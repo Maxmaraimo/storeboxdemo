@@ -1,0 +1,184 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Mijozlar ro'yxati — StoreBox{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="customersApp()">
+
+    <!-- HEADER & ACTION (Video 08:17) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Mijozlar ro'yxati</h1>
+            <p class="text-xs text-slate-500 mt-0.5">{{ customers.count }} ta faol mijozlar va sodiqlik dasturi</p>
+        </div>
+
+        <button type="button" @click="bonusSettingsModal = true" class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center gap-2 shadow-2xs">
+            <i data-lucide="gift" class="w-4 h-4 text-brand"></i>
+            <span>Ball sozlamalari</span>
+        </button>
+    </div>
+
+    <!-- SEARCH BAR (Video 08:17) -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-2xs flex items-center justify-between gap-4">
+        <form method="GET" class="flex-1 max-w-md relative">
+            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Mijoz ismi, foydalanuvchi ismi, telefon..."
+                   class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold placeholder-slate-400 focus:outline-none focus:border-brand">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
+        </form>
+
+        <div class="text-xs font-bold text-slate-500">
+            Jami: <span class="text-slate-900 font-black">{{ customers.count }} ta</span>
+        </div>
+    </div>
+
+    <!-- CUSTOMERS TABLE (Video 08:17) -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                    <tr>
+                        <th class="py-3.5 px-4">Ism</th>
+                        <th class="py-3.5 px-4">Telefon raqami</th>
+                        <th class="py-3.5 px-4">Buyurtmalar soni</th>
+                        <th class="py-3.5 px-4">Bonus ball</th>
+                        <th class="py-3.5 px-4">Qo'shilgan sana</th>
+                        <th class="py-3.5 px-4">Platforma</th>
+                        <th class="py-3.5 px-4 text-right">Harakat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+                    {% for c in customers %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-4 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center">
+                                {{ c.name|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-900">{{ c.name }}</div>
+                                <div class="text-[10px] text-slate-400">ID: {{ c.id }}</div>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-4 font-mono font-bold text-slate-600">
+                            {{ c.phone }}
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="font-mono font-bold text-slate-900">{{ c.orders_count }} ta</span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-black border border-amber-200 font-mono">
+                                🎁 {{ c.bonus_balance }} ball
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
+                            {{ c.created_at|date:"d.m.Y" }}
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
+                                <i data-lucide="globe" class="w-3 h-3"></i> Veb-sayt
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right space-x-2">
+                            <button type="button" @click="openAdjustBonus('{{ c.id }}', '{{ c.name }}', {{ c.bonus_balance }})" class="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-[11px] font-bold text-slate-700">
+                                Ball berish
+                            </button>
+                            <a href="/dashboard/chats/?phone={{ c.phone }}" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-brand font-bold text-[11px] inline-flex items-center gap-1 spa-link">
+                                <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+                                <span>Chat</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-slate-400">
+                            Hozircha mijozlar mavjud emas
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- BONUS SETTINGS MODAL -->
+    <div x-show="bonusSettingsModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="bonusSettingsModal = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900">Bonus dasturi sozlamalari</h3>
+                <button type="button" @click="bonusSettingsModal = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Xariddan keshbek foizi (%)</label>
+                    <input type="number" value="3" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold">
+                    <span class="text-[10px] text-slate-400 mt-1 block">Har bir muvaffaqiyatli buyurtmadan mijozga qaytariladi</span>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">1 bonus ball qiymati</label>
+                    <input type="text" value="1 ball = 1 UZS" readonly class="w-full p-2.5 rounded-xl bg-slate-100 border border-slate-200 font-mono text-slate-600">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" @click="bonusSettingsModal = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                <button type="button" @click="bonusSettingsModal = false; showToast('Bonus sozlamalari saqlandi!')" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADJUST BONUS TO INDIVIDUAL CUSTOMER MODAL -->
+    <div x-show="adjustModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="adjustModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900">Bonus ball berish</h3>
+                <button type="button" @click="adjustModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div class="font-bold text-slate-900" x-text="targetName"></div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Qo'shiladigan ball miqdori</label>
+                    <input type="number" x-model="pointsToAdd" step="1000" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold font-mono">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" @click="adjustModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                <button type="button" @click="saveAdjustBonus()" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Tasdiqlash</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function customersApp() {
+        return {
+            bonusSettingsModal: false,
+            adjustModalOpen: false,
+            targetId: null,
+            targetName: '',
+            pointsToAdd: 5000,
+
+            openAdjustBonus(id, name, current) {
+                this.targetId = id;
+                this.targetName = name;
+                this.pointsToAdd = 5000;
+                this.adjustModalOpen = true;
+            },
+
+            saveAdjustBonus() {
+                const fd = new FormData();
+                fd.append('customer_id', this.targetId);
+                fd.append('points', this.pointsToAdd);
+
+                fetch('/dashboard/api/adjust-bonus/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.adjustModalOpen = false;
+                    showToast("Bonus muvaffaqiyatli qo'shildi!");
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

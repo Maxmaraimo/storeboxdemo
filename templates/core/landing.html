@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+
+{% block title %}StoreBox — Создайте свой интернет-магазин и Telegram-витрину в Узбекистане{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 text-white selection:bg-emerald-500 selection:text-white">
+    <!-- Header -->
+    <header class="border-b border-slate-800/80 sticky top-0 z-50 backdrop-blur-md bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-2xl font-black tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">StoreBox</span>
+                <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Uzbekistan</span>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
+                <a href="#features" class="hover:text-emerald-400 transition-colors">Возможности</a>
+                <a href="#how-it-works" class="hover:text-emerald-400 transition-colors">Как это работает</a>
+                <a href="#payments" class="hover:text-emerald-400 transition-colors">Платежи</a>
+                <a href="#pricing" class="hover:text-emerald-400 transition-colors">Тарифы</a>
+                <a href="/store/goldlavash/" class="text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors">
+                    <i data-lucide="store" class="w-4 h-4"></i> Демо-магазин
+                </a>
+            </nav>
+
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center bg-slate-800/60 rounded-xl p-1 text-xs border border-slate-700/60">
+                    <a href="/platform/lang/ru/" class="px-2 py-1 rounded-lg {% if lang == 'ru' %}bg-emerald-500 text-white font-bold{% else %}text-slate-400 hover:text-white{% endif %}">RU</a>
+                    <a href="/platform/lang/uz/" class="px-2 py-1 rounded-lg {% if lang == 'uz' %}bg-emerald-500 text-white font-bold{% else %}text-slate-400 hover:text-white{% endif %}">UZ</a>
+                </div>
+
+                <a href="/login/" class="hidden sm:inline-flex text-sm font-semibold text-slate-300 hover:text-white transition-colors px-4 py-2">
+                    Войти
+                </a>
+                <a href="/register/" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5">
+                    Создать магазин
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative pt-16 pb-24 overflow-hidden">
+        <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-emerald-500/15 blur-[140px] rounded-full pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-emerald-400 text-xs font-semibold mb-8 shadow-inner">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Аналог StoreBox для быстрого старта в Узбекистане</span>
+            </div>
+
+            <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-[1.15]">
+                Создайте интернет-магазин и <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Telegram-витрину</span> за 15 минут
+            </h1>
+
+            <p class="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                Готовая SaaS-платформа для предпринимателей Узбекистана: прием оплат через <b>Click</b>, <b>Payme</b> и <b>Uzum Pay</b>, Telegram Mini App (TMA), расчет доставки и складской учет.
+            </p>
+
+            <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="/register/" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-base transition-all shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                    <span>Запустить магазин бесплатно</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </a>
+                <a href="/store/goldlavash/" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-800/80 hover:bg-slate-700/80 text-white font-bold text-base transition-all border border-slate-700 flex items-center justify-center gap-2">
+                    <i data-lucide="eye" class="w-5 h-5 text-amber-400"></i>
+                    <span>Посмотреть демо-магазин</span>
+                </a>
+            </div>
+
+            <!-- Trust Pills -->
+            <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto text-slate-400 text-sm font-medium">
+                <div class="flex items-center justify-center gap-2 bg-slate-800/40 border border-slate-800 rounded-xl py-3 px-4">
+                    <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Запуск за 15 минут</span>
+                </div>
+                <div class="flex items-center justify-center gap-2 bg-slate-800/40 border border-slate-800 rounded-xl py-3 px-4">
+                    <i data-lucide="credit-card" class="w-4 h-4 text-blue-400"></i>
+                    <span>Click, Payme, Uzum</span>
+                </div>
+                <div class="flex items-center justify-center gap-2 bg-slate-800/40 border border-slate-800 rounded-xl py-3 px-4">
+                    <i data-lucide="send" class="w-4 h-4 text-sky-400"></i>
+                    <span>Telegram Mini App</span>
+                </div>
+                <div class="flex items-center justify-center gap-2 bg-slate-800/40 border border-slate-800 rounded-xl py-3 px-4">
+                    <i data-lucide="globe" class="w-4 h-4 text-amber-400"></i>
+                    <span>Свой поддомен</span>
+                </div>
+            </div>
+
+            <!-- Interface Mockup -->
+            <div class="mt-16 relative max-w-5xl mx-auto rounded-3xl p-3 bg-gradient-to-b from-slate-700/50 to-slate-800/20 border border-slate-700/50 shadow-2xl">
+                <div class="rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 text-left p-6 sm:p-8">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-5 mb-6">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                            <span class="ml-4 text-xs font-mono text-slate-500">goldlavash.platform.uz</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">TMA Ready</span>
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">Payme / Click Active</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5">
+                            <div class="text-xs text-slate-400 font-medium mb-1">Выручка за месяц</div>
+                            <div class="text-2xl font-black text-white">18 450 000 UZS</div>
+                            <div class="text-xs text-emerald-400 font-semibold mt-2 flex items-center gap-1">
+                                <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +24% к прошлому месяцу
+                            </div>
+                        </div>
+                        <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5">
+                            <div class="text-xs text-slate-400 font-medium mb-1">Всего заказов</div>
+                            <div class="text-2xl font-black text-white">342 заказа</div>
+                            <div class="text-xs text-sky-400 font-semibold mt-2 flex items-center gap-1">
+                                <i data-lucide="send" class="w-3.5 h-3.5"></i> 68% через Telegram
+                            </div>
+                        </div>
+                        <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5">
+                            <div class="text-xs text-slate-400 font-medium mb-1">Средний чек</div>
+                            <div class="text-2xl font-black text-white">54 000 UZS</div>
+                            <div class="text-xs text-purple-400 font-semibold mt-2 flex items-center gap-1">
+                                <i data-lucide="users" class="w-3.5 h-3.5"></i> 290 уникальных клиентов
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Features Section -->
+    <section id="features" class="py-24 bg-slate-900/60 border-t border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                    Все инструменты для продаж в Узбекистане
+                </h2>
+                <p class="mt-4 text-base text-slate-400">
+                    StoreBox объединяет современный веб-сайт, Telegram Mini App и админ-панель со всеми локальными шлюзами.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
+                    <div class="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-6">
+                        <i data-lucide="send" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Telegram Mini App & Бот</h3>
+                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
+                        Клиенты выбирают товары и оформляют заказ прямо внутри Telegram в 2 клика. А мерчант моментально получает уведомление в группу с подробным чеком.
+                    </p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-6">
+                        <i data-lucide="credit-card" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Click, Payme & Uzum Pay</h3>
+                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
+                        Поддержка банковских карт Uzcard и Humo. Автоматическое подтверждение оплаты через защищенные вебхуки и смена статуса на «Оплачено».
+                    </p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-6">
+                        <i data-lucide="layers" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Вариации и контроль склада</h3>
+                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
+                        Настраивайте размеры (S, M, L), вкусы и опции со своей ценой и остатком. Система автоматически списывает склад и показывает плашку «Нет в наличии».
+                    </p>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
+                    <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-6">
+                        <i data-lucide="ticket" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Промокоды и акции</h3>
+                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
+                        Создавайте купоны со скидкой в процентах или UZS, лимитом использований и минимальным чеком. Отображение перечеркнутых цен на товары.
+                    </p>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-6">
+                        <i data-lucide="truck" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Доставка и самовывоз</h3>
+                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
+                        Фиксированная стоимость доставки или бесплатная доставка при заказе от N суммы (например, бесплатно от 150 000 UZS). Поддержка самовывоза.
+                    </p>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
+                    <div class="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-6">
+                        <i data-lucide="languages" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Мультиязычность UZ / RU</h3>
+                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
+                        Интерфейс витрины и карточки товаров на узбекском и русском языках. Клиенты выбирают удобный язык одним кликом.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-24 border-t border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                    Всего 4 простых шага до первых продаж
+                </h2>
+                <p class="mt-4 text-base text-slate-400">
+                    Запустите магазин быстрее, чем выпьете чашку кофе.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-slate-800/30 border border-slate-800 p-6 rounded-2xl relative">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-black flex items-center justify-center mb-4 text-lg border border-emerald-500/20">1</div>
+                    <h4 class="text-lg font-bold text-white">Регистрация</h4>
+                    <p class="mt-2 text-xs text-slate-400 leading-relaxed">Введите номер телефона (+998) и придумайте надежный пароль.</p>
+                </div>
+                <div class="bg-slate-800/30 border border-slate-800 p-6 rounded-2xl relative">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-black flex items-center justify-center mb-4 text-lg border border-emerald-500/20">2</div>
+                    <h4 class="text-lg font-bold text-white">Мастер настройки</h4>
+                    <p class="mt-2 text-xs text-slate-400 leading-relaxed">Укажите название, выберите поддомен (mystore.platform.uz) и цвет бренда.</p>
+                </div>
+                <div class="bg-slate-800/30 border border-slate-800 p-6 rounded-2xl relative">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-black flex items-center justify-center mb-4 text-lg border border-emerald-500/20">3</div>
+                    <h4 class="text-lg font-bold text-white">Загрузка каталога</h4>
+                    <p class="mt-2 text-xs text-slate-400 leading-relaxed">Добавьте категории, фото блюд или товаров, цены и опции.</p>
+                </div>
+                <div class="bg-slate-800/30 border border-slate-800 p-6 rounded-2xl relative">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-black flex items-center justify-center mb-4 text-lg border border-emerald-500/20">4</div>
+                    <h4 class="text-lg font-bold text-white">Первые продажи</h4>
+                    <p class="mt-2 text-xs text-slate-400 leading-relaxed">Поделитесь ссылкой в Instagram и подключите бота в Telegram!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24 bg-slate-900/60 border-t border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                    Честные и прозрачные тарифы
+                </h2>
+                <p class="mt-4 text-base text-slate-400">
+                    Попробуйте все возможности платформы бесплатно в течение 14 дней.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <!-- Plan 1 -->
+                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Старт</h3>
+                        <p class="text-slate-400 text-xs mt-1">Для тестирования гипотез и первых заказов</p>
+                        <div class="mt-6 text-3xl font-black text-white">0 UZS <span class="text-xs font-normal text-slate-400">/ 14 дней</span></div>
+                        <ul class="mt-6 space-y-3 text-xs text-slate-300">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> До 30 товаров</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Витрина на поддомене</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Telegram-уведомления</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Оплата при получении</li>
+                        </ul>
+                    </div>
+                    <a href="/register/" class="mt-8 block text-center py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm transition-colors">
+                        Начать бесплатно
+                    </a>
+                </div>
+
+                <!-- Plan 2 (Highlighted) -->
+                <div class="bg-gradient-to-b from-slate-800 to-slate-800/80 border-2 border-emerald-500 rounded-3xl p-8 flex flex-col justify-between relative shadow-2xl shadow-emerald-500/10">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-xs tracking-wider uppercase">
+                        Популярный выбор
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Бизнес</h3>
+                        <p class="text-slate-400 text-xs mt-1">Для ресторанов, магазинов одежды и электроники</p>
+                        <div class="mt-6 text-3xl font-black text-white">190 000 UZS <span class="text-xs font-normal text-slate-400">/ месяц</span></div>
+                        <ul class="mt-6 space-y-3 text-xs text-slate-300">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> До 500 товаров с вариациями</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Telegram Mini App (TMA) внутри бота</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Эквайринг Click, Payme, Uzum Pay</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Промокоды и расчет доставки</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Контроль складских остатков</li>
+                        </ul>
+                    </div>
+                    <a href="/register/" class="mt-8 block text-center py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-emerald-500/25">
+                        Выбрать «Бизнес»
+                    </a>
+                </div>
+
+                <!-- Plan 3 -->
+                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Pro / Бренд</h3>
+                        <p class="text-slate-400 text-xs mt-1">Для крупных сетей и высоких оборотов</p>
+                        <div class="mt-6 text-3xl font-black text-white">390 000 UZS <span class="text-xs font-normal text-slate-400">/ месяц</span></div>
+                        <ul class="mt-6 space-y-3 text-xs text-slate-300">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Безлимитно товаров и фото</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Подключение собственного домена (.UZ)</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Выделенный Telegram-бот</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Персональный менеджер 24/7</li>
+                        </ul>
+                    </div>
+                    <a href="/register/" class="mt-8 block text-center py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm transition-colors">
+                        Подключить Pro
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-12 text-slate-400 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2 text-white font-bold">
+                <i data-lucide="shopping-bag" class="w-5 h-5 text-emerald-400"></i>
+                <span>StoreBox Uzbekistan</span>
+            </div>
+            <div>
+                © 2026 StoreBox Platform. Все права защищены. Ташкент, Узбекистан.
+            </div>
+            <div class="flex space-x-6">
+                <a href="#" class="hover:text-white">Оферта</a>
+                <a href="#" class="hover:text-white">Конфиденциальность</a>
+                <a href="#" class="hover:text-white">Поддержка</a>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Kategoriyalar — StoreBox{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="categoriesApp()">
+
+    <!-- Header & Action (Video 08:32) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Kategoriyalar ro'yxati</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Katalog mahsulotlarini bo'limlar bo'yicha ajratish</p>
+        </div>
+
+        <button type="button" @click="addModalOpen = true" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Kategoriya qo'shish</span>
+        </button>
+    </div>
+
+    <!-- Categories Table -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                    <tr>
+                        <th class="py-3.5 px-4">Belgi</th>
+                        <th class="py-3.5 px-4">Kategoriya nomi</th>
+                        <th class="py-3.5 px-4">Mahsulotlar soni</th>
+                        <th class="py-3.5 px-4 text-right">Harakat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+                    {% for cat in categories %}
+                    <tr id="cat-row-{{ cat.id }}" class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-4">
+                            <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                                <i data-lucide="{{ cat.icon|default:'tag' }}" class="w-4 h-4"></i>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <div class="font-bold text-slate-900">{{ cat.name_uz|default:cat.name_ru }}</div>
+                            {% if cat.name_ru and cat.name_uz != cat.name_ru %}
+                            <div class="text-[10px] text-slate-400">{{ cat.name_ru }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-4 font-mono font-bold text-slate-600">
+                            {{ cat.products.count }} ta
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            <button type="button" @click="deleteCategory('{{ cat.id }}')" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-12 text-center text-slate-400">
+                            Hozircha kategoriyalar mavjud emas
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ADD CATEGORY MODAL (Video 03:00) -->
+    <div x-show="addModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="addModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900">Yangi kategoriya qo'shish</h3>
+                <button type="button" @click="addModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <form method="POST" action="/dashboard/categories/" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Kategoriya nomi (O'zbekcha) *</label>
+                    <input type="text" name="name_uz" required placeholder="Masalan: Ichimliklar" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Kategoriya nomi (Русский)</label>
+                    <input type="text" name="name_ru" placeholder="Например: Напитки" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Belgi (Icon)</label>
+                    <input type="text" name="icon" value="tag" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" @click="addModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function categoriesApp() {
+        return {
+            addModalOpen: false,
+
+            deleteCategory(id) {
+                if (!confirm("Kategoriyani o'chirmoqchimisiz?")) return;
+                const fd = new FormData();
+                fd.append('action', 'delete');
+                fd.append('category_id', id);
+
+                fetch('/dashboard/categories/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(() => {
+                    const row = document.getElementById(`cat-row-${id}`);
+                    if (row) row.remove();
+                    showToast("Kategoriya o'chirildi!");
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

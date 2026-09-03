@@ -1,0 +1,249 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Marketing — StoreBox{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="marketingApp()">
+
+    <!-- Header & Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Marketing va Sodiqlik</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Mijozlar oqimini oshirish, aksiyalar va promokodlar</p>
+        </div>
+
+        <div>
+            <template x-if="activeTab === 'rassilka' || activeTab === 'sms'">
+                <button type="button" @click="campaignModalOpen = true" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span>Rassilka yaratish</span>
+                </button>
+            </template>
+            <template x-if="activeTab === 'promokod'">
+                <button type="button" @click="promoModalOpen = true" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Promokod yaratish</span>
+                </button>
+            </template>
+            <template x-if="activeTab === 'banner'">
+                <button type="button" @click="bannerModalOpen = true" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
+                    <i data-lucide="image" class="w-4 h-4"></i>
+                    <span>Banner qo'shish</span>
+                </button>
+            </template>
+        </div>
+    </div>
+
+    <!-- TABS BAR (Video 08:58) -->
+    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl overflow-x-auto no-scrollbar w-fit text-xs font-bold">
+        <button type="button" @click="activeTab = 'rassilka'" :class="activeTab === 'rassilka' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl whitespace-nowrap">Rassilka</button>
+        <button type="button" @click="activeTab = 'promokod'" :class="activeTab === 'promokod' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl whitespace-nowrap">Promokod</button>
+        <button type="button" @click="activeTab = 'manbalar'" :class="activeTab === 'manbalar' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl whitespace-nowrap">Manbalar</button>
+        <button type="button" @click="activeTab = 'sms'" :class="activeTab === 'sms' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl whitespace-nowrap">SMS rassilka</button>
+        <button type="button" @click="activeTab = 'kanal_post'" :class="activeTab === 'kanal_post' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl whitespace-nowrap">Kanal uchun post</button>
+        <button type="button" @click="activeTab = 'banner'" :class="activeTab === 'banner' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl whitespace-nowrap">Banner</button>
+        <button type="button" @click="activeTab = 'sharhlar'" :class="activeTab === 'sharhlar' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl whitespace-nowrap">Sharhlar</button>
+    </div>
+
+    <!-- TAB 1: RASSILKA -->
+    <div x-show="activeTab === 'rassilka'" class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+        <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                <tr>
+                    <th class="py-3.5 px-4">Kampaniya nomi</th>
+                    <th class="py-3.5 px-4">Kanal</th>
+                    <th class="py-3.5 px-4">Xabar matni</th>
+                    <th class="py-3.5 px-4">Qabul qiluvchilar</th>
+                    <th class="py-3.5 px-4">Sana</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+                {% for c in campaigns %}
+                <tr class="hover:bg-slate-50/60">
+                    <td class="py-3.5 px-4 font-bold text-slate-900">{{ c.title }}</td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-sky-50 text-sky-700">Telegram</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate">{{ c.message }}</td>
+                    <td class="py-3.5 px-4 font-mono font-bold text-slate-900">{{ c.sent_count }} kishi</td>
+                    <td class="py-3.5 px-4 text-slate-400 font-mono text-[11px]">{{ c.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="py-12 text-center text-slate-400">Hali rassilkalar yuborilmagan</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- TAB 2: PROMOKOD -->
+    <div x-show="activeTab === 'promokod'" class="space-y-4" x-data="{ openPromoModal: false }">
+        <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Do'kon promokodlari</h3>
+            <button type="button" @click="openPromoModal = true" class="px-4 py-2 rounded-xl bg-brand text-white font-bold text-xs flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Promokod qo'shish</span>
+            </button>
+        </div>
+
+        <!-- Create Promo Modal -->
+        <div x-show="openPromoModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div @click.away="openPromoModal = false" class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h4 class="font-black text-sm text-slate-900">Yangi promokod yaratish</h4>
+                    <button type="button" @click="openPromoModal = false" class="p-1 rounded-lg text-slate-400 hover:bg-slate-100">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <form method="POST" class="space-y-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_promo">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Promokod kodi *</label>
+                        <input type="text" name="code" required placeholder="LAVASH10" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono uppercase focus:outline-none focus:border-brand">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Chegirma qiymati (foizda %) *</label>
+                        <input type="number" name="discount_value" required value="10" placeholder="10" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Minimal buyurtma summasi (UZS)</label>
+                        <input type="number" name="min_order_amount" value="0" placeholder="0" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand">
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" @click="openPromoModal = false" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50">Bekor qilish</button>
+                        <button type="submit" class="flex-1 py-2.5 rounded-xl bg-brand text-white text-xs font-bold shadow-xs">Saqlash</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+            <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                <tr>
+                    <th class="py-3.5 px-4">Promokod</th>
+                    <th class="py-3.5 px-4">Chegirma turi</th>
+                    <th class="py-3.5 px-4">Miqdori</th>
+                    <th class="py-3.5 px-4">Min. buyurtma</th>
+                    <th class="py-3.5 px-4">Holat</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+                {% for p in promos %}
+                <tr class="hover:bg-slate-50/60">
+                    <td class="py-3.5 px-4 font-mono font-bold text-brand">{{ p.code }}</td>
+                    <td class="py-3.5 px-4">{{ p.get_discount_type_display }}</td>
+                    <td class="py-3.5 px-4 font-mono font-bold">{% if p.discount_type == 'PERCENT' %}{{ p.discount_value|floatformat:0 }}%{% else %}{{ p.discount_value|floatformat:0 }} UZS{% endif %}</td>
+                    <td class="py-3.5 px-4 font-mono text-slate-500">{{ p.min_order_amount|floatformat:0 }} UZS</td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">Faol</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="py-12 text-center text-slate-400">Promokodlar mavjud emas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: MANBALAR (TRAFFIC SOURCES) -->
+    <div x-show="activeTab === 'manbalar'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-slate-500">Telegram Bot & Kanal</span>
+                <i data-lucide="send" class="w-4 h-4 text-sky-500"></i>
+            </div>
+            <div class="text-2xl font-black text-slate-900 font-mono">68%</div>
+            <div class="text-[11px] text-slate-400">Mijozlarning asosiy oqimi</div>
+        </div>
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-slate-500">Instagram Bio Link</span>
+                <i data-lucide="instagram" class="w-4 h-4 text-pink-500"></i>
+            </div>
+            <div class="text-2xl font-black text-slate-900 font-mono">24%</div>
+            <div class="text-[11px] text-slate-400">Profil sarlavhasidagi havola</div>
+        </div>
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-slate-500">QR Katalog (Stolda)</span>
+                <i data-lucide="qr-code" class="w-4 h-4 text-emerald-500"></i>
+            </div>
+            <div class="text-2xl font-black text-slate-900 font-mono">8%</div>
+            <div class="text-[11px] text-slate-400">Muassasa ichidagi skanerlash</div>
+        </div>
+    </div>
+
+    <!-- TAB 4: KANAL UCHUN POST GENERATOR (Video 09:12) -->
+    <div x-show="activeTab === 'kanal_post'" class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4 max-w-2xl">
+        <div class="flex items-center justify-between">
+            <h3 class="font-black text-sm text-slate-900">Telegram kanal uchun tayyor post</h3>
+            <button type="button" @click="copyPost()" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span x-text="copied ? 'Nusxa olindi!' : 'Nusxa olish'"></span>
+            </button>
+        </div>
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs leading-relaxed space-y-2 font-medium" id="tg-post-content">
+            <p>🔥 <b>Gold Lavash & Burger</b> da yangi mazali taomlar!</p>
+            <p>Eng xushbo'y va so'lim go'sht, yangi sabzavotlar va o'zgacha retsept bo'yicha tayyorlangan souslarimiz bilan o'zingizni xursand qiling! 😋</p>
+            <p>🛵 <b>35 daqiqada</b> to'g'ridan-to'g'ri eshigingizgacha issiq holda yetkazib beramiz!</p>
+            <p>👉 <b>Buyurtma berish:</b> https://storebox.uz/store/{{ store.subdomain }}/</p>
+        </div>
+    </div>
+
+    <!-- TAB 5: BANNERLAR -->
+    <div x-show="activeTab === 'banner'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for b in banners %}
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-3">
+            <div class="h-32 rounded-2xl bg-slate-100 flex items-center justify-center font-bold text-slate-400 overflow-hidden">
+                {% if b.image %}
+                <img src="{{ b.image.url }}" class="w-full h-full object-cover">
+                {% else %}
+                <i data-lucide="image" class="w-8 h-8 text-slate-300"></i>
+                {% endif %}
+            </div>
+            <div>
+                <h4 class="font-bold text-sm text-slate-900">{{ b.title }}</h4>
+                <p class="text-xs text-slate-500">{{ b.subtitle }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-2 py-12 text-center text-slate-400">Bannerlar mavjud emas</div>
+        {% endfor %}
+    </div>
+
+    <!-- TAB 6: SHARHLAR -->
+    <div x-show="activeTab === 'sharhlar'" class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs">
+        <div class="text-center py-10 text-slate-400 text-xs">
+            <i data-lucide="star" class="w-8 h-8 mx-auto mb-2 text-amber-400"></i>
+            <p>Mijozlarning barcha sharhlari va baholari shu yerda ko'rsatiladi</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function marketingApp() {
+        return {
+            activeTab: '{{ tab|default:"rassilka" }}',
+            copied: false,
+            campaignModalOpen: false,
+            promoModalOpen: false,
+            bannerModalOpen: false,
+
+            copyPost() {
+                const text = document.getElementById('tg-post-content').innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    this.copied = true;
+                    showToast('Post matni nusxa olindi!');
+                    setTimeout(() => { this.copied = false; }, 2500);
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

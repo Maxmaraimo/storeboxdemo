@@ -1,0 +1,166 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Xodimlar — StoreBox{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="staffApp()">
+
+    <!-- Header & Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Xodimlar</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Xodimlarni boshqarish va kirish huquqlarini taqsimlash</p>
+        </div>
+
+        <button type="button" @click="addModalOpen = true" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Xodim qo'shish</span>
+        </button>
+    </div>
+
+    <!-- Tabs (Video 09:51) -->
+    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl w-fit text-xs font-bold">
+        <button type="button" @click="activeTab = 'staff'" :class="activeTab === 'staff' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl">Xodimlar</button>
+        <button type="button" @click="activeTab = 'roles'" :class="activeTab === 'roles' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl">Rollar</button>
+        <button type="button" @click="activeTab = 'courier'" :class="activeTab === 'courier' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl">Kuryer</button>
+    </div>
+
+    <!-- Staff Table (Video 09:52) -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                    <tr>
+                        <th class="py-3.5 px-4">Foydalanuvchi</th>
+                        <th class="py-3.5 px-4">Telefon raqami</th>
+                        <th class="py-3.5 px-4">Roli</th>
+                        <th class="py-3.5 px-4">Holati</th>
+                        <th class="py-3.5 px-4 text-right">Harakat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+                    {% for s in staff_list %}
+                    <tr id="staff-row-{{ s.id }}" class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-4 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">
+                                {{ s.name|slice:":1"|upper }}
+                            </div>
+                            <span class="font-bold text-slate-900">{{ s.name }}</span>
+                        </td>
+                        <td class="py-3.5 px-4 font-mono text-slate-600">{{ s.phone }}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-bold text-[11px]">
+                                {{ s.get_role_display }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">Faol</span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            <button type="button" @click="deleteStaff('{{ s.id }}')" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-slate-400">
+                            Qo'shimcha xodimlar biriktirilmagan
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ADD STAFF MODAL -->
+    <div x-show="addModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="addModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900">Yangi xodim qo'shish</h3>
+                <button type="button" @click="addModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Xodim ismi va familiyasi *</label>
+                    <input type="text" x-model="staffName" placeholder="Alisher Qodirov" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Telefon raqami *</label>
+                    <input type="text" x-model="staffPhone" placeholder="+998 90 123 45 67" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Roli</label>
+                    <select x-model="staffRole" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold">
+                        <option value="MANAGER">Menejer</option>
+                        <option value="CASHIER">Kassir</option>
+                        <option value="COURIER">Kuryer</option>
+                        <option value="ADMIN">Admin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" @click="addModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                <button type="button" @click="saveStaff()" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Saqlash</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function staffApp() {
+        return {
+            activeTab: 'staff',
+            addModalOpen: false,
+            staffName: '',
+            staffPhone: '+998 ',
+            staffRole: 'MANAGER',
+
+            saveStaff() {
+                if (!this.staffName.trim()) { alert('Xodim ismini kiriting'); return; }
+                const fd = new FormData();
+                fd.append('action', 'create');
+                fd.append('name', this.staffName);
+                fd.append('phone', this.staffPhone);
+                fd.append('role', this.staffRole);
+
+                fetch('/dashboard/api/staff-action/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.addModalOpen = false;
+                    showToast("Xodim muvaffaqiyatli qo'shildi!");
+                    spaNavigate('/dashboard/settings/staff/', false);
+                });
+            },
+
+            deleteStaff(id) {
+                if (!confirm("Ushbu xodimni o'chirmoqchimisiz?")) return;
+                const fd = new FormData();
+                fd.append('action', 'delete');
+                fd.append('staff_id', id);
+
+                fetch('/dashboard/api/staff-action/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    const row = document.getElementById(`staff-row-${id}`);
+                    if (row) row.remove();
+                    showToast("Xodim o'chirildi!");
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

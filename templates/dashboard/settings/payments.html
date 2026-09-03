@@ -1,0 +1,231 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}To'lov turi — StoreBox{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="paymentsApp()">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">To'lov turlari</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Xaridorlar uchun to'lov usullarini yoqing yoki o'chiring</p>
+        </div>
+    </div>
+
+    <!-- Gateways Grid (Video 09:40) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- 1. Naqd pul -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                    <i data-lucide="banknote" class="w-5 h-5"></i>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" :checked="cashEnabled" @change="toggleGateway('cash', $event.target.checked)" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+                </label>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm text-slate-900">Naqd pul</h3>
+                <p class="text-xs text-slate-400 mt-1">Buyurtmani qabul qilganda naqd to'lash</p>
+            </div>
+        </div>
+
+        <!-- 2. Click -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                    CLICK
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="configModal = 'click'" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100" title="Sozlamalar">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                    </button>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" :checked="clickEnabled" @change="toggleGateway('click', $event.target.checked)" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm text-slate-900">Click</h3>
+                <p class="text-xs text-slate-400 mt-1">Click ilovasi yoki veb orqali tezkor to'lov</p>
+            </div>
+        </div>
+
+        <!-- 3. Payme -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold text-sm">
+                    payme
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="configModal = 'payme'" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100" title="Sozlamalar">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                    </button>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" :checked="paymeEnabled" @change="toggleGateway('payme', $event.target.checked)" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm text-slate-900">Payme</h3>
+                <p class="text-xs text-slate-400 mt-1">Payme to'lov tizimi orqali onlayn qabul qilish</p>
+            </div>
+        </div>
+
+        <!-- 4. Uzum Pay -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
+                    uzum
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="configModal = 'uzum'" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100" title="Sozlamalar">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                    </button>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" :checked="uzumEnabled" @change="toggleGateway('uzum', $event.target.checked)" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm text-slate-900">Uzum Pay</h3>
+                <p class="text-xs text-slate-400 mt-1">Uzum ekotizimi va bank kartalari</p>
+            </div>
+        </div>
+
+        <!-- 5. Terminal -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                    <i data-lucide="credit-card" class="w-5 h-5"></i>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" :checked="terminalEnabled" @change="toggleGateway('terminal', $event.target.checked)" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+                </label>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm text-slate-900">Yetkazilganda terminal</h3>
+                <p class="text-xs text-slate-400 mt-1">Kuryer olib kelgan POS terminal orqali</p>
+            </div>
+        </div>
+
+        <!-- 6. StoreBox Pay -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-brand flex items-center justify-center font-black text-xs">
+                    SB
+                </div>
+                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold">Tez orada</span>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm text-slate-900">StoreBox Pay</h3>
+                <p class="text-xs text-slate-400 mt-1">Avtomatik yechish va past komissiya</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREDENTIALS MODAL (Video birinchi.mov 09:10-09:30) -->
+    <div x-show="configModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="configModal = null" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900" x-text="configModal === 'click' ? 'Click sozlamalari' : (configModal === 'payme' ? 'Payme sozlamalari' : 'Uzum Pay sozlamalari')"></h3>
+                <button type="button" @click="configModal = null" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <!-- Click Form -->
+            <form method="POST" x-show="configModal === 'click'" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Click Service ID</label>
+                    <input type="text" name="click_service_id" value="{{ payment_settings.click_service_id|default:'' }}" placeholder="12345" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Click Merchant ID</label>
+                    <input type="text" name="click_merchant_id" value="{{ payment_settings.click_merchant_id|default:'' }}" placeholder="67890" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Click Secret Key</label>
+                    <input type="password" name="click_secret_key" value="{{ payment_settings.click_secret_key|default:'' }}" placeholder="••••••••••••" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" class="w-full py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs">
+                        Saqlash
+                    </button>
+                </div>
+            </form>
+
+            <!-- Payme Form -->
+            <form method="POST" x-show="configModal === 'payme'" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Payme Merchant ID</label>
+                    <input type="text" name="payme_merchant_id" value="{{ payment_settings.payme_merchant_id|default:'' }}" placeholder="6328329b30f..." class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Payme Secret Key (Password)</label>
+                    <input type="password" name="payme_secret_key" value="{{ payment_settings.payme_secret_key|default:'' }}" placeholder="••••••••••••" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" class="w-full py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs">
+                        Saqlash
+                    </button>
+                </div>
+            </form>
+
+            <!-- Uzum Form -->
+            <form method="POST" x-show="configModal === 'uzum'" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Uzum Merchant ID</label>
+                    <input type="text" name="uzum_merchant_id" value="{{ payment_settings.uzum_merchant_id|default:'' }}" placeholder="uzum_merch_123" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Uzum Secret Key</label>
+                    <input type="password" name="uzum_secret_key" value="{{ payment_settings.uzum_secret_key|default:'' }}" placeholder="••••••••••••" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" class="w-full py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs">
+                        Saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function paymentsApp() {
+        return {
+            configModal: null,
+            clickEnabled: {% if payment_settings.click_enabled %}true{% else %}false{% endif %},
+            paymeEnabled: {% if payment_settings.payme_enabled %}true{% else %}false{% endif %},
+            uzumEnabled: {% if payment_settings.uzum_enabled %}true{% else %}false{% endif %},
+            cashEnabled: {% if payment_settings.cash_on_delivery_enabled %}true{% else %}false{% endif %},
+            terminalEnabled: {% if payment_settings.terminal_on_delivery_enabled %}true{% else %}false{% endif %},
+
+            toggleGateway(gw, val) {
+                const fd = new FormData();
+                fd.append('gateway', gw);
+                fd.append('enabled', val);
+
+                fetch('/dashboard/api/toggle-payment/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    showToast(`${gw.toUpperCase()} holati yangilandi!`);
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

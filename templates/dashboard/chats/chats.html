@@ -1,0 +1,144 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Chat — StoreBox{% endblock %}
+
+{% block dashboard_content %}
+<div class="h-[calc(100vh-10rem)] bg-white rounded-3xl border border-slate-200/80 shadow-xs flex overflow-hidden" x-data="chatApp()">
+
+    <!-- LEFT COLUMN: CONVERSATIONS LIST (Video 08:22) -->
+    <div class="w-80 sm:w-96 border-r border-slate-100 flex flex-col shrink-0">
+        <!-- Search & Filter Tabs -->
+        <div class="p-4 border-b border-slate-100 space-y-3">
+            <h2 class="font-black text-base text-slate-900">Mijozlar bilan chat / Xabarlar</h2>
+            
+            <!-- Channels Tabs (Video 08:23) -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] font-bold">
+                <button type="button" @click="activeTab = 'all'" :class="activeTab === 'all' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">Barchasi</button>
+                <button type="button" @click="activeTab = 'unread'" :class="activeTab === 'unread' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">O'qilmagan</button>
+                <button type="button" @click="activeTab = 'instagram'" :class="activeTab === 'instagram' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">Instagram</button>
+                <button type="button" @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">Sharhlar</button>
+            </div>
+
+            <div class="relative">
+                <input type="text" placeholder="Qidirish..." class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+            </div>
+        </div>
+
+        <!-- Threads list -->
+        <div class="flex-1 overflow-y-auto divide-y divide-slate-50">
+            {% for phone, msgs in chat_threads.items %}
+            {% with last_msg=msgs|last %}
+            <div @click="selectContact('{{ phone }}', '{{ last_msg.customer_name|default:phone }}')"
+                 class="p-3.5 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                 :class="selectedPhone === '{{ phone }}' ? 'bg-emerald-50/50' : ''">
+                <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center shrink-0 text-xs">
+                    {{ last_msg.customer_name|slice:":1"|upper|default:"U" }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <div class="font-bold text-xs text-slate-900 truncate">{{ last_msg.customer_name|default:phone }}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">{{ last_msg.created_at|date:"H:i" }}</div>
+                    </div>
+                    <div class="text-[11px] text-slate-500 truncate mt-0.5">{{ last_msg.message }}</div>
+                </div>
+            </div>
+            {% endwith %}
+            {% empty %}
+            <div class="p-8 text-center text-xs text-slate-400">Hozircha xabarlar yo'q</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: CHAT WINDOW -->
+    <div class="flex-1 flex flex-col bg-slate-50/40">
+        
+        <!-- Header -->
+        <div class="p-4 bg-white border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-brand/10 text-brand font-bold flex items-center justify-center text-xs">
+                    <span x-text="selectedName ? selectedName[0].toUpperCase() : 'M'"></span>
+                </div>
+                <div>
+                    <div class="font-black text-xs text-slate-900" x-text="selectedName || 'Mijoz tanlanmagan'"></div>
+                    <div class="text-[10px] text-slate-400 font-mono" x-text="selectedPhone"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages stream -->
+        <div class="flex-1 p-4 overflow-y-auto space-y-3" id="chat-stream">
+            <template x-for="msg in currentMessages" :key="msg.id || Math.random()">
+                <div class="flex" :class="msg.sender === 'MERCHANT' ? 'justify-end' : 'justify-start'">
+                    <div class="max-w-md p-3 rounded-2xl text-xs space-y-1 shadow-2xs"
+                         :class="msg.sender === 'MERCHANT' ? 'bg-brand text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'">
+                        <div x-text="msg.message"></div>
+                        <div class="text-[9px] text-right" :class="msg.sender === 'MERCHANT' ? 'text-white/70' : 'text-slate-400'" x-text="msg.time"></div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Input Bar (Video 08:24) -->
+        <div class="p-3 bg-white border-t border-slate-100 flex items-center gap-2">
+            <input type="text" x-model="inputText" @keydown.enter="sendMessage()" placeholder="Xabar yozing..."
+                   class="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand">
+            <button type="button" @click="sendMessage()" class="px-4 py-2.5 rounded-xl bg-brand text-white font-bold text-xs hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
+                <span>Yuborish</span>
+                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function chatApp() {
+        const initialMsgs = JSON.parse('{{ active_messages_json|escapejs }}' || '[]');
+        return {
+            activeTab: 'all',
+            selectedPhone: '{{ active_phone|default:"" }}',
+            selectedName: '{{ active_name|default:"Mijoz" }}',
+            inputText: '',
+            currentMessages: initialMsgs.length > 0 ? initialMsgs : [
+                { id: 1, sender: 'CUSTOMER', message: 'Assalomu alaykum! Savollaringiz bo\'lsa, bemalol yozishingiz mumkin.', time: '12:00' }
+            ],
+
+            selectContact(phone, name) {
+                window.location.href = `/dashboard/chats/?phone=${phone}`;
+            },
+
+            sendMessage() {
+                if (!this.inputText.trim()) return;
+                const text = this.inputText.trim();
+                const now = new Date();
+                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                
+                this.currentMessages.push({
+                    id: Date.now(),
+                    sender: 'MERCHANT',
+                    message: text,
+                    time: timeStr
+                });
+                this.inputText = '';
+
+                // Scroll to bottom
+                setTimeout(() => {
+                    const stream = document.getElementById('chat-stream');
+                    if (stream) stream.scrollTop = stream.scrollHeight;
+                }, 50);
+
+                // Send via AJAX
+                const fd = new FormData();
+                fd.append('phone', this.selectedPhone);
+                fd.append('message', text);
+
+                fetch('/dashboard/api/send-chat/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

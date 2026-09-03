@@ -1,0 +1,57 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-black text-slate-900 tracking-tight">Omborxona</h1>
+            <p class="text-xs text-slate-500 mt-1">Mahsulotlarning kirish narxi, marjasi va qolgan zaxirasi</p>
+        </div>
+        <div class="text-xs font-bold text-slate-500">{{ products.count }} ta mahsulot</div>
+    </div>
+
+    <!-- Table matching Video 08:59 -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-100">
+                    <tr>
+                        <th class="py-3.5 px-4">Mahsulot nomi</th>
+                        <th class="py-3.5 px-4">Kirish narxi</th>
+                        <th class="py-3.5 px-4">Sotuv narxi</th>
+                        <th class="py-3.5 px-4">Marja</th>
+                        <th class="py-3.5 px-4">Holat</th>
+                        <th class="py-3.5 px-4">Qolgan</th>
+                        <th class="py-3.5 px-4">Oxirgi yangilanish</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+                    {% for p in products %}
+                    <tr class="hover:bg-slate-50/60">
+                        <td class="py-3 px-4 font-bold text-slate-900">
+                            {{ p.name_uz|default:p.name_ru }}
+                        </td>
+                        <td class="py-3 px-4 font-mono">{{ p.cost_price|floatformat:0 }} UZS</td>
+                        <td class="py-3 px-4 font-mono font-bold text-brand">{{ p.price|floatformat:0 }} UZS</td>
+                        <td class="py-3 px-4 text-emerald-600 font-bold">{{ p.margin }}%</td>
+                        <td class="py-3 px-4">
+                            {% if p.stock > 0 %}
+                            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">Mavjud</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold">Tugagan</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 font-mono font-bold">{{ p.stock }} {{ p.unit }}</td>
+                        <td class="py-3 px-4 text-slate-400 text-[11px]">{{ p.updated_at|date:"d.m.Y, H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-slate-400">Mahsulotlar mavjud emas</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

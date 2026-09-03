@@ -1,0 +1,105 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block page_title %}Telegram-bot & Mini App{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    
+    <div>
+        <h2 class="text-xl font-black text-slate-900 tracking-tight">Telegram-bot va Mini App (TMA)</h2>
+        <p class="text-xs text-slate-500 mt-1">Buyurtmalar haqida Telegram guruhiga bildirishnoma olish va do'konni bot ichida ochish</p>
+    </div>
+
+    {% if msg %}
+    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+        <span>{{ msg }}</span>
+    </div>
+    {% endif %}
+
+    {% if err %}
+    <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+        <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500"></i>
+        <span>{{ err }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Telegram Bot Settings Form -->
+    <div class="bg-white border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-xs space-y-5">
+        <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+            <i data-lucide="bot" class="w-4 h-4 text-brand"></i>
+            <span>Bot sozlamalari</span>
+        </h3>
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save">
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Telegram-bot API Tokeni (@BotFather'dan) *</label>
+                <input type="text" name="telegram_bot_token" value="{{ store.telegram_bot_token }}" placeholder="7182938491:AAH..."
+                       class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono text-xs focus:outline-none focus:border-brand transition-colors">
+                <p class="text-[11px] text-slate-400 mt-1">Token Telegramda <code>@BotFather</code> orqali <code>/newbot</code> buyrug'i yordamida olinadi.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Bildirishnomalar uchun guruh yoki admin Chat ID *</label>
+                <input type="text" name="telegram_chat_id" value="{{ store.telegram_chat_id }}" placeholder="-1001234567890 yoki 98765432"
+                       class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono text-xs focus:outline-none focus:border-brand transition-colors">
+                <p class="text-[11px] text-slate-400 mt-1">Botni adminlar guruhiga qo'shing va yangi buyurtmalarni bir zumda qabul qiling.</p>
+            </div>
+
+            <div class="pt-2">
+                <button type="submit"
+                        class="px-6 py-2.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-extrabold text-xs shadow-md shadow-brand/20 transition-all">
+                    Sozlamalarni saqlash
+                </button>
+            </div>
+        </form>
+
+        <!-- Test Connection Form -->
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+            <div class="text-xs text-slate-500 font-medium">
+                Telegram guruhga sinov xabarini yuborish
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="test">
+                <input type="hidden" name="telegram_bot_token" value="{{ store.telegram_bot_token }}">
+                <input type="hidden" name="telegram_chat_id" value="{{ store.telegram_chat_id }}">
+                <button type="submit" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5">
+                    <i data-lucide="send" class="w-3.5 h-3.5 text-brand"></i>
+                    <span>Sinov xabari yuborish</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TMA Link Box -->
+    <div class="bg-white border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-xs space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                <i data-lucide="smartphone" class="w-4 h-4 text-brand"></i>
+                <span>Telegram Mini App (TMA) havolasi</span>
+            </h3>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">Faol</span>
+        </div>
+
+        <p class="text-xs text-slate-500 leading-relaxed">
+            Sizning do'koningiz Telegram WebApp tizimiga 100% moslashtirilgan. Xaridorlar botingizdagi "Buyurtma berish" tugmasini bosib, to'g'ridan-to'g'ri Telegram ichida xarid qilishlari mumkin.
+        </p>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Mini App uchun URL havola</label>
+            <div class="flex rounded-2xl bg-slate-50 border border-slate-200 overflow-hidden">
+                <input type="text" readonly value="{{ tma_url }}" id="tmaUrlInput"
+                       class="flex-1 px-4 py-2.5 bg-transparent text-slate-900 font-mono text-xs font-bold focus:outline-none">
+                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('tmaUrlInput').value); alert('Havola nusxalandi!');"
+                        class="px-5 py-2.5 bg-brand hover:bg-brand-dark text-white text-xs font-black transition-colors">
+                    Nusxalash
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

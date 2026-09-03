@@ -1,0 +1,275 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+
+    <!-- PERIOD FILTER BAR (Video 07:47) -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-500">Muddati:</span>
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                <a href="?period=today" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'today' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Bugun</a>
+                <a href="?period=week" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'week' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Har hafta</a>
+                <a href="?period=month" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'month' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Har oy</a>
+                <a href="?period=quarter" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'quarter' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Chorak</a>
+                <a href="?period=year" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'year' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Har yil</a>
+            </div>
+        </div>
+
+        <form method="GET" class="flex items-center gap-2 text-xs">
+            <span class="text-slate-400 font-bold hidden sm:inline">Oraliq:</span>
+            <input type="date" name="start_date" value="{{ start_date_val }}" required class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-slate-700 text-xs focus:outline-none focus:border-brand">
+            <span class="text-slate-400">—</span>
+            <input type="date" name="end_date" value="{{ end_date_val }}" required class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-slate-700 text-xs focus:outline-none focus:border-brand">
+            <button type="submit" class="px-4 py-1.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors shadow-xs">Qo'llash</button>
+        </form>
+    </div>
+
+    <!-- 3 KPI METRIC CARDS (Video 07:48) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Card 1: Daromadlar -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-slate-500 uppercase tracking-wider">Daromadlar</span>
+                <span class="text-xs font-mono font-bold text-slate-400">UZS</span>
+            </div>
+            <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                {{ foyda|floatformat:0 }} <span class="text-xs text-slate-400 font-normal">UZS</span>
+            </div>
+            <div class="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
+                <div class="flex justify-between">
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Sotuvlar summasi:</span>
+                    <span class="font-mono font-bold">{{ sotuvlar_summasi|floatformat:0 }} UZS</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>Yetkazib berish summasi:</span>
+                    <span class="font-mono font-bold">{{ yetkazib_berish_summasi|floatformat:0 }} UZS</span>
+                </div>
+                <div class="flex justify-between text-emerald-700 font-black">
+                    <span>Foyda:</span>
+                    <span class="font-mono">{{ foyda|floatformat:0 }} UZS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Buyurtmalar -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-slate-500 uppercase tracking-wider">Buyurtmalar</span>
+                <i data-lucide="shopping-cart" class="w-4 h-4 text-slate-400"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                {{ orders_count }} <span class="text-xs text-slate-400 font-normal">ta</span>
+            </div>
+            <div class="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
+                <div class="flex justify-between">
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Yangi:</span>
+                    <span class="font-mono font-bold">{{ yangi_orders }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Tayyor / Yetkazilgan:</span>
+                    <span class="font-mono font-bold">{{ tayyor_orders }}</span>
+                </div>
+                <div class="flex justify-between text-rose-500">
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Bekor qilindi:</span>
+                    <span class="font-mono font-bold">{{ bekor_qilindi }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Jami Mijozlar -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-slate-500 uppercase tracking-wider">Jami mijozlar</span>
+                <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                {{ total_customers }} <span class="text-xs text-slate-400 font-normal">ta</span>
+            </div>
+            <div class="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
+                <div class="flex justify-between">
+                    <span>Yangi mijozlar:</span>
+                    <span class="font-mono font-bold">{{ total_customers }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>O'rtacha buyurtma:</span>
+                    <span class="font-mono font-bold">{{ avg_order|floatformat:0 }} UZS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS ROW: REVENUE + ORDERS BY CHANNELS (Video 07:49) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Daromadlar statistikasi -->
+        <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+            <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Daromadlar statistikasi</div>
+            <div class="h-64">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Buyurtmalar statistikasi (Telegram vs Web vs Click) -->
+        <div class="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4 flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Buyurtmalar statistikasi</div>
+                
+                <!-- Channels list -->
+                <div class="space-y-3 text-xs font-semibold">
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xs font-black">T</div>
+                            <div>
+                                <div class="font-bold text-slate-900">Telegram bot</div>
+                                <div class="text-[10px] text-slate-400">{{ tma_cnt }} ta buyurtma</div>
+                            </div>
+                        </div>
+                        <a href="/dashboard/platforms/?tab=telegram" class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100">
+                            Bot yaratish
+                        </a>
+                    </div>
+
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-lg bg-brand text-white flex items-center justify-center text-xs font-black">W</div>
+                            <div>
+                                <div class="font-bold text-slate-900">Veb-sayt</div>
+                                <div class="text-[10px] text-slate-400">{{ web_cnt }} ta buyurtma</div>
+                            </div>
+                        </div>
+                        <a href="/store/{{ store.subdomain }}/" target="_blank" class="px-3 py-1 rounded-lg bg-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-300">
+                            Saytni ochish
+                        </a>
+                    </div>
+
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-black">C</div>
+                            <div>
+                                <div class="font-bold text-slate-900">Click Shop</div>
+                                <div class="text-[10px] text-slate-400">Onlayn to'lov</div>
+                            </div>
+                        </div>
+                        <a href="/dashboard/settings/payments/" class="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-bold hover:bg-blue-100">
+                            Ariza yuborish
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-[11px] text-slate-400 text-center pt-2">
+                Barcha savdo kanallari avtomatik ravishda bitta tizimda sinxronlanadi
+            </div>
+        </div>
+    </div>
+
+    <!-- LOWER ROW: TRAFFIC SOURCE + TOP PRODUCTS + DELIVERIES MAP (Video 07:58 - 08:00) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Trafik manbai -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+            <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Trafik manbai</div>
+            <div class="h-44 flex items-center justify-center">
+                <canvas id="trafficChart"></canvas>
+            </div>
+            <div class="flex justify-around text-xs font-bold text-slate-600 pt-2 border-t border-slate-100">
+                <span class="text-blue-500">• Veb-sayt ({{ web_cnt }})</span>
+                <span class="text-brand">• Telegram ({{ tma_cnt }})</span>
+            </div>
+        </div>
+
+        <!-- Top 10 ta mahsulot -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+            <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Top mahsulotlar</div>
+            <div class="space-y-2 text-xs font-semibold max-h-48 overflow-y-auto">
+                {% for tp in top_products %}
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
+                    <span class="truncate max-w-[150px] font-bold text-slate-800">{{ tp.product_name }}</span>
+                    <span class="font-mono text-slate-500">{{ tp.sold_qty }} ta</span>
+                </div>
+                {% empty %}
+                <div class="text-center text-slate-400 py-8">Hozircha sotuvlar yo'q</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Buyurtma xaritasi (Leaflet Deliveries Map Video 08:00) -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Buyurtma xaritasi</div>
+                <span class="text-[10px] text-emerald-600 font-bold">Jonli GPS</span>
+            </div>
+            <div class="rounded-2xl overflow-hidden border border-slate-200">
+                <div id="analyticsMap" class="w-full h-44 bg-slate-100"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Revenue Chart
+        const revCtx = document.getElementById('revenueChart');
+        if (revCtx) {
+            new Chart(revCtx, {
+                type: 'bar',
+                data: {
+                    labels: JSON.parse('{{ chart_labels_json|safe }}'),
+                    datasets: [{
+                        label: 'Tushum (UZS)',
+                        data: JSON.parse('{{ chart_revenue_json|safe }}'),
+                        backgroundColor: '#10B981',
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // 2. Traffic Donut
+        const trfCtx = document.getElementById('trafficChart');
+        if (trfCtx) {
+            new Chart(trfCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Veb-sayt', 'Telegram'],
+                    datasets: [{
+                        data: [Number('{{ web_cnt }}') || 1, Number('{{ tma_cnt }}') || 0],
+                        backgroundColor: ['#3B82F6', '#10B981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // 3. Leaflet Deliveries Map
+        const mapOrders = JSON.parse('{{ map_orders_json|safe }}');
+        const defaultLat = mapOrders.length > 0 ? mapOrders[0].lat : 41.2995;
+        const defaultLng = mapOrders.length > 0 ? mapOrders[0].lng : 69.2401;
+
+        const map = L.map('analyticsMap').setView([defaultLat, defaultLng], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+
+        mapOrders.forEach(o => {
+            L.marker([o.lat, o.lng]).addTo(map).bindPopup(
+                `<b>#${o.num} — ${o.client}</b><br>${o.total ? o.total.toLocaleString() + ' UZS' : ''}`
+            );
+        });
+    });
+</script>
+{% endblock %}

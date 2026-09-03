@@ -1,0 +1,679 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Boshqaruv paneli — StoreBox{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#10B981',
+                            dark: '#059669',
+                            forest: '#0B3B2C',
+                            light: '#ECFDF5'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        #spa-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #10B981, #059669, #34D399);
+            width: 0%;
+            z-index: 9999;
+            transition: width 0.25s ease-out, opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .spa-nav-active {
+            background-color: #10B981 !important;
+            color: #ffffff !important;
+            box-shadow: 0 1px 2px 0 rgba(16, 185, 129, 0.25);
+        }
+        .spa-nav-active i {
+            color: #ffffff !important;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-[#F8FAFC] min-h-full font-sans text-slate-800 antialiased flex flex-col" x-data="dashboardApp()">
+
+    <!-- SPA TOP PROGRESS BAR (Subtle smooth indicator) -->
+    <div id="spa-progress-bar"></div>
+
+    <!-- TOP NAVBAR (StoreBox Video Layout) -->
+    <header class="bg-white border-b border-slate-200/80 sticky top-0 z-40 h-16 flex items-center px-4 sm:px-6 justify-between gap-4 shadow-2xs">
+        
+        <!-- Left: StoreBox Logo & Store Switcher -->
+        <div class="flex items-center gap-4 sm:gap-6">
+            <a href="/dashboard/" class="flex items-center gap-2 spa-link">
+                <div class="w-8 h-8 rounded-xl bg-brand text-white flex items-center justify-center font-black text-sm shadow-xs">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xl font-black text-slate-900 tracking-tight hidden sm:inline">store<span class="text-brand">box</span></span>
+            </a>
+
+            <!-- Store Switcher Dropdown (Video 07:47) -->
+            <div class="flex items-center gap-1.5">
+                <div class="relative" x-data="{ open: false }">
+                    <button type="button" @click="open = !open" class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold hover:bg-slate-50">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <span class="max-w-[120px] truncate text-slate-900">{{ store.name }}</span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                    </button>
+
+                    <div x-show="open" @click.away="open = false" x-cloak class="absolute left-0 mt-1 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 text-xs space-y-1">
+                        {% for s in request.user.stores.all %}
+                        <a href="/dashboard/api/switch-store/{{ s.id }}/" class="p-2 rounded-xl flex items-center justify-between {% if s.id == store.id %}bg-emerald-50 text-emerald-800 font-bold{% else %}hover:bg-slate-50 text-slate-700{% endif %}">
+                            <span class="truncate">{{ s.name }}</span>
+                            {% if s.id == store.id %}<i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>{% endif %}
+                        </a>
+                        {% endfor %}
+                        <div class="border-t border-slate-100 my-1"></div>
+                        <button type="button" @click="createStoreModalOpen = true; open = false" class="w-full flex items-center gap-2 p-2 rounded-xl text-brand font-bold hover:bg-brand/5 text-left">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>Yangi do'kon qo'shish</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Plus Button (Video birinchi.mov 00:55) -->
+                <button type="button" @click="createStoreModalOpen = true" class="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm hover:bg-brand-dark shadow-xs transition-transform active:scale-95" title="Biznes qo'shish">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- View Storefront Link -->
+            <a href="/store/{{ store.subdomain }}/" target="_blank" class="hidden md:flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                <span>Saytni ko'rish</span>
+            </a>
+        </div>
+
+        <!-- Right: Language, Support, Balance, Notifications, Profile -->
+        <div class="flex items-center gap-2 sm:gap-3">
+
+            <!-- Language -->
+            <div class="relative hidden sm:block" x-data="{ open: false }">
+                <button type="button" @click="open = !open" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
+                    <span>🇺🇿 O'zb</span>
+                    <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+                </button>
+                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50 text-xs">
+                    <a href="#" class="block px-3 py-1.5 font-bold text-slate-800 hover:bg-slate-50">O'zbek</a>
+                    <a href="#" class="block px-3 py-1.5 text-slate-600 hover:bg-slate-50">Русский</a>
+                    <a href="#" class="block px-3 py-1.5 text-slate-600 hover:bg-slate-50">English</a>
+                </div>
+            </div>
+
+            <!-- Support Help Popup (Video 10:23) -->
+            <div class="relative" x-data="{ open: false }">
+                <button type="button" @click="open = !open" class="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 text-xs font-bold">
+                    ?
+                </button>
+                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 text-xs">
+                    <div class="font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="headphones" class="w-4 h-4 text-brand"></i>
+                        <span>Qo'llab-quvvatlash</span>
+                    </div>
+                    <div class="space-y-1 text-slate-600">
+                        <div class="font-mono font-bold text-slate-900">+998(78) 113 82 12</div>
+                        <a href="https://t.me/storebox_support" target="_blank" class="text-brand font-semibold hover:underline block">
+                            Telegram orqali bog'lanish
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance Pill + Top up Button (Video 07:47 & 10:30) -->
+            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
+                <div class="text-[11px] font-bold text-slate-600">
+                    Sizning hisobingizda <span class="text-slate-900 font-black" x-text="balance.toLocaleString() + ' UZS'"></span>
+                </div>
+                <button type="button" @click="topupModalOpen = true" class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black hover:bg-emerald-600 shadow-2xs">
+                    +
+                </button>
+            </div>
+
+            <!-- Notifications Bell (Video 10:25) -->
+            <button type="button" @click="notifDrawerOpen = true" class="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 relative">
+                <i data-lucide="bell" class="w-4 h-4"></i>
+                <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand"></span>
+            </button>
+
+            <!-- User Avatar & Profile Dropdown (Video 10:33) -->
+            <div class="relative" x-data="{ open: false }">
+                <button type="button" @click="open = !open" class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-slate-50">
+                    <div class="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+                        {{ request.user.username|slice:":1"|upper }}
+                    </div>
+                    <span class="text-xs font-bold text-slate-800 hidden md:inline">{{ request.user.username }}</span>
+                </button>
+
+                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-50 text-xs space-y-1">
+                    <div class="p-2 border-b border-slate-100 mb-1">
+                        <div class="font-black text-slate-900">{{ request.user.username }}</div>
+                        <div class="text-[10px] text-emerald-600 font-bold">Bepul tarif rejasi: 7 kun qoldi</div>
+                    </div>
+                    <a href="/dashboard/settings/" class="flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 spa-link">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                        <span>Profilni tahrirlash</span>
+                    </a>
+                    <a href="/dashboard/platforms/" class="flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 spa-link">
+                        <i data-lucide="smartphone" class="w-4 h-4 text-slate-400"></i>
+                        <span>Platformalar</span>
+                    </a>
+                    <button type="button" @click="topupModalOpen = true; open = false" class="w-full flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 text-left">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-slate-400"></i>
+                        <span>Mening kartalarim</span>
+                    </button>
+                    <div class="border-t border-slate-100 my-1"></div>
+                    <a href="/logout/" class="flex items-center gap-2 p-2 rounded-xl text-rose-600 font-bold hover:bg-rose-50">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span>Chiqish</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 7-DAY TRIAL BANNER (Video 07:47) -->
+    <div x-show="showTrialBanner" class="bg-emerald-50 border-b border-emerald-200/80 px-4 py-2.5 text-xs text-emerald-900 font-bold flex items-center justify-between">
+        <div class="flex items-center gap-2 mx-auto sm:mx-0">
+            <i data-lucide="sparkles" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+            <span>Sizning hisobingizda 7 kunlik bepul sinov ishlayapti</span>
+        </div>
+        <button type="button" @click="showTrialBanner = false" class="text-emerald-700 hover:text-emerald-900 text-sm font-black">×</button>
+    </div>
+
+    <!-- MAIN APP WRAPPER: SIDEBAR + CONTENT -->
+    <div class="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 gap-6">
+
+        <!-- 14-SECTION SIDEBAR (Video 07:46 - 10:14) -->
+        <aside class="w-60 shrink-0 hidden lg:block space-y-6">
+            <nav class="space-y-1 text-xs font-bold text-slate-600" id="sidebar-nav">
+
+                <!-- 1. Boshqaruv paneli -->
+                <a href="/dashboard/" data-path="/dashboard/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Boshqaruv paneli</span>
+                </a>
+
+                <!-- 2. Buyurtmalar -->
+                <a href="/dashboard/orders/" data-path="/dashboard/orders/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                    <span>Buyurtmalar</span>
+                </a>
+
+                <!-- 3. Mijozlar -->
+                <a href="/dashboard/customers/" data-path="/dashboard/customers/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    <span>Mijozlar</span>
+                </a>
+
+                <!-- 4. Chat -->
+                <a href="/dashboard/chats/" data-path="/dashboard/chats/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                    <span>Chat</span>
+                </a>
+
+                <!-- 5. Mahsulotlar (Accordion) -->
+                <div x-data="{ open: true }" class="space-y-1">
+                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="package" class="w-4 h-4"></i>
+                            <span>Mahsulotlar</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                        <a href="/dashboard/categories/" data-path="/dashboard/categories/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Kategoriyalar</a>
+                        <a href="/dashboard/products/" data-path="/dashboard/products/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Mahsulotlar</a>
+                        <a href="/dashboard/discounts/" data-path="/dashboard/discounts/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Chegirma</a>
+                        <a href="/dashboard/ikpu/" data-path="/dashboard/ikpu/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">IKPU</a>
+                        <a href="/dashboard/warehouse/" data-path="/dashboard/warehouse/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Omborxona</a>
+                    </div>
+                </div>
+
+                <!-- 6. Marketing (Accordion) -->
+                <div x-data="{ open: false }" class="space-y-1">
+                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="megaphone" class="w-4 h-4"></i>
+                            <span>Marketing</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                        <a href="/dashboard/marketing/?tab=rassilka" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Rassilka</a>
+                        <a href="/dashboard/marketing/?tab=promokod" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Promokod</a>
+                        <a href="/dashboard/marketing/?tab=manbalar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Manbalar</a>
+                        <a href="/dashboard/marketing/?tab=sms" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">SMS rassilka</a>
+                        <a href="/dashboard/marketing/?tab=kanal_post" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Kanal uchun post</a>
+                        <a href="/dashboard/marketing/?tab=banner" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Banner</a>
+                        <a href="/dashboard/marketing/?tab=sharhlar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Sharhlar</a>
+                    </div>
+                </div>
+
+                <!-- 7. Platformalar -->
+                <div x-data="{ open: false }" class="space-y-1">
+                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="share-2" class="w-4 h-4"></i>
+                            <span>Platformalar</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                        <a href="/dashboard/platforms/?tab=telegram" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Telegram bot</a>
+                        <a href="/dashboard/platforms/?tab=website" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Veb-sayt</a>
+                        <a href="/dashboard/platforms/?tab=qr" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">QR katalog</a>
+                    </div>
+                </div>
+
+                <!-- 8. To'lov turi -->
+                <a href="/dashboard/settings/payments/" data-path="/dashboard/settings/payments/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="credit-card" class="w-4 h-4"></i>
+                    <span>To'lov turi</span>
+                </a>
+
+                <!-- 9. Yetkazib berish -->
+                <a href="/dashboard/settings/delivery/" data-path="/dashboard/settings/delivery/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="truck" class="w-4 h-4"></i>
+                    <span>Yetkazib berish</span>
+                </a>
+
+                <!-- 10. Filiallar -->
+                <a href="/dashboard/settings/branches/" data-path="/dashboard/settings/branches/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="map-pin" class="w-4 h-4"></i>
+                    <span>Filiallar</span>
+                </a>
+
+                <!-- 11. Xodimlar -->
+                <a href="/dashboard/settings/staff/" data-path="/dashboard/settings/staff/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                    <span>Xodimlar</span>
+                </a>
+
+                <!-- 12. Tarif rejasi -->
+                <a href="/dashboard/settings/tariffs/" data-path="/dashboard/settings/tariffs/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="badge-percent" class="w-4 h-4"></i>
+                    <span>Tarif rejasi</span>
+                </a>
+
+                <!-- 13. StoreBox Market (Integrations) -->
+                <a href="/dashboard/robo-market/" data-path="/dashboard/robo-market/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="store" class="w-4 h-4"></i>
+                    <span>StoreBox market</span>
+                </a>
+
+                <!-- 14. Sozlamalar -->
+                <a href="/dashboard/settings/" data-path="/dashboard/settings/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span>Sozlamalar</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- DYNAMIC SPA CONTENT CONTAINER (No full page reload!) -->
+        <main id="dashboard-main-content" class="flex-1 overflow-x-hidden min-h-[600px] transition-opacity duration-200">
+            {% block dashboard_content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- HISOBNI TO'LDIRISH MODAL (Video 10:28 - 10:31)                 -->
+    <!-- ============================================================= -->
+    <div x-show="topupModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="topupModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                    <h3 class="font-black text-base text-slate-900">Hisobingizni to'ldiring</h3>
+                    <div class="text-[11px] text-slate-400">Joriy balans: <span class="font-bold text-brand" x-text="balance.toLocaleString() + ' UZS'"></span></div>
+                </div>
+                <button type="button" @click="topupModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <!-- Presets & Amount Input -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Summani tanlang yoki kiriting (UZS)</label>
+                    <div class="grid grid-cols-3 gap-2 mb-2">
+                        <button type="button" @click="topupAmount = 50000" class="py-2 rounded-xl border text-xs font-bold" :class="topupAmount === 50000 ? 'border-brand bg-brand/10 text-brand' : 'border-slate-200'">50 000</button>
+                        <button type="button" @click="topupAmount = 150000" class="py-2 rounded-xl border text-xs font-bold" :class="topupAmount === 150000 ? 'border-brand bg-brand/10 text-brand' : 'border-slate-200'">150 000</button>
+                        <button type="button" @click="topupAmount = 300000" class="py-2 rounded-xl border text-xs font-bold" :class="topupAmount === 300000 ? 'border-brand bg-brand/10 text-brand' : 'border-slate-200'">300 000</button>
+                    </div>
+                    <input type="number" x-model="topupAmount" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-black focus:outline-none focus:border-brand">
+                </div>
+
+                <!-- Payment gateways radios (Payme, Click, Uzum, Bank) -->
+                <div class="space-y-2">
+                    <label class="p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-50">
+                        <input type="radio" name="topup_gw" value="payme" checked class="text-brand focus:ring-brand">
+                        <span class="text-xs font-bold">Payme orqali</span>
+                    </label>
+                    <label class="p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-50">
+                        <input type="radio" name="topup_gw" value="click" class="text-brand focus:ring-brand">
+                        <span class="text-xs font-bold">Click orqali</span>
+                    </label>
+                    <label class="p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-50">
+                        <input type="radio" name="topup_gw" value="uzum" class="text-brand focus:ring-brand">
+                        <span class="text-xs font-bold">Uzum bank</span>
+                    </label>
+                    <label class="p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-50">
+                        <input type="radio" name="topup_gw" value="bank" class="text-brand focus:ring-brand">
+                        <span class="text-xs font-bold">Bank o'tkazmasi</span>
+                    </label>
+                </div>
+
+                <!-- Card Form -->
+                <div class="pt-3 border-t border-slate-100">
+                    <div class="text-xs font-bold text-slate-700 mb-2">+ Yangi karta qo'shish</div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="text" x-model="newCardNum" placeholder="8600 0000 0000 0000" class="col-span-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                        <input type="text" x-model="newCardExp" placeholder="MM/YY" class="col-span-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-center">
+                    </div>
+                </div>
+
+                <button type="button" @click="submitTopup()" class="w-full py-3.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20">
+                    To'lovni tasdiqlash
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- BILDIRISHNOMALAR (SLIDE-OVER DRAWER Video 10:25)               -->
+    <!-- ============================================================= -->
+    <div x-show="notifDrawerOpen" x-cloak class="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs">
+        <div @click.away="notifDrawerOpen = false" class="w-80 sm:w-96 bg-white h-full p-6 shadow-2xl flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h3 class="font-black text-sm text-slate-900">Bildirishnomalar</h3>
+                    <button type="button" class="text-[11px] font-bold text-brand hover:underline">Barchasini o'qilgan deb belgilash</button>
+                </div>
+                <div class="space-y-2">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1">
+                        <div class="font-bold text-slate-900">🎉 Xush kelibsiz!</div>
+                        <p class="text-slate-500 text-[11px]">Sizning 7 kunlik bepul StoreBox sinov muddatingiz faollashtirildi.</p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" @click="notifDrawerOpen = false" class="w-full py-2.5 rounded-xl bg-slate-100 font-bold text-xs text-slate-700">Yopish</button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="spa-toast" class="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-brand"></i>
+        <span id="spa-toast-text">Sozlama saqlandi!</span>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- SEAMLESS SPA ROUTING SCRIPT (Zero Full-Page Reload)           -->
+    <!-- ============================================================= -->
+    <script>
+        function showToast(msg) {
+            const toast = document.getElementById('spa-toast');
+            const toastText = document.getElementById('spa-toast-text');
+            if (!toast) return;
+            toastText.textContent = msg || 'Sozlama saqlandi!';
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        const spaProgressBar = document.getElementById('spa-progress-bar');
+        function startProgressBar() {
+            if (!spaProgressBar) return;
+            spaProgressBar.style.opacity = '1';
+            spaProgressBar.style.width = '30%';
+            setTimeout(() => { if (spaProgressBar.style.opacity === '1') spaProgressBar.style.width = '70%'; }, 150);
+        }
+        function finishProgressBar() {
+            if (!spaProgressBar) return;
+            spaProgressBar.style.width = '100%';
+            setTimeout(() => {
+                spaProgressBar.style.opacity = '0';
+                setTimeout(() => { spaProgressBar.style.width = '0%'; }, 300);
+            }, 200);
+        }
+
+        function updateSidebarHighlights(currentUrl) {
+            const path = currentUrl.split('?')[0];
+            document.querySelectorAll('#sidebar-nav .sidebar-item').forEach(el => {
+                const itemPath = el.getAttribute('data-path');
+                if (itemPath === path || (path === '/dashboard/' && itemPath === '/dashboard/')) {
+                    el.classList.add('spa-nav-active');
+                } else if (itemPath !== '/dashboard/' && path.startsWith(itemPath)) {
+                    el.classList.add('spa-nav-active');
+                } else {
+                    el.classList.remove('spa-nav-active');
+                }
+            });
+        }
+
+        async function spaNavigate(url, push = true) {
+            const contentEl = document.getElementById('dashboard-main-content');
+            if (!contentEl) {
+                window.location.href = url;
+                return;
+            }
+
+            startProgressBar();
+            contentEl.style.opacity = '0.5';
+
+            try {
+                const res = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!res.ok) {
+                    window.location.href = url;
+                    return;
+                }
+                const htmlText = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+                const newContent = doc.getElementById('dashboard-main-content');
+
+                if (newContent) {
+                    if (doc.title) document.title = doc.title;
+
+                    contentEl.innerHTML = newContent.innerHTML;
+
+                    if (push) {
+                        window.history.pushState({ url: url }, '', url);
+                    }
+                    updateSidebarHighlights(url);
+
+                    // Execute scripts in newly injected content
+                    const scripts = contentEl.querySelectorAll('script');
+                    scripts.forEach(s => {
+                        const newScript = document.createElement('script');
+                        if (s.src) newScript.src = s.src;
+                        else newScript.textContent = s.textContent;
+                        document.body.appendChild(newScript);
+                        newScript.remove();
+                    });
+
+                    // Re-run icons & Alpine
+                    if (window.lucide) lucide.createIcons();
+                    if (window.Alpine) {
+                        try { Alpine.initTree(contentEl); } catch(e){}
+                    }
+                } else {
+                    window.location.href = url;
+                }
+            } catch (err) {
+                console.error('SPA navigation error:', err);
+                window.location.href = url;
+            } finally {
+                contentEl.style.opacity = '1';
+                finishProgressBar();
+            }
+        }
+
+        // Intercept all internal dashboard links for instantaneous swap
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (!link) return;
+            const href = link.getAttribute('href');
+            if (!href) return;
+
+            // Handle internal dashboard links
+            if (href.startsWith('/dashboard/') && !href.startsWith('/dashboard/onboarding/') && !link.hasAttribute('download') && !link.hasAttribute('target') && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                spaNavigate(href);
+            }
+        });
+
+        // Handle Browser Back & Forward Buttons
+        window.addEventListener('popstate', (e) => {
+            const url = (e.state && e.state.url) ? e.state.url : (window.location.pathname + window.location.search);
+            spaNavigate(url, false);
+        });
+
+        // Initialize active state on initial page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSidebarHighlights(window.location.pathname);
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+
+    <!-- ============================================================= -->
+    <!-- BIZNESINGIZ TAFSILOTLARI MODAL (Video birinchi.mov 00:55)     -->
+    <!-- ============================================================= -->
+    <div x-show="createStoreModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="createStoreModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900">Biznesingiz tafsilotlari</h3>
+                <button type="button" @click="createStoreModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <form method="POST" action="/dashboard/api/quick-create-store/" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Kompaniya nomi *</label>
+                    <input type="text" name="name" required placeholder="Kompaniya nomini kiriting" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Biznes turi *</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="p-3 rounded-xl border border-slate-200 cursor-pointer flex items-center gap-2 hover:bg-slate-50">
+                            <input type="radio" name="business_type" value="RESTAURANT" class="text-brand focus:ring-brand">
+                            <span class="font-bold text-slate-800">Restoran</span>
+                        </label>
+                        <label class="p-3 rounded-xl border border-slate-200 cursor-pointer flex items-center gap-2 hover:bg-slate-50">
+                            <input type="radio" name="business_type" value="ONLINE_STORE" checked class="text-brand focus:ring-brand">
+                            <span class="font-bold text-slate-800">Onlayn do'kon</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Platformani tanlang</label>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
+                            <input type="checkbox" name="platform_telegram" checked class="rounded text-brand focus:ring-brand">
+                            <span>Telegram</span>
+                        </label>
+                        <label class="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
+                            <input type="checkbox" name="platform_website" checked class="rounded text-brand focus:ring-brand">
+                            <span>Veb-sayt</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Mamlakat</label>
+                    <select name="country" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-xs focus:outline-none focus:border-brand">
+                        <option value="UZ" selected>O'zbekiston</option>
+                        <option value="KZ">Qozog'iston</option>
+                        <option value="TR">Turkiya</option>
+                        <option value="RU">Rossiya</option>
+                        <option value="KG">Qirg'iziston</option>
+                        <option value="OTHER">Boshqa</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Biznes toifasi</label>
+                    <select name="category" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-xs focus:outline-none focus:border-brand">
+                        <option value="food">Oziq-ovqat va restoran</option>
+                        <option value="clothing">Kiyim-kechak</option>
+                        <option value="shoes">Poyabzal</option>
+                        <option value="tech">Elektronika va texnika</option>
+                        <option value="sport">Sport anjomlari</option>
+                        <option value="beauty">Go'zallik va parvarish</option>
+                        <option value="other">Boshqa</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-md shadow-brand/20 transition-all">
+                    Oldinga
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alpine App Data -->
+    <script>
+        function dashboardApp() {
+            return {
+                showTrialBanner: true,
+                topupModalOpen: false,
+                notifDrawerOpen: false,
+                createStoreModalOpen: false,
+                balance: Number('{{ merchant_balance.balance|default:150000|floatformat:0 }}'),
+                topupAmount: 50000,
+                newCardNum: '',
+                newCardExp: '',
+
+                submitTopup() {
+                    const fd = new FormData();
+                    fd.append('amount', this.topupAmount);
+                    if (this.newCardNum) {
+                        fd.append('card_number', this.newCardNum);
+                        fd.append('expiry', this.newCardExp);
+                    }
+                    fetch('/dashboard/api/topup-balance/', {
+                        method: 'POST',
+                        body: fd,
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        this.balance = data.new_balance;
+                        this.topupModalOpen = false;
+                        showToast("Balans muvaffaqiyatli to'ldirildi!");
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>

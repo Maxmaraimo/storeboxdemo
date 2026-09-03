@@ -1,0 +1,294 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block page_title %}{% if product %}Mahsulotni tahrirlash{% else %}Yangi mahsulot qo'shish{% endif %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-4xl mx-auto space-y-6" x-data="productForm()">
+    
+    <!-- Top Breadcrumbs & Action -->
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+            <a href="/dashboard/products/" class="hover:text-slate-800 transition-colors">Mahsulotlar</a>
+            <span>/</span>
+            <span class="text-slate-900 font-extrabold">{% if product %}{{ product.name_uz|default:product.name_ru }}{% else %}Yangi mahsulot{% endif %}</span>
+        </div>
+        <a href="/dashboard/products/" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+            Bekor qilish
+        </a>
+    </div>
+
+    {% if error %}
+    <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+        <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500 shrink-0"></i>
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Form -->
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Card 1: Main Product Details -->
+        <div class="bg-white border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-xs space-y-5">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                <i data-lucide="info" class="w-4 h-4 text-brand"></i>
+                <span>1. Asosiy ma'lumotlar</span>
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Mahsulot nomi (O'zbek) *</label>
+                    <input type="text" name="name_uz" x-model="productNameUz" required value="{{ product.name_uz }}" placeholder="Masalan: Mol go'shtli lavash"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Mahsulot nomi (Русский)</label>
+                    <input type="text" name="name_ru" value="{{ product.name_ru }}" placeholder="Например: Лаваш говяжий"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-brand transition-colors">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategoriya</label>
+                    <select name="category_id" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold focus:outline-none focus:border-brand transition-colors">
+                        <option value="">-- Kategoriyasiz --</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if product.category_id == cat.id %}selected{% endif %}>
+                            {{ cat.name_uz|default:cat.name_ru }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">O'lchov birligi</label>
+                    <select name="unit" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold focus:outline-none focus:border-brand transition-colors">
+                        {% for u_val, u_lbl in units %}
+                        <option value="{{ u_val }}" {% if product.unit == u_val %}selected{% endif %}>{{ u_lbl }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-700">Mahsulot tavsifi (O'zbek)</label>
+                    <button type="button" @click="generateAiDescription()" class="text-[11px] font-bold text-brand hover:underline flex items-center gap-1">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        <span>AI orqali yaratish</span>
+                    </button>
+                </div>
+                <textarea name="desc_uz" x-model="productDescUz" rows="3" placeholder="Tarkibi, xususiyatlari..."
+                          class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-brand transition-colors">{{ product.description_uz }}</textarea>
+            </div>
+        </div>
+
+        <!-- Card 2: Pricing & Warehouse (Omborxona) -->
+        <div class="bg-white border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-xs space-y-5">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                <i data-lucide="calculator" class="w-4 h-4 text-emerald-500"></i>
+                <span>2. Narx va omborxona</span>
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Sotuv narxi (UZS) *</label>
+                    <input type="number" name="price" x-model="sellingPrice" @input="calculateMargin()" required value="{{ product.price|floatformat:0 }}" placeholder="35000"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-black focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Eski narx (chizilgan)</label>
+                    <input type="number" name="old_price" value="{{ product.old_price|floatformat:0 }}" placeholder="42000"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Kirish narxi (UZS)</label>
+                    <input type="number" name="cost_price" x-model="costPrice" @input="calculateMargin()" value="{{ product.cost_price|floatformat:0|default:'0' }}" placeholder="20000"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Marja (%)</label>
+                    <input type="text" name="margin" x-model="marginPercent" readonly
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 text-xs font-black">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Ombordagi qoldiq soni</label>
+                    <input type="number" name="stock" value="{{ product.stock|default:'10' }}"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div class="flex items-center gap-2 pt-6">
+                    <input type="checkbox" id="is_active" name="is_active" {% if not product or product.is_active %}checked{% endif %}
+                           class="w-4 h-4 rounded text-brand border-slate-300 focus:ring-brand">
+                    <label for="is_active" class="text-xs font-bold text-slate-700 cursor-pointer">Sotuvda faol (vitrinada ko'rinadi)</label>
+                </div>
+                <div class="flex items-center gap-2 pt-6">
+                    <input type="checkbox" id="is_featured" name="is_featured" {% if product.is_featured %}checked{% endif %}
+                           class="w-4 h-4 rounded text-brand border-slate-300 focus:ring-brand">
+                    <label for="is_featured" class="text-xs font-bold text-slate-700 cursor-pointer">🔥 Xit mahsulot (Aksiya)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Tax & IKPU codes -->
+        <div class="bg-white border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-xs space-y-4">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                <i data-lucide="receipt" class="w-4 h-4 text-sky-500"></i>
+                <span>3. Soliq va katalog kodlari</span>
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">IKPU kodi</label>
+                    <input type="text" name="ikpu_code" value="{{ product.ikpu_code|default:'' }}" placeholder="Masalan: 01010001001000000"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Qadoqlash kodi</label>
+                    <input type="text" name="package_code" value="{{ product.package_code|default:'' }}" placeholder="Masalan: 123456"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Shtrix-kod (Barcode)</label>
+                    <input type="text" name="barcode" value="{{ product.barcode|default:'' }}" placeholder="Masalan: 4780012345678"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-brand transition-colors">
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Product Variations -->
+        <div class="bg-white border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                        <i data-lucide="layers" class="w-4 h-4 text-indigo-500"></i>
+                        <span>4. Mahsulot variantlari (O'lcham, ta'm, rang)</span>
+                    </h3>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Masalan: Katta, Standart, Mini yoki Pishloqli — har biri uchun alohida narx</p>
+                </div>
+                <button type="button" @click="addVariation()"
+                        class="px-3.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-bold transition-colors flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>Variant qo'shish</span>
+                </button>
+            </div>
+
+            <template x-if="variations.length > 0">
+                <div class="space-y-2.5 pt-2">
+                    <template x-for="(v, idx) in variations" :key="idx">
+                        <div class="flex items-center gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                            <div class="flex-1">
+                                <input type="text" name="var_name[]" x-model="v.name" required placeholder="Variant nomi (Katta / Qora)"
+                                       class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-bold focus:outline-none focus:border-brand">
+                            </div>
+                            <div class="w-36">
+                                <input type="number" name="var_price[]" x-model="v.price" required placeholder="Narxi UZS"
+                                       class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-black focus:outline-none focus:border-brand">
+                            </div>
+                            <div class="w-24">
+                                <input type="number" name="var_stock[]" x-model="v.stock" required placeholder="Qoldiq"
+                                       class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-bold focus:outline-none focus:border-brand">
+                            </div>
+                            <button type="button" @click="removeVariation(idx)" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl" title="O'chirish">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template x-if="variations.length === 0">
+                <div class="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+                    Variantlar qo'shilmagan. Mahsulot yagona asosiy narxda sotiladi.
+                </div>
+            </template>
+        </div>
+
+        <!-- Card 5: Photos Upload -->
+        <div class="bg-white border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-xs space-y-4">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                <i data-lucide="image" class="w-4 h-4 text-emerald-500"></i>
+                <span>5. Mahsulot rasmlari (3:4 proporsiya tavsiya etiladi)</span>
+            </h3>
+
+            {% if product and product.images.exists %}
+            <div class="flex flex-wrap gap-3 pb-2">
+                {% for img in product.images.all %}
+                <div class="w-24 h-32 rounded-2xl overflow-hidden border border-slate-200 relative group">
+                    <img src="{{ img.image.url }}" class="w-full h-full object-cover">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div>
+                <input type="file" name="photos" multiple accept="image/*"
+                       class="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand/10 file:text-brand hover:file:bg-brand/20">
+            </div>
+        </div>
+
+        <!-- Submit & Actions -->
+        <div class="flex items-center justify-end gap-3 pt-4">
+            <a href="/dashboard/products/" class="px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">
+                Bekor qilish
+            </a>
+            <button type="submit"
+                    class="px-8 py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-extrabold text-xs shadow-md shadow-brand/20 transition-all flex items-center gap-2">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span>{% if product %}O'zgarishlarni saqlash{% else %}Mahsulotni yaratish{% endif %}</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function productForm() {
+    return {
+        productNameUz: '{{ product.name_uz|escapejs }}',
+        productDescUz: '{{ product.description_uz|escapejs }}',
+        sellingPrice: '{{ product.price|floatformat:0|default:"" }}',
+        costPrice: '{{ product.cost_price|floatformat:0|default:"0" }}',
+        marginPercent: '{{ product.margin|floatformat:0|default:"100" }}',
+        variations: [
+            {% if product and product.variations.exists %}
+                {% for v in product.variations.all %}
+                { name: '{{ v.name_uz|escapejs }}', price: '{{ v.price|floatformat:0 }}', stock: '{{ v.stock }}' },
+                {% endfor %}
+            {% endif %}
+        ],
+        calculateMargin() {
+            const sell = parseFloat(this.sellingPrice) || 0;
+            const cost = parseFloat(this.costPrice) || 0;
+            if (cost > 0 && sell > 0) {
+                this.marginPercent = Math.round(((sell - cost) / cost) * 100);
+            } else {
+                this.marginPercent = '100';
+            }
+        },
+        addVariation() {
+            this.variations.push({ name: '', price: this.sellingPrice || '', stock: '10' });
+            setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
+        },
+        removeVariation(idx) {
+            this.variations.splice(idx, 1);
+        },
+        generateAiDescription() {
+            if (!this.productNameUz) {
+                alert("Iltimos, avval mahsulot nomini kiriting!");
+                return;
+            }
+            fetch(`/dashboard/api/ai-desc/?name=${encodeURIComponent(this.productNameUz)}&lang=uz`)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.description) {
+                        this.productDescUz = d.description;
+                    }
+                })
+                .catch(() => {});
+        }
+    }
+}
+</script>
+{% endblock %}

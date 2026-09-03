@@ -1,0 +1,1043 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoreBox — Do'kon yaratish ustasi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#10B981',
+                            dark: '#059669',
+                            forest: '#0B3B2C',
+                            light: '#ECFDF5'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .iphone-frame {
+            width: 320px;
+            height: 640px;
+            border: 10px solid #1e293b;
+            border-radius: 46px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+        .iphone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 20px;
+            background: #1e293b;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="bg-[#F8FAFC] min-h-full font-sans text-slate-800 antialiased" x-data="storeboxWizard()">
+
+    <!-- TOP HEADER -->
+    <header class="bg-white border-b border-slate-200/80 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="/" class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white font-black text-base shadow-sm shadow-brand/30">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                </div>
+                <div class="flex items-baseline">
+                    <span class="text-xl font-black text-slate-900 tracking-tight">store<span class="text-brand">box</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 ml-1">.uz</span>
+                </div>
+            </a>
+
+            <!-- Right Controls -->
+            <div class="flex items-center gap-4">
+                <!-- Language Selector -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                        <span>🇺🇿 O'zbek</span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                    </button>
+                    <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50 text-xs">
+                        <a href="#" class="block px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-50">🇺🇿 O'zbek</a>
+                        <a href="#" class="block px-3 py-1.5 text-slate-600 hover:bg-slate-50">🇷🇺 Русский</a>
+                        <a href="#" class="block px-3 py-1.5 text-slate-600 hover:bg-slate-50">🇬🇧 English</a>
+                    </div>
+                </div>
+
+                <a href="https://t.me/storebox_support" target="_blank" class="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 text-xs font-bold">
+                    ?
+                </a>
+
+                <a href="/login/" class="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-rose-600">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                    <span>Chiqish</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- SUCCESS TOAST (from Video 00:40) -->
+    <div x-show="showToast" x-transition.opacity x-cloak class="fixed top-20 right-6 z-50 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-2.5 text-emerald-800 text-xs font-bold">
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+        <span>Amal muvaffaqiyatli yakunlandi.</span>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+
+        <!-- FORM WRAPPER -->
+        <form method="POST" enctype="multipart/form-data" id="wizardForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" x-model="submitAction">
+
+            <!-- ============================================================= -->
+            <!-- STAGE 0: WELCOME & BUSINESS DETAILS (Video 00:00 - 00:39)      -->
+            <!-- ============================================================= -->
+            <div x-show="step === 0" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch" x-cloak>
+                <!-- Left: Form -->
+                <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs flex flex-col justify-between">
+                    <div class="space-y-6">
+                        <div>
+                            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Biznesingiz tafsilotlari</h1>
+                            <p class="text-xs text-slate-500 mt-1">Platformada do'koningizni yaratish uchun asosiy parametrlarni tanlang</p>
+                        </div>
+
+                        <!-- 1. Kompaniya nomi -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Kompaniya nomi *</label>
+                            <input type="text" name="name" x-model="companyName" required placeholder="Kompaniya nomini kiriting"
+                                   class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-brand">
+                        </div>
+
+                        <!-- 2. Biznes turi (Restoran / Onlayn do'kon) -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">Biznes turi</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="p-3.5 rounded-xl border cursor-pointer flex items-center gap-3 transition-all"
+                                       :class="businessType === 'RESTAURANT' ? 'border-brand bg-brand/5 text-slate-900 font-bold' : 'border-slate-200 text-slate-600'">
+                                    <input type="radio" name="business_type" value="RESTAURANT" x-model="businessType" class="sr-only">
+                                    <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center" :class="businessType === 'RESTAURANT' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="businessType === 'RESTAURANT'"></div>
+                                    </div>
+                                    <span class="text-xs">Restoran</span>
+                                </label>
+
+                                <label class="p-3.5 rounded-xl border cursor-pointer flex items-center gap-3 transition-all"
+                                       :class="businessType === 'STORE' ? 'border-brand bg-brand/5 text-slate-900 font-bold' : 'border-slate-200 text-slate-600'">
+                                    <input type="radio" name="business_type" value="STORE" x-model="businessType" class="sr-only">
+                                    <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center" :class="businessType === 'STORE' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="businessType === 'STORE'"></div>
+                                    </div>
+                                    <span class="text-xs">Onlayn do'kon</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 3. Platformani tanlang -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">Platformani tanlang</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="p-3.5 rounded-xl border cursor-pointer flex items-center gap-3 transition-all"
+                                       :class="platformType === 'TELEGRAM' ? 'border-brand bg-brand/5 text-slate-900 font-bold' : 'border-slate-200 text-slate-600'">
+                                    <input type="radio" name="platform_type" value="TELEGRAM" x-model="platformType" class="sr-only">
+                                    <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center" :class="platformType === 'TELEGRAM' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="platformType === 'TELEGRAM'"></div>
+                                    </div>
+                                    <span class="text-xs">Telegram</span>
+                                </label>
+
+                                <label class="p-3.5 rounded-xl border cursor-pointer flex items-center gap-3 transition-all"
+                                       :class="platformType === 'ALL' ? 'border-brand bg-brand/5 text-slate-900 font-bold' : 'border-slate-200 text-slate-600'">
+                                    <input type="radio" name="platform_type" value="ALL" x-model="platformType" class="sr-only">
+                                    <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center" :class="platformType === 'ALL' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="platformType === 'ALL'"></div>
+                                    </div>
+                                    <span class="text-xs">Veb-sayt</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 4. Mamlakat -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Mamlakat</label>
+                            <select name="country" x-model="country" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-brand">
+                                <option value="UZ">O'zbekiston</option>
+                                <option value="KZ">Qozog'iston</option>
+                                <option value="TR">Turkiya</option>
+                                <option value="RU">Rossiya</option>
+                                <option value="KG">Qirg'iziston</option>
+                                <option value="OTHER">Boshqa</option>
+                            </select>
+                        </div>
+
+                        <!-- 5. Biznes Toifasi -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Biznes Toifasi</label>
+                            <select name="business_category" x-model="businessCategory" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-brand">
+                                <option value="FOOD">Oziq-ovqat / Restoran</option>
+                                <option value="ACCESSORIES">Aksessuarlar</option>
+                                <option value="AUTO">Avto ehtiyot qismlar</option>
+                                <option value="ELECTRONICS">Elektronika</option>
+                                <option value="BEAUTY">Go'zallik va parvarish</option>
+                                <option value="PETS">Hayvonlar uchun mahsulotlar</option>
+                                <option value="DRINKS">Ichimliklar</option>
+                                <option value="BOOKS">Kitoblar va ofis anjomlari</option>
+                                <option value="CLOTHES">Kiyim-kechak</option>
+                                <option value="APPLIANCES">Maishiy texnika</option>
+                                <option value="SHOES">Poyabzal</option>
+                                <option value="SPORT">Sport anjomlari</option>
+                                <option value="HOME">Uy jihozlari</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Next button -->
+                    <button type="button" @click="nextStep(1)" class="w-full mt-8 py-3.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-sm transition-all shadow-md shadow-brand/20 flex items-center justify-center gap-2">
+                        <span>Oldinga</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Right: StoreBox Graphic Banner (Video 00:00 - 00:39) -->
+                <div class="lg:col-span-5 bg-gradient-to-br from-[#0B3B2C] to-[#06241B] rounded-3xl p-8 text-white flex flex-col justify-between relative overflow-hidden shadow-xl">
+                    <!-- Background decor circles -->
+                    <div class="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+
+                    <div class="space-y-3 z-10">
+                        <h2 class="text-2xl sm:text-3xl font-black leading-tight tracking-tight">
+                            Daromadli biznes boshlashning eng tez usuli 🚀
+                        </h2>
+                        <p class="text-xs text-emerald-200/80 font-normal leading-relaxed">
+                            Onlayn savdoni tashkil qilish uchun Telegram bot va veb-sayt konstruktori
+                        </p>
+                    </div>
+
+                    <!-- Animated Ecosystem Visual -->
+                    <div class="my-8 py-4 flex flex-col items-center justify-center relative z-10">
+                        <!-- Upper cards: products -->
+                        <div class="grid grid-cols-2 gap-3 w-full max-w-[280px] mb-4">
+                            <div class="bg-white/10 backdrop-blur-md border border-white/15 p-2 rounded-xl text-center">
+                                <div class="text-[10px] text-emerald-300 font-bold">Futbolka</div>
+                                <div class="text-[11px] font-black">100 000 so'm</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-md border border-white/15 p-2 rounded-xl text-center">
+                                <div class="text-[10px] text-emerald-300 font-bold">Botik</div>
+                                <div class="text-[11px] font-black">150 000 so'm</div>
+                            </div>
+                        </div>
+
+                        <!-- Center StoreBox Hub -->
+                        <div class="px-6 py-2.5 rounded-2xl bg-amber-400 text-slate-950 font-black text-sm shadow-xl flex items-center gap-2">
+                            <i data-lucide="infinity" class="w-4 h-4"></i>
+                            <span>storebox</span>
+                        </div>
+
+                        <!-- Connector lines down -->
+                        <div class="w-0.5 h-6 bg-emerald-400/40 my-1"></div>
+
+                        <!-- Lower services -->
+                        <div class="grid grid-cols-3 gap-2 w-full text-center">
+                            <div class="bg-emerald-950/60 border border-emerald-800/40 p-2 rounded-xl text-[9px] font-bold text-emerald-200">
+                                Boshqaruv paneli
+                            </div>
+                            <div class="bg-emerald-950/60 border border-emerald-800/40 p-2 rounded-xl text-[9px] font-bold text-emerald-200">
+                                Yetkazib berish
+                            </div>
+                            <div class="bg-emerald-950/60 border border-emerald-800/40 p-2 rounded-xl text-[9px] font-bold text-emerald-200">
+                                POS & To'lovlar
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-emerald-300/60 z-10">
+                        1 500+ tadbirkorlar allaqachon StoreBox orqali sotishmoqda
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- STEPPER 1 TO 6 WRAPPER                                         -->
+            <!-- ============================================================= -->
+            <div x-show="step >= 1" x-cloak class="space-y-6">
+
+                <!-- STEPPER BAR (Video 00:42) -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
+                    <div class="flex items-center justify-between overflow-x-auto gap-2">
+                        <!-- Step 1 -->
+                        <div class="flex items-center gap-2 cursor-pointer" @click="step >= 1 ? step = 1 : null">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                                 :class="step > 1 ? 'bg-emerald-500 text-white' : (step === 1 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400')">
+                                <span x-show="step <= 1">1</span>
+                                <i data-lucide="check" class="w-4 h-4" x-show="step > 1"></i>
+                            </div>
+                            <span class="text-xs font-bold" :class="step === 1 ? 'text-slate-900' : 'text-slate-400'">Sayt yaratish</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-slate-200"></div>
+
+                        <!-- Step 2 -->
+                        <div class="flex items-center gap-2 cursor-pointer" @click="step >= 2 ? step = 2 : null">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                                 :class="step > 2 ? 'bg-emerald-500 text-white' : (step === 2 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400')">
+                                <span x-show="step <= 2">2</span>
+                                <i data-lucide="check" class="w-4 h-4" x-show="step > 2"></i>
+                            </div>
+                            <span class="text-xs font-bold" :class="step === 2 ? 'text-slate-900' : 'text-slate-400'">Sozlamalar</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-slate-200"></div>
+
+                        <!-- Step 3 -->
+                        <div class="flex items-center gap-2 cursor-pointer" @click="step >= 3 ? step = 3 : null">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                                 :class="step > 3 ? 'bg-emerald-500 text-white' : (step === 3 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400')">
+                                <span x-show="step <= 3">3</span>
+                                <i data-lucide="check" class="w-4 h-4" x-show="step > 3"></i>
+                            </div>
+                            <span class="text-xs font-bold" :class="step === 3 ? 'text-slate-900' : 'text-slate-400'">Kategoriya qo'shish</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-slate-200"></div>
+
+                        <!-- Step 4 -->
+                        <div class="flex items-center gap-2 cursor-pointer" @click="step >= 4 ? step = 4 : null">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                                 :class="step > 4 ? 'bg-emerald-500 text-white' : (step === 4 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400')">
+                                <span x-show="step <= 4">4</span>
+                                <i data-lucide="check" class="w-4 h-4" x-show="step > 4"></i>
+                            </div>
+                            <span class="text-xs font-bold" :class="step === 4 ? 'text-slate-900' : 'text-slate-400'">Mahsulot qo'shish</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-slate-200"></div>
+
+                        <!-- Step 5 -->
+                        <div class="flex items-center gap-2 cursor-pointer" @click="step >= 5 ? step = 5 : null">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                                 :class="step > 5 ? 'bg-emerald-500 text-white' : (step === 5 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400')">
+                                <span x-show="step <= 5">5</span>
+                                <i data-lucide="check" class="w-4 h-4" x-show="step > 5"></i>
+                            </div>
+                            <span class="text-xs font-bold" :class="step === 5 ? 'text-slate-900' : 'text-slate-400'">Yetkazib berish</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-slate-200"></div>
+
+                        <!-- Step 6 -->
+                        <div class="flex items-center gap-2 cursor-pointer" @click="step >= 6 ? step = 6 : null">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                                 :class="step === 6 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400'">
+                                <span>6</span>
+                            </div>
+                            <span class="text-xs font-bold" :class="step === 6 ? 'text-slate-900' : 'text-slate-400'">Ko'rib chiqish</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ------------------------------------------------------------- -->
+                <!-- STEP 1: SAYT YARATISH (DOMAIN)                                 -->
+                <!-- ------------------------------------------------------------- -->
+                <div x-show="step === 1" class="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">Sizning shaxsiy domeningiz bormi?</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                                <input type="radio" name="has_domain" value="no" checked class="text-brand focus:ring-brand">
+                                <span>Yo'q</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer text-slate-500">
+                                <input type="radio" name="has_domain" value="yes" class="text-brand focus:ring-brand">
+                                <span>Menda bor</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Sub domen *</label>
+                        <div class="flex rounded-xl bg-slate-50 border border-slate-200 overflow-hidden focus-within:border-brand">
+                            <input type="text" name="subdomain" x-model="subdomain" @input="checkSubdomain()" required placeholder="subdomenni kiriting"
+                                   class="flex-1 px-4 py-3 bg-transparent text-xs font-mono font-bold text-slate-900 focus:outline-none">
+                            <span class="px-4 py-3 bg-slate-100/80 text-xs font-bold text-slate-500 border-l border-slate-200">.storebox.uz</span>
+                        </div>
+                        <p x-show="subdomainMsg" class="text-[11px] font-bold mt-1.5" :class="subdomainAvailable ? 'text-emerald-600' : 'text-rose-500'" x-text="subdomainMsg"></p>
+                    </div>
+
+                    <!-- Bottom Nav -->
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <button type="button" @click="step = 0" class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                            ← Orqaga
+                        </button>
+                        <button type="button" @click="nextStep(2)" class="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white text-xs font-bold shadow-md shadow-brand/20">
+                            Oldinga
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ------------------------------------------------------------- -->
+                <!-- STEP 2: SOZLAMALAR (Video 00:56 - 02:36)                       -->
+                <!-- ------------------------------------------------------------- -->
+                <div x-show="step === 2" class="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-6">
+                    
+                    <!-- Logo Upload with Crop Modal Trigger -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">Logotipni shu yerga o'tkazing yoki tanlang</label>
+                        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-brand transition-colors cursor-pointer" @click="$refs.logoInput.click()">
+                            <input type="file" x-ref="logoInput" name="logo" accept="image/*" class="sr-only" @change="handleLogoSelect($event)">
+                            <div x-show="!logoPreview">
+                                <i data-lucide="image-plus" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+                                <div class="text-xs font-bold text-slate-600">Fayl o'lchami 10 MB gacha</div>
+                            </div>
+                            <div x-show="logoPreview" class="flex items-center justify-center gap-3">
+                                <img :src="logoPreview" class="w-16 h-16 rounded-xl object-cover border border-slate-200">
+                                <div class="text-left">
+                                    <span class="text-xs font-bold text-emerald-600">Logotip yuklandi!</span>
+                                    <div class="text-[10px] text-slate-400">O'zgartirish uchun bosing</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tip box -->
+                        <div class="mt-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                            <i data-lucide="info" class="w-4 h-4 text-brand shrink-0 mt-0.5"></i>
+                            <div class="text-xs text-slate-600">
+                                Agar siz logotipni saytda ko'rsatishni istasangiz, uni yuklashingizni tavsiya qilamiz
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Til sozlamalari -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">Saytingiz qo'llab-quvvatlaydigan tillarni tanlang</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <label class="p-3 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" name="languages" value="uz" checked class="rounded text-brand focus:ring-brand">
+                                    <span>O'zbek</span>
+                                </div>
+                                <span class="text-[10px] text-slate-400">Asosiy til</span>
+                            </label>
+
+                            <label class="p-3 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" name="languages" value="ru" checked class="rounded text-brand focus:ring-brand">
+                                    <span>Русский</span>
+                                </div>
+                            </label>
+
+                            <label class="p-3 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" name="languages" value="en" class="rounded text-brand focus:ring-brand">
+                                    <span>English</span>
+                                </div>
+                            </label>
+
+                            <label class="p-3 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" name="languages" value="tr" class="rounded text-brand focus:ring-brand">
+                                    <span>Türkçe</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Biz haqimizda with Rich text buttons (B, I, U) -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-xs font-bold text-slate-700">Biz haqimizda (O'zbek)</label>
+                            <div class="flex gap-1 bg-slate-100 p-0.5 rounded-lg text-xs">
+                                <button type="button" class="px-2 py-0.5 rounded font-black hover:bg-white">B</button>
+                                <button type="button" class="px-2 py-0.5 rounded italic hover:bg-white">I</button>
+                                <button type="button" class="px-2 py-0.5 rounded underline hover:bg-white">U</button>
+                            </div>
+                        </div>
+                        <textarea name="about_us_uz" rows="3" placeholder="Foydalanuvchilar uchun kompaniyangiz ma'lumotlarini kiriting"
+                                  class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"></textarea>
+                    </div>
+
+                    <!-- Phone & Socials -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Aloqa uchun telefon raqami *</label>
+                            <input type="tel" name="phone" value="+998 " required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Valyuta</label>
+                            <select name="currency" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold">
+                                <option value="UZS">UZS (O'zbek so'mi)</option>
+                                <option value="USD">USD (AQSH dollari)</option>
+                                <option value="RUB">RUB (Rossiya rubli)</option>
+                                <option value="EUR">EUR (Yevro)</option>
+                                <option value="KZT">KZT (Qozoq tengesi)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 6 Social Links -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">Ijtimoiy tarmoqlarga havola</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <input type="text" name="instagram" placeholder="Instagram havolasi" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                            <input type="text" name="telegram" placeholder="Telegram kanali" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                            <input type="text" name="facebook" placeholder="Facebook" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                            <input type="text" name="youtube" placeholder="YouTube" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                            <input type="text" name="tiktok" placeholder="TikTok" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                            <input type="text" name="whatsapp" placeholder="WhatsApp" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                        </div>
+                    </div>
+
+                    <!-- Ish vaqti (Working Hours Matrix) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">Ish vaqti</label>
+                        <div class="space-y-2 border border-slate-100 rounded-2xl p-4 bg-slate-50">
+                            <template x-for="day in ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba']" :key="day">
+                                <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-200/50 last:border-0">
+                                    <div class="w-28 font-bold text-slate-700" x-text="day"></div>
+                                    <div class="flex items-center gap-2">
+                                        <input type="time" value="00:00" class="px-2 py-1 rounded bg-white border border-slate-200 text-[11px]">
+                                        <span>-</span>
+                                        <input type="time" value="23:59" class="px-2 py-1 rounded bg-white border border-slate-200 text-[11px]">
+                                        <button type="button" class="w-6 h-6 rounded-full bg-emerald-50 text-brand flex items-center justify-center font-bold text-xs">+</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Manzil & Leaflet Map Autocomplete -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">Manzil</label>
+                        <div class="space-y-3">
+                            <input type="text" name="branch_name" placeholder="Filial nomi (Masalan: Beruniy filiali)" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold">
+                            
+                            <!-- Search Map -->
+                            <div class="relative">
+                                <input type="text" x-model="mapSearch" @input.debounce.400ms="searchAddress()" placeholder="Manzilni xaritadan toping (Masalan: Beruniy metrosi)"
+                                       class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold">
+                                <div x-show="searchResults.length > 0" class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
+                                    <template x-for="res in searchResults" :key="res.place_id">
+                                        <div @click="selectSearchResult(res)" class="p-2.5 text-xs hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0" x-text="res.display_name"></div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <input type="hidden" name="branch_lat" x-model="branchLat">
+                            <input type="hidden" name="branch_lng" x-model="branchLng">
+                            <input type="hidden" name="branch_address" x-model="branchAddress">
+
+                            <div class="rounded-2xl overflow-hidden border border-slate-200">
+                                <div id="onboardingMap" class="w-full h-56 bg-slate-100"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Nav -->
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <button type="button" @click="step = 1" class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                            ← Orqaga
+                        </button>
+                        <button type="button" @click="nextStep(3)" class="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white text-xs font-bold shadow-md shadow-brand/20">
+                            Oldinga
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ------------------------------------------------------------- -->
+                <!-- STEP 3: KATEGORIYA QO'SHISH (Video 02:58 - 03:32)             -->
+                <!-- ------------------------------------------------------------- -->
+                <div x-show="step === 3" class="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-6">
+                    <!-- Language tabs + Auto-translate button -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex gap-2">
+                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold">O'zbek</button>
+                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">Русский</button>
+                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">English</button>
+                        </div>
+                        <button type="button" @click="autoTranslateCategory()" class="px-3 py-1.5 rounded-xl bg-brand/10 text-brand text-xs font-bold flex items-center gap-1.5 hover:bg-brand/20">
+                            <i data-lucide="languages" class="w-3.5 h-3.5"></i>
+                            <span>Tarjima qilish</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategoriya nomi (O'zbek) *</label>
+                        <input type="text" name="cat_name_uz" x-model="categoryNameUz" required placeholder="Masalan: Gullar"
+                               class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                    </div>
+                    <input type="hidden" name="cat_name_ru" x-model="categoryNameRu">
+                    <input type="hidden" name="cat_name_en" x-model="categoryNameEn">
+
+                    <!-- Category image -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategoriya rasmi</label>
+                        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-brand transition-colors cursor-pointer" @click="$refs.catImgInput.click()">
+                            <input type="file" x-ref="catImgInput" name="cat_image" accept="image/*" class="sr-only">
+                            <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+                            <div class="text-xs font-bold text-slate-600">Tasvirni shu yerga tashlang yoki yuklang</div>
+                            <div class="text-[10px] text-slate-400 mt-1">56px x 56px tavsiya etiladi, fayl hajmi 4 MB gacha</div>
+                        </div>
+
+                        <!-- Recommendations list (Video 03:00) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-[11px]">
+                            <div class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100 text-emerald-900 space-y-1">
+                                <div class="font-bold flex items-center gap-1.5">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                    <span>Tavsiya etiladi:</span>
+                                </div>
+                                <div>• Yuqori sifatli rasm ishlating</div>
+                                <div>• Oddiy va mos rasm tanlang</div>
+                                <div>• Bir xil uslubda bo'lsin</div>
+                            </div>
+
+                            <div class="p-3 rounded-xl bg-rose-50/60 border border-rose-100 text-rose-900 space-y-1">
+                                <div class="font-bold flex items-center gap-1.5">
+                                    <i data-lucide="x" class="w-3.5 h-3.5 text-rose-600"></i>
+                                    <span>Tavsiya etilmaydi:</span>
+                                </div>
+                                <div>• Ichida matn qolgan rasmlar</div>
+                                <div>• Xira qilib olingan rasmlar</div>
+                                <div>• GIF yoki harakatli rasm</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Nav -->
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <button type="button" @click="step = 2" class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                            ← Orqaga
+                        </button>
+                        <button type="button" @click="nextStep(4)" class="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white text-xs font-bold shadow-md shadow-brand/20">
+                            Oldinga
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ------------------------------------------------------------- -->
+                <!-- STEP 4: MAHSULOT QO'SHISH (Video 03:33 - 05:04)               -->
+                <!-- ------------------------------------------------------------- -->
+                <div x-show="step === 4" class="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-6">
+                    <!-- Language tabs + AI Generator (✨ Yaratish) -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex gap-2">
+                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold">O'zbek</button>
+                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">Русский</button>
+                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">English</button>
+                        </div>
+                        <button type="button" @click="autoTranslateProduct()" class="px-3 py-1.5 rounded-xl bg-brand/10 text-brand text-xs font-bold flex items-center gap-1.5 hover:bg-brand/20">
+                            <i data-lucide="languages" class="w-3.5 h-3.5"></i>
+                            <span>Tarjima qilish</span>
+                        </button>
+                    </div>
+
+                    <!-- Product Name -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mahsulot nomi (O'zbek) *</label>
+                        <input type="text" name="prod_name_uz" x-model="productNameUz" required placeholder="Masalan: Qizil atirgul guldastasi"
+                               class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                    </div>
+                    <input type="hidden" name="prod_name_ru" x-model="productNameRu">
+                    <input type="hidden" name="prod_name_en" x-model="productNameEn">
+
+                    <!-- Description with AI Generator ✨ Yaratish -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-xs font-bold text-slate-700">Ta'rif (O'zbek)</label>
+                            <button type="button" @click="generateAiDescription()" class="px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold flex items-center gap-1.5 hover:bg-indigo-100">
+                                <span>✨ Yaratish</span>
+                            </button>
+                        </div>
+                        <textarea name="prod_desc_uz" x-model="productDescUz" rows="3" placeholder="Mahsulotingiz tavsifini yozing..."
+                                  class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"></textarea>
+                    </div>
+
+                    <!-- Multi photo upload (3:4 ratio) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mahsulot rasmlari</label>
+                        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-brand transition-colors cursor-pointer" @click="$refs.prodPhotosInput.click()">
+                            <input type="file" x-ref="prodPhotosInput" name="prod_photos" accept="image/*" multiple class="sr-only" @change="handleProdPhotos($event)">
+                            <i data-lucide="images" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+                            <div class="text-xs font-bold text-slate-600">Tasvirni shu yerga tashlang yoki yuklang</div>
+                            <div class="text-[10px] text-slate-400 mt-1">1200 x 1600 (3:4) tavsiya etiladi, har biri 10 MB gacha</div>
+                        </div>
+
+                        <!-- Gallery Thumbnails -->
+                        <div x-show="prodPhotosPreviews.length > 0" class="flex gap-3 mt-3 overflow-x-auto py-1">
+                            <template x-for="(img, idx) in prodPhotosPreviews" :key="idx">
+                                <div class="relative w-20 h-24 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                                    <img :src="img" class="w-full h-full object-cover">
+                                    <button type="button" @click="prodPhotosPreviews.splice(idx, 1)" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-900/80 text-white flex items-center justify-center text-xs">×</button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Price, Unit & Old Price (16 Units from Video 04:31) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Narx (UZS) *</label>
+                            <input type="number" name="prod_price" x-model="productPrice" required placeholder="Masalan: 100 000"
+                                   class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">O'lchov Birligi</label>
+                            <select name="prod_unit" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold">
+                                <option value="Dona">Dona</option>
+                                <option value="Metr">Metr</option>
+                                <option value="Kilogram">Kilogram</option>
+                                <option value="Gramm">Gramm</option>
+                                <option value="Santimetr">Santimetr</option>
+                                <option value="Litr">Litr</option>
+                                <option value="Kvadrat metr">Kvadrat metr</option>
+                                <option value="Portsiya">Portsiya</option>
+                                <option value="Tonna">Tonna</option>
+                                <option value="Kub metr">Kub metr</option>
+                                <option value="Upakovka">Upakovka</option>
+                                <option value="Korobka">Korobka</option>
+                                <option value="Pachka">Pachka</option>
+                                <option value="Blok">Blok</option>
+                                <option value="Milligram">Milligram</option>
+                                <option value="Millilitr">Millilitr</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Eski narx (Aksiya)</label>
+                            <input type="number" name="prod_old_price" x-model="productOldPrice" placeholder="Masalan: 150 000"
+                                   class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold">
+                            <span class="text-[10px] text-slate-400">Asosiy narxdan katta bo'lishi kerak</span>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Nav -->
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <button type="button" @click="step = 3" class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                            ← Orqaga
+                        </button>
+                        <button type="button" @click="nextStep(5)" class="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white text-xs font-bold shadow-md shadow-brand/20">
+                            Oldinga
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ------------------------------------------------------------- -->
+                <!-- STEP 5: YETKAZIB BERISH (Video 05:05)                         -->
+                <!-- ------------------------------------------------------------- -->
+                <div x-show="step === 5" class="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-6">
+                    <div class="space-y-4">
+                        <!-- Card 1: Olib ketish -->
+                        <div class="p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+                                    <i data-lucide="store" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-xs text-slate-900">Olib ketish</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">Faol</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500" x-text="branchAddress || 'Toshkent, Beruniy ko\'chasi'"></div>
+                                </div>
+                            </div>
+                            <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                                Tahrirlash
+                            </button>
+                        </div>
+
+                        <!-- Card 2: Yetkazib berish -->
+                        <div class="p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                                    <i data-lucide="truck" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-xs text-slate-900">Yetkazib berish</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">Faol</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500">Yetkazib berish turi: Bepul (150 000 so'mdan yuqori)</div>
+                                </div>
+                            </div>
+                            <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                                Tahrirlash
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Nav -->
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <button type="button" @click="step = 4" class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                            ← Orqaga
+                        </button>
+                        <button type="button" @click="nextStep(6)" class="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white text-xs font-bold shadow-md shadow-brand/20">
+                            Oldinga
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ------------------------------------------------------------- -->
+                <!-- STEP 6: KO'RIB CHIQISH (PREVIEW Video 05:12 - 05:22)          -->
+                <!-- ------------------------------------------------------------- -->
+                <div x-show="step === 6" class="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs flex flex-col items-center">
+                    <!-- Toggle Mobile vs Desktop -->
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl mb-6">
+                        <button type="button" @click="previewMode = 'mobile'"
+                                class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                                :class="previewMode === 'mobile' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'">
+                            <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                            <span>Mobile</span>
+                        </button>
+                        <button type="button" @click="previewMode = 'desktop'"
+                                class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                                :class="previewMode === 'desktop' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'">
+                            <i data-lucide="laptop" class="w-3.5 h-3.5"></i>
+                            <span>Desktop</span>
+                        </button>
+                    </div>
+
+                    <!-- Realistic iPhone Screen (Video 05:14) -->
+                    <div x-show="previewMode === 'mobile'" class="iphone-frame flex flex-col">
+                        <div class="iphone-notch"></div>
+                        
+                        <!-- Mini storefront inside phone -->
+                        <div class="flex-1 overflow-y-auto pt-8 pb-14 px-3 space-y-3">
+                            <!-- Mini Header -->
+                            <div class="flex items-center justify-between py-2 border-b border-slate-200">
+                                <div class="flex items-center gap-1.5">
+                                    <template x-if="logoPreview">
+                                        <img :src="logoPreview" class="w-6 h-6 rounded-md object-cover">
+                                    </template>
+                                    <span class="font-bold text-[11px] text-slate-900" x-text="companyName || 'Do\'kon'"></span>
+                                </div>
+                                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400"></i>
+                            </div>
+
+                            <!-- Category Pill -->
+                            <div class="flex gap-2">
+                                <span class="px-3 py-1 rounded-full bg-brand text-white text-[10px] font-bold" x-text="categoryNameUz || 'Gullar'"></span>
+                            </div>
+
+                            <!-- Product Card -->
+                            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+                                <div class="w-full h-36 bg-slate-100 flex items-center justify-center relative">
+                                    <template x-if="prodPhotosPreviews.length > 0">
+                                        <img :src="prodPhotosPreviews[0]" class="w-full h-full object-cover">
+                                    </template>
+                                    <template x-if="prodPhotosPreviews.length === 0">
+                                        <i data-lucide="image" class="w-8 h-8 text-slate-300"></i>
+                                    </template>
+                                    <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-rose-500 text-white text-[9px] font-black">-33.3%</span>
+                                </div>
+                                <div class="p-2.5">
+                                    <div class="font-bold text-xs text-slate-900 truncate" x-text="productNameUz || 'Test'"></div>
+                                    <div class="flex items-baseline gap-2 mt-1">
+                                        <span class="font-black text-xs text-brand" x-text="(productPrice || '100') + ' UZS'"></span>
+                                        <span class="text-[9px] text-slate-400 line-through" x-text="(productOldPrice || '150') + ' UZS'"></span>
+                                    </div>
+                                    <button type="button" class="w-full mt-2 py-1.5 rounded-lg bg-brand text-white text-[10px] font-bold">
+                                        Savatchaga
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Phone Bottom Nav -->
+                        <div class="absolute bottom-0 left-0 right-0 h-12 bg-white border-t border-slate-200 flex items-center justify-around text-slate-400">
+                            <i data-lucide="home" class="w-4 h-4 text-brand"></i>
+                            <i data-lucide="heart" class="w-4 h-4"></i>
+                            <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+
+                    <!-- Open in web button (Video 05:22) -->
+                    <div class="mt-8 flex gap-3">
+                        <button type="submit" @click="submitAction = 'open_store'"
+                                class="px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-blue-500/25">
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                            <span>Veb-saytda oching</span>
+                        </button>
+
+                        <button type="submit" @click="submitAction = 'dashboard'"
+                                class="px-6 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2">
+                            <span>Boshqaruv paneliga o'tish</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        function storeboxWizard() {
+            return {
+                step: 0,
+                submitAction: 'dashboard',
+                showToast: false,
+                previewMode: 'mobile',
+
+                companyName: '',
+                businessType: 'RESTAURANT',
+                platformType: 'ALL',
+                country: 'UZ',
+                businessCategory: 'FOOD',
+
+                subdomain: '',
+                subdomainAvailable: false,
+                subdomainMsg: '',
+
+                logoPreview: null,
+                categoryNameUz: 'Gullar',
+                categoryNameRu: '',
+                categoryNameEn: '',
+
+                productNameUz: 'Test',
+                productNameRu: '',
+                productNameEn: '',
+                productDescUz: '',
+                productPrice: '100',
+                productOldPrice: '150',
+                prodPhotosPreviews: [],
+
+                branchAddress: "Toshkent, Beruniy ko'chasi",
+                branchLat: 41.2995,
+                branchLng: 69.2401,
+                mapSearch: '',
+                searchResults: [],
+                mapObj: null,
+                mapMarker: null,
+
+                nextStep(target) {
+                    this.step = target;
+                    this.showToast = true;
+                    setTimeout(() => { this.showToast = false; }, 3000);
+
+                    if (target === 2) {
+                        this.$nextTick(() => {
+                            this.initMap();
+                        });
+                    }
+                },
+
+                checkSubdomain() {
+                    if (this.subdomain.length < 3) {
+                        this.subdomainMsg = 'Kamida 3 ta belgi kiriting';
+                        this.subdomainAvailable = false;
+                        return;
+                    }
+                    fetch('/dashboard/api/check-subdomain/?subdomain=' + encodeURIComponent(this.subdomain))
+                        .then(r => r.json())
+                        .then(data => {
+                            this.subdomainAvailable = data.available;
+                            this.subdomainMsg = data.message;
+                        });
+                },
+
+                handleLogoSelect(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        this.logoPreview = URL.createObjectURL(file);
+                    }
+                },
+
+                handleProdPhotos(e) {
+                    const files = Array.from(e.target.files);
+                    files.forEach(f => {
+                        this.prodPhotosPreviews.push(URL.createObjectURL(f));
+                    });
+                },
+
+                autoTranslateCategory() {
+                    if (!this.categoryNameUz) return;
+                    fetch('/dashboard/api/translate/?text=' + encodeURIComponent(this.categoryNameUz) + '&to=ru')
+                        .then(r => r.json())
+                        .then(d => {
+                            this.categoryNameRu = d.translated;
+                        });
+                },
+
+                autoTranslateProduct() {
+                    if (!this.productNameUz) return;
+                    fetch('/dashboard/api/translate/?text=' + encodeURIComponent(this.productNameUz) + '&to=ru')
+                        .then(r => r.json())
+                        .then(d => {
+                            this.productNameRu = d.translated;
+                        });
+                },
+
+                generateAiDescription() {
+                    fetch('/dashboard/api/ai-desc/?name=' + encodeURIComponent(this.productNameUz || 'Mahsulot') + '&lang=uz')
+                        .then(r => r.json())
+                        .then(d => {
+                            this.productDescUz = d.description;
+                        });
+                },
+
+                initMap() {
+                    if (this.mapObj) return;
+                    const mapEl = document.getElementById('onboardingMap');
+                    if (!mapEl) return;
+
+                    this.mapObj = L.map('onboardingMap').setView([this.branchLat, this.branchLng], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(this.mapObj);
+                    this.mapMarker = L.marker([this.branchLat, this.branchLng], { draggable: true }).addTo(this.mapObj);
+
+                    this.mapMarker.on('dragend', (e) => {
+                        const pos = e.target.getLatLng();
+                        this.branchLat = pos.lat;
+                        this.branchLng = pos.lng;
+                    });
+                },
+
+                searchAddress() {
+                    if (this.mapSearch.length < 3) {
+                        this.searchResults = [];
+                        return;
+                    }
+                    fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(this.mapSearch) + '&countrycodes=uz')
+                        .then(r => r.json())
+                        .then(data => {
+                            this.searchResults = data.slice(0, 5);
+                        });
+                },
+
+                selectSearchResult(res) {
+                    this.branchLat = parseFloat(res.lat);
+                    this.branchLng = parseFloat(res.lon);
+                    this.branchAddress = res.display_name;
+                    this.mapSearch = res.display_name;
+                    this.searchResults = [];
+
+                    if (this.mapObj && this.mapMarker) {
+                        this.mapObj.setView([this.branchLat, this.branchLng], 15);
+                        this.mapMarker.setLatLng([this.branchLat, this.branchLng]);
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

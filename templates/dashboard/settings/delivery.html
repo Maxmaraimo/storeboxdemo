@@ -1,0 +1,184 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Yetkazib berish — StoreBox{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="deliveryApp()">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Yetkazib berish</h1>
+            <p class="text-xs text-slate-500 mt-0.5">O'z xizmatingiz va tashqi yetkazib beruvchi integratsiyalar</p>
+        </div>
+    </div>
+
+    <!-- MAIN 2 FULFILLMENT CARDS (Video 09:46) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Card 1: Olib ketish -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                        <i data-lucide="store" class="w-5 h-5"></i>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">Faol</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm text-slate-900">Do'kon filialidan olib ketish</h3>
+                    <p class="text-xs text-slate-400 mt-1">Xaridor buyurtmani tayyor bo'lgach o'zi filialdan olib ketadi</p>
+                </div>
+                <div class="text-xs font-mono font-bold text-slate-700">Narxi: <span class="text-brand">Bepul (0 UZS)</span></div>
+            </div>
+
+            <button type="button" @click="pickupModalOpen = true" class="mt-6 w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700">
+                Tahrirlash
+            </button>
+        </div>
+
+        <!-- Card 2: Yetkazib berish -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                        <i data-lucide="truck" class="w-5 h-5"></i>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">Faol</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm text-slate-900">Do'kon yetkazib berish xizmati</h3>
+                    <p class="text-xs text-slate-400 mt-1">Kuryer orqali xaridorning ko'rsatilgan manziliga yetkazish</p>
+                </div>
+                <div class="space-y-1 text-xs font-semibold text-slate-600">
+                    <div>Yetkazish narxi: <span class="font-mono font-bold text-slate-900">{{ store.delivery_price|floatformat:0 }} UZS</span></div>
+                    <div>Bepul yetkazish: <span class="font-mono font-bold text-emerald-600">{{ store.free_delivery_threshold|floatformat:0 }} UZS dan</span></div>
+                    <div>O'rtacha vaqt: <span class="font-mono font-bold text-slate-900">{{ store.delivery_time_estimate }}</span></div>
+                </div>
+            </div>
+
+            <button type="button" @click="deliveryModalOpen = true" class="mt-6 w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700">
+                Tahrirlash
+            </button>
+        </div>
+    </div>
+
+    <!-- EXTERNAL COURIER INTEGRATIONS (Video 09:47) -->
+    <div class="space-y-4">
+        <h2 class="font-black text-sm text-slate-900 uppercase tracking-wider">Kuryerlik xizmatlari integratsiyasi</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+            <!-- Yandex Delivery -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4">
+                <div class="space-y-2">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-400 text-slate-900 font-black flex items-center justify-center text-xs">Y</div>
+                    <div class="font-bold text-sm text-slate-900">Yandex Delivery</div>
+                    <p class="text-xs text-slate-400">Avtomatik kuryer chaqirish va real vaqtda GPS kuzatuv</p>
+                </div>
+                <button type="button" @click="connectCourier('Yandex Delivery')" class="w-full py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800">
+                    Ulash
+                </button>
+            </div>
+
+            <!-- Fargo -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4">
+                <div class="space-y-2">
+                    <div class="w-10 h-10 rounded-2xl bg-red-600 text-white font-black flex items-center justify-center text-xs">F</div>
+                    <div class="font-bold text-sm text-slate-900">Fargo Parcel Service</div>
+                    <p class="text-xs text-slate-400">O'zbekiston viloyatlari bo'ylab posilka jo'natish</p>
+                </div>
+                <button type="button" @click="connectCourier('Fargo')" class="w-full py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800">
+                    Ulash
+                </button>
+            </div>
+
+            <!-- UzPost -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4">
+                <div class="space-y-2">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white font-black flex items-center justify-center text-xs">UZ</div>
+                    <div class="font-bold text-sm text-slate-900">UzPost (Milliy Pochta)</div>
+                    <p class="text-xs text-slate-400">Barcha tuman va qishloqlarga yetkazish tarmog'i</p>
+                </div>
+                <button type="button" @click="connectCourier('UzPost')" class="w-full py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800">
+                    Ulash
+                </button>
+            </div>
+
+            <!-- BTS Express -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4">
+                <div class="space-y-2">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white font-black flex items-center justify-center text-xs">BTS</div>
+                    <div class="font-bold text-sm text-slate-900">BTS Express</div>
+                    <p class="text-xs text-slate-400">Tezkor yuk tashish va posilka xizmati</p>
+                </div>
+                <button type="button" @click="connectCourier('BTS Express')" class="w-full py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800">
+                    Ulash
+                </button>
+            </div>
+
+            <!-- Noor Delivery -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4">
+                <div class="space-y-2">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center text-xs">N</div>
+                    <div class="font-bold text-sm text-slate-900">Noor Delivery</div>
+                    <p class="text-xs text-slate-400">Shaharlararo ekspress kuryerlik</p>
+                </div>
+                <button type="button" @click="connectCourier('Noor Delivery')" class="w-full py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800">
+                    Ulash
+                </button>
+            </div>
+
+            <!-- StoreBox Pochta -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4">
+                <div class="space-y-2">
+                    <div class="w-10 h-10 rounded-2xl bg-brand text-white font-black flex items-center justify-center text-xs">SB</div>
+                    <div class="font-bold text-sm text-slate-900">StoreBox Pochta</div>
+                    <p class="text-xs text-slate-400">Yagona tarif va qulay shartnomaviy logistika</p>
+                </div>
+                <span class="px-3 py-2 rounded-xl bg-slate-100 text-slate-500 font-bold text-xs text-center">Tez orada</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- COURIER CONNECT MODAL -->
+    <div x-show="connectModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="connectModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900" x-text="targetCourier + ' integratsiyasi'"></h3>
+                <button type="button" @click="connectModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">API kalit (Token) *</label>
+                    <input type="password" placeholder="yand_sec_..." class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Mijoz kodi (Account ID)</label>
+                    <input type="text" placeholder="UZB_..." class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" @click="connectModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                <button type="button" @click="connectModalOpen = false; showToast(targetCourier + ' muvaffaqiyatli ulandi!')" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Faollashtirish</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function deliveryApp() {
+        return {
+            pickupModalOpen: false,
+            deliveryModalOpen: false,
+            connectModalOpen: false,
+            targetCourier: '',
+
+            connectCourier(name) {
+                this.targetCourier = name;
+                this.connectModalOpen = true;
+            }
+        }
+    }
+</script>
+{% endblock %}

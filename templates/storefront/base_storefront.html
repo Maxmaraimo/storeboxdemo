@@ -1,0 +1,759 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ lang|default:'uz' }}" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}{{ store.name }} — StoreBox{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '{{ store.primary_color|default:"#10B981" }}',
+                        'brand-dark': '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        .hover-bg-brand:hover { background-color: {{ store.primary_color|default:"#10B981" }}; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-[#F8FAFC] min-h-full font-sans text-slate-800 antialiased flex flex-col justify-between" x-data="storefrontApp()">
+
+    <div>
+        <!-- TOP STOREBOX BADGE STRIP (Video 05:27) -->
+        <div class="bg-slate-900 text-white text-[11px] py-1 px-4 text-center font-bold tracking-wide flex items-center justify-center gap-1.5">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>StoreBox platformasida ishlab chiqilgan</span>
+        </div>
+
+        <!-- MAIN STOREFRONT HEADER -->
+        <header class="bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-2xs">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+                
+                <!-- Left: Menu Drawer Trigger + Store Logo -->
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="sideDrawerOpen = true" class="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+
+                    <a href="/store/{{ store.subdomain }}/" class="flex items-center gap-2.5">
+                        {% if store.logo %}
+                        <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="w-9 h-9 rounded-xl object-cover border border-slate-200">
+                        {% else %}
+                        <div class="w-9 h-9 rounded-xl bg-brand text-white flex items-center justify-center font-black text-sm">
+                            {{ store.name|slice:":1" }}
+                        </div>
+                        {% endif %}
+                        <div class="hidden sm:block">
+                            <span class="font-black text-sm text-slate-900 tracking-tight block">{{ store.name }}</span>
+                            <span class="text-[10px] text-emerald-600 font-bold block leading-none">🟢 {{ store.is_currently_open.1 }}</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Center: Search Input -->
+                <div class="flex-1 max-w-md hidden md:block">
+                    <form action="/store/{{ store.subdomain }}/" method="GET" class="relative">
+                        <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Mahsulotlar va toifalarni qidirish"
+                               class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
+                    </form>
+                </div>
+
+                <!-- Right: Wishlist, Cart, Profile, Language -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Wishlist (Sevimmlar) -->
+                    <button type="button" @click="wishlistModalOpen = true" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 relative text-xs font-bold text-slate-700">
+                        <i data-lucide="heart" class="w-4 h-4 text-slate-500"></i>
+                        <span class="hidden sm:inline">Sevimmlar</span>
+                        <span x-show="wishlist.length > 0" class="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center" x-text="wishlist.length"></span>
+                    </button>
+
+                    <!-- Cart (Savat) -->
+                    <a href="/store/{{ store.subdomain }}/checkout/" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-brand text-white text-xs font-bold shadow-xs hover:bg-brand-dark">
+                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Savat</span>
+                        <span class="w-4 h-4 rounded-full bg-white text-brand text-[10px] font-black flex items-center justify-center" x-text="cartCount">0</span>
+                    </a>
+
+                    <!-- User Profile Button (Kirish / Ozodbek) -->
+                    <button type="button" @click="customerLoggedIn ? profileDrawerOpen = true : loginModalOpen = true"
+                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold hover:bg-slate-50">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-600"></i>
+                        <span x-text="customerLoggedIn ? customerName : 'Kirish'"></span>
+                    </button>
+
+                    <!-- Language Switcher -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" type="button" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold">
+                            <span>🇺🇿 O'zb</span>
+                            <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50 text-xs">
+                            <a href="?lang=uz" class="block px-3 py-1.5 font-bold text-slate-800 hover:bg-slate-50">O'zbekcha</a>
+                            <a href="?lang=ru" class="block px-3 py-1.5 text-slate-600 hover:bg-slate-50">Русский</a>
+                            <a href="?lang=en" class="block px-3 py-1.5 text-slate-600 hover:bg-slate-50">English</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        {% block storefront_body %}{% endblock %}
+    </div>
+
+    <!-- FOOTER WITH LEGAL LINKS (Video 05:34) -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-500">
+            <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+                <button type="button" @click="infoModal = 'about'" class="hover:text-slate-900">Biz haqimizda</button>
+                <button type="button" @click="infoModal = 'branches'" class="hover:text-slate-900">Do'kon filiallari</button>
+                <button type="button" @click="infoModal = 'delivery'" class="hover:text-slate-900">Yetkazib berish shartlari</button>
+                <button type="button" @click="infoModal = 'returns'" class="hover:text-slate-900">Qaytarish va almashtirish shartlari</button>
+            </div>
+            <div class="font-bold text-slate-800">
+                {{ store.phone|default:'+998 77 898 77 77' }}
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================================================= -->
+    <!-- CUSTOMER LOGIN MODAL (Video 06:06)                            -->
+    <!-- ============================================================= -->
+    <div x-show="loginModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+        <div @click.away="loginModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-black text-sm sm:text-base text-slate-900">Telefon raqamingizni kiriting</h3>
+                <button type="button" @click="loginModalOpen = false" class="text-slate-400 hover:text-slate-600">×</button>
+            </div>
+
+            <div x-show="loginStep === 1" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Telefon raqami</label>
+                    <div class="flex items-center rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 gap-2">
+                        <span class="text-sm">🇺🇿</span>
+                        <input type="tel" x-model="customerPhoneInput" placeholder="+998 90 123 45 67" class="bg-transparent text-xs font-mono font-bold w-full focus:outline-none">
+                    </div>
+                    <span class="text-[10px] text-slate-400 block mt-1">Tizimga kirish orqali siz maxfiylik siyosatiga rozilik bildirasiz</span>
+                </div>
+                <button type="button" @click="proceedToNameStep()" class="w-full py-3 rounded-xl bg-brand text-white font-black text-xs shadow-md shadow-brand/20">
+                    Kirish
+                </button>
+            </div>
+
+            <div x-show="loginStep === 2" class="space-y-4" x-cloak>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Ism va familiya</label>
+                    <input type="text" x-model="customerNameInput" placeholder="Ismingizni kiriting" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                </div>
+                <button type="button" @click="finishCustomerLogin()" class="w-full py-3 rounded-xl bg-brand text-white font-black text-xs shadow-md shadow-brand/20">
+                    Saqlash va kirish
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CUSTOMER PROFILE DRAWER (Video 06:49)                         -->
+    <!-- ============================================================= -->
+    <div x-show="profileDrawerOpen" x-cloak class="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs">
+        <div @click.away="profileDrawerOpen = false" class="w-80 bg-white h-full p-6 shadow-2xl flex flex-col justify-between overflow-y-auto">
+            <div class="space-y-6">
+                <!-- User Header (Logged In) -->
+                <template x-if="customerLoggedIn">
+                    <div class="space-y-3 pb-4 border-b border-slate-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand font-black text-lg shadow-xs">
+                                <span x-text="customerName ? customerName[0].toUpperCase() : 'U'"></span>
+                            </div>
+                            <div>
+                                <div class="font-black text-sm text-slate-900" x-text="customerName"></div>
+                                <div class="text-xs font-mono font-bold text-slate-400" x-text="customerPhone"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 text-[11px] font-bold text-slate-600">
+                            <span>Mening xaridlarim:</span>
+                            <span class="px-2 py-0.5 rounded-md bg-brand text-white font-black" x-text="ordersCount + ' ta'"></span>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Guest Login Box (Not Logged In) -->
+                <template x-if="!customerLoggedIn">
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                        <div>
+                            <h4 class="font-black text-sm text-slate-900">Xush kelibsiz!</h4>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Buyurtmalaringizni ko'rish va xarid qilish uchun telefoningizni kiriting:</p>
+                        </div>
+                        <div class="space-y-2.5">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 mb-1">Telefon raqami *</label>
+                                <input type="tel" x-model="customerPhoneInput" placeholder="+998 90 123 45 67" class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 mb-1">Ismingiz</label>
+                                <input type="text" x-model="customerNameInput" placeholder="Ismingizni kiriting" class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                            </div>
+                            <button type="button" @click="loginCustomer()" class="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
+                                Kirish
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Menu items list -->
+                <div class="space-y-1 text-xs font-semibold text-slate-700">
+                    <button type="button" @click="openMyOrders()" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <i data-lucide="package" class="w-4 h-4 text-brand"></i>
+                            <span class="font-bold text-slate-800">Buyurtmalarim</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span x-show="ordersCount > 0" class="px-2 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-black" x-text="ordersCount"></span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                        </div>
+                    </button>
+
+                    <button type="button" @click="infoModal = 'about'; profileDrawerOpen = false" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <i data-lucide="store" class="w-4 h-4 text-slate-500"></i>
+                            <span>Biz haqimizda</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+
+                    <button type="button" @click="infoModal = 'delivery'; profileDrawerOpen = false" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <i data-lucide="truck" class="w-4 h-4 text-slate-500"></i>
+                            <span>Yetkazib berish shartlari</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+
+                    <button type="button" @click="infoModal = 'returns'; profileDrawerOpen = false" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4 text-slate-500"></i>
+                            <span>Qaytarish va almashtirish</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+
+                    {% if store.phone %}
+                    <a href="tel:{{ store.phone }}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors">
+                        <div class="flex items-center gap-2.5">
+                            <i data-lucide="phone" class="w-4 h-4 text-emerald-600"></i>
+                            <span>Biz bilan bog'lanish</span>
+                        </div>
+                        <span class="text-[11px] font-mono font-bold text-brand">{{ store.phone }}</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <template x-if="customerLoggedIn">
+                <button type="button" @click="customerLogout()" class="w-full py-3 rounded-xl border border-rose-200 text-rose-600 text-xs font-bold hover:bg-rose-50 flex items-center justify-center gap-2 transition-colors">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span>Tizimdan chiqish</span>
+                </button>
+            </template>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- INFO MODAL (BIZ HAQIMIZDA / YETKAZIB BERISH / QAYTARISH)      -->
+    <!-- ============================================================= -->
+    <div x-show="infoModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+        <div @click.away="infoModal = null" class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900" x-text="infoModal === 'about' ? 'Biz haqimizda' : (infoModal === 'delivery' ? 'Yetkazib berish shartlari' : (infoModal === 'branches' ? 'Filiallar' : 'Qaytarish va almashtirish shartlari'))"></h3>
+                <button type="button" @click="infoModal = null" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <!-- Content -->
+            <div class="text-xs text-slate-600 leading-relaxed space-y-4">
+                <template x-if="infoModal === 'about'">
+                    <div class="space-y-4">
+                        {% if store.logo %}
+                        <div class="w-full h-32 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
+                            <img src="{{ store.logo.url }}" class="w-full h-full object-cover">
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h4 class="font-black text-sm text-slate-900">{{ store.name }}</h4>
+                            <p class="mt-1 text-slate-600">{{ store.about_us_uz|default:"Bizning do'konimiz mijozlarga eng sifatli va saralangan mahsulotlarni taqdim etadi." }}</p>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 font-semibold">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Ish vaqti:</span>
+                                <span class="text-slate-900 font-bold">Dushanba - Yakshanba: 10:00 - 23:59</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Kontaktlar:</span>
+                                <a href="tel:{{ store.phone|default:'+998778987777' }}" class="text-brand font-bold">{{ store.phone|default:'+998 77 898 77 77' }}</a>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Manzil:</span>
+                                <span class="text-slate-900 font-bold">{{ store.address|default:'Toshkent shahri' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template x-if="infoModal === 'delivery'">
+                    <div class="space-y-3">
+                        <p class="font-bold text-slate-900">Tovarlar butun shahar bo'ylab qisqa vaqt ichida yetkazib beriladi.</p>
+                        <p>{{ store.delivery_terms_uz|default:"Tovarlar buyurtma tasdiqlanganidan so'ng 30-45 daqiqa ichida yetkazib beriladi. Yetkazib berish narxi belgilangan tariflar bo'yicha hisoblanadi." }}</p>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <div class="font-bold text-slate-900">Standart yetkazib berish:</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">{{ store.delivery_price|floatformat:0 }} UZS (Bepul chegara: {{ store.free_delivery_threshold|floatformat:0 }} UZS)</div>
+                        </div>
+                    </div>
+                </template>
+
+                <template x-if="infoModal === 'returns'">
+                    <div class="space-y-3">
+                        <p class="font-bold text-slate-900">Xaridor huquqlari va tovarlarni almashtirish tartibi</p>
+                        <p>{{ store.return_terms_uz|default:"Xaridor tovar sifatsiz chiqqan taqdirda uni qabul qilgandan keyin 24 soat ichida almashtirishi yoki qaytarishi mumkin. Qaytarilgan tovar o'z holatida va to'liq to'plamda bo'lishi lozim." }}</p>
+                    </div>
+                </template>
+
+                <template x-if="infoModal === 'branches'">
+                    <div class="space-y-2">
+                        {% for b in store.branches.all %}
+                        <div class="p-3 rounded-xl border border-slate-100 bg-slate-50">
+                            <div class="font-bold text-slate-900">{{ b.name }}</div>
+                            <div class="text-[11px] text-slate-500">{{ b.address }} · {{ b.working_hours }}</div>
+                        </div>
+                        {% empty %}
+                        <p>{{ store.address|default:'Asosiy filial faoliyat ko\'rsatmoqda' }}</p>
+                        {% endfor %}
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CUSTOMER ORDERS MODAL ("Mening buyurtmalarim" Video 00:37)    -->
+    <!-- ============================================================= -->
+    <div x-show="myOrdersModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="myOrdersModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-4 max-h-[85vh] flex flex-col justify-between overflow-hidden">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-2xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+                        <i data-lucide="package" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-base text-slate-900">Mening buyurtmalarim</h3>
+                        <p class="text-[11px] text-slate-400">Do'kondagi xaridlaringiz tarixi va holati</p>
+                    </div>
+                </div>
+                <button type="button" @click="myOrdersModalOpen = false" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
+            </div>
+
+            <!-- Orders List Container -->
+            <div class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <template x-if="isLoadingOrders">
+                    <div class="py-12 text-center text-slate-400 text-xs">
+                        <div class="inline-block animate-spin mb-2">⏳</div>
+                        <div>Buyurtmalar yuklanmoqda...</div>
+                    </div>
+                </template>
+
+                <template x-if="!isLoadingOrders && customerOrders.length === 0">
+                    <div class="py-12 text-center space-y-3">
+                        <div class="w-16 h-16 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 text-2xl">🛍</div>
+                        <div>
+                            <div class="font-black text-sm text-slate-800">Sizda hali buyurtmalar yo'q</div>
+                            <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Do'konimiz katalogidan sevimli mahsulotlaringizni tanlang va buyurtma bering</p>
+                        </div>
+                        <button type="button" @click="myOrdersModalOpen = false" class="px-5 py-2.5 rounded-xl bg-brand text-white text-xs font-bold shadow-md shadow-brand/20">
+                            Katalogga o'tish
+                        </button>
+                    </div>
+                </template>
+
+                <template x-if="!isLoadingOrders && customerOrders.length > 0">
+                    <div class="space-y-3">
+                        <template x-for="ord in customerOrders" :key="ord.id">
+                            <div class="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition-all space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono font-black text-xs text-slate-900" x-text="'#' + ord.order_number"></span>
+                                        <span class="text-[10px] text-slate-400" x-text="ord.created_at"></span>
+                                    </div>
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black"
+                                          :class="{
+                                              'bg-amber-100 text-amber-800': ord.status === 'NEW',
+                                              'bg-blue-100 text-blue-800': ord.status === 'PROCESSING',
+                                              'bg-cyan-100 text-cyan-800': ord.status === 'READY',
+                                              'bg-purple-100 text-purple-800': ord.status === 'IN_DELIVERY',
+                                              'bg-emerald-100 text-emerald-800': ord.status === 'COMPLETED',
+                                              'bg-rose-100 text-rose-800': ord.status === 'CANCELLED'
+                                          }"
+                                          x-text="ord.status_display">
+                                    </span>
+                                </div>
+
+                                <!-- Items preview -->
+                                <div class="space-y-1 text-xs border-y border-slate-200/60 py-2">
+                                    <template x-for="item in ord.items" :key="item.product_name">
+                                        <div class="flex items-center justify-between text-slate-700">
+                                            <span class="font-medium" x-text="item.product_name + (item.variation_name ? ' (' + item.variation_name + ')' : '') + ' x' + item.quantity"></span>
+                                            <span class="font-mono font-bold text-slate-900" x-text="item.total_price.toLocaleString() + ' UZS'"></span>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Footer: delivery & total -->
+                                <div class="flex items-center justify-between text-xs pt-1">
+                                    <div class="text-[11px] text-slate-500 font-medium">
+                                        <span x-text="ord.delivery_method_display"></span>
+                                        <span x-show="ord.delivery_address" class="text-slate-400" x-text="' (' + ord.delivery_address + ')'"></span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-[10px] text-slate-400 block">Jami summa:</span>
+                                        <span class="font-mono font-black text-sm text-brand" x-text="ord.total_amount.toLocaleString() + ' UZS'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CART DRAWER (Video ikkinchi.mov 00:36)                         -->
+    <!-- ============================================================= -->
+    <div x-show="cartDrawerOpen" x-cloak class="fixed inset-0 z-50 flex justify-end bg-slate-900/50 backdrop-blur-xs">
+        <div @click.away="cartDrawerOpen = false" class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <h3 class="font-black text-base text-slate-900">Savat</h3>
+                    <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold" x-text="cartCount + ' ta'"></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="clearCart()" class="text-xs font-semibold text-rose-500 hover:underline">Tozalash</button>
+                    <button type="button" @click="cartDrawerOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+                </div>
+            </div>
+
+            <!-- Cart items list -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                <template x-if="cartCount === 0">
+                    <div class="py-16 text-center text-slate-400 text-xs">
+                        <div class="w-12 h-12 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 mb-2">🛍</div>
+                        Savatingiz hozircha bo'sh
+                    </div>
+                </template>
+
+                <template x-for="(item, key) in cartItems" :key="key">
+                    <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 bg-slate-50/50">
+                        <div class="w-14 h-14 rounded-xl bg-slate-200 overflow-hidden shrink-0">
+                            <template x-if="item.image">
+                                <img :src="item.image" class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="!item.image">
+                                <div class="w-full h-full flex items-center justify-center text-slate-400 text-xs">📦</div>
+                            </template>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-bold text-xs text-slate-900 truncate" x-text="item.name"></div>
+                            <div class="text-[10px] text-slate-400 font-medium" x-show="item.variation_name" x-text="item.variation_name"></div>
+                            <div class="text-xs font-mono font-bold text-slate-900 mt-1" x-text="item.total_price.toLocaleString() + ' UZS'"></div>
+                        </div>
+                        <!-- Qty counter -->
+                        <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2 py-1 shadow-2xs">
+                            <button type="button" @click="updateCart(key, 'decrement')" class="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-900 font-bold">-</button>
+                            <span class="text-xs font-mono font-bold w-4 text-center" x-text="item.quantity"></span>
+                            <button type="button" @click="updateCart(key, 'increment')" class="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-900 font-bold">+</button>
+                        </div>
+                        <!-- Remove button -->
+                        <button type="button" @click="updateCart(key, 'remove')" class="text-slate-300 hover:text-rose-500 ml-1">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Footer & Checkout link -->
+            <div class="p-4 border-t border-slate-100 bg-slate-50/50 space-y-3">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Jami to'lov:</span>
+                    <span class="font-mono font-black text-base text-brand" x-text="subtotal.toLocaleString() + ' UZS'"></span>
+                </div>
+                <a :href="cartCount > 0 ? '/store/{{ store.subdomain }}/checkout/' : '#'"
+                   :class="cartCount > 0 ? 'bg-brand hover:bg-brand-dark text-white cursor-pointer shadow-md shadow-brand/20' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                   class="block w-full py-3.5 rounded-2xl font-black text-xs text-center transition-all">
+                    To'lovga o'tish
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- WISHLIST MODAL                                                -->
+    <!-- ============================================================= -->
+    <div x-show="wishlistModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+        <div @click.away="wishlistModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 max-h-[80vh] flex flex-col justify-between">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <h3 class="font-black text-base text-slate-900">Sevimmlilar</h3>
+                    <span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs font-bold" x-text="wishlist.length + ' ta'"></span>
+                </div>
+                <button type="button" @click="wishlistModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto space-y-2">
+                <template x-if="wishlist.length === 0">
+                    <div class="py-12 text-center text-slate-400 text-xs">
+                        <div class="w-12 h-12 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 mb-2">❤️</div>
+                        Hozircha sevimli mahsulotlar yo'q
+                    </div>
+                </template>
+                <template x-if="wishlist.length > 0">
+                    <div class="text-xs text-slate-500 py-4 text-center">
+                        Siz tanlagan <span class="font-bold text-slate-900" x-text="wishlist.length"></span> ta mahsulot saqlandi.
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- 5-TAB MOBILE & TMA BOTTOM BAR (Video 00:10-00:58)             -->
+    <!-- ============================================================= -->
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-4 py-2 flex items-center justify-around text-[10px] font-bold text-slate-500 shadow-lg">
+        <!-- 1. Bosh sahifa -->
+        <a href="/store/{{ store.subdomain }}/" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand">
+            <i data-lucide="home" class="w-5 h-5"></i>
+            <span>Bosh sahifa</span>
+        </a>
+
+        <!-- 2. Katalog -->
+        <button type="button" @click="sideDrawerOpen = true" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand">
+            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+            <span>Katalog</span>
+        </button>
+
+        <!-- 3. Savat -->
+        <button type="button" @click="cartDrawerOpen = true" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand relative">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            <span>Savat</span>
+            <span x-show="cartCount > 0" class="absolute -top-1 right-1 w-4 h-4 rounded-full bg-brand text-white text-[9px] font-black flex items-center justify-center" x-text="cartCount"></span>
+        </button>
+
+        <!-- 4. Sevimmlilar -->
+        <button type="button" @click="wishlistModalOpen = true" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand relative">
+            <i data-lucide="heart" class="w-5 h-5"></i>
+            <span>Sevimmlilar</span>
+            <span x-show="wishlist.length > 0" class="absolute -top-1 right-2 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center" x-text="wishlist.length"></span>
+        </button>
+
+        <!-- 5. Profil -->
+        <button type="button" @click="profileDrawerOpen = true" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand">
+            <i data-lucide="user" class="w-5 h-5"></i>
+            <span>Profil</span>
+        </button>
+    </nav>
+
+    <script>
+        function storefrontApp() {
+            const initialPhone = '{{ request.session.customer_phone|default:"" }}' || localStorage.getItem('sb_cust_phone_{{ store.id }}') || '';
+            const initialName = '{{ request.session.customer_name|default:"" }}' || localStorage.getItem('sb_cust_name_{{ store.id }}') || '';
+
+            return {
+                cartCount: Number('{{ cart_count|default:0 }}'),
+                subtotal: Number('{{ cart_subtotal|default:0 }}'),
+                cartItems: JSON.parse('{{ cart_json|escapejs }}' || '{}'),
+                wishlist: JSON.parse(localStorage.getItem('store_wishlist_{{ store.id }}') || '[]'),
+                
+                customerLoggedIn: Boolean(initialPhone),
+                customerName: initialName,
+                customerPhone: initialPhone,
+                customerOrders: [],
+                ordersCount: 0,
+                isLoadingOrders: false,
+                myOrdersModalOpen: false,
+
+                loginModalOpen: false,
+                loginStep: 1,
+                customerPhoneInput: initialPhone || '+998 ',
+                customerNameInput: initialName || '',
+                profileDrawerOpen: false,
+                sideDrawerOpen: false,
+                cartDrawerOpen: false,
+                wishlistModalOpen: false,
+                infoModal: null,
+
+                toggleWishlist(productId) {
+                    const idx = this.wishlist.indexOf(productId);
+                    if (idx > -1) {
+                        this.wishlist.splice(idx, 1);
+                    } else {
+                        this.wishlist.push(productId);
+                    }
+                    localStorage.setItem('store_wishlist_{{ store.id }}', JSON.stringify(this.wishlist));
+                },
+
+                isInWishlist(productId) {
+                    return this.wishlist.includes(productId);
+                },
+
+                openMyOrders() {
+                    this.myOrdersModalOpen = true;
+                    this.profileDrawerOpen = false;
+                    if (this.customerPhone) {
+                        this.fetchOrders();
+                    }
+                },
+
+                fetchOrders() {
+                    if (!this.customerPhone) return;
+                    this.isLoadingOrders = true;
+                    fetch('/store/{{ store.subdomain }}/api/customer/orders/?phone=' + encodeURIComponent(this.customerPhone))
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                this.customerOrders = data.orders || [];
+                                this.ordersCount = data.count || 0;
+                            }
+                            this.isLoadingOrders = false;
+                        })
+                        .catch(() => {
+                            this.isLoadingOrders = false;
+                        });
+                },
+
+                loginCustomer() {
+                    if (!this.customerPhoneInput || this.customerPhoneInput.length < 9) {
+                        alert("Iltimos, to'liq telefon raqamingizni kiriting");
+                        return;
+                    }
+
+                    fetch('/store/{{ store.subdomain }}/api/customer/login/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify({
+                            phone: this.customerPhoneInput,
+                            name: this.customerNameInput
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.customerLoggedIn = true;
+                            this.customerPhone = data.customer.phone;
+                            this.customerName = data.customer.name;
+                            this.ordersCount = data.customer.orders_count;
+                            localStorage.setItem('sb_cust_phone_{{ store.id }}', this.customerPhone);
+                            localStorage.setItem('sb_cust_name_{{ store.id }}', this.customerName);
+                            this.fetchOrders();
+                        } else {
+                            alert(data.error || "Xatolik yuz berdi");
+                        }
+                    });
+                },
+
+                customerLogout() {
+                    fetch('/store/{{ store.subdomain }}/api/customer/logout/', {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    }).finally(() => {
+                        this.customerLoggedIn = false;
+                        this.customerPhone = '';
+                        this.customerName = '';
+                        this.customerOrders = [];
+                        this.ordersCount = 0;
+                        localStorage.removeItem('sb_cust_phone_{{ store.id }}');
+                        localStorage.removeItem('sb_cust_name_{{ store.id }}');
+                        this.profileDrawerOpen = false;
+                    });
+                },
+
+                proceedToNameStep() {
+                    if (this.customerPhoneInput.length > 5) {
+                        this.loginStep = 2;
+                    }
+                },
+
+                finishCustomerLogin() {
+                    this.customerLoggedIn = true;
+                    this.customerName = this.customerNameInput || 'Mijoz';
+                    this.customerPhone = this.customerPhoneInput;
+                    localStorage.setItem('sb_cust_phone_{{ store.id }}', this.customerPhone);
+                    localStorage.setItem('sb_cust_name_{{ store.id }}', this.customerName);
+                    this.loginModalOpen = false;
+                },
+
+                updateCart(key, action) {
+                    fetch('/cart/update/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify({ item_key: key, action: action })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.cartCount = data.cart_count;
+                            this.subtotal = data.subtotal;
+                            this.cartItems = data.cart;
+                        }
+                    });
+                },
+
+                clearCart() {
+                    fetch('/cart/clear/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.cartCount = 0;
+                            this.subtotal = 0;
+                            this.cartItems = {};
+                        }
+                    });
+                },
+
+                init() {
+                    if (this.customerPhone) {
+                        this.fetchOrders();
+                    }
+                    // Auto-open orders if url has open_orders=1
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('open_orders') === '1') {
+                        this.openMyOrders();
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

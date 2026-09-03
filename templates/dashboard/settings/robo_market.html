@@ -1,0 +1,130 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="marketApp()">
+    <div>
+        <h1 class="text-xl font-black text-slate-900 tracking-tight">StoreBox Market</h1>
+        <p class="text-xs text-slate-500 mt-1">POS-tizimlar, omborxona, yetkazib berish xizmatlari va to'lov tizimlari integratsiyalari</p>
+    </div>
+
+    <!-- Filter Tabs (Video 10:07) -->
+    <div class="flex gap-2 overflow-x-auto pb-1 border-b border-slate-200 text-xs font-bold">
+        <button type="button" @click="activeTab = 'all'" :class="activeTab === 'all' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">Barchasi</button>
+        <button type="button" @click="activeTab = 'pos'" :class="activeTab === 'pos' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">POS tizimlari</button>
+        <button type="button" @click="activeTab = 'warehouse'" :class="activeTab === 'warehouse' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">Omborxona</button>
+        <button type="button" @click="activeTab = 'delivery'" :class="activeTab === 'delivery' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">Yetkazib berish</button>
+        <button type="button" @click="activeTab = 'payments'" :class="activeTab === 'payments' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">To'lov tizimlari</button>
+        <button type="button" @click="activeTab = 'crm'" :class="activeTab === 'crm' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">CRM tizimlari</button>
+    </div>
+
+    <!-- Integration Cards Grid -->
+    <div class="space-y-6">
+        <!-- POS Tizimlari -->
+        <div x-show="activeTab === 'all' || activeTab === 'pos'" class="space-y-3">
+            <h3 class="font-bold text-xs text-slate-500 uppercase tracking-wider">POS tizimlari</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                <template x-for="item in posList" :key="item.name">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+                        <div>
+                            <div class="font-black text-sm text-slate-900" x-text="item.name"></div>
+                            <div class="text-[10px] text-amber-500 font-bold" x-text="'⭐ ' + item.rating"></div>
+                        </div>
+                        <button type="button" @click="openModal(item.name)" class="mt-4 w-full py-1.5 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-50">Ochish</button>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Omborxona -->
+        <div x-show="activeTab === 'all' || activeTab === 'warehouse'" class="space-y-3">
+            <h3 class="font-bold text-xs text-slate-500 uppercase tracking-wider">Omborxona</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                <template x-for="item in whList" :key="item.name">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+                        <div>
+                            <div class="font-black text-sm text-slate-900" x-text="item.name"></div>
+                            <div class="text-[10px] text-amber-500 font-bold" x-text="'⭐ ' + item.rating"></div>
+                        </div>
+                        <button type="button" @click="openModal(item.name)" class="mt-4 w-full py-1.5 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-50">Ochish</button>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Yetkazib berish -->
+        <div x-show="activeTab === 'all' || activeTab === 'delivery'" class="space-y-3">
+            <h3 class="font-bold text-xs text-slate-500 uppercase tracking-wider">Yetkazib berish</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                <template x-for="item in delList" :key="item.name">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+                        <div>
+                            <div class="font-black text-sm text-slate-900" x-text="item.name"></div>
+                            <div class="text-[10px] text-amber-500 font-bold" x-text="'⭐ ' + item.rating"></div>
+                        </div>
+                        <button type="button" @click="openModal(item.name)" class="mt-4 w-full py-1.5 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-50">Ochish</button>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONNECTION MODAL -->
+    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="modalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900" x-text="selectedApp + ' bilan integratsiya'"></h3>
+                <button type="button" @click="modalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">API kaliti yoki server manzili *</label>
+                    <input type="password" placeholder="api_key_..." class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Do'kon identifikatori (Store ID)</label>
+                    <input type="text" value="{{ store.subdomain }}" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono" readonly>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" @click="modalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                <button type="button" @click="modalOpen = false; showToast(selectedApp + ' muvaffaqiyatli ulandi!')" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Faollashtirish</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function marketApp() {
+        return {
+            activeTab: 'all',
+            modalOpen: false,
+            selectedApp: '',
+
+            posList: [
+                { name: 'iiko', rating: '5.0' },
+                { name: 'Poster', rating: '5.0' },
+                { name: 'Jowi', rating: '5.0' },
+                { name: 'Clopos', rating: '5.0' },
+                { name: 'Allpos', rating: '5.0' }
+            ],
+            whList: [
+                { name: '1C: Korxona', rating: '5.0' },
+                { name: 'Bito', rating: '5.0' },
+                { name: 'MoySklad', rating: '5.0' }
+            ],
+            delList: [
+                { name: 'Uzpost', rating: '5.0' },
+                { name: 'Yandex Delivery', rating: '5.0' },
+                { name: 'Fargo', rating: '5.0' },
+                { name: 'BTS Express', rating: '5.0' },
+                { name: 'Noor Delivery', rating: '5.0' }
+            ],
+
+            openModal(name) {
+                this.selectedApp = name;
+                this.modalOpen = true;
+            }
+        }
+    }
+</script>
+{% endblock %}

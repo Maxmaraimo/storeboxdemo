@@ -1,0 +1,210 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Filiallar — StoreBox{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="branchesApp()">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Filiallar ro'yxati</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Olib ketish va yetkazib berish punktlari</p>
+        </div>
+
+        <button type="button" @click="openAddBranch()" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Filial qo'shish</span>
+        </button>
+    </div>
+
+    <!-- Branches Table (Video 09:49) -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                    <tr>
+                        <th class="py-3.5 px-4">Filial nomi</th>
+                        <th class="py-3.5 px-4">Manzil</th>
+                        <th class="py-3.5 px-4">Telefon</th>
+                        <th class="py-3.5 px-4">Ish vaqti</th>
+                        <th class="py-3.5 px-4">Holat</th>
+                        <th class="py-3.5 px-4 text-right">Harakat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-semibold text-slate-700" id="branches-tbody">
+                    {% for b in branches %}
+                    <tr id="branch-row-{{ b.id }}" class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-4">
+                            <div class="font-bold text-slate-900">{{ b.name }}</div>
+                            {% if b.is_main %}<span class="text-[10px] text-emerald-600 font-bold">Asosiy filial</span>{% endif %}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate">
+                            {{ b.address }}
+                        </td>
+                        <td class="py-3.5 px-4 font-mono text-slate-600">
+                            {{ b.phone }}
+                        </td>
+                        <td class="py-3.5 px-4 font-mono text-[11px] text-slate-500">
+                            {{ b.working_hours }}
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black {% if b.is_active %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-slate-100 text-slate-500{% endif %}">
+                                {% if b.is_active %}Faol{% else %}Nofaol{% endif %}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right space-x-2">
+                            <button type="button" @click="deleteBranch('{{ b.id }}')" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-12 text-center text-slate-400">
+                            Filiallar mavjud emas
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ADD BRANCH MODAL WITH LEAFLET MAP -->
+    <div x-show="addModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="addModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900">Yangi filial qo'shish</h3>
+                <button type="button" @click="addModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Filial nomi *</label>
+                    <input type="text" x-model="branchName" placeholder="Masalan: Yunusobod filiali" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Manzil *</label>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" x-model="branchAddress" placeholder="Toshkent, Amir Temur shoh ko'chasi, 12" class="flex-1 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                        <button type="button" @click="searchAddress()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">Qidirish</button>
+                    </div>
+                    <div id="branchModalMap" class="w-full h-44 rounded-xl border border-slate-200 bg-slate-100"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Telefon</label>
+                        <input type="text" x-model="branchPhone" placeholder="+998 71 200 00 00" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Ish vaqti</label>
+                        <input type="text" x-model="branchHours" placeholder="09:00 - 23:00" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" @click="addModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                <button type="button" @click="saveBranch()" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Saqlash</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function branchesApp() {
+        return {
+            addModalOpen: false,
+            branchName: '',
+            branchAddress: "Toshkent, Amir Temur ko'chasi",
+            branchPhone: '+998 71 200 11 22',
+            branchHours: '09:00 - 23:00',
+            branchLat: 41.3111,
+            branchLng: 69.2797,
+            mapInstance: null,
+            markerInstance: null,
+
+            openAddBranch() {
+                this.addModalOpen = true;
+                setTimeout(() => {
+                    if (!this.mapInstance) {
+                        this.mapInstance = L.map('branchModalMap').setView([this.branchLat, this.branchLng], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.mapInstance);
+                        this.markerInstance = L.marker([this.branchLat, this.branchLng], { draggable: true }).addTo(this.mapInstance);
+                        this.markerInstance.on('dragend', (e) => {
+                            const pos = e.target.getLatLng();
+                            this.branchLat = pos.lat;
+                            this.branchLng = pos.lng;
+                        });
+                    } else {
+                        this.mapInstance.invalidateSize();
+                    }
+                }, 200);
+            },
+
+            searchAddress() {
+                if (!this.branchAddress) return;
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.branchAddress)}&countrycodes=uz`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            const lat = parseFloat(data[0].lat);
+                            const lon = parseFloat(data[0].lon);
+                            this.branchLat = lat;
+                            this.branchLng = lon;
+                            this.mapInstance.setView([lat, lon], 15);
+                            this.markerInstance.setLatLng([lat, lon]);
+                        }
+                    });
+            },
+
+            saveBranch() {
+                if (!this.branchName.trim()) { alert('Filial nomini kiriting'); return; }
+                const fd = new FormData();
+                fd.append('action', 'create');
+                fd.append('name', this.branchName);
+                fd.append('address', this.branchAddress);
+                fd.append('phone', this.branchPhone);
+                fd.append('working_hours', this.branchHours);
+                fd.append('lat', this.branchLat);
+                fd.append('lng', this.branchLng);
+
+                fetch('/dashboard/api/branch-action/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.addModalOpen = false;
+                    showToast("Filial muvaffaqiyatli qo'shildi!");
+                    // Seamless refresh
+                    spaNavigate('/dashboard/settings/branches/', false);
+                });
+            },
+
+            deleteBranch(id) {
+                if (!confirm("Ushbu filialni o'chirmoqchimisiz?")) return;
+                const fd = new FormData();
+                fd.append('action', 'delete');
+                fd.append('branch_id', id);
+
+                fetch('/dashboard/api/branch-action/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    const row = document.getElementById(`branch-row-${id}`);
+                    if (row) row.remove();
+                    showToast("Filial o'chirildi!");
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

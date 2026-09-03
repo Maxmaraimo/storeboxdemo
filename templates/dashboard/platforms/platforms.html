@@ -1,0 +1,615 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block extra_head %}
+<!-- QRious for high-resolution canvas QR generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        #printableTableTent, #printableTableTent * { visibility: visible; }
+        #printableTableTent {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: none !important;
+            border: 2px solid #cbd5e1 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="qrDesigner()">
+
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-black text-slate-900 tracking-tight">Platformalar va QR katalog</h1>
+            <p class="text-xs text-slate-500 mt-1">Stollar uchun dizaynerlik QR-menyusi va Telegram-bot integratsiyasi</p>
+        </div>
+        
+        <!-- Tabs: QR katalog vs Telegram bot vs Veb-sayt -->
+        <div class="flex gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold">
+            <button type="button" @click="activeTab = 'qr'" :class="activeTab === 'qr' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'" class="px-4 py-2 rounded-xl">QR katalog</button>
+            <button type="button" @click="activeTab = 'telegram'" :class="activeTab === 'telegram' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'" class="px-4 py-2 rounded-xl">Telegram bot</button>
+            <button type="button" @click="activeTab = 'website'" :class="activeTab === 'website' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'" class="px-4 py-2 rounded-xl">Veb-sayt</button>
+        </div>
+    </div>
+
+    {% if msg %}
+    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+        <span>{{ msg }}</span>
+    </div>
+    {% endif %}
+
+    <!-- ============================================================= -->
+    <!-- TAB 1: QR KATALOG (Video 09:24 - 09:39)                       -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'qr'" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Left: Designer Controls -->
+        <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-6">
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_qr">
+                <input type="hidden" name="qr_paper_size" x-model="paperSize">
+                <input type="hidden" name="qr_bg_color" x-model="bgColor">
+                <input type="hidden" name="qr_code_color" x-model="qrColor">
+                <input type="hidden" name="qr_main_text" x-model="mainText">
+                <input type="hidden" name="qr_main_text_size" x-model="mainTextSize">
+                <input type="hidden" name="qr_main_text_color" x-model="mainTextColor">
+                <input type="hidden" name="qr_sub_text" x-model="subText">
+                <input type="hidden" name="qr_sub_text_size" x-model="subTextSize">
+                <input type="hidden" name="qr_sub_text_color" x-model="subTextColor">
+
+                <!-- 1. Banner hajmi -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">Banner hajmi</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" @click="paperSize = 'A5'"
+                                class="p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2"
+                                :class="paperSize === 'A5' ? 'border-brand bg-brand/5 text-slate-900 font-black' : 'border-slate-200 text-slate-600'">
+                            <i data-lucide="file-text" class="w-4 h-4 text-brand"></i>
+                            <span>A5 qog'oz</span>
+                        </button>
+                        <button type="button" @click="paperSize = 'A6'"
+                                class="p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2"
+                                :class="paperSize === 'A6' ? 'border-brand bg-brand/5 text-slate-900 font-black' : 'border-slate-200 text-slate-600'">
+                            <i data-lucide="file" class="w-4 h-4 text-brand"></i>
+                            <span>A6 qog'oz</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Fon rangi (Palette Swatches from Video 09:27) -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">Fon rangi</label>
+                    <div class="flex flex-wrap gap-2.5 items-center">
+                        <template x-for="c in bgPalette" :key="c">
+                            <button type="button" @click="bgColor = c"
+                                    class="w-8 h-8 rounded-xl border transition-all"
+                                    :style="'background-color: ' + c"
+                                    :class="bgColor === c ? 'ring-2 ring-brand ring-offset-2 scale-105 border-transparent' : 'border-slate-300'"></button>
+                        </template>
+                        <!-- Custom color picker -->
+                        <div class="flex items-center gap-1.5 ml-2">
+                            <input type="color" x-model="bgColor" class="w-8 h-8 rounded-lg cursor-pointer border border-slate-200">
+                            <span class="text-[11px] text-slate-400 font-bold">Maxsus</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. QR kod rangi (Palette Swatches from Video 09:30) -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">QR kod rangi</label>
+                    <div class="flex flex-wrap gap-2.5 items-center">
+                        <template x-for="c in qrPalette" :key="c">
+                            <button type="button" @click="qrColor = c; drawQR();"
+                                    class="w-8 h-8 rounded-xl border transition-all"
+                                    :style="'background-color: ' + c"
+                                    :class="qrColor === c ? 'ring-2 ring-brand ring-offset-2 scale-105 border-transparent' : 'border-slate-300'"></button>
+                        </template>
+                        <div class="flex items-center gap-1.5 ml-2">
+                            <input type="color" x-model="qrColor" @input="drawQR()" class="w-8 h-8 rounded-lg cursor-pointer border border-slate-200">
+                            <span class="text-[11px] text-slate-400 font-bold">Maxsus</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Asosiy matn -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Asosiy matn</label>
+                        <input type="text" x-model="mainText" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Matn hajmi</label>
+                        <input type="number" x-model="mainTextSize" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-center">
+                    </div>
+                </div>
+
+                <!-- 5. Ikkilamchi matn -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Ikkilamchi matn</label>
+                        <input type="text" x-model="subText" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Matn hajmi</label>
+                        <input type="number" x-model="subTextSize" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-center">
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20">
+                    Saqlash
+                </button>
+            </form>
+        </div>
+
+        <!-- Right: Live Table-Tent Preview Card (Video 09:25) -->
+        <div class="lg:col-span-5 flex flex-col items-center space-y-4">
+            <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Jonli ko'rish</div>
+
+            <!-- Table Tent Card (printable container) -->
+            <div id="printableTableTent"
+                 class="w-[300px] rounded-3xl p-6 flex flex-col items-center justify-between text-center shadow-xl border border-slate-200 transition-colors"
+                 :style="'background-color: ' + bgColor + '; min-height: 420px; color: ' + (bgColor === '#FFFFFF' ? '#0f172a' : '#ffffff')">
+                
+                <!-- Logo at Top -->
+                <div class="flex items-center gap-2 mb-4">
+                    {% if store.logo %}
+                    <img src="{{ store.logo.url }}" class="w-10 h-10 rounded-xl object-cover border border-black/10">
+                    {% else %}
+                    <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-sm">
+                        {{ store.name|slice:":1" }}
+                    </div>
+                    {% endif %}
+                    <span class="font-black text-xs">{{ store.name }}</span>
+                </div>
+
+                <!-- Main Headline -->
+                <div class="font-black tracking-tight"
+                     :style="'font-size: ' + mainTextSize + 'px; color: ' + (bgColor === '#FFFFFF' ? mainTextColor : '#FFFFFF')"
+                     x-text="mainText"></div>
+
+                <!-- Crisp Canvas QR Code -->
+                <div class="my-4 p-3 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
+                    <canvas id="qrCanvas" class="w-44 h-44"></canvas>
+                </div>
+
+                <!-- Subtext -->
+                <div class="leading-snug"
+                     :style="'font-size: ' + subTextSize + 'px; color: ' + (bgColor === '#FFFFFF' ? subTextColor : '#E2E8F0')"
+                     x-text="subText"></div>
+            </div>
+
+            <!-- Action Buttons (Video 09:25) -->
+            <div class="flex gap-3 w-[300px]">
+                <button type="button" @click="downloadTentImage()" class="flex-1 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-xs flex items-center justify-center gap-1.5">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Yuklab olish</span>
+                </button>
+                <button type="button" @click="window.print()" class="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>Chop etish</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- TAB 2: TELEGRAM BOT INTEGRATION (Video birinchi.mov 05:20-07:15) -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'telegram'" x-cloak class="space-y-6" x-data="{ tgSubTab: 'settings' }">
+        <!-- Connected Bot Card -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-bold text-lg">
+                    <i data-lucide="bot" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-black text-base text-slate-900">@{{ store.telegram_bot_username|default:"storebox_bot" }}</h3>
+                        {% if store.telegram_bot_token %}
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Faol</span>
+                        </span>
+                        {% else %}
+                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold">Ulanmagan</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">Yaratilgan: {{ store.created_at|date:"H:i, M d, Y" }}</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-xs font-bold">
+                {% if store.telegram_bot_username %}
+                <a href="https://t.me/{{ store.telegram_bot_username }}" target="_blank" class="px-4 py-2 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white flex items-center gap-2 shadow-xs transition-colors">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span>Botni ochish</span>
+                </a>
+                {% endif %}
+                <div class="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+                    <div class="text-slate-400 text-[10px]">Mijozlar</div>
+                    <div class="text-slate-900 font-black">{{ store.customers.count|default:1 }}</div>
+                </div>
+                <div class="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+                    <div class="text-slate-400 text-[10px]">Buyurtmalar soni</div>
+                    <div class="text-slate-900 font-black">{{ store.orders.count|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Telegram Sub Tabs -->
+        <div class="flex gap-2 border-b border-slate-200 text-xs font-bold pb-2">
+            <button type="button" @click="tgSubTab = 'settings'" :class="tgSubTab === 'settings' ? 'text-brand border-b-2 border-brand pb-2' : 'text-slate-500 hover:text-slate-800'">Bot sozlamalari</button>
+            <button type="button" @click="tgSubTab = 'actions'" :class="tgSubTab === 'actions' ? 'text-brand border-b-2 border-brand pb-2' : 'text-slate-500 hover:text-slate-800'">Amallar</button>
+            <button type="button" @click="tgSubTab = 'qr'" :class="tgSubTab === 'qr' ? 'text-brand border-b-2 border-brand pb-2' : 'text-slate-500 hover:text-slate-800'">QR kod</button>
+        </div>
+
+        <!-- Sub Tab 1: Bot Sozlamalari -->
+        <div x-show="tgSubTab === 'settings'" class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-6 max-w-3xl">
+            <!-- Instruction Box -->
+            <div class="p-4 rounded-2xl bg-sky-50/70 border border-sky-100 text-xs space-y-2 text-slate-700">
+                <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
+                    <i data-lucide="info" class="w-4 h-4 text-sky-600"></i>
+                    <span>Buyurtmalarni Telegram guruhiga yo'naltirish</span>
+                </h4>
+                <p class="text-[11px] text-slate-600">Do'koningizdan yangi buyurtmalar haqidagi bildirishnomalar ma'lum bir telegram guruhiga yuborilishini istasangiz, quyidagi amallarni bajaring:</p>
+                <ol class="list-decimal pl-4 space-y-1 text-[11px] text-slate-600 font-medium">
+                    <li>Botingizni kerakli guruhga qo'shing va administrator huquqlarini bering.</li>
+                    <li>Guruh chat ID sini quyidagi maydonga kiriting yoki xabarlarni ulang.</li>
+                    <li>Bot bildirishnomalarni guruhga avtomatik tarzda yetkazadi.</li>
+                </ol>
+            </div>
+
+            <!-- Bot Form -->
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_telegram">
+
+                <!-- Active WebApp URL Display -->
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-slate-400 text-[10px] font-bold block uppercase tracking-wider">Telegram Web App (TMA) URL</span>
+                        <span class="font-mono text-brand font-black text-xs break-all">{{ web_app_url }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a href="{{ web_app_url }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-xs inline-flex items-center gap-1 shadow-2xs">
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                            <span>Vebda ochish</span>
+                        </a>
+                        <button type="button" @click="navigator.clipboard.writeText('{{ web_app_url }}'); alert('Nusxalandi!')" class="px-3 py-1.5 rounded-xl bg-brand text-white font-bold text-xs inline-flex items-center gap-1 shadow-2xs">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Nusxa olish</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Bot Token</label>
+                        <input type="text" name="telegram_bot_token" value="{{ store.telegram_bot_token|default:'' }}" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+                               class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                        <span class="text-[10px] text-slate-400 block mt-1">@BotFather bergan tokenni kiriting. Tizim bot nomini avtomatik aniqlaydi.</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Telegram Chat ID</label>
+                        <input type="text" name="telegram_chat_id" value="{{ store.telegram_chat_id|default:'' }}" placeholder="-100123456789 yoki shaxsiy ID"
+                               class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                        <span class="text-[10px] text-slate-400 block mt-1">Guruh yoki shaxsiy chat ID. Botga /id deb yozsangiz ham avtomatik ulanadi.</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Bot Username (@ siz)</label>
+                        <input type="text" name="telegram_bot_username" value="{{ store.telegram_bot_username|default:'' }}" placeholder="do'kon_nomi_bot"
+                               class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Tugma nomi (Menu Button)</label>
+                        <input type="text" name="telegram_button_name" value="{{ store.telegram_button_name|default:'Do\'kon' }}" placeholder="Do'kon"
+                               class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Boshlang'ich matn (Welcome message)</label>
+                    <textarea name="telegram_welcome_message" rows="3" placeholder="Assalomu alaykum {user}! {bot} do'konimizga xush kelibsiz!..."
+                              class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand leading-relaxed">{{ store.telegram_welcome_message|default:'' }}</textarea>
+                    <span class="text-[10px] text-slate-400 block mt-1">Qo'llab-quvvatlanadigan o'zgaruvchilar: <code>{user}</code> (foydalanuvchi ismi), <code>{bot}</code> (do'kon nomi)</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button type="submit" class="flex-1 py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-md shadow-brand/20 transition-all">
+                        O'zgarishlarni saqlash
+                    </button>
+                </div>
+            </form>
+
+            <!-- TMA Actions -->
+            <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-3">
+                <form method="POST" class="inline-block">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="setup_tma_menu">
+                    <button type="submit" class="px-4 py-2.5 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-bold flex items-center gap-2 transition-colors">
+                        <i data-lucide="smartphone" class="w-4 h-4"></i>
+                        <span>TMA Menyu tugmasini sozlash</span>
+                    </button>
+                </form>
+
+                <form method="POST" class="inline-block">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="test_bot">
+                    <button type="submit" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-2 transition-colors">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>Aloqani tekshirish</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sub Tab 2: Amallar (Actions) -->
+        <div x-show="tgSubTab === 'actions'" x-cloak class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-4 max-w-3xl">
+            <h3 class="font-black text-base text-slate-900">Bot amallari va buyruqlari</h3>
+            <p class="text-xs text-slate-500">Xaridorlar botga kirganda taqdim etiladigan asosiy buyruqlar va Web App interfeyslari:</p>
+            <div class="divide-y divide-slate-100 text-xs">
+                <div class="py-3 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-slate-900">🛍 {{ store.telegram_button_name|default:"Do'kon" }} / Menyu (TMA)</div>
+                        <div class="text-[11px] text-slate-400">Do'koningiz to'liq katalogini Telegram ichidagi oyna (TMA) orqali ochadi</div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">Faol</span>
+                </div>
+                <div class="py-3 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-slate-900">🌐 Tilni o'zgartirish</div>
+                        <div class="text-[11px] text-slate-400">Xaridorlar uchun O'zbek, Rus va Ingliz tillarini tanlash menyusi</div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">Faol</span>
+                </div>
+                <div class="py-3 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-slate-900">💬 Chat</div>
+                        <div class="text-[11px] text-slate-400">Xaridorlardan to'g'ridan-to'g'ri xabarlar va savollarni qabul qilish</div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">Faol</span>
+                </div>
+                <div class="py-3 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-slate-900">📦 Buyurtmalarim</div>
+                        <div class="text-[11px] text-slate-400">Xaridorning do'kondagi joriy va o'tgan buyurtmalari ro'yxati</div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">Faol</span>
+                </div>
+                <div class="py-3 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-slate-900">ℹ️ Biz haqimizda</div>
+                        <div class="text-[11px] text-slate-400">Do'kon tavsifi, ish vaqti, telefon va manzili</div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">Faol</span>
+                </div>
+                <div class="py-3 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-slate-900">📞 Kontaktlar</div>
+                        <div class="text-[11px] text-slate-400">Do'kon telefon raqami va manzili</div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">Faol</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub Tab 3: Bot QR Kod -->
+        <div x-show="tgSubTab === 'qr'" x-cloak class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs max-w-3xl space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-black text-base text-slate-900">Telegram bot QR kodi</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Xaridorlar kamerani yo'naltirib to'g'ridan-to'g'ri botingizga o'tishadi</p>
+                </div>
+                <button type="button" @click="window.print()" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center gap-2">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>Chop etish</span>
+                </button>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center gap-4">
+                <canvas id="tgQrCanvas" width="220" height="220" class="rounded-xl bg-white p-2 shadow-sm"></canvas>
+                <div class="text-center">
+                    <div class="font-mono font-bold text-xs text-slate-700">{{ bot_link }}</div>
+                    <a href="{{ bot_link }}" target="_blank" class="text-brand font-bold text-xs hover:underline mt-1 inline-block">Telegramda ochish</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- TAB 3: VEB-SAYT SUB-TABS (Video birinchi.mov 07:15 - 07:46)   -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'website'" x-cloak class="space-y-6" x-data="{ siteSubTab: 'general' }">
+        <div class="flex gap-2 border-b border-slate-200 text-xs font-bold pb-2">
+            <button type="button" @click="siteSubTab = 'general'" :class="siteSubTab === 'general' ? 'text-brand border-b-2 border-brand pb-2' : 'text-slate-500 hover:text-slate-800'">Asosiy</button>
+            <button type="button" @click="siteSubTab = 'analytics'" :class="siteSubTab === 'analytics' ? 'text-brand border-b-2 border-brand pb-2' : 'text-slate-500 hover:text-slate-800'">Analitika</button>
+            <button type="button" @click="siteSubTab = 'domain'" :class="siteSubTab === 'domain' ? 'text-brand border-b-2 border-brand pb-2' : 'text-slate-500 hover:text-slate-800'">Domen</button>
+            <button type="button" @click="siteSubTab = 'qr'" :class="siteSubTab === 'qr' ? 'text-brand border-b-2 border-brand pb-2' : 'text-slate-500 hover:text-slate-800'">QR kod</button>
+        </div>
+
+        <!-- 1. Asosiy -->
+        <div x-show="siteSubTab === 'general'" class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs max-w-2xl space-y-4">
+            <h3 class="font-black text-base text-slate-900">Veb-sayt asosiy ma'lumotlari</h3>
+            <form method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_website">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Favicon qo'shish (Veb-sayt belgisi)</label>
+                    <input type="file" name="favicon" accept="image/*" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Sayt nomi</label>
+                    <input type="text" name="site_name" value="{{ store.name }}" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Ta'rif (SEO tavsifi)</label>
+                    <textarea name="seo_description" rows="3" placeholder="Saytingiz haqida tavsifni kiriting" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800">{{ store.seo_description|default:'' }}</textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs">
+                        Yuborish (Saqlash)
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 2. Analitika -->
+        <div x-show="siteSubTab === 'analytics'" x-cloak class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs max-w-2xl space-y-4">
+            <h3 class="font-black text-base text-slate-900">Analitika va piksellar</h3>
+            <form method="POST" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_analytics">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Google Analytics ID</label>
+                    <input type="text" name="google_analytics_id" value="{{ store.google_analytics_id|default:'' }}" placeholder="G-XXXXXXXXXX" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Google Tag Manager ID</label>
+                    <input type="text" name="google_tag_manager_id" value="{{ store.google_tag_manager_id|default:'' }}" placeholder="GTM-XXXXXXX" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Facebook Pixel ID</label>
+                    <input type="text" name="facebook_pixel_id" value="{{ store.facebook_pixel_id|default:'' }}" placeholder="123456789012345" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Yandex Metrika ID</label>
+                    <input type="text" name="yandex_metrika_id" value="{{ store.yandex_metrika_id|default:'' }}" placeholder="12345678" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs">
+                        Yuborish (Saqlash)
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 3. Domen -->
+        <div x-show="siteSubTab === 'domain'" x-cloak class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs max-w-2xl space-y-4" x-data="{ hasCustomDomain: {% if store.custom_domain %}true{% else %}false{% endif %} }">
+            <h3 class="font-black text-base text-slate-900">Domen sozlamalari</h3>
+            <form method="POST" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_domain">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2">Sizning shaxsiy domeningiz bormi?</label>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="domain_choice" :checked="!hasCustomDomain" @change="hasCustomDomain = false" class="text-brand focus:ring-brand">
+                            <span class="font-bold">Yo'q</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="domain_choice" :checked="hasCustomDomain" @change="hasCustomDomain = true" class="text-brand focus:ring-brand">
+                            <span class="font-bold">Menda bor</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div x-show="!hasCustomDomain" class="space-y-2">
+                    <label class="block font-bold text-slate-700">Sub-domen</label>
+                    <div class="flex items-center">
+                        <input type="text" name="subdomain" value="{{ store.subdomain }}" class="w-full px-4 py-2.5 rounded-l-xl bg-slate-50 border border-r-0 border-slate-200 text-xs font-mono font-bold">
+                        <span class="px-4 py-2.5 rounded-r-xl bg-slate-100 border border-slate-200 text-xs font-mono text-slate-500">.storebox.uz</span>
+                    </div>
+                </div>
+
+                <div x-show="hasCustomDomain" class="space-y-3" x-cloak>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Shaxsiy domen (masalan: store.uz)</label>
+                        <input type="text" name="custom_domain" value="{{ store.custom_domain|default:'' }}" placeholder="myshop.uz" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800 space-y-1">
+                        <div class="font-bold">DNS sozlamasi:</div>
+                        <p>Domeningiz DNS sozlamalariga kirib, <b>A-yozuv (A-record)</b> qiymatini server IP manziliga yo'naltiring: <code class="font-mono font-bold">127.0.0.1</code></p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs">
+                        Saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. QR Kod (Veb-sayt) -->
+        <div x-show="siteSubTab === 'qr'" x-cloak class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs max-w-2xl space-y-4">
+            <h3 class="font-black text-base text-slate-900">Veb-sayt QR kodi</h3>
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                <div class="text-slate-500">Do'koningizning to'liq havolasi:</div>
+                <a href="{{ storefront_url }}" target="_blank" class="font-mono font-bold text-brand hover:underline block text-sm">
+                    {{ storefront_url }}
+                </a>
+            </div>
+            <button type="button" @click="downloadTentImage()" class="px-4 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Chop etish</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function qrDesigner() {
+        return {
+            activeTab: '{{ tab|default:"qr" }}',
+            paperSize: '{{ store.qr_paper_size|default:"A5" }}',
+            bgColor: '{{ store.qr_bg_color|default:"#FFFFFF" }}',
+            qrColor: '{{ store.qr_code_color|default:"#000000" }}',
+            mainText: '{{ store.qr_main_text|default:"Online buyurtma" }}',
+            mainTextSize: Number('{{ store.qr_main_text_size|default:24 }}'),
+            mainTextColor: '{{ store.qr_main_text_color|default:"#000000" }}',
+            subText: '{{ store.qr_sub_text|default:"Menyuni ochish uchun qr kodni skanerlang" }}',
+            subTextSize: Number('{{ store.qr_sub_text_size|default:8 }}'),
+            subTextColor: '{{ store.qr_sub_text_color|default:"#64748B" }}',
+
+            bgPalette: ['#FFFFFF', '#EF4444', '#B91C1C', '#F43F5E', '#EC4899', '#A855F7'],
+            qrPalette: ['#000000', '#2563EB', '#0D9488', '#F97316', '#A855F7', '#DC2626'],
+
+            drawQR() {
+                const canvas = document.getElementById('qrCanvas');
+                if (!canvas) return;
+                new QRious({
+                    element: canvas,
+                    value: '{{ storefront_url }}',
+                    size: 260,
+                    foreground: this.qrColor,
+                    background: '#FFFFFF',
+                    level: 'H'
+                });
+            },
+
+            drawTgQR() {
+                const canvas = document.getElementById('tgQrCanvas');
+                if (!canvas) return;
+                new QRious({
+                    element: canvas,
+                    value: '{{ bot_link }}',
+                    size: 220,
+                    foreground: '#000000',
+                    background: '#FFFFFF',
+                    level: 'H'
+                });
+            },
+
+            downloadTentImage() {
+                window.print();
+            },
+
+            init() {
+                this.$nextTick(() => {
+                    this.drawQR();
+                    this.drawTgQR();
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}
