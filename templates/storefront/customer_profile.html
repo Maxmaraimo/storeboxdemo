@@ -1,0 +1,283 @@
+{% extends 'storefront/base_storefront.html' %}
+
+{% block storefront_body %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6"
+     x-data="{
+        activeFilter: 'all',
+        reorderingId: null,
+        reorder(orderNumber) {
+            this.reorderingId = orderNumber;
+            fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/api/order/' + orderNumber + '/reorder/{% else %}/api/order/' + orderNumber + '/reorder/{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                }
+            })
+            .catch(() => { this.reorderingId = null; });
+        }
+     }">
+
+    <!-- BREADCRUMBS -->
+    <nav class="flex items-center gap-2 text-xs font-bold text-slate-400">
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" class="hover:text-brand flex items-center gap-1 transition-colors">
+            <i data-lucide="home" class="w-3.5 h-3.5"></i>
+            <span>Bosh sahifa</span>
+        </a>
+        <span class="text-slate-300">/</span>
+        <span class="text-slate-700">Mijoz profili va buyurtmalar</span>
+    </nav>
+
+    <!-- CUSTOMER PROFILE HEADER CARD -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
+        {% if customer_phone %}
+        <!-- LOGGED IN USER -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl bg-brand text-white flex items-center justify-center font-black text-2xl shadow-md shadow-brand/20">
+                    {{ customer_name|slice:":1"|upper }}
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{{ customer_name }}</h1>
+                    <p class="text-xs font-mono font-bold text-slate-500 mt-0.5">{{ customer_phone }}</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-black">
+                            Faol mijoz
+                        </span>
+                        {% if customer.bonus_balance %}
+                        <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-black flex items-center gap-1">
+                            <i data-lucide="gift" class="w-3.5 h-3.5"></i>
+                            <span>{{ customer.bonus_balance|floatformat:0 }} UZS keshbek</span>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats & Logout -->
+            <div class="flex items-center gap-3">
+                <div class="px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+                    <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Buyurtmalar</div>
+                    <div class="text-lg font-black font-mono text-slate-900">{{ orders_count }} ta</div>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="logout">
+                    <button type="submit" class="px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-rose-600 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span>Chiqish</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <!-- GUEST LOGIN CARD -->
+        <div class="max-w-md mx-auto py-4 space-y-4 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-brand/10 text-brand mx-auto flex items-center justify-center font-bold">
+                <i data-lucide="user" class="w-7 h-7"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-slate-900 tracking-tight">Shaxsiy kabinetga kirish</h2>
+                <p class="text-xs text-slate-500 mt-1">Buyurtmalaringiz holatini kuzatish va keshbek ballaringizni ko'rish uchun telefon raqamingizni kiriting.</p>
+            </div>
+
+            <form method="POST" class="space-y-3 pt-2 text-left">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="login">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Telefon raqam *</label>
+                    <input type="tel" name="phone" required placeholder="+998 90 123 45 67" 
+                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Ismingiz</label>
+                    <input type="text" name="name" placeholder="Masalan: Jamshid" 
+                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
+                    Kirish va buyurtmalarni ko'rish
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ORDERS SECTION -->
+    {% if customer_phone %}
+    <div class="space-y-4">
+        
+        <!-- Header & Filters -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-black text-slate-900 tracking-tight">Mening buyurtmalarim</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Barcha joriy va yetkazilgan buyurtmalaringiz tarixi</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold self-start">
+                <button type="button" @click="activeFilter = 'all'" 
+                        :class="activeFilter === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                        class="px-3 py-1.5 rounded-xl transition-all">
+                    Barchasi ({{ orders_count }})
+                </button>
+                <button type="button" @click="activeFilter = 'active'" 
+                        :class="activeFilter === 'active' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                        class="px-3 py-1.5 rounded-xl transition-all">
+                    Faol
+                </button>
+                <button type="button" @click="activeFilter = 'delivered'" 
+                        :class="activeFilter === 'delivered' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                        class="px-3 py-1.5 rounded-xl transition-all">
+                    Yetkazildi
+                </button>
+            </div>
+        </div>
+
+        <!-- Orders List -->
+        <div class="space-y-4">
+            {% for order in orders %}
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4 transition-all hover:border-slate-300"
+                 x-show="activeFilter === 'all' || 
+                         (activeFilter === 'active' && ['NEW', 'ACCEPTED', 'COOKING', 'READY', 'IN_DELIVERY'].includes('{{ order.status }}')) ||
+                         (activeFilter === 'delivered' && '{{ order.status }}' === 'DELIVERED')"
+                 x-transition>
+                
+                <!-- Order Top Bar -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="font-black text-sm text-slate-900 font-mono">#{{ order.order_number }}</span>
+                        <span class="text-xs text-slate-400">• {{ order.created_at|date:"d.m.Y, H:i" }}</span>
+                    </div>
+
+                    <!-- Status Pill -->
+                    <div>
+                        {% if order.status == 'NEW' %}
+                        <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-black flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                            <span>Yangi qabul qilindi</span>
+                        </span>
+                        {% elif order.status == 'ACCEPTED' or order.status == 'COOKING' or order.status == 'READY' %}
+                        <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-black flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            <span>Tayyorlanmoqda</span>
+                        </span>
+                        {% elif order.status == 'IN_DELIVERY' %}
+                        <span class="px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-xs font-black flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                            <span>Yo'lda (Kuryerda)</span>
+                        </span>
+                        {% elif order.status == 'DELIVERED' or order.status == 'COMPLETED' %}
+                        <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black flex items-center gap-1.5">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            <span>Yetkazildi</span>
+                        </span>
+                        {% elif order.status == 'CANCELLED' %}
+                        <span class="px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-black">
+                            Bekor qilindi
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-black">
+                            {{ order.get_status_display }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Order Delivery & Payment Info -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600">
+                    <div class="flex items-start gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-brand shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="text-slate-400 block text-[11px]">Yetkazib berish manzili:</span>
+                            <span class="font-bold text-slate-800">{{ order.delivery_city }}, {{ order.delivery_address|default:"Filialdan olib ketish" }}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-brand shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="text-slate-400 block text-[11px]">To'lov usuli:</span>
+                            <span class="font-bold text-slate-800">{{ order.get_payment_method_display }} ({{ order.get_payment_status_display }})</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items Breakdown -->
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                    {% for item in order.items.all %}
+                    <div class="flex items-center justify-between py-1.5 text-xs">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/80 overflow-hidden shrink-0">
+                                {% if item.product and item.product.primary_image_url %}
+                                <img src="{{ item.product.primary_image_url }}" alt="{{ item.product_name }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-slate-400 font-bold text-xs">
+                                    🛍
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="font-bold text-slate-900 block">{{ item.product_name }}</span>
+                                {% if item.variation_name %}
+                                <span class="text-[11px] text-slate-400 block">{{ item.variation_name }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-mono font-bold text-slate-900">{{ item.total_price|floatformat:0 }} UZS</div>
+                            <div class="text-[11px] text-slate-400">{{ item.quantity }} dona × {{ item.unit_price|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Order Total & Actions -->
+                <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-xs text-slate-400">Jami to'lov:</span>
+                        <span class="text-lg font-black font-mono text-brand">{{ order.total_amount|floatformat:0 }} UZS</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" 
+                                @click="reorder('{{ order.order_number }}')"
+                                :disabled="reorderingId === '{{ order.order_number }}'"
+                                class="px-4 py-2.5 rounded-2xl bg-brand/10 hover:bg-brand text-brand hover:text-white font-black text-xs flex items-center gap-1.5 transition-all shadow-2xs">
+                            <i data-lucide="rotate-cw" class="w-3.5 h-3.5" :class="reorderingId === '{{ order.order_number }}' ? 'animate-spin' : ''"></i>
+                            <span x-text="reorderingId === '{{ order.order_number }}' ? 'Tayyorlanmoqda...' : 'Qayta buyurtma berish'">Qayta buyurtma berish</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            {% empty %}
+            <!-- EMPTY ORDERS STATE -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-12 text-center space-y-4 shadow-xs">
+                <div class="w-16 h-16 rounded-3xl bg-slate-50 text-slate-300 mx-auto flex items-center justify-center">
+                    <i data-lucide="package" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-base text-slate-900">Sizda hali buyurtmalar mavjud emas</h3>
+                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Katalogimizdagi sara mahsulotlardan tanlang va birinchi buyurtmangizni amalga oshiring!</p>
+                </div>
+                <div>
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" 
+                       class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
+                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                        <span>Katalogga o'tish</span>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

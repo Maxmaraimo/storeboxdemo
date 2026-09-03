@@ -93,4 +93,4 @@ def get_public_https_base_url():
     except Exception:
         pass
 
-    return stored or "https://2a1349bb9e8280.lhr.life"
+    return stored or "https://a3a320d54a27b4.lhr.life"

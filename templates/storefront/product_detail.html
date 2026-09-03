@@ -1,0 +1,401 @@
+{% extends 'storefront/base_storefront.html' %}
+{% load l10n %}
+
+{% block storefront_body %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8" 
+     x-data="{
+        selectedVariationId: {% if variations.first %}{{ variations.first.id }}{% else %}null{% endif %},
+        selectedPrice: {% if variations.first %}Number('{{ variations.first.price|unlocalize }}'){% else %}Number('{{ product.price|unlocalize }}'){% endif %},
+        selectedVariationName: '{% if variations.first %}{{ variations.first.name_uz|escapejs }}{% else %}{% endif %}',
+        qty: 1,
+        activeImage: '{% if product.primary_image_url %}{{ product.primary_image_url }}{% else %}https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80{% endif %}',
+        activeTab: 'desc',
+        adding: false,
+        buying: false,
+        addedSuccess: false,
+        changeVariation(id, price, name) {
+            this.selectedVariationId = id;
+            this.selectedPrice = price;
+            this.selectedVariationName = name;
+        },
+        addToCart() {
+            this.adding = true;
+            fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    product_id: {{ product.id }},
+                    variation_id: this.selectedVariationId,
+                    quantity: this.qty
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.adding = false;
+                if (data.success) {
+                    this.addedSuccess = true;
+                    setTimeout(() => { this.addedSuccess = false; }, 2500);
+                    if (window.storeCart) {
+                        window.storeCart.cartCount = data.cart_count;
+                        window.storeCart.cartSubtotal = data.subtotal;
+                        window.storeCart.cart = data.cart;
+                    }
+                    $dispatch('cart-updated', data);
+                }
+            })
+            .catch(() => { this.adding = false; });
+        },
+        buyNow() {
+            this.buying = true;
+            fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    product_id: {{ product.id }},
+                    variation_id: this.selectedVariationId,
+                    quantity: this.qty
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.buying = false;
+                if (data.success) {
+                    window.location.href = '{% if store.subdomain %}/store/{{ store.subdomain }}/checkout/{% else %}/checkout/{% endif %}';
+                }
+            })
+            .catch(() => { this.buying = false; });
+        }
+     }">
+
+    <!-- BREADCRUMBS -->
+    <nav class="flex items-center gap-2 text-xs font-bold text-slate-400">
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" class="hover:text-brand flex items-center gap-1 transition-colors">
+            <i data-lucide="home" class="w-3.5 h-3.5"></i>
+            <span>Bosh sahifa</span>
+        </a>
+        <span class="text-slate-300">/</span>
+        {% if product.category %}
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/?cat={{ product.category.id }}{% else %}/?cat={{ product.category.id }}{% endif %}" class="hover:text-brand transition-colors">
+            {{ product.category.name_uz|default:"Katalog" }}
+        </a>
+        <span class="text-slate-300">/</span>
+        {% endif %}
+        <span class="text-slate-700 truncate max-w-[200px] sm:max-w-xs">{{ product.name_uz }}</span>
+    </nav>
+
+    <!-- PRODUCT DETAIL MAIN CARD -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-10 shadow-xs">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            
+            <!-- LEFT: PRODUCT GALLERY -->
+            <div class="lg:col-span-6 space-y-4">
+                <div class="relative w-full aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-200/80 group">
+                    <img :src="activeImage" 
+                         alt="{{ product.name_uz }}" 
+                         class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500">
+
+                    <!-- Badges -->
+                    <div class="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                        {% if product.discount_percent %}
+                        <span class="px-3 py-1 rounded-full bg-rose-500 text-white text-xs font-black shadow-md shadow-rose-500/20">
+                            -{{ product.discount_percent }}%
+                        </span>
+                        {% endif %}
+                        {% if product.is_featured %}
+                        <span class="px-3 py-1 rounded-full bg-amber-500 text-white text-xs font-black shadow-md shadow-amber-500/20 flex items-center gap-1">
+                            <i data-lucide="flame" class="w-3.5 h-3.5"></i>
+                            <span>Xit savdo</span>
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="absolute top-4 right-4 z-10">
+                        {% if product.is_in_stock %}
+                        <span class="px-3 py-1 rounded-full bg-emerald-500/90 backdrop-blur-md text-white text-xs font-bold shadow-xs flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                            <span>Mavjud</span>
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 rounded-full bg-slate-800 text-white text-xs font-bold shadow-xs">
+                            Tugagan
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Thumbnails if multiple images -->
+                {% if images.count > 1 %}
+                <div class="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+                    {% for img in images %}
+                    <button type="button" 
+                            @click="activeImage = '{{ img.image.url }}'" 
+                            :class="activeImage === '{{ img.image.url }}' ? 'ring-2 ring-brand border-transparent' : 'border-slate-200 hover:border-slate-300'"
+                            class="w-20 h-20 rounded-2xl overflow-hidden border bg-slate-50 shrink-0 transition-all">
+                        <img src="{{ img.image.url }}" alt="{{ product.name_uz }}" class="w-full h-full object-cover">
+                    </button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- RIGHT: PRODUCT DETAILS & BUY BOX -->
+            <div class="lg:col-span-6 space-y-6">
+                
+                <!-- Category & Rating -->
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        {% if product.category %}
+                        <span class="px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-black">
+                            {{ product.category.name_uz }}
+                        </span>
+                        {% endif %}
+                        <span class="text-slate-400 text-xs font-medium">Artikul: #{{ product.id|stringformat:"05d" }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-amber-500">
+                        <i data-lucide="star" class="w-4 h-4 fill-amber-400 text-amber-400"></i>
+                        <span>{{ product.rating|default:"5.0" }}</span>
+                        <span class="text-slate-400 font-normal">({{ product.reviews_count|default:14 }} baho)</span>
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+                        {{ product.name_uz }}
+                    </h1>
+                    {% if product.name_ru and product.name_ru != product.name_uz %}
+                    <p class="text-sm font-semibold text-slate-400 mt-1">{{ product.name_ru }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Price Block -->
+                <div class="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+                    <div class="flex items-baseline gap-3">
+                        <span class="text-3xl sm:text-4xl font-black text-brand font-mono" x-text="Number(selectedPrice).toLocaleString() + ' UZS'">
+                            {{ product.price|floatformat:0 }} UZS
+                        </span>
+                        {% if product.old_price and product.old_price > product.price %}
+                        <span class="text-lg font-bold text-slate-400 line-through font-mono">
+                            {{ product.old_price|floatformat:0 }} UZS
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium flex items-center gap-1">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>
+                        <span>QQS bilan birga ko'rsatilgan • Birlik: {{ product.get_unit_display }}</span>
+                    </p>
+                </div>
+
+                <!-- Variations Selector (If available) -->
+                {% if variations.exists %}
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-bold text-slate-700 uppercase tracking-wider">Tanlov:</span>
+                        <span class="font-bold text-brand" x-text="selectedVariationName"></span>
+                    </div>
+                    <div class="flex flex-wrap gap-2.5">
+                        {% for v in variations %}
+                        <button type="button" 
+                                @click="changeVariation({{ v.id }}, Number('{{ v.price|unlocalize }}'), '{{ v.name_uz|escapejs }}')"
+                                :class="selectedVariationId === {{ v.id }} ? 'bg-brand text-white border-brand shadow-sm ring-2 ring-brand/20' : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'"
+                                class="px-4 py-2.5 rounded-2xl border text-xs font-black transition-all flex items-center gap-2">
+                            <span>{{ v.name_uz }}</span>
+                            <span :class="selectedVariationId === {{ v.id }} ? 'text-white/80' : 'text-slate-400'" class="font-mono text-[11px]">
+                                {{ v.price|floatformat:0 }} UZS
+                            </span>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Quantity and CTA Buttons -->
+                <div class="space-y-4 pt-4 border-t border-slate-100">
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Miqdor:</span>
+                        <div class="flex items-center border border-slate-200 bg-slate-50 rounded-2xl p-1 shadow-2xs">
+                            <button type="button" 
+                                    @click="if (qty > 1) qty--" 
+                                    class="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-700 flex items-center justify-center font-black text-sm shadow-xs transition-colors">
+                                -
+                            </button>
+                            <span class="w-12 text-center font-black font-mono text-sm text-slate-900" x-text="qty">1</span>
+                            <button type="button" 
+                                    @click="qty++" 
+                                    class="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-700 flex items-center justify-center font-black text-sm shadow-xs transition-colors">
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dual Action Buttons -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <button type="button" 
+                                @click="addToCart()" 
+                                :disabled="adding"
+                                class="w-full py-3.5 px-6 rounded-2xl border-2 border-brand bg-brand/5 hover:bg-brand/10 text-brand font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs">
+                            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                            <span x-show="!adding && !addedSuccess">Savatga qo'shish</span>
+                            <span x-show="adding">Qo'shilmoqda...</span>
+                            <span x-show="addedSuccess" class="text-emerald-700 font-black">✓ Savatga qo'shildi!</span>
+                        </button>
+
+                        <button type="button" 
+                                @click="buyNow()" 
+                                :disabled="buying"
+                                class="w-full py-3.5 px-6 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-brand/20">
+                            <i data-lucide="zap" class="w-4 h-4"></i>
+                            <span x-show="!buying">Hoziroq xarid qilish</span>
+                            <span x-show="buying">O'tilmoqda...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Trust Badges -->
+                <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100 text-center">
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                        <i data-lucide="truck" class="w-4 h-4 text-brand mx-auto mb-1"></i>
+                        <div class="font-bold text-[11px] text-slate-800">Tez yetkazish</div>
+                        <div class="text-[9px] text-slate-400">30-60 daqiqa</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500 mx-auto mb-1"></i>
+                        <div class="font-bold text-[11px] text-slate-800">100% Sifat</div>
+                        <div class="text-[9px] text-slate-400">Kafolatlangan</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-blue-500 mx-auto mb-1"></i>
+                        <div class="font-bold text-[11px] text-slate-800">Xavfsiz to'lov</div>
+                        <div class="text-[9px] text-slate-400">Click, Payme, Naqd</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- DESCRIPTION & SPECS TABS -->
+        <div class="mt-12 pt-8 border-t border-slate-200/80">
+            <div class="flex items-center gap-3 border-b border-slate-200 pb-3 text-xs font-bold">
+                <button type="button" 
+                        @click="activeTab = 'desc'" 
+                        :class="activeTab === 'desc' ? 'text-brand border-b-2 border-brand pb-3 -mb-3.5 font-black' : 'text-slate-400 hover:text-slate-700'">
+                    Mahsulot tavsifi
+                </button>
+                <button type="button" 
+                        @click="activeTab = 'specs'" 
+                        :class="activeTab === 'specs' ? 'text-brand border-b-2 border-brand pb-3 -mb-3.5 font-black' : 'text-slate-400 hover:text-slate-700'">
+                    Xususiyatlar
+                </button>
+                <button type="button" 
+                        @click="activeTab = 'delivery'" 
+                        :class="activeTab === 'delivery' ? 'text-brand border-b-2 border-brand pb-3 -mb-3.5 font-black' : 'text-slate-400 hover:text-slate-700'">
+                    Yetkazib berish va qaytarish
+                </button>
+            </div>
+
+            <div class="pt-6 text-xs sm:text-sm text-slate-600 leading-relaxed max-w-4xl">
+                <!-- Description Tab -->
+                <div x-show="activeTab === 'desc'" class="space-y-4">
+                    {% if product.description_uz %}
+                    <p class="whitespace-pre-line">{{ product.description_uz }}</p>
+                    {% elif product.description_ru %}
+                    <p class="whitespace-pre-line">{{ product.description_ru }}</p>
+                    {% else %}
+                    <p>{{ product.name_uz }} — eng sara va yuqori sifatli mahsulot. Do'konimizda barcha standartlarga muvofiq tayyorlangan va tezkor yetkazib berish xizmati bilan sizga taqdim etiladi.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Specs Tab -->
+                <div x-show="activeTab === 'specs'" x-cloak class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="flex justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-400">O'lchov birligi:</span>
+                            <span class="font-bold text-slate-800">{{ product.get_unit_display }}</span>
+                        </div>
+                        {% if product.barcode %}
+                        <div class="flex justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-400">Shtrix-kod:</span>
+                            <span class="font-mono font-bold text-slate-800">{{ product.barcode }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.ikpu_code %}
+                        <div class="flex justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-400">IKPU kodi:</span>
+                            <span class="font-mono font-bold text-slate-800">{{ product.ikpu_code }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.category %}
+                        <div class="flex justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-400">Kategoriya:</span>
+                            <span class="font-bold text-slate-800">{{ product.category.name_uz }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Delivery Tab -->
+                <div x-show="activeTab === 'delivery'" x-cloak class="space-y-3">
+                    <p><b>Yetkazib berish:</b> Buyurtmangiz qabul qilingandan so'ng kuryerimiz 30-60 daqiqa ichida belgilangan manzilga yetkazib beradi.</p>
+                    <p><b>Yetkazib berish narxi:</b> {{ store.delivery_price|floatformat:0 }} UZS. {{ store.free_delivery_threshold|floatformat:0 }} UZS dan ortiq buyurtmalarga <b>bepul</b> yetkaziladi.</p>
+                    <p><b>Qaytarish shartlari:</b> Mahsulot qabul qilingan vaqtda tekshirilishi shart. Sifati talabga javob bermasa, joyida almashtirib beriladi yoki to'lov qaytariladi.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RELATED PRODUCTS SECTION -->
+    {% if related_products %}
+    <div class="space-y-4 pt-4">
+        <div class="flex items-center justify-between">
+            <h3 class="text-xl font-black text-slate-900 tracking-tight">O'xshash mahsulotlar</h3>
+            {% if product.category %}
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/?cat={{ product.category.id }}{% else %}/?cat={{ product.category.id }}{% endif %}" class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
+                <span>Barchasini ko'rish</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+            {% for rp in related_products %}
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ rp.id }}/{% else %}/product/{{ rp.id }}/{% endif %}" class="block aspect-square rounded-2xl overflow-hidden bg-slate-50 mb-3 relative">
+                        <img src="{% if rp.primary_image_url %}{{ rp.primary_image_url }}{% else %}https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80{% endif %}" 
+                             alt="{{ rp.name_uz }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% if rp.discount_percent %}
+                        <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black">
+                            -{{ rp.discount_percent }}%
+                        </span>
+                        {% endif %}
+                    </a>
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ rp.id }}/{% else %}/product/{{ rp.id }}/{% endif %}" class="block font-black text-xs sm:text-sm text-slate-900 group-hover:text-brand transition-colors line-clamp-2">
+                        {{ rp.name_uz }}
+                    </a>
+                </div>
+                
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div>
+                        <div class="font-black text-xs sm:text-sm font-mono text-slate-900">
+                            {{ rp.price|floatformat:0 }} <span class="text-[10px] font-normal text-slate-400">UZS</span>
+                        </div>
+                    </div>
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ rp.id }}/{% else %}/product/{{ rp.id }}/{% endif %}" class="w-8 h-8 rounded-xl bg-brand/10 hover:bg-brand text-brand hover:text-white flex items-center justify-center transition-colors">
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

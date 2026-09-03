@@ -51,19 +51,20 @@
             <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group">
                 
                 <!-- Card Image & Badges -->
-                <div class="relative w-full aspect-[3/4] bg-slate-100 overflow-hidden cursor-pointer"
-                     @click="openProductModal({{ product.id }}, '{{ product.name_uz|default:product.name_ru|escapejs }}', '{{ product.price|floatformat:0 }}', '{{ product.old_price|default:''|floatformat:0 }}', '{{ product.primary_image_url|default:'' }}', '{{ product.description_uz|default:product.description_ru|escapejs }}', '{{ product.unit }}', '{{ product.discount_percent|default:'' }}')">
-                    {% if product.primary_image_url %}
-                    <img src="{{ product.primary_image_url }}" alt="{{ product.name_uz }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                    {% else %}
-                    <div class="w-full h-full flex items-center justify-center text-slate-300">
-                        <i data-lucide="image" class="w-12 h-12"></i>
-                    </div>
-                    {% endif %}
+                <div class="relative w-full aspect-[3/4] bg-slate-100 overflow-hidden group/img">
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="block w-full h-full">
+                        {% if product.primary_image_url %}
+                        <img src="{{ product.primary_image_url }}" alt="{{ product.name_uz }}" class="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-slate-300">
+                            <i data-lucide="image" class="w-12 h-12"></i>
+                        </div>
+                        {% endif %}
+                    </a>
 
                     <!-- Discount Badge -->
                     {% if product.discount_percent %}
-                    <div class="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-lg bg-rose-500 text-white font-black text-[10px] shadow-sm">
+                    <div class="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-lg bg-rose-500 text-white font-black text-[10px] shadow-sm pointer-events-none">
                         -{{ product.discount_percent }}%
                     </div>
                     {% endif %}
@@ -86,9 +87,12 @@
                             {% endif %}
                         </div>
 
-                        <!-- Title -->
-                        <h3 class="font-bold text-xs sm:text-sm text-slate-800 line-clamp-2 mt-1 leading-snug">
-                            {{ product.name_uz|default:product.name_ru }}
+                        <!-- Title (Clickable link to dedicated product page) -->
+                        <h3 class="mt-1 leading-snug">
+                            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" 
+                               class="font-bold text-xs sm:text-sm text-slate-800 hover:text-brand transition-colors line-clamp-2">
+                                {{ product.name_uz|default:product.name_ru }}
+                            </a>
                         </h3>
 
                         <!-- Rating & Review -->

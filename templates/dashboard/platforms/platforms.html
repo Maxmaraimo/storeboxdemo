@@ -202,44 +202,121 @@
     <!-- ============================================================= -->
     <!-- TAB 2: TELEGRAM BOT INTEGRATION (Video birinchi.mov 05:20-07:15) -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'telegram'" x-cloak class="space-y-6" x-data="{ tgSubTab: 'settings' }">
-        <!-- Connected Bot Card -->
+    <!-- TAB 3: TELEGRAM BOT (Ultra-simplified & intuitive) -->
+    <div x-show="activeTab === 'telegram'" x-cloak class="space-y-6" x-data="{ tgSubTab: 'settings', changeBotOpen: false }">
+        
+        {% if not store.telegram_bot_token %}
+        <!-- INITIAL STATE: BOT YARATISH VA ULASH (Video 00:08) -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-10 shadow-xs max-w-3xl space-y-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-3xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-black text-2xl shadow-sm">
+                    <i data-lucide="bot" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-slate-900 tracking-tight">Telegram bot yaratish</h3>
+                    <p class="text-xs text-slate-500 mt-1">Telegram orqali buyurtma qabul qilish va Telegram Web App (TMA) do'koningiz avtomatik ishga tushishi uchun bot tokenini kiriting.</p>
+                </div>
+            </div>
+
+            <!-- 5-Step BotFather Guide -->
+            <div class="p-5 rounded-2xl bg-sky-50/70 border border-sky-100 text-xs space-y-3">
+                <div class="font-black text-slate-900 flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-sky-600"></i>
+                    <span>@BotFather orqali bot tokenini olish tartibi:</span>
+                </div>
+                <ol class="list-decimal pl-5 space-y-1.5 text-slate-600 font-medium">
+                    <li>Telegramda <a href="https://t.me/BotFather" target="_blank" class="font-bold text-sky-600 hover:underline">@BotFather</a> ga o'ting va <code>/newbot</code> buyrug'ini yuboring.</li>
+                    <li>Botingiz nomini kiriting (masalan: <b>{{ store.name }}</b>).</li>
+                    <li>Botingiz uchun username kiriting (oxiri <code>_bot</code> bilan tugashi shart, masalan: <code>{{ store.subdomain }}_bot</code>).</li>
+                    <li>@BotFather sizga bergan uzun <b>HTTP API Token</b> nusxasini oling.</li>
+                    <li>Olingan tokenni quyidagi maydonga joylashtiring va <b>"Saqlash va Web App yaratish"</b> tugmasini bosing!</li>
+                </ol>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_telegram">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Bot Token *</label>
+                    <input type="text" name="telegram_bot_token" required placeholder="Masalan: 8873156579:AAHl8Vrh7kuJbFhqjXBSZ4ZHImfizziBwm8"
+                           class="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand shadow-2xs">
+                    <span class="text-[11px] text-slate-400 block mt-1.5">Hech qanday chat ID yoki murakkab sozlama shart emas — tizim botni avtomatik aniqlaydi va Web App ni o'rnatadi.</span>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                        <span>Saqlash va Web App yaratish</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% else %}
+        <!-- CONNECTED BOT CARD -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3.5">
                 <div class="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-bold text-lg">
                     <i data-lucide="bot" class="w-6 h-6"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h3 class="font-black text-base text-slate-900">@{{ store.telegram_bot_username|default:"storebox_bot" }}</h3>
-                        {% if store.telegram_bot_token %}
-                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black flex items-center gap-1">
+                        <h3 class="font-black text-base text-slate-900">@{{ store.telegram_bot_username }}</h3>
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black flex items-center gap-1">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>Faol</span>
+                            <span>Faol • Web App yoqilgan</span>
                         </span>
-                        {% else %}
-                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold">Ulanmagan</span>
-                        {% endif %}
                     </div>
                     <p class="text-xs text-slate-400 mt-0.5">Yaratilgan: {{ store.created_at|date:"H:i, M d, Y" }}</p>
                 </div>
             </div>
-            <div class="flex flex-wrap items-center gap-3 text-xs font-bold">
-                {% if store.telegram_bot_username %}
-                <a href="https://t.me/{{ store.telegram_bot_username }}" target="_blank" class="px-4 py-2 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white flex items-center gap-2 shadow-xs transition-colors">
-                    <i data-lucide="send" class="w-4 h-4"></i>
+
+            <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+                <a href="https://t.me/{{ store.telegram_bot_username }}" target="_blank" class="px-4 py-2 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white flex items-center gap-1.5 shadow-xs transition-colors">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
                     <span>Botni ochish</span>
                 </a>
-                {% endif %}
-                <div class="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-                    <div class="text-slate-400 text-[10px]">Mijozlar</div>
-                    <div class="text-slate-900 font-black">{{ store.customers.count|default:1 }}</div>
-                </div>
-                <div class="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-                    <div class="text-slate-400 text-[10px]">Buyurtmalar soni</div>
-                    <div class="text-slate-900 font-black">{{ store.orders.count|default:0 }}</div>
-                </div>
+
+                <button type="button" @click="changeBotOpen = !changeBotOpen" class="px-3.5 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 shadow-2xs transition-colors">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    <span>Boshqa bot ulash</span>
+                </button>
+
+                <form method="POST" onsubmit="return confirm('Haqiqatan ham botni uzmoqchimisiz?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="disconnect_telegram">
+                    <button type="submit" class="px-3 py-2 rounded-2xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 flex items-center gap-1 transition-colors">
+                        <i data-lucide="unlink" class="w-3.5 h-3.5"></i>
+                        <span>Uzish</span>
+                    </button>
+                </form>
             </div>
+        </div>
+
+        <!-- CHANGE BOT ACCORDION / DRAWER -->
+        <div x-show="changeBotOpen" x-cloak class="bg-amber-50/70 border border-amber-200 rounded-3xl p-6 space-y-4 max-w-3xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 text-amber-900 font-black text-sm">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i>
+                    <span>Yangi bot ulash yoki tokenni almashtirish</span>
+                </div>
+                <button type="button" @click="changeBotOpen = false" class="text-amber-700 font-bold hover:text-amber-900">✕</button>
+            </div>
+            <p class="text-xs text-amber-800">Yangi @BotFather tokenini kiritsangiz, platforma eski bot o'rniga yangi botni ulaydi va Web App ni unga sozlaydi.</p>
+
+            <form method="POST" class="space-y-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_telegram">
+                <div>
+                    <label class="block text-xs font-bold text-amber-900 mb-1">Yangi Bot Token</label>
+                    <input type="text" name="telegram_bot_token" required placeholder="Yangi bot tokenini kiriting"
+                           class="w-full px-4 py-2.5 rounded-xl bg-white border border-amber-300 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                </div>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs shadow-xs transition-colors">
+                    Yangi botni ulash
+                </button>
+            </form>
         </div>
 
         <!-- Telegram Sub Tabs -->
@@ -251,18 +328,23 @@
 
         <!-- Sub Tab 1: Bot Sozlamalari -->
         <div x-show="tgSubTab === 'settings'" class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-6 max-w-3xl">
-            <!-- Instruction Box -->
-            <div class="p-4 rounded-2xl bg-sky-50/70 border border-sky-100 text-xs space-y-2 text-slate-700">
-                <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
-                    <i data-lucide="info" class="w-4 h-4 text-sky-600"></i>
-                    <span>Buyurtmalarni Telegram guruhiga yo'naltirish</span>
-                </h4>
-                <p class="text-[11px] text-slate-600">Do'koningizdan yangi buyurtmalar haqidagi bildirishnomalar ma'lum bir telegram guruhiga yuborilishini istasangiz, quyidagi amallarni bajaring:</p>
-                <ol class="list-decimal pl-4 space-y-1 text-[11px] text-slate-600 font-medium">
-                    <li>Botingizni kerakli guruhga qo'shing va administrator huquqlarini bering.</li>
-                    <li>Guruh chat ID sini quyidagi maydonga kiriting yoki xabarlarni ulang.</li>
-                    <li>Bot bildirishnomalarni guruhga avtomatik tarzda yetkazadi.</li>
-                </ol>
+            
+            <!-- Active WebApp URL Display -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <span class="text-slate-400 text-[10px] font-bold block uppercase tracking-wider">Telegram Web App (TMA) URL</span>
+                    <span class="font-mono text-brand font-black text-xs break-all">{{ web_app_url }}</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="{{ web_app_url }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-xs inline-flex items-center gap-1 shadow-2xs">
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        <span>Vebda ochish</span>
+                    </a>
+                    <button type="button" @click="navigator.clipboard.writeText('{{ web_app_url }}'); alert('Nusxalandi!')" class="px-3 py-1.5 rounded-xl bg-brand text-white font-bold text-xs inline-flex items-center gap-1 shadow-2xs">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        <span>Nusxa olish</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Bot Form -->
@@ -270,50 +352,18 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="save_telegram">
 
-                <!-- Active WebApp URL Display -->
-                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <span class="text-slate-400 text-[10px] font-bold block uppercase tracking-wider">Telegram Web App (TMA) URL</span>
-                        <span class="font-mono text-brand font-black text-xs break-all">{{ web_app_url }}</span>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <a href="{{ web_app_url }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-xs inline-flex items-center gap-1 shadow-2xs">
-                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                            <span>Vebda ochish</span>
-                        </a>
-                        <button type="button" @click="navigator.clipboard.writeText('{{ web_app_url }}'); alert('Nusxalandi!')" class="px-3 py-1.5 rounded-xl bg-brand text-white font-bold text-xs inline-flex items-center gap-1 shadow-2xs">
-                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                            <span>Nusxa olish</span>
-                        </button>
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Bot Token</label>
+                    <input type="text" name="telegram_bot_token" value="{{ store.telegram_bot_token|default:'' }}" placeholder="123456:ABC-DEF1234ghIkl..."
+                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                    <span class="text-[10px] text-slate-400 block mt-1">Bot tokeningiz faol va ulangan. O'zgartirish kerak bo'lsa, yangi tokenni kiritib saqlang.</span>
                 </div>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Bot Token</label>
-                        <input type="text" name="telegram_bot_token" value="{{ store.telegram_bot_token|default:'' }}" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
-                               class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
-                        <span class="text-[10px] text-slate-400 block mt-1">@BotFather bergan tokenni kiriting. Tizim bot nomini avtomatik aniqlaydi.</span>
-                    </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Telegram Chat ID</label>
-                        <input type="text" name="telegram_chat_id" value="{{ store.telegram_chat_id|default:'' }}" placeholder="-100123456789 yoki shaxsiy ID"
-                               class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
-                        <span class="text-[10px] text-slate-400 block mt-1">Guruh yoki shaxsiy chat ID. Botga /id deb yozsangiz ham avtomatik ulanadi.</span>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Bot Username (@ siz)</label>
-                        <input type="text" name="telegram_bot_username" value="{{ store.telegram_bot_username|default:'' }}" placeholder="do'kon_nomi_bot"
-                               class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Tugma nomi (Menu Button)</label>
-                        <input type="text" name="telegram_button_name" value="{{ store.telegram_button_name|default:'Do\'kon' }}" placeholder="Do'kon"
-                               class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Tugma nomi (Menu Button)</label>
+                    <input type="text" name="telegram_button_name" value="{{ store.telegram_button_name|default:'Do\'kon' }}" placeholder="Do'kon"
+                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
+                    <span class="text-[10px] text-slate-400 block mt-1">Telegram chat oynasining pastki chap burchagidagi do'konni ochuvchi menyu tugmasi matni.</span>
                 </div>
 
                 <div>
@@ -323,8 +373,8 @@
                     <span class="text-[10px] text-slate-400 block mt-1">Qo'llab-quvvatlanadigan o'zgaruvchilar: <code>{user}</code> (foydalanuvchi ismi), <code>{bot}</code> (do'kon nomi)</span>
                 </div>
 
-                <div class="flex flex-col sm:flex-row gap-3 pt-2">
-                    <button type="submit" class="flex-1 py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-md shadow-brand/20 transition-all">
+                <div class="pt-2">
+                    <button type="submit" class="w-full sm:w-auto px-8 py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-md shadow-brand/20 transition-all">
                         O'zgarishlarni saqlash
                     </button>
                 </div>
@@ -351,6 +401,7 @@
                 </form>
             </div>
         </div>
+        {% endif %}
 
         <!-- Sub Tab 2: Amallar (Actions) -->
         <div x-show="tgSubTab === 'actions'" x-cloak class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-4 max-w-3xl">

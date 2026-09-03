@@ -179,14 +179,24 @@
             </div>
         </div>
 
-        <!-- Top 10 ta mahsulot -->
+        <!-- Top mahsulotlar (Period-scoped) -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-            <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Top mahsulotlar</div>
+            <div class="flex items-center justify-between">
+                <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Top mahsulotlar</div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {% if has_period_sales %}bg-brand/10 text-brand{% else %}bg-slate-100 text-slate-500{% endif %}">
+                    {% if has_period_sales %}{{ period_display }}{% else %}Umumiy{% endif %}
+                </span>
+            </div>
             <div class="space-y-2 text-xs font-semibold max-h-48 overflow-y-auto">
                 {% for tp in top_products %}
-                <div class="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-                    <span class="truncate max-w-[150px] font-bold text-slate-800">{{ tp.product_name }}</span>
-                    <span class="font-mono text-slate-500">{{ tp.sold_qty }} ta</span>
+                <div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                    <span class="truncate max-w-[140px] font-bold text-slate-800">{{ tp.product_name }}</span>
+                    <div class="text-right">
+                        <span class="font-mono font-bold text-brand">{{ tp.sold_qty }} ta</span>
+                        {% if tp.sold_sum %}
+                        <span class="text-[10px] font-mono text-slate-400 block">{{ tp.sold_sum|floatformat:0 }} UZS</span>
+                        {% endif %}
+                    </div>
                 </div>
                 {% empty %}
                 <div class="text-center text-slate-400 py-8">Hozircha sotuvlar yo'q</div>

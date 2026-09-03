@@ -129,6 +129,12 @@ class Product(models.Model):
             return primary.image.url
         return None
 
+    @property
+    def is_in_stock(self):
+        if not self.track_stock:
+            return True
+        return self.stock > 0
+
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')

@@ -439,11 +439,31 @@ def dashboard_home_view(request):
     web_cnt = store_orders.filter(source=Order.Sources.WEB).count()
     tma_cnt = store_orders.filter(source=Order.Sources.TELEGRAM_MINI_APP).count()
 
-    # Top 10 products
-    top_products = OrderItem.objects.filter(order__store=store).values('product_name').annotate(
+    # Top products ordered in the selected period (Bugun, Hafta, Har oy, Har yil)
+    period_top_qs = OrderItem.objects.filter(order__in=orders_scope).values('product_name').annotate(
         sold_qty=Sum('quantity'),
         sold_sum=Sum('total_price')
     ).order_by('-sold_qty')[:10]
+
+    has_period_sales = period_top_qs.exists()
+    if has_period_sales:
+        top_products = list(period_top_qs)
+    else:
+        # Fallback to store-wide top products so merchant sees popular items
+        top_products = list(OrderItem.objects.filter(order__store=store).values('product_name').annotate(
+            sold_qty=Sum('quantity'),
+            sold_sum=Sum('total_price')
+        ).order_by('-sold_qty')[:10])
+
+    period_labels = {
+        'today': 'Bugungi',
+        'week': 'Haftalik',
+        'month': 'Oylik',
+        'quarter': 'Choraklik',
+        'year': 'Yillik',
+        'custom': 'Tanlangan oraliq'
+    }
+    period_display = period_labels.get(period, 'Bugungi')
 
     # Deliveries map
     map_orders = []
@@ -473,6 +493,8 @@ def dashboard_home_view(request):
     return render(request, 'dashboard/home.html', {
         'store': store,
         'period': period,
+        'period_display': period_display,
+        'has_period_sales': has_period_sales,
         'start_date_val': start_date_val,
         'end_date_val': end_date_val,
         'merchant_balance': merchant_balance,
@@ -965,8 +987,6 @@ def platforms_view(request):
             msg = "QR katalog sozlamalari muvaffaqiyatli saqlandi!"
         elif action == 'save_telegram':
             token = request.POST.get('telegram_bot_token', '').strip()
-            chat_id = request.POST.get('telegram_chat_id', '').strip()
-            manual_username = request.POST.get('telegram_bot_username', '').strip().lstrip('@')
             button_name = request.POST.get('telegram_button_name', "Do'kon").strip()
             welcome_msg = request.POST.get('telegram_welcome_message', '').strip()
 
@@ -977,37 +997,36 @@ def platforms_view(request):
                 ok, bot_res = get_bot_info(token)
                 if ok and isinstance(bot_res, dict):
                     detected_username = bot_res.get('username', '').lstrip('@')
-                    store.telegram_bot_username = detected_username or manual_username
+                    store.telegram_bot_username = detected_username
                     store.telegram_bot_token = token
-                    store.telegram_chat_id = chat_id
-                    store.telegram_button_name = button_name
-                    store.telegram_welcome_message = welcome_msg
+                    store.telegram_button_name = button_name or "Do'kon"
+                    if welcome_msg:
+                        store.telegram_welcome_message = welcome_msg
                     store.save()
 
-                    # Setup WebApp menu button with HTTPS WebApp URL
+                    # Automatically setup WebApp menu button with HTTPS WebApp URL
                     web_app_url = get_store_webapp_url(store)
                     setup_bot_menu_button(token, web_app_url, button_name)
 
                     # Ensure polling worker is active
                     start_polling_thread()
 
-                    msg = f"Telegram bot @{store.telegram_bot_username} muvaffaqiyatli ulandi va Web App faollashtirildi!"
+                    msg = f"Telegram bot @{store.telegram_bot_username} muvaffaqiyatli ulandi va Web App ishga tushirildi!"
                 else:
                     store.telegram_bot_token = token
-                    store.telegram_chat_id = chat_id
-                    store.telegram_bot_username = manual_username
-                    store.telegram_button_name = button_name
-                    store.telegram_welcome_message = welcome_msg
+                    store.telegram_button_name = button_name or "Do'kon"
+                    if welcome_msg:
+                        store.telegram_welcome_message = welcome_msg
                     store.save()
-                    msg = f"Telegram bot sozlamalari muvaffaqiyatli saqlandi! (Eslatma: {bot_res})"
+                    msg = f"Telegram bot saqlandi! ({bot_res})"
             else:
-                store.telegram_bot_token = ''
-                store.telegram_chat_id = chat_id
-                store.telegram_bot_username = manual_username
-                store.telegram_button_name = button_name
-                store.telegram_welcome_message = welcome_msg
-                store.save()
-                msg = "Telegram bot sozlamalari muvaffaqiyatli saqlandi!"
+                msg = "Iltimos, @BotFather dan olingan bot tokenini kiriting!"
+
+        elif action == 'disconnect_telegram':
+            store.telegram_bot_token = ''
+            store.telegram_bot_username = ''
+            store.save()
+            msg = "Telegram bot uzildi. Endi boshqa botni ulashingiz mumkin!"
         elif action == 'save_website':
             store.name = request.POST.get('site_name', store.name).strip()
             store.seo_description = request.POST.get('seo_description', '').strip()

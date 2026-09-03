@@ -132,7 +132,7 @@ def product_detail_json_view(request, product_id):
 # -----------------------------------------------------------------
 
 @csrf_exempt
-def cart_add_view(request):
+def cart_add_view(request, subdomain=None):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=400)
 
@@ -188,7 +188,7 @@ def cart_add_view(request):
 
 
 @csrf_exempt
-def cart_update_view(request):
+def cart_update_view(request, subdomain=None):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=400)
 
@@ -229,13 +229,13 @@ def cart_update_view(request):
 
 
 @csrf_exempt
-def cart_clear_view(request):
+def cart_clear_view(request, subdomain=None):
     request.session['cart'] = {}
     request.session.modified = True
     return JsonResponse({'success': True, 'cart_count': 0, 'subtotal': 0, 'cart': {}})
 
 
-def apply_promo_view(request):
+def apply_promo_view(request, subdomain=None):
     store = getattr(request, 'store', None)
     if not store:
         subdomain = request.GET.get('subdomain') or request.session.get('current_store_subdomain')
@@ -591,4 +591,174 @@ def customer_logout_api(request, subdomain=None):
     request.session.pop('customer_name', None)
     request.session.modified = True
     return JsonResponse({'success': True})
+
+
+# -----------------------------------------------------------------
+# DEDICATED PRODUCT DETAIL PAGE (Full e-commerce experience)
+# -----------------------------------------------------------------
+
+@xframe_options_exempt
+def product_detail_page_view(request, product_id, subdomain=None):
+    store = get_current_store(request, subdomain)
+    if not store:
+        raise Http404("Магазин не найден")
+
+    product = get_object_or_404(Product, id=product_id, store=store, is_active=True)
+    lang = getattr(request, 'language', 'ru')
+
+    # Cart context
+    cart = request.session.get('cart', {})
+    cart_count = sum(item.get('quantity', 1) for item in cart.values())
+    subtotal = sum(item.get('total_price', 0) for item in cart.values())
+
+    # Check if this product is already in cart
+    in_cart_qty = 0
+    for k, item in cart.items():
+        if item.get('product_id') == product.id and not item.get('variation_id'):
+            in_cart_qty = item.get('quantity', 0)
+            break
+
+    # Related products from same category or store
+    related_products = []
+    if product.category:
+        related_products = Product.objects.filter(
+            store=store,
+            category=product.category,
+            is_active=True
+        ).exclude(id=product.id)[:8]
+    if not related_products:
+        related_products = Product.objects.filter(
+            store=store,
+            is_active=True
+        ).exclude(id=product.id)[:8]
+
+    # Payment & branches settings
+    pay_settings, _ = StorePaymentSetting.objects.get_or_create(store=store)
+    branches = store.branches.filter(is_active=True)
+
+    context = {
+        'store': store,
+        'product': product,
+        'related_products': related_products,
+        'variations': product.variations.filter(is_active=True),
+        'images': product.images.all(),
+        'in_cart_qty': in_cart_qty,
+        'cart': cart,
+        'cart_count': cart_count,
+        'cart_subtotal': subtotal,
+        'cart_json': json.dumps(cart),
+        'pay_settings': pay_settings,
+        'branches': branches,
+        'lang': lang,
+        'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
+    }
+    return render(request, 'storefront/product_detail.html', context)
+
+
+# -----------------------------------------------------------------
+# DEDICATED CUSTOMER PROFILE & ORDERS PAGE
+# -----------------------------------------------------------------
+
+@xframe_options_exempt
+def customer_profile_page_view(request, subdomain=None):
+    store = get_current_store(request, subdomain)
+    if not store:
+        raise Http404("Магазин не найден")
+
+    # Handle login POST from profile page if guest
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'login':
+            phone = request.POST.get('phone', '').strip()
+            name = request.POST.get('name', '').strip()
+            if phone:
+                request.session['customer_phone'] = phone
+                if name:
+                    request.session['customer_name'] = name
+                request.session.modified = True
+                customer, _ = Customer.objects.get_or_create(
+                    store=store,
+                    phone=phone,
+                    defaults={'name': name or 'Xaridor'}
+                )
+                if name and not customer.name:
+                    customer.name = name
+                    customer.save(update_fields=['name'])
+        elif action == 'logout':
+            request.session.pop('customer_phone', None)
+            request.session.pop('customer_name', None)
+            request.session.modified = True
+
+    customer_phone = request.session.get('customer_phone')
+    customer_name = request.session.get('customer_name')
+    customer = None
+    orders = []
+
+    if customer_phone:
+        customer = Customer.objects.filter(store=store, phone=customer_phone).first()
+        if customer:
+            orders = Order.objects.filter(store=store, customer=customer).prefetch_related('items').order_by('-created_at')
+            if not customer_name:
+                customer_name = customer.name
+        else:
+            orders = Order.objects.filter(store=store, customer_phone=customer_phone).prefetch_related('items').order_by('-created_at')
+
+    # Cart context
+    cart = request.session.get('cart', {})
+    cart_count = sum(item.get('quantity', 1) for item in cart.values())
+    subtotal = sum(item.get('total_price', 0) for item in cart.values())
+
+    context = {
+        'store': store,
+        'customer': customer,
+        'customer_phone': customer_phone,
+        'customer_name': customer_name or 'Xaridor',
+        'orders': orders,
+        'orders_count': len(orders),
+        'cart': cart,
+        'cart_count': cart_count,
+        'cart_subtotal': subtotal,
+        'cart_json': json.dumps(cart),
+        'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
+    }
+    return render(request, 'storefront/customer_profile.html', context)
+
+
+@csrf_exempt
+def reorder_api(request, order_number, subdomain=None):
+    """Reorder items from an existing order into session cart"""
+    store = get_current_store(request, subdomain)
+    if not store:
+        return JsonResponse({'success': False, 'message': 'Магазин не найден'})
+
+    order = get_object_or_404(Order, order_number=order_number, store=store)
+    cart = request.session.get('cart', {})
+
+    for item in order.items.all():
+        item_key = f"p_{item.product_id}_v_{item.variation_id or 0}"
+        u_price = float(item.unit_price)
+        qty = item.quantity
+        img_url = item.product.primary_image_url if item.product else None
+
+        cart[item_key] = {
+            'product_id': item.product_id,
+            'variation_id': item.variation_id,
+            'name': item.product_name,
+            'variation_name': item.variation_name,
+            'unit_price': u_price,
+            'quantity': qty,
+            'total_price': u_price * qty,
+            'image_url': img_url
+        }
+
+    request.session['cart'] = cart
+    request.session.modified = True
+
+    redirect_url = f'/store/{store.subdomain}/checkout/' if subdomain else '/checkout/'
+    return JsonResponse({
+        'success': True,
+        'redirect_url': redirect_url,
+        'cart_count': sum(i['quantity'] for i in cart.values()),
+        'subtotal': sum(i['total_price'] for i in cart.values())
+    })
 

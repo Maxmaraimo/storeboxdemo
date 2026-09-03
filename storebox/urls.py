@@ -10,6 +10,7 @@ urlpatterns = [
     # Auth & Onboarding
     path('register/', dashboard_views.register_view, name='register'),
     path('login/', dashboard_views.login_view, name='login'),
+    path('auth/login/', dashboard_views.login_view, name='auth_login'),
     path('accounts/login/', dashboard_views.login_view, name='accounts_login'),
     path('logout/', dashboard_views.logout_view, name='logout'),
     path('onboarding/', dashboard_views.onboarding_wizard_view, name='onboarding'),
