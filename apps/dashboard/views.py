@@ -377,8 +377,9 @@ def dashboard_home_view(request):
         orders_scope = store_orders.filter(created_at__gte=filter_date)
         chart_labels = [f"{h:02d}:00" for h in range(0, 24, 2)]
         chart_revenue = [0.0] * 12
-        for o in orders_scope.filter(payment_status=Order.PaymentStatuses.PAID):
-            slot = o.created_at.hour // 2
+        for o in orders_scope.exclude(status=Order.OrderStatuses.CANCELLED):
+            local_hour = timezone.localtime(o.created_at).hour
+            slot = local_hour // 2
             if slot < 12:
                 chart_revenue[slot] += float(o.total_amount)
     elif period == 'month':
@@ -388,7 +389,7 @@ def dashboard_home_view(request):
         chart_revenue = []
         for i in range(29, -1, -3):
             day_date = (now - timezone.timedelta(days=i)).date()
-            day_sum = orders_scope.filter(created_at__date=day_date, payment_status=Order.PaymentStatuses.PAID).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            day_sum = orders_scope.filter(created_at__date=day_date).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             chart_labels.append(day_date.strftime('%d.%m'))
             chart_revenue.append(float(day_sum))
     elif period == 'quarter':
@@ -399,7 +400,7 @@ def dashboard_home_view(request):
         for i in range(89, -1, -10):
             start_d = (now - timezone.timedelta(days=i)).date()
             end_d = (now - timezone.timedelta(days=max(0, i - 9))).date()
-            day_sum = orders_scope.filter(created_at__date__gte=start_d, created_at__date__lte=end_d, payment_status=Order.PaymentStatuses.PAID).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            day_sum = orders_scope.filter(created_at__date__gte=start_d, created_at__date__lte=end_d).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             chart_labels.append(start_d.strftime('%d.%m'))
             chart_revenue.append(float(day_sum))
     elif period == 'year':
@@ -408,7 +409,7 @@ def dashboard_home_view(request):
         chart_labels = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek']
         chart_revenue = []
         for m in range(1, 13):
-            m_sum = orders_scope.filter(created_at__year=now.year, created_at__month=m, payment_status=Order.PaymentStatuses.PAID).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            m_sum = orders_scope.filter(created_at__year=now.year, created_at__month=m).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             chart_revenue.append(float(m_sum))
     elif period != 'custom': # default week
         period = 'week'
@@ -418,13 +419,14 @@ def dashboard_home_view(request):
         chart_revenue = []
         for i in range(6, -1, -1):
             day_date = (now - timezone.timedelta(days=i)).date()
-            day_sum = orders_scope.filter(created_at__date=day_date, payment_status=Order.PaymentStatuses.PAID).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            day_sum = orders_scope.filter(created_at__date=day_date).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             chart_labels.append(day_date.strftime('%d.%m'))
             chart_revenue.append(float(day_sum))
 
     # Metrics calculated dynamically for the selected period scope
-    sotuvlar_summasi = orders_scope.filter(payment_status=Order.PaymentStatuses.PAID).aggregate(Sum('subtotal'))['subtotal__sum'] or Decimal('0')
-    yetkazib_berish_summasi = orders_scope.filter(payment_status=Order.PaymentStatuses.PAID).aggregate(Sum('delivery_fee'))['delivery_fee__sum'] or Decimal('0')
+    valid_orders = orders_scope.exclude(status=Order.OrderStatuses.CANCELLED)
+    sotuvlar_summasi = valid_orders.aggregate(Sum('subtotal'))['subtotal__sum'] or Decimal('0')
+    yetkazib_berish_summasi = valid_orders.aggregate(Sum('delivery_fee'))['delivery_fee__sum'] or Decimal('0')
     foyda = sotuvlar_summasi + yetkazib_berish_summasi
 
     orders_count = orders_scope.count()
@@ -1278,6 +1280,68 @@ def update_order_status_api(request):
             'status_display': order.get_status_display()
         })
     return JsonResponse({'error': 'Invalid status'}, status=400)
+
+
+@login_required
+def order_detail_api(request, order_id):
+    store = get_merchant_store(request)
+    order = get_object_or_404(Order, id=order_id, store=store)
+
+    items_data = []
+    for it in order.items.all():
+        img_url = None
+        if it.product and it.product.primary_image_url:
+            img_url = it.product.primary_image_url
+        items_data.append({
+            'id': it.id,
+            'product_name': it.product_name,
+            'variation_name': it.variation_name or '',
+            'unit_price': int(it.unit_price),
+            'quantity': it.quantity,
+            'total_price': int(it.total_price),
+            'image_url': img_url,
+        })
+
+    # Count customer previous orders
+    customer_orders_count = 1
+    if order.customer:
+        customer_orders_count = order.customer.orders.count()
+    elif order.customer_phone:
+        customer_orders_count = Order.objects.filter(store=store, customer_phone=order.customer_phone).count()
+
+    data = {
+        'id': order.id,
+        'order_number': order.order_number,
+        'created_at': order.created_at.strftime('%d.%m.%Y %H:%M'),
+        'customer_name': order.customer_name or 'Noma\'lum xaridor',
+        'customer_phone': order.customer_phone or '',
+        'customer_orders_count': customer_orders_count,
+        'delivery_method': order.delivery_method,
+        'delivery_method_display': order.get_delivery_method_display(),
+        'delivery_city': order.delivery_city or 'Toshkent',
+        'delivery_address': order.delivery_address or '',
+        'delivery_lat': order.delivery_lat,
+        'delivery_lng': order.delivery_lng,
+        'delivery_fee': int(order.delivery_fee or 0),
+        'notes': order.notes or '',
+        'promo_code': order.promo_code.code if order.promo_code else None,
+        'discount_amount': int(order.discount_amount or 0),
+        'subtotal': int(order.subtotal or 0),
+        'total_amount': int(order.total_amount or 0),
+        'payment_method': order.payment_method,
+        'payment_method_display': order.get_payment_method_display(),
+        'payment_status': order.payment_status,
+        'payment_status_display': order.get_payment_status_display(),
+        'status': order.status,
+        'status_display': order.get_status_display(),
+        'source': order.source,
+        'source_display': order.get_source_display(),
+        'branch_name': order.branch.name if order.branch else None,
+        'items': items_data,
+        'items_count': len(items_data),
+        'full_detail_url': f"/dashboard/orders/{order.id}/",
+    }
+    return JsonResponse({'success': True, 'order': data})
 
 
 @login_required

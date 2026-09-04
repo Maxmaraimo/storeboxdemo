@@ -15,6 +15,7 @@ urlpatterns = [
         path('api/add-card/', views.add_card_api, name='add_card_api'),
     path('api/toggle-payment/', views.toggle_payment_api, name='toggle_payment_api'),
     path('api/update-order-status/', views.update_order_status_api, name='update_order_status_api'),
+    path('api/orders/<int:order_id>/', views.order_detail_api, name='order_detail_api'),
     path('api/adjust-bonus/', views.adjust_bonus_api, name='adjust_bonus_api'),
     path('api/branch-action/', views.branch_action_api, name='branch_action_api'),
     path('api/staff-action/', views.staff_action_api, name='staff_action_api'),

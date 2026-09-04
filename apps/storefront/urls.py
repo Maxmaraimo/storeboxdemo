@@ -18,6 +18,7 @@ urlpatterns = [
     path('checkout/', views.checkout_view, name='checkout'),
     path('store/<slug:subdomain>/checkout/', views.checkout_view, name='store_checkout'),
     path('order/<str:order_number>/success/', views.order_success_view, name='order_success'),
+    path('store/<slug:subdomain>/order/<str:order_number>/success/', views.order_success_view, name='store_order_success'),
 
     # Dedicated Product Detail Page
     path('product/<int:product_id>/', views.product_detail_page_view, name='product_detail'),

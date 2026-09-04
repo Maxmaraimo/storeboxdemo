@@ -328,10 +328,16 @@ def checkout_view(request, subdomain=None):
 
             total_amount = max(Decimal('0'), subtotal - discount_amount + delivery_fee)
 
-            # Detect source
-            source = Order.Sources.WEB
-            if telegram_user_id or request.POST.get('is_tma') == '1':
-                source = Order.Sources.TELEGRAM_MINI_APP
+            # Detect source: Telegram Mini App vs Web
+            is_from_telegram = bool(
+                telegram_user_id or 
+                request.POST.get('is_tma') == '1' or 
+                request.GET.get('tma') == '1' or 
+                request.session.get('is_tma') == True or 
+                request.COOKIES.get('is_tma') == '1' or 
+                'Telegram' in request.headers.get('User-Agent', '')
+            )
+            source = Order.Sources.TELEGRAM_MINI_APP if is_from_telegram else Order.Sources.WEB
 
             branch_id = request.POST.get('branch_id')
             branch = Branch.objects.filter(id=branch_id, store=store).first() if branch_id else None
@@ -420,9 +426,18 @@ def checkout_view(request, subdomain=None):
             tg_message = format_order_telegram_message(order)
             send_telegram_notification(store, tg_message)
 
+            if store and store.subdomain:
+                return redirect(f'/store/{store.subdomain}/order/{order.order_number}/success/')
             return redirect(f'/order/{order.order_number}/success/')
 
-    is_tma = request.GET.get('tma') == '1'
+    is_tma = bool(
+        request.GET.get('tma') == '1' or 
+        request.session.get('is_tma') == True or 
+        request.COOKIES.get('is_tma') == '1' or 
+        'Telegram' in request.headers.get('User-Agent', '')
+    )
+    if is_tma:
+        request.session['is_tma'] = True
     branches = store.branches.filter(is_active=True)
     saved_phone = request.session.get('customer_phone', '')
     saved_name = request.session.get('customer_name', '')
@@ -444,7 +459,7 @@ def checkout_view(request, subdomain=None):
 
 
 @xframe_options_exempt
-def order_success_view(request, order_number):
+def order_success_view(request, order_number, subdomain=None):
     order = get_object_or_404(Order, order_number=order_number)
     store = order.store
     pay_settings, _ = StorePaymentSetting.objects.get_or_create(store=store)

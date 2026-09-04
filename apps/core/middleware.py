@@ -34,11 +34,19 @@ class SubdomainTenantMiddleware:
         request.store = None
         request.is_platform_root = True
 
+        tunnel_domains = [
+            'trycloudflare.com',
+            'lhr.life',
+            'loca.lt',
+            'ngrok.io',
+            'ngrok-free.app',
+        ]
+        is_tunnel = any(host.endswith('.' + t_dom) or host == t_dom for t_dom in tunnel_domains)
+
         if not is_system_path:
             subdomain = None
-            # Check subdomain from host
-            # Examples: goldlavash.storebox.uz, goldlavash.platform.uz, goldlavash.localhost
-            if host != 'localhost' and host != '127.0.0.1' and host not in platform_domains and not host.startswith('www.'):
+            # Check subdomain from host (only if NOT a public tunnel domain)
+            if not is_tunnel and host != 'localhost' and host != '127.0.0.1' and host not in platform_domains and not host.startswith('www.'):
                 matched = False
                 for p_dom in platform_domains:
                     if host.endswith('.' + p_dom):
@@ -48,8 +56,6 @@ class SubdomainTenantMiddleware:
                 if not matched:
                     if host.endswith('.localhost'):
                         subdomain = host[:-len('.localhost')]
-                    elif '.' in host:
-                        subdomain = host.split('.')[0]
 
             # Query param override for convenient local development & demos: ?store=goldlavash
             param_store = request.GET.get('store')
@@ -61,6 +67,9 @@ class SubdomainTenantMiddleware:
                 parts = path.strip('/').split('/')
                 if len(parts) >= 2:
                     subdomain = parts[1]
+                    request.session['current_store_subdomain'] = subdomain
+            elif not subdomain and request.session.get('current_store_subdomain'):
+                subdomain = request.session.get('current_store_subdomain')
 
             if subdomain and subdomain not in ['www', 'api', 'app', 'admin']:
                 try:
@@ -69,8 +78,13 @@ class SubdomainTenantMiddleware:
                         request.store = store
                         request.is_platform_root = False
                     else:
-                        # Unknown store
-                        if not path.startswith('/dashboard') and not path.startswith('/login') and not path.startswith('/register'):
+                        # Unknown store - only show 404 on actual store pages, not system/order/auth paths
+                        safe_prefixes = (
+                            '/dashboard', '/login', '/register', '/logout', '/accounts',
+                            '/order', '/profile', '/cart', '/checkout', '/auth',
+                            '/platform', '/payments', '/telegram', '/api'
+                        )
+                        if not any(path.startswith(prefix) for prefix in safe_prefixes):
                             return render(request, 'storefront/store_not_found.html', {'subdomain': subdomain}, status=404)
                 except Exception:
                     # During early migrations or DB init

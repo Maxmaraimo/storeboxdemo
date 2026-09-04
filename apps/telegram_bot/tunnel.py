@@ -82,7 +82,7 @@ def get_public_https_base_url():
                         try:
                             with open(log_path, 'r', errors='ignore') as f:
                                 content = f.read()
-                                match = re.search(r'(https://[a-zA-Z0-9-]+\.lhr\.life)', content)
+                                match = re.search(r'(https://[a-zA-Z0-9-]+\.(?:trycloudflare\.com|lhr\.life))', content)
                                 if match:
                                     t_url = match.group(1)
                                     if check_tunnel_healthy(t_url):
@@ -93,4 +93,4 @@ def get_public_https_base_url():
     except Exception:
         pass
 
-    return stored or "https://a3a320d54a27b4.lhr.life"
+    return stored or "https://machines-tower-life-processors.trycloudflare.com"

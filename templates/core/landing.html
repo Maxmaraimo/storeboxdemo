@@ -1,348 +1,1366 @@
 {% extends 'base.html' %}
 
-{% block title %}StoreBox — Создайте свой интернет-магазин и Telegram-витрину в Узбекистане{% endblock %}
+{% block title %}{% if lang == 'uz' %}StoreBox — O'zbekistonda zamonaviy Internet-do'kon va Telegram-vitrina yaratish{% else %}StoreBox — Создайте свой интернет-магазин и Telegram-витрину в Узбекистане{% endif %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* 3D Perspective & Depth */
+    .perspective-1200 {
+        perspective: 1200px;
+    }
+    .transform-style-3d {
+        transform-style: preserve-3d;
+    }
+    .backface-hidden {
+        backface-visibility: hidden;
+    }
+
+    /* Custom subtle grid background */
+    .bg-grid-slate-pattern {
+        background-image: radial-gradient(rgba(100, 116, 139, 0.12) 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+
+    /* Ambient glow animation */
+    @keyframes pulse-slow {
+        0%, 100% { opacity: 0.45; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.08); }
+    }
+    .animate-pulse-slow {
+        animation: pulse-slow 8s ease-in-out infinite;
+    }
+
+    @keyframes float-y {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-8px) rotate(0.5deg); }
+    }
+    .animate-float-y {
+        animation: float-y 5s ease-in-out infinite;
+    }
+
+    @keyframes float-y-reverse {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(8px) rotate(-0.5deg); }
+    }
+    .animate-float-y-reverse {
+        animation: float-y-reverse 6s ease-in-out infinite;
+    }
+
+    /* Shimmer effect for buttons */
+    @keyframes shimmer {
+        100% { transform: translateX(100%); }
+    }
+    .shimmer-btn {
+        position: relative;
+        overflow: hidden;
+    }
+    .shimmer-btn::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            60deg,
+            transparent,
+            rgba(255, 255, 255, 0.25),
+            transparent
+        );
+        transform: rotate(25deg);
+        animation: shimmer 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* 3D Glass card reflection */
+    .glass-card-3d {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(226, 232, 240, 0.85);
+        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 text-white selection:bg-emerald-500 selection:text-white">
-    <!-- Header -->
-    <header class="border-b border-slate-800/80 sticky top-0 z-50 backdrop-blur-md bg-slate-900/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                    <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
-                </div>
-                <span class="text-2xl font-black tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">StoreBox</span>
-                <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Uzbekistan</span>
-            </div>
+<div class="min-h-screen bg-slate-50 text-slate-900 selection:bg-emerald-500 selection:text-white relative overflow-x-hidden font-sans"
+     x-data="{
+         isUz: {% if lang == 'uz' %}true{% else %}false{% endif %},
+         billingCycle: 'annual',
+         simCategory: 'food',
+         simCart: [],
+         simNotification: false,
+         simLastOrder: null,
+         addToSimCart(item) {
+             const existing = this.simCart.find(i => i.id === item.id);
+             if (existing) {
+                 existing.qty += 1;
+             } else {
+                 this.simCart.push({ ...item, qty: 1 });
+             }
+         },
+         removeFromSimCart(id) {
+             this.simCart = this.simCart.filter(i => i.id !== id);
+         },
+         get simTotal() {
+             return this.simCart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+         },
+         triggerSimOrder() {
+             if (this.simCart.length === 0) return;
+             if (window.confetti) {
+                 window.confetti({
+                     particleCount: 80,
+                     spread: 70,
+                     origin: { y: 0.6 }
+                 });
+             }
+             this.simLastOrder = {
+                 sum: this.simTotal,
+                 count: this.simCart.reduce((a, b) => a + b.qty, 0),
+                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+             };
+             this.simCart = [];
+             this.simNotification = true;
+             setTimeout(() => {
+                 this.simNotification = false;
+             }, 6000);
+         }
+     }">
 
-            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
-                <a href="#features" class="hover:text-emerald-400 transition-colors">Возможности</a>
-                <a href="#how-it-works" class="hover:text-emerald-400 transition-colors">Как это работает</a>
-                <a href="#payments" class="hover:text-emerald-400 transition-colors">Платежи</a>
-                <a href="#pricing" class="hover:text-emerald-400 transition-colors">Тарифы</a>
-                <a href="/store/goldlavash/" class="text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors">
-                    <i data-lucide="store" class="w-4 h-4"></i> Демо-магазин
+    <!-- Top Ambient Lights (Soft Luxury Glow) -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] bg-gradient-to-tr from-emerald-200/40 via-teal-100/30 to-sky-200/30 blur-[130px] rounded-full pointer-events-none -z-10 animate-pulse-slow"></div>
+    <div class="absolute top-80 right-0 w-[500px] h-[500px] bg-gradient-to-br from-amber-100/30 via-emerald-100/20 to-transparent blur-[120px] rounded-full pointer-events-none -z-10"></div>
+    <div class="absolute top-[1400px] left-0 w-[600px] h-[600px] bg-gradient-to-tr from-indigo-100/30 via-emerald-100/20 to-transparent blur-[140px] rounded-full pointer-events-none -z-10"></div>
+
+    <!-- Background Subtle Micro-Grid -->
+    <div class="absolute inset-0 bg-grid-slate-pattern pointer-events-none -z-10 [mask-image:linear-gradient(to_bottom,white,white_80%,transparent)]"></div>
+
+    <!-- Navigation Bar (Glassmorphic & Crisp) -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl bg-white/85 border-b border-slate-200/70 transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="/" class="flex items-center space-x-3 group">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 via-emerald-600 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition-transform duration-300">
+                    <i data-lucide="shopping-bag" class="w-6 h-6 text-white stroke-[2.2]"></i>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-2xl font-black tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">StoreBox</span>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 tracking-wide uppercase">SaaS</span>
+                    </div>
+                    <span class="text-[11px] font-medium text-slate-500 tracking-tight" x-text="isUz ? 'Telegram & Veb e-tijorat' : 'Telegram & Web e-commerce'">Telegram & Web e-commerce</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden lg:flex items-center space-x-8 text-sm font-semibold text-slate-600">
+                <a href="#features" class="hover:text-emerald-600 transition-colors" x-text="isUz ? 'Imkoniyatlar' : 'Возможности'">Возможности</a>
+                <a href="#simulator" class="hover:text-emerald-600 transition-colors flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span x-text="isUz ? 'Jonli Demo' : 'Живое демо'">Живое демо</span>
                 </a>
+                <a href="#payments" class="hover:text-emerald-600 transition-colors" x-text="isUz ? 'To\'lov tizimlari' : 'Платежи'">Платежи</a>
+                <a href="#pricing" class="hover:text-emerald-600 transition-colors" x-text="isUz ? 'Tariflar' : 'Тарифы'">Тарифы</a>
+                <a href="#faq" class="hover:text-emerald-600 transition-colors">FAQ</a>
             </nav>
 
-            <div class="flex items-center space-x-4">
-                <div class="flex items-center bg-slate-800/60 rounded-xl p-1 text-xs border border-slate-700/60">
-                    <a href="/platform/lang/ru/" class="px-2 py-1 rounded-lg {% if lang == 'ru' %}bg-emerald-500 text-white font-bold{% else %}text-slate-400 hover:text-white{% endif %}">RU</a>
-                    <a href="/platform/lang/uz/" class="px-2 py-1 rounded-lg {% if lang == 'uz' %}bg-emerald-500 text-white font-bold{% else %}text-slate-400 hover:text-white{% endif %}">UZ</a>
+            <!-- Actions & Language Switcher -->
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <!-- Lang Toggle -->
+                <div class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold border border-slate-200/60">
+                    <a href="/platform/lang/uz/" class="px-2.5 py-1 rounded-lg transition-all {% if lang == 'uz' %}bg-white text-emerald-700 shadow-xs{% else %}text-slate-500 hover:text-slate-900{% endif %}">UZ</a>
+                    <a href="/platform/lang/ru/" class="px-2.5 py-1 rounded-lg transition-all {% if lang == 'ru' %}bg-white text-emerald-700 shadow-xs{% else %}text-slate-500 hover:text-slate-900{% endif %}">RU</a>
                 </div>
 
-                <a href="/login/" class="hidden sm:inline-flex text-sm font-semibold text-slate-300 hover:text-white transition-colors px-4 py-2">
+                <a href="/login/" class="hidden sm:inline-flex text-sm font-bold text-slate-700 hover:text-emerald-600 transition-colors px-3 py-2" x-text="isUz ? 'Kirish' : 'Войти'">
                     Войти
                 </a>
-                <a href="/register/" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5">
-                    Создать магазин
+
+                <a href="/register/" class="shimmer-btn inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 gap-2">
+                    <span x-text="isUz ? 'Bepul boshlash' : 'Создать магазин'">Создать магазин</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 text-emerald-400"></i>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="relative pt-16 pb-24 overflow-hidden">
-        <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-emerald-500/15 blur-[140px] rounded-full pointer-events-none"></div>
+    <!-- HERO SECTION (Bright, 3D Tilt Perspective & Floating Badges) -->
+    <section class="relative pt-12 sm:pt-16 pb-20 lg:pb-28 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-emerald-400 text-xs font-semibold mb-8 shadow-inner">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Аналог StoreBox для быстрого старта в Узбекистане</span>
+            <!-- High-Trust Pill Badge -->
+            <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/95 border border-slate-200 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all duration-300 mb-8 cursor-default">
+                <span class="flex h-2.5 w-2.5 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs sm:text-sm font-semibold text-slate-700" x-text="isUz ? 'O\'zbekistondagi tadbirkorlar uchun yangi avlod platformasi' : 'Платформа нового поколения для предпринимателей Узбекистана'">
+                    Платформа нового поколения для предпринимателей Узбекистана
+                </span>
+                <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">v2.4</span>
             </div>
 
-            <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-[1.15]">
-                Создайте интернет-магазин и <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Telegram-витрину</span> за 15 минут
+            <!-- Main Heading with High-End Typography -->
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-950 max-w-4xl mx-auto leading-[1.2]">
+                <template x-if="isUz">
+                    <span>Telegram va Veb-do'koningizni <span class="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 bg-clip-text text-transparent">15 daqiqada</span> ishga tushiring</span>
+                </template>
+                <template x-if="!isUz">
+                    <span>Запустите интернет-магазин и <span class="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 bg-clip-text text-transparent">Telegram-витрину</span> за 15 минут</span>
+                </template>
             </h1>
 
-            <p class="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                Готовая SaaS-платформа для предпринимателей Узбекистана: прием оплат через <b>Click</b>, <b>Payme</b> и <b>Uzum Pay</b>, Telegram Mini App (TMA), расчет доставки и складской учет.
+            <!-- Subtitle -->
+            <p class="mt-5 sm:mt-6 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
+                <template x-if="isUz">
+                    <span>Dasturchisiz to'liq tayyor savdo ekotizimi: <b>Click</b>, <b>Payme</b>, <b>Uzum Pay</b> orqali to'lovlar, Telegram Mini App (TMA), kuryerlar va real-vaqt hisobotlar.</span>
+                </template>
+                <template x-if="!isUz">
+                    <span>Готовая экосистема для e-commerce без программистов: прием платежей через <b>Click</b>, <b>Payme</b>, <b>Uzum Pay</b>, Telegram Mini App (TMA), расчет доставки и складской учет.</span>
+                </template>
             </p>
 
-            <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="/register/" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-base transition-all shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                    <span>Запустить магазин бесплатно</span>
-                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            <!-- CTA Buttons -->
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="/register/" class="shimmer-btn w-full sm:w-auto px-8 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-base transition-all shadow-xl shadow-emerald-600/25 hover:shadow-emerald-600/40 hover:-translate-y-1 flex items-center justify-center gap-3">
+                    <span x-text="isUz ? 'Do\'konni bepul ochish (14 kun)' : 'Открыть магазин бесплатно (14 дней)'">Открыть магазин бесплатно (14 дней)</span>
+                    <i data-lucide="sparkles" class="w-5 h-5 text-amber-300"></i>
                 </a>
-                <a href="/store/goldlavash/" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-800/80 hover:bg-slate-700/80 text-white font-bold text-base transition-all border border-slate-700 flex items-center justify-center gap-2">
-                    <i data-lucide="eye" class="w-5 h-5 text-amber-400"></i>
-                    <span>Посмотреть демо-магазин</span>
+                <a href="#simulator" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-base transition-all border border-slate-300/80 shadow-xs hover:shadow-md hover:border-slate-400 flex items-center justify-center gap-2.5 group">
+                    <i data-lucide="play-circle" class="w-5 h-5 text-emerald-600 group-hover:scale-110 transition-transform"></i>
+                    <span x-text="isUz ? 'Jonli simulyatorni sinash' : 'Попробовать живой симулятор'">Попробовать живой симулятор</span>
                 </a>
             </div>
 
-            <!-- Trust Pills -->
-            <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto text-slate-400 text-sm font-medium">
-                <div class="flex items-center justify-center gap-2 bg-slate-800/40 border border-slate-800 rounded-xl py-3 px-4">
-                    <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
-                    <span>Запуск за 15 минут</span>
-                </div>
-                <div class="flex items-center justify-center gap-2 bg-slate-800/40 border border-slate-800 rounded-xl py-3 px-4">
-                    <i data-lucide="credit-card" class="w-4 h-4 text-blue-400"></i>
-                    <span>Click, Payme, Uzum</span>
-                </div>
-                <div class="flex items-center justify-center gap-2 bg-slate-800/40 border border-slate-800 rounded-xl py-3 px-4">
-                    <i data-lucide="send" class="w-4 h-4 text-sky-400"></i>
-                    <span>Telegram Mini App</span>
-                </div>
-                <div class="flex items-center justify-center gap-2 bg-slate-800/40 border border-slate-800 rounded-xl py-3 px-4">
-                    <i data-lucide="globe" class="w-4 h-4 text-amber-400"></i>
-                    <span>Свой поддомен</span>
-                </div>
-            </div>
-
-            <!-- Interface Mockup -->
-            <div class="mt-16 relative max-w-5xl mx-auto rounded-3xl p-3 bg-gradient-to-b from-slate-700/50 to-slate-800/20 border border-slate-700/50 shadow-2xl">
-                <div class="rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 text-left p-6 sm:p-8">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-5 mb-6">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
-                            <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
-                            <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-                            <span class="ml-4 text-xs font-mono text-slate-500">goldlavash.platform.uz</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">TMA Ready</span>
-                            <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">Payme / Click Active</span>
-                        </div>
+            <!-- Key Trust Metric Badges -->
+            <div class="mt-10 pt-6 border-t border-slate-200/60 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-left">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/70 flex items-center justify-center text-emerald-600 shrink-0">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
                     </div>
+                    <div>
+                        <div class="text-base font-extrabold text-slate-900" x-text="isUz ? '0% Komissiya' : '0% Комиссия'">0% Комиссия</div>
+                        <div class="text-xs text-slate-500" x-text="isUz ? 'To\'g\'ridan-to\'g\'ri hisobingizga' : 'Напрямую на ваш счет'">Напрямую на ваш счет</div>
+                    </div>
+                </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5">
-                            <div class="text-xs text-slate-400 font-medium mb-1">Выручка за месяц</div>
-                            <div class="text-2xl font-black text-white">18 450 000 UZS</div>
-                            <div class="text-xs text-emerald-400 font-semibold mt-2 flex items-center gap-1">
-                                <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +24% к прошлому месяцу
-                            </div>
-                        </div>
-                        <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5">
-                            <div class="text-xs text-slate-400 font-medium mb-1">Всего заказов</div>
-                            <div class="text-2xl font-black text-white">342 заказа</div>
-                            <div class="text-xs text-sky-400 font-semibold mt-2 flex items-center gap-1">
-                                <i data-lucide="send" class="w-3.5 h-3.5"></i> 68% через Telegram
-                            </div>
-                        </div>
-                        <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5">
-                            <div class="text-xs text-slate-400 font-medium mb-1">Средний чек</div>
-                            <div class="text-2xl font-black text-white">54 000 UZS</div>
-                            <div class="text-xs text-purple-400 font-semibold mt-2 flex items-center gap-1">
-                                <i data-lucide="users" class="w-3.5 h-3.5"></i> 290 уникальных клиентов
-                            </div>
-                        </div>
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/70 flex items-center justify-center text-blue-600 shrink-0">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-base font-extrabold text-slate-900">TMA & WebApp</div>
+                        <div class="text-xs text-slate-500" x-text="isUz ? 'Telegram ichida 1-klikka' : 'В Telegram в 1 клик'">В Telegram в 1 клик</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/70 flex items-center justify-center text-amber-600 shrink-0">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-base font-extrabold text-slate-900" x-text="isUz ? '15 Daqiqa' : '15 Минут'">15 Минут</div>
+                        <div class="text-xs text-slate-500" x-text="isUz ? 'Tezkor ishga tushirish' : 'Быстрый запуск'">Быстрый запуск</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200/70 flex items-center justify-center text-indigo-600 shrink-0">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-base font-extrabold text-slate-900">99.9% Uptime</div>
+                        <div class="text-xs text-slate-500" x-text="isUz ? 'Xavfsiz va barqaror' : 'Защита и стабильность'">Защита и стабильность</div>
                     </div>
                 </div>
             </div>
+
+            <!-- 3D INTERACTIVE HERO STAGE (Mouse Tilt & Protruding Layers) -->
+            <div class="mt-10 sm:mt-14 relative max-w-6xl mx-auto perspective-1200"
+                 x-data="{
+                     tiltX: 0,
+                     tiltY: 0,
+                     handleMove(e) {
+                         const rect = this.$el.getBoundingClientRect();
+                         const x = e.clientX - rect.left - rect.width / 2;
+                         const y = e.clientY - rect.top - rect.height / 2;
+                         this.tiltX = -(y / rect.height) * 10;
+                         this.tiltY = (x / rect.width) * 10;
+                     },
+                     resetTilt() {
+                         this.tiltX = 0;
+                         this.tiltY = 0;
+                     }
+                 }"
+                 @mousemove="handleMove($event)"
+                 @mouseleave="resetTilt()">
+
+                <!-- Floating 3D Protruding Badges -->
+                <!-- Badge 1: Top Left - New Live Order -->
+                <div class="hidden md:flex absolute -top-8 -left-6 lg:-left-12 z-30 animate-float-y glass-card-3d p-4 rounded-2xl items-center gap-3.5 shadow-2xl max-w-xs text-left border border-white/80">
+                    <div class="w-11 h-11 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                        <i data-lucide="bell-ring" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-xs font-bold text-slate-900" x-text="isUz ? 'Yangi buyurtma #SB-9418' : 'Новый заказ #SB-9418'">Новый заказ #SB-9418</span>
+                        </div>
+                        <div class="text-sm font-extrabold text-emerald-600">+ 385 000 UZS</div>
+                        <div class="text-[11px] text-slate-500" x-text="isUz ? 'Click orqali to\'landi • Toshkent' : 'Оплачено через Click • Ташкент'">Оплачено через Click • Ташкент</div>
+                    </div>
+                </div>
+
+                <!-- Badge 2: Bottom Right - Real-time Telegram Bot -->
+                <div class="hidden md:flex absolute -bottom-8 -right-6 lg:-right-10 z-30 animate-float-y-reverse glass-card-3d p-4 rounded-2xl items-center gap-3.5 shadow-2xl max-w-xs text-left border border-white/80">
+                    <div class="w-11 h-11 rounded-xl bg-sky-500 text-white flex items-center justify-center shadow-lg shadow-sky-500/30">
+                        <i data-lucide="bot" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-slate-900">@goldlavash_bot</div>
+                        <div class="text-xs font-semibold text-slate-600" x-text="isUz ? 'Telegram Mini App faol' : 'Telegram Mini App активен'">Telegram Mini App активен</div>
+                        <div class="flex items-center gap-1 text-[11px] font-bold text-sky-600">
+                            <i data-lucide="wifi" class="w-3 h-3"></i> 1,420 online xaridor
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Badge 3: Top Right Floating Payment Stamp -->
+                <div class="hidden lg:flex absolute top-6 -right-8 z-30 glass-card-3d p-3 rounded-2xl items-center gap-2.5 shadow-xl text-left border border-white/90">
+                    <div class="flex -space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-xs border-2 border-white">C</div>
+                        <div class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white font-bold text-xs border-2 border-white">P</div>
+                        <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-xs border-2 border-white">U</div>
+                    </div>
+                    <div class="text-xs font-bold text-slate-800" x-text="isUz ? 'Avtomatik fiskal cheklar' : 'Авто-фискальные чеки'">Авто-фискальные чеки</div>
+                </div>
+
+                <!-- 3D Mac Browser Window Container -->
+                <div class="rounded-3xl p-2 sm:p-3 bg-gradient-to-b from-white/90 via-white/70 to-slate-200/50 border border-white/90 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.15)] transition-transform duration-200 ease-out transform-style-3d"
+                     :style="`transform: rotateX(${tiltX}deg) rotateY(${tiltY}deg);`">
+                    <div class="rounded-2xl bg-white border border-slate-200/80 overflow-hidden shadow-inner text-left">
+
+                        <!-- Browser Header Bar -->
+                        <div class="bg-slate-50/90 border-b border-slate-200/80 px-4 py-3 flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 rounded-full bg-rose-400"></div>
+                                <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                                <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+                            </div>
+                            <div class="flex items-center space-x-2 bg-white border border-slate-200 rounded-lg px-4 py-1 text-xs font-medium text-slate-500 shadow-2xs w-full max-w-sm justify-center">
+                                <i data-lucide="lock" class="w-3 h-3 text-emerald-600"></i>
+                                <span class="text-slate-700 font-semibold">storebox.uz</span>
+                                <span class="text-slate-400">/admin/analytics</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-slate-400">
+                                <i data-lucide="share-2" class="w-4 h-4 hover:text-slate-600 cursor-pointer"></i>
+                                <i data-lucide="plus" class="w-4 h-4 hover:text-slate-600 cursor-pointer"></i>
+                            </div>
+                        </div>
+
+                        <!-- Inside Realistic Dashboard Preview -->
+                        <div class="p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-white to-slate-50">
+                            <!-- Dashboard Top Stats -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                                <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+                                    <div class="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                                        <span x-text="isUz ? 'Bugungi daromad' : 'Выручка за сегодня'">Выручка за сегодня</span>
+                                        <span class="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">+32.8%</span>
+                                    </div>
+                                    <div class="text-2xl font-black text-slate-900 tracking-tight">14 850 000 <span class="text-xs font-bold text-slate-400">UZS</span></div>
+                                </div>
+
+                                <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+                                    <div class="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                                        <span x-text="isUz ? 'Telegram buyurtmalar' : 'Заказы из Telegram'">Заказы из Telegram</span>
+                                        <span class="text-sky-600 font-bold bg-sky-50 px-2 py-0.5 rounded-full">TMA</span>
+                                    </div>
+                                    <div class="text-2xl font-black text-slate-900 tracking-tight">84 <span class="text-xs font-bold text-slate-400" x-text="isUz ? 'ta xarid' : 'заказа'">заказа</span></div>
+                                </div>
+
+                                <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+                                    <div class="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                                        <span x-text="isUz ? 'O\'rtacha chek' : 'Средний чек'">Средний чек</span>
+                                        <span class="text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-full">Payme/Click</span>
+                                    </div>
+                                    <div class="text-2xl font-black text-slate-900 tracking-tight">176 780 <span class="text-xs font-bold text-slate-400">UZS</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Live Chart & Activity Columns -->
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <!-- Chart Mockup -->
+                                <div class="lg:col-span-2 p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h4 class="text-sm font-bold text-slate-900" x-text="isUz ? 'Soatlik sotuv dinamikasi (Real-vaqt)' : 'Динамика продаж по часам (Реальное время)'">Динамика продаж по часам</h4>
+                                            <p class="text-xs text-slate-500">Toshkent vaqti bilan (UTC+5)</p>
+                                        </div>
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/60">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live Updates
+                                        </span>
+                                    </div>
+
+                                    <!-- Chart Bars Graphic -->
+                                    <div class="h-44 flex items-end justify-between gap-2 pt-6 pb-2 px-1">
+                                        <div class="flex-1 flex flex-col items-center gap-1.5">
+                                            <div class="w-full bg-slate-100 rounded-t-lg h-14 hover:bg-emerald-200 transition-colors"></div>
+                                            <span class="text-[10px] font-bold text-slate-400">10:00</span>
+                                        </div>
+                                        <div class="flex-1 flex flex-col items-center gap-1.5">
+                                            <div class="w-full bg-slate-100 rounded-t-lg h-20 hover:bg-emerald-200 transition-colors"></div>
+                                            <span class="text-[10px] font-bold text-slate-400">11:00</span>
+                                        </div>
+                                        <div class="flex-1 flex flex-col items-center gap-1.5">
+                                            <div class="w-full bg-emerald-500 rounded-t-lg h-36 shadow-lg shadow-emerald-500/20 relative group">
+                                                <div class="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    3.2M UZS
+                                                </div>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-emerald-600">12:00</span>
+                                        </div>
+                                        <div class="flex-1 flex flex-col items-center gap-1.5">
+                                            <div class="w-full bg-emerald-600 rounded-t-lg h-40 shadow-lg shadow-emerald-600/30 relative group">
+                                                <div class="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    4.8M UZS
+                                                </div>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-emerald-600">13:00</span>
+                                        </div>
+                                        <div class="flex-1 flex flex-col items-center gap-1.5">
+                                            <div class="w-full bg-slate-200 rounded-t-lg h-28 hover:bg-emerald-200 transition-colors"></div>
+                                            <span class="text-[10px] font-bold text-slate-400">14:00</span>
+                                        </div>
+                                        <div class="flex-1 flex flex-col items-center gap-1.5">
+                                            <div class="w-full bg-slate-100 rounded-t-lg h-16 hover:bg-emerald-200 transition-colors"></div>
+                                            <span class="text-[10px] font-bold text-slate-400">15:00</span>
+                                        </div>
+                                        <div class="flex-1 flex flex-col items-center gap-1.5">
+                                            <div class="w-full bg-slate-100 rounded-t-lg h-24 hover:bg-emerald-200 transition-colors"></div>
+                                            <span class="text-[10px] font-bold text-slate-400">16:00</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Recent Live Orders -->
+                                <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h4 class="text-sm font-bold text-slate-900" x-text="isUz ? 'Oxirgi buyurtmalar' : 'Последние заказы'">Последние заказы</h4>
+                                        <span class="text-xs font-bold text-emerald-600" x-text="isUz ? 'Barchasi →' : 'Все →'">Все →</span>
+                                    </div>
+
+                                    <div class="space-y-2.5">
+                                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                                            <div class="flex items-center space-x-2.5">
+                                                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">🍔</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900">#RB-51505</div>
+                                                    <div class="text-[10px] text-slate-500" x-text="isUz ? '2 ta mahsulot • Click' : '2 товара • Click'">2 товара • Click</div>
+                                                </div>
+                                            </div>
+                                            <span class="text-xs font-black text-slate-900">140 000 UZS</span>
+                                        </div>
+
+                                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                                            <div class="flex items-center space-x-2.5">
+                                                <div class="w-8 h-8 rounded-lg bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs">💐</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900">#RB-51504</div>
+                                                    <div class="text-[10px] text-slate-500" x-text="isUz ? 'Guldasta 101 • Payme' : 'Букет 101 • Payme'">Букет 101 • Payme</div>
+                                                </div>
+                                            </div>
+                                            <span class="text-xs font-black text-slate-900">850 000 UZS</span>
+                                        </div>
+
+                                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                                            <div class="flex items-center space-x-2.5">
+                                                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">📱</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900">#RB-51503</div>
+                                                    <div class="text-[10px] text-slate-500" x-text="isUz ? 'AirPods Pro • Uzum' : 'AirPods Pro • Uzum'">AirPods Pro • Uzum</div>
+                                                </div>
+                                            </div>
+                                            <span class="text-xs font-black text-slate-900">2 450 000 UZS</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                                        <span x-text="isUz ? 'Yetkazib berish holati:' : 'Статус доставки:'">Статус доставки:</span>
+                                        <span class="font-bold text-emerald-600" x-text="isUz ? 'Yandex Go ulangan' : 'Яндекс Доставка'">Яндекс Доставка</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
         </div>
     </section>
 
-    <!-- Key Features Section -->
-    <section id="features" class="py-24 bg-slate-900/60 border-t border-slate-800/80">
+    <!-- INTERACTIVE 3D STORE SIMULATOR ("Попробуйте прямо сейчас / Hoziroq sinab ko'ring") -->
+    <section id="simulator" class="py-20 lg:py-32 bg-white border-y border-slate-200/80 relative overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                    Все инструменты для продаж в Узбекистане
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-4">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span x-text="isUz ? 'Interaktiv 3D Simulyator' : 'Интерактивный 3D симулятор'">Интерактивный 3D симулятор</span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-slate-900">
+                    <template x-if="isUz">
+                        <span>Mijozlaringiz Telegram orqali qanday xarid qilishini sinab ko'ring</span>
+                    </template>
+                    <template x-if="!isUz">
+                        <span>Попробуйте, как ваши клиенты будут покупать через Telegram прямо сейчас</span>
+                    </template>
                 </h2>
-                <p class="mt-4 text-base text-slate-400">
-                    StoreBox объединяет современный веб-сайт, Telegram Mini App и админ-панель со всеми локальными шлюзами.
+                <p class="mt-4 text-base sm:text-lg text-slate-600">
+                    <template x-if="isUz">
+                        <span>Kategoriyani tanlang, mahsulotlarni savatga qo'shing va buyurtma bering — xabarnoma darhol botingizga qanday yetib borishini his eting!</span>
+                    </template>
+                    <template x-if="!isUz">
+                        <span>Выберите нишу, добавьте товары в корзину и оформите заказ — почувствуйте моментальную скорость Telegram Mini App!</span>
+                    </template>
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
-                    <div class="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-6">
-                        <i data-lucide="send" class="w-7 h-7"></i>
+            <!-- Simulator Layout: Left Controls + Right Phone Mockup -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center max-w-6xl mx-auto">
+                <!-- Left Column: Interactive Store Type Selector & Pitch -->
+                <div class="lg:col-span-6 space-y-6">
+                    <div class="space-y-3">
+                        <span class="text-xs font-extrabold tracking-wider text-slate-400 uppercase" x-text="isUz ? 'Faoliyat turini tanlang:' : 'Выберите направление бизнеса:'">Выберите направление бизнеса:</span>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" @click="simCategory = 'food'"
+                                    :class="simCategory === 'food' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 border-emerald-600' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'"
+                                    class="px-4 py-3.5 rounded-2xl border text-sm font-bold flex items-center gap-3 transition-all duration-200 text-left">
+                                <span class="text-2xl">🍔</span>
+                                <div>
+                                    <div x-text="isUz ? 'Fast Food & Kafe' : 'Еда и напитки'">Еда и напитки</div>
+                                    <div class="text-[11px] opacity-80" x-text="isUz ? 'Lavash, burger, pitsa' : 'Бургеры, пицца, кофе'">Бургеры, пицца, кофе</div>
+                                </div>
+                            </button>
+
+                            <button type="button" @click="simCategory = 'flowers'"
+                                    :class="simCategory === 'flowers' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 border-emerald-600' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'"
+                                    class="px-4 py-3.5 rounded-2xl border text-sm font-bold flex items-center gap-3 transition-all duration-200 text-left">
+                                <span class="text-2xl">💐</span>
+                                <div>
+                                    <div x-text="isUz ? 'Gullar & Sovg\'alar' : 'Цветы и подарки'">Цветы и подарки</div>
+                                    <div class="text-[11px] opacity-80" x-text="isUz ? 'Guldasta, shar, shirinlik' : 'Букеты, шары, сладости'">Букеты, шары, сладости</div>
+                                </div>
+                            </button>
+
+                            <button type="button" @click="simCategory = 'clothes'"
+                                    :class="simCategory === 'clothes' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 border-emerald-600' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'"
+                                    class="px-4 py-3.5 rounded-2xl border text-sm font-bold flex items-center gap-3 transition-all duration-200 text-left">
+                                <span class="text-2xl">👗</span>
+                                <div>
+                                    <div x-text="isUz ? 'Kiyim & Moda' : 'Одежда и обувь'">Одежда и обувь</div>
+                                    <div class="text-[11px] opacity-80" x-text="isUz ? 'O\'lcham va rang tanlash' : 'Размеры и цвета'">Размеры и цвета</div>
+                                </div>
+                            </button>
+
+                            <button type="button" @click="simCategory = 'tech'"
+                                    :class="simCategory === 'tech' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 border-emerald-600' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'"
+                                    class="px-4 py-3.5 rounded-2xl border text-sm font-bold flex items-center gap-3 transition-all duration-200 text-left">
+                                <span class="text-2xl">📱</span>
+                                <div>
+                                    <div x-text="isUz ? 'Elektronika' : 'Электроника'">Электроника</div>
+                                    <div class="text-[11px] opacity-80" x-text="isUz ? 'Gadjet va aksessuarlar' : 'Гаджеты и девайсы'">Гаджеты и девайсы</div>
+                                </div>
+                            </button>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-white">Telegram Mini App & Бот</h3>
-                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
-                        Клиенты выбирают товары и оформляют заказ прямо внутри Telegram в 2 клика. А мерчант моментально получает уведомление в группу с подробным чеком.
-                    </p>
+
+                    <!-- Simulator Advantages List -->
+                    <div class="p-6 rounded-3xl bg-slate-50 border border-slate-200/80 space-y-4">
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">1</div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-900" x-text="isUz ? 'Telegram ichida 1 soniyada ochiladi' : 'Открывается внутри Telegram за 1 секунду'">Открывается внутри Telegram за 1 секунду</h4>
+                                <p class="text-xs text-slate-500 mt-0.5" x-text="isUz ? 'Xaridor hech qanday ilova yuklab olmaydi, to\'g\'ridan-to\'g\'ri botingizda ishlaydi.' : 'Покупателю не нужно скачивать приложение — всё работает бесшовно в Telegram.'">Покупателю не нужно скачивать приложение — всё работает бесшовно в Telegram.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">2</div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-900" x-text="isUz ? 'Savat va tezkor buyurtma' : 'Корзина и мгновенный чекаут'">Корзина и мгновенный чекаут</h4>
+                                <p class="text-xs text-slate-500 mt-0.5" x-text="isUz ? 'Mijoz nomerini bitta tugma bilan ulashadi, geolokatsiyani yuboradi va Click/Payme orqali to\'laydi.' : 'Клиент отправляет номер в 1 клик, делится геопозицией и сразу оплачивает через Payme/Click.'">Клиент отправляет номер в 1 клик, делится геопозицией и сразу оплачивает через Payme/Click.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">3</div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-900" x-text="isUz ? 'Boshqaruv panelingizga buyurtma ovoz bilan tushadi' : 'Заказ со звуком падает в вашу админку'">Заказ со звуком падает в вашу админку</h4>
+                                <p class="text-xs text-slate-500 mt-0.5" x-text="isUz ? 'Operator chekni printerdan chiqarishi yoki to\'g\'ridan-to\'g\'ri Yandex Go kuryeriga topshirishi mumkin.' : 'Оператор может распечатать чек или в один клик вызвать курьера Яндекс Доставки.'">Оператор может распечатать чек или в один клик вызвать курьера Яндекс Доставки.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simulator Trigger CTA -->
+                    <div class="pt-2">
+                        <a href="/register/" class="shimmer-btn inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition-all">
+                            <span x-text="isUz ? 'O\'z do\'koningizni bunday ko\'rinishda ochish' : 'Создать такой магазин для себя'">Создать такой магазин для себя</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-emerald-400"></i>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Card 2 -->
-                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
-                    <div class="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-6">
-                        <i data-lucide="credit-card" class="w-7 h-7"></i>
+                <!-- Right Column: 3D High-Fidelity Smartphone Simulator -->
+                <div class="lg:col-span-6 flex justify-center relative">
+                    <!-- Simulated Notification Toast (Appears when user checks out) -->
+                    <div x-show="simNotification"
+                         x-transition:enter="transition ease-out duration-300 transform"
+                         x-transition:enter-start="-translate-y-8 opacity-0 scale-95"
+                         x-transition:enter-end="translate-y-0 opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-200 transform"
+                         x-transition:leave-start="translate-y-0 opacity-100 scale-100"
+                         x-transition:leave-end="-translate-y-8 opacity-0 scale-95"
+                         class="absolute -top-14 z-50 glass-card-3d border-emerald-300 bg-white/95 p-4 rounded-2xl shadow-2xl flex items-center gap-3.5 max-w-sm"
+                         style="display: none;">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/30">
+                            <i data-lucide="check" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-slate-900" x-text="isUz ? '🎉 Buyurtma muvaffaqiyatli qabul qilindi!' : '🎉 Заказ успешно оформлен!'">🎉 Заказ успешно оформлен!</div>
+                            <div class="text-[11px] text-slate-600 font-medium">
+                                <span x-text="simLastOrder ? simLastOrder.sum.toLocaleString() : '0'"></span> UZS • <span x-text="isUz ? 'Telegram bot orqali chek yuborildi' : 'Чек отправлен в Telegram бот'">Чек отправлен в Telegram бот</span>
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-white">Click, Payme & Uzum Pay</h3>
-                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
-                        Поддержка банковских карт Uzcard и Humo. Автоматическое подтверждение оплаты через защищенные вебхуки и смена статуса на «Оплачено».
-                    </p>
-                </div>
 
-                <!-- Card 3 -->
-                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-6">
-                        <i data-lucide="layers" class="w-7 h-7"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white">Вариации и контроль склада</h3>
-                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
-                        Настраивайте размеры (S, M, L), вкусы и опции со своей ценой и остатком. Система автоматически списывает склад и показывает плашку «Нет в наличии».
-                    </p>
-                </div>
+                    <!-- Realistic iPhone Mockup Frame -->
+                    <div class="w-[320px] sm:w-[350px] h-[640px] bg-slate-950 rounded-[48px] p-3 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border-4 border-slate-800 relative flex flex-col">
+                        <!-- Dynamic Island & Camera -->
+                        <div class="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full z-40 flex items-center justify-between px-3">
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-900"></div>
+                            <div class="w-2 h-2 rounded-full bg-emerald-500/80"></div>
+                        </div>
 
-                <!-- Card 4 -->
-                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
-                    <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-6">
-                        <i data-lucide="ticket" class="w-7 h-7"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white">Промокоды и акции</h3>
-                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
-                        Создавайте купоны со скидкой в процентах или UZS, лимитом использований и минимальным чеком. Отображение перечеркнутых цен на товары.
-                    </p>
-                </div>
+                        <!-- Inner Screen Content -->
+                        <div class="w-full h-full bg-slate-50 rounded-[38px] overflow-hidden flex flex-col text-slate-900 text-left relative">
+                            <!-- Telegram Mini App Top Nav -->
+                            <div class="bg-white border-b border-slate-200 px-4 pt-8 pb-3 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-bold text-sky-600">Telegram</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-xs font-bold text-slate-800 truncate" x-text="simCategory === 'food' ? 'Gold Lavash' : (simCategory === 'flowers' ? 'Bloom Flowers' : (simCategory === 'clothes' ? 'Urban Fashion' : 'SmartGadgets'))">Store Demo</span>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Online</span>
+                            </div>
 
-                <!-- Card 5 -->
-                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
-                    <div class="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-6">
-                        <i data-lucide="truck" class="w-7 h-7"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white">Доставка и самовывоз</h3>
-                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
-                        Фиксированная стоимость доставки или бесплатная доставка при заказе от N суммы (например, бесплатно от 150 000 UZS). Поддержка самовывоза.
-                    </p>
-                </div>
+                            <!-- Interactive Products List inside Phone -->
+                            <div class="p-3.5 space-y-3 overflow-y-auto flex-1 no-scrollbar">
+                                <!-- Fast Food Items -->
+                                <template x-if="simCategory === 'food'">
+                                    <div class="space-y-2.5">
+                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-xl">🌯</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Mini Mol Go\'shtli Lavash' : 'Мини лаваш с говядиной'">Мини лаваш с говядиной</div>
+                                                    <div class="text-[11px] font-black text-emerald-600">32 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <button @click="addToSimCart({ id: 1, name: 'Mini Lavash', price: 32000 })"
+                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
+                                                +
+                                            </button>
+                                        </div>
 
-                <!-- Card 6 -->
-                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 hover:border-emerald-500/40 transition-all hover:-translate-y-1">
-                    <div class="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-6">
-                        <i data-lucide="languages" class="w-7 h-7"></i>
+                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-xl">🍔</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'StoreBox CheeseBurger' : 'StoreBox Чизбургер'">StoreBox Чизбургер</div>
+                                                    <div class="text-[11px] font-black text-emerald-600">38 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <button @click="addToSimCart({ id: 2, name: 'CheeseBurger', price: 38000 })"
+                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
+                                                +
+                                            </button>
+                                        </div>
+
+                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-xl">🥤</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900">Coca-Cola 0.5L</div>
+                                                    <div class="text-[11px] font-black text-emerald-600">9 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <button @click="addToSimCart({ id: 3, name: 'Coca-Cola 0.5L', price: 9000 })"
+                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Flowers Items -->
+                                <template x-if="simCategory === 'flowers'">
+                                    <div class="space-y-2.5">
+                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-xl">🌹</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? '51 ta Qizil Atirgul' : '51 Красная роза'">51 Красная роза</div>
+                                                    <div class="text-[11px] font-black text-emerald-600">650 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <button @click="addToSimCart({ id: 4, name: '51 Atirgul', price: 650000 })"
+                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
+                                                +
+                                            </button>
+                                        </div>
+
+                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-xl">🌸</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Pion guldastasi' : 'Букет свежих пионов'">Букет свежих пионов</div>
+                                                    <div class="text-[11px] font-black text-emerald-600">420 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <button @click="addToSimCart({ id: 5, name: 'Pion guldastasi', price: 420000 })"
+                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Clothes Items -->
+                                <template x-if="simCategory === 'clothes'">
+                                    <div class="space-y-2.5">
+                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-xl">👕</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Oversize Premium Xudi' : 'Худи Oversize Premium'">Худи Oversize Premium</div>
+                                                    <div class="text-[11px] font-black text-emerald-600">280 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <button @click="addToSimCart({ id: 6, name: 'Premium Xudi', price: 280000 })"
+                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
+                                                +
+                                            </button>
+                                        </div>
+
+                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-xl">👖</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Klassik Djinsi Shim' : 'Джинсы Regular Fit'">Джинсы Regular Fit</div>
+                                                    <div class="text-[11px] font-black text-emerald-600">320 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <button @click="addToSimCart({ id: 7, name: 'Djinsi Shim', price: 320000 })"
+                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Tech Items -->
+                                <template x-if="simCategory === 'tech'">
+                                    <div class="space-y-2.5">
+                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center text-xl">🎧</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Simsiz Quloqchin Pro' : 'Беспроводные наушники Pro'">Беспроводные наушники Pro</div>
+                                                    <div class="text-[11px] font-black text-emerald-600">450 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <button @click="addToSimCart({ id: 8, name: 'Simsiz Quloqchin', price: 450000 })"
+                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
+                                                +
+                                            </button>
+                                        </div>
+
+                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-xl">⌚️</div>
+                                                <div>
+                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Smart Soat Ultra 2' : 'Смарт-часы Ultra 2'">Смарт-часы Ultra 2</div>
+                                                    <div class="text-[11px] font-black text-emerald-600">890 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <button @click="addToSimCart({ id: 9, name: 'Smart Soat', price: 890000 })"
+                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Bottom Mini App Sticky Cart Bar -->
+                            <div class="p-3 bg-white border-t border-slate-200">
+                                <div class="flex items-center justify-between mb-2 text-xs">
+                                    <span class="text-slate-500" x-text="isUz ? 'Savatdagi jami:' : 'Итого в корзине:'">Savatdagi jami:</span>
+                                    <span class="font-black text-slate-900"><span x-text="simTotal.toLocaleString()">0</span> UZS</span>
+                                </div>
+                                <button type="button"
+                                        @click="triggerSimOrder()"
+                                        :disabled="simCart.length === 0"
+                                        :class="simCart.length > 0 ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md active:scale-98' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                                        class="w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all">
+                                    <span x-text="simCart.length > 0 ? (isUz ? 'Buyurtma berish' : 'Оформить заказ') : (isUz ? 'Mahsulot qo\'shing (+)' : 'Добавьте товар (+)')">Buyurtma berish</span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5" x-show="simCart.length > 0"></i>
+                                </button>
+                            </div>
+
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-white">Мультиязычность UZ / RU</h3>
-                    <p class="mt-3 text-slate-400 text-sm leading-relaxed">
-                        Интерфейс витрины и карточки товаров на узбекском и русском языках. Клиенты выбирают удобный язык одним кликом.
-                    </p>
                 </div>
             </div>
+
         </div>
     </section>
 
-    <!-- How It Works -->
-    <section id="how-it-works" class="py-24 border-t border-slate-800/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                    Всего 4 простых шага до первых продаж
+    <!-- UZBEKISTAN PAYMENT SYSTEMS 3D SHOWCASE -->
+    <section id="payments" class="py-20 lg:py-28 bg-slate-50 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="max-w-3xl mx-auto mb-14">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold mb-4">
+                    <i data-lucide="credit-card" class="w-4 h-4"></i>
+                    <span x-text="isUz ? 'Milliy To\'lov Tizimlari' : 'Национальные платежные системы'">Национальные платежные системы</span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-slate-900">
+                    <template x-if="isUz">
+                        <span>Click, Payme va Uzum Pay — tayyor holatda</span>
+                    </template>
+                    <template x-if="!isUz">
+                        <span>Click, Payme и Uzum Pay — уже подключены из коробки</span>
+                    </template>
                 </h2>
-                <p class="mt-4 text-base text-slate-400">
-                    Запустите магазин быстрее, чем выпьете чашку кофе.
+                <p class="mt-4 text-base sm:text-lg text-slate-600">
+                    <template x-if="isUz">
+                        <span>Mablag'lar hech qanday vositachilarsiz darhol sizning O'zbekistondagi bank hisobingizga tushadi. Fiskal cheklar avtomatik shakllanadi.</span>
+                    </template>
+                    <template x-if="!isUz">
+                        <span>Деньги поступают прямо на ваш расчетный счет в любом банке Узбекистана. Фискальные чеки отправляются в ГНК автоматически.</span>
+                    </template>
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-slate-800/30 border border-slate-800 p-6 rounded-2xl relative">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-black flex items-center justify-center mb-4 text-lg border border-emerald-500/20">1</div>
-                    <h4 class="text-lg font-bold text-white">Регистрация</h4>
-                    <p class="mt-2 text-xs text-slate-400 leading-relaxed">Введите номер телефона (+998) и придумайте надежный пароль.</p>
+            <!-- 3D Interactive Payment Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto text-left">
+                <!-- Card 1: Click -->
+                <div class="glass-card-3d p-7 rounded-3xl hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 relative group overflow-hidden">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-500/20 mb-6">
+                        C
+                    </div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Click Up & Click Pass</h3>
+                    <p class="text-sm text-slate-600 mb-6" x-text="isUz ? 'Mijoz Telegram yoki Veb-saytda bir tegish orqali to\'lovni amalga oshiradi.' : 'Быстрая оплата в 1 клик с мобильного приложения Click или по QR-коду.'">
+                        Быстрая оплата в 1 клик с мобильного приложения Click или по QR-коду.
+                    </p>
+                    <div class="flex items-center gap-2 text-xs font-bold text-emerald-600">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span x-text="isUz ? 'Avtomatik holat yangilanishi' : 'Автоматическое обновление статуса'">Автоматическое обновление статуса</span>
+                    </div>
                 </div>
-                <div class="bg-slate-800/30 border border-slate-800 p-6 rounded-2xl relative">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-black flex items-center justify-center mb-4 text-lg border border-emerald-500/20">2</div>
-                    <h4 class="text-lg font-bold text-white">Мастер настройки</h4>
-                    <p class="mt-2 text-xs text-slate-400 leading-relaxed">Укажите название, выберите поддомен (mystore.platform.uz) и цвет бренда.</p>
+
+                <!-- Card 2: Payme -->
+                <div class="glass-card-3d p-7 rounded-3xl hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 relative group overflow-hidden">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-cyan-500/20 mb-6">
+                        P
+                    </div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Payme Business</h3>
+                    <p class="text-sm text-slate-600 mb-6" x-text="isUz ? 'Humo va Uzcard kartalari bilan xavfsiz va kafolatlangan to\'lovlar oqimi.' : 'Безопасный эквайринг для карт Humo и Uzcard с мгновенными пуш-уведомлениями.'">
+                        Безопасный эквайринг для карт Humo и Uzcard с мгновенными пуш-уведомлениями.
+                    </p>
+                    <div class="flex items-center gap-2 text-xs font-bold text-cyan-600">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span x-text="isUz ? '100% Rasmiy integratsiya' : '100% Официальная интеграция'">100% Официальная интеграция</span>
+                    </div>
                 </div>
-                <div class="bg-slate-800/30 border border-slate-800 p-6 rounded-2xl relative">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-black flex items-center justify-center mb-4 text-lg border border-emerald-500/20">3</div>
-                    <h4 class="text-lg font-bold text-white">Загрузка каталога</h4>
-                    <p class="mt-2 text-xs text-slate-400 leading-relaxed">Добавьте категории, фото блюд или товаров, цены и опции.</p>
+
+                <!-- Card 3: Uzum Pay -->
+                <div class="glass-card-3d p-7 rounded-3xl hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 relative group overflow-hidden">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-purple-600/20 mb-6">
+                        U
+                    </div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2" x-text="isUz ? 'Uzum Pay & Muddatli to\'lov' : 'Uzum Pay & Рассрочка'">Uzum Pay & Рассрочка</h3>
+                    <p class="text-sm text-slate-600 mb-6" x-text="isUz ? 'O\'zbekistonning eng yirik ekotizimi orqali to\'lovlar va bo\'lib to\'lash imkoniyati.' : 'Оплата через популярный кошелек Uzum Pay с поддержкой бонусных программ.'">
+                        Оплата через популярный кошелек Uzum Pay с поддержкой бонусных программ.
+                    </p>
+                    <div class="flex items-center gap-2 text-xs font-bold text-purple-600">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span x-text="isUz ? 'Ekosistema integratsiyasi' : 'Интеграция с экосистемой'">Интеграция с экосистемой</span>
+                    </div>
                 </div>
-                <div class="bg-slate-800/30 border border-slate-800 p-6 rounded-2xl relative">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-black flex items-center justify-center mb-4 text-lg border border-emerald-500/20">4</div>
-                    <h4 class="text-lg font-bold text-white">Первые продажи</h4>
-                    <p class="mt-2 text-xs text-slate-400 leading-relaxed">Поделитесь ссылкой в Instagram и подключите бота в Telegram!</p>
+            </div>
+
+            <!-- Additional Guarantee Pill -->
+            <div class="mt-12 inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-white border border-slate-200/80 shadow-xs text-xs font-semibold text-slate-600">
+                <i data-lucide="shield-alert" class="w-4 h-4 text-emerald-600"></i>
+                <span x-text="isUz ? 'Barcha to\'lovlar O\'zbekiston Respublikasi Soliq qo\'mitasi (OFD) talablariga mos keladi' : 'Все платежи соответствуют требованиям ГНК РУз (фискализация и QR)'">
+                    Все платежи соответствуют требованиям ГНК РУз (фискализация и QR)
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- BENTO GRID (Why StoreBox? Luxury Architectural SaaS Layout) -->
+    <section id="features" class="py-20 lg:py-28 bg-white border-t border-slate-200/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold mb-4">
+                    <i data-lucide="layers" class="w-4 h-4 text-emerald-600"></i>
+                    <span x-text="isUz ? 'Nega aynan StoreBox?' : 'Почему выбирают StoreBox?'">Почему выбирают StoreBox?</span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-slate-900">
+                    <template x-if="isUz">
+                        <span>Savdoni avtomatlashtirish uchun barcha kerakli vositalar</span>
+                    </template>
+                    <template x-if="!isUz">
+                        <span>Всё, что нужно современному бренду для масштабирования</span>
+                    </template>
+                </h2>
+            </div>
+
+            <!-- Bento 5-Card Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                <!-- Bento 1: Large Featured Card (Span 2) -->
+                <div class="md:col-span-2 glass-card-3d p-8 sm:p-10 rounded-3xl flex flex-col justify-between relative overflow-hidden group">
+                    <div class="max-w-md z-10">
+                        <span class="text-xs font-extrabold text-emerald-600 uppercase tracking-wider" x-text="isUz ? 'Telegram Ekotizimi' : 'Экосистема Telegram'">Экосистема Telegram</span>
+                        <h3 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2 mb-3">
+                            <template x-if="isUz">
+                                <span>Telegram Mini App (TMA) va Avtomatik Bot</span>
+                            </template>
+                            <template x-if="!isUz">
+                                <span>Telegram Mini App (TMA) и Умный бот</span>
+                            </template>
+                        </h3>
+                        <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+                            <template x-if="isUz">
+                                <span>Mijoz botga kirganida to'liq interaktiv do'kon ochiladi. Mahsulotlarni filtrlash, savatga qo'shish va to'lash 1 daqiqa vaqt oladi.</span>
+                            </template>
+                            <template x-if="!isUz">
+                                <span>Клиент открывает полноценный интернет-магазин прямо внутри чата. Никаких переходов на внешние сайты или ожидания операторов.</span>
+                            </template>
+                        </p>
+                    </div>
+
+                    <div class="mt-8 flex flex-wrap items-center gap-3 text-xs font-bold text-slate-700">
+                        <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
+                            <span x-text="isUz ? 'BotFather token ulanishi' : 'Подключение через BotFather'">Подключение через BotFather</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
+                            <span x-text="isUz ? 'TMA WebApp menyu tugmasi' : 'Кнопка WebApp в меню'">Кнопка WebApp в меню</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bento 2: Courier & Delivery -->
+                <div class="glass-card-3d p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-6 font-black">
+                            <i data-lucide="truck" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-slate-900 mb-2" x-text="isUz ? 'Yandex Go & Kuryerlar' : 'Яндекс Доставка и курьеры'">Яндекс Доставка и курьеры</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed" x-text="isUz ? 'Yetkazib berish narxini radius va zonalarga qarab avtomatik hisoblash.' : 'Автоматический расчет стоимости доставки по километражу или фиксированным зонам.'">
+                            Автоматический расчет стоимости доставки по километражу или фиксированным зонам.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 text-xs font-bold text-amber-600 flex items-center gap-1">
+                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        <span x-text="isUz ? 'Geolokatsiya aniqligi' : 'Точная геолокация'">Точная геолокация</span>
+                    </div>
+                </div>
+
+                <!-- Bento 3: Warehouse & Stock Control -->
+                <div class="glass-card-3d p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-600 flex items-center justify-center mb-6 font-black">
+                            <i data-lucide="boxes" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-slate-900 mb-2" x-text="isUz ? 'Ombor va Qoldiqlar' : 'Складской учет'">Складской учет</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed" x-text="isUz ? 'Mahsulot tugaganda avtomatik sotuvdan olinadi, ortiqcha xatoliklar bo\'lmaydi.' : 'Автоматическое списание остатков. Товар скрывается, если закончился на складе.'">
+                            Автоматическое списание остатков. Товар скрывается, если закончился на складе.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 text-xs font-bold text-sky-600 flex items-center gap-1">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span x-text="isUz ? '100% Nazorat' : '100% Контроль'">100% Контроль</span>
+                    </div>
+                </div>
+
+                <!-- Bento 4: Dedicated Subdomain & Branding -->
+                <div class="glass-card-3d p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center mb-6 font-black">
+                            <i data-lucide="globe" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-slate-900 mb-2" x-text="isUz ? 'Shaxsiy Domen & SEO' : 'Свой домен и SEO'">Свой домен и SEO</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed" x-text="isUz ? 'Do\'koningiz nomiga mos bepul havola yoki shaxsiy domeningizni ulash.' : 'Бесплатный красивый поддомен вида store.storebox.uz или подключение своего .uz домена.'">
+                            Бесплатный красивый поддомен вида store.storebox.uz или подключение своего .uz домена.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 text-xs font-bold text-purple-600 flex items-center gap-1">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                        <span x-text="isUz ? 'Bepul SSL sertifikat' : 'Бесплатный SSL-сертификат'">Бесплатный SSL-сертификат</span>
+                    </div>
+                </div>
+
+                <!-- Bento 5: Customer Profiles & Reorder -->
+                <div class="glass-card-3d p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center mb-6 font-black">
+                            <i data-lucide="user-check" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-slate-900 mb-2" x-text="isUz ? 'Mijoz Profili va Qayta Xarid' : 'Профиль клиента и повторные заказы'">Профиль клиента и повторные заказы</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed" x-text="isUz ? 'Xaridorlar o\'z buyurtmalarini kuzatib boradi va 1-bosish bilan qayta buyurtma beradi.' : 'История заказов, трекинг доставки и повторный заказ любимых позиций в 1 клик.'">
+                            История заказов, трекинг доставки и повторный заказ любимых позиций в 1 клик.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 text-xs font-bold text-rose-600 flex items-center gap-1">
+                        <i data-lucide="repeat" class="w-4 h-4"></i>
+                        <span x-text="isUz ? 'LTV oshirish' : 'Рост повторных продаж'">Рост повторных продаж</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- TRANSPARENT PRICING TIERS (Monthly & Annual Toggle with -20% Discount) -->
+    <section id="pricing" class="py-20 lg:py-28 bg-slate-50 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-14">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-4">
+                    <i data-lucide="tag" class="w-4 h-4"></i>
+                    <span x-text="isUz ? 'Shaffof va Qulay Tariflar' : 'Прозрачные тарифы'">Прозрачные тарифы</span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-slate-900">
+                    <template x-if="isUz">
+                        <span>Hech qanday yashirin to'lovlarsiz tarif rejalari</span>
+                    </template>
+                    <template x-if="!isUz">
+                        <span>Инвестируйте в рост продаж без скрытых комиссий</span>
+                    </template>
+                </h2>
+                <p class="mt-4 text-base text-slate-600">
+                    <span x-text="isUz ? 'Barcha tariflarda 14 kunlik bepul to\'liq funksional sinov davri mavjud.' : 'На всех тарифах действует 14 дней бесплатного пробного периода.'">14 дней бесплатного пробного периода.</span>
+                </p>
+
+                <!-- Billing Cycle Switch (Monthly vs Annual) -->
+                <div class="mt-8 inline-flex items-center p-1.5 bg-white border border-slate-200/90 rounded-2xl shadow-xs">
+                    <button type="button" @click="billingCycle = 'monthly'"
+                            :class="billingCycle === 'monthly' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                            class="px-5 py-2 rounded-xl text-xs font-bold transition-all"
+                            x-text="isUz ? 'Oylik to\'lov' : 'Ежемесячно'">
+                        Ежемесячно
+                    </button>
+                    <button type="button" @click="billingCycle = 'annual'"
+                            :class="billingCycle === 'annual' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                            class="px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                        <span x-text="isUz ? 'Yillik to\'lov' : 'Ежегодно'">Ежегодно</span>
+                        <span class="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">-20%</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pricing Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+                <!-- Tier 1: Start -->
+                <div class="glass-card-3d p-8 rounded-3xl flex flex-col justify-between hover:shadow-xl transition-all">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1" x-text="isUz ? 'Boshlang\'ich' : 'Старт'">Старт</h3>
+                        <p class="text-xs text-slate-500 mb-6" x-text="isUz ? 'Yangi boshlayotgan tadbirkorlar uchun' : 'Для начинающих предпринимателей'">Для начинающих предпринимателей</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-black text-slate-900" x-text="billingCycle === 'annual' ? '159 000' : '199 000'">159 000</span>
+                            <span class="text-xs font-bold text-slate-500">UZS / oy</span>
+                        </div>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-700 font-medium">
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? '100 tagacha mahsulot' : 'До 100 товаров'">До 100 товаров</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Telegram Bot va Veb-vitrina' : 'Telegram-бот и веб-витрина'">Telegram-бот и веб-витрина</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Click va Payme to\'lovlari' : 'Прием Click и Payme'">Прием Click и Payme</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Kunlik hisobotlar' : 'Ежедневные отчеты'">Ежедневные отчеты</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mt-8">
+                        <a href="/register/" class="w-full py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs flex items-center justify-center transition-colors" x-text="isUz ? 'Sinab ko\'rish' : 'Попробовать'">
+                            Попробовать
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Tier 2: Business (Most Popular - Highlighted) -->
+                <div class="glass-card-3d p-8 rounded-3xl flex flex-col justify-between border-2 border-emerald-500 shadow-2xl relative bg-white scale-105 z-10">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[11px] font-black px-3.5 py-1 rounded-full uppercase tracking-wider shadow-md">
+                        <span x-text="isUz ? 'Eng ommabop' : 'Самый популярный'">Самый популярный</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1" x-text="isUz ? 'Biznes' : 'Бизнес'">Бизнес</h3>
+                        <p class="text-xs text-slate-500 mb-6" x-text="isUz ? 'O\'sayotgan brend va do\'konlar uchun' : 'Для растущих брендов и ресторанов'">Для растущих брендов и ресторанов</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-black text-slate-900 text-emerald-600" x-text="billingCycle === 'annual' ? '359 000' : '449 000'">359 000</span>
+                            <span class="text-xs font-bold text-slate-500">UZS / oy</span>
+                        </div>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-700 font-medium">
+                            <li class="flex items-center gap-2.5 font-bold text-slate-900">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Cheksiz mahsulotlar' : 'Неограниченно товаров'">Неограниченно товаров</span>
+                            </li>
+                            <li class="flex items-center gap-2.5 font-bold text-slate-900">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Telegram Mini App (TMA) to\'liq' : 'Полноценный Telegram Mini App'">Полноценный Telegram Mini App</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Click, Payme, Uzum Pay' : 'Click, Payme, Uzum Pay'">Click, Payme, Uzum Pay</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Yandex Go va Kuryer integratsiyasi' : 'Интеграция с Яндекс Доставкой'">Интеграция с Яндекс Доставкой</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? '3 tagacha filial/ombor hisobi' : 'Учет до 3 филиалов и складов'">Учет до 3 филиалов и складов</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mt-8">
+                        <a href="/register/" class="shimmer-btn w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm flex items-center justify-center shadow-lg shadow-emerald-600/30 transition-all" x-text="isUz ? 'Biznesni boshlash' : 'Начать бесплатно'">
+                            Начать бесплатно
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Tier 3: Pro / Enterprise -->
+                <div class="glass-card-3d p-8 rounded-3xl flex flex-col justify-between hover:shadow-xl transition-all">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1" x-text="isUz ? 'Pro & Korporativ' : 'Pro / Корпоративный'">Pro / Корпоративный</h3>
+                        <p class="text-xs text-slate-500 mb-6" x-text="isUz ? 'Tarmoqli biznes va yirik kompaniyalar' : 'Для сетевых магазинов и франшиз'">Для сетевых магазинов и франшиз</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-black text-slate-900" x-text="billingCycle === 'annual' ? '790 000' : '990 000'">790 000</span>
+                            <span class="text-xs font-bold text-slate-500">UZS / oy</span>
+                        </div>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-700 font-medium">
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Shaxsiy domen (.uz)' : 'Свой домен (.uz)'">Свой домен (.uz)</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Cheksiz filiallar va omborlar' : 'Неограниченно складов и филиалов'">Неограниченно складов и филиалов</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? '1C / MoySklad integratsiyasi' : 'Интеграция с 1С / МойСклад'">Интеграция с 1С / МойСклад</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span x-text="isUz ? 'Shaxsiy 24/7 menejer' : 'Персональный менеджер 24/7'">Персональный менеджер 24/7</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mt-8">
+                        <a href="/register/" class="w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center transition-colors" x-text="isUz ? 'Bog\'lanish' : 'Выбрать Pro'">
+                            Выбрать Pro
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-24 bg-slate-900/60 border-t border-slate-800/80">
+    <!-- REAL CUSTOMER TESTIMONIALS & TRUST -->
+    <section class="py-20 lg:py-28 bg-white border-t border-slate-200/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                    Честные и прозрачные тарифы
+                <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-slate-900" x-text="isUz ? 'Bizga ishonch bildirgan tadbirkorlar' : 'Нам доверяют лидеры рынка Узбекистана'">
+                    Нам доверяют лидеры рынка Узбекистана
                 </h2>
-                <p class="mt-4 text-base text-slate-400">
-                    Попробуйте все возможности платформы бесплатно в течение 14 дней.
+                <p class="mt-3 text-sm sm:text-base text-slate-600" x-text="isUz ? 'Toshkent, Samarqand va Farg\'onadagi 1,400+ faol do\'konlar biz bilan rivojlanmoqda.' : 'Более 1,400 активных магазинов по всему Узбекистану.'">
+                    Более 1,400 активных магазинов по всему Узбекистану.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <!-- Plan 1 -->
-                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-white">Старт</h3>
-                        <p class="text-slate-400 text-xs mt-1">Для тестирования гипотез и первых заказов</p>
-                        <div class="mt-6 text-3xl font-black text-white">0 UZS <span class="text-xs font-normal text-slate-400">/ 14 дней</span></div>
-                        <ul class="mt-6 space-y-3 text-xs text-slate-300">
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> До 30 товаров</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Витрина на поддомене</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Telegram-уведомления</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Оплата при получении</li>
-                        </ul>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                <div class="glass-card-3d p-7 rounded-3xl">
+                    <div class="flex items-center gap-3.5 mb-4">
+                        <div class="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center font-bold text-amber-700 text-sm">GL</div>
+                        <div>
+                            <div class="text-sm font-bold text-slate-900">Gold Lavash Toshkent</div>
+                            <div class="text-xs text-slate-500" x-text="isUz ? 'Fast-Food tarmog\'i' : 'Сеть Fast-Food'">Сеть Fast-Food</div>
+                        </div>
                     </div>
-                    <a href="/register/" class="mt-8 block text-center py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm transition-colors">
-                        Начать бесплатно
-                    </a>
+                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed italic" x-text="isUz ? '«Telegram botimiz orqali buyurtmalar soni 3 barobarga oshdi. Eng muhimi — operatorlarimiz telefon kutib o\'tirmaydi, hamma buyurtma avtomatik tushadi va printerdan chiqadi.»' : '«Количество заказов через Telegram выросло в 3 раза. Самое главное — операторы больше не принимают заказы вручную по телефону, чеки сразу уходят на кухню!»'">
+                        «Количество заказов через Telegram выросло в 3 раза. Самое главное — операторы больше не принимают заказы вручную по телефону, чеки сразу уходят на кухню!»
+                    </p>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600">
+                        <span x-text="isUz ? '+280% onlayn sotuv' : '+280% онлайн-продажи'">+280% онлайн-продажи</span>
+                        <span class="text-slate-400 font-normal" x-text="isUz ? 'Toshkent' : 'Ташкент'">Ташкент</span>
+                    </div>
                 </div>
 
-                <!-- Plan 2 (Highlighted) -->
-                <div class="bg-gradient-to-b from-slate-800 to-slate-800/80 border-2 border-emerald-500 rounded-3xl p-8 flex flex-col justify-between relative shadow-2xl shadow-emerald-500/10">
-                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-xs tracking-wider uppercase">
-                        Популярный выбор
+                <div class="glass-card-3d p-7 rounded-3xl">
+                    <div class="flex items-center gap-3.5 mb-4">
+                        <div class="w-11 h-11 rounded-full bg-pink-100 flex items-center justify-center font-bold text-pink-700 text-sm">BF</div>
+                        <div>
+                            <div class="text-sm font-bold text-slate-900">Bloom Flowers</div>
+                            <div class="text-xs text-slate-500" x-text="isUz ? 'Gullar va sovg\'alar' : 'Цветы и подарки'">Цветы и подарки</div>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-white">Бизнес</h3>
-                        <p class="text-slate-400 text-xs mt-1">Для ресторанов, магазинов одежды и электроники</p>
-                        <div class="mt-6 text-3xl font-black text-white">190 000 UZS <span class="text-xs font-normal text-slate-400">/ месяц</span></div>
-                        <ul class="mt-6 space-y-3 text-xs text-slate-300">
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> До 500 товаров с вариациями</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Telegram Mini App (TMA) внутри бота</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Эквайринг Click, Payme, Uzum Pay</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Промокоды и расчет доставки</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Контроль складских остатков</li>
-                        </ul>
+                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed italic" x-text="isUz ? '«Mijozlarimiz Telegram Mini App orqali guldastaning rasmini ko\'rib, Click orqali darhol to\'lashadi. Kuryerga geolokatsiya to\'g\'ri yetib boradi, hech qanday adashish yo\'q!»' : '«Клиенты выбирают букет прямо в Telegram Mini App и оплачивают через Click в один тап. Курьер получает точную геолокацию адреса, никаких задержек!»'">
+                        «Клиенты выбирают букет прямо в Telegram Mini App и оплачивают через Click в один тап. Курьер получает точную геолокацию адреса, никаких задержек!»
+                    </p>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600">
+                        <span x-text="isUz ? '100% Click & Payme to\'lov' : '100% Оплата через Click/Payme'">100% Оплата через Click/Payme</span>
+                        <span class="text-slate-400 font-normal" x-text="isUz ? 'Samarqand' : 'Самарканд'">Самарканд</span>
                     </div>
-                    <a href="/register/" class="mt-8 block text-center py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-emerald-500/25">
-                        Выбрать «Бизнес»
-                    </a>
                 </div>
 
-                <!-- Plan 3 -->
-                <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-white">Pro / Бренд</h3>
-                        <p class="text-slate-400 text-xs mt-1">Для крупных сетей и высоких оборотов</p>
-                        <div class="mt-6 text-3xl font-black text-white">390 000 UZS <span class="text-xs font-normal text-slate-400">/ месяц</span></div>
-                        <ul class="mt-6 space-y-3 text-xs text-slate-300">
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Безлимитно товаров и фото</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Подключение собственного домена (.UZ)</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Выделенный Telegram-бот</li>
-                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Персональный менеджер 24/7</li>
-                        </ul>
+                <div class="glass-card-3d p-7 rounded-3xl">
+                    <div class="flex items-center gap-3.5 mb-4">
+                        <div class="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700 text-sm">US</div>
+                        <div>
+                            <div class="text-sm font-bold text-slate-900">Urban Style UZ</div>
+                            <div class="text-xs text-slate-500" x-text="isUz ? 'Kiyim va moda do\'koni' : 'Магазин одежды'">Магазин одежды</div>
+                        </div>
                     </div>
-                    <a href="/register/" class="mt-8 block text-center py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm transition-colors">
-                        Подключить Pro
-                    </a>
+                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed italic" x-text="isUz ? '«StoreBox bizga eng qimmatli narsa — vaqtni tejab berdi. 15 daqiqada butun katalogimizni kiritdik va o\'sha kuniyoq birinchi buyurtmalarni qabul qila boshladik.»' : '«StoreBox сэкономил нам недели разработки. За 15 минут перенесли весь каталог одежды и в тот же день приняли первые онлайн-заказы.»'">
+                        «StoreBox сэкономил нам недели разработки. За 15 минут перенесли весь каталог одежды и в тот же день приняли первые онлайн-заказы.»
+                    </p>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600">
+                        <span x-text="isUz ? '15 daqiqada start' : 'Старт за 15 минут'">Старт за 15 минут</span>
+                        <span class="text-slate-400 font-normal" x-text="isUz ? 'Farg\'ona' : 'Фергана'">Фергана</span>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800 py-12 text-slate-400 text-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-2 text-white font-bold">
-                <i data-lucide="shopping-bag" class="w-5 h-5 text-emerald-400"></i>
-                <span>StoreBox Uzbekistan</span>
+    <!-- FAQ ACCORDION -->
+    <section id="faq" class="py-20 lg:py-28 bg-slate-50 border-t border-slate-200/80"
+             x-data="{ openFaq: null }">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-14">
+                <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-slate-900" x-text="isUz ? 'Ko\'p beriladigan savollar' : 'Часто задаваемые вопросы'">
+                    Часто задаваемые вопросы
+                </h2>
+                <p class="mt-3 text-sm sm:text-base text-slate-600" x-text="isUz ? 'Savolingizga javob topa olmadingizmi? Qo\'llab-quvvatlash xizmati doim aloqada.' : 'Не нашли ответ? Наша служба заботы всегда на связи.'">
+                    Не нашли ответ? Наша служба заботы всегда на связи.
+                </p>
             </div>
-            <div>
-                © 2026 StoreBox Platform. Все права защищены. Ташкент, Узбекистан.
+
+            <div class="space-y-4">
+                <!-- FAQ 1 -->
+                <div class="glass-card-3d rounded-2xl overflow-hidden">
+                    <button type="button" @click="openFaq = openFaq === 1 ? null : 1"
+                            class="w-full px-6 py-5 text-left font-bold text-sm sm:text-base text-slate-900 flex items-center justify-between">
+                        <span x-text="isUz ? 'Do\'kon ochish uchun dasturchi yoki maxsus bilim kerakmi?' : 'Нужны ли навыки программирования для открытия магазина?'">Нужны ли навыки программирования для открытия магазина?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-200" :class="openFaq === 1 ? 'rotate-180 text-emerald-600' : ''"></i>
+                    </button>
+                    <div x-show="openFaq === 1" x-collapse class="px-6 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                        <span x-text="isUz ? 'Mutlaqo yo\'q! StoreBox barcha texnik qiyinchiliklarni o\'z zimmasiga olgan. Siz shunchaki ro\'yxatdan o\'tasiz, do\'kon nomini kiritasiz va mahsulotlaringizni qo\'shasiz. Hammasi oddiy va tushunarli.' : 'Абсолютно нет! Платформа разработана так, чтобы любой предприниматель смог настроить витрину, добавить товары и подключить бота за 15 минут без единой строчки кода.'">Абсолютно нет! Платформа разработана так, чтобы любой предприниматель смог настроить витрину, добавить товары и подключить бота за 15 минут без единой строчки кода.</span>
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="glass-card-3d rounded-2xl overflow-hidden">
+                    <button type="button" @click="openFaq = openFaq === 2 ? null : 2"
+                            class="w-full px-6 py-5 text-left font-bold text-sm sm:text-base text-slate-900 flex items-center justify-between">
+                        <span x-text="isUz ? 'Click va Payme orqali to\'langan pul qayerga tushadi?' : 'Куда поступают деньги от оплат через Click и Payme?'">Куда поступают деньги от оплат через Click и Payme?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-200" :class="openFaq === 2 ? 'rotate-180 text-emerald-600' : ''"></i>
+                    </button>
+                    <div x-show="openFaq === 2" x-collapse class="px-6 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                        <span x-text="isUz ? 'Pullar to\'g\'ridan-to\'g\'ri sizning O\'zbekistondagi yuridik bank hisob raqamingizga tushadi. StoreBox pullaringizni ushlab turmaydi va oraliq komissiya olmaydi.' : 'Все средства зачисляются напрямую на ваш расчетный счет в узбекском банке. StoreBox не удерживает ваши деньги и не берет скрытых процентов с транзакций.'">Все средства зачисляются напрямую на ваш расчетный счет в узбекском банке. StoreBox не удерживает ваши деньги и не берет скрытых процентов с транзакций.</span>
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="glass-card-3d rounded-2xl overflow-hidden">
+                    <button type="button" @click="openFaq = openFaq === 3 ? null : 3"
+                            class="w-full px-6 py-5 text-left font-bold text-sm sm:text-base text-slate-900 flex items-center justify-between">
+                        <span x-text="isUz ? 'Telegram botni qanday ulayman?' : 'Как подключить Telegram-бота?'">Как подключить Telegram-бота?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-200" :class="openFaq === 3 ? 'rotate-180 text-emerald-600' : ''"></i>
+                    </button>
+                    <div x-show="openFaq === 3" x-collapse class="px-6 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                        <span x-text="isUz ? 'Telegram-da @BotFather orqali yangi bot yaratib, uning API tokenini StoreBox boshqaruv paneliga nusxalaysiz. Tizim avtomatik ravishda botingizga menyu va Telegram Mini App vitrinasini biriktiradi.' : 'Создайте бота в @BotFather за 1 минуту и просто вставьте его токен в настройках магазина в панели StoreBox. Платформа сама настроит WebApp кнопку и синхронизирует меню.'">Создайте бота в @BotFather за 1 минуту и просто вставьте его токен в настройках магазина в панели StoreBox. Платформа сама настроит WebApp кнопку и синхронизирует меню.</span>
+                    </div>
+                </div>
             </div>
-            <div class="flex space-x-6">
-                <a href="#" class="hover:text-white">Оферта</a>
-                <a href="#" class="hover:text-white">Конфиденциальность</a>
-                <a href="#" class="hover:text-white">Поддержка</a>
+        </div>
+    </section>
+
+    <!-- BIG BOTTOM CTA BANNER -->
+    <section class="py-20 bg-slate-900 text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-grid-slate-pattern opacity-10 pointer-events-none"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-emerald-500/20 blur-[130px] rounded-full pointer-events-none"></div>
+
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-3xl sm:text-5xl font-black tracking-tight mb-6">
+                <template x-if="isUz">
+                    <span>O'z brendingiz savdosini yangi darajaga olib chiqing</span>
+                </template>
+                <template x-if="!isUz">
+                    <span>Готовы вывести продажи вашего бизнеса на новый уровень?</span>
+                </template>
+            </h2>
+            <p class="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto mb-10">
+                <span x-text="isUz ? '14 kun davomida bepul sinab ko\'ring. Kredit karta yoki to\'lov talab qilinmaydi.' : 'Попробуйте 14 дней бесплатно. Кредитная карта не требуется.'">
+                    Попробуйте 14 дней бесплатно. Кредитная карта не требуется.
+                </span>
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="/register/" class="shimmer-btn px-9 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-base shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-1 transition-all flex items-center gap-2">
+                    <span x-text="isUz ? 'Hoziroq bepul boshlash' : 'Начать бесплатно прямо сейчас'">Начать бесплатно прямо сейчас</span>
+                    <i data-lucide="sparkles" class="w-5 h-5 text-slate-950"></i>
+                </a>
+                <a href="/login/" class="px-8 py-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-base border border-slate-700 transition-all" x-text="isUz ? 'Tizimga kirish' : 'Войти в личный кабинет'">
+                    Войти в личный кабинет
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200/80 py-12 text-slate-500 text-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-white">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                </div>
+                <span class="font-extrabold text-slate-900 text-base">StoreBox</span>
+                <span class="text-xs text-slate-400" x-text="isUz ? '© 2026 StoreBox UZ. Barcha huquqlar himoyalangan.' : '© 2026 StoreBox UZ. Все права защищены.'">© 2026 StoreBox UZ. Все права защищены.</span>
+            </div>
+
+            <div class="flex items-center space-x-6 text-xs font-semibold">
+                <a href="#features" class="hover:text-emerald-600 transition-colors" x-text="isUz ? 'Imkoniyatlar' : 'Возможности'">Возможности</a>
+                <a href="#payments" class="hover:text-emerald-600 transition-colors" x-text="isUz ? 'To\'lovlar' : 'Платежи'">Платежи</a>
+                <a href="#pricing" class="hover:text-emerald-600 transition-colors" x-text="isUz ? 'Tariflar' : 'Тарифы'">Тарифы</a>
+                <a href="/login/" class="hover:text-emerald-600 transition-colors" x-text="isUz ? 'Kabinet' : 'Вход'">Вход</a>
             </div>
         </div>
     </footer>
+
 </div>
 {% endblock %}

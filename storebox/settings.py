@@ -19,7 +19,22 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.loca.lt',
     'https://*.ngrok.io',
     'https://*.ngrok-free.app',
+    'https://*.trycloudflare.com',
 ]
+
+# Dynamically add stored tunnel URL if present
+_tunnel_file = BASE_DIR / '.tunnel_url'
+if _tunnel_file.exists():
+    try:
+        _t_url = _tunnel_file.read_text().strip()
+        if _t_url.startswith('https://') and _t_url not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_t_url)
+    except Exception:
+        pass
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
 
 X_FRAME_OPTIONS = 'ALLOWALL'
 

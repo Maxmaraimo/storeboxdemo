@@ -10,13 +10,13 @@
     <!-- Heading -->
     <div>
         <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-black uppercase tracking-wider">
-            Заказ успешно принят!
+            Buyurtma qabul qilindi!
         </span>
         <h2 class="text-3xl font-black text-slate-900 mt-3">
-            Спасибо за заказ!
+            Xaridingiz uchun rahmat!
         </h2>
         <p class="text-slate-500 text-sm mt-1">
-            Номер вашего заказа: <span class="font-mono font-bold text-slate-900">#{{ order.order_number }}</span>
+            Buyurtma raqami: <span class="font-mono font-bold text-slate-900">#{{ order.order_number }}</span>
         </p>
     </div>
 
@@ -94,12 +94,12 @@
     </div>
 
     <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-        <a href="{% if request.store %}/?open_orders=1{% else %}/store/{{ order.store.subdomain }}/?open_orders=1{% endif %}"
+        <a href="/store/{{ order.store.subdomain }}/profile/"
            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs transition-all shadow-md shadow-brand/20">
             <i data-lucide="package" class="w-4 h-4"></i>
             <span>Mening buyurtmalarimni ko'rish</span>
         </a>
-        <a href="{% if request.store %}/{% else %}/store/{{ order.store.subdomain }}/{% endif %}"
+        <a href="/store/{{ order.store.subdomain }}/"
            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors shadow-md">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             <span>Do'konga qaytish</span>

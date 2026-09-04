@@ -28,10 +28,29 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
         [x-cloak] { display: none !important; }
         .hover-bg-brand:hover { background-color: {{ store.primary_color|default:"#10B981" }}; }
     </style>
+    <script>
+        (function() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                try {
+                    window.Telegram.WebApp.ready();
+                    window.Telegram.WebApp.expand();
+                } catch(e) {
+                    console.error("Telegram WebApp init error:", e);
+                }
+            }
+            if ((window.Telegram && window.Telegram.WebApp) || window.location.search.includes('tma=1') || sessionStorage.getItem('is_tma') === '1') {
+                document.cookie = "is_tma=1; path=/; max-age=86400; SameSite=Lax";
+                sessionStorage.setItem('is_tma', '1');
+            }
+        })();
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-[#F8FAFC] min-h-full font-sans text-slate-800 antialiased flex flex-col justify-between" x-data="storefrontApp()">
@@ -737,6 +756,19 @@
                 },
 
                 init() {
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        try {
+                            window.Telegram.WebApp.ready();
+                            window.Telegram.WebApp.expand();
+                            const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+                            if (tgUser) {
+                                if (!this.customerName || this.customerName === 'Mijoz') {
+                                    this.customerName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || tgUser.username || 'Mijoz';
+                                    localStorage.setItem('sb_cust_name_{{ store.id }}', this.customerName);
+                                }
+                            }
+                        } catch(e) {}
+                    }
                     if (this.customerPhone) {
                         this.fetchOrders();
                     }
