@@ -102,6 +102,41 @@
             currentMessages: initialMsgs.length > 0 ? initialMsgs : [
                 { id: 1, sender: 'CUSTOMER', message: 'Assalomu alaykum! Savollaringiz bo\'lsa, bemalol yozishingiz mumkin.', time: '12:00' }
             ],
+            pollTimer: null,
+
+            init() {
+                // Scroll to bottom initially
+                this.scrollToBottom();
+
+                // Live polling for new incoming messages from customer / telegram
+                if (this.selectedPhone) {
+                    this.pollTimer = setInterval(() => {
+                        this.fetchLatestMessages();
+                    }, 3000);
+                }
+            },
+
+            scrollToBottom() {
+                this.$nextTick(() => {
+                    const stream = document.getElementById('chat-stream');
+                    if (stream) stream.scrollTop = stream.scrollHeight;
+                });
+            },
+
+            fetchLatestMessages() {
+                if (!this.selectedPhone) return;
+                fetch(`/dashboard/api/get-chat/?phone=${encodeURIComponent(this.selectedPhone)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.messages && data.messages.length > 0) {
+                            if (data.messages.length !== this.currentMessages.length) {
+                                this.currentMessages = data.messages;
+                                this.scrollToBottom();
+                            }
+                        }
+                    })
+                    .catch(() => {});
+            },
 
             selectContact(phone, name) {
                 window.location.href = `/dashboard/chats/?phone=${phone}`;
@@ -120,14 +155,9 @@
                     time: timeStr
                 });
                 this.inputText = '';
+                this.scrollToBottom();
 
-                // Scroll to bottom
-                setTimeout(() => {
-                    const stream = document.getElementById('chat-stream');
-                    if (stream) stream.scrollTop = stream.scrollHeight;
-                }, 50);
-
-                // Send via AJAX
+                // Send via AJAX & deliver to Telegram
                 const fd = new FormData();
                 fd.append('phone', this.selectedPhone);
                 fd.append('message', text);
@@ -136,7 +166,14 @@
                     method: 'POST',
                     body: fd,
                     headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                });
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.telegram_delivered && typeof showToast === 'function') {
+                        showToast("Xabar Telegram botga yetkazildi ✈️");
+                    }
+                })
+                .catch(err => console.error(err));
             }
         }
     }

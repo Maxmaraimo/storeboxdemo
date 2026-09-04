@@ -80,6 +80,289 @@
         box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
     }
 </style>
+
+<script>
+    const SIM_STORES = {
+        food: {
+            name: 'Gold Lavash',
+            handle: '@goldlavash_bot',
+            avatar: '🌯',
+            deliveryTime: '15-25 min',
+            rating: '4.95',
+            banner: {
+                badge: '🔥 AKSIYA -20%',
+                badgeRu: '🔥 АКЦИЯ -20%',
+                title: 'Combo: Lavash + Fri + Cola',
+                titleRu: 'Комбо: Лаваш + Фри + Cola',
+                sub: 'Eng to\'yimli va mazali tushlik',
+                subRu: 'Самый вкусный и сочный обед',
+                img: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=500&auto=format&fit=crop&q=80'
+            },
+            chips: [
+                { id: 'all', name: '🔥 Barchasi', nameRu: '🔥 Все' },
+                { id: 'lavash', name: '🌯 Lavash', nameRu: '🌯 Лаваши' },
+                { id: 'burger', name: '🍔 Burger', nameRu: '🍔 Бургеры' },
+                { id: 'drinks', name: '🥤 Ichimlik', nameRu: '🥤 Напитки' }
+            ],
+            items: [
+                {
+                    id: 1,
+                    cat: 'lavash',
+                    name: 'Mini Mol Go\'shtli Lavash',
+                    nameRu: 'Мини лаваш с говядиной',
+                    price: 32000,
+                    oldPrice: 36000,
+                    rating: 4.9,
+                    badge: 'Xit',
+                    badgeRu: 'Хит',
+                    img: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Yupqa qarsildoq xamir, sersuv mol go\'shti, chipslar, pomidor va maxsus sous.',
+                    descRu: 'Хрустящий лаваш, рубленая говядина, фирменный соус и картофельные чипсы.'
+                },
+                {
+                    id: 2,
+                    cat: 'burger',
+                    name: 'Double Cheeseburger',
+                    nameRu: 'Двойной чизбургер StoreBox',
+                    price: 42000,
+                    oldPrice: 48000,
+                    rating: 4.8,
+                    badge: 'Top',
+                    badgeRu: 'Топ',
+                    img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Ikki qavatli grilda pishgan go\'sht, erigan cheddar pishlog\'i va aysberg.',
+                    descRu: 'Две сочные котлеты на гриле, двойной сыр чеддер и свежие овощи.'
+                },
+                {
+                    id: 3,
+                    cat: 'lavash',
+                    name: 'Pishloqli Tovuq Lavash',
+                    nameRu: 'Сырный лаваш с курицей',
+                    price: 35000,
+                    oldPrice: 39000,
+                    rating: 4.9,
+                    badge: 'Yangi',
+                    badgeRu: 'Новинка',
+                    img: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Mayin tovuq filesi, erigan mozzarella pishlog\'i va sarimsoqli oq sous.',
+                    descRu: 'Нежное филе цыпленка, тающая моцарелла и домашний чесночный соус.'
+                },
+                {
+                    id: 4,
+                    cat: 'drinks',
+                    name: 'Coca-Cola 0.5L',
+                    nameRu: 'Coca-Cola 0.5L',
+                    price: 9000,
+                    oldPrice: 11000,
+                    rating: 5.0,
+                    badge: 'Muzdek',
+                    badgeRu: 'Холодная',
+                    img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Muzdek klassik gazlangan tetiklashtiruvchi ichimlik.',
+                    descRu: 'Классический освежающий сильногазированный напиток.'
+                }
+            ]
+        },
+        flowers: {
+            name: 'Bloom Flowers',
+            handle: '@bloom_flowers_bot',
+            avatar: '🌹',
+            deliveryTime: '30-45 min',
+            rating: '4.98',
+            banner: {
+                badge: '🌸 SEZON',
+                badgeRu: '🌸 СЕЗОН',
+                title: '101 ta Qizil Ekvador Atirguli',
+                titleRu: '101 Красная роза (Эквадор)',
+                sub: 'Bepul otkritka va maxsus akvaboks',
+                subRu: 'Бесплатная открытка с вашим текстом',
+                img: 'https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?w=500&auto=format&fit=crop&q=80'
+            },
+            chips: [
+                { id: 'all', name: '🔥 Barchasi', nameRu: '🔥 Все' },
+                { id: 'roses', name: '🌹 Atirgullar', nameRu: '🌹 Розы' },
+                { id: 'peonies', name: '🌸 Pionlar', nameRu: '🌸 Пионы' },
+                { id: 'boxes', name: '🎁 Qutilar', nameRu: '🎁 Боксы' }
+            ],
+            items: [
+                {
+                    id: 5,
+                    cat: 'roses',
+                    name: '51 ta Qizil Ekvador Atirgul',
+                    nameRu: '51 Красная роза (Эквадор)',
+                    price: 650000,
+                    oldPrice: 750000,
+                    rating: 5.0,
+                    badge: 'Premium',
+                    badgeRu: 'Премиум',
+                    img: 'https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Balandligi 70 sm lik yangi kesilgan to\'q qizil baxmal atirgullar.',
+                    descRu: 'Крупные бархатные бутоны 70 см с доставкой в аквабоксе.'
+                },
+                {
+                    id: 6,
+                    cat: 'peonies',
+                    name: 'Pushti Pionlar Buketi',
+                    nameRu: 'Букет нежно-розовых пионов',
+                    price: 420000,
+                    oldPrice: 490000,
+                    rating: 4.9,
+                    badge: 'Mavsumiy',
+                    badgeRu: 'Сезонные',
+                    img: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Gollandiyadan keltirilgan xushbo\'y Сара Бернар pionlari.',
+                    descRu: 'Ароматные голландские пионы сорта Сара Бернар с эвкалиптом.'
+                },
+                {
+                    id: 7,
+                    cat: 'boxes',
+                    name: 'Macarons & Gullar Sovg\'a Boxi',
+                    nameRu: 'Подарочный бокс с макарунами',
+                    price: 290000,
+                    oldPrice: 340000,
+                    rating: 4.9,
+                    badge: 'Sovg\'a',
+                    badgeRu: 'Подарок',
+                    img: 'https://images.unsplash.com/photo-1548848221-0c2e497ed557?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Shirin fransuz pechenyelari va tirik gullar jamlanmasi.',
+                    descRu: 'Изысканный микс свежих цветов и французских макарунов.'
+                }
+            ]
+        },
+        clothes: {
+            name: 'Urban Brand',
+            handle: '@urban_store_bot',
+            avatar: '👕',
+            deliveryTime: '1 kun',
+            rating: '4.92',
+            banner: {
+                badge: '⚡️ NEW DROP',
+                badgeRu: '⚡️ NEW DROP',
+                title: 'Oversize Hoodie & Sneakers',
+                titleRu: 'Худи Oversize & Кроссовки',
+                sub: '100% og\'ir paxta • SS\'26',
+                subRu: 'Итальянский хлопок 480 г/м² • SS\'26',
+                img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=500&auto=format&fit=crop&q=80'
+            },
+            chips: [
+                { id: 'all', name: '🔥 Barchasi', nameRu: '🔥 Все' },
+                { id: 'hoodie', name: '👕 Xudi', nameRu: '👕 Худи' },
+                { id: 'shoes', name: '👟 Poyabzal', nameRu: '👟 Обувь' },
+                { id: 'pants', name: '👖 Shimlar', nameRu: '👖 Джинсы' }
+            ],
+            items: [
+                {
+                    id: 8,
+                    cat: 'hoodie',
+                    name: 'Oversize Hoodie Warm Sand',
+                    nameRu: 'Худи Oversize Бежевый',
+                    price: 280000,
+                    oldPrice: 340000,
+                    rating: 4.9,
+                    badge: 'Trend',
+                    badgeRu: 'Тренд',
+                    img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Zich 480g/m² paxta mato, sifatli cho\'ntak va qulay erkin bichim.',
+                    descRu: 'Плотный футер без начеса, спущенная линия плеча.'
+                },
+                {
+                    id: 9,
+                    cat: 'shoes',
+                    name: 'Street Sneakers Classic White',
+                    nameRu: 'Кроссовки Street Classic',
+                    price: 490000,
+                    oldPrice: 580000,
+                    rating: 4.8,
+                    badge: 'Xit',
+                    badgeRu: 'Хит',
+                    img: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Tabiiy charm, mustahkam tagcharm va qulay ichki astar.',
+                    descRu: 'Натуральная кожа, амортизирующая подошва.'
+                },
+                {
+                    id: 10,
+                    cat: 'pants',
+                    name: 'Relaxed Fit Vintage Denim',
+                    nameRu: 'Джинсы Relaxed Fit Denim',
+                    price: 320000,
+                    oldPrice: 380000,
+                    rating: 4.7,
+                    badge: 'Klassik',
+                    badgeRu: 'Классика',
+                    img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Toza paxtali quyuq ko\'k denim, zamonaviy erkin siluet.',
+                    descRu: 'Прямой свободный крой из 100% хлопкового денима.'
+                }
+            ]
+        },
+        tech: {
+            name: 'iTech Store',
+            handle: '@itech_gadgets_bot',
+            avatar: '⚡️',
+            deliveryTime: '2-3 soat',
+            rating: '4.96',
+            banner: {
+                badge: '🛡 1 YIL KAFOLAT',
+                badgeRu: '🛡 ГАРАНТИЯ 1 ГОД',
+                title: 'AirPods Pro 2 (USB-C)',
+                titleRu: 'AirPods Pro 2 (USB-C MagSafe)',
+                sub: 'Faol shovqin bosish tizimi (ANC)',
+                subRu: 'Адаптивное аудио и шумоподавление',
+                img: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=500&auto=format&fit=crop&q=80'
+            },
+            chips: [
+                { id: 'all', name: '🔥 Barchasi', nameRu: '🔥 Все' },
+                { id: 'audio', name: '🎧 Audio', nameRu: '🎧 Наушники' },
+                { id: 'watch', name: '⌚️ Soatlar', nameRu: '⌚️ Часы' },
+                { id: 'power', name: '🔋 PowerBank', nameRu: '🔋 Зарядка' }
+            ],
+            items: [
+                {
+                    id: 11,
+                    cat: 'audio',
+                    name: 'AirPods Pro 2 MagSafe Type-C',
+                    nameRu: 'AirPods Pro 2 MagSafe (USB-C)',
+                    price: 2450000,
+                    oldPrice: 2750000,
+                    rating: 5.0,
+                    badge: 'Original',
+                    badgeRu: 'Оригинал',
+                    img: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Adaptiv audio, fazoviy ovoz va Type-C zaryad keysi.',
+                    descRu: 'Активное шумоподавление до 2 раз мощнее, динамик на кейсе.'
+                },
+                {
+                    id: 12,
+                    cat: 'watch',
+                    name: 'Smart Watch Ultra 2 Titanium',
+                    nameRu: 'Смарт-часы Ultra 2 Titanium',
+                    price: 890000,
+                    oldPrice: 1100000,
+                    rating: 4.9,
+                    badge: 'Top',
+                    badgeRu: 'Топ',
+                    img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Titan korpus, ultra yorqin AMOLED displey va aniq GPS datchik.',
+                    descRu: 'Титановый корпус 49 мм, экран 3000 нит и влагозащита 100м.'
+                },
+                {
+                    id: 13,
+                    cat: 'power',
+                    name: 'MagSafe PowerBank 10 000 mAh',
+                    nameRu: 'MagSafe PowerBank 10 000 mAh',
+                    price: 290000,
+                    oldPrice: 350000,
+                    rating: 4.8,
+                    badge: '20W PD',
+                    badgeRu: '20W PD',
+                    img: 'https://images.unsplash.com/photo-1609592424368-24d161a0eb1e?w=350&auto=format&fit=crop&q=80',
+                    desc: 'Kuchli magnitlar, simsiz va Type-C simli tezkor quvvatlash.',
+                    descRu: 'Мощные магниты, быстрая зарядка 20W и компактный корпус.'
+                }
+            ]
+        }
+    };
+</script>
 {% endblock %}
 
 {% block content %}
@@ -88,9 +371,27 @@
          isUz: {% if lang == 'uz' %}true{% else %}false{% endif %},
          billingCycle: 'annual',
          simCategory: 'food',
-         simCart: [],
+         simSubCat: 'all',
+         simScreen: 'menu',
+         simQuickView: null,
          simNotification: false,
          simLastOrder: null,
+         simCart: [
+             { id: 1, cat: 'lavash', name: 'Mini Mol Go\'shtli Lavash', nameRu: 'Мини лаваш с говядиной', price: 32000, qty: 1, img: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=350&auto=format&fit=crop&q=80' },
+             { id: 2, cat: 'burger', name: 'Double Cheeseburger', nameRu: 'Двойной чизбургер StoreBox', price: 42000, qty: 1, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=350&auto=format&fit=crop&q=80' }
+         ],
+         get currentSimStore() {
+             return SIM_STORES[this.simCategory] || SIM_STORES.food;
+         },
+         get currentFilteredItems() {
+             const store = this.currentSimStore;
+             if (this.simSubCat === 'all') return store.items;
+             return store.items.filter(it => it.cat === this.simSubCat);
+         },
+         getSimItemQty(id) {
+             const item = this.simCart.find(i => i.id === id);
+             return item ? item.qty : 0;
+         },
          addToSimCart(item) {
              const existing = this.simCart.find(i => i.id === item.id);
              if (existing) {
@@ -99,11 +400,24 @@
                  this.simCart.push({ ...item, qty: 1 });
              }
          },
+         decrementSimItem(id) {
+             const existing = this.simCart.find(i => i.id === id);
+             if (existing) {
+                 if (existing.qty > 1) {
+                     existing.qty -= 1;
+                 } else {
+                     this.simCart = this.simCart.filter(i => i.id !== id);
+                 }
+             }
+         },
          removeFromSimCart(id) {
              this.simCart = this.simCart.filter(i => i.id !== id);
          },
          get simTotal() {
              return this.simCart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+         },
+         get simTotalCount() {
+             return this.simCart.reduce((acc, item) => acc + item.qty, 0);
          },
          triggerSimOrder() {
              if (this.simCart.length === 0) return;
@@ -115,11 +429,13 @@
                  });
              }
              this.simLastOrder = {
+                 id: Math.floor(1000 + Math.random() * 9000),
                  sum: this.simTotal,
-                 count: this.simCart.reduce((a, b) => a + b.qty, 0),
+                 count: this.simTotalCount,
                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
              };
              this.simCart = [];
+             this.simScreen = 'success';
              this.simNotification = true;
              setTimeout(() => {
                  this.simNotification = false;
@@ -533,7 +849,7 @@
                     <div class="space-y-3">
                         <span class="text-xs font-extrabold tracking-wider text-slate-400 uppercase" x-text="isUz ? 'Faoliyat turini tanlang:' : 'Выберите направление бизнеса:'">Выберите направление бизнеса:</span>
                         <div class="grid grid-cols-2 gap-3">
-                            <button type="button" @click="simCategory = 'food'"
+                            <button type="button" @click="simCategory = 'food'; simSubCat = 'all'; simScreen = 'menu'"
                                     :class="simCategory === 'food' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 border-emerald-600' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'"
                                     class="px-4 py-3.5 rounded-2xl border text-sm font-bold flex items-center gap-3 transition-all duration-200 text-left">
                                 <span class="text-2xl">🍔</span>
@@ -543,7 +859,7 @@
                                 </div>
                             </button>
 
-                            <button type="button" @click="simCategory = 'flowers'"
+                            <button type="button" @click="simCategory = 'flowers'; simSubCat = 'all'; simScreen = 'menu'"
                                     :class="simCategory === 'flowers' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 border-emerald-600' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'"
                                     class="px-4 py-3.5 rounded-2xl border text-sm font-bold flex items-center gap-3 transition-all duration-200 text-left">
                                 <span class="text-2xl">💐</span>
@@ -553,7 +869,7 @@
                                 </div>
                             </button>
 
-                            <button type="button" @click="simCategory = 'clothes'"
+                            <button type="button" @click="simCategory = 'clothes'; simSubCat = 'all'; simScreen = 'menu'"
                                     :class="simCategory === 'clothes' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 border-emerald-600' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'"
                                     class="px-4 py-3.5 rounded-2xl border text-sm font-bold flex items-center gap-3 transition-all duration-200 text-left">
                                 <span class="text-2xl">👗</span>
@@ -563,7 +879,7 @@
                                 </div>
                             </button>
 
-                            <button type="button" @click="simCategory = 'tech'"
+                            <button type="button" @click="simCategory = 'tech'; simSubCat = 'all'; simScreen = 'menu'"
                                     :class="simCategory === 'tech' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 border-emerald-600' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'"
                                     class="px-4 py-3.5 rounded-2xl border text-sm font-bold flex items-center gap-3 transition-all duration-200 text-left">
                                 <span class="text-2xl">📱</span>
@@ -635,188 +951,354 @@
                     </div>
 
                     <!-- Realistic iPhone Mockup Frame -->
-                    <div class="w-[320px] sm:w-[350px] h-[640px] bg-slate-950 rounded-[48px] p-3 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border-4 border-slate-800 relative flex flex-col">
+                    <div class="w-[325px] sm:w-[365px] h-[670px] bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 rounded-[52px] p-3 shadow-[0_30px_90px_-20px_rgba(15,23,42,0.45),0_0_0_1px_rgba(255,255,255,0.1),inset_0_1px_1px_rgba(255,255,255,0.3)] border-4 border-slate-800/90 relative flex flex-col select-none">
+                        <!-- Side buttons simulated -->
+                        <div class="absolute -left-[7px] top-28 w-[3px] h-9 bg-slate-700 rounded-l"></div>
+                        <div class="absolute -left-[7px] top-40 w-[3px] h-12 bg-slate-700 rounded-l"></div>
+                        <div class="absolute -left-[7px] top-56 w-[3px] h-12 bg-slate-700 rounded-l"></div>
+                        <div class="absolute -right-[7px] top-36 w-[3px] h-16 bg-slate-700 rounded-r"></div>
+
                         <!-- Dynamic Island & Camera -->
-                        <div class="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full z-40 flex items-center justify-between px-3">
-                            <div class="w-2.5 h-2.5 rounded-full bg-slate-900"></div>
+                        <div class="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full z-40 flex items-center justify-between px-3 shadow-sm">
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-800"></div>
                             <div class="w-2 h-2 rounded-full bg-emerald-500/80"></div>
                         </div>
 
                         <!-- Inner Screen Content -->
-                        <div class="w-full h-full bg-slate-50 rounded-[38px] overflow-hidden flex flex-col text-slate-900 text-left relative">
+                        <div class="w-full h-full bg-slate-100 rounded-[42px] overflow-hidden flex flex-col text-slate-900 text-left relative">
+                            <!-- iOS Status Bar -->
+                            <div class="bg-white px-6 pt-3 pb-1 flex items-center justify-between text-[11px] font-bold text-slate-800 z-30 select-none">
+                                <span>09:41</span>
+                                <div class="flex items-center gap-1.5 text-xs">
+                                    <span class="text-[10px]">5G</span>
+                                    <div class="w-4 h-2.5 rounded-sm border border-slate-800 p-0.5 flex items-center">
+                                        <div class="w-full h-full bg-emerald-500 rounded-xs"></div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Telegram Mini App Top Nav -->
-                            <div class="bg-white border-b border-slate-200 px-4 pt-8 pb-3 flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-xs font-bold text-sky-600">Telegram</span>
-                                    <span class="text-slate-300">•</span>
-                                    <span class="text-xs font-bold text-slate-800 truncate" x-text="simCategory === 'food' ? 'Gold Lavash' : (simCategory === 'flowers' ? 'Bloom Flowers' : (simCategory === 'clothes' ? 'Urban Fashion' : 'SmartGadgets'))">Store Demo</span>
+                            <div class="bg-white border-b border-slate-200/80 px-3.5 py-2.5 flex items-center justify-between z-30 shadow-2xs">
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @click="simScreen = 'menu'" class="text-sky-600 hover:text-sky-700 text-xs font-semibold flex items-center gap-0.5">
+                                        <span class="text-sm">‹</span>
+                                        <span x-text="simScreen === 'menu' ? (isUz ? 'Yopish' : 'Закрыть') : (isUz ? 'Orqaga' : 'Назад')">Yopish</span>
+                                    </button>
                                 </div>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Online</span>
+                                <div class="flex items-center gap-1.5 truncate max-w-[170px]">
+                                    <span class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs shrink-0" x-text="currentSimStore.avatar"></span>
+                                    <div class="truncate">
+                                        <div class="text-xs font-bold text-slate-900 truncate flex items-center gap-1">
+                                            <span x-text="currentSimStore.name">Store Demo</span>
+                                            <svg class="w-3 h-3 text-sky-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div class="text-[9px] text-slate-400 font-medium">bot</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1 text-slate-400">
+                                    <span class="text-sm font-bold tracking-widest leading-none">•••</span>
+                                </div>
                             </div>
 
-                            <!-- Interactive Products List inside Phone -->
-                            <div class="p-3.5 space-y-3 overflow-y-auto flex-1 no-scrollbar">
-                                <!-- Fast Food Items -->
-                                <template x-if="simCategory === 'food'">
-                                    <div class="space-y-2.5">
-                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
-                                            <div class="flex items-center gap-2.5">
-                                                <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-xl">🌯</div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Mini Mol Go\'shtli Lavash' : 'Мини лаваш с говядиной'">Мини лаваш с говядиной</div>
-                                                    <div class="text-[11px] font-black text-emerald-600">32 000 UZS</div>
-                                                </div>
-                                            </div>
-                                            <button @click="addToSimCart({ id: 1, name: 'Mini Lavash', price: 32000 })"
-                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-
-                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
-                                            <div class="flex items-center gap-2.5">
-                                                <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-xl">🍔</div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'StoreBox CheeseBurger' : 'StoreBox Чизбургер'">StoreBox Чизбургер</div>
-                                                    <div class="text-[11px] font-black text-emerald-600">38 000 UZS</div>
-                                                </div>
-                                            </div>
-                                            <button @click="addToSimCart({ id: 2, name: 'CheeseBurger', price: 38000 })"
-                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-
-                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
-                                            <div class="flex items-center gap-2.5">
-                                                <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-xl">🥤</div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-slate-900">Coca-Cola 0.5L</div>
-                                                    <div class="text-[11px] font-black text-emerald-600">9 000 UZS</div>
-                                                </div>
-                                            </div>
-                                            <button @click="addToSimCart({ id: 3, name: 'Coca-Cola 0.5L', price: 9000 })"
-                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <!-- Flowers Items -->
-                                <template x-if="simCategory === 'flowers'">
-                                    <div class="space-y-2.5">
-                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
-                                            <div class="flex items-center gap-2.5">
-                                                <div class="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-xl">🌹</div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? '51 ta Qizil Atirgul' : '51 Красная роза'">51 Красная роза</div>
-                                                    <div class="text-[11px] font-black text-emerald-600">650 000 UZS</div>
-                                                </div>
-                                            </div>
-                                            <button @click="addToSimCart({ id: 4, name: '51 Atirgul', price: 650000 })"
-                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-
-                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
-                                            <div class="flex items-center gap-2.5">
-                                                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-xl">🌸</div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Pion guldastasi' : 'Букет свежих пионов'">Букет свежих пионов</div>
-                                                    <div class="text-[11px] font-black text-emerald-600">420 000 UZS</div>
-                                                </div>
-                                            </div>
-                                            <button @click="addToSimCart({ id: 5, name: 'Pion guldastasi', price: 420000 })"
-                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <!-- Clothes Items -->
-                                <template x-if="simCategory === 'clothes'">
-                                    <div class="space-y-2.5">
-                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
-                                            <div class="flex items-center gap-2.5">
-                                                <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-xl">👕</div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Oversize Premium Xudi' : 'Худи Oversize Premium'">Худи Oversize Premium</div>
-                                                    <div class="text-[11px] font-black text-emerald-600">280 000 UZS</div>
-                                                </div>
-                                            </div>
-                                            <button @click="addToSimCart({ id: 6, name: 'Premium Xudi', price: 280000 })"
-                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-
-                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
-                                            <div class="flex items-center gap-2.5">
-                                                <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-xl">👖</div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Klassik Djinsi Shim' : 'Джинсы Regular Fit'">Джинсы Regular Fit</div>
-                                                    <div class="text-[11px] font-black text-emerald-600">320 000 UZS</div>
-                                                </div>
-                                            </div>
-                                            <button @click="addToSimCart({ id: 7, name: 'Djinsi Shim', price: 320000 })"
-                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <!-- Tech Items -->
-                                <template x-if="simCategory === 'tech'">
-                                    <div class="space-y-2.5">
-                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
-                                            <div class="flex items-center gap-2.5">
-                                                <div class="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center text-xl">🎧</div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Simsiz Quloqchin Pro' : 'Беспроводные наушники Pro'">Беспроводные наушники Pro</div>
-                                                    <div class="text-[11px] font-black text-emerald-600">450 000 UZS</div>
-                                                </div>
-                                            </div>
-                                            <button @click="addToSimCart({ id: 8, name: 'Simsiz Quloqchin', price: 450000 })"
-                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-
-                                        <div class="bg-white p-2.5 rounded-2xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
-                                            <div class="flex items-center gap-2.5">
-                                                <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-xl">⌚️</div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-slate-900" x-text="isUz ? 'Smart Soat Ultra 2' : 'Смарт-часы Ultra 2'">Смарт-часы Ultra 2</div>
-                                                    <div class="text-[11px] font-black text-emerald-600">890 000 UZS</div>
-                                                </div>
-                                            </div>
-                                            <button @click="addToSimCart({ id: 9, name: 'Smart Soat', price: 890000 })"
-                                                    class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-xs active:scale-95 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-                                </template>
+                            <!-- Store Quick Sub-bar -->
+                            <div class="bg-emerald-50/70 border-b border-emerald-100/60 px-3.5 py-1.5 flex items-center justify-between text-[10px] text-slate-600">
+                                <span class="flex items-center gap-1 font-semibold text-emerald-800">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span x-text="isUz ? 'Buyurtmalar qabul qilinmoqda' : 'Принимаем заказы 24/7'">Buyurtmalar qabul qilinmoqda</span>
+                                </span>
+                                <span class="font-medium text-slate-500 flex items-center gap-1">
+                                    <span>⚡️</span>
+                                    <span x-text="currentSimStore.deliveryTime">15-25 daqiqa</span>
+                                </span>
                             </div>
 
-                            <!-- Bottom Mini App Sticky Cart Bar -->
-                            <div class="p-3 bg-white border-t border-slate-200">
-                                <div class="flex items-center justify-between mb-2 text-xs">
-                                    <span class="text-slate-500" x-text="isUz ? 'Savatdagi jami:' : 'Итого в корзине:'">Savatdagi jami:</span>
-                                    <span class="font-black text-slate-900"><span x-text="simTotal.toLocaleString()">0</span> UZS</span>
+                            <!-- Screen Container (Scrollable) -->
+                            <div class="flex-1 overflow-y-auto no-scrollbar relative flex flex-col">
+                                <!-- SCREEN 1: MENU -->
+                                <div x-show="simScreen === 'menu'" class="p-3 space-y-3 flex-1 flex flex-col">
+                                    <!-- Promo Banner Card -->
+                                    <div class="relative rounded-2xl overflow-hidden shadow-xs h-28 shrink-0 bg-slate-900 text-white flex flex-col justify-end p-3 group">
+                                        <img :src="currentSimStore.banner.img" :alt="currentSimStore.banner.title" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                                        <div class="relative z-10">
+                                            <span class="inline-block px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-emerald-500 text-slate-950 uppercase tracking-wider mb-1"
+                                                  x-text="isUz ? currentSimStore.banner.badge : currentSimStore.banner.badgeRu">AKSIYA</span>
+                                            <h5 class="text-xs font-black text-white leading-tight line-clamp-1"
+                                                x-text="isUz ? currentSimStore.banner.title : currentSimStore.banner.titleRu"></h5>
+                                            <p class="text-[9px] text-slate-300 line-clamp-1 mt-0.5"
+                                               x-text="isUz ? currentSimStore.banner.sub : currentSimStore.banner.subRu"></p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Category Chips -->
+                                    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 shrink-0">
+                                        <template x-for="chip in currentSimStore.chips" :key="chip.id">
+                                            <button type="button"
+                                                    @click="simSubCat = chip.id"
+                                                    :class="simSubCat === chip.id ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 font-medium'"
+                                                    class="px-2.5 py-1 rounded-lg text-[10px] whitespace-nowrap transition-all shrink-0">
+                                                <span x-text="isUz ? chip.name : chip.nameRu"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+
+                                    <!-- Product Grid (2 columns) -->
+                                    <div class="grid grid-cols-2 gap-2 flex-1 pb-16">
+                                        <template x-for="item in currentFilteredItems" :key="item.id">
+                                            <div class="bg-white rounded-2xl p-2 border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
+                                                 @click="simQuickView = item">
+                                                <div>
+                                                    <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 mb-1.5">
+                                                        <img :src="item.img" :alt="item.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                                        <span class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-slate-900/80 text-white backdrop-blur-xs"
+                                                              x-text="isUz ? item.badge : item.badgeRu"></span>
+                                                        <span class="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-white/90 text-amber-600 shadow-2xs flex items-center gap-0.5">
+                                                            ⭐️<span x-text="item.rating"></span>
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-[11px] font-bold text-slate-900 line-clamp-1 leading-snug" x-text="isUz ? item.name : item.nameRu"></div>
+                                                    <div class="text-[9px] text-slate-500 line-clamp-1 mt-0.5" x-text="isUz ? item.desc : item.descRu"></div>
+                                                </div>
+
+                                                <div class="mt-2 pt-1 border-t border-slate-100">
+                                                    <div class="flex items-baseline justify-between">
+                                                        <div class="text-[11px] font-black text-emerald-600">
+                                                            <span x-text="item.price.toLocaleString()"></span> <span class="text-[9px]">UZS</span>
+                                                        </div>
+                                                        <template x-if="item.oldPrice">
+                                                            <span class="text-[8px] text-slate-400 line-through"><span x-text="item.oldPrice.toLocaleString()"></span></span>
+                                                        </template>
+                                                    </div>
+
+                                                    <!-- Quantity / Add Controls -->
+                                                    <template x-if="getSimItemQty(item.id) === 0">
+                                                        <button type="button"
+                                                                @click.stop="addToSimCart(item)"
+                                                                class="mt-1.5 w-full py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 font-bold text-[10px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs">
+                                                            <span class="text-xs font-black">+</span>
+                                                            <span x-text="isUz ? 'Qo\'shish' : 'В корзину'">Qo'shish</span>
+                                                        </button>
+                                                    </template>
+
+                                                    <template x-if="getSimItemQty(item.id) > 0">
+                                                        <div class="mt-1.5 flex items-center justify-between w-full bg-emerald-600 text-white rounded-lg p-0.5 shadow-2xs">
+                                                            <button type="button" @click.stop="decrementSimItem(item.id)" class="w-6 h-5 rounded flex items-center justify-center font-bold text-xs hover:bg-emerald-700 active:scale-90">-</button>
+                                                            <span class="font-extrabold text-[11px]" x-text="getSimItemQty(item.id)">1</span>
+                                                            <button type="button" @click.stop="addToSimCart(item)" class="w-6 h-5 rounded flex items-center justify-center font-bold text-xs hover:bg-emerald-700 active:scale-90">+</button>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
                                 </div>
+
+                                <!-- SCREEN 2: CART -->
+                                <div x-show="simScreen === 'cart'" class="p-3 space-y-3 flex-1 flex flex-col pb-20" style="display: none;">
+                                    <div class="flex items-center justify-between pb-1 border-b border-slate-200">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-xs font-black text-slate-900" x-text="isUz ? 'Savatdagi mahsulotlar' : 'Товары в корзине'">Savatdagi mahsulotlar</span>
+                                            <span class="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold" x-text="simTotalCount"></span>
+                                        </div>
+                                        <button type="button" @click="simCart = []" class="text-[10px] text-red-500 hover:text-red-700 font-bold" x-show="simCart.length > 0" x-text="isUz ? 'Tozalash' : 'Очистить'">Tozalash</button>
+                                    </div>
+
+                                    <!-- Empty Cart State -->
+                                    <template x-if="simCart.length === 0">
+                                        <div class="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-2">
+                                            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-2xl">🛒</div>
+                                            <div class="text-xs font-bold text-slate-800" x-text="isUz ? 'Savatingiz bo\'sh' : 'Корзина пуста'">Savatingiz bo'sh</div>
+                                            <p class="text-[10px] text-slate-500" x-text="isUz ? 'Menyudan xarid qilish uchun mahsulot tanlang' : 'Выберите товары из меню'">Menyudan xarid qilish uchun mahsulot tanlang</p>
+                                            <button type="button" @click="simScreen = 'menu'" class="mt-2 px-4 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-bold shadow-xs" x-text="isUz ? 'Menyuga o\'tish' : 'В меню'">Menyuga o'tish</button>
+                                        </div>
+                                    </template>
+
+                                    <!-- Cart Items List -->
+                                    <template x-if="simCart.length > 0">
+                                        <div class="space-y-2 flex-1">
+                                            <template x-for="cItem in simCart" :key="cItem.id">
+                                                <div class="bg-white p-2 rounded-xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+                                                    <div class="flex items-center gap-2 min-w-0">
+                                                        <img :src="cItem.img" class="w-10 h-10 rounded-lg object-cover shrink-0">
+                                                        <div class="min-w-0">
+                                                            <div class="text-[11px] font-bold text-slate-900 truncate" x-text="isUz ? cItem.name : cItem.nameRu"></div>
+                                                            <div class="text-[10px] font-black text-emerald-600"><span x-text="(cItem.price * cItem.qty).toLocaleString()"></span> UZS</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center gap-1.5 shrink-0">
+                                                        <div class="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+                                                            <button type="button" @click="decrementSimItem(cItem.id)" class="w-5 h-5 rounded flex items-center justify-center text-xs font-bold hover:bg-white text-slate-700">-</button>
+                                                            <span class="w-5 text-center text-[10px] font-extrabold text-slate-900" x-text="cItem.qty"></span>
+                                                            <button type="button" @click="addToSimCart(cItem)" class="w-5 h-5 rounded flex items-center justify-center text-xs font-bold hover:bg-white text-slate-700">+</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+
+                                            <!-- Delivery info card -->
+                                            <div class="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1.5 text-[10px]">
+                                                <div class="flex items-center justify-between font-bold text-slate-800">
+                                                    <span>📍 <span x-text="isUz ? 'Yetkazish manzili:' : 'Адрес доставки:'"></span></span>
+                                                    <span class="text-emerald-700">Yandex Go ⚡️</span>
+                                                </div>
+                                                <div class="text-slate-600 truncate bg-slate-50 p-1.5 rounded-md border border-slate-100">
+                                                    Toshkent sh., Chilonzor 9-kvartal, 14-uy
+                                                </div>
+                                            </div>
+
+                                            <!-- Bill breakdown -->
+                                            <div class="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1 text-[10px]">
+                                                <div class="flex justify-between text-slate-500">
+                                                    <span x-text="isUz ? 'Mahsulotlar:' : 'Товары:'">Mahsulotlar:</span>
+                                                    <span class="font-bold text-slate-800"><span x-text="simTotal.toLocaleString()"></span> UZS</span>
+                                                </div>
+                                                <div class="flex justify-between text-slate-500">
+                                                    <span x-text="isUz ? 'Yetkazib berish:' : 'Доставка:'">Yetkazib berish:</span>
+                                                    <span class="font-bold text-emerald-600" x-text="isUz ? 'Bepul' : 'Бесплатно'">Bepul</span>
+                                                </div>
+                                                <div class="pt-1.5 border-t border-slate-100 flex justify-between text-xs font-extrabold text-slate-900">
+                                                    <span x-text="isUz ? 'Jami to\'lov:' : 'К оплате:'">Jami to'lov:</span>
+                                                    <span class="text-emerald-600"><span x-text="simTotal.toLocaleString()"></span> UZS</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- SCREEN 3: SUCCESS -->
+                                <div x-show="simScreen === 'success'" class="p-4 space-y-3 flex-1 flex flex-col items-center justify-center text-center pb-12" style="display: none;">
+                                    <div class="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center text-2xl shadow-xl shadow-emerald-500/30 animate-bounce">
+                                        ✓
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-black text-slate-900" x-text="isUz ? 'Buyurtmangiz qabul qilindi!' : 'Заказ успешно принят!'">Buyurtmangiz qabul qilindi!</h4>
+                                        <p class="text-[10px] text-slate-500 mt-0.5" x-text="isUz ? 'Do\'kon buyurtmani tayyorlashga kirishdi' : 'Магазин уже приступил к сборке заказа'">Do'kon buyurtmani tayyorlashga kirishdi</p>
+                                    </div>
+
+                                    <!-- Receipt card -->
+                                    <div class="w-full bg-white rounded-2xl p-3 border border-dashed border-slate-300 text-left space-y-1.5 text-[10px]">
+                                        <div class="flex justify-between text-slate-500">
+                                            <span x-text="isUz ? 'Buyurtma ID:' : 'Номер заказа:'">Buyurtma ID:</span>
+                                            <span class="font-extrabold text-slate-900">#RB-<span x-text="simLastOrder ? simLastOrder.id : '51505'">51505</span></span>
+                                        </div>
+                                        <div class="flex justify-between text-slate-500">
+                                            <span x-text="isUz ? 'To\'lov holati:' : 'Статус оплаты:'">To'lov holati:</span>
+                                            <span class="font-bold text-emerald-600" x-text="isUz ? 'To\'landi (Payme) ✅' : 'Оплачено (Payme) ✅'">To'landi (Payme) ✅</span>
+                                        </div>
+                                        <div class="flex justify-between text-slate-500">
+                                            <span x-text="isUz ? 'Taxminiy vaqt:' : 'Ожидание:'">Taxminiy vaqt:</span>
+                                            <span class="font-bold text-slate-800" x-text="isUz ? '~ 20-30 daqiqa' : '~ 20-30 минут'">~ 20-30 daqiqa</span>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-100 flex justify-between text-xs font-black text-slate-900">
+                                            <span x-text="isUz ? 'Jami summa:' : 'Итоговая сумма:'">Jami summa:</span>
+                                            <span class="text-emerald-600"><span x-text="simLastOrder ? simLastOrder.sum.toLocaleString() : '0'"></span> UZS</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bot message bubble -->
+                                    <div class="w-full bg-sky-50 border border-sky-100 rounded-xl p-2.5 text-left flex items-start gap-2">
+                                        <span class="text-sm">🤖</span>
+                                        <p class="text-[9px] text-sky-800 leading-tight" x-text="isUz ? 'Telegram botingizga elektron chek va kuryer geolokatsiyasi yuborildi!' : 'В Telegram бот отправлен электронный чек и трек курьера!'"></p>
+                                    </div>
+
+                                    <button type="button"
+                                            @click="simScreen = 'menu'"
+                                            class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all">
+                                        <span x-text="isUz ? 'Yana buyurtma qilish' : 'Сделать ещё заказ'">Yana buyurtma qilish</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Floating Telegram MainButton (When on Menu and Cart has items) -->
+                            <div x-show="simScreen === 'menu' && simTotalCount > 0"
+                                 class="absolute bottom-16 inset-x-2.5 z-30"
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="translate-y-4 opacity-0"
+                                 x-transition:enter-end="translate-y-0 opacity-100">
+                                <button type="button"
+                                        @click="simScreen = 'cart'"
+                                        class="w-full py-2.5 px-3.5 rounded-xl bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold text-xs flex items-center justify-between shadow-lg shadow-sky-500/30 transition-all active:scale-98">
+                                    <span class="flex items-center gap-1.5">
+                                        <span>🛍</span>
+                                        <span x-text="simTotalCount + (isUz ? ' ta mahsulot' : ' товара')"></span>
+                                    </span>
+                                    <span class="flex items-center gap-1 font-black">
+                                        <span x-text="simTotal.toLocaleString() + ' UZS'"></span>
+                                        <span>➔</span>
+                                    </span>
+                                </button>
+                            </div>
+
+                            <!-- Product Quick View Bottom Sheet (Modal inside Phone) -->
+                            <div x-show="simQuickView !== null"
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0"
+                                 x-transition:enter-end="opacity-100"
+                                 class="absolute inset-0 bg-black/50 backdrop-blur-xs z-50 flex flex-col justify-end"
+                                 style="display: none;"
+                                 @click="simQuickView = null">
+                                <div class="bg-white rounded-t-3xl p-3.5 space-y-2.5 shadow-2xl text-left"
+                                     @click.stop>
+                                    <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto"></div>
+                                    <div class="relative aspect-video rounded-xl overflow-hidden bg-slate-100">
+                                        <img :src="simQuickView ? simQuickView.img : ''" class="w-full h-full object-cover">
+                                        <button type="button" @click="simQuickView = null" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center text-xs">✕</button>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between">
+                                            <h4 class="text-xs font-black text-slate-900" x-text="simQuickView ? (isUz ? simQuickView.name : simQuickView.nameRu) : ''"></h4>
+                                            <span class="text-xs font-black text-emerald-600">
+                                                <span x-text="simQuickView ? simQuickView.price.toLocaleString() : 0"></span> UZS
+                                            </span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500 mt-1 leading-relaxed" x-text="simQuickView ? (isUz ? simQuickView.desc : simQuickView.descRu) : ''"></p>
+                                    </div>
+                                    <button type="button"
+                                            @click="addToSimCart(simQuickView); simQuickView = null"
+                                            class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md">
+                                        <span>+</span>
+                                        <span x-text="isUz ? 'Savatga qo\'shish' : 'Добавить в корзину'">Savatga qo'shish</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Mini App Tab Navigation Bar (Shown on Menu & Success screens) -->
+                            <div x-show="simScreen !== 'cart'" class="bg-white border-t border-slate-200/80 px-4 py-2 flex items-center justify-around z-30 select-none">
+                                <button type="button" @click="simScreen = 'menu'" class="flex flex-col items-center gap-0.5" :class="simScreen === 'menu' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'">
+                                    <span class="text-sm">🏠</span>
+                                    <span class="text-[9px] font-bold" x-text="isUz ? 'Menyu' : 'Меню'">Menyu</span>
+                                </button>
+                                <button type="button" @click="simScreen = 'cart'" class="flex flex-col items-center gap-0.5 relative" :class="simScreen === 'cart' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'">
+                                    <span class="text-sm">🛍</span>
+                                    <span class="text-[9px] font-bold" x-text="isUz ? 'Savat' : 'Корзина'">Savat</span>
+                                    <span x-show="simTotalCount > 0" class="absolute -top-1 right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-white font-black text-[8px] flex items-center justify-center" x-text="simTotalCount"></span>
+                                </button>
+                                <button type="button" @click="if(simCart.length > 0) { triggerSimOrder(); } else { simScreen = 'menu'; }" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+                                    <span class="text-sm">⚡️</span>
+                                    <span class="text-[9px] font-bold" x-text="isUz ? 'Buyurtma' : 'Заказ'">Buyurtma</span>
+                                </button>
+                            </div>
+
+                            <!-- Sticky Cart Checkout Bar (Replaces bottom tabs when in Cart screen) -->
+                            <div x-show="simScreen === 'cart'" class="bg-white border-t border-slate-200/80 p-2.5 z-30">
                                 <button type="button"
                                         @click="triggerSimOrder()"
                                         :disabled="simCart.length === 0"
-                                        :class="simCart.length > 0 ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md active:scale-98' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
-                                        class="w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all">
-                                    <span x-text="simCart.length > 0 ? (isUz ? 'Buyurtma berish' : 'Оформить заказ') : (isUz ? 'Mahsulot qo\'shing (+)' : 'Добавьте товар (+)')">Buyurtma berish</span>
-                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5" x-show="simCart.length > 0"></i>
+                                        :class="simCart.length > 0 ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md active:scale-98 cursor-pointer' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                                        class="w-full py-2.5 px-3.5 rounded-xl font-extrabold text-xs flex items-center justify-between shadow-lg shadow-emerald-600/25 transition-all">
+                                    <span x-text="isUz ? 'Buyurtmani tasdiqlash' : 'Подтвердить заказ'">Buyurtmani tasdiqlash</span>
+                                    <span class="flex items-center gap-1">
+                                        <span x-text="simTotal.toLocaleString() + ' UZS'"></span>
+                                        <span>➔</span>
+                                    </span>
                                 </button>
+                            </div>
+
+                            <!-- iOS Home Indicator -->
+                            <div class="bg-white py-1 flex justify-center z-30">
+                                <div class="w-24 h-1 bg-slate-300 rounded-full"></div>
                             </div>
 
                         </div>

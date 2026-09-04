@@ -334,6 +334,69 @@ def process_telegram_update(store, update):
         send_telegram_notification(store, contact_text, chat_id=chat_id)
         return True
 
+    # Contact sharing handler
+    contact = message.get('contact')
+    if contact:
+        phone_num = (contact.get('phone_number') or '').strip()
+        if phone_num:
+            if not phone_num.startswith('+'):
+                phone_num = '+' + phone_num
+            from apps.orders.models import Customer
+            from django.db.models import Q
+            clean_p = phone_num.replace(' ', '').replace('+', '').strip()
+            cust = Customer.objects.filter(store=store).filter(
+                Q(phone__icontains=clean_p) | Q(phone__icontains=phone_num)
+            ).first()
+            if not cust:
+                cust = Customer.objects.create(
+                    store=store,
+                    name=user_first_name,
+                    phone=phone_num,
+                    telegram_chat_id=str(chat_id)
+                )
+            else:
+                cust.telegram_chat_id = str(chat_id)
+                cust.save(update_fields=['telegram_chat_id'])
+            send_telegram_notification(store, f"✅ Rahmat! Telefon raqamingiz ({phone_num}) saqlandi.", chat_id=chat_id)
+            return True
+
+    # General incoming text message from customer -> save to ChatMessage
+    if text:
+        from apps.orders.models import Customer, Order, ChatMessage
+        from django.db.models import Q
+
+        cust = Customer.objects.filter(store=store, telegram_chat_id=str(chat_id)).first()
+        if not cust:
+            ord_obj = Order.objects.filter(store=store, telegram_user_id=chat_id).order_by('-created_at').first()
+            if ord_obj:
+                cust = Customer.objects.filter(store=store, phone=ord_obj.customer_phone).first()
+                if cust:
+                    cust.telegram_chat_id = str(chat_id)
+                    cust.save(update_fields=['telegram_chat_id'])
+
+        if not cust and store.telegram_chat_id == str(chat_id):
+            cust = Customer.objects.filter(store=store).order_by('-created_at').first()
+            if cust:
+                cust.telegram_chat_id = str(chat_id)
+                cust.save(update_fields=['telegram_chat_id'])
+
+        cust_phone = cust.phone if cust else f"+998 (TG:{chat_id})"
+        cust_name = cust.name if cust else user_first_name
+
+        ChatMessage.objects.create(
+            store=store,
+            customer_phone=cust_phone,
+            customer_name=cust_name,
+            telegram_chat_id=str(chat_id),
+            sender=ChatMessage.Senders.CUSTOMER,
+            message=text,
+            is_read=False
+        )
+
+        ack_text = "✅ <b>Xabaringiz do'kon ma'muriyatiga yetkazildi!</b>\nOperator tez orada javob beradi."
+        send_telegram_notification(store, ack_text, chat_id=chat_id)
+        return True
+
     return False
 
 

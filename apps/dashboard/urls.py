@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/branch-action/', views.branch_action_api, name='branch_action_api'),
     path('api/staff-action/', views.staff_action_api, name='staff_action_api'),
     path('api/send-chat/', views.send_chat_api, name='send_chat_api'),
+    path('api/get-chat/', views.get_chat_messages_api, name='get_chat_messages_api'),
     path('api/quick-create-store/', views.quick_create_store_api, name='quick_create_store_api'),
     path('api/switch-store/<int:store_id>/', views.switch_store_api, name='switch_store_api'),
     path('orders/export/', views.export_orders_csv, name='export_orders_csv'),

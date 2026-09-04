@@ -295,6 +295,8 @@ class Customer(models.Model):
     orders_count = models.PositiveIntegerField(default=0, verbose_name='Количество заказов')
     last_order_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата последнего заказа')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата регистрации')
+    telegram_chat_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, verbose_name='Telegram Chat ID')
+    telegram_username = models.CharField(max_length=100, blank=True, null=True, verbose_name='Telegram Username')
 
     class Meta:
         verbose_name = 'Клиент'
@@ -319,6 +321,7 @@ class ChatMessage(models.Model):
     )
     customer_phone = models.CharField(max_length=30, db_index=True, verbose_name='Телефон клиента')
     customer_name = models.CharField(max_length=120, default='Покупатель', verbose_name='Имя клиента')
+    telegram_chat_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, verbose_name='Telegram Chat ID')
     sender = models.CharField(max_length=20, choices=Senders.choices, default=Senders.CUSTOMER)
     message = models.TextField(verbose_name='Текст сообщения')
     is_read = models.BooleanField(default=False, verbose_name='Прочитано')

@@ -850,6 +850,50 @@ def customers_list_view(request):
     })
 
 
+def send_telegram_chat_reply(store, phone, message_text):
+    """Deliver chat reply from merchant directly into customer's Telegram bot chat"""
+    if not store:
+        return False, "Do'kon topilmadi"
+    clean_phone = phone.replace(' ', '').replace('+', '').strip()
+    
+    # 1. Search customer by phone
+    cust = Customer.objects.filter(store=store).filter(
+        Q(phone__icontains=clean_phone) | Q(phone__icontains=phone) | Q(telegram_chat_id=phone)
+    ).first()
+    chat_id = cust.telegram_chat_id if cust and cust.telegram_chat_id else None
+    
+    # 2. Search order by phone with telegram_user_id
+    if not chat_id:
+        ord_obj = Order.objects.filter(store=store).filter(
+            Q(customer_phone__icontains=clean_phone) | Q(customer_phone__icontains=phone)
+        ).exclude(telegram_user_id__isnull=True).first()
+        if ord_obj and ord_obj.telegram_user_id:
+            chat_id = str(ord_obj.telegram_user_id)
+            if cust and not cust.telegram_chat_id:
+                cust.telegram_chat_id = chat_id
+                cust.save(update_fields=['telegram_chat_id'])
+                
+    # 3. Search past ChatMessage with telegram_chat_id
+    if not chat_id:
+        cm_prev = ChatMessage.objects.filter(store=store).filter(
+            Q(customer_phone__icontains=clean_phone) | Q(customer_phone__icontains=phone)
+        ).exclude(telegram_chat_id__isnull=True).exclude(telegram_chat_id='').first()
+        if cm_prev and cm_prev.telegram_chat_id:
+            chat_id = cm_prev.telegram_chat_id
+
+    # 4. Fallback if store has telegram_chat_id
+    if not chat_id and store.telegram_chat_id:
+        chat_id = store.telegram_chat_id
+
+    if chat_id:
+        tg_text = (
+            f"💬 <b>{store.name} do'koni ma'muriyati:</b>\n\n"
+            f"{message_text}"
+        )
+        return send_telegram_notification(store, tg_text, chat_id=chat_id)
+    return False, "Chat ID topilmadi"
+
+
 @login_required
 def chats_view(request):
     store = get_merchant_store(request)
@@ -861,9 +905,16 @@ def chats_view(request):
         phone = request.POST.get('phone', '').strip()
         message = request.POST.get('message', '').strip()
         if phone and message:
+            send_telegram_chat_reply(store, phone, message)
+            clean_p = phone.replace(' ', '').replace('+', '').strip()
+            c_obj = Customer.objects.filter(store=store).filter(
+                Q(phone__icontains=clean_p) | Q(phone__icontains=phone)
+            ).first()
             ChatMessage.objects.create(
                 store=store,
                 customer_phone=phone,
+                customer_name=c_obj.name if c_obj else 'Mijoz',
+                telegram_chat_id=c_obj.telegram_chat_id if c_obj else store.telegram_chat_id,
                 sender=ChatMessage.Senders.MERCHANT,
                 message=message
             )
@@ -871,17 +922,22 @@ def chats_view(request):
 
     all_messages = ChatMessage.objects.filter(store=store).order_by('created_at')
     chat_threads = {}
+    normalized_keys = {}
     for m in all_messages:
-        if m.customer_phone not in chat_threads:
-            chat_threads[m.customer_phone] = []
-        chat_threads[m.customer_phone].append(m)
+        norm_key = m.customer_phone.replace(' ', '').replace('+', '').strip()
+        display_phone = m.customer_phone if m.customer_phone.startswith('+') else f"+{m.customer_phone}"
+        if norm_key not in chat_threads:
+            chat_threads[norm_key] = []
+            normalized_keys[norm_key] = display_phone
+        chat_threads[norm_key].append(m)
 
-    if not active_phone and chat_threads:
-        active_phone = list(chat_threads.keys())[0]
+    clean_active = active_phone.replace(' ', '').replace('+', '').strip() if active_phone else ''
+    if not clean_active and chat_threads:
+        clean_active = list(chat_threads.keys())[0]
 
     active_messages_list = []
-    if active_phone and active_phone in chat_threads:
-        for m in chat_threads[active_phone]:
+    if clean_active and clean_active in chat_threads:
+        for m in chat_threads[clean_active]:
             active_messages_list.append({
                 'id': m.id,
                 'sender': m.sender,
@@ -889,18 +945,27 @@ def chats_view(request):
                 'time': m.created_at.strftime('%H:%M')
             })
 
-    active_customer_name = active_phone or 'Mijoz'
-    if active_phone:
-        cust = Customer.objects.filter(store=store, phone=active_phone).first()
+    active_display_phone = normalized_keys.get(clean_active, active_phone)
+    active_customer_name = active_display_phone or 'Mijoz'
+    if clean_active:
+        cust = Customer.objects.filter(store=store).filter(
+            Q(phone__icontains=clean_active)
+        ).first()
         if cust:
             active_customer_name = cust.name
-        elif active_phone in chat_threads and chat_threads[active_phone]:
-            active_customer_name = chat_threads[active_phone][-1].customer_name or active_phone
+        elif clean_active in chat_threads and chat_threads[clean_active]:
+            active_customer_name = chat_threads[clean_active][-1].customer_name or active_display_phone
+
+    # Build template-friendly threads dict keyed by display_phone
+    display_threads = {}
+    for nk, msgs in chat_threads.items():
+        dp = normalized_keys.get(nk, nk)
+        display_threads[dp] = msgs
 
     return render(request, 'dashboard/chats/chats.html', {
         'store': store,
-        'chat_threads': chat_threads,
-        'active_phone': active_phone,
+        'chat_threads': display_threads,
+        'active_phone': active_display_phone,
         'active_name': active_customer_name,
         'active_messages_json': json.dumps(active_messages_list),
     })
@@ -1431,10 +1496,60 @@ def send_chat_api(request):
     msg = request.POST.get('message', '').strip()
     if not phone or not msg:
         return JsonResponse({'error': 'Missing fields'}, status=400)
+
+    clean_phone = phone.replace(' ', '').replace('+', '').strip()
+    cust = Customer.objects.filter(store=store).filter(
+        Q(phone__icontains=clean_phone) | Q(phone__icontains=phone)
+    ).first()
+
+    tg_chat_id = cust.telegram_chat_id if cust and cust.telegram_chat_id else None
+    if not tg_chat_id and store.telegram_chat_id:
+        tg_chat_id = store.telegram_chat_id
+
     cm = ChatMessage.objects.create(
-        store=store, customer_phone=phone, sender=ChatMessage.Senders.MERCHANT, message=msg
+        store=store,
+        customer_phone=phone,
+        customer_name=cust.name if cust else 'Mijoz',
+        telegram_chat_id=tg_chat_id,
+        sender=ChatMessage.Senders.MERCHANT,
+        message=msg
     )
-    return JsonResponse({'success': True, 'message': cm.message, 'created_at': cm.created_at.strftime('%H:%M')})
+
+    # Deliver to Telegram
+    delivered, err = send_telegram_chat_reply(store, phone, msg)
+
+    return JsonResponse({
+        'success': True,
+        'message': cm.message,
+        'created_at': cm.created_at.strftime('%H:%M'),
+        'telegram_delivered': delivered
+    })
+
+
+@login_required
+def get_chat_messages_api(request):
+    store = get_merchant_store(request)
+    phone = request.GET.get('phone', '').strip()
+    if not phone:
+        return JsonResponse({'messages': []})
+
+    clean_phone = phone.replace(' ', '').replace('+', '').strip()
+    messages = ChatMessage.objects.filter(store=store).filter(
+        Q(customer_phone__icontains=clean_phone) | Q(customer_phone__icontains=phone)
+    ).order_by('created_at')
+
+    # Mark as read
+    messages.filter(sender=ChatMessage.Senders.CUSTOMER, is_read=False).update(is_read=True)
+
+    data = []
+    for m in messages:
+        data.append({
+            'id': m.id,
+            'sender': m.sender,
+            'message': m.message,
+            'time': m.created_at.strftime('%H:%M')
+        })
+    return JsonResponse({'messages': data})
 
 
 @login_required
