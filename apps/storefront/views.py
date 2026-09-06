@@ -42,7 +42,7 @@ def storefront_home_view(request, subdomain=None):
     products = Product.objects.filter(store=store, is_active=True).prefetch_related('images', 'variations')
 
     # Category filter
-    cat_slug = request.GET.get('category')
+    cat_slug = request.GET.get('cat') or request.GET.get('category')
     selected_category = None
     if cat_slug:
         selected_category = categories.filter(slug=cat_slug).first()
@@ -73,15 +73,125 @@ def storefront_home_view(request, subdomain=None):
     # Telegram Mini App detection
     is_tma = request.GET.get('tma') == '1' or 'Telegram' in request.headers.get('User-Agent', '')
 
-    cart = request.session.get('cart', {})
+    from apps.orders.models import MarketingBanner
+    banners = MarketingBanner.objects.filter(store=store, is_active=True).order_by('sort_order', 'id')
+
+    # Live Preview overrides for interactive dashboard design customizer
+    if request.GET.get('preview') == '1':
+        if request.GET.get('primary_color'):
+            store.primary_color = request.GET.get('primary_color').strip()
+        if request.GET.get('card_style'):
+            store.theme_card_style = request.GET.get('card_style').strip()
+        if request.GET.get('card_radius'):
+            store.theme_card_radius = request.GET.get('card_radius').strip()
+        if request.GET.get('image_aspect'):
+            store.theme_image_aspect = request.GET.get('image_aspect').strip()
+        if request.GET.get('button_style'):
+            store.theme_button_style = request.GET.get('button_style').strip()
+        if request.GET.get('bg_color'):
+            store.theme_bg_color = request.GET.get('bg_color').strip()
+
+        # Preview Banner
+        p_title = request.GET.get('preview_banner_title', '').strip()
+        p_sub = request.GET.get('preview_banner_subtitle', '').strip()
+        p_img = request.GET.get('preview_banner_image', '').strip()
+        if p_title or p_img:
+            class MockBanner:
+                def __init__(self, title, subtitle, image_url):
+                    self.title = title
+                    self.subtitle = subtitle
+                    self.image_url = image_url
+                    self.image = None
+
+                @property
+                def display_image_url(self):
+                    return self.image_url
+            banners = [MockBanner(p_title or f"«{store.name}»", p_sub, p_img)]
+
+        # Preview Niche Products & Categories with real photos
+        preview_niche = request.GET.get('preview_niche', '').strip()
+        if preview_niche:
+            from apps.stores.ai_designer import NICHE_PRESETS
+            niche_data = NICHE_PRESETS.get(preview_niche)
+            if niche_data:
+                # Mock Categories for preview niche
+                if niche_data.get('categories'):
+                    class MockCategory:
+                        def __init__(self, c_dict, idx):
+                            self.id = 8000 + idx
+                            self.name_uz = c_dict['name_uz']
+                            self.name_ru = c_dict.get('name_ru', c_dict['name_uz'])
+                            self.name_en = c_dict.get('name_en', c_dict['name_uz'])
+                            self.slug = c_dict.get('slug', f'cat-{idx}')
+                            self.icon = c_dict.get('icon', 'tag')
+                            self.image = None
+                            self.image_url = c_dict.get('image_url')
+                            self.primary_image_url = c_dict.get('image_url')
+                        def get_name(self, l='uz'):
+                            if l == 'ru' and self.name_ru:
+                                return self.name_ru
+                            elif l == 'en' and self.name_en:
+                                return self.name_en
+                            return self.name_uz
+
+                    categories = [MockCategory(c, i) for i, c in enumerate(niche_data['categories'])]
+                    if cat_slug:
+                        selected_category = next((c for c in categories if c.slug == cat_slug), None)
+
+                # Mock Products for preview niche
+                if niche_data.get('products'):
+                    has_any_photos = any(p.primary_image_url for p in products)
+                    if not has_any_photos or store.theme_business_niche != preview_niche or request.GET.get('force_preview') == '1':
+                        class MockProduct:
+                            def __init__(self, p_dict, idx):
+                                self.id = 9000 + idx
+                                self.name_uz = p_dict['name_uz']
+                                self.name_ru = p_dict.get('name_ru', p_dict['name_uz'])
+                                self.name_en = p_dict.get('name_en', p_dict['name_uz'])
+                                self.description_uz = p_dict.get('description_uz', '')
+                                self.description_ru = p_dict.get('description_ru', '')
+                                self.description_en = p_dict.get('description_en', '')
+                                self.category_slug = p_dict.get('category_slug', '')
+                                self.price = p_dict['price']
+                                self.old_price = p_dict.get('old_price')
+                                self.primary_image_url = p_dict.get('image_url')
+                                self.discount_percent = int(round(((self.old_price - self.price) / self.old_price) * 100)) if self.old_price and self.old_price > self.price else None
+                                self.rating = 5.0
+                                self.reviews_count = 8 + (idx * 3)
+                                self.stock = 25
+                                self.is_in_stock = True
+                                self.variations = type('EmptyVars', (), {'filter': lambda *a, **k: []})()
+                            def get_name(self, l='uz'):
+                                if l == 'ru' and self.name_ru:
+                                    return self.name_ru
+                                elif l == 'en' and self.name_en:
+                                    return self.name_en
+                                return self.name_uz
+                            def get_description(self, l='uz'):
+                                if l == 'ru' and self.description_ru:
+                                    return self.description_ru
+                                elif l == 'en' and self.description_en:
+                                    return self.description_en
+                                return self.description_uz
+
+                        preview_prods = [MockProduct(p, i) for i, p in enumerate(niche_data['products'])]
+                        if cat_slug:
+                            filtered = [p for p in preview_prods if p.category_slug == cat_slug]
+                            products = filtered if filtered else preview_prods
+                        else:
+                            products = preview_prods
+
+    cart = request.session.get('cart', {}) if hasattr(request, 'session') else {}
     cart_count = sum(item.get('quantity', 1) for item in cart.values())
     subtotal = sum(item.get('total_price', 0) for item in cart.values())
 
     context = {
         'store': store,
+        'banners': banners,
         'categories': categories,
         'products': products,
         'selected_category': selected_category,
+        'current_category': selected_category,
         'search_q': search_q,
         'sort': sort,
         'lang': lang,

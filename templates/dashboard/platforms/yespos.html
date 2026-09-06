@@ -1,0 +1,847 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load humanize %}
+
+{% block title %}{{ t.yespos_title }} — StoreBox{% endblock %}
+
+{% block dashboard_content %}
+<script>
+function getCsrfToken() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '{{ csrf_token }}';
+}
+
+window.yesposManager = function() {
+    return {
+        isConnected: {% if is_connected %}true{% else %}false{% endif %},
+        branchName: '{{ connection.branch_name|default:""|escapejs }}',
+        branchId: '{{ connection.branch_id|default:""|escapejs }}',
+        totalLinkedCount: {{ total_linked }},
+
+        // Drawer state
+        isDrawerOpen: false,
+        apiKey: '',
+        isTestingKey: false,
+        isConnecting: false,
+        drawerError: '',
+        branches: [],
+        selectedBranchId: '',
+
+        // Catalog modal state
+        isCatalogOpen: false,
+        isLoadingCatalog: false,
+        isImporting: false,
+        isSyncing: false,
+        searchQuery: '',
+        categories: [],
+        selectedProductIds: [],
+
+        init() {
+            if (window.lucide) window.lucide.createIcons();
+        },
+
+        openConnectDrawer() {
+            this.isDrawerOpen = true;
+            this.drawerError = '';
+            if (this.branchId) {
+                this.selectedBranchId = this.branchId;
+            }
+            this.$nextTick(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
+        },
+
+        async testApiKey() {
+            if (!this.apiKey.trim()) {
+                this.drawerError = 'Введите API-ключ YES POS';
+                return;
+            }
+            this.isTestingKey = true;
+            this.drawerError = '';
+            try {
+                const res = await fetch('/dashboard/api/yespos/test/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ api_key: this.apiKey })
+                });
+                const data = await res.json();
+                if (data.success && data.branches) {
+                    this.branches = data.branches;
+                    if (this.branches.length > 0) {
+                        this.selectedBranchId = this.branches[0].id;
+                    }
+                    if (window.showToast) window.showToast('Ключ подтвержден! Доступно филиалов: ' + this.branches.length);
+                } else {
+                    this.drawerError = data.error || 'Ошибка проверки ключа';
+                }
+            } catch (err) {
+                this.drawerError = 'Ошибка связи с сервером StoreBox';
+            } finally {
+                this.isTestingKey = false;
+                this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+            }
+        },
+
+        async connectBranch() {
+            if (!this.selectedBranchId) {
+                this.drawerError = 'Пожалуйста, выберите филиал из списка';
+                return;
+            }
+            this.isConnecting = true;
+            this.drawerError = '';
+            const branch = this.branches.find(b => b.id === this.selectedBranchId) || { name: this.selectedBranchId };
+
+            try {
+                const res = await fetch('/dashboard/api/yespos/connect/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({
+                        api_key: this.apiKey || 'yp_configured_key',
+                        branch_id: this.selectedBranchId,
+                        branch_name: branch.name
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.isConnected = true;
+                    this.isDrawerOpen = false;
+                    if (window.showToast) window.showToast(data.message || 'Филиал YES POS успешно подключен!');
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    this.drawerError = data.error || 'Ошибка при подключении филиала';
+                }
+            } catch (err) {
+                this.drawerError = 'Не удалось подключить филиал';
+            } finally {
+                this.isConnecting = false;
+            }
+        },
+
+        async disconnect() {
+            if (!confirm('Вы действительно хотите отключить интеграцию с YES POS?')) return;
+            try {
+                const res = await fetch('/dashboard/api/yespos/disconnect/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (window.showToast) window.showToast('Интеграция YES POS отключена');
+                    setTimeout(() => window.location.reload(), 500);
+                }
+            } catch (err) {
+                alert('Ошибка при отключении интеграции');
+            }
+        },
+
+        async openCatalogModal() {
+            this.isCatalogOpen = true;
+            this.selectedProductIds = [];
+            this.isLoadingCatalog = true;
+            this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+
+            try {
+                const res = await fetch('/dashboard/api/yespos/catalog/');
+                const data = await res.json();
+                if (data.success && data.categories) {
+                    this.categories = data.categories;
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.isLoadingCatalog = false;
+                this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+            }
+        },
+
+        get filteredCategories() {
+            const q = this.searchQuery.trim().toLowerCase();
+            if (!q) return this.categories;
+            return this.categories.map(cat => {
+                const prods = (cat.products || []).filter(p => {
+                    return (p.name && p.name.toLowerCase().includes(q)) ||
+                           (p.sku && p.sku.toLowerCase().includes(q)) ||
+                           (p.barcode && p.barcode.toLowerCase().includes(q));
+                });
+                return { ...cat, products: prods };
+            }).filter(cat => cat.products.length > 0);
+        },
+
+        get allVisibleProductIds() {
+            const ids = [];
+            for (const cat of this.filteredCategories) {
+                for (const p of cat.products || []) {
+                    ids.push(p.id);
+                }
+            }
+            return ids;
+        },
+
+        get isAllSelected() {
+            const all = this.allVisibleProductIds;
+            return all.length > 0 && all.every(id => this.selectedProductIds.includes(id));
+        },
+
+        toggleSelectAll() {
+            const all = this.allVisibleProductIds;
+            if (this.isAllSelected) {
+                this.selectedProductIds = this.selectedProductIds.filter(id => !all.includes(id));
+            } else {
+                this.selectedProductIds = Array.from(new Set([...this.selectedProductIds, ...all]));
+            }
+        },
+
+        toggleSelect(id) {
+            if (this.selectedProductIds.includes(id)) {
+                this.selectedProductIds = this.selectedProductIds.filter(i => i !== id);
+            } else {
+                this.selectedProductIds.push(id);
+            }
+        },
+
+        async importSelectedProducts() {
+            if (this.selectedProductIds.length === 0) return;
+            this.isImporting = true;
+            const items = [];
+            for (const cat of this.categories) {
+                for (const p of cat.products || []) {
+                    if (this.selectedProductIds.includes(p.id)) {
+                        items.push({
+                            remote_id: p.id,
+                            category_name: cat.name,
+                            name: p.name,
+                            sku: p.sku,
+                            barcode: p.barcode,
+                            ikpu: p.ikpu,
+                            price: p.price,
+                            stock: p.stock,
+                            description: p.description,
+                            image: p.image
+                        });
+                    }
+                }
+            }
+
+            try {
+                const res = await fetch('/dashboard/api/yespos/import/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ items: items })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.isCatalogOpen = false;
+                    if (window.showToast) window.showToast(data.message || 'Товары успешно импортированы!');
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    alert(data.error || 'Ошибка при импорте товаров');
+                }
+            } catch (err) {
+                alert('Не удалось связаться с сервером');
+            } finally {
+                this.isImporting = false;
+            }
+        },
+
+        async syncProducts() {
+            this.isSyncing = true;
+            try {
+                const res = await fetch('/dashboard/api/yespos/sync/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (window.showToast) window.showToast(data.message || 'Остатки и цены обновлены!');
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    alert(data.error || 'Ошибка синхронизации');
+                }
+            } catch (err) {
+                alert('Не удалось синхронизировать товары');
+            } finally {
+                this.isSyncing = false;
+            }
+        }
+    };
+};
+</script>
+
+<div x-data="yesposManager()" class="max-w-7xl mx-auto space-y-6">
+
+    <!-- ============================================================ -->
+    <!-- TOP HEADER / BANNER                                           -->
+    <!-- ============================================================ -->
+    <div class="bg-white rounded-3xl p-6 lg:p-8 border border-slate-200/80 shadow-sm relative overflow-hidden">
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-gradient-to-br from-amber-100/40 via-blue-50/20 to-transparent rounded-full blur-2xl pointer-events-none"></div>
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div class="space-y-2 max-w-2xl">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-amber-800 shadow-xs">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span>STOREBOX x YES POS</span>
+                </div>
+                <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
+                    {{ t.yespos_title }}
+                </h1>
+                <p class="text-sm text-slate-500 leading-relaxed">
+                    {{ t.yespos_subtitle }}
+                </p>
+            </div>
+
+            <!-- Action & Stat Counter -->
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl px-5 py-3.5 text-center min-w-[140px]">
+                    <div class="text-2xl font-bold text-slate-900">{{ total_linked }}</div>
+                    <div class="text-xs font-medium text-slate-500">{{ t.yespos_linked_products }}</div>
+                </div>
+
+                {% if not is_connected %}
+                <button type="button" id="openDrawerBtn" @click="openConnectDrawer()" class="inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-sm transition-all hover:shadow-md cursor-pointer">
+                    <i data-lucide="plug" class="w-4 h-4 text-amber-400"></i>
+                    <span>{{ t.yespos_connect_btn }}</span>
+                </button>
+                {% else %}
+                <div class="flex items-center gap-2">
+                    <button type="button" id="openCatalogBtn" @click="openCatalogModal()" class="inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-sm transition-all hover:shadow-md cursor-pointer">
+                        <i data-lucide="folder-sync" class="w-4 h-4 text-emerald-400"></i>
+                        <span>{{ t.yespos_open_catalog }}</span>
+                    </button>
+                    <button type="button" @click="syncProducts()" :disabled="isSyncing" class="inline-flex items-center gap-2 px-4 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-sm font-semibold shadow-xs transition-all cursor-pointer">
+                        <span :class="isSyncing ? 'inline-block animate-spin' : 'inline-block'"><i data-lucide="refresh-cw" class="w-4 h-4 text-slate-500"></i></span>
+                        <span x-text="isSyncing ? '...' : '{{ t.yespos_sync_now }}'">{{ t.yespos_sync_now }}</span>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 2 MAIN CARDS: CONNECTION STATUS & IMPORT READINESS            -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- LEFT CARD: ПОДКЛЮЧЕНИЕ -->
+        <div class="bg-white rounded-3xl p-6 lg:p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-700 font-semibold">
+                            <i data-lucide="link-2" class="w-4 h-4"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-slate-900">{{ t.yespos_connection }}</h2>
+                    </div>
+
+                    {% if is_connected %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span>{{ t.yespos_connected }}</span>
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-600">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                        <span>{{ t.yespos_not_connected }}</span>
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if not is_connected %}
+                <!-- Not Connected Body -->
+                <div class="py-6 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mb-4">
+                        <i data-lucide="link-2-off" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-slate-800 mb-1.5">{{ t.yespos_connection_not_set }}</h3>
+                    <p class="text-xs text-slate-500 max-w-sm mb-6">
+                        {{ t.yespos_connection_not_set_desc }}
+                    </p>
+                    <button type="button" id="startConnectBtn" @click="openConnectDrawer()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>{{ t.yespos_start_connect }}</span>
+                    </button>
+                </div>
+                {% else %}
+                <!-- Connected Body -->
+                <div class="space-y-4 py-2">
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-500">Филиал YES POS:</span>
+                            <span class="font-semibold text-slate-800">{{ connection.branch_name }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-500">ID:</span>
+                            <span class="font-mono font-medium text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">{{ connection.branch_id }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-500">API-ключ:</span>
+                            <span class="font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">{{ masked_key }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-500">Последняя синхронизация:</span>
+                            <span class="text-slate-700">{% if connection.last_sync_at %}{{ connection.last_sync_at|date:'d.m.Y H:i' }}{% else %}Только что{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 pt-2">
+                        <button type="button" @click="openConnectDrawer()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors cursor-pointer">
+                            <i data-lucide="settings-2" class="w-3.5 h-3.5"></i>
+                            <span>{{ t.yespos_reconnect }}</span>
+                        </button>
+                        <button type="button" @click="disconnect()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium transition-colors cursor-pointer">
+                            <i data-lucide="unlink" class="w-3.5 h-3.5"></i>
+                            <span>Отключить</span>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT CARD: ГОТОВНОСТЬ ИМПОРТА -->
+        <div class="bg-white rounded-3xl p-6 lg:p-7 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="flex items-center gap-2.5 mb-2">
+                    <div class="w-9 h-9 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center font-semibold">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">{{ t.yespos_import_readiness }}</h2>
+                </div>
+                <p class="text-xs text-slate-500 mb-5">
+                    {{ t.yespos_import_readiness_desc }}
+                </p>
+
+                <div class="space-y-4">
+                    <!-- Check 1: Encryption -->
+                    <div class="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60">
+                        <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                            <i data-lucide="check" class="w-3 h-3"></i>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-semibold text-slate-800">{{ t.yespos_server_encryption }}</div>
+                            <div class="text-[11px] text-slate-500 leading-snug">
+                                {{ t.yespos_server_encryption_desc }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Check 2: Connected branch -->
+                    <div class="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60">
+                        <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 {% if is_connected %}bg-emerald-100 text-emerald-600{% else %}bg-amber-100 text-amber-600{% endif %}">
+                            <i data-lucide="{% if is_connected %}check{% else %}alert-circle{% endif %}" class="w-3 h-3"></i>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-semibold text-slate-800">{{ t.yespos_branch_connected }}</div>
+                            <div class="text-[11px] text-slate-500 leading-snug">
+                                {% if is_connected %}Подключен филиал: {{ connection.branch_name }}{% else %}{{ t.yespos_branch_connected_desc }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Check 3: Currency UZS -->
+                    <div class="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60">
+                        <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                            <i data-lucide="check" class="w-3 h-3"></i>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-semibold text-slate-800">{{ t.yespos_currency_uzs }}</div>
+                            <div class="text-[11px] text-slate-500 leading-snug">
+                                {{ t.yespos_currency_uzs_desc }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DEDUPLICATION NOTICE FOOTER                                  -->
+    <!-- ============================================================ -->
+    <div class="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/70 flex items-start gap-3 text-xs text-blue-900">
+        <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+        <div>
+            <span class="font-semibold">Повторный импорт не дублирует товары:</span> существующие позиции StoreBox с тем же YES POS ID обновляются (цена, остаток, штрихкод).
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- LINKED PRODUCTS TABLE SECTION                                -->
+    <!-- ============================================================ -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h3 class="text-base font-bold text-slate-900">Связанные товары StoreBox & YES POS</h3>
+                <p class="text-xs text-slate-500">Товары, синхронизируемые с вашей кассовой системой</p>
+            </div>
+            <div class="flex items-center gap-2">
+                {% if is_connected %}
+                <button type="button" @click="openCatalogModal()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors cursor-pointer">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>Добавить из YES POS</span>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Table or Empty State -->
+        {% if linked_products %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+                    <tr>
+                        <th class="py-3 px-4">Товар</th>
+                        <th class="py-3 px-4">Категория</th>
+                        <th class="py-3 px-4">YES POS ID / Штрихкод</th>
+                        <th class="py-3 px-4">Цена</th>
+                        <th class="py-3 px-4">Остаток</th>
+                        <th class="py-3 px-4">Синхронизация</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for item in linked_products %}
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-3 px-4 font-semibold text-slate-900 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                                <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
+                            </div>
+                            <div>
+                                <div>{{ item.product.get_name }}</div>
+                                {% if item.product.ikpu_code %}
+                                <div class="text-[10px] text-slate-400 font-mono">ИКПУ: {{ item.product.ikpu_code }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-600">
+                            <span class="px-2 py-0.5 rounded-md bg-slate-100 font-medium text-[11px]">
+                                {{ item.product.category.get_name|default:"Без категории" }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 font-mono text-[11px] text-slate-600">
+                            <div>{{ item.remote_product_id }}</div>
+                            {% if item.remote_barcode %}
+                            <div class="text-[10px] text-slate-400">{{ item.remote_barcode }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-slate-900">
+                            {{ item.remote_price|default:item.product.price|intcomma }} UZS
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold {% if item.remote_stock > 5 %}bg-emerald-50 text-emerald-700{% elif item.remote_stock > 0 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">
+                                {{ item.remote_stock }} шт.
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-slate-500 text-[11px]">
+                            {{ item.last_synced_at|date:"d.m.Y H:i" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="py-12 px-4 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                <i data-lucide="box" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-sm font-semibold text-slate-800 mb-1">Пока нет связанных товаров</h4>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+                Подключите YES POS и откройте каталог, чтобы импортировать позиции в витрину StoreBox.
+            </p>
+            {% if is_connected %}
+            <button type="button" @click="openCatalogModal()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer">
+                <i data-lucide="folder-sync" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Открыть каталог YES POS</span>
+            </button>
+            {% else %}
+            <button type="button" @click="openConnectDrawer()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer">
+                <i data-lucide="plug" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>Подключить филиал</span>
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- RIGHT DRAWER: ПОДКЛЮЧИТЬ YES POS (Matches User Image 1)       -->
+    <!-- ============================================================ -->
+    <div x-show="isDrawerOpen" @keydown.escape.window="isDrawerOpen = false" x-cloak class="fixed inset-0 z-50 overflow-hidden">
+        <!-- Backdrop -->
+        <div x-show="isDrawerOpen"
+             x-transition:enter="transition-opacity ease-linear duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="isDrawerOpen = false"
+             class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+
+        <div x-show="isDrawerOpen"
+             x-transition:enter="transform transition ease-in-out duration-300"
+             x-transition:enter-start="translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transform transition ease-in-out duration-300"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="translate-x-full"
+             class="fixed inset-y-0 right-0 w-full max-w-md h-screen bg-white shadow-2xl flex flex-col justify-between overflow-hidden z-50">
+
+                <!-- Drawer Header -->
+                <div class="p-6 border-b border-slate-100 flex items-start justify-between shrink-0">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Подключить YES POS</h3>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                            Свяжите филиал YES POS со StoreBox, чтобы загружать каталог и синхронизировать остатки.
+                        </p>
+                    </div>
+                    <button type="button" @click="isDrawerOpen = false" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Drawer Content -->
+                <div style="flex: 1 1 0%; min-height: 0; overflow-y: auto;" class="p-6 space-y-5">
+                    <!-- Green Notice: Только официальный API -->
+                    <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-start gap-3">
+                        <div class="w-5 h-5 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5">
+                            <i data-lucide="check" class="w-3 h-3"></i>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold text-emerald-950">Только официальный API</div>
+                            <div class="text-[11px] text-emerald-800/90 leading-snug">
+                                Интеграция работает напрямую с серверами YES POS через защищенное HTTPS-соединение.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amber Notice: Состав каталога определяет YES POS -->
+                    <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-start gap-3">
+                        <div class="w-5 h-5 rounded-full bg-amber-200 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                            <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold text-amber-950">Состав каталога определяет YES POS</div>
+                            <div class="text-[11px] text-amber-800/90 leading-snug">
+                                Загружаются категории, товары, цены, штрихкоды и остатки, настроенные в вашей учетной записи YES POS.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input: API Key -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-semibold text-slate-800">
+                                API-ключ YES POS <span class="text-rose-500">*</span>
+                            </label>
+                            <button type="button" id="demoKeyBtn" @click="apiKey = 'yp_demo_api_key_tashkent'; testApiKey()" class="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer">
+                                Вставить тестовый ключ
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i data-lucide="key-round" class="w-4 h-4"></i>
+                            </div>
+                            <input type="text" x-model="apiKey" placeholder="Например: yp_live_... или тестовый ключ" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-hidden focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all font-mono">
+                        </div>
+                        <p class="text-[11px] text-slate-400">Ключ проверяется через официальный API YES POS до сохранения.</p>
+                    </div>
+
+                    <!-- Validate Key Action -->
+                    <div class="flex justify-end">
+                        <button type="button" id="testKeyBtn" @click="testApiKey()" :disabled="isTestingKey || !apiKey.trim()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer">
+                            <span :class="isTestingKey ? 'inline-block animate-spin' : 'inline-block'"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></span>
+                            <span x-text="isTestingKey ? 'Проверка...' : 'Проверить доступ'">Проверить доступ</span>
+                        </button>
+                    </div>
+
+                    <!-- Branch Selector -->
+                    <div class="space-y-2" x-show="branches.length > 0">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-semibold text-slate-800">
+                                Филиал YES POS <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[11px] text-slate-500 font-medium" x-text="'Доступно: ' + branches.length"></span>
+                        </div>
+
+                        <!-- Clickable Branch Cards -->
+                        <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                            <template x-for="b in branches" :key="b.id">
+                                <div @click="selectedBranchId = b.id"
+                                     :class="selectedBranchId === b.id ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900' : 'border-slate-200 hover:border-slate-300 bg-white'"
+                                     class="p-3 rounded-xl border cursor-pointer flex items-center justify-between transition-all">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+                                            <i data-lucide="store" class="w-4 h-4 text-slate-600"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="text-xs font-bold text-slate-900 truncate" x-text="b.name"></div>
+                                            <div class="text-[10px] text-slate-400 font-mono" x-text="'ID: ' + b.id"></div>
+                                        </div>
+                                    </div>
+                                    <div class="shrink-0">
+                                        <span x-show="selectedBranchId === b.id" class="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px]">
+                                            <i data-lucide="check" class="w-3 h-3"></i>
+                                        </span>
+                                        <span x-show="selectedBranchId !== b.id" class="w-5 h-5 rounded-full border border-slate-300 block"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Каталог и остатки будут синхронизироваться с выбранным филиалом.</p>
+                    </div>
+
+                    <div x-show="drawerError" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium" x-text="drawerError"></div>
+                </div>
+
+                <!-- Drawer Footer -->
+                <div style="flex-shrink: 0;" class="p-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3 shrink-0">
+                    <button type="button" @click="isDrawerOpen = false" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer">
+                        Отмена
+                    </button>
+                    <button type="button" id="submitConnectBranchBtn" @click="connectBranch()" :disabled="isConnecting || !selectedBranchId" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer">
+                        <span x-text="isConnecting ? 'Подключение...' : 'Подключить филиал'">Подключить филиал</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    <!-- ============================================================ -->
+    <!-- CATALOG IMPORT MODAL                                         -->
+    <!-- ============================================================ -->
+    <div x-show="isCatalogOpen" @keydown.escape.window="isCatalogOpen = false" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs" @click="isCatalogOpen = false"></div>
+
+        <div class="min-h-full flex items-center justify-center p-4">
+            <div class="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+                <!-- Modal Header -->
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Каталог товаров YES POS</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Выберите товары для импорта в витрину вашего магазина StoreBox</p>
+                    </div>
+                    <button type="button" id="closeCatalogBtn" @click="isCatalogOpen = false" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Search & Filters -->
+                <div class="p-4 bg-slate-50/80 border-b border-slate-200/80 flex flex-col sm:flex-row items-center gap-3 shrink-0">
+                    <div class="relative flex-1 w-full">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                        </div>
+                        <input type="text" x-model="searchQuery" placeholder="Поиск по названию, артикулу или штрихкоду..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-hidden focus:border-slate-900">
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <button type="button" id="selectAllCatalogBtn" @click="toggleSelectAll()" class="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer shrink-0">
+                            <span x-text="isAllSelected ? 'Снять выделение' : 'Выбрать все'">Выбрать все</span>
+                        </button>
+                        <div class="text-xs font-medium text-slate-500 px-2 shrink-0">
+                            Выбрано: <span class="font-bold text-slate-900" x-text="selectedProductIds.length">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products List in Modal -->
+                <div class="p-6 overflow-y-auto flex-1 min-h-0 divide-y divide-slate-100 space-y-4">
+                    <template x-if="isLoadingCatalog">
+                        <div class="py-16 text-center text-slate-400">
+                            <i data-lucide="refresh-cw" class="w-8 h-8 animate-spin mx-auto mb-2 text-slate-500"></i>
+                            <p class="text-xs">Загрузка каталога YES POS...</p>
+                        </div>
+                    </template>
+
+                    <template x-if="!isLoadingCatalog && filteredCategories.length === 0">
+                        <div class="py-12 text-center text-slate-400">
+                            <p class="text-xs">Товары не найдены</p>
+                        </div>
+                    </template>
+
+                    <template x-for="cat in filteredCategories" :key="cat.id">
+                        <div class="pt-3 first:pt-0">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                    <i data-lucide="folder" class="w-3.5 h-3.5 text-amber-500"></i>
+                                    <span x-text="cat.name"></span>
+                                    <span class="text-[10px] text-slate-400 font-normal" x-text="'(' + cat.products.length + ')'"></span>
+                                </h4>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <template x-for="p in cat.products" :key="p.id">
+                                    <div @click="toggleSelect(p.id)" class="p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3"
+                                         :class="selectedProductIds.includes(p.id) ? 'border-slate-900 bg-slate-50/60 ring-1 ring-slate-900' : 'border-slate-200 hover:border-slate-300 bg-white'">
+                                        
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <input type="checkbox" :checked="selectedProductIds.includes(p.id)" class="w-4 h-4 rounded text-slate-900 focus:ring-0 cursor-pointer shrink-0">
+                                            <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                                                <template x-if="p.image">
+                                                    <img :src="p.image" class="w-full h-full object-cover">
+                                                </template>
+                                                <template x-if="!p.image">
+                                                    <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
+                                                </template>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <div class="text-xs font-bold text-slate-900 truncate" x-text="p.name"></div>
+                                                <div class="text-[10px] text-slate-400 flex items-center gap-2">
+                                                    <span x-text="'Арт: ' + (p.sku || p.id)"></span>
+                                                    <span x-show="p.barcode" x-text="'ШК: ' + p.barcode"></span>
+                                                </div>
+                                                <div class="text-[11px] font-semibold text-slate-800 mt-0.5">
+                                                    <span x-text="Number(p.price).toLocaleString() + ' UZS'"></span>
+                                                    <span class="text-[10px] text-slate-500 font-normal" x-text="' • ' + p.stock + ' шт.'"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <template x-if="p.is_linked">
+                                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                                Связан
+                                            </span>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="p-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4 shrink-0">
+                    <div class="text-xs text-slate-500">
+                        Выбрано товаров для импорта: <span class="font-bold text-slate-900" x-text="selectedProductIds.length">0</span>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button type="button" @click="isCatalogOpen = false" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer">
+                            Закрыть
+                        </button>
+                        <button type="button" id="importCatalogBtn" @click="importSelectedProducts()" :disabled="isImporting || selectedProductIds.length === 0" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer">
+                            <span :class="isImporting ? 'inline-block animate-bounce' : 'inline-block'"><i data-lucide="download" class="w-3.5 h-3.5"></i></span>
+                            <span x-text="isImporting ? 'Импорт...' : 'Импортировать (' + selectedProductIds.length + ')'">Импортировать</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

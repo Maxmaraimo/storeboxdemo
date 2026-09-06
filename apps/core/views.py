@@ -20,7 +20,21 @@ def landing_view(request):
 
 
 def switch_language_view(request, lang):
-    if lang in ['ru', 'uz']:
+    lang = (lang or '').lower().strip()
+    if lang in ['uz', 'ru', 'en']:
         request.session['lang'] = lang
-    next_url = request.META.get('HTTP_REFERER', '/')
-    return redirect(next_url)
+        request.session['_language'] = lang
+        from django.utils import translation
+        translation.activate(lang)
+
+    next_url = request.GET.get('next') or request.META.get('HTTP_REFERER') or '/dashboard/'
+    if '#' in next_url:
+        next_url = next_url.split('#')[0]
+    if not next_url.strip():
+        next_url = '/dashboard/'
+
+    response = redirect(next_url)
+    if lang in ['uz', 'ru', 'en']:
+        response.set_cookie('django_language', lang, max_age=365*24*60*60, samesite='Lax')
+        response.set_cookie('storebox_lang', lang, max_age=365*24*60*60, samesite='Lax')
+    return response

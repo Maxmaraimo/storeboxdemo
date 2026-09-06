@@ -16,8 +16,17 @@ class Category(models.Model):
     slug = models.SlugField(max_length=120, verbose_name='Слаг')
     icon = models.CharField(max_length=50, blank=True, default='utensils')
     image = models.ImageField(upload_to='categories/', blank=True, null=True)
+    image_url = models.URLField(max_length=500, blank=True, default='', verbose_name='Rasm havolasi (URL)')
     sort_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+
+    @property
+    def primary_image_url(self):
+        if self.image:
+            return self.image.url
+        if self.image_url:
+            return self.image_url
+        return None
 
     class Meta:
         verbose_name = 'Категория'
@@ -81,6 +90,7 @@ class Product(models.Model):
     unit = models.CharField(max_length=30, choices=Units.choices, default=Units.DONA, verbose_name="O'lchov birligi")
     rating = models.DecimalField(max_digits=3, decimal_places=1, default=5.0)
     reviews_count = models.PositiveIntegerField(default=0)
+    image_url = models.URLField(max_length=500, blank=True, default='', verbose_name='Rasm havolasi (URL)')
     
     stock = models.IntegerField(default=10, verbose_name='Qolgan (dona)')
     track_stock = models.BooleanField(default=True)
@@ -127,6 +137,8 @@ class Product(models.Model):
             primary = self.images.first()
         if primary and primary.image:
             return primary.image.url
+        if self.image_url:
+            return self.image_url
         return None
 
     @property
@@ -168,3 +180,40 @@ class ProductVariation(models.Model):
         elif lang == 'en' and self.name_en:
             return self.name_en
         return self.name_uz or self.name_ru or self.name_en or ''
+
+
+class YesPosConnection(models.Model):
+    store = models.OneToOneField('stores.Store', on_delete=models.CASCADE, related_name='yespos_connection')
+    api_key = models.CharField(max_length=255)
+    branch_id = models.CharField(max_length=100)
+    branch_name = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    last_sync_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"YES POS - {self.store.name} ({self.branch_name})"
+
+
+class YesPosCategoryLink(models.Model):
+    store = models.ForeignKey('stores.Store', on_delete=models.CASCADE, related_name='yespos_category_links')
+    remote_category_id = models.CharField(max_length=100)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='yespos_links')
+    last_synced_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('store', 'remote_category_id')
+
+
+class YesPosProductLink(models.Model):
+    store = models.ForeignKey('stores.Store', on_delete=models.CASCADE, related_name='yespos_product_links')
+    remote_product_id = models.CharField(max_length=100)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='yespos_links')
+    remote_barcode = models.CharField(max_length=100, blank=True)
+    remote_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    remote_stock = models.IntegerField(default=0)
+    last_synced_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('store', 'remote_product_id')

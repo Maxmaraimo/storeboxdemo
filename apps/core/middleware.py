@@ -10,10 +10,16 @@ class SubdomainTenantMiddleware:
 
     def __call__(self, request):
         # 1. Language resolution
-        lang = request.GET.get('lang')
-        if lang in ['ru', 'uz']:
-            request.session['lang'] = lang
-        request.language = request.session.get('lang', 'ru')
+        query_lang = request.GET.get('lang')
+        if query_lang in ['ru', 'uz', 'en']:
+            request.session['lang'] = query_lang
+            request.session['_language'] = query_lang
+
+        stored_lang = request.session.get('lang') or request.COOKIES.get('django_language') or request.COOKIES.get('storebox_lang')
+        if stored_lang in ['ru', 'uz', 'en']:
+            request.language = stored_lang
+        else:
+            request.language = 'uz'
 
         # 2. Host and subdomain resolution
         host = request.get_host().split(':')[0].lower()

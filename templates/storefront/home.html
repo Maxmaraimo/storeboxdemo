@@ -4,14 +4,21 @@
 <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8" x-data="homeCatalog()">
 
     <!-- BANNERS SLIDER (if active) -->
-    {% if banners.exists %}
-    <div class="relative rounded-3xl overflow-hidden bg-gradient-to-r from-emerald-950 to-slate-900 text-white p-6 sm:p-10 shadow-lg">
-        <div class="max-w-md space-y-2">
-            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider">Aksiya</span>
-            <h2 class="text-xl sm:text-3xl font-black">{{ banners.first.title }}</h2>
-            <p class="text-xs text-emerald-200/80">{{ banners.first.subtitle }}</p>
+    {% if banners %}
+    {% with b=banners|first %}
+    <div class="relative rounded-3xl overflow-hidden text-white p-6 sm:p-10 shadow-lg min-h-[160px] sm:min-h-[220px] flex items-center"
+         style="background: linear-gradient(to right, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.45)){% if b.display_image_url %}, url('{{ b.display_image_url|safe }}'){% elif b.image %}, url('{{ b.image.url|safe }}'){% elif b.image_url %}, url('{{ b.image_url|safe }}'){% endif %}; background-size: cover; background-position: center;">
+        <div class="max-w-xl space-y-2 z-10">
+            <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider">
+                Aksiya
+            </span>
+            <h2 class="text-xl sm:text-3xl font-black tracking-tight text-white drop-shadow-sm">{{ b.title|safe }}</h2>
+            {% if b.subtitle %}
+            <p class="text-xs sm:text-sm text-slate-100/90 font-medium leading-relaxed drop-shadow-sm">{{ b.subtitle|safe }}</p>
+            {% endif %}
         </div>
     </div>
+    {% endwith %}
     {% endif %}
 
     <!-- CATEGORIES SCROLL BAR (Video 05:28) -->
@@ -26,32 +33,98 @@
             {% for cat in categories %}
             <a href="?cat={{ cat.slug }}"
                class="px-4 py-2.5 rounded-2xl text-xs font-bold shrink-0 transition-all shadow-2xs flex items-center gap-2 {% if current_category.id == cat.id %}bg-brand text-white shadow-brand/20{% else %}bg-white border border-slate-200 text-slate-700 hover:bg-slate-50{% endif %}">
-                {% if cat.image %}
+                {% if cat.primary_image_url %}
+                <img src="{{ cat.primary_image_url }}" class="w-4 h-4 rounded-full object-cover">
+                {% elif cat.image %}
                 <img src="{{ cat.image.url }}" class="w-4 h-4 rounded-full object-cover">
                 {% else %}
                 <i data-lucide="{{ cat.icon|default:'tag' }}" class="w-4 h-4"></i>
                 {% endif %}
-                <span>{{ cat.name_uz|default:cat.name_ru }}</span>
+                <span>{% if lang == 'ru' %}{{ cat.name_ru|default:cat.name_uz }}{% elif lang == 'en' %}{{ cat.name_en|default:cat.name_uz }}{% else %}{{ cat.name_uz|default:cat.name_ru }}{% endif %}</span>
             </a>
             {% endfor %}
         </div>
     </div>
 
-    <!-- PRODUCTS GRID (Video 05:31) -->
+    <!-- PRODUCTS SECTION (Dynamic Grid or Compact Restaurant Menu) -->
     <div>
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                {% if current_category %}{{ current_category.name_uz|default:current_category.name_ru }}{% else %}Barcha mahsulotlar{% endif %}
+            <h2 class="text-base sm:text-lg font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight">
+                {% if current_category %}{% if lang == 'ru' %}{{ current_category.name_ru|default:current_category.name_uz }}{% elif lang == 'en' %}{{ current_category.name_en|default:current_category.name_uz }}{% else %}{{ current_category.name_uz|default:current_category.name_ru }}{% endif %}{% else %}{% if lang == 'ru' %}Все товары{% elif lang == 'en' %}All Products{% else %}Barcha mahsulotlar{% endif %}{% endif %}
             </h2>
-            <span class="text-xs font-bold text-slate-400">{{ products.count }} ta mahsulot</span>
+            <span class="text-xs font-bold text-slate-400">{{ products|length }} {% if lang == 'ru' %}товаров{% elif lang == 'en' %}items{% else %}ta mahsulot{% endif %}</span>
         </div>
 
+        {% if store.theme_card_style == 'compact' %}
+        <!-- COMPACT RESTAURANT / FOOD MENU LIST -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for product in products %}
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-3.5 flex items-center justify-between gap-3 shadow-xs hover:shadow-md transition-all group">
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="flex items-center gap-3.5 min-w-0 flex-1">
+                    <div class="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
+                        {% if product.primary_image_url %}
+                        <img src="{{ product.primary_image_url }}" alt="{{ product.name_uz }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-slate-300"><i data-lucide="image" class="w-6 h-6"></i></div>
+                        {% endif %}
+                        {% if product.discount_percent %}
+                        <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-rose-500 text-white font-black text-[9px]">-{{ product.discount_percent }}%</span>
+                        {% endif %}
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="font-bold text-xs sm:text-sm text-slate-900 truncate group-hover:text-brand transition-colors">{{ product.name_uz|default:product.name_ru }}</h3>
+                        <div class="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{{ product.description_uz|default:product.description_ru|striptags|default:"Mazali va yangi tayyorlangan" }}</div>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <span class="text-xs sm:text-sm font-black text-slate-900">{{ product.price|floatformat:0 }} UZS</span>
+                            {% if product.old_price %}
+                            <span class="text-[10px] text-slate-400 line-through">{{ product.old_price|floatformat:0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                <div class="shrink-0">
+                    <template x-if="!cartItems['{{ product.id }}_0']">
+                        <button type="button" @click="addToCart({{ product.id }})"
+                                class="px-3 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1 active:scale-95">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Qo'shish</span>
+                        </button>
+                    </template>
+                    <template x-if="cartItems['{{ product.id }}_0']">
+                        <div class="flex items-center gap-1 border border-brand/40 bg-brand/5 rounded-xl p-1">
+                            <button type="button" @click="updateCart('{{ product.id }}_0', 'decrease')" class="w-7 h-7 rounded-lg bg-white text-brand font-black text-xs shadow-xs flex items-center justify-center">-</button>
+                            <span class="text-xs font-black text-slate-900 px-1" x-text="cartItems['{{ product.id }}_0'].quantity"></span>
+                            <button type="button" @click="updateCart('{{ product.id }}_0', 'increase')" class="w-7 h-7 rounded-lg bg-white text-brand font-black text-xs shadow-xs flex items-center justify-center">+</button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full py-16 text-center text-slate-400 text-xs font-semibold">
+                <i data-lucide="package-search" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
+                <p>Hozircha mahsulotlar mavjud emas</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- STANDARD / MODERN / MINIMAL / BOLD GRID -->
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
             {% for product in products %}
-            <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group">
+            <div class="overflow-hidden transition-all flex flex-col justify-between group
+                 {% if store.theme_card_style == 'minimal' %}bg-transparent border-0 shadow-none
+                 {% elif store.theme_card_style == 'bold' %}bg-white border-2 border-slate-900 shadow-md
+                 {% else %}bg-white border border-slate-200/80 shadow-xs hover:shadow-lg{% endif %}
+                 {% if store.theme_card_radius == 'none' %}rounded-none
+                 {% elif store.theme_card_radius == 'lg' %}rounded-xl
+                 {% elif store.theme_card_radius == '2xl' %}rounded-2xl
+                 {% else %}rounded-3xl{% endif %}">
                 
                 <!-- Card Image & Badges -->
-                <div class="relative w-full aspect-[3/4] bg-slate-100 overflow-hidden group/img">
+                <div class="relative w-full bg-slate-100 overflow-hidden group/img
+                     {% if store.theme_image_aspect == 'square' %}aspect-[1/1]
+                     {% elif store.theme_image_aspect == 'landscape' %}aspect-[4/3]
+                     {% else %}aspect-[3/4]{% endif %}">
                     <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="block w-full h-full">
                         {% if product.primary_image_url %}
                         <img src="{{ product.primary_image_url }}" alt="{{ product.name_uz }}" class="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300">
@@ -87,7 +160,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- Title (Clickable link to dedicated product page) -->
+                        <!-- Title -->
                         <h3 class="mt-1 leading-snug">
                             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" 
                                class="font-bold text-xs sm:text-sm text-slate-800 hover:text-brand transition-colors line-clamp-2">
@@ -102,11 +175,14 @@
                         </div>
                     </div>
 
-                    <!-- Buy / Add to Cart Button with Stepper when in cart (Video ikkinchi.mov 00:34) -->
+                    <!-- Buy / Add to Cart Button -->
                     <div class="mt-3">
                         <template x-if="!cartItems['{{ product.id }}_0']">
                             <button type="button" @click="addToCart({{ product.id }})"
-                                    class="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95">
+                                    class="w-full py-2.5 rounded-xl font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95
+                                    {% if store.theme_button_style == 'outline' %}border-2 border-brand text-brand hover:bg-brand hover:text-white
+                                    {% elif store.theme_button_style == 'soft' %}bg-brand/10 text-brand hover:bg-brand/20
+                                    {% else %}bg-brand hover:bg-brand-dark text-white{% endif %}">
                                 <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
                                 <span>Sotib olish</span>
                             </button>
@@ -128,6 +204,7 @@
             </div>
             {% endfor %}
         </div>
+        {% endif %}
     </div>
 
     <!-- ============================================================= -->

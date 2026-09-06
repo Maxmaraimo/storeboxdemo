@@ -484,8 +484,9 @@
             <div class="flex items-center space-x-3 sm:space-x-4">
                 <!-- Lang Toggle -->
                 <div class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold border border-slate-200/60">
-                    <a href="/platform/lang/uz/" class="px-2.5 py-1 rounded-lg transition-all {% if lang == 'uz' %}bg-white text-emerald-700 shadow-xs{% else %}text-slate-500 hover:text-slate-900{% endif %}">UZ</a>
-                    <a href="/platform/lang/ru/" class="px-2.5 py-1 rounded-lg transition-all {% if lang == 'ru' %}bg-white text-emerald-700 shadow-xs{% else %}text-slate-500 hover:text-slate-900{% endif %}">RU</a>
+                    <a href="/lang/uz/?next={{ request.get_full_path|urlencode }}" class="px-2.5 py-1 rounded-lg transition-all {% if lang == 'uz' %}bg-white text-emerald-700 shadow-xs{% else %}text-slate-500 hover:text-slate-900{% endif %}">UZ</a>
+                    <a href="/lang/ru/?next={{ request.get_full_path|urlencode }}" class="px-2.5 py-1 rounded-lg transition-all {% if lang == 'ru' %}bg-white text-emerald-700 shadow-xs{% else %}text-slate-500 hover:text-slate-900{% endif %}">RU</a>
+                    <a href="/lang/en/?next={{ request.get_full_path|urlencode }}" class="px-2.5 py-1 rounded-lg transition-all {% if lang == 'en' %}bg-white text-emerald-700 shadow-xs{% else %}text-slate-500 hover:text-slate-900{% endif %}">EN</a>
                 </div>
 
                 <a href="/login/" class="hidden sm:inline-flex text-sm font-bold text-slate-700 hover:text-emerald-600 transition-colors px-3 py-2" x-text="isUz ? 'Kirish' : 'Войти'">

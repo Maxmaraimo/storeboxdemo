@@ -97,6 +97,37 @@ class Store(models.Model):
         default='#10B981',
         verbose_name='Основной цвет бренда (HEX)'
     )
+    theme_card_style = models.CharField(
+        max_length=30,
+        default='modern',
+        verbose_name='Стиль карточек товаров'
+    )  # 'modern', 'minimal', 'bold', 'compact'
+    theme_card_radius = models.CharField(
+        max_length=20,
+        default='3xl',
+        verbose_name='Скругление карточек'
+    )  # 'none', 'lg', '2xl', '3xl', 'full'
+    theme_image_aspect = models.CharField(
+        max_length=20,
+        default='portrait',
+        verbose_name='Соотношение фото'
+    )  # 'square' (1/1), 'portrait' (3/4), 'landscape' (4/3)
+    theme_button_style = models.CharField(
+        max_length=30,
+        default='solid',
+        verbose_name='Стиль кнопок'
+    )  # 'solid', 'outline', 'soft'
+    theme_bg_color = models.CharField(
+        max_length=20,
+        default='#F8FAFC',
+        verbose_name='Цвет фона сайта'
+    )
+    theme_business_niche = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name='Ниша магазина для ИИ'
+    )
 
     phone = models.CharField(max_length=30, blank=True, verbose_name='Телефон (+998)')
     

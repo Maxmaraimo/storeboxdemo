@@ -1,16 +1,22 @@
 from django.urls import path
 from apps.dashboard import views
+from apps.core import views as core_views
 
 app_name = 'dashboard'
 
 urlpatterns = [
     path('', views.dashboard_home_view, name='home'),
+    path('lang/<str:lang>/', core_views.switch_language_view, name='dashboard_switch_language'),
     path('onboarding/', views.onboarding_wizard_view, name='onboarding'),
     
     # APIs
     path('api/check-subdomain/', views.check_subdomain_api, name='check_subdomain'),
     path('api/translate/', views.translate_api, name='translate_api'),
     path('api/ai-desc/', views.ai_desc_api, name='ai_desc_api'),
+    path('api/ai-designer/', views.ai_designer_api, name='ai_designer_api'),
+    path('api/ai-apply-niche/', views.ai_apply_niche_api, name='ai_apply_niche_api'),
+    path('api/ai-banner-regenerate/', views.ai_banner_regenerate_api, name='ai_banner_regenerate_api'),
+    path('api/upload-banner/', views.upload_banner_api, name='upload_banner_api'),
     path('api/topup-balance/', views.topup_balance_api, name='topup_balance_api'),
         path('api/add-card/', views.add_card_api, name='add_card_api'),
     path('api/toggle-payment/', views.toggle_payment_api, name='toggle_payment_api'),
@@ -57,4 +63,13 @@ urlpatterns = [
     path('settings/delivery/', views.settings_delivery_view, name='settings_delivery'),
     path('settings/payments/', views.settings_payments_view, name='settings_payments'),
     path('robo-market/', views.robo_market_view, name='robo_market'),
+
+    # YES POS Integration (from mainstore/storebox)
+    path('yespos/', views.yespos_view, name='yespos'),
+    path('api/yespos/test/', views.yespos_test_api, name='yespos_test_api'),
+    path('api/yespos/connect/', views.yespos_connect_api, name='yespos_connect_api'),
+    path('api/yespos/disconnect/', views.yespos_disconnect_api, name='yespos_disconnect_api'),
+    path('api/yespos/catalog/', views.yespos_catalog_api, name='yespos_catalog_api'),
+    path('api/yespos/import/', views.yespos_import_api, name='yespos_import_api'),
+    path('api/yespos/sync/', views.yespos_sync_api, name='yespos_sync_api'),
 ]

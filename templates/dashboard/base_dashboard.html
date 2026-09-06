@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="uz" class="h-full">
+<html lang="{{ current_lang|default:'uz' }}" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Boshqaruv paneli — StoreBox{% endblock %}</title>
+    <title>{% block title %}{{ t.dashboard }} — StoreBox{% endblock %}</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -80,51 +80,72 @@
                 <div class="relative" x-data="{ open: false }">
                     <button type="button" @click="open = !open" class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold hover:bg-slate-50">
                         <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                        <span class="max-w-[120px] truncate text-slate-900">{{ store.name }}</span>
+                        <span class="max-w-[120px] truncate text-slate-900">{{ store.name|default:"StoreBox" }}</span>
                         <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
                     </button>
 
                     <div x-show="open" @click.away="open = false" x-cloak class="absolute left-0 mt-1 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 text-xs space-y-1">
                         {% for s in request.user.stores.all %}
                         <a href="/dashboard/api/switch-store/{{ s.id }}/" class="p-2 rounded-xl flex items-center justify-between {% if s.id == store.id %}bg-emerald-50 text-emerald-800 font-bold{% else %}hover:bg-slate-50 text-slate-700{% endif %}">
-                            <span class="truncate">{{ s.name }}</span>
+                            <span class="truncate">{{ s.name|default:s.subdomain }}</span>
                             {% if s.id == store.id %}<i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>{% endif %}
                         </a>
                         {% endfor %}
                         <div class="border-t border-slate-100 my-1"></div>
                         <button type="button" @click="createStoreModalOpen = true; open = false" class="w-full flex items-center gap-2 p-2 rounded-xl text-brand font-bold hover:bg-brand/5 text-left">
                             <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                            <span>Yangi do'kon qo'shish</span>
+                            <span>{{ t.add_store }}</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Quick Plus Button (Video birinchi.mov 00:55) -->
-                <button type="button" @click="createStoreModalOpen = true" class="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm hover:bg-brand-dark shadow-xs transition-transform active:scale-95" title="Biznes qo'shish">
+                <button type="button" @click="createStoreModalOpen = true" class="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm hover:bg-brand-dark shadow-xs transition-transform active:scale-95" title="{{ t.add_business }}">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <!-- View Storefront Link -->
-            <a href="/store/{{ store.subdomain }}/" target="_blank" class="hidden md:flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900">
-                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                <span>Saytni ko'rish</span>
-            </a>
+            <!-- View Storefront & Design Studio Links -->
+            <div class="hidden md:flex items-center gap-2.5">
+                <a href="/dashboard/platforms/?tab=website&sub=design" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-colors border border-emerald-200/60">
+                    <i data-lucide="palette" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span>Dizayn studio (AI)</span>
+                </a>
+                <a href="/store/{{ store.subdomain }}/" target="_blank" class="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                    <span>{{ t.view_site }}</span>
+                </a>
+            </div>
         </div>
 
         <!-- Right: Language, Support, Balance, Notifications, Profile -->
         <div class="flex items-center gap-2 sm:gap-3">
 
-            <!-- Language -->
-            <div class="relative hidden sm:block" x-data="{ open: false }">
-                <button type="button" @click="open = !open" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
-                    <span>🇺🇿 O'zb</span>
+            <!-- Language Dropdown -->
+            <div class="relative" x-data="{ open: false }">
+                <button type="button" @click="open = !open" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                    {% if current_lang == 'ru' %}
+                        <span>🇷🇺 Рус</span>
+                    {% elif current_lang == 'en' %}
+                        <span>🇺🇸 Eng</span>
+                    {% else %}
+                        <span>🇺🇿 O'zb</span>
+                    {% endif %}
                     <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
                 </button>
-                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50 text-xs">
-                    <a href="#" class="block px-3 py-1.5 font-bold text-slate-800 hover:bg-slate-50">O'zbek</a>
-                    <a href="#" class="block px-3 py-1.5 text-slate-600 hover:bg-slate-50">Русский</a>
-                    <a href="#" class="block px-3 py-1.5 text-slate-600 hover:bg-slate-50">English</a>
+                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50 text-xs font-semibold">
+                    <a href="/lang/uz/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'uz' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
+                        <span class="flex items-center gap-2"><span>🇺🇿</span> <span>O'zbek</span></span>
+                        {% if current_lang == 'uz' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                    </a>
+                    <a href="/lang/ru/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'ru' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
+                        <span class="flex items-center gap-2"><span>🇷🇺</span> <span>Русский</span></span>
+                        {% if current_lang == 'ru' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                    </a>
+                    <a href="/lang/en/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'en' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
+                        <span class="flex items-center gap-2"><span>🇺🇸</span> <span>English</span></span>
+                        {% if current_lang == 'en' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                    </a>
                 </div>
             </div>
 
@@ -136,12 +157,12 @@
                 <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 text-xs">
                     <div class="font-bold text-slate-900 flex items-center gap-2">
                         <i data-lucide="headphones" class="w-4 h-4 text-brand"></i>
-                        <span>Qo'llab-quvvatlash</span>
+                        <span>{{ t.support }}</span>
                     </div>
                     <div class="space-y-1 text-slate-600">
                         <div class="font-mono font-bold text-slate-900">+998(78) 113 82 12</div>
                         <a href="https://t.me/storebox_support" target="_blank" class="text-brand font-semibold hover:underline block">
-                            Telegram orqali bog'lanish
+                            {{ t.telegram_support }}
                         </a>
                     </div>
                 </div>
@@ -150,7 +171,7 @@
             <!-- Balance Pill + Top up Button (Video 07:47 & 10:30) -->
             <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
                 <div class="text-[11px] font-bold text-slate-600">
-                    Sizning hisobingizda <span class="text-slate-900 font-black" x-text="balance.toLocaleString() + ' UZS'"></span>
+                    {{ t.balance_text }} <span class="text-slate-900 font-black" x-text="balance.toLocaleString() + ' UZS'"></span>
                 </div>
                 <button type="button" @click="topupModalOpen = true" class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black hover:bg-emerald-600 shadow-2xs">
                     +
@@ -175,24 +196,24 @@
                 <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-50 text-xs space-y-1">
                     <div class="p-2 border-b border-slate-100 mb-1">
                         <div class="font-black text-slate-900">{{ request.user.username }}</div>
-                        <div class="text-[10px] text-emerald-600 font-bold">Bepul tarif rejasi: 7 kun qoldi</div>
+                        <div class="text-[10px] text-emerald-600 font-bold">{{ t.trial_days_left }}</div>
                     </div>
                     <a href="/dashboard/settings/" class="flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 spa-link">
                         <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
-                        <span>Profilni tahrirlash</span>
+                        <span>{{ t.edit_profile }}</span>
                     </a>
                     <a href="/dashboard/platforms/" class="flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 spa-link">
                         <i data-lucide="smartphone" class="w-4 h-4 text-slate-400"></i>
-                        <span>Platformalar</span>
+                        <span>{{ t.platforms }}</span>
                     </a>
                     <button type="button" @click="topupModalOpen = true; open = false" class="w-full flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 text-left">
                         <i data-lucide="credit-card" class="w-4 h-4 text-slate-400"></i>
-                        <span>Mening kartalarim</span>
+                        <span>{{ t.my_cards }}</span>
                     </button>
                     <div class="border-t border-slate-100 my-1"></div>
                     <a href="/logout/" class="flex items-center gap-2 p-2 rounded-xl text-rose-600 font-bold hover:bg-rose-50">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span>Chiqish</span>
+                        <span>{{ t.logout }}</span>
                     </a>
                 </div>
             </div>
@@ -203,7 +224,7 @@
     <div x-show="showTrialBanner" class="bg-emerald-50 border-b border-emerald-200/80 px-4 py-2.5 text-xs text-emerald-900 font-bold flex items-center justify-between">
         <div class="flex items-center gap-2 mx-auto sm:mx-0">
             <i data-lucide="sparkles" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-            <span>Sizning hisobingizda 7 kunlik bepul sinov ishlayapti</span>
+            <span>{{ t.trial_banner }}</span>
         </div>
         <button type="button" @click="showTrialBanner = false" class="text-emerald-700 hover:text-emerald-900 text-sm font-black">×</button>
     </div>
@@ -218,25 +239,25 @@
                 <!-- 1. Boshqaruv paneli -->
                 <a href="/dashboard/" data-path="/dashboard/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-                    <span>Boshqaruv paneli</span>
+                    <span>{{ t.dashboard }}</span>
                 </a>
 
                 <!-- 2. Buyurtmalar -->
                 <a href="/dashboard/orders/" data-path="/dashboard/orders/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-                    <span>Buyurtmalar</span>
+                    <span>{{ t.orders }}</span>
                 </a>
 
                 <!-- 3. Mijozlar -->
                 <a href="/dashboard/customers/" data-path="/dashboard/customers/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="users" class="w-4 h-4"></i>
-                    <span>Mijozlar</span>
+                    <span>{{ t.customers }}</span>
                 </a>
 
                 <!-- 4. Chat -->
                 <a href="/dashboard/chats/" data-path="/dashboard/chats/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="message-square" class="w-4 h-4"></i>
-                    <span>Chat</span>
+                    <span>{{ t.chat }}</span>
                 </a>
 
                 <!-- 5. Mahsulotlar (Accordion) -->
@@ -244,16 +265,16 @@
                     <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
                         <div class="flex items-center gap-3">
                             <i data-lucide="package" class="w-4 h-4"></i>
-                            <span>Mahsulotlar</span>
+                            <span>{{ t.products }}</span>
                         </div>
                         <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </button>
                     <div x-show="open" class="pl-7 space-y-1 text-[11px]">
-                        <a href="/dashboard/categories/" data-path="/dashboard/categories/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Kategoriyalar</a>
-                        <a href="/dashboard/products/" data-path="/dashboard/products/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Mahsulotlar</a>
-                        <a href="/dashboard/discounts/" data-path="/dashboard/discounts/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Chegirma</a>
-                        <a href="/dashboard/ikpu/" data-path="/dashboard/ikpu/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">IKPU</a>
-                        <a href="/dashboard/warehouse/" data-path="/dashboard/warehouse/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Omborxona</a>
+                        <a href="/dashboard/categories/" data-path="/dashboard/categories/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.categories }}</a>
+                        <a href="/dashboard/products/" data-path="/dashboard/products/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.all_products }}</a>
+                        <a href="/dashboard/discounts/" data-path="/dashboard/discounts/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.discounts }}</a>
+                        <a href="/dashboard/ikpu/" data-path="/dashboard/ikpu/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.ikpu }}</a>
+                        <a href="/dashboard/warehouse/" data-path="/dashboard/warehouse/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.warehouse }}</a>
                     </div>
                 </div>
 
@@ -262,18 +283,18 @@
                     <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
                         <div class="flex items-center gap-3">
                             <i data-lucide="megaphone" class="w-4 h-4"></i>
-                            <span>Marketing</span>
+                            <span>{{ t.marketing }}</span>
                         </div>
                         <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </button>
                     <div x-show="open" class="pl-7 space-y-1 text-[11px]">
-                        <a href="/dashboard/marketing/?tab=rassilka" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Rassilka</a>
-                        <a href="/dashboard/marketing/?tab=promokod" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Promokod</a>
-                        <a href="/dashboard/marketing/?tab=manbalar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Manbalar</a>
-                        <a href="/dashboard/marketing/?tab=sms" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">SMS rassilka</a>
-                        <a href="/dashboard/marketing/?tab=kanal_post" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Kanal uchun post</a>
-                        <a href="/dashboard/marketing/?tab=banner" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Banner</a>
-                        <a href="/dashboard/marketing/?tab=sharhlar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Sharhlar</a>
+                        <a href="/dashboard/marketing/?tab=rassilka" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.broadcast }}</a>
+                        <a href="/dashboard/marketing/?tab=promokod" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.promocodes }}</a>
+                        <a href="/dashboard/marketing/?tab=manbalar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.sources }}</a>
+                        <a href="/dashboard/marketing/?tab=sms" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.sms_broadcast }}</a>
+                        <a href="/dashboard/marketing/?tab=kanal_post" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.channel_post }}</a>
+                        <a href="/dashboard/marketing/?tab=banner" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.banner }}</a>
+                        <a href="/dashboard/marketing/?tab=sharhlar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.reviews }}</a>
                     </div>
                 </div>
 
@@ -282,57 +303,65 @@
                     <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
                         <div class="flex items-center gap-3">
                             <i data-lucide="share-2" class="w-4 h-4"></i>
-                            <span>Platformalar</span>
+                            <span>{{ t.platforms }}</span>
                         </div>
                         <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </button>
                     <div x-show="open" class="pl-7 space-y-1 text-[11px]">
-                        <a href="/dashboard/platforms/?tab=telegram" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Telegram bot</a>
-                        <a href="/dashboard/platforms/?tab=website" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Veb-sayt</a>
-                        <a href="/dashboard/platforms/?tab=qr" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">QR katalog</a>
+                        <a href="/dashboard/platforms/?tab=telegram" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.telegram_bot }}</a>
+                        <a href="/dashboard/platforms/?tab=website&sub=design" data-path="/dashboard/platforms/" class="sidebar-subitem flex items-center justify-between py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">
+                            <span>Dizayn & Ko'rinish</span>
+                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">AI</span>
+                        </a>
+                        <a href="/dashboard/platforms/?tab=website" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.website }}</a>
+                        <a href="/dashboard/platforms/?tab=qr" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.qr_catalog }}</a>
+                        <a href="/dashboard/yespos/" data-path="/dashboard/yespos/" class="sidebar-subitem flex items-center justify-between py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">
+                            <span>{{ t.yespos_import }}</span>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">POS</span>
+                        </a>
                     </div>
                 </div>
 
                 <!-- 8. To'lov turi -->
                 <a href="/dashboard/settings/payments/" data-path="/dashboard/settings/payments/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="credit-card" class="w-4 h-4"></i>
-                    <span>To'lov turi</span>
+                    <span>{{ t.payment_methods }}</span>
                 </a>
 
                 <!-- 9. Yetkazib berish -->
                 <a href="/dashboard/settings/delivery/" data-path="/dashboard/settings/delivery/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="truck" class="w-4 h-4"></i>
-                    <span>Yetkazib berish</span>
+                    <span>{{ t.delivery }}</span>
                 </a>
 
                 <!-- 10. Filiallar -->
                 <a href="/dashboard/settings/branches/" data-path="/dashboard/settings/branches/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="map-pin" class="w-4 h-4"></i>
-                    <span>Filiallar</span>
+                    <span>{{ t.branches }}</span>
                 </a>
 
                 <!-- 11. Xodimlar -->
                 <a href="/dashboard/settings/staff/" data-path="/dashboard/settings/staff/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="user-check" class="w-4 h-4"></i>
-                    <span>Xodimlar</span>
+                    <span>{{ t.staff }}</span>
                 </a>
 
                 <!-- 12. Tarif rejasi -->
                 <a href="/dashboard/settings/tariffs/" data-path="/dashboard/settings/tariffs/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="badge-percent" class="w-4 h-4"></i>
-                    <span>Tarif rejasi</span>
+                    <span>{{ t.tariffs }}</span>
                 </a>
 
                 <!-- 13. StoreBox Market (Integrations) -->
                 <a href="/dashboard/robo-market/" data-path="/dashboard/robo-market/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="store" class="w-4 h-4"></i>
-                    <span>StoreBox market</span>
+                    <span>{{ t.storebox_market }}</span>
                 </a>
 
                 <!-- 14. Sozlamalar -->
                 <a href="/dashboard/settings/" data-path="/dashboard/settings/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
                     <i data-lucide="settings" class="w-4 h-4"></i>
-                    <span>Sozlamalar</span>
+                    <span>{{ t.settings }}</span>
                 </a>
             </nav>
         </aside>
@@ -350,8 +379,8 @@
         <div @click.away="topupModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
-                    <h3 class="font-black text-base text-slate-900">Hisobingizni to'ldiring</h3>
-                    <div class="text-[11px] text-slate-400">Joriy balans: <span class="font-bold text-brand" x-text="balance.toLocaleString() + ' UZS'"></span></div>
+                    <h3 class="font-black text-base text-slate-900">{{ t.topup_title }}</h3>
+                    <div class="text-[11px] text-slate-400">{{ t.current_balance }}: <span class="font-bold text-brand" x-text="balance.toLocaleString() + ' UZS'"></span></div>
                 </div>
                 <button type="button" @click="topupModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
@@ -359,7 +388,7 @@
             <!-- Presets & Amount Input -->
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Summani tanlang yoki kiriting (UZS)</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.select_amount }}</label>
                     <div class="grid grid-cols-3 gap-2 mb-2">
                         <button type="button" @click="topupAmount = 50000" class="py-2 rounded-xl border text-xs font-bold" :class="topupAmount === 50000 ? 'border-brand bg-brand/10 text-brand' : 'border-slate-200'">50 000</button>
                         <button type="button" @click="topupAmount = 150000" class="py-2 rounded-xl border text-xs font-bold" :class="topupAmount === 150000 ? 'border-brand bg-brand/10 text-brand' : 'border-slate-200'">150 000</button>
@@ -372,25 +401,21 @@
                 <div class="space-y-2">
                     <label class="p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-50">
                         <input type="radio" name="topup_gw" value="payme" checked class="text-brand focus:ring-brand">
-                        <span class="text-xs font-bold">Payme orqali</span>
+                        <span class="text-xs font-bold">Payme</span>
                     </label>
                     <label class="p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-50">
                         <input type="radio" name="topup_gw" value="click" class="text-brand focus:ring-brand">
-                        <span class="text-xs font-bold">Click orqali</span>
+                        <span class="text-xs font-bold">Click</span>
                     </label>
                     <label class="p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-50">
                         <input type="radio" name="topup_gw" value="uzum" class="text-brand focus:ring-brand">
-                        <span class="text-xs font-bold">Uzum bank</span>
-                    </label>
-                    <label class="p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-50">
-                        <input type="radio" name="topup_gw" value="bank" class="text-brand focus:ring-brand">
-                        <span class="text-xs font-bold">Bank o'tkazmasi</span>
+                        <span class="text-xs font-bold">Uzum</span>
                     </label>
                 </div>
 
                 <!-- Card Form -->
                 <div class="pt-3 border-t border-slate-100">
-                    <div class="text-xs font-bold text-slate-700 mb-2">+ Yangi karta qo'shish</div>
+                    <div class="text-xs font-bold text-slate-700 mb-2">+ {{ t.my_cards }}</div>
                     <div class="grid grid-cols-3 gap-2">
                         <input type="text" x-model="newCardNum" placeholder="8600 0000 0000 0000" class="col-span-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
                         <input type="text" x-model="newCardExp" placeholder="MM/YY" class="col-span-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-center">
@@ -398,7 +423,7 @@
                 </div>
 
                 <button type="button" @click="submitTopup()" class="w-full py-3.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20">
-                    To'lovni tasdiqlash
+                    {{ t.topup_btn }}
                 </button>
             </div>
         </div>
@@ -411,7 +436,7 @@
         <div @click.away="notifDrawerOpen = false" class="w-80 sm:w-96 bg-white h-full p-6 shadow-2xl flex flex-col justify-between">
             <div class="space-y-4">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <h3 class="font-black text-sm text-slate-900">Bildirishnomalar</h3>
+                    <h3 class="font-black text-sm text-slate-900">{{ t.notifications }}</h3>
                     <button type="button" class="text-[11px] font-bold text-brand hover:underline">Barchasini o'qilgan deb belgilash</button>
                 </div>
                 <div class="space-y-2">
@@ -476,90 +501,27 @@
             });
         }
 
-        async function spaNavigate(url, push = true) {
-            const contentEl = document.getElementById('dashboard-main-content');
-            if (!contentEl) {
-                window.location.href = url;
-                return;
-            }
-
+        function spaNavigate(url) {
             startProgressBar();
-            contentEl.style.opacity = '0.5';
-
-            try {
-                const res = await fetch(url, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                if (!res.ok) {
-                    window.location.href = url;
-                    return;
-                }
-                const htmlText = await res.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlText, 'text/html');
-                const newContent = doc.getElementById('dashboard-main-content');
-
-                if (newContent) {
-                    if (doc.title) document.title = doc.title;
-
-                    contentEl.innerHTML = newContent.innerHTML;
-
-                    if (push) {
-                        window.history.pushState({ url: url }, '', url);
-                    }
-                    updateSidebarHighlights(url);
-
-                    // Execute scripts in newly injected content
-                    const scripts = contentEl.querySelectorAll('script');
-                    scripts.forEach(s => {
-                        const newScript = document.createElement('script');
-                        if (s.src) newScript.src = s.src;
-                        else newScript.textContent = s.textContent;
-                        document.body.appendChild(newScript);
-                        newScript.remove();
-                    });
-
-                    // Re-run icons & Alpine
-                    if (window.lucide) lucide.createIcons();
-                    if (window.Alpine) {
-                        try { Alpine.initTree(contentEl); } catch(e){}
-                    }
-                } else {
-                    window.location.href = url;
-                }
-            } catch (err) {
-                console.error('SPA navigation error:', err);
-                window.location.href = url;
-            } finally {
-                contentEl.style.opacity = '1';
-                finishProgressBar();
-            }
+            window.location.href = url;
         }
 
-        // Intercept all internal dashboard links for instantaneous swap
+        // Show smooth progress bar when clicking dashboard links
         document.addEventListener('click', (e) => {
             const link = e.target.closest('a');
             if (!link) return;
             const href = link.getAttribute('href');
-            if (!href) return;
-
-            // Handle internal dashboard links
-            if (href.startsWith('/dashboard/') && !href.startsWith('/dashboard/onboarding/') && !link.hasAttribute('download') && !link.hasAttribute('target') && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-                e.preventDefault();
-                spaNavigate(href);
+            if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+            if (href.startsWith('/dashboard/') && !link.hasAttribute('download') && !link.hasAttribute('target') && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                startProgressBar();
             }
         });
 
-        // Handle Browser Back & Forward Buttons
-        window.addEventListener('popstate', (e) => {
-            const url = (e.state && e.state.url) ? e.state.url : (window.location.pathname + window.location.search);
-            spaNavigate(url, false);
-        });
-
-        // Initialize active state on initial page load
+        // Initialize active state on page load
         document.addEventListener('DOMContentLoaded', () => {
             updateSidebarHighlights(window.location.pathname);
             if (window.lucide) lucide.createIcons();
+            finishProgressBar();
         });
     </script>
 

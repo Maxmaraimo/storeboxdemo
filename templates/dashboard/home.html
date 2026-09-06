@@ -225,11 +225,11 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    function initDashboardCharts() {
         // 1. Revenue Chart
         const revCtx = document.getElementById('revenueChart');
-        if (revCtx) {
-            new Chart(revCtx, {
+        if (revCtx && !revCtx.chartInstance) {
+            revCtx.chartInstance = new Chart(revCtx, {
                 type: 'bar',
                 data: {
                     labels: JSON.parse('{{ chart_labels_json|safe }}'),
@@ -254,8 +254,8 @@
 
         // 2. Traffic Donut
         const trfCtx = document.getElementById('trafficChart');
-        if (trfCtx) {
-            new Chart(trfCtx, {
+        if (trfCtx && !trfCtx.chartInstance) {
+            trfCtx.chartInstance = new Chart(trfCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Veb-sayt', 'Telegram'],
@@ -275,18 +275,27 @@
         }
 
         // 3. Leaflet Deliveries Map
-        const mapOrders = JSON.parse('{{ map_orders_json|safe }}');
-        const defaultLat = mapOrders.length > 0 ? mapOrders[0].lat : 41.2995;
-        const defaultLng = mapOrders.length > 0 ? mapOrders[0].lng : 69.2401;
+        const mapContainer = document.getElementById('analyticsMap');
+        if (mapContainer && !mapContainer._leaflet_id && typeof L !== 'undefined') {
+            const mapOrders = JSON.parse('{{ map_orders_json|safe }}');
+            const defaultLat = mapOrders.length > 0 ? mapOrders[0].lat : 41.2995;
+            const defaultLng = mapOrders.length > 0 ? mapOrders[0].lng : 69.2401;
 
-        const map = L.map('analyticsMap').setView([defaultLat, defaultLng], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+            const map = L.map('analyticsMap').setView([defaultLat, defaultLng], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 
-        mapOrders.forEach(o => {
-            L.marker([o.lat, o.lng]).addTo(map).bindPopup(
-                `<b>#${o.num} — ${o.client}</b><br>${o.total ? o.total.toLocaleString() + ' UZS' : ''}`
-            );
-        });
-    });
+            mapOrders.forEach(o => {
+                L.marker([o.lat, o.lng]).addTo(map).bindPopup(
+                    `<b>#${o.num} — ${o.client}</b><br>${o.total ? o.total.toLocaleString() + ' UZS' : ''}`
+                );
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDashboardCharts);
+    } else {
+        initDashboardCharts();
+    }
 </script>
 {% endblock %}

@@ -379,6 +379,15 @@ class MarketingBanner(models.Model):
     is_active = models.BooleanField(default=True, verbose_name='Активен')
     sort_order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
 
+    @property
+    def display_image_url(self):
+        if self.image:
+            try:
+                return self.image.url
+            except Exception:
+                pass
+        return self.image_url or ''
+
     class Meta:
         verbose_name = 'Промо-баннер витрины'
         verbose_name_plural = 'Промо-баннеры витрины'
