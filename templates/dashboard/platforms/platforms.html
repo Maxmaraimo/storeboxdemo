@@ -517,11 +517,17 @@
 
                         <!-- Industry / Niche Chips -->
                         <div class="space-y-2">
-                            <label class="block text-[11px] font-bold text-slate-300">Biznesingiz yo'nalishi (Nisha):</label>
+                            <div class="flex items-center justify-between">
+                                <label class="block text-[11px] font-bold text-slate-300">Biznesingiz yo'nalishi (Nisha):</label>
+                                <span x-show="syncSuccessMessage" x-transition class="text-[11px] font-bold text-emerald-300 bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                    <span x-text="syncSuccessMessage"></span>
+                                </span>
+                            </div>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 <template x-for="n in nicheList" :key="n.id">
                                     <button type="button" @click="selectNiche(n.id)"
-                                            class="p-2.5 rounded-2xl border text-left transition-all flex items-center gap-2 text-xs font-bold"
+                                            class="p-2.5 rounded-2xl border text-left transition-all flex items-center gap-2 text-xs font-bold cursor-pointer"
                                             :class="selectedNiche === n.id ? 'bg-white text-slate-900 border-white shadow-md scale-[1.02]' : 'bg-white/10 text-white border-white/10 hover:bg-white/15'">
                                         <span class="text-base" x-text="n.emoji"></span>
                                         <span class="truncate text-[11px]" x-text="n.name"></span>
@@ -536,9 +542,15 @@
                                 <label class="text-[11px] font-bold text-slate-300">Yoki o'z yo'nalishingizni yozing:</label>
                                 <span class="text-[10px] text-slate-400">Masalan: Kitoblar, Bolalar kiyimi, Avto</span>
                             </div>
-                            <input type="text" x-model="customPrompt" @keydown.enter.prevent="selectNiche('custom')"
-                                   placeholder="Sohangizni kiriting (masalan: Parfyumeriya va sovg'alar)..."
-                                   class="w-full px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-400">
+                            <div class="flex items-center gap-2">
+                                <input type="text" x-model="customPrompt" @keydown.enter.prevent="selectNiche('custom')"
+                                       placeholder="Sohangizni kiriting (masalan: Parfyumeriya va sovg'alar)..."
+                                       class="w-full px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-400">
+                                <button type="button" @click="selectNiche('custom')"
+                                        class="px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shrink-0 transition-all cursor-pointer">
+                                    Qo'llash
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Trigger AI Generator Buttons -->
@@ -804,7 +816,7 @@
 
                         <!-- E. Generate Catalog Checkbox -->
                         <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-start gap-2.5">
-                            <input type="checkbox" id="genCatCheck" name="generate_catalog" value="1"
+                            <input type="checkbox" id="genCatCheck" name="generate_catalog" value="1" checked
                                    class="mt-0.5 rounded border-emerald-400 text-brand focus:ring-brand w-4 h-4">
                             <label for="genCatCheck" class="text-xs text-emerald-950 font-bold leading-tight cursor-pointer">
                                 Do'konga ushbu nishaga mos tovarlar va rasmlarni yuklash
@@ -1026,6 +1038,7 @@
             selectedNiche: '{{ store.theme_business_niche|default:"flowers" }}',
             customPrompt: '',
             aiLoading: false,
+            syncSuccessMessage: '',
 
             primaryColor: '{{ store.primary_color|default:"#10B981" }}',
             cardStyle: '{{ store.theme_card_style|default:"modern" }}',
@@ -1085,7 +1098,9 @@
             selectNiche(id) {
                 this.selectedNiche = id;
                 if (id !== 'custom') this.customPrompt = '';
-                this.generateAIDesign(id);
+                const check = document.getElementById('genCatCheck');
+                if (check) check.checked = true;
+                this.applyNicheInstant(id);
             },
 
             async regenerateBannerImage() {
@@ -1170,12 +1185,17 @@
                 }
             },
 
-            async applyNicheInstant() {
+            async applyNicheInstant(nicheId = null) {
+                if (nicheId) {
+                    this.selectedNiche = nicheId;
+                }
+                const chosenNiche = this.customPrompt ? 'custom' : (this.selectedNiche || 'restaurant');
                 this.aiLoading = true;
+                this.syncSuccessMessage = '';
                 try {
                     const formData = new FormData();
-                    formData.append('niche', this.customPrompt ? 'custom' : this.selectedNiche);
-                    formData.append('custom_prompt', this.customPrompt);
+                    formData.append('niche', chosenNiche);
+                    formData.append('custom_prompt', this.customPrompt || '');
                     const res = await fetch('/dashboard/api/ai-apply-niche/', {
                         method: 'POST',
                         headers: {
@@ -1196,8 +1216,11 @@
                         this.bannerSubtitle = t.subtitle;
                         this.bannerImageUrl = t.banner_image;
                         this.bannerImagesList = t.banner_images || [t.banner_image];
+                        const check = document.getElementById('genCatCheck');
+                        if (check) check.checked = true;
                         this.refreshPreview();
-                        alert("Muvaffaqiyatli! Tanlangan nisha, banner va fotosuratli tovarlar do'konga yuklandi!");
+                        this.syncSuccessMessage = "Muvaffaqiyatli! Nishaga mos tovarlar, banner va dizayn do'konga o'rnatildi!";
+                        setTimeout(() => { this.syncSuccessMessage = ''; }, 4000);
                     }
                 } catch(e) {
                     console.error('Apply niche error:', e);

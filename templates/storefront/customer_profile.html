@@ -1,4 +1,5 @@
 {% extends 'storefront/base_storefront.html' %}
+{% load humanize %}
 
 {% block storefront_body %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6"
@@ -53,7 +54,7 @@
                         {% if customer.bonus_balance %}
                         <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-black flex items-center gap-1">
                             <i data-lucide="gift" class="w-3.5 h-3.5"></i>
-                            <span>{{ customer.bonus_balance|floatformat:0 }} UZS keshbek</span>
+                            <span>{{ customer.bonus_balance|floatformat:0|intcomma }} UZS keshbek</span>
                         </span>
                         {% endif %}
                     </div>
@@ -230,8 +231,8 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <div class="font-mono font-bold text-slate-900">{{ item.total_price|floatformat:0 }} UZS</div>
-                            <div class="text-[11px] text-slate-400">{{ item.quantity }} dona × {{ item.unit_price|floatformat:0 }}</div>
+                            <div class="font-mono font-bold text-slate-900">{{ item.total_price|floatformat:0|intcomma }} UZS</div>
+                            <div class="text-[11px] text-slate-400">{{ item.quantity }} dona × {{ item.unit_price|floatformat:0|intcomma }} UZS</div>
                         </div>
                     </div>
                     {% endfor %}
@@ -241,7 +242,7 @@
                 <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div class="flex items-baseline gap-2">
                         <span class="text-xs text-slate-400">Jami to'lov:</span>
-                        <span class="text-lg font-black font-mono text-brand">{{ order.total_amount|floatformat:0 }} UZS</span>
+                        <span class="text-lg font-black font-mono text-brand">{{ order.total_amount|floatformat:0|intcomma }} UZS</span>
                     </div>
 
                     <div class="flex items-center gap-2">

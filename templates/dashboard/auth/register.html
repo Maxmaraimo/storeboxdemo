@@ -3,8 +3,9 @@
 {% block title %}Ro'yxatdan o'tish — StoreBox{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-[#F8FAFC] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 text-slate-800 relative">
-    <div class="max-w-md w-full space-y-8 relative z-10 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-xl">
+<div class="min-h-screen bg-[#F8FAFC] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 text-slate-800 relative"
+     x-data="phoneRegister()">
+    <div class="max-w-md w-full space-y-7 relative z-10 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-xl">
         <div class="text-center">
             <a href="/" class="inline-flex items-center gap-2 mb-4">
                 <div class="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/30">
@@ -23,54 +24,194 @@
         </div>
         {% endif %}
 
-        <form method="POST" class="mt-6 space-y-3.5">
+        <form method="POST" @submit="handleSubmit($event)" class="mt-5 space-y-4">
             {% csrf_token %}
+
+            <!-- 1. COUNTRY SELECTOR & PHONE MASK INPUT -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1.5">Telefon raqam (+998)</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <i data-lucide="phone" class="w-4 h-4"></i>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-700">
+                        Telefon raqam:
+                    </label>
+                    <span class="text-[11px] font-bold text-slate-400" x-text="selectedCountry.name + ' (' + selectedCountry.dialCode + ')'"></span>
+                </div>
+
+                <div class="relative flex rounded-xl bg-slate-50 border transition-all"
+                     :class="phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : (isFocused ? 'border-emerald-500 ring-2 ring-emerald-500/10' : 'border-slate-200')">
+                    
+                    <!-- Country Selector Dropdown Trigger -->
+                    <div class="relative">
+                        <button type="button" 
+                                id="countryTriggerBtn"
+                                @click="countryMenuOpen = !countryMenuOpen" 
+                                @keydown.escape="countryMenuOpen = false"
+                                class="h-full px-3 py-2.5 rounded-l-xl bg-slate-100 hover:bg-slate-200/80 border-r border-slate-200 flex items-center gap-1.5 text-xs font-bold text-slate-800 transition-colors cursor-pointer select-none">
+                            <span class="text-base leading-none" x-text="selectedCountry.flag"></span>
+                            <span class="font-mono text-xs" x-text="selectedCountry.dialCode"></span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="countryMenuOpen ? 'rotate-180' : ''"></i>
+                        </button>
+
+                        <!-- Country Dropdown Popover -->
+                        <div x-show="countryMenuOpen" 
+                             @click.outside="countryMenuOpen = false"
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 translate-y-1 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-100"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-1 scale-95"
+                             class="absolute left-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 p-2 space-y-2"
+                             style="display: none;">
+                            
+                            <!-- Search Bar inside dropdown -->
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                                    <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                                </div>
+                                <input type="text" x-model="searchQuery" 
+                                       @keydown.enter.prevent
+                                       placeholder="Mamlakat yoki kodni qidirish..." 
+                                       class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500">
+                            </div>
+
+                            <!-- Countries List -->
+                            <div class="max-h-60 overflow-y-auto space-y-0.5 no-scrollbar divide-y divide-slate-100/60">
+                                <template x-for="c in filteredCountries" :key="c.id">
+                                    <button type="button" 
+                                            @click="selectCountry(c)"
+                                            class="w-full px-3 py-2 rounded-xl text-left flex items-center justify-between gap-2 hover:bg-slate-100 transition-all cursor-pointer group"
+                                            :class="selectedCountry.id === c.id ? 'bg-emerald-50 font-bold text-emerald-950' : 'text-slate-700'">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <span class="text-lg leading-none" x-text="c.flag"></span>
+                                            <div class="truncate text-xs">
+                                                <span class="font-bold" x-text="c.name"></span>
+                                                <span class="text-[10px] text-slate-400 ml-1" x-text="'(' + c.nameRu + ')'"></span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="font-mono text-xs text-slate-500 font-bold group-hover:text-emerald-600" x-text="c.dialCode"></span>
+                                            <template x-if="selectedCountry.id === c.id">
+                                                <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
+                                            </template>
+                                        </div>
+                                    </button>
+                                </template>
+                                <template x-if="filteredCountries.length === 0">
+                                    <div class="py-4 text-center text-xs text-slate-400">
+                                        Mamlakat topilmadi
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
                     </div>
-                    <input type="text" name="phone" required placeholder="+998 90 123 45 67" value="{{ request.POST.phone }}"
-                           class="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors">
+
+                    <!-- The Phone Number Input with strict mask -->
+                    <div class="relative flex-1">
+                        <input type="tel" 
+                               id="phoneInputField"
+                               x-ref="phoneInput"
+                               :value="displayValue" 
+                               @input="handleInput($event)"
+                               @keydown="handleKeyDown($event)"
+                               @focus="isFocused = true; phoneError = ''"
+                               @blur="isFocused = false; validateInput()"
+                               @paste="handlePaste($event)"
+                               :placeholder="selectedCountry.placeholder"
+                               autocomplete="tel-national"
+                               class="block w-full px-3.5 py-2.5 rounded-r-xl bg-transparent text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-semibold tracking-wide focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Hidden inputs for backend submission -->
+                <input type="hidden" name="phone" :value="fullPhoneNumber">
+                <input type="hidden" name="country_code" :value="selectedCountry.id">
+
+                <!-- Dynamic Format / Progress Helper & Error -->
+                <div class="mt-1.5 flex items-center justify-between text-[11px]">
+                    <template x-if="phoneError">
+                        <span class="text-rose-600 font-bold flex items-center gap-1">
+                            <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
+                            <span x-text="phoneError"></span>
+                        </span>
+                    </template>
+                    <template x-if="!phoneError">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-slate-400 font-medium">
+                                Namuna: <span class="font-mono font-semibold text-slate-600" x-text="selectedCountry.dialCode + ' ' + selectedCountry.placeholder"></span>
+                            </span>
+                            <template x-if="rawDigits.length > 0">
+                                <span class="font-bold flex items-center gap-1 transition-colors"
+                                      :class="isComplete ? 'text-emerald-600' : 'text-slate-400'">
+                                    <template x-if="isComplete">
+                                        <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                    </template>
+                                    <span x-text="isComplete ? 'To\'liq kiritildi' : (rawDigits.length + ' / ' + selectedCountry.digits + ' ta raqam')"></span>
+                                </span>
+                            </template>
+                        </div>
+                    </template>
                 </div>
             </div>
 
+            <!-- 2. EMAIL (OPTIONAL) -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Email (ixtiyoriy)</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="mail" class="w-4 h-4"></i>
                     </div>
-                    <input type="email" name="email" placeholder="merchant@store.uz" value="{{ request.POST.email }}"
+                    <input type="email" name="email" placeholder="merchant@store.uz" value="{{ submitted_email|default:'' }}"
                            class="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors">
                 </div>
             </div>
 
+            <!-- 3. PASSWORD -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Parol</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="lock" class="w-4 h-4"></i>
                     </div>
-                    <input type="password" name="password" required placeholder="Kamida 6 ta belgi"
-                           class="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors">
+                    <input :type="showPassword ? 'text' : 'password'" 
+                           name="password" 
+                           x-model="password"
+                           required 
+                           placeholder="Kamida 6 ta belgi"
+                           class="block w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors">
+                    <button type="button" 
+                            @click="showPassword = !showPassword"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer">
+                        <i :data-lucide="showPassword ? 'eye-off' : 'eye'" class="w-4 h-4"></i>
+                    </button>
                 </div>
             </div>
 
+            <!-- 4. PASSWORD CONFIRM -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Parolni tasdiqlang</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="lock" class="w-4 h-4"></i>
                     </div>
-                    <input type="password" name="password_confirm" required placeholder="Parolni qaytadan kiriting"
+                    <input :type="showPassword ? 'text' : 'password'" 
+                           name="password_confirm" 
+                           x-model="passwordConfirm"
+                           required 
+                           placeholder="Parolni qaytadan kiriting"
                            class="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors">
                 </div>
+                <template x-if="password && passwordConfirm && password !== passwordConfirm">
+                    <p class="text-[11px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Parollar bir-biriga mos kelmadi
+                    </p>
+                </template>
             </div>
 
-            <button type="submit" class="w-full py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs transition-all shadow-md shadow-emerald-500/25 mt-2">
-                Davom etish va do'kon yaratish
+            <!-- SUBMIT BUTTON -->
+            <button type="submit" 
+                    class="w-full py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white font-extrabold text-xs transition-all shadow-md shadow-emerald-500/25 mt-2 flex items-center justify-center gap-2 cursor-pointer">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span>Davom etish va do'kon yaratish</span>
             </button>
         </form>
 
@@ -80,4 +221,358 @@
         </div>
     </div>
 </div>
+
+<script>
+function phoneRegister() {
+    return {
+        countryMenuOpen: false,
+        searchQuery: '',
+        isFocused: false,
+        phoneError: '',
+        rawDigits: '',
+        password: '',
+        passwordConfirm: '',
+        showPassword: false,
+
+        countries: [
+            {
+                id: 'uz',
+                name: "O'zbekiston",
+                nameRu: "Узбекистан",
+                dialCode: '+998',
+                code: '998',
+                flag: '🇺🇿',
+                digits: 9,
+                placeholder: '(90) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 2);
+                    if (d.length >= 2) res += ') ';
+                    if (d.length > 2) res += d.slice(2, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 7);
+                    if (d.length > 7) res += '-' + d.slice(7, 9);
+                    return res;
+                }
+            },
+            {
+                id: 'ru',
+                name: "Rossiya",
+                nameRu: "Россия",
+                dialCode: '+7',
+                code: '7',
+                flag: '🇷🇺',
+                digits: 10,
+                placeholder: '(912) 345-67-89',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 8);
+                    if (d.length > 8) res += '-' + d.slice(8, 10);
+                    return res;
+                }
+            },
+            {
+                id: 'kz',
+                name: "Qozog'iston",
+                nameRu: "Казахстан",
+                dialCode: '+7',
+                code: '7',
+                flag: '🇰🇿',
+                digits: 10,
+                placeholder: '(777) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 8);
+                    if (d.length > 8) res += '-' + d.slice(8, 10);
+                    return res;
+                }
+            },
+            {
+                id: 'kg',
+                name: "Qirg'iziston",
+                nameRu: "Кыргызстан",
+                dialCode: '+996',
+                code: '996',
+                flag: '🇰🇬',
+                digits: 9,
+                placeholder: '(555) 12-34-56',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 7);
+                    if (d.length > 7) res += '-' + d.slice(7, 9);
+                    return res;
+                }
+            },
+            {
+                id: 'tj',
+                name: "Tojikiston",
+                nameRu: "Таджикистан",
+                dialCode: '+992',
+                code: '992',
+                flag: '🇹🇯',
+                digits: 9,
+                placeholder: '(90) 123-4567',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 2);
+                    if (d.length >= 2) res += ') ';
+                    if (d.length > 2) res += d.slice(2, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 9);
+                    return res;
+                }
+            },
+            {
+                id: 'tr',
+                name: "Turkiya",
+                nameRu: "Турция",
+                dialCode: '+90',
+                code: '90',
+                flag: '🇹🇷',
+                digits: 10,
+                placeholder: '(532) 123-4567',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 10);
+                    return res;
+                }
+            },
+            {
+                id: 'ae',
+                name: "BAA (Dubay)",
+                nameRu: "ОАЭ (Дубай)",
+                dialCode: '+971',
+                code: '971',
+                flag: '🇦🇪',
+                digits: 9,
+                placeholder: '(50) 123-4567',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 2);
+                    if (d.length >= 2) res += ') ';
+                    if (d.length > 2) res += d.slice(2, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 9);
+                    return res;
+                }
+            },
+            {
+                id: 'us',
+                name: "AQSh / Kanada",
+                nameRu: "США / Канада",
+                dialCode: '+1',
+                code: '1',
+                flag: '🇺🇸',
+                digits: 10,
+                placeholder: '(202) 555-0123',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 10);
+                    return res;
+                }
+            },
+            {
+                id: 'other',
+                name: "Boshqa davlat",
+                nameRu: "Другая страна",
+                dialCode: '+',
+                code: '',
+                flag: '🌐',
+                digits: 15,
+                placeholder: '1234567890',
+                format(d) {
+                    return d.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
+                }
+            }
+        ],
+
+        selectedCountry: null,
+
+        init() {
+            const initialCountryId = '{{ submitted_country|default:"uz" }}';
+            this.selectedCountry = this.countries.find(c => c.id === initialCountryId) || this.countries[0];
+            
+            // Handle pre-submitted phone if any
+            const prePhone = '{{ submitted_phone|default:"" }}';
+            if (prePhone) {
+                this.parseAndSetPhone(prePhone);
+            }
+
+            this.$watch('countryMenuOpen', (val) => {
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            });
+            this.$watch('showPassword', (val) => {
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            });
+        },
+
+        get filteredCountries() {
+            if (!this.searchQuery) return this.countries;
+            const q = this.searchQuery.toLowerCase().trim();
+            return this.countries.filter(c => 
+                c.name.toLowerCase().includes(q) || 
+                c.nameRu.toLowerCase().includes(q) || 
+                c.dialCode.includes(q)
+            );
+        },
+
+        get displayValue() {
+            if (!this.selectedCountry) return '';
+            return this.selectedCountry.format(this.rawDigits);
+        },
+
+        get fullPhoneNumber() {
+            if (!this.selectedCountry) return '';
+            return this.selectedCountry.dialCode + this.rawDigits;
+        },
+
+        get isComplete() {
+            if (!this.selectedCountry) return false;
+            if (this.selectedCountry.id === 'other') return this.rawDigits.length >= 8;
+            return this.rawDigits.length === this.selectedCountry.digits;
+        },
+
+        selectCountry(country) {
+            this.selectedCountry = country;
+            this.countryMenuOpen = false;
+            this.searchQuery = '';
+            this.phoneError = '';
+            // Truncate raw digits if exceeds new country's limit
+            if (this.rawDigits.length > this.selectedCountry.digits) {
+                this.rawDigits = this.rawDigits.slice(0, this.selectedCountry.digits);
+            }
+            this.$nextTick(() => {
+                if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+                if (window.lucide) lucide.createIcons();
+            });
+        },
+
+        handleKeyDown(e) {
+            // Allow control keys
+            const allowed = [
+                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 
+                'Home', 'End', 'Enter'
+            ];
+            if (allowed.includes(e.key) || e.ctrlKey || e.metaKey) {
+                return;
+            }
+
+            // Check if key is a digit
+            if (!/^\d$/.test(e.key)) {
+                e.preventDefault();
+                return;
+            }
+
+            // Prevent typing more digits than allowed
+            if (this.rawDigits.length >= this.selectedCountry.digits) {
+                const input = e.target;
+                if (input.selectionStart === input.selectionEnd) {
+                    e.preventDefault();
+                }
+            }
+        },
+
+        handleInput(e) {
+            const val = e.target.value;
+            const digits = val.replace(/\D/g, '');
+
+            this.rawDigits = digits.slice(0, this.selectedCountry.digits);
+            this.phoneError = '';
+
+            this.$nextTick(() => {
+                if (window.lucide) lucide.createIcons();
+            });
+        },
+
+        handlePaste(e) {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            this.parseAndSetPhone(text);
+        },
+
+        parseAndSetPhone(text) {
+            if (!text) return;
+            let digits = text.replace(/\D/g, '');
+            if (!digits) return;
+
+            // Try to auto-detect country by prefix
+            if (digits.startsWith('998') && digits.length >= 12) {
+                this.selectedCountry = this.countries.find(c => c.id === 'uz');
+                digits = digits.slice(3);
+            } else if (digits.startsWith('90') && digits.length >= 12) {
+                this.selectedCountry = this.countries.find(c => c.id === 'tr');
+                digits = digits.slice(2);
+            } else if (digits.startsWith('996') && digits.length >= 12) {
+                this.selectedCountry = this.countries.find(c => c.id === 'kg');
+                digits = digits.slice(3);
+            } else if (digits.startsWith('992') && digits.length >= 12) {
+                this.selectedCountry = this.countries.find(c => c.id === 'tj');
+                digits = digits.slice(3);
+            } else if (digits.startsWith('971') && digits.length >= 11) {
+                this.selectedCountry = this.countries.find(c => c.id === 'ae');
+                digits = digits.slice(3);
+            } else if (digits.startsWith('7') && digits.length >= 11) {
+                this.selectedCountry = this.countries.find(c => c.id === 'ru');
+                digits = digits.slice(1);
+            } else if (digits.startsWith('1') && digits.length >= 11) {
+                this.selectedCountry = this.countries.find(c => c.id === 'us');
+                digits = digits.slice(1);
+            }
+
+            this.rawDigits = digits.slice(0, this.selectedCountry.digits);
+            this.phoneError = '';
+            this.$nextTick(() => {
+                if (window.lucide) lucide.createIcons();
+            });
+        },
+
+        validateInput() {
+            if (this.rawDigits.length === 0) return;
+            if (this.selectedCountry.id !== 'other' && this.rawDigits.length < this.selectedCountry.digits) {
+                this.phoneError = `Raqam to'liq emas (${this.selectedCountry.digits} ta raqam kiritilishi kerak)`;
+            } else {
+                this.phoneError = '';
+            }
+        },
+
+        handleSubmit(e) {
+            this.phoneError = '';
+            if (this.rawDigits.length === 0) {
+                e.preventDefault();
+                this.phoneError = "Iltimos, telefon raqamini kiriting";
+                if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+                return;
+            }
+
+            if (this.selectedCountry.id !== 'other' && this.rawDigits.length < this.selectedCountry.digits) {
+                e.preventDefault();
+                this.phoneError = `Iltimos, telefon raqamini to'liq kiriting (${this.selectedCountry.digits} ta raqam bo'lishi kerak)`;
+                if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+                return;
+            }
+
+            if (this.password && this.passwordConfirm && this.password !== this.passwordConfirm) {
+                e.preventDefault();
+                return;
+            }
+        }
+    }
+}
+</script>
 {% endblock %}

@@ -26,10 +26,10 @@
     </div>
     {% endif %}
 
-    <form method="POST" id="checkoutForm" class="space-y-6">
+    <form method="POST" id="checkoutForm" @submit="validateCheckout($event)" class="space-y-6">
         {% csrf_token %}
         <input type="hidden" name="telegram_user_id" x-model="tgUserId">
-        <input type="hidden" name="is_tma" value="{% if is_tma %}1{% else %}0{% endif %}">
+        <input type="hidden" name="is_tma" :value="tgUserId ? '1' : '0'">
         <input type="hidden" name="delivery_lat" x-model="deliveryLat">
         <input type="hidden" name="delivery_lng" x-model="deliveryLng">
 
@@ -37,19 +37,73 @@
         <div class="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
             <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
                 <div class="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center text-xs">1</div>
-                <h3>Контактные данные</h3>
+                <h3>{% if lang == 'uz' %}Aloqa ma'lumotlari{% else %}Контактные данные{% endif %}</h3>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Ваше имя *</label>
-                    <input type="text" name="customer_name" x-model="customerName" required placeholder="Алишер"
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                        {% if lang == 'uz' %}Ismingiz{% else %}Ваше имя{% endif %} <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="customer_name" x-model="customerName" required
+                           placeholder="{% if lang == 'uz' %}Alisher{% else %}Алишер{% endif %}"
                            class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-brand">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Номер телефона (+998) *</label>
-                    <input type="tel" name="customer_phone" x-model="customerPhone" @input="formatPhone($event)" required placeholder="+998 90 123 45 67"
-                           class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                        <span>{% if lang == 'uz' %}Telefon raqami{% else %}Номер телефона{% endif %} <span class="text-rose-500">*</span></span>
+                        <span class="text-[11px] text-slate-400 font-normal" x-text="selectedCountry.nameRu || selectedCountry.name"></span>
+                    </label>
+                    
+                    <!-- Country Selector & Phone Mask Input -->
+                    <div class="relative flex rounded-xl bg-slate-50 border border-slate-200 focus-within:border-brand focus-within:bg-white transition-all overflow-visible"
+                         :class="phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : ''">
+                        
+                        <!-- Country Dropdown Trigger -->
+                        <div class="relative shrink-0">
+                            <button type="button" @click="countryDropdownOpen = !countryDropdownOpen"
+                                    class="h-full px-3 py-3 flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200/70 rounded-l-xl border-r border-slate-200 text-xs font-bold text-slate-800 transition-colors">
+                                <span class="text-base leading-none" x-text="selectedCountry.flag"></span>
+                                <span class="font-mono text-xs" x-text="selectedCountry.dialCode"></span>
+                                <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+                            </button>
+                            
+                            <!-- Country List Popover -->
+                            <div x-show="countryDropdownOpen" @click.away="countryDropdownOpen = false" x-cloak
+                                 class="absolute left-0 top-full mt-1.5 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-1.5 max-h-56 overflow-y-auto space-y-0.5">
+                                <template x-for="c in countries" :key="c.id">
+                                    <button type="button" @click="selectCountry(c)"
+                                            class="w-full px-3 py-2 rounded-xl text-left text-xs font-bold flex items-center gap-2 hover:bg-emerald-50 transition-colors"
+                                            :class="selectedCountry.id === c.id ? 'bg-emerald-50 text-brand' : 'text-slate-700'">
+                                        <span class="text-base" x-text="c.flag"></span>
+                                        <span class="flex-1 truncate" x-text="c.nameRu || c.name"></span>
+                                        <span class="font-mono text-[11px] text-slate-400" x-text="c.dialCode"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Formatted Phone Input with Strict Mask -->
+                        <input type="tel"
+                               id="phoneInput"
+                               x-ref="phoneInput"
+                               :value="formattedPhone"
+                               @input="onPhoneInput($event)"
+                               required
+                               :placeholder="selectedCountry.placeholder"
+                               class="flex-1 px-3.5 py-3 bg-transparent text-slate-900 text-xs font-mono font-bold focus:outline-none placeholder:text-slate-300">
+                        
+                        <!-- Validation Check Icon -->
+                        <div class="flex items-center pr-3 pointer-events-none" x-show="isPhoneComplete">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Full Phone Input for Form Submit -->
+                    <input type="hidden" name="customer_phone" :value="fullPhoneNumber">
+
+                    <!-- Phone Error Message -->
+                    <p x-show="phoneError" x-text="phoneError" class="text-[11px] text-rose-500 font-bold mt-1"></p>
                 </div>
             </div>
         </div>
@@ -84,23 +138,173 @@
                 </label>
             </div>
 
-            <!-- Case A: Courier Address -->
-            <div x-show="deliveryMethod === 'COURIER'" class="space-y-3 pt-2">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div class="sm:col-span-1">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Город / Регион</label>
-                        <input type="text" name="delivery_city" value="Ташкент" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+            <!-- Case A: Courier Address with Yandex-Style Interactive Map -->
+            <div x-show="deliveryMethod === 'COURIER'" class="space-y-4 pt-2">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800">
+                            {% if lang == 'uz' %}Yetkazib berish manzili va xarita{% else %}Адрес доставки и карта{% endif %} *
+                        </label>
+                        <p class="text-[11px] text-slate-400">
+                            {% if lang == 'uz' %}Xaritadan tanlang, qidiring yoki geolokatsiyani yoqing{% else %}Укажите на карте, найдите через поиск или включите геолокацию{% endif %}
+                        </p>
                     </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Улица, дом, квартира *</label>
-                        <input type="text" name="delivery_address" placeholder="ул. Амира Темура, д. 15, кв. 42"
-                               class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand">
+                    <button type="button" @click="locateMe()"
+                            class="flex items-center gap-1.5 text-xs font-bold text-brand hover:text-brand-dark transition-colors px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 shadow-2xs">
+                        <i data-lucide="crosshair" class="w-3.5 h-3.5" :class="isLocating ? 'animate-spin' : ''"></i>
+                        <span x-text="isLocating ? '{% if lang == 'uz' %}Aniqlanmoqda...{% else %}Определение...{% endif %}' : '{% if lang == 'uz' %}Mening joylashuvim{% else %}Мое местоположение{% endif %}'"></span>
+                    </button>
+                </div>
+
+                <!-- City Selector & Address Search Controls Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                    <!-- City Dropdown (4 cols) -->
+                    <div class="sm:col-span-4">
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                            <i data-lucide="building-2" class="w-3.5 h-3.5 text-brand"></i>
+                            <span>{% if lang == 'uz' %}Shahar / Viloyat{% else %}Город / Регион{% endif %}</span>
+                        </label>
+                        <div class="relative">
+                            <select x-model="activeCity" @change="selectCity($event.target.value)"
+                                    class="w-full pl-3 pr-8 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-brand focus:bg-white transition-all appearance-none cursor-pointer">
+                                <option value="tashkent">📍 Toshkent / Ташкент</option>
+                                <option value="samarkand">📍 Samarqand / Самарканд</option>
+                                <option value="bukhara">📍 Buxoro / Бухара</option>
+                                <option value="andijan">📍 Andijon / Андижан</option>
+                                <option value="namangan">📍 Namangan / Наманган</option>
+                                <option value="fergana">📍 Farg'ona / Фергана</option>
+                                <option value="kokand">📍 Qo'qon / Коканд</option>
+                                <option value="qarshi">📍 Qarshi / Карши</option>
+                                <option value="urgench">📍 Urganch / Ургенч</option>
+                                <option value="khiva">📍 Xiva / Хива</option>
+                                <option value="nukus">📍 Nukus / Нукус</option>
+                                <option value="navoiy">📍 Navoiy / Навои</option>
+                                <option value="jizzakh">📍 Jizzax / Джизак</option>
+                                <option value="termez">📍 Termiz / Термез</option>
+                                <option value="gulistan">📍 Guliston / Гулистан</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Map with Live Autocomplete Dropdown (8 cols, z-50) -->
+                    <div class="sm:col-span-8 relative z-50">
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                            <span class="flex items-center gap-1.5">
+                                <i data-lucide="search" class="w-3.5 h-3.5 text-brand"></i>
+                                <span>{% if lang == 'uz' %}Ko'cha yoki orientirni qidirish{% else %}Поиск улицы или ориентира{% endif %}</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-normal">{% if lang == 'uz' %}yoki xaritadan tanlang{% else %}или укажите на карте{% endif %}</span>
+                        </label>
+                        <div class="relative flex items-center">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-brand absolute left-3.5 pointer-events-none"></i>
+                            <input type="text" id="checkoutSearchInput" x-model="mapSearch" @input.debounce.250ms="searchAddress()"
+                                   placeholder="{% if lang == 'uz' %}Masalan: Registon, Beruniy, Mirzo Ulug'bek...{% else %}Например: Регистан, Беруни, Мирзо Улугбек...{% endif %}"
+                                   class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand focus:bg-white transition-all">
+                            <div x-show="isSearchingMap" class="absolute right-3.5">
+                                <i data-lucide="loader-2" class="w-4 h-4 text-brand animate-spin"></i>
+                            </div>
+                            <button type="button" x-show="mapSearch && !isSearchingMap" @click="mapSearch = ''; searchResults = []"
+                                    class="absolute right-3 text-slate-400 hover:text-slate-600 font-bold text-sm">×</button>
+                        </div>
+
+                    <!-- Autocomplete Suggestions Dropdown -->
+                    <div id="checkoutMapSuggestions" x-show="searchResults.length > 0" @click.away="searchResults = []" x-cloak
+                         class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-100">
+                        <template x-for="res in searchResults" :key="res.lat + '_' + res.lng + '_' + res.display_name">
+                            <div @click="selectSearchResult(res)" data-action="select-loc"
+                                 class="p-3 text-xs hover:bg-emerald-50/70 cursor-pointer flex items-start gap-3 transition-colors group">
+                                <div class="w-7 h-7 rounded-lg bg-emerald-100 text-brand flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-brand group-hover:text-white transition-colors">
+                                    <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="font-bold text-slate-900 group-hover:text-brand transition-colors" x-text="res.name || res.display_name"></div>
+                                    <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1" x-text="res.display_name"></div>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-400 shrink-0 self-center" x-text="res.city || ''"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+                <!-- Leaflet Interactive Map -->
+                <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
+                    <div id="checkoutDeliveryMap" class="w-full h-56 sm:h-64 bg-slate-100"></div>
+                    <div class="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-semibold text-slate-700 shadow-xs border border-slate-200/60 flex items-center gap-1.5">
+                        <span>💡</span>
+                        <span>{% if lang == 'uz' %}Xaritani bosib yoki markerni surib uyingizni belgilang{% else %}Нажмите на карту или перетащите маркер к вашему дому{% endif %}</span>
                     </div>
                 </div>
 
+                <!-- Selected Address Confirmation Badge -->
+                <div class="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/80 flex items-center justify-between text-xs transition-all">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0" :class="isReverseGeocoding ? 'animate-pulse text-amber-500' : ''"></i>
+                        <span class="text-slate-700 truncate">
+                            {% if lang == 'uz' %}Tanlangan manzil:{% else %}Выбранный адрес:{% endif %}
+                            <strong class="text-slate-900 ml-1" x-text="deliveryStreet || '{% if lang == 'uz' %}Xaritadan tanlang{% else %}Выберите на карте{% endif %}'"></strong>
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0 ml-2">
+                        <span x-show="isReverseGeocoding" class="text-[10px] font-bold text-amber-600 animate-pulse">{% if lang == 'uz' %}Aniqlanmoqda...{% else %}Определение...{% endif %}</span>
+                        <span class="font-mono text-[10px] text-slate-400" x-show="deliveryLat && deliveryLng" x-text="Number(deliveryLat).toFixed(4) + ', ' + Number(deliveryLng).toFixed(4)"></span>
+                    </div>
+                </div>
+
+                <!-- Structured Apartment / House Details -->
+                <div class="space-y-3 pt-1">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            {% if lang == 'uz' %}Ko'cha, uy raqami *{% else %}Улица, номер дома *{% endif %}
+                        </label>
+                        <input type="text" name="delivery_street" id="checkoutDeliveryStreet" x-model="deliveryStreet" required
+                               placeholder="{% if lang == 'uz' %}Masalan: Beruniy ko'chasi, 12-uy{% else %}Например: ул. Беруни, д. 12{% endif %}"
+                               class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">{% if lang == 'uz' %}Podezd{% else %}Подъезд{% endif %}</label>
+                            <input type="text" name="delivery_entrance" x-model="deliveryEntrance" placeholder="1"
+                                   class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">{% if lang == 'uz' %}Qavat{% else %}Этаж{% endif %}</label>
+                            <input type="text" name="delivery_floor" x-model="deliveryFloor" placeholder="4"
+                                   class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">{% if lang == 'uz' %}Xonadon / Ofis{% else %}Кв. / Офис{% endif %}</label>
+                            <input type="text" name="delivery_apartment" x-model="deliveryApartment" placeholder="42"
+                                   class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">{% if lang == 'uz' %}Domofon kodi{% else %}Домофон{% endif %}</label>
+                            <input type="text" name="delivery_domofon" x-model="deliveryDomofon" placeholder="42K"
+                                   class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">{% if lang == 'uz' %}Mo'ljal (orientir){% else %}Ориентир для курьера{% endif %}</label>
+                        <input type="text" name="delivery_landmark" x-model="deliveryLandmark"
+                               placeholder="{% if lang == 'uz' %}Masalan: Korzinka yonida, sariq darvoza{% else %}Например: рядом с Korzinka, желтые ворота{% endif %}"
+                               class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                    </div>
+                </div>
+
+                <!-- Hidden combined delivery address for backward compatibility -->
+                <input type="hidden" name="delivery_address" :value="computedFullAddress">
+                <input type="hidden" name="delivery_city" x-model="deliveryCity">
+                <input type="hidden" name="delivery_lat" x-model="deliveryLat">
+                <input type="hidden" name="delivery_lng" x-model="deliveryLng">
+
                 <div class="text-[11px] p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                    <span class="text-slate-600">Стоимость курьерской доставки:</span>
-                    <span class="font-bold text-slate-900" x-text="deliveryFee === 0 ? 'Бесплатно 🎉' : (deliveryFee.toLocaleString() + ' UZS')"></span>
+                    <span class="text-slate-600">{% if lang == 'uz' %}Yetkazib berish narxi:{% else %}Стоимость курьерской доставки:{% endif %}</span>
+                    <span class="font-bold text-slate-900" x-text="deliveryFee === 0 ? '{% if lang == 'uz' %}Bepul 🎉{% else %}Бесплатно 🎉{% endif %}' : (deliveryFee.toLocaleString() + ' UZS')"></span>
                 </div>
             </div>
 
@@ -252,9 +456,172 @@
 {% block extra_scripts %}
 <script>
     function checkoutApp() {
+        {% if branches.exists and branches.first.latitude and branches.first.longitude %}
+        const initLat = {{ branches.first.latitude|unlocalize }};
+        const initLng = {{ branches.first.longitude|unlocalize }};
+        const initCityKey = "{% if 'toshkent' in branches.first.address|lower or 'tashkent' in branches.first.address|lower %}tashkent{% elif 'samarqand' in branches.first.address|lower or 'samarkand' in branches.first.address|lower %}samarkand{% elif 'buxoro' in branches.first.address|lower or 'bukhara' in branches.first.address|lower %}bukhara{% elif 'andijon' in branches.first.address|lower or 'andijan' in branches.first.address|lower %}andijan{% elif 'namangan' in branches.first.address|lower %}namangan{% elif 'farg' in branches.first.address|lower or 'fergana' in branches.first.address|lower %}fergana{% elif 'kokand' in branches.first.address|lower or 'qoqon' in branches.first.address|lower %}kokand{% elif 'qarshi' in branches.first.address|lower %}qarshi{% elif 'urganch' in branches.first.address|lower or 'urgench' in branches.first.address|lower %}urgench{% elif 'xiva' in branches.first.address|lower or 'khiva' in branches.first.address|lower %}khiva{% elif 'nukus' in branches.first.address|lower %}nukus{% elif 'navoiy' in branches.first.address|lower or 'navoi' in branches.first.address|lower %}navoiy{% elif 'jizzax' in branches.first.address|lower or 'jizzakh' in branches.first.address|lower %}jizzakh{% elif 'termiz' in branches.first.address|lower or 'termez' in branches.first.address|lower %}termez{% elif 'guliston' in branches.first.address|lower or 'gulistan' in branches.first.address|lower %}gulistan{% else %}samarkand{% endif %}";
+        {% else %}
+        const initLat = 39.6542;
+        const initLng = 66.9597;
+        const initCityKey = "samarkand";
+        {% endif %}
+
         return {
             customerName: '{{ saved_name|escapejs }}' || localStorage.getItem('sb_cust_name_{{ store.id }}') || '',
-            customerPhone: '{{ saved_phone|escapejs }}' || localStorage.getItem('sb_cust_phone_{{ store.id }}') || '+998 ',
+            
+            // Country and Phone Mask State
+            selectedCountry: {
+                id: 'uz',
+                name: "O'zbekiston",
+                nameRu: "Узбекистан",
+                dialCode: '+998',
+                code: '998',
+                flag: '🇺🇿',
+                digits: 9,
+                placeholder: '(90) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 2);
+                    if (d.length >= 2) res += ') ';
+                    if (d.length > 2) res += d.slice(2, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 7);
+                    if (d.length > 7) res += '-' + d.slice(7, 9);
+                    return res;
+                }
+            },
+            countries: [
+                {
+                    id: 'uz',
+                    name: "O'zbekiston",
+                    nameRu: "Узбекистан",
+                    dialCode: '+998',
+                    code: '998',
+                    flag: '🇺🇿',
+                    digits: 9,
+                    placeholder: '(90) 123-45-67',
+                    format(d) {
+                        let res = '';
+                        if (d.length > 0) res += '(' + d.slice(0, 2);
+                        if (d.length >= 2) res += ') ';
+                        if (d.length > 2) res += d.slice(2, 5);
+                        if (d.length > 5) res += '-' + d.slice(5, 7);
+                        if (d.length > 7) res += '-' + d.slice(7, 9);
+                        return res;
+                    }
+                },
+                {
+                    id: 'ru',
+                    name: "Rossiya",
+                    nameRu: "Россия",
+                    dialCode: '+7',
+                    code: '7',
+                    flag: '🇷🇺',
+                    digits: 10,
+                    placeholder: '(912) 345-67-89',
+                    format(d) {
+                        let res = '';
+                        if (d.length > 0) res += '(' + d.slice(0, 3);
+                        if (d.length >= 3) res += ') ';
+                        if (d.length > 3) res += d.slice(3, 6);
+                        if (d.length > 6) res += '-' + d.slice(6, 8);
+                        if (d.length > 8) res += '-' + d.slice(8, 10);
+                        return res;
+                    }
+                },
+                {
+                    id: 'kz',
+                    name: "Qozog'iston",
+                    nameRu: "Казахстан",
+                    dialCode: '+7',
+                    code: '7',
+                    flag: '🇰🇿',
+                    digits: 10,
+                    placeholder: '(777) 123-45-67',
+                    format(d) {
+                        let res = '';
+                        if (d.length > 0) res += '(' + d.slice(0, 3);
+                        if (d.length >= 3) res += ') ';
+                        if (d.length > 3) res += d.slice(3, 6);
+                        if (d.length > 6) res += '-' + d.slice(6, 8);
+                        if (d.length > 8) res += '-' + d.slice(8, 10);
+                        return res;
+                    }
+                },
+                {
+                    id: 'kg',
+                    name: "Qirg'iziston",
+                    nameRu: "Кыргызстан",
+                    dialCode: '+996',
+                    code: '996',
+                    flag: '🇰🇬',
+                    digits: 9,
+                    placeholder: '(555) 12-34-56',
+                    format(d) {
+                        let res = '';
+                        if (d.length > 0) res += '(' + d.slice(0, 3);
+                        if (d.length >= 3) res += ') ';
+                        if (d.length > 3) res += d.slice(3, 5);
+                        if (d.length > 5) res += '-' + d.slice(5, 7);
+                        if (d.length > 7) res += '-' + d.slice(7, 9);
+                        return res;
+                    }
+                },
+                {
+                    id: 'tj',
+                    name: "Tojikiston",
+                    nameRu: "Таджикистан",
+                    dialCode: '+992',
+                    code: '992',
+                    flag: '🇹🇯',
+                    digits: 9,
+                    placeholder: '(90) 123-45-67',
+                    format(d) {
+                        let res = '';
+                        if (d.length > 0) res += '(' + d.slice(0, 2);
+                        if (d.length >= 2) res += ') ';
+                        if (d.length > 2) res += d.slice(2, 5);
+                        if (d.length > 5) res += '-' + d.slice(5, 7);
+                        if (d.length > 7) res += '-' + d.slice(7, 9);
+                        return res;
+                    }
+                },
+                {
+                    id: 'tr',
+                    name: "Turkiya",
+                    nameRu: "Турция",
+                    dialCode: '+90',
+                    code: '90',
+                    flag: '🇹🇷',
+                    digits: 10,
+                    placeholder: '(555) 123 45 67',
+                    format(d) {
+                        let res = '';
+                        if (d.length > 0) res += '(' + d.slice(0, 3);
+                        if (d.length >= 3) res += ') ';
+                        if (d.length > 3) res += d.slice(3, 6);
+                        if (d.length > 6) res += ' ' + d.slice(6, 8);
+                        if (d.length > 8) res += ' ' + d.slice(8, 10);
+                        return res;
+                    }
+                }
+            ],
+            countryDropdownOpen: false,
+            rawPhoneDigits: '',
+            phoneError: '',
+
+            get formattedPhone() {
+                return this.selectedCountry.format(this.rawPhoneDigits);
+            },
+
+            get fullPhoneNumber() {
+                if (!this.rawPhoneDigits) return '';
+                return this.selectedCountry.dialCode + this.rawPhoneDigits;
+            },
+
+            get isPhoneComplete() {
+                return this.rawPhoneDigits.length === this.selectedCountry.digits;
+            },
+
             deliveryMethod: 'COURIER',
             paymentMethod: 'CLICK',
             promoInput: '',
@@ -263,10 +630,59 @@
             subtotal: Number('{{ subtotal|floatformat:0 }}'),
             baseDeliveryFee: Number('{{ default_delivery_fee|floatformat:0 }}'),
             freeThreshold: Number('{{ free_delivery_threshold|floatformat:0 }}'),
-            deliveryLat: null,
-            deliveryLng: null,
-            tgUserId: null,
+
+            // Delivery Map & Structured Address
+            deliveryLat: initLat,
+            deliveryLng: initLng,
+            activeCity: initCityKey,
+            deliveryCity: initCityKey === 'tashkent' ? 'Toshkent' : 'Samarqand',
+            deliveryStreet: '',
+            deliveryEntrance: '',
+            deliveryFloor: '',
+            deliveryApartment: '',
+            deliveryDomofon: '',
+            deliveryLandmark: '',
+            isReverseGeocoding: false,
+            mapSearch: '',
+            searchResults: [],
+            isSearchingMap: false,
+            isLocating: false,
+            deliveryMap: null,
+            deliveryMarker: null,
             branchMap: null,
+            tgUserId: null,
+
+            get computedFullAddress() {
+                let addr = (this.deliveryStreet || '').trim();
+                const parts = [];
+                if (this.deliveryEntrance) parts.push('podezd ' + this.deliveryEntrance);
+                if (this.deliveryFloor) parts.push('qavat ' + this.deliveryFloor);
+                if (this.deliveryApartment) parts.push('xonadon ' + this.deliveryApartment);
+                if (this.deliveryDomofon) parts.push('domofon: ' + this.deliveryDomofon);
+                if (this.deliveryLandmark) parts.push("mo'ljal: " + this.deliveryLandmark);
+                if (parts.length > 0) {
+                    addr = addr ? `${addr} (${parts.join(', ')})` : parts.join(', ');
+                }
+                return addr;
+            },
+
+            citiesConfig: {
+                tashkent: { name: 'Toshkent', lat: 41.2995, lng: 69.2401, zoom: 13, defaultAddress: "Toshkent shahri, Amir Temur xiyoboni" },
+                samarkand: { name: 'Samarqand', lat: 39.6542, lng: 66.9597, zoom: 14, defaultAddress: "Samarqand shahri, Registon maydoni" },
+                bukhara: { name: 'Buxoro', lat: 39.7747, lng: 64.4286, zoom: 14, defaultAddress: "Buxoro shahri, Labi Hovuz" },
+                andijan: { name: 'Andijon', lat: 40.7821, lng: 72.3442, zoom: 14, defaultAddress: "Andijon shahri, Bobur shohko'chasi" },
+                namangan: { name: 'Namangan', lat: 40.9983, lng: 71.6726, zoom: 14, defaultAddress: "Namangan shahri, Bobur bog'i" },
+                fergana: { name: "Farg'ona", lat: 40.3842, lng: 71.7843, zoom: 14, defaultAddress: "Farg'ona shahri, Al-Farg'oniy ko'chasi" },
+                kokand: { name: "Qo'qon", lat: 40.5286, lng: 70.9425, zoom: 14, defaultAddress: "Qo'qon shahri, Xudoyorxon o'rdasi" },
+                qarshi: { name: 'Qarshi', lat: 38.8606, lng: 65.7891, zoom: 14, defaultAddress: "Qarshi shahri, Mustaqillik maydoni" },
+                urgench: { name: 'Urganch', lat: 41.5562, lng: 60.6311, zoom: 14, defaultAddress: "Urganch shahri, Al-Xorazmiy ko'chasi" },
+                khiva: { name: 'Xiva', lat: 41.3783, lng: 60.3639, zoom: 14, defaultAddress: "Xiva shahri, Ichan Qal'a" },
+                nukus: { name: 'Nukus', lat: 42.4603, lng: 59.6166, zoom: 14, defaultAddress: "Nukus shahri, Berdaq shohko'chasi" },
+                navoiy: { name: 'Navoiy', lat: 40.0844, lng: 65.3792, zoom: 14, defaultAddress: "Navoiy shahri, Karmana ko'chasi" },
+                jizzakh: { name: 'Jizzax', lat: 40.1158, lng: 67.8422, zoom: 14, defaultAddress: "Jizzax shahri, Sharof Rashidov ko'chasi" },
+                termez: { name: 'Termiz', lat: 37.2242, lng: 67.2783, zoom: 14, defaultAddress: "Termiz shahri, At-Termiziy ko'chasi" },
+                gulistan: { name: 'Guliston', lat: 40.4897, lng: 68.7844, zoom: 14, defaultAddress: "Guliston shahri, Sayxun ko'chasi" }
+            },
 
             get deliveryFee() {
                 if (this.deliveryMethod === 'PICKUP') return 0;
@@ -278,12 +694,68 @@
                 return Math.max(0, this.subtotal - this.discountAmount + this.deliveryFee);
             },
 
-            formatPhone(e) {
-                let v = e.target.value.replace(/[^0-9+]/g, '');
-                if (!v.startsWith('+998')) {
-                    v = '+998 ' + v.replace('+998', '').trim();
+            selectCountry(c) {
+                this.selectedCountry = c;
+                this.rawPhoneDigits = '';
+                this.phoneError = '';
+                this.countryDropdownOpen = false;
+                this.$nextTick(() => {
+                    if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+                });
+            },
+
+            onPhoneInput(e) {
+                let val = e.target.value;
+                let digits = val.replace(/\D/g, '');
+                // If user pasted or typed with country dialCode
+                if (digits.startsWith(this.selectedCountry.code)) {
+                    digits = digits.slice(this.selectedCountry.code.length);
                 }
-                this.customerPhone = v;
+                this.rawPhoneDigits = digits.slice(0, this.selectedCountry.digits);
+                e.target.value = this.formattedPhone;
+                this.phoneError = '';
+            },
+
+            initPhone() {
+                const saved = '{{ saved_phone|escapejs }}' || localStorage.getItem('sb_cust_phone_{{ store.id }}') || '';
+                if (saved) {
+                    const cleaned = saved.replace(/\D/g, '');
+                    for (const c of this.countries) {
+                        if (cleaned.startsWith(c.code)) {
+                            this.selectedCountry = c;
+                            this.rawPhoneDigits = cleaned.slice(c.code.length, c.code.length + c.digits);
+                            return;
+                        }
+                    }
+                    if (cleaned.length === 9) {
+                        this.rawPhoneDigits = cleaned;
+                    }
+                }
+            },
+
+            validateCheckout(e) {
+                this.phoneError = '';
+                if (!this.customerName.trim()) {
+                    alert('{% if lang == "uz" %}Iltimos, ismingizni kiriting{% else %}Пожалуйста, введите ваше имя{% endif %}');
+                    e.preventDefault();
+                    return false;
+                }
+                if (!this.isPhoneComplete) {
+                    this.phoneError = `{% if lang == "uz" %}Telefon raqamini to'liq kiriting (${this.selectedCountry.digits} ta raqam){% else %}Пожалуйста, введите полный номер телефона (${this.selectedCountry.digits} цифр){% endif %}`;
+                    if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+                    e.preventDefault();
+                    return false;
+                }
+                if (this.deliveryMethod === 'COURIER' && (!this.deliveryStreet || !this.deliveryStreet.trim())) {
+                    alert('{% if lang == "uz" %}Yetkazib berish manzilini kiriting yoki xaritadan tanlang{% else %}Укажите адрес доставки или выберите на карте{% endif %}');
+                    e.preventDefault();
+                    return false;
+                }
+                try {
+                    localStorage.setItem('sb_cust_name_{{ store.id }}', this.customerName.trim());
+                    localStorage.setItem('sb_cust_phone_{{ store.id }}', this.fullPhoneNumber);
+                } catch(err) {}
+                return true;
             },
 
             checkPromo() {
@@ -306,7 +778,223 @@
                 }
             },
 
+            selectCity(cityKey) {
+                this.activeCity = cityKey;
+                const city = this.citiesConfig[cityKey];
+                if (!city) return;
+                this.deliveryLat = city.lat;
+                this.deliveryLng = city.lng;
+                this.deliveryCity = city.name;
+                this.deliveryStreet = city.defaultAddress;
+                this.mapSearch = '';
+                this.searchResults = [];
+
+                if (this.deliveryMap) {
+                    this.deliveryMap.flyTo([city.lat, city.lng], city.zoom || 14, { animate: true, duration: 1 });
+                }
+                if (this.deliveryMarker) {
+                    this.deliveryMarker.setLatLng([city.lat, city.lng]);
+                    this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${city.name}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${city.defaultAddress}</div>`).openPopup();
+                }
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            },
+
+            initDeliveryMap() {
+                const mapEl = document.getElementById('checkoutDeliveryMap');
+                if (!mapEl) return;
+
+                if (this.deliveryMap) {
+                    setTimeout(() => {
+                        this.deliveryMap.invalidateSize();
+                    }, 200);
+                    return;
+                }
+
+                const lat = this.deliveryLat || 39.6542;
+                const lng = this.deliveryLng || 66.9597;
+
+                this.deliveryMap = L.map('checkoutDeliveryMap').setView([lat, lng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(this.deliveryMap);
+
+                this.deliveryMarker = L.marker([lat, lng], { draggable: true }).addTo(this.deliveryMap);
+                this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 {% if lang == 'uz' %}Yetkazib berish nuqtasi{% else %}Точка доставки{% endif %}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${this.deliveryStreet || '{% if lang == 'uz' %}Xaritadan tanlang{% else %}Выберите на карте{% endif %}'}</div>`);
+
+                this.deliveryMarker.on('dragend', (e) => {
+                    const pos = e.target.getLatLng();
+                    this.updateCoordinatesAndReverse(pos.lat, pos.lng);
+                });
+
+                this.deliveryMap.on('click', (e) => {
+                    const pos = e.latlng;
+                    this.updateCoordinatesAndReverse(pos.lat, pos.lng);
+                });
+
+                if (!this.deliveryStreet) {
+                    this.updateCoordinatesAndReverse(lat, lng);
+                }
+
+                setTimeout(() => {
+                    this.deliveryMap.invalidateSize();
+                }, 300);
+            },
+
+            searchAddress() {
+                const q = (this.mapSearch || '').trim();
+                if (!q || q.length < 1) {
+                    this.searchResults = [];
+                    return;
+                }
+                this.isSearchingMap = true;
+                const lat = this.deliveryLat || 39.6542;
+                const lng = this.deliveryLng || 66.9597;
+
+                const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=${lat}&lon=${lng}&limit=8`;
+                fetch(photonUrl)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.features && data.features.length > 0) {
+                            this.searchResults = data.features.map(f => {
+                                const p = f.properties;
+                                const parts = [p.name, p.street, p.housenumber, p.district, p.city || p.county || p.state].filter(Boolean);
+                                const unique = [];
+                                parts.forEach(pt => { if (!unique.includes(pt)) unique.push(pt); });
+                                return {
+                                    name: p.name || p.street || p.city || q,
+                                    display_name: unique.join(', ') || p.name || q,
+                                    city: p.city || p.state || '',
+                                    lat: f.geometry.coordinates[1],
+                                    lng: f.geometry.coordinates[0],
+                                };
+                            });
+                        } else {
+                            this.fallbackSearch(q, lat, lng);
+                        }
+                    })
+                    .catch(() => {
+                        this.fallbackSearch(q, lat, lng);
+                    })
+                    .finally(() => {
+                        this.isSearchingMap = false;
+                        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                    });
+            },
+
+            fallbackSearch(q, lat, lng) {
+                fetch(`/api/geo-search/?q=${encodeURIComponent(q)}&lat=${lat}&lng=${lng}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        this.searchResults = (data.results || []).slice(0, 8);
+                    })
+                    .catch(() => {
+                        this.searchResults = [];
+                    })
+                    .finally(() => {
+                        this.isSearchingMap = false;
+                        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                    });
+            },
+
+            selectSearchResult(res) {
+                this.deliveryLat = parseFloat(res.lat);
+                this.deliveryLng = parseFloat(res.lng);
+                this.deliveryStreet = res.display_name;
+                this.mapSearch = res.name || res.display_name;
+                if (res.city) this.deliveryCity = res.city;
+                this.searchResults = [];
+
+                if (this.deliveryMap && this.deliveryMarker) {
+                    this.deliveryMap.flyTo([this.deliveryLat, this.deliveryLng], 17, { animate: true, duration: 1 });
+                    this.deliveryMarker.setLatLng([this.deliveryLat, this.deliveryLng]);
+                    this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${res.name || 'Yetkazish manzili'}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${res.display_name}</div>`).openPopup();
+                }
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            },
+
+            updateCoordinatesAndReverse(lat, lng) {
+                this.deliveryLat = Number(lat);
+                this.deliveryLng = Number(lng);
+                this.isReverseGeocoding = true;
+                if (this.deliveryMarker) {
+                    this.deliveryMarker.setLatLng([this.deliveryLat, this.deliveryLng]);
+                }
+
+                const photonUrl = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;
+                fetch(photonUrl)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.features && data.features.length > 0) {
+                            const p = data.features[0].properties;
+                            const parts = [p.name, p.street, p.housenumber, p.district, p.city || p.county || p.state].filter(Boolean);
+                            const uniqueParts = [];
+                            parts.forEach(pt => { if (!uniqueParts.includes(pt)) uniqueParts.push(pt); });
+                            const address = uniqueParts.join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                            if (p.city) this.deliveryCity = p.city;
+                            this.applyReverseResult(address, p.name || address);
+                        } else {
+                            this.fallbackReverse(lat, lng);
+                        }
+                    })
+                    .catch(() => {
+                        this.fallbackReverse(lat, lng);
+                    });
+            },
+
+            fallbackReverse(lat, lng) {
+                fetch(`/api/geo-reverse/?lat=${lat}&lng=${lng}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.address) {
+                            if (data.city) this.deliveryCity = data.city;
+                            this.applyReverseResult(data.address, data.display_name || data.address);
+                        } else {
+                            this.isReverseGeocoding = false;
+                        }
+                    })
+                    .catch(() => {
+                        this.isReverseGeocoding = false;
+                    });
+            },
+
+            applyReverseResult(address, title) {
+                this.deliveryStreet = address;
+                this.mapSearch = address;
+                this.isReverseGeocoding = false;
+                if (this.deliveryMarker) {
+                    this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${title}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${address}</div>`).openPopup();
+                }
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            },
+
+            locateMe() {
+                if (!navigator.geolocation) {
+                    alert("{% if lang == 'uz' %}Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi{% else %}Ваш браузер не поддерживает геолокацию{% endif %}");
+                    return;
+                }
+                this.isLocating = true;
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        this.isLocating = false;
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        if (this.deliveryMap) {
+                            this.deliveryMap.flyTo([lat, lng], 17, { animate: true, duration: 1 });
+                        }
+                        this.updateCoordinatesAndReverse(lat, lng);
+                    },
+                    (err) => {
+                        this.isLocating = false;
+                        console.warn('Geolocation error:', err);
+                        alert("{% if lang == 'uz' %}Joylashuvni aniqlab bo'lmadi. Iltimos, brauzerda ruxsat bering yoki xaritadan tanlang.{% else %}Не удалось определить местоположение. Пожалуйста, разрешите доступ к геопозиции или выберите на карте.{% endif %}");
+                    },
+                    { timeout: 10000, enableHighAccuracy: true }
+                );
+            },
+
             init() {
+                this.initPhone();
                 // Check Telegram WebApp context
                 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
                     const u = window.Telegram.WebApp.initDataUnsafe.user;
@@ -318,20 +1006,37 @@
                     }
                 }
 
+                // Initial delivery map mount
+                if (this.deliveryMethod === 'COURIER') {
+                    this.$nextTick(() => {
+                        this.initDeliveryMap();
+                    });
+                }
+
                 this.$watch('deliveryMethod', (val) => {
-                    if (val === 'PICKUP') {
+                    if (val === 'COURIER') {
+                        this.$nextTick(() => {
+                            this.initDeliveryMap();
+                            if (this.deliveryMap) {
+                                setTimeout(() => { this.deliveryMap.invalidateSize(); }, 200);
+                            }
+                        });
+                    } else if (val === 'PICKUP') {
                         this.$nextTick(() => {
                             if (!this.branchMap && document.getElementById('checkoutBranchMap')) {
-                                {% if branches.exists %}
+                                {% if branches.exists and branches.first.latitude and branches.first.longitude %}
                                 const bLat = {{ branches.first.latitude|unlocalize }};
                                 const bLng = {{ branches.first.longitude|unlocalize }};
                                 {% else %}
-                                const bLat = 41.2995;
-                                const bLng = 69.2401;
+                                const bLat = 39.6542;
+                                const bLng = 66.9597;
                                 {% endif %}
-                                this.branchMap = L.map('checkoutBranchMap').setView([bLat, bLng], 13);
+                                this.branchMap = L.map('checkoutBranchMap').setView([bLat, bLng], 14);
                                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(this.branchMap);
-                                L.marker([bLat, bLng]).addTo(this.branchMap);
+                                const m = L.marker([bLat, bLng]).addTo(this.branchMap);
+                                m.bindPopup("<div style='font-size:12px;font-weight:bold;'>🏪 {{ branches.first.name|default:store.name|escapejs }}</div><div style='font-size:11px;color:#666;'>{{ branches.first.address|default:store.address|escapejs }}</div>");
+                            } else if (this.branchMap) {
+                                setTimeout(() => { this.branchMap.invalidateSize(); }, 200);
                             }
                         });
                     }

@@ -73,6 +73,8 @@ def format_order_telegram_message(order):
     delivery_details = f'{order.delivery_city}, {order.delivery_address}' if order.delivery_address else 'Do\'kondan olib ketish'
     if order.delivery_fee > 0:
         delivery_details += f' (+{int(order.delivery_fee):,} UZS)'
+    if order.delivery_lat and order.delivery_lng:
+        delivery_details += f"\n🗺 <b>Xarita:</b> <a href='https://yandex.com/maps/?pt={order.delivery_lng},{order.delivery_lat}&z=17&l=map'>Yandex Xarita</a> | <a href='https://maps.google.com/?q={order.delivery_lat},{order.delivery_lng}'>Google Xarita</a>"
 
     discount_line = ''
     if order.discount_amount > 0:

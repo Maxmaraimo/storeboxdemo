@@ -201,25 +201,34 @@ class Store(models.Model):
         platform_domain = getattr(settings, 'PLATFORM_DOMAIN', 'storebox.uz')
         return f"{self.subdomain}.{platform_domain}"
 
-    def is_currently_open(self):
+    def is_currently_open(self, lang=None):
+        l = lang or getattr(self, '_current_lang', 'uz')
+        status_labels = {
+            'uz': {'open': "Ochiq", 'open_until': "Ochiq ({time} gacha)", 'closed': "Hozir yopiq", 'day_off': "Dam olish kuni"},
+            'ru': {'open': "Открыто", 'open_until': "Открыто (до {time})", 'closed': "Сейчас закрыто", 'day_off': "Выходной"},
+            'en': {'open': "Open", 'open_until': "Open (until {time})", 'closed': "Currently closed", 'day_off': "Day off"},
+            'tr': {'open': "Açık", 'open_until': "Açık ({time}'a kadar)", 'closed': "Şu anda kapalı", 'day_off': "Tatil günü"},
+        }
+        lbls = status_labels.get(l, status_labels['uz'])
+
         if not self.working_hours:
-            return True, 'Ochiq'
+            return True, lbls['open']
         now = timezone.localtime(timezone.now())
         weekday_keys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         today_key = weekday_keys[now.weekday()]
         day_info = self.working_hours.get(today_key)
         if not day_info or day_info.get('closed'):
-            return False, 'Dam olish kuni'
+            return False, lbls['day_off']
 
         try:
             open_time = datetime.datetime.strptime(day_info.get('open', '00:00'), '%H:%M').time()
             close_time = datetime.datetime.strptime(day_info.get('close', '23:59'), '%H:%M').time()
             cur_time = now.time()
             if open_time <= cur_time <= close_time:
-                return True, f"Ochiq ({day_info.get('close', '23:59')} gacha)"
-            return False, 'Hozir yopiq'
+                return True, lbls['open_until'].format(time=day_info.get('close', '23:59'))
+            return False, lbls['closed']
         except Exception:
-            return True, 'Ochiq'
+            return True, lbls['open']
 
 
 class Branch(models.Model):

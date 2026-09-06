@@ -18,6 +18,8 @@ urlpatterns = [
     path('accounts/login/', dashboard_views.login_view, name='accounts_login'),
     path('logout/', dashboard_views.logout_view, name='logout'),
     path('onboarding/', dashboard_views.onboarding_wizard_view, name='onboarding'),
+    path('api/geo-search/', dashboard_views.geo_search_api, name='root_geo_search'),
+    path('api/geo-reverse/', dashboard_views.geo_reverse_api, name='root_geo_reverse'),
 
     # Merchant Dashboard
     path('dashboard/', include('apps.dashboard.urls')),

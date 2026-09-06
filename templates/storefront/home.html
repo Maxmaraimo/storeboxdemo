@@ -10,7 +10,7 @@
          style="background: linear-gradient(to right, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.45)){% if b.display_image_url %}, url('{{ b.display_image_url|safe }}'){% elif b.image %}, url('{{ b.image.url|safe }}'){% elif b.image_url %}, url('{{ b.image_url|safe }}'){% endif %}; background-size: cover; background-position: center;">
         <div class="max-w-xl space-y-2 z-10">
             <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider">
-                Aksiya
+                {{ t.sale|default:"Aksiya" }}
             </span>
             <h2 class="text-xl sm:text-3xl font-black tracking-tight text-white drop-shadow-sm">{{ b.title|safe }}</h2>
             {% if b.subtitle %}
@@ -27,7 +27,7 @@
             <a href="/store/{{ store.subdomain }}/"
                class="px-4 py-2.5 rounded-2xl text-xs font-bold shrink-0 transition-all shadow-2xs flex items-center gap-2 {% if not current_category %}bg-brand text-white shadow-brand/20{% else %}bg-white border border-slate-200 text-slate-700 hover:bg-slate-50{% endif %}">
                 <i data-lucide="layout-grid" class="w-4 h-4"></i>
-                <span>Barchasi</span>
+                <span>{{ t.all|default:"Barchasi" }}</span>
             </a>
 
             {% for cat in categories %}
@@ -40,7 +40,7 @@
                 {% else %}
                 <i data-lucide="{{ cat.icon|default:'tag' }}" class="w-4 h-4"></i>
                 {% endif %}
-                <span>{% if lang == 'ru' %}{{ cat.name_ru|default:cat.name_uz }}{% elif lang == 'en' %}{{ cat.name_en|default:cat.name_uz }}{% else %}{{ cat.name_uz|default:cat.name_ru }}{% endif %}</span>
+                <span>{{ cat.display_name }}</span>
             </a>
             {% endfor %}
         </div>
@@ -50,9 +50,9 @@
     <div>
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-base sm:text-lg font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight">
-                {% if current_category %}{% if lang == 'ru' %}{{ current_category.name_ru|default:current_category.name_uz }}{% elif lang == 'en' %}{{ current_category.name_en|default:current_category.name_uz }}{% else %}{{ current_category.name_uz|default:current_category.name_ru }}{% endif %}{% else %}{% if lang == 'ru' %}Все товары{% elif lang == 'en' %}All Products{% else %}Barcha mahsulotlar{% endif %}{% endif %}
+                {% if current_category %}{{ current_category.display_name }}{% else %}{{ t.all_categories|default:"Barcha mahsulotlar" }}{% endif %}
             </h2>
-            <span class="text-xs font-bold text-slate-400">{{ products|length }} {% if lang == 'ru' %}товаров{% elif lang == 'en' %}items{% else %}ta mahsulot{% endif %}</span>
+            <span class="text-xs font-bold text-slate-400">{{ products|length }} {{ t.products_count|default:"ta mahsulot" }}</span>
         </div>
 
         {% if store.theme_card_style == 'compact' %}
@@ -63,7 +63,7 @@
                 <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="flex items-center gap-3.5 min-w-0 flex-1">
                     <div class="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
                         {% if product.primary_image_url %}
-                        <img src="{{ product.primary_image_url }}" alt="{{ product.name_uz }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                         {% else %}
                         <div class="w-full h-full flex items-center justify-center text-slate-300"><i data-lucide="image" class="w-6 h-6"></i></div>
                         {% endif %}
@@ -72,8 +72,8 @@
                         {% endif %}
                     </div>
                     <div class="min-w-0">
-                        <h3 class="font-bold text-xs sm:text-sm text-slate-900 truncate group-hover:text-brand transition-colors">{{ product.name_uz|default:product.name_ru }}</h3>
-                        <div class="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{{ product.description_uz|default:product.description_ru|striptags|default:"Mazali va yangi tayyorlangan" }}</div>
+                        <h3 class="font-bold text-xs sm:text-sm text-slate-900 truncate group-hover:text-brand transition-colors">{{ product.display_name }}</h3>
+                        <div class="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{{ product.display_description|striptags|default:"Mazali va yangi tayyorlangan" }}</div>
                         <div class="flex items-baseline gap-2 mt-1">
                             <span class="text-xs sm:text-sm font-black text-slate-900">{{ product.price|floatformat:0 }} UZS</span>
                             {% if product.old_price %}
@@ -87,7 +87,7 @@
                         <button type="button" @click="addToCart({{ product.id }})"
                                 class="px-3 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1 active:scale-95">
                             <i data-lucide="plus" class="w-4 h-4"></i>
-                            <span class="hidden sm:inline">Qo'shish</span>
+                            <span class="hidden sm:inline">{{ t.add|default:"Qo'shish" }}</span>
                         </button>
                     </template>
                     <template x-if="cartItems['{{ product.id }}_0']">
@@ -102,7 +102,7 @@
             {% empty %}
             <div class="col-span-full py-16 text-center text-slate-400 text-xs font-semibold">
                 <i data-lucide="package-search" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
-                <p>Hozircha mahsulotlar mavjud emas</p>
+                <p>{{ t.empty_products|default:"Hozircha mahsulotlar mavjud emas" }}</p>
             </div>
             {% endfor %}
         </div>
@@ -127,7 +127,7 @@
                      {% else %}aspect-[3/4]{% endif %}">
                     <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="block w-full h-full">
                         {% if product.primary_image_url %}
-                        <img src="{{ product.primary_image_url }}" alt="{{ product.name_uz }}" class="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300">
+                        <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300">
                         {% else %}
                         <div class="w-full h-full flex items-center justify-center text-slate-300">
                             <i data-lucide="image" class="w-12 h-12"></i>
@@ -164,14 +164,14 @@
                         <h3 class="mt-1 leading-snug">
                             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" 
                                class="font-bold text-xs sm:text-sm text-slate-800 hover:text-brand transition-colors line-clamp-2">
-                                {{ product.name_uz|default:product.name_ru }}
+                                {{ product.display_name }}
                             </a>
                         </h3>
 
                         <!-- Rating & Review -->
                         <div class="flex items-center gap-1 mt-1 text-[11px] text-amber-500 font-bold">
                             <span>⭐ {{ product.rating }}</span>
-                            <span class="text-slate-400 font-normal">({{ product.reviews_count }} sharh)</span>
+                            <span class="text-slate-400 font-normal">({{ product.reviews_count }} {{ t.reviews|default:"sharh" }})</span>
                         </div>
                     </div>
 
@@ -184,7 +184,7 @@
                                     {% elif store.theme_button_style == 'soft' %}bg-brand/10 text-brand hover:bg-brand/20
                                     {% else %}bg-brand hover:bg-brand-dark text-white{% endif %}">
                                 <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
-                                <span>Sotib olish</span>
+                                <span>{{ t.buy|default:"Sotib olish" }}</span>
                             </button>
                         </template>
                         <template x-if="cartItems['{{ product.id }}_0']">
@@ -200,7 +200,7 @@
             {% empty %}
             <div class="col-span-full py-16 text-center text-slate-400 text-xs font-semibold">
                 <i data-lucide="package-search" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
-                <p>Hozircha mahsulotlar mavjud emas</p>
+                <p>{{ t.empty_products|default:"Hozircha mahsulotlar mavjud emas" }}</p>
             </div>
             {% endfor %}
         </div>
@@ -215,7 +215,7 @@
             
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div class="text-[11px] font-bold text-slate-400">
-                    Bosh sahifa > {{ store.name }} > <span class="text-slate-900" x-text="selectedProduct?.name"></span>
+                    {{ t.home|default:"Bosh sahifa" }} > {{ store.name }} > <span class="text-slate-900" x-text="selectedProduct?.name"></span>
                 </div>
                 <button type="button" @click="selectedProduct = null" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
@@ -242,7 +242,7 @@
                         <h2 class="text-lg sm:text-xl font-black text-slate-900" x-text="selectedProduct?.name"></h2>
                         <div class="flex items-center gap-1.5 text-xs text-amber-500 font-bold mt-1">
                             <span>⭐ 5.0</span>
-                            <span class="text-slate-400 font-normal">(Sharhlar yo'q)</span>
+                            <span class="text-slate-400 font-normal">({{ t.no_reviews|default:"Sharhlar yo'q" }})</span>
                         </div>
                     </div>
 
@@ -269,7 +269,7 @@
                             <span class="font-bold text-xs text-slate-800">{{ store.name }}</span>
                         </div>
                         <button type="button" @click="startSellerChat()" class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
-                            <span>Sotuvchi bilan chat</span>
+                            <span>{{ t.seller_chat|default:"Sotuvchi bilan chat" }}</span>
                             <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
                         </button>
                     </div>
@@ -282,13 +282,13 @@
                             <button type="button" @click="qty++" class="w-8 h-8 rounded-lg bg-white flex items-center justify-center font-bold text-sm shadow-xs">+</button>
                         </div>
                         <button type="button" @click="addToCartWithQty()" class="flex-1 py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20">
-                            Savatchaga
+                            {{ t.add_to_cart|default:"Savatchaga" }}
                         </button>
                     </div>
 
                     <!-- Description -->
                     <div class="pt-3 border-t border-slate-100">
-                        <div class="font-bold text-xs text-slate-900 mb-1">Mahsulot haqida</div>
+                        <div class="font-bold text-xs text-slate-900 mb-1">{{ t.about_product|default:"Mahsulot haqida" }}</div>
                         <p class="text-xs text-slate-600 leading-relaxed" x-text="selectedProduct?.desc || 'Ushbu mahsulot do\'konimizda eng sara sifatda taqdim etiladi.'"></p>
                     </div>
                 </div>

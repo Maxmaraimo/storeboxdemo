@@ -1,6 +1,8 @@
 import json
 import random
 import datetime
+import urllib.parse
+import requests
 from decimal import Decimal
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
@@ -28,20 +30,19 @@ from apps.telegram_bot.services import send_telegram_notification, test_bot_conn
 def get_merchant_store(request):
     if not request.user.is_authenticated:
         return None
+    store = None
     curr_id = request.session.get('merchant_current_store_id')
     if curr_id:
         store = request.user.stores.filter(id=curr_id, is_active=True).first()
-        if store:
-            return store
-        if request.user.is_superuser:
+        if not store and request.user.is_superuser:
             store = Store.objects.filter(id=curr_id, is_active=True).first()
-            if store:
-                return store
-    store = request.user.stores.filter(is_active=True).first()
+    if not store:
+        store = request.user.stores.filter(is_active=True).first()
     if not store and request.user.is_superuser:
         store = Store.objects.filter(is_active=True).first()
     if store:
         request.session['merchant_current_store_id'] = store.id
+        request.session['current_store_subdomain'] = store.subdomain
     return store
 
 
@@ -218,6 +219,239 @@ def upload_banner_api(request):
     })
 
 
+UZ_LOCAL_PLACES = [
+    {'name': "Samarqand shahri", 'display_name': "Samarqand, Samarqand viloyati, O'zbekiston", 'lat': 39.6542, 'lng': 66.9597, 'city': "Samarqand", 'street': ""},
+    {'name': "Abu Rayhon Beruniy ko'chasi", 'display_name': "Abu Rayhon Beruniy ko'chasi, Samarqand, O'zbekiston", 'lat': 39.6601, 'lng': 66.9502, 'city': "Samarqand", 'street': "Beruniy ko'chasi"},
+    {'name': "Registon maydoni", 'display_name': "Registon maydoni, Samarqand, O'zbekiston", 'lat': 39.6547, 'lng': 66.9758, 'city': "Samarqand", 'street': "Registon"},
+    {'name': "Toshkent shahri", 'display_name': "Toshkent shahri, O'zbekiston", 'lat': 41.2995, 'lng': 69.2401, 'city': "Toshkent", 'street': ""},
+    {'name': "Beruniy shoh ko'chasi", 'display_name': "Beruniy shoh ko'chasi, Olmazor tumani, Toshkent", 'lat': 41.3456, 'lng': 69.2089, 'city': "Toshkent", 'street': "Beruniy shoh ko'chasi"},
+    {'name': "Beruniy metro bekati", 'display_name': "Beruniy metro bekati, Toshkent, O'zbekiston", 'lat': 41.3443, 'lng': 69.2052, 'city': "Toshkent", 'street': "Beruniy"},
+    {'name': "Chilonzor tumani", 'display_name': "Chilonzor tumani, Toshkent, O'zbekiston", 'lat': 41.2858, 'lng': 69.2035, 'city': "Toshkent", 'street': "Chilonzor"},
+    {'name': "Bunyodkor shoh ko'chasi", 'display_name': "Bunyodkor shoh ko'chasi, Toshkent, O'zbekiston", 'lat': 41.2801, 'lng': 69.2155, 'city': "Toshkent", 'street': "Bunyodkor"},
+    {'name': "Yunusobod tumani", 'display_name': "Yunusobod tumani, Toshkent, O'zbekiston", 'lat': 41.3644, 'lng': 69.2882, 'city': "Toshkent", 'street': "Amir Temur"},
+    {'name': "Amir Temur xiyoboni", 'display_name': "Amir Temur xiyoboni, Mirobod tumani, Toshkent", 'lat': 41.3111, 'lng': 69.2797, 'city': "Toshkent", 'street': "Amir Temur"},
+    {'name': "Mirzo Ulug'bek tumani", 'display_name': "Mirzo Ulug'bek tumani, Toshkent, O'zbekiston", 'lat': 41.3288, 'lng': 69.3345, 'city': "Toshkent", 'street': ""},
+    {'name': "Buxoro shahri", 'display_name': "Buxoro shahri, Buxoro viloyati, O'zbekiston", 'lat': 39.7681, 'lng': 64.4556, 'city': "Buxoro", 'street': ""},
+    {'name': "Namangan shahri", 'display_name': "Namangan shahri, Namangan viloyati, O'zbekiston", 'lat': 40.9983, 'lng': 71.6726, 'city': "Namangan", 'street': ""},
+    {'name': "Andijon shahri", 'display_name': "Andijon shahri, Andijon viloyati, O'zbekiston", 'lat': 40.7821, 'lng': 72.3442, 'city': "Andijon", 'street': ""},
+    {'name': "Farg'ona shahri", 'display_name': "Farg'ona shahri, Farg'ona viloyati, O'zbekiston", 'lat': 40.3842, 'lng': 71.7843, 'city': "Farg'ona", 'street': ""},
+    {'name': "Qo'qon shahri", 'display_name': "Qo'qon shahri, Farg'ona viloyati, O'zbekiston", 'lat': 40.5286, 'lng': 70.9425, 'city': "Qo'qon", 'street': ""},
+    {'name': "Qarshi shahri", 'display_name': "Qarshi shahri, Qashqadaryo viloyati, O'zbekiston", 'lat': 38.8606, 'lng': 65.7891, 'city': "Qarshi", 'street': ""},
+    {'name': "Termiz shahri", 'display_name': "Termiz shahri, Surxondaryo viloyati, O'zbekiston", 'lat': 37.2242, 'lng': 67.2783, 'city': "Termiz", 'street': ""},
+    {'name': "Urganch shahri", 'display_name': "Urganch shahri, Xorazm viloyati, O'zbekiston", 'lat': 41.5504, 'lng': 60.6315, 'city': "Urganch", 'street': ""},
+    {'name': "Xiva shahri", 'display_name': "Xiva shahri (Ichan Qal'a), Xorazm viloyati, O'zbekiston", 'lat': 41.3783, 'lng': 60.3639, 'city': "Xiva", 'street': ""},
+    {'name': "Nukus shahri", 'display_name': "Nukus shahri, Qoraqalpog'iston Respublikasi", 'lat': 42.4602, 'lng': 59.6166, 'city': "Nukus", 'street': ""},
+    {'name': "Navoiy shahri", 'display_name': "Navoiy shahri, Navoiy viloyati, O'zbekiston", 'lat': 40.0844, 'lng': 65.3792, 'city': "Navoiy", 'street': ""},
+    {'name': "Jizzax shahri", 'display_name': "Jizzax shahri, Jizzax viloyati, O'zbekiston", 'lat': 40.1158, 'lng': 67.8422, 'city': "Jizzax", 'street': ""},
+    {'name': "Guliston shahri", 'display_name': "Guliston shahri, Sirdaryo viloyati, O'zbekiston", 'lat': 40.4897, 'lng': 68.7842, 'city': "Guliston", 'street': ""},
+]
+
+
+def geo_search_api(request):
+    """
+    Geocoding search API: searches places, cities, and streets in Uzbekistan and worldwide.
+    Supports ?q=..., ?lat=..., ?lng=... for strict local proximity.
+    """
+    q = request.GET.get('q', '').strip()
+    if not q:
+        return JsonResponse({'results': []})
+
+    lat = request.GET.get('lat')
+    lng = request.GET.get('lng') or request.GET.get('lon')
+
+    results = []
+    # 1. Try Photon API with lat/lon proximity if provided
+    try:
+        if lat and lng:
+            url = f"https://photon.komoot.io/api/?q={urllib.parse.quote(q)}&lat={lat}&lon={lng}&limit=10&lang=uz"
+        else:
+            url = f"https://photon.komoot.io/api/?q={urllib.parse.quote(q)}&limit=10&lang=uz"
+        resp = requests.get(url, headers={'User-Agent': 'StoreBox-Platform/1.0 (support@storebox.uz)'}, timeout=3)
+        if resp.status_code == 200:
+            data = resp.json()
+            for f in data.get('features', []):
+                p = f.get('properties', {})
+                coords = f.get('geometry', {}).get('coordinates', [])
+                if len(coords) >= 2:
+                    c_lng, c_lat = float(coords[0]), float(coords[1])
+                    name = p.get('name') or ''
+                    street = p.get('street') or ''
+                    housenumber = p.get('housenumber') or ''
+                    district = p.get('district') or p.get('locality') or ''
+                    city = p.get('city') or p.get('state') or ''
+                    country = p.get('country') or ''
+
+                    parts = []
+                    if name:
+                        parts.append(name)
+                    if street and street != name:
+                        if housenumber:
+                            parts.append(f"{street}, {housenumber}")
+                        else:
+                            parts.append(street)
+                    elif not name and street:
+                        parts.append(f"{street}, {housenumber}" if housenumber else street)
+                    if district and district not in parts:
+                        parts.append(district)
+                    if city and city not in parts:
+                        parts.append(city)
+                    if country and country not in parts:
+                        parts.append(country)
+
+                    display_str = ", ".join(parts) if parts else (name or street or city)
+                    results.append({
+                        'display_name': display_str,
+                        'name': name or street or display_str,
+                        'lat': c_lat,
+                        'lng': c_lng,
+                        'city': city,
+                        'street': street,
+                    })
+    except Exception:
+        pass
+
+    # 2. If Photon returned nothing or failed, try Nominatim
+    if not results:
+        try:
+            if lat and lng:
+                flt_lat, flt_lng = float(lat), float(lng)
+                vbox = f"{flt_lng-0.5},{flt_lat+0.3},{flt_lng+0.5},{flt_lat-0.3}"
+                url = f"https://nominatim.openstreetmap.org/search?format=json&q={urllib.parse.quote(q)}&viewbox={vbox}&bounded=0&countrycodes=uz&limit=8"
+            else:
+                url = f"https://nominatim.openstreetmap.org/search?format=json&q={urllib.parse.quote(q)}&countrycodes=uz&limit=8"
+            resp = requests.get(url, headers={'User-Agent': 'StoreBox-Platform/1.0 (support@storebox.uz)'}, timeout=3)
+            if resp.status_code == 200:
+                data = resp.json()
+                for item in data:
+                    results.append({
+                        'display_name': item.get('display_name', ''),
+                        'name': item.get('name', '') or item.get('display_name', '').split(',')[0],
+                        'lat': float(item.get('lat')),
+                        'lng': float(item.get('lon')),
+                        'city': '',
+                        'street': ''
+                    })
+        except Exception:
+            pass
+
+    # 3. Local fallback match for instant, offline, and reliable search
+    q_lower = q.lower()
+    local_matches = []
+    for place in UZ_LOCAL_PLACES:
+        if any(term in place['display_name'].lower() or term in place['name'].lower() for term in q_lower.split()):
+            if not any(abs(r['lat'] - place['lat']) < 0.001 and abs(r['lng'] - place['lng']) < 0.001 for r in results):
+                local_matches.append(place)
+
+    results.extend(local_matches)
+    return JsonResponse({'results': results})
+
+
+def geo_reverse_api(request):
+    """
+    Reverse geocoding API: converts lat & lng coordinates to a human-readable street address.
+    """
+    lat = request.GET.get('lat')
+    lng = request.GET.get('lng') or request.GET.get('lon')
+    if not lat or not lng:
+        return JsonResponse({'status': 'error', 'message': 'lat va lng talab qilinadi'}, status=400)
+
+    try:
+        lat = float(lat)
+        lng = float(lng)
+    except (TypeError, ValueError):
+        return JsonResponse({'status': 'error', 'message': 'Koordinatalar noto‘g‘ri'}, status=400)
+
+    # 1. Try Photon reverse (captures exact shop/POI name like TEMURXON)
+    try:
+        url = f"https://photon.komoot.io/reverse?lat={lat}&lon={lng}"
+        resp = requests.get(url, headers={'User-Agent': 'StoreBox-Platform/1.0 (support@storebox.uz)'}, timeout=3)
+        if resp.status_code == 200:
+            data = resp.json()
+            features = data.get('features', [])
+            if features:
+                p = features[0].get('properties', {})
+                name = p.get('name') or ''
+                street = p.get('street') or ''
+                housenumber = p.get('housenumber') or ''
+                district = p.get('district') or p.get('locality') or ''
+                city = p.get('city') or p.get('state') or ''
+                country = p.get('country') or ''
+
+                parts = []
+                if name:
+                    parts.append(name)
+                if street and street != name:
+                    if housenumber:
+                        parts.append(f"{street}, {housenumber}")
+                    else:
+                        parts.append(street)
+                elif not name and street:
+                    parts.append(f"{street}, {housenumber}" if housenumber else street)
+
+                if district and district not in parts:
+                    parts.append(district)
+                if city and city not in parts:
+                    parts.append(city)
+                if country and country not in parts:
+                    parts.append(country)
+
+                formatted = ", ".join(parts) if parts else name
+                if formatted:
+                    return JsonResponse({'status': 'ok', 'address': formatted, 'name': name, 'lat': lat, 'lng': lng})
+    except Exception:
+        pass
+
+    # 2. Try Nominatim reverse
+    try:
+        url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lng}&zoom=18&addressdetails=1"
+        resp = requests.get(url, headers={'User-Agent': 'StoreBox-Platform/1.0 (support@storebox.uz)'}, timeout=3)
+        if resp.status_code == 200:
+            data = resp.json()
+            addr = data.get('address', {})
+            road = addr.get('road') or addr.get('pedestrian') or addr.get('street') or ''
+            house = addr.get('house_number') or ''
+            suburb = addr.get('suburb') or addr.get('neighbourhood') or addr.get('residential') or ''
+            city = addr.get('city') or addr.get('town') or addr.get('state') or ''
+            amenity = addr.get('amenity') or addr.get('shop') or addr.get('building') or addr.get('tourism') or ''
+
+            parts = []
+            if amenity:
+                parts.append(amenity)
+            if road:
+                parts.append(f"{road}, {house}" if house else road)
+            if suburb and suburb not in parts:
+                parts.append(suburb)
+            if city and city not in parts:
+                parts.append(city)
+
+            display_name = ", ".join(parts) if parts else data.get('display_name', '')
+            if display_name:
+                return JsonResponse({'status': 'ok', 'address': display_name, 'name': amenity or road, 'lat': lat, 'lng': lng})
+    except Exception:
+        pass
+
+    # 3. If very close to a known landmark (< 300 meters)
+    closest_place = None
+    min_dist = float('inf')
+    for p in UZ_LOCAL_PLACES:
+        dist = (p['lat'] - lat)**2 + (p['lng'] - lng)**2
+        if dist < min_dist:
+            min_dist = dist
+            closest_place = p
+
+    if closest_place and min_dist < 0.0001:
+        return JsonResponse({'status': 'ok', 'address': closest_place['display_name'], 'lat': lat, 'lng': lng})
+
+    # 4. Fallback with smart city tag and coordinates
+    guessed_city = "Samarqand" if (39.5 < lat < 39.8 and 66.8 < lng < 67.2) else ("Toshkent" if (41.1 < lat < 41.5 and 69.1 < lng < 69.4) else "O'zbekiston")
+    return JsonResponse({
+        'status': 'ok',
+        'address': f"{guessed_city}, Tanlangan nuqta ({lat:.5f}, {lng:.5f})",
+        'lat': lat,
+        'lng': lng
+    })
+
+
 # -----------------------------------------------------------------
 # AUTH & STOREBOX ONBOARDING WIZARD
 # -----------------------------------------------------------------
@@ -232,29 +466,83 @@ def register_view(request):
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
         password_confirm = request.POST.get('password_confirm', '')
+        country_code = request.POST.get('country_code', 'uz').lower().strip()
 
-        if not phone or not password:
-            error = 'Пожалуйста, укажите номер телефона и пароль'
-        elif password != password_confirm:
-            error = 'Пароли не совпадают'
-        elif len(password) < 6:
-            error = 'Пароль должен содержать минимум 6 символов'
+        import re
+        clean_digits = re.sub(r'\D', '', phone)
+
+        # Country-specific length & prefix validation
+        if not phone:
+            error = "Iltimos, telefon raqamini kiriting"
+        elif country_code == 'uz':
+            if len(clean_digits) == 9:
+                clean_digits = '998' + clean_digits
+            if len(clean_digits) != 12 or not clean_digits.startswith('998'):
+                error = "Iltimos, O'zbekiston telefon raqamini to'liq kiriting (9 ta raqam, masalan: +998 90 123 45 67)"
+        elif country_code in ['ru', 'kz']:
+            if len(clean_digits) == 10:
+                clean_digits = '7' + clean_digits
+            if len(clean_digits) != 11 or not clean_digits.startswith('7'):
+                error = "Iltimos, telefon raqamini to'liq kiriting (10 ta raqam, masalan: +7 912 345 67 89)"
+        elif country_code == 'tr':
+            if len(clean_digits) == 10:
+                clean_digits = '90' + clean_digits
+            if len(clean_digits) != 12 or not clean_digits.startswith('90'):
+                error = "Iltimos, Turkiya telefon raqamini to'liq kiriting (10 ta raqam, masalan: +90 532 123 45 67)"
+        elif country_code == 'kg':
+            if len(clean_digits) == 9:
+                clean_digits = '996' + clean_digits
+            if len(clean_digits) != 12 or not clean_digits.startswith('996'):
+                error = "Iltimos, Qirg'iziston telefon raqamini to'liq kiriting (9 ta raqam, masalan: +996 555 12 34 56)"
+        elif country_code == 'tj':
+            if len(clean_digits) == 9:
+                clean_digits = '992' + clean_digits
+            if len(clean_digits) != 12 or not clean_digits.startswith('992'):
+                error = "Iltimos, Tojikiston telefon raqamini to'liq kiriting (9 ta raqam, masalan: +992 90 123 4567)"
+        elif country_code == 'ae':
+            if len(clean_digits) == 9:
+                clean_digits = '971' + clean_digits
+            if len(clean_digits) != 12 or not clean_digits.startswith('971'):
+                error = "Iltimos, BAA telefon raqamini to'liq kiriting (9 ta raqam, masalan: +971 50 123 4567)"
+        elif country_code == 'us':
+            if len(clean_digits) == 10:
+                clean_digits = '1' + clean_digits
+            if len(clean_digits) != 11 or not clean_digits.startswith('1'):
+                error = "Iltimos, AQSh/Kanada telefon raqamini to'liq kiriting (10 ta raqam, masalan: +1 202 555 0123)"
         else:
-            username = phone.replace('+', '').replace(' ', '').replace('-', '')
-            if User.objects.filter(username=username).exists():
-                error = 'Пользователь с таким номером уже зарегистрирован'
+            if len(clean_digits) < 8 or len(clean_digits) > 15:
+                error = "Iltimos, to'liq xalqaro telefon raqamini kiriting"
+
+        if not error:
+            normalized_phone = f"+{clean_digits}"
+            username = clean_digits
+
+            from django.db.models import Q
+            if User.objects.filter(Q(username=username) | Q(phone=normalized_phone) | Q(phone=phone)).exists():
+                error = "Ushbu telefon raqamiga ega foydalanuvchi allaqachon ro'yxatdan o'tgan. Iltimos, tizimga kiring."
+            elif not password:
+                error = 'Iltimos, maxfiy parolni kiriting'
+            elif password != password_confirm:
+                error = 'Parollar bir-biriga mos kelmadi'
+            elif len(password) < 6:
+                error = "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
             else:
                 user = User.objects.create_user(
                     username=username,
                     email=email,
-                    phone=phone,
+                    phone=normalized_phone,
                     password=password,
                     role=User.Roles.MERCHANT
                 )
                 login(request, user)
                 return redirect('dashboard:onboarding')
 
-    return render(request, 'dashboard/auth/register.html', {'error': error})
+    return render(request, 'dashboard/auth/register.html', {
+        'error': error,
+        'submitted_country': request.POST.get('country_code', 'uz'),
+        'submitted_phone': request.POST.get('phone', ''),
+        'submitted_email': request.POST.get('email', '')
+    })
 
 
 def login_view(request):
@@ -346,27 +634,48 @@ def onboarding_wizard_view(request):
 
             about_us_uz = request.POST.get('about_us_uz', '').strip()
             about_us_ru = request.POST.get('about_us_ru', '').strip()
-            phone = request.POST.get('phone', request.user.phone or '')
+            
+            raw_phone = request.POST.get('phone', request.user.phone or '').strip()
+            clean_digits = ''.join(c for c in raw_phone if c.isdigit())
+            phone = f"+{clean_digits}" if clean_digits else ''
 
-            instagram = request.POST.get('instagram', '').strip()
-            telegram = request.POST.get('telegram', '').strip()
-            facebook = request.POST.get('facebook', '').strip()
-            youtube = request.POST.get('youtube', '').strip()
-            tiktok = request.POST.get('tiktok', '').strip()
-            whatsapp = request.POST.get('whatsapp', '').strip()
+            def _clean_social(val, base_url):
+                val = (val or '').strip()
+                if not val:
+                    return ''
+                if val.startswith('http://') or val.startswith('https://'):
+                    return val
+                val = val.lstrip('@')
+                return f"{base_url}{val}"
+
+            instagram = _clean_social(request.POST.get('instagram', ''), 'https://instagram.com/')
+            telegram = _clean_social(request.POST.get('telegram', ''), 'https://t.me/')
+            facebook = _clean_social(request.POST.get('facebook', ''), 'https://facebook.com/')
+            youtube = _clean_social(request.POST.get('youtube', ''), 'https://youtube.com/')
+            tiktok = _clean_social(request.POST.get('tiktok', ''), 'https://tiktok.com/@')
+            whatsapp = _clean_social(request.POST.get('whatsapp', ''), 'https://wa.me/')
 
             schedule = {}
             for day in ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']:
+                is_closed = request.POST.get(f'schedule_{day}_closed') in ['on', 'true', '1']
+                open_t = request.POST.get(f'schedule_{day}_open', '09:00').strip() or '09:00'
+                close_t = request.POST.get(f'schedule_{day}_close', '22:00').strip() or '22:00'
                 schedule[day] = {
-                    'open': request.POST.get(f'schedule_{day}_open', '09:00'),
-                    'close': request.POST.get(f'schedule_{day}_close', '23:59'),
-                    'closed': request.POST.get(f'schedule_{day}_closed') == 'on'
+                    'open': open_t,
+                    'close': close_t,
+                    'closed': is_closed
                 }
 
-            branch_name = request.POST.get('branch_name', "Do'kon filiali").strip()
-            branch_address = request.POST.get('branch_address', "Toshkent, Beruniy ko'chasi").strip()
-            branch_lat = float(request.POST.get('branch_lat', '41.2995') or '41.2995')
-            branch_lng = float(request.POST.get('branch_lng', '69.2401') or '69.2401')
+            branch_name = request.POST.get('branch_name', "Asosiy filial").strip() or "Asosiy filial"
+            branch_address = request.POST.get('branch_address', '').strip() or request.POST.get('address', "Toshkent shahri").strip()
+            try:
+                branch_lat = float(request.POST.get('branch_lat', '41.2995') or '41.2995')
+            except (ValueError, TypeError):
+                branch_lat = 41.2995
+            try:
+                branch_lng = float(request.POST.get('branch_lng', '69.2401') or '69.2401')
+            except (ValueError, TypeError):
+                branch_lng = 69.2401
 
             # Create Store
             store = Store.objects.create(
@@ -399,6 +708,9 @@ def onboarding_wizard_view(request):
                 free_delivery_threshold=Decimal('150000'),
                 delivery_time_estimate='30-45 min'
             )
+
+            request.session['merchant_current_store_id'] = store.id
+            request.session['current_store_subdomain'] = store.subdomain
 
             # Create Merchant Balance & Trial
             MerchantBalance.objects.create(store=store, balance=Decimal('0'), trial_days_left=7)
@@ -920,7 +1232,7 @@ def orders_list_view(request):
     if not store:
         return redirect('dashboard:onboarding')
 
-    orders = Order.objects.filter(store=store).prefetch_related('items', 'branch')
+    orders = Order.objects.filter(store=store).prefetch_related('items', 'items__product', 'branch').order_by('-created_at')
     status_filter = request.GET.get('status', 'ALL')
 
     if status_filter == 'NEW':
@@ -929,9 +1241,9 @@ def orders_list_view(request):
         orders = orders.filter(status=Order.OrderStatuses.PROCESSING)
     elif status_filter == 'READY':
         orders = orders.filter(status=Order.OrderStatuses.READY)
-    elif status_filter == 'IN_DELIVERY':
+    elif status_filter == 'IN_DELIVERY' or status_filter == 'SHIPPED':
         orders = orders.filter(status=Order.OrderStatuses.IN_DELIVERY)
-    elif status_filter == 'HISTORY':
+    elif status_filter == 'HISTORY' or status_filter == 'DELIVERED':
         orders = orders.filter(status__in=[Order.OrderStatuses.COMPLETED, Order.OrderStatuses.CANCELLED])
 
     query = request.GET.get('q', '').strip()
@@ -942,13 +1254,22 @@ def orders_list_view(request):
             Q(customer_phone__icontains=query)
         )
 
+    all_store_orders = Order.objects.filter(store=store)
+    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_orders = all_store_orders.filter(created_at__gte=today_start)
+    today_revenue = today_orders.exclude(status=Order.OrderStatuses.CANCELLED).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+    total_revenue = all_store_orders.exclude(status=Order.OrderStatuses.CANCELLED).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+
     counts = {
-        'all': Order.objects.filter(store=store).count(),
-        'new': Order.objects.filter(store=store, status=Order.OrderStatuses.NEW).count(),
-        'processing': Order.objects.filter(store=store, status=Order.OrderStatuses.PROCESSING).count(),
-        'ready': Order.objects.filter(store=store, status=Order.OrderStatuses.READY).count(),
-        'in_delivery': Order.objects.filter(store=store, status=Order.OrderStatuses.IN_DELIVERY).count(),
-        'history': Order.objects.filter(store=store, status__in=[Order.OrderStatuses.COMPLETED, Order.OrderStatuses.CANCELLED]).count(),
+        'all': all_store_orders.count(),
+        'new': all_store_orders.filter(status=Order.OrderStatuses.NEW).count(),
+        'processing': all_store_orders.filter(status=Order.OrderStatuses.PROCESSING).count(),
+        'ready': all_store_orders.filter(status=Order.OrderStatuses.READY).count(),
+        'in_delivery': all_store_orders.filter(status=Order.OrderStatuses.IN_DELIVERY).count(),
+        'history': all_store_orders.filter(status__in=[Order.OrderStatuses.COMPLETED, Order.OrderStatuses.CANCELLED]).count(),
+        'today_count': today_orders.count(),
+        'today_revenue': today_revenue,
+        'total_revenue': total_revenue,
     }
 
     return render(request, 'dashboard/orders/orders_list.html', {
@@ -1273,6 +1594,7 @@ def platforms_view(request):
             store.save()
             msg = "Domen sozlamalari muvaffaqiyatli saqlandi!"
         elif action == 'save_design_theme':
+            old_niche = store.theme_business_niche
             primary_color = request.POST.get('primary_color', '').strip()
             if primary_color:
                 store.primary_color = primary_color
@@ -1320,9 +1642,16 @@ def platforms_view(request):
                 primary_banner.is_active = True
                 primary_banner.save()
 
-            # If user checked 'generate_catalog', automatically populate products & photos for niche
-            if request.POST.get('generate_catalog') == '1' and store.theme_business_niche:
-                from apps.stores.ai_designer import apply_niche_catalog_to_store
+            # If user checked 'generate_catalog', or niche changed, or catalog is mismatched, automatically sync catalog
+            from apps.catalog.models import Category
+            from apps.stores.ai_designer import NICHE_PRESETS, apply_niche_catalog_to_store
+            active_cat_slugs = set(Category.objects.filter(store=store, is_active=True).values_list('slug', flat=True))
+            niche_data = NICHE_PRESETS.get(store.theme_business_niche, {})
+            expected_slugs = set(c['slug'] for c in niche_data.get('categories', []))
+            has_mismatched_catalog = bool(expected_slugs and not (expected_slugs & active_cat_slugs))
+            niche_changed = bool(old_niche and store.theme_business_niche != old_niche)
+
+            if (request.POST.get('generate_catalog') == '1' or niche_changed or has_mismatched_catalog) and store.theme_business_niche:
                 apply_niche_catalog_to_store(
                     store,
                     store.theme_business_niche,
@@ -1806,8 +2135,12 @@ def quick_create_store_api(request):
 
 @login_required
 def switch_store_api(request, store_id):
-    store = get_object_or_404(Store, id=store_id, owner=request.user)
+    if request.user.is_superuser:
+        store = get_object_or_404(Store, id=store_id)
+    else:
+        store = get_object_or_404(Store, id=store_id, owner=request.user)
     request.session['merchant_current_store_id'] = store.id
+    request.session['current_store_subdomain'] = store.subdomain
     return redirect('dashboard:home')
 
 

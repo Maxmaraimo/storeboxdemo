@@ -487,15 +487,79 @@
                                   class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"></textarea>
                     </div>
 
-                    <!-- Phone & Socials -->
+                    <!-- Phone & Currency -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Aloqa uchun telefon raqami *</label>
-                            <input type="tel" name="phone" value="+998 " required class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-xs font-bold text-slate-700">Aloqa uchun telefon raqami *</label>
+                                <span class="text-[11px] font-bold text-slate-500" x-text="selectedCountry ? selectedCountry.name + ' (' + selectedCountry.dialCode + ')' : ''"></span>
+                            </div>
+                            
+                            <!-- Phone Input Group with Country Selector -->
+                            <div class="relative flex rounded-xl border border-slate-200 bg-slate-50 transition-all focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/10"
+                                 :class="phoneError ? 'border-rose-300 ring-2 ring-rose-100' : ''">
+                                
+                                <!-- Country Trigger Button -->
+                                <button type="button" @click="countryMenuOpen = !countryMenuOpen" id="onboardingCountryTriggerBtn"
+                                        class="flex items-center gap-1.5 px-3 py-2.5 bg-slate-100/80 hover:bg-slate-200/70 border-r border-slate-200 rounded-l-xl text-xs font-bold text-slate-700 transition-colors shrink-0">
+                                    <span class="text-base" x-text="selectedCountry ? selectedCountry.flag : '🇺🇿'"></span>
+                                    <span class="font-mono text-xs text-slate-900" x-text="selectedCountry ? selectedCountry.dialCode : '+998'"></span>
+                                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="countryMenuOpen ? 'rotate-180' : ''"></i>
+                                </button>
+
+                                <!-- Formatted Phone Input -->
+                                <input type="tel" x-ref="phoneInput" id="onboardingPhoneInput"
+                                       :value="phoneDisplayValue"
+                                       @keydown="handlePhoneKeyDown($event)"
+                                       @input="handlePhoneInput($event)"
+                                       @paste="handlePhonePaste($event)"
+                                       :placeholder="selectedCountry ? selectedCountry.placeholder : '(90) 123-45-67'"
+                                       required
+                                       class="w-full px-3.5 py-2.5 bg-transparent text-xs font-mono font-bold text-slate-900 placeholder-slate-400 focus:outline-none">
+
+                                <!-- Hidden input for clean form submission -->
+                                <input type="hidden" name="phone" :value="fullPhoneNumber">
+
+                                <!-- Country Dropdown Menu -->
+                                <div x-show="countryMenuOpen" @click.away="countryMenuOpen = false" x-cloak
+                                     class="absolute left-0 top-full mt-1.5 w-72 max-h-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col">
+                                    <!-- Search Inside Dropdown -->
+                                    <div class="p-2 border-b border-slate-100 bg-slate-50/70">
+                                        <input type="text" x-model="countrySearch" placeholder="Mamlakat yoki kodni qidirish..."
+                                               class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-brand">
+                                    </div>
+                                    <!-- Country Options List -->
+                                    <div class="overflow-y-auto divide-y divide-slate-50 py-1">
+                                        <template x-for="c in filteredCountries" :key="c.id">
+                                            <button type="button" @click="selectPhoneCountry(c)"
+                                                    class="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-slate-50 transition-colors text-xs"
+                                                    :class="selectedCountry && selectedCountry.id === c.id ? 'bg-emerald-50/60 font-bold' : ''">
+                                                <div class="flex items-center gap-2.5 min-w-0">
+                                                    <span class="text-base shrink-0" x-text="c.flag"></span>
+                                                    <div class="truncate">
+                                                        <span class="text-slate-900 font-semibold" x-text="c.name"></span>
+                                                        <span class="text-[10px] text-slate-400 block" x-text="c.nameRu"></span>
+                                                    </div>
+                                                </div>
+                                                <span class="font-mono text-xs font-bold text-slate-500 shrink-0 ml-2" x-text="c.dialCode"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Phone Format Info & Counter -->
+                            <div class="flex items-center justify-between mt-1 text-[11px] text-slate-400">
+                                <span>Namuna: <strong class="text-slate-600 font-mono" x-text="(selectedCountry ? selectedCountry.dialCode : '+998') + ' ' + (selectedCountry ? selectedCountry.placeholder : '(90) 123-45-67')"></strong></span>
+                                <span x-show="selectedCountry && selectedCountry.id !== 'other'"
+                                      :class="isPhoneComplete ? 'text-emerald-600 font-bold' : 'text-slate-400'"
+                                      x-text="isPhoneComplete ? '✓ To\'liq kiritildi' : (rawPhoneDigits.length + ' / ' + selectedCountry.digits + ' ta raqam')"></span>
+                            </div>
                         </div>
+
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Valyuta</label>
-                            <select name="currency" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold">
+                            <select name="currency" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
                                 <option value="UZS">UZS (O'zbek so'mi)</option>
                                 <option value="USD">USD (AQSH dollari)</option>
                                 <option value="RUB">RUB (Rossiya rubli)</option>
@@ -505,50 +569,197 @@
                         </div>
                     </div>
 
-                    <!-- 6 Social Links -->
+                    <!-- 6 Social Links with Branded Icons -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Ijtimoiy tarmoqlarga havola</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Ijtimoiy tarmoqlarga havola</label>
+                        <p class="text-[11px] text-slate-400 mb-2.5">Do'kon vitrinangiz va sahifalaringizda ushbu tarmoqlarning faol havolalari va ikonkasi ko'rinadi</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <input type="text" name="instagram" placeholder="Instagram havolasi" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                            <input type="text" name="telegram" placeholder="Telegram kanali" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                            <input type="text" name="facebook" placeholder="Facebook" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                            <input type="text" name="youtube" placeholder="YouTube" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                            <input type="text" name="tiktok" placeholder="TikTok" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                            <input type="text" name="whatsapp" placeholder="WhatsApp" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                            <!-- Instagram -->
+                            <div class="relative flex items-center">
+                                <div class="absolute left-3 text-pink-500 pointer-events-none"><i data-lucide="instagram" class="w-4 h-4"></i></div>
+                                <input type="text" name="instagram" placeholder="Instagram havolasi yoki @username"
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand">
+                            </div>
+                            <!-- Telegram -->
+                            <div class="relative flex items-center">
+                                <div class="absolute left-3 text-sky-500 pointer-events-none"><i data-lucide="send" class="w-4 h-4"></i></div>
+                                <input type="text" name="telegram" placeholder="Telegram kanali yoki guruhi"
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand">
+                            </div>
+                            <!-- Facebook -->
+                            <div class="relative flex items-center">
+                                <div class="absolute left-3 text-blue-600 pointer-events-none"><i data-lucide="facebook" class="w-4 h-4"></i></div>
+                                <input type="text" name="facebook" placeholder="Facebook havolasi"
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand">
+                            </div>
+                            <!-- YouTube -->
+                            <div class="relative flex items-center">
+                                <div class="absolute left-3 text-red-600 pointer-events-none"><i data-lucide="youtube" class="w-4 h-4"></i></div>
+                                <input type="text" name="youtube" placeholder="YouTube kanali"
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand">
+                            </div>
+                            <!-- TikTok -->
+                            <div class="relative flex items-center">
+                                <div class="absolute left-3 text-slate-800 pointer-events-none"><i data-lucide="music" class="w-4 h-4"></i></div>
+                                <input type="text" name="tiktok" placeholder="TikTok @username"
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand">
+                            </div>
+                            <!-- WhatsApp -->
+                            <div class="relative flex items-center">
+                                <div class="absolute left-3 text-emerald-600 pointer-events-none"><i data-lucide="message-circle" class="w-4 h-4"></i></div>
+                                <input type="text" name="whatsapp" placeholder="WhatsApp raqami (+998...)"
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand">
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Ish vaqti (Working Hours Matrix) -->
+                    <!-- Ish vaqti (Working Hours Matrix with Day Off Toggle) -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Ish vaqti</label>
-                        <div class="space-y-2 border border-slate-100 rounded-2xl p-4 bg-slate-50">
-                            <template x-for="day in ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba']" :key="day">
-                                <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-200/50 last:border-0">
-                                    <div class="w-28 font-bold text-slate-700" x-text="day"></div>
-                                    <div class="flex items-center gap-2">
-                                        <input type="time" value="00:00" class="px-2 py-1 rounded bg-white border border-slate-200 text-[11px]">
-                                        <span>-</span>
-                                        <input type="time" value="23:59" class="px-2 py-1 rounded bg-white border border-slate-200 text-[11px]">
-                                        <button type="button" class="w-6 h-6 rounded-full bg-emerald-50 text-brand flex items-center justify-center font-bold text-xs">+</button>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700">Ish vaqti</label>
+                                <p class="text-[11px] text-slate-400">Har bir kun uchun ish vaqtini belgilang yoki dam olish kuni (yopiq) qilib sozlang</p>
+                            </div>
+                            <!-- Quick Presets -->
+                            <div class="flex flex-wrap gap-1.5 text-[10px] font-bold">
+                                <button type="button" @click="applySchedulePreset('standard')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">09:00 - 22:00</button>
+                                <button type="button" @click="applySchedulePreset('restaurant')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">10:00 - 23:00</button>
+                                <button type="button" @click="applySchedulePreset('24/7')" class="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors">24/7 (Kun-u tun)</button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 border border-slate-200/80 rounded-2xl p-4 bg-slate-50/70">
+                            <template x-for="(d, idx) in scheduleDays" :key="d.key">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs py-2 border-b border-slate-200/60 last:border-0 gap-2">
+                                    <div class="w-32 font-bold flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full shrink-0" :class="d.isClosed ? 'bg-rose-400' : 'bg-emerald-500'"></span>
+                                        <span :class="d.isClosed ? 'text-slate-400 line-through' : 'text-slate-800'" x-text="d.name"></span>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <!-- If Open -->
+                                        <template x-if="!d.isClosed">
+                                            <div class="flex items-center gap-1.5">
+                                                <input type="time" :name="'schedule_' + d.key + '_open'" x-model="d.open"
+                                                       class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-slate-700">
+                                                <span class="text-slate-400 font-bold">-</span>
+                                                <input type="time" :name="'schedule_' + d.key + '_close'" x-model="d.close"
+                                                       class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-slate-700">
+                                                <button type="button" @click="copyScheduleToAll(idx)"
+                                                        class="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-brand flex items-center justify-center font-bold text-xs transition-colors shadow-2xs"
+                                                        title="Barcha kunlarga nusxalash">
+                                                    +
+                                                </button>
+                                            </div>
+                                        </template>
+
+                                        <!-- If Closed -->
+                                        <template x-if="d.isClosed">
+                                            <div class="flex items-center gap-2">
+                                                <span class="px-3 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100">
+                                                    ⛔ Dam olish kuni (Yopiq)
+                                                </span>
+                                                <input type="hidden" :name="'schedule_' + d.key + '_open'" value="00:00">
+                                                <input type="hidden" :name="'schedule_' + d.key + '_close'" value="00:00">
+                                            </div>
+                                        </template>
+
+                                        <!-- Toggle Button: Dam olish kuni -->
+                                        <button type="button" @click="toggleDayClosed(idx)"
+                                                class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ml-auto sm:ml-0"
+                                                :class="d.isClosed ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-200/70 text-slate-600 hover:bg-rose-100 hover:text-rose-700'"
+                                                x-text="d.isClosed ? 'Ish kuniga o\'tkazish' : 'Dam olish kuni'">
+                                        </button>
+
+                                        <!-- Hidden input for closed flag -->
+                                        <input type="hidden" :name="'schedule_' + d.key + '_closed'" :value="d.isClosed ? 'on' : ''">
                                     </div>
                                 </div>
                             </template>
                         </div>
                     </div>
 
-                    <!-- Manzil & Leaflet Map Autocomplete -->
+                    <!-- Manzil & Leaflet Map with Live Geosearch -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Manzil</label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-bold text-slate-700">Manzil va do'kon filiali</label>
+                            <button type="button" @click="locateMe()"
+                                    class="flex items-center gap-1.5 text-xs font-bold text-brand hover:text-brand-dark transition-colors px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 shadow-2xs">
+                                <i data-lucide="crosshair" class="w-3.5 h-3.5" :class="isLocating ? 'animate-spin' : ''"></i>
+                                <span x-text="isLocating ? 'Aniqlanmoqda...' : 'Mening joylashuvim'"></span>
+                            </button>
+                        </div>
+
+                        <!-- City Dropdown & Branch Name Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                            <div class="sm:col-span-5">
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-brand"></i>
+                                    <span>Shahar / Viloyat</span>
+                                </label>
+                                <div class="relative">
+                                    <select x-model="activeCity" @change="selectCity($event.target.value)"
+                                            class="w-full pl-3 pr-8 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-brand focus:bg-white transition-all appearance-none cursor-pointer">
+                                        <option value="tashkent">📍 Toshkent / Ташкент</option>
+                                        <option value="samarkand">📍 Samarqand / Самарканд</option>
+                                        <option value="bukhara">📍 Buxoro / Бухара</option>
+                                        <option value="andijan">📍 Andijon / Андижан</option>
+                                        <option value="namangan">📍 Namangan / Наманган</option>
+                                        <option value="fergana">📍 Farg'ona / Фергана</option>
+                                        <option value="kokand">📍 Qo'qon / Коканд</option>
+                                        <option value="qarshi">📍 Qarshi / Карши</option>
+                                        <option value="urgench">📍 Urganch / Ургенч</option>
+                                        <option value="khiva">📍 Xiva / Хива</option>
+                                        <option value="nukus">📍 Nukus / Нукус</option>
+                                        <option value="navoiy">📍 Navoiy / Навои</option>
+                                        <option value="jizzakh">📍 Jizzax / Джизак</option>
+                                        <option value="termez">📍 Termiz / Термез</option>
+                                        <option value="gulistan">📍 Guliston / Гулистан</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="sm:col-span-7">
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">Filial nomi</label>
+                                <input type="text" name="branch_name" placeholder="Masalan: Markaziy filial, Samarqand filiali"
+                                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                            </div>
+                        </div>
+
                         <div class="space-y-3">
-                            <input type="text" name="branch_name" placeholder="Filial nomi (Masalan: Beruniy filiali)" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold">
                             
-                            <!-- Search Map -->
-                            <div class="relative">
-                                <input type="text" x-model="mapSearch" @input.debounce.400ms="searchAddress()" placeholder="Manzilni xaritadan toping (Masalan: Beruniy metrosi)"
-                                       class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold">
-                                <div x-show="searchResults.length > 0" class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
-                                    <template x-for="res in searchResults" :key="res.place_id">
-                                        <div @click="selectSearchResult(res)" class="p-2.5 text-xs hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0" x-text="res.display_name"></div>
+                            <!-- Search Map with Live Autocomplete Dropdown -->
+                            <!-- Search Map with Live Autocomplete Dropdown -->
+                            <div class="relative z-50">
+                                <div class="relative flex items-center">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-brand absolute left-3.5 pointer-events-none"></i>
+                                    <input type="text" id="mapSearchInput" x-model="mapSearch" @input.debounce.250ms="searchAddress()"
+                                           placeholder="Manzil, ko'cha yoki joy nomini yozing (Masalan: Beruniy, Registon, Firdavsiy...)"
+                                           class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand focus:bg-white transition-all">
+                                    <div x-show="isSearchingMap" class="absolute right-3.5">
+                                        <i data-lucide="loader-2" class="w-4 h-4 text-brand animate-spin"></i>
+                                    </div>
+                                    <button type="button" x-show="mapSearch && !isSearchingMap" @click="mapSearch = ''; searchResults = []"
+                                            class="absolute right-3 text-slate-400 hover:text-slate-600 font-bold text-sm">×</button>
+                                </div>
+
+                                <!-- Autocomplete Results Dropdown -->
+                                <div id="mapSuggestions" x-show="searchResults.length > 0" @click.away="searchResults = []" x-cloak
+                                     class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-100">
+                                    <template x-for="res in searchResults" :key="res.lat + '_' + res.lng + '_' + res.display_name">
+                                        <div @click="selectSearchResult(res)" data-action="select-loc"
+                                             class="p-3 text-xs hover:bg-emerald-50/70 cursor-pointer flex items-start gap-3 transition-colors group">
+                                            <div class="w-7 h-7 rounded-lg bg-emerald-100 text-brand flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-brand group-hover:text-white transition-colors">
+                                                <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="font-bold text-slate-900 group-hover:text-brand transition-colors" x-text="res.name || res.display_name"></div>
+                                                <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1" x-text="res.display_name"></div>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-slate-400 shrink-0 self-center" x-text="res.city || ''"></span>
+                                        </div>
                                     </template>
                                 </div>
                             </div>
@@ -557,8 +768,26 @@
                             <input type="hidden" name="branch_lng" x-model="branchLng">
                             <input type="hidden" name="branch_address" x-model="branchAddress">
 
-                            <div class="rounded-2xl overflow-hidden border border-slate-200">
-                                <div id="onboardingMap" class="w-full h-56 bg-slate-100"></div>
+                            <!-- Selected Address Confirmation Badge -->
+                            <div class="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between text-xs transition-all">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0" :class="isReverseGeocoding ? 'animate-pulse text-amber-500' : ''"></i>
+                                    <span class="text-slate-700 truncate">
+                                        Tanlangan manzil: <strong class="text-slate-900" x-text="branchAddress || 'Xaritadan tanlang'"></strong>
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0 ml-2">
+                                    <span x-show="isReverseGeocoding" class="text-[10px] font-bold text-amber-600 animate-pulse">Aniqlanmoqda...</span>
+                                    <span class="font-mono text-[10px] text-slate-400" x-text="Number(branchLat).toFixed(4) + ', ' + Number(branchLng).toFixed(4)"></span>
+                                </div>
+                            </div>
+
+                            <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
+                                <div id="onboardingMap" class="w-full h-64 bg-slate-100"></div>
+                                <div class="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-semibold text-slate-700 shadow-xs border border-slate-200/60 flex items-center gap-1.5">
+                                    <span>💡</span>
+                                    <span>Xaritani bosib yoki markerni surib aniq nuqtani belgilang (nomi avtomat chiqadi)</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -932,13 +1161,562 @@
                 productOldPrice: '150',
                 prodPhotosPreviews: [],
 
-                branchAddress: "Toshkent, Beruniy ko'chasi",
+                // Phone & Country Selector
+                countries: [
+                    {
+                        id: 'uz',
+                        name: "O'zbekiston",
+                        nameRu: "Узбекистан",
+                        dialCode: '+998',
+                        code: '998',
+                        flag: '🇺🇿',
+                        digits: 9,
+                        placeholder: '(90) 123-45-67',
+                        format(d) {
+                            let res = '';
+                            if (d.length > 0) res += '(' + d.slice(0, 2);
+                            if (d.length >= 2) res += ') ';
+                            if (d.length > 2) res += d.slice(2, 5);
+                            if (d.length >= 5) res += '-' + d.slice(5, 7);
+                            if (d.length >= 7) res += '-' + d.slice(7, 9);
+                            return res;
+                        }
+                    },
+                    {
+                        id: 'tr',
+                        name: "Turkiya",
+                        nameRu: "Турция",
+                        dialCode: '+90',
+                        code: '90',
+                        flag: '🇹🇷',
+                        digits: 10,
+                        placeholder: '(532) 123-4567',
+                        format(d) {
+                            let res = '';
+                            if (d.length > 0) res += '(' + d.slice(0, 3);
+                            if (d.length >= 3) res += ') ';
+                            if (d.length > 3) res += d.slice(3, 6);
+                            if (d.length >= 6) res += '-' + d.slice(6, 10);
+                            return res;
+                        }
+                    },
+                    {
+                        id: 'ru',
+                        name: "Rossiya",
+                        nameRu: "Россия",
+                        dialCode: '+7',
+                        code: '7',
+                        flag: '🇷🇺',
+                        digits: 10,
+                        placeholder: '(912) 345-67-89',
+                        format(d) {
+                            let res = '';
+                            if (d.length > 0) res += '(' + d.slice(0, 3);
+                            if (d.length >= 3) res += ') ';
+                            if (d.length > 3) res += d.slice(3, 6);
+                            if (d.length >= 6) res += '-' + d.slice(6, 8);
+                            if (d.length >= 8) res += '-' + d.slice(8, 10);
+                            return res;
+                        }
+                    },
+                    {
+                        id: 'kz',
+                        name: "Qozog'iston",
+                        nameRu: "Казахстан",
+                        dialCode: '+7',
+                        code: '7_kz',
+                        flag: '🇰🇿',
+                        digits: 10,
+                        placeholder: '(701) 234-56-78',
+                        format(d) {
+                            let res = '';
+                            if (d.length > 0) res += '(' + d.slice(0, 3);
+                            if (d.length >= 3) res += ') ';
+                            if (d.length > 3) res += d.slice(3, 6);
+                            if (d.length >= 6) res += '-' + d.slice(6, 8);
+                            if (d.length >= 8) res += '-' + d.slice(8, 10);
+                            return res;
+                        }
+                    },
+                    {
+                        id: 'kg',
+                        name: "Qirg'iziston",
+                        nameRu: "Кыргызстан",
+                        dialCode: '+996',
+                        code: '996',
+                        flag: '🇰🇬',
+                        digits: 9,
+                        placeholder: '(555) 12-34-56',
+                        format(d) {
+                            let res = '';
+                            if (d.length > 0) res += '(' + d.slice(0, 3);
+                            if (d.length >= 3) res += ') ';
+                            if (d.length > 3) res += d.slice(3, 5);
+                            if (d.length >= 5) res += '-' + d.slice(5, 7);
+                            if (d.length >= 7) res += '-' + d.slice(7, 9);
+                            return res;
+                        }
+                    },
+                    {
+                        id: 'tj',
+                        name: "Tojikiston",
+                        nameRu: "Таджикистан",
+                        dialCode: '+992',
+                        code: '992',
+                        flag: '🇹🇯',
+                        digits: 9,
+                        placeholder: '(92) 123-4567',
+                        format(d) {
+                            let res = '';
+                            if (d.length > 0) res += '(' + d.slice(0, 2);
+                            if (d.length >= 2) res += ') ';
+                            if (d.length > 2) res += d.slice(2, 5);
+                            if (d.length >= 5) res += '-' + d.slice(5, 9);
+                            return res;
+                        }
+                    },
+                    {
+                        id: 'ae',
+                        name: "BAA (Dubay)",
+                        nameRu: "ОАЭ (Дубай)",
+                        dialCode: '+971',
+                        code: '971',
+                        flag: '🇦🇪',
+                        digits: 9,
+                        placeholder: '(50) 123-4567',
+                        format(d) {
+                            let res = '';
+                            if (d.length > 0) res += '(' + d.slice(0, 2);
+                            if (d.length >= 2) res += ') ';
+                            if (d.length > 2) res += d.slice(2, 5);
+                            if (d.length >= 5) res += '-' + d.slice(5, 9);
+                            return res;
+                        }
+                    },
+                    {
+                        id: 'us',
+                        name: "AQSh / Kanada",
+                        nameRu: "США / Канада",
+                        dialCode: '+1',
+                        code: '1',
+                        flag: '🇺🇸',
+                        digits: 10,
+                        placeholder: '(202) 555-0123',
+                        format(d) {
+                            let res = '';
+                            if (d.length > 0) res += '(' + d.slice(0, 3);
+                            if (d.length >= 3) res += ') ';
+                            if (d.length > 3) res += d.slice(3, 6);
+                            if (d.length >= 6) res += '-' + d.slice(6, 10);
+                            return res;
+                        }
+                    },
+                    {
+                        id: 'other',
+                        name: "Boshqa davlat",
+                        nameRu: "Другая страна",
+                        dialCode: '+',
+                        code: '',
+                        flag: '🌐',
+                        digits: 15,
+                        placeholder: '1234567890',
+                        format(d) {
+                            return d.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
+                        }
+                    }
+                ],
+                selectedCountry: null,
+                countryMenuOpen: false,
+                countrySearch: '',
+                rawPhoneDigits: '{{ request.user.phone|default:"" }}'.replace(/\D/g, '').slice(-9) || '',
+                phoneError: '',
+
+                // Working Hours (Schedule)
+                scheduleDays: [
+                    { key: 'mon', name: 'Dushanba', open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'tue', name: 'Seshanba', open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'wed', name: 'Chorshanba', open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'thu', name: 'Payshanba', open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'fri', name: 'Juma', open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'sat', name: 'Shanba', open: '10:00', close: '23:00', isClosed: false },
+                    { key: 'sun', name: 'Yakshanba', open: '10:00', close: '22:00', isClosed: true },
+                ],
+
+                // Map & Branch Location
+                branchAddress: "Toshkent shahri, Amir Temur xiyoboni",
                 branchLat: 41.2995,
                 branchLng: 69.2401,
+                activeCity: 'tashkent',
+                isReverseGeocoding: false,
                 mapSearch: '',
                 searchResults: [],
+                isSearchingMap: false,
+                isLocating: false,
                 mapObj: null,
                 mapMarker: null,
+
+                init() {
+                    this.selectedCountry = this.countries[0]; // UZ default
+                    const prePhone = '{{ request.user.phone|default:"" }}';
+                    if (prePhone) {
+                        this.parseAndSetPhone(prePhone);
+                    }
+
+                    this.$watch('step', (val) => {
+                        this.$nextTick(() => {
+                            if (window.lucide) lucide.createIcons();
+                            if (val === 2) {
+                                this.initMap();
+                            }
+                        });
+                    });
+                },
+
+                get filteredCountries() {
+                    if (!this.countrySearch) return this.countries;
+                    const q = this.countrySearch.toLowerCase().trim();
+                    return this.countries.filter(c =>
+                        c.name.toLowerCase().includes(q) ||
+                        c.nameRu.toLowerCase().includes(q) ||
+                        c.dialCode.includes(q)
+                    );
+                },
+
+                get phoneDisplayValue() {
+                    if (!this.selectedCountry) return '';
+                    return this.selectedCountry.format(this.rawPhoneDigits);
+                },
+
+                get fullPhoneNumber() {
+                    if (!this.selectedCountry) return '';
+                    return this.selectedCountry.dialCode + this.rawPhoneDigits;
+                },
+
+                get isPhoneComplete() {
+                    if (!this.selectedCountry) return false;
+                    if (this.selectedCountry.id === 'other') return this.rawPhoneDigits.length >= 8;
+                    return this.rawPhoneDigits.length === this.selectedCountry.digits;
+                },
+
+                selectPhoneCountry(c) {
+                    this.selectedCountry = c;
+                    this.countryMenuOpen = false;
+                    this.countrySearch = '';
+                    this.phoneError = '';
+                    if (this.rawPhoneDigits.length > this.selectedCountry.digits) {
+                        this.rawPhoneDigits = this.rawPhoneDigits.slice(0, this.selectedCountry.digits);
+                    }
+                    this.$nextTick(() => {
+                        if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+                        if (window.lucide) lucide.createIcons();
+                    });
+                },
+
+                handlePhoneKeyDown(e) {
+                    const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'];
+                    if (allowed.includes(e.key) || e.ctrlKey || e.metaKey) return;
+                    if (!/^\d$/.test(e.key)) {
+                        e.preventDefault();
+                        return;
+                    }
+                    if (this.rawPhoneDigits.length >= this.selectedCountry.digits) {
+                        const input = e.target;
+                        if (input.selectionStart === input.selectionEnd) {
+                            e.preventDefault();
+                        }
+                    }
+                },
+
+                handlePhoneInput(e) {
+                    const val = e.target.value;
+                    const digits = val.replace(/\D/g, '');
+                    this.rawPhoneDigits = digits.slice(0, this.selectedCountry.digits);
+                    this.phoneError = '';
+                },
+
+                handlePhonePaste(e) {
+                    e.preventDefault();
+                    const text = (e.clipboardData || window.clipboardData).getData('text');
+                    this.parseAndSetPhone(text);
+                },
+
+                parseAndSetPhone(text) {
+                    if (!text) return;
+                    let digits = text.replace(/\D/g, '');
+                    if (!digits) return;
+                    if (digits.startsWith('998') && digits.length >= 12) {
+                        this.selectedCountry = this.countries.find(c => c.id === 'uz');
+                        digits = digits.slice(3);
+                    } else if (digits.startsWith('90') && digits.length >= 12) {
+                        this.selectedCountry = this.countries.find(c => c.id === 'tr');
+                        digits = digits.slice(2);
+                    } else if (digits.startsWith('7') && digits.length >= 11) {
+                        this.selectedCountry = this.countries.find(c => c.id === 'ru');
+                        digits = digits.slice(1);
+                    }
+                    this.rawPhoneDigits = digits.slice(0, this.selectedCountry.digits);
+                },
+
+                // Schedule methods
+                toggleDayClosed(idx) {
+                    this.scheduleDays[idx].isClosed = !this.scheduleDays[idx].isClosed;
+                },
+
+                copyScheduleToAll(idx) {
+                    const src = this.scheduleDays[idx];
+                    this.scheduleDays.forEach(d => {
+                        d.open = src.open;
+                        d.close = src.close;
+                        d.isClosed = src.isClosed;
+                    });
+                },
+
+                applySchedulePreset(preset) {
+                    if (preset === 'standard') {
+                        this.scheduleDays.forEach(d => {
+                            d.open = '09:00';
+                            d.close = '22:00';
+                            d.isClosed = (d.key === 'sun');
+                        });
+                    } else if (preset === 'restaurant') {
+                        this.scheduleDays.forEach(d => {
+                            d.open = '10:00';
+                            d.close = '23:00';
+                            d.isClosed = false;
+                        });
+                    } else if (preset === '24/7') {
+                        this.scheduleDays.forEach(d => {
+                            d.open = '00:00';
+                            d.close = '23:59';
+                            d.isClosed = false;
+                        });
+                    }
+                },
+
+                // Map & Geosearch methods (Yandex-Taxi style proximity search & reverse geocoding)
+                citiesConfig: {
+                    tashkent: { name: 'Toshkent', lat: 41.2995, lng: 69.2401, zoom: 13, defaultAddress: "Toshkent shahri, Amir Temur xiyoboni" },
+                    samarkand: { name: 'Samarqand', lat: 39.6542, lng: 66.9597, zoom: 14, defaultAddress: "Samarqand shahri, Registon maydoni" },
+                    bukhara: { name: 'Buxoro', lat: 39.7747, lng: 64.4286, zoom: 14, defaultAddress: "Buxoro shahri, Labi Hovuz" },
+                    andijan: { name: 'Andijon', lat: 40.7821, lng: 72.3442, zoom: 14, defaultAddress: "Andijon shahri, Bobur shohko'chasi" },
+                    namangan: { name: 'Namangan', lat: 40.9983, lng: 71.6726, zoom: 14, defaultAddress: "Namangan shahri, Bobur bog'i" },
+                    fergana: { name: "Farg'ona", lat: 40.3842, lng: 71.7843, zoom: 14, defaultAddress: "Farg'ona shahri, Al-Farg'oniy ko'chasi" },
+                    kokand: { name: "Qo'qon", lat: 40.5286, lng: 70.9425, zoom: 14, defaultAddress: "Qo'qon shahri, Xudoyorxon o'rdasi" },
+                    qarshi: { name: 'Qarshi', lat: 38.8606, lng: 65.7891, zoom: 14, defaultAddress: "Qarshi shahri, Mustaqillik maydoni" },
+                    urgench: { name: 'Urganch', lat: 41.5562, lng: 60.6311, zoom: 14, defaultAddress: "Urganch shahri, Al-Xorazmiy ko'chasi" },
+                    khiva: { name: 'Xiva', lat: 41.3783, lng: 60.3639, zoom: 14, defaultAddress: "Xiva shahri, Ichan Qal'a" },
+                    nukus: { name: 'Nukus', lat: 42.4603, lng: 59.6166, zoom: 14, defaultAddress: "Nukus shahri, Berdaq shohko'chasi" },
+                    navoiy: { name: 'Navoiy', lat: 40.0844, lng: 65.3792, zoom: 14, defaultAddress: "Navoiy shahri, Karmana ko'chasi" },
+                    jizzakh: { name: 'Jizzax', lat: 40.1158, lng: 67.8422, zoom: 14, defaultAddress: "Jizzax shahri, Sharof Rashidov ko'chasi" },
+                    termez: { name: 'Termiz', lat: 37.2242, lng: 67.2783, zoom: 14, defaultAddress: "Termiz shahri, At-Termiziy ko'chasi" },
+                    gulistan: { name: 'Guliston', lat: 40.4897, lng: 68.7844, zoom: 14, defaultAddress: "Guliston shahri, Sayxun ko'chasi" }
+                },
+
+                selectCity(cityKey) {
+                    this.activeCity = cityKey;
+                    const city = this.citiesConfig[cityKey];
+                    if (!city) return;
+                    this.branchLat = city.lat;
+                    this.branchLng = city.lng;
+                    this.branchAddress = city.defaultAddress;
+                    this.mapSearch = '';
+                    this.searchResults = [];
+
+                    if (this.mapObj) {
+                        this.mapObj.flyTo([city.lat, city.lng], city.zoom || 14, { animate: true, duration: 1 });
+                    }
+                    if (this.mapMarker) {
+                        this.mapMarker.setLatLng([city.lat, city.lng]);
+                        this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${city.name}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${city.defaultAddress}</div>`).openPopup();
+                    }
+                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                },
+
+                initMap() {
+                    const mapEl = document.getElementById('onboardingMap');
+                    if (!mapEl) return;
+
+                    if (this.mapObj) {
+                        setTimeout(() => {
+                            this.mapObj.invalidateSize();
+                        }, 250);
+                        return;
+                    }
+
+                    this.mapObj = L.map('onboardingMap').setView([this.branchLat, this.branchLng], 14);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap'
+                    }).addTo(this.mapObj);
+
+                    this.mapMarker = L.marker([this.branchLat, this.branchLng], { draggable: true }).addTo(this.mapObj);
+                    this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 Boshlang'ich joylashuv</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${this.branchAddress}</div>`);
+
+                    this.mapMarker.on('dragend', (e) => {
+                        const pos = e.target.getLatLng();
+                        this.updateCoordinatesAndReverse(pos.lat, pos.lng);
+                    });
+
+                    this.mapObj.on('click', (e) => {
+                        const pos = e.latlng;
+                        this.updateCoordinatesAndReverse(pos.lat, pos.lng);
+                    });
+
+                    setTimeout(() => {
+                        this.mapObj.invalidateSize();
+                    }, 300);
+                },
+
+                updateCoordinatesAndReverse(lat, lng) {
+                    this.branchLat = Number(lat);
+                    this.branchLng = Number(lng);
+                    this.isReverseGeocoding = true;
+                    if (this.mapMarker) {
+                        this.mapMarker.setLatLng([this.branchLat, this.branchLng]);
+                    }
+
+                    // Try Photon reverse first (fast, open CORS, rich POI/street names)
+                    const photonUrl = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;
+                    fetch(photonUrl)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.features && data.features.length > 0) {
+                                const p = data.features[0].properties;
+                                const parts = [p.name, p.street, p.housenumber, p.district, p.city || p.county || p.state].filter(Boolean);
+                                const uniqueParts = [];
+                                parts.forEach(pt => { if (!uniqueParts.includes(pt)) uniqueParts.push(pt); });
+                                const address = uniqueParts.join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                                this.applyReverseResult(address, p.name || address);
+                            } else {
+                                this.fallbackReverse(lat, lng);
+                            }
+                        })
+                        .catch(() => {
+                            this.fallbackReverse(lat, lng);
+                        });
+                },
+
+                fallbackReverse(lat, lng) {
+                    fetch(`/dashboard/api/geo-reverse/?lat=${lat}&lng=${lng}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.address) {
+                                this.applyReverseResult(data.address, data.display_name || data.address);
+                            } else {
+                                this.isReverseGeocoding = false;
+                            }
+                        })
+                        .catch(() => {
+                            this.isReverseGeocoding = false;
+                        });
+                },
+
+                applyReverseResult(address, title) {
+                    this.branchAddress = address;
+                    this.mapSearch = address;
+                    this.isReverseGeocoding = false;
+                    if (this.mapMarker) {
+                        this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${title}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${address}</div>`).openPopup();
+                    }
+                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                },
+
+                searchAddress() {
+                    const q = (this.mapSearch || '').trim();
+                    if (!q || q.length < 1) {
+                        this.searchResults = [];
+                        return;
+                    }
+                    this.isSearchingMap = true;
+                    const lat = this.branchLat || 41.2995;
+                    const lng = this.branchLng || 69.2401;
+
+                    // Query Photon API with proximity lat/lon (allows single character queries, instantaneous)
+                    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=${lat}&lon=${lng}&limit=8`;
+                    fetch(photonUrl)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.features && data.features.length > 0) {
+                                this.searchResults = data.features.map(f => {
+                                    const p = f.properties;
+                                    const parts = [p.name, p.street, p.housenumber, p.district, p.city || p.county || p.state].filter(Boolean);
+                                    const unique = [];
+                                    parts.forEach(pt => { if (!unique.includes(pt)) unique.push(pt); });
+                                    return {
+                                        name: p.name || p.street || p.city || q,
+                                        display_name: unique.join(', ') || p.name || q,
+                                        city: p.city || p.state || '',
+                                        lat: f.geometry.coordinates[1],
+                                        lng: f.geometry.coordinates[0],
+                                    };
+                                });
+                            } else {
+                                this.fallbackSearch(q, lat, lng);
+                            }
+                        })
+                        .catch(() => {
+                            this.fallbackSearch(q, lat, lng);
+                        })
+                        .finally(() => {
+                            this.isSearchingMap = false;
+                            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                        });
+                },
+
+                fallbackSearch(q, lat, lng) {
+                    fetch(`/dashboard/api/geo-search/?q=${encodeURIComponent(q)}&lat=${lat}&lng=${lng}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            this.searchResults = (data.results || []).slice(0, 8);
+                        })
+                        .catch(() => {
+                            this.searchResults = [];
+                        })
+                        .finally(() => {
+                            this.isSearchingMap = false;
+                            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                        });
+                },
+
+                selectSearchResult(res) {
+                    this.branchLat = parseFloat(res.lat);
+                    this.branchLng = parseFloat(res.lng);
+                    this.branchAddress = res.display_name;
+                    this.mapSearch = res.name || res.display_name;
+                    this.searchResults = [];
+
+                    if (this.mapObj && this.mapMarker) {
+                        this.mapObj.flyTo([this.branchLat, this.branchLng], 17, { animate: true, duration: 1 });
+                        this.mapMarker.setLatLng([this.branchLat, this.branchLng]);
+                        this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${res.name || 'Tanlangan manzil'}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${res.display_name}</div>`).openPopup();
+                    }
+                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                },
+
+                locateMe() {
+                    if (!navigator.geolocation) {
+                        alert("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi");
+                        return;
+                    }
+                    this.isLocating = true;
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            this.isLocating = false;
+                            const lat = pos.coords.latitude;
+                            const lng = pos.coords.longitude;
+                            if (this.mapObj) {
+                                this.mapObj.flyTo([lat, lng], 17, { animate: true, duration: 1 });
+                            }
+                            this.updateCoordinatesAndReverse(lat, lng);
+                        },
+                        (err) => {
+                            this.isLocating = false;
+                            console.warn('Geolocation error:', err);
+                            alert("Joylashuvni aniqlab bo'lmadi. Iltimos, brauzerda geolokatsiyaga ruxsat bering yoki xaritadan tanlang.");
+                        },
+                        { timeout: 10000, enableHighAccuracy: true }
+                    );
+                },
 
                 nextStep(target) {
                     this.step = target;
@@ -1022,47 +1800,6 @@
                         .then(d => {
                             this.productDescUz = d.description;
                         });
-                },
-
-                initMap() {
-                    if (this.mapObj) return;
-                    const mapEl = document.getElementById('onboardingMap');
-                    if (!mapEl) return;
-
-                    this.mapObj = L.map('onboardingMap').setView([this.branchLat, this.branchLng], 13);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(this.mapObj);
-                    this.mapMarker = L.marker([this.branchLat, this.branchLng], { draggable: true }).addTo(this.mapObj);
-
-                    this.mapMarker.on('dragend', (e) => {
-                        const pos = e.target.getLatLng();
-                        this.branchLat = pos.lat;
-                        this.branchLng = pos.lng;
-                    });
-                },
-
-                searchAddress() {
-                    if (this.mapSearch.length < 3) {
-                        this.searchResults = [];
-                        return;
-                    }
-                    fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(this.mapSearch) + '&countrycodes=uz')
-                        .then(r => r.json())
-                        .then(data => {
-                            this.searchResults = data.slice(0, 5);
-                        });
-                },
-
-                selectSearchResult(res) {
-                    this.branchLat = parseFloat(res.lat);
-                    this.branchLng = parseFloat(res.lon);
-                    this.branchAddress = res.display_name;
-                    this.mapSearch = res.display_name;
-                    this.searchResults = [];
-
-                    if (this.mapObj && this.mapMarker) {
-                        this.mapObj.setView([this.branchLat, this.branchLng], 15);
-                        this.mapMarker.setLatLng([this.branchLat, this.branchLng]);
-                    }
                 }
             }
         }

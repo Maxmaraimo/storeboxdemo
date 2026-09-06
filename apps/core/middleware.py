@@ -11,12 +11,12 @@ class SubdomainTenantMiddleware:
     def __call__(self, request):
         # 1. Language resolution
         query_lang = request.GET.get('lang')
-        if query_lang in ['ru', 'uz', 'en']:
+        if query_lang in ['ru', 'uz', 'en', 'tr']:
             request.session['lang'] = query_lang
             request.session['_language'] = query_lang
 
         stored_lang = request.session.get('lang') or request.COOKIES.get('django_language') or request.COOKIES.get('storebox_lang')
-        if stored_lang in ['ru', 'uz', 'en']:
+        if stored_lang in ['ru', 'uz', 'en', 'tr']:
             request.language = stored_lang
         else:
             request.language = 'uz'
@@ -97,4 +97,7 @@ class SubdomainTenantMiddleware:
                     pass
 
         response = self.get_response(request)
+        if query_lang in ['ru', 'uz', 'en', 'tr']:
+            response.set_cookie('storebox_lang', query_lang, max_age=365*24*3600, path='/')
+            response.set_cookie('django_language', query_lang, max_age=365*24*3600, path='/')
         return response

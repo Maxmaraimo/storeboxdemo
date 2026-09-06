@@ -22,6 +22,142 @@ def get_current_store(request, subdomain=None):
     return store
 
 
+UI_TRANSLATIONS = {
+    'uz': {
+        'search_placeholder': "Mahsulotlar va toifalarni qidirish",
+        'favorites': "Sevimmlar",
+        'cart': "Savat",
+        'login': "Kirish",
+        'buy': "Sotib olish",
+        'add': "Qo'shish",
+        'about_us': "Biz haqimizda",
+        'branches': "Do'kon filiallari",
+        'delivery_terms': "Yetkazib berish shartlari",
+        'return_terms': "Qaytarish va almashtirish shartlari",
+        'contact_us': "Biz bilan bog'lanish",
+        'empty_products': "Hozircha mahsulotlar mavjud emas",
+        'work_hours': "Ish vaqti",
+        'address': "Manzil",
+        'contacts': "Kontaktlar",
+        'day_off': "Dam olish kuni",
+        'currently_closed': "Hozir yopiq",
+        'open_until': "Ochiq",
+        'open_now': "Ochiq",
+        'all_categories': "Barcha mahsulotlar",
+        'all': "Barchasi",
+        'products_count': "ta mahsulot",
+        'sale': "Aksiya",
+        'add_to_cart': "Savatchaga",
+        'about_product': "Mahsulot haqida",
+        'seller_chat': "Sotuvchi bilan chat",
+        'home': "Bosh sahifa",
+        'no_reviews': "Sharhlar yo'q",
+        'view_on_map': "Xaritada ko'rish",
+        'our_socials': "Ijtimoiy tarmoqlarimiz",
+        'reviews': "sharh",
+    },
+    'ru': {
+        'search_placeholder': "Поиск товаров и категорий",
+        'favorites': "Избранное",
+        'cart': "Корзина",
+        'login': "Войти",
+        'buy': "Купить",
+        'add': "Добавить",
+        'about_us': "О нас",
+        'branches': "Филиалы магазина",
+        'delivery_terms': "Условия доставки",
+        'return_terms': "Условия возврата и обмена",
+        'contact_us': "Связаться с нами",
+        'empty_products': "Пока нет товаров",
+        'work_hours': "Время работы",
+        'address': "Адрес",
+        'contacts': "Контакты",
+        'day_off': "Выходной",
+        'currently_closed': "Сейчас закрыто",
+        'open_until': "Открыто",
+        'open_now': "Открыто",
+        'all_categories': "Все товары",
+        'all': "Все",
+        'products_count': "товаров",
+        'sale': "Акция",
+        'add_to_cart': "В корзину",
+        'about_product': "О товаре",
+        'seller_chat': "Чат с продавцом",
+        'home': "Главная",
+        'no_reviews': "Нет отзывов",
+        'view_on_map': "Посмотреть на карте",
+        'our_socials': "Наши соцсети",
+        'reviews': "отзывов",
+    },
+    'en': {
+        'search_placeholder': "Search products and categories",
+        'favorites': "Favorites",
+        'cart': "Cart",
+        'login': "Log in",
+        'buy': "Buy",
+        'add': "Add",
+        'about_us': "About us",
+        'branches': "Store branches",
+        'delivery_terms': "Delivery terms",
+        'return_terms': "Return and exchange policy",
+        'contact_us': "Contact us",
+        'empty_products': "No products available yet",
+        'work_hours': "Working hours",
+        'address': "Address",
+        'contacts': "Contacts",
+        'day_off': "Day off",
+        'currently_closed': "Currently closed",
+        'open_until': "Open",
+        'open_now': "Open",
+        'all_categories': "All products",
+        'all': "All",
+        'products_count': "items",
+        'sale': "Sale",
+        'add_to_cart': "Add to Cart",
+        'about_product': "About product",
+        'seller_chat': "Chat with seller",
+        'home': "Home",
+        'no_reviews': "No reviews",
+        'view_on_map': "View on map",
+        'our_socials': "Our social media",
+        'reviews': "reviews",
+    },
+    'tr': {
+        'search_placeholder': "Ürün ve kategori ara",
+        'favorites': "Favoriler",
+        'cart': "Sepet",
+        'login': "Giriş yap",
+        'buy': "Satın al",
+        'add': "Ekle",
+        'about_us': "Hakkımızda",
+        'branches': "Şubelerimiz",
+        'delivery_terms': "Teslimat şartları",
+        'return_terms': "İade ve değişim şartları",
+        'contact_us': "İletişime geç",
+        'empty_products': "Henüz ürün bulunmuyor",
+        'work_hours': "Çalışma saatleri",
+        'address': "Adres",
+        'contacts': "İletişim",
+        'day_off': "Tatil günü",
+        'currently_closed': "Şu anda kapalı",
+        'open_until': "Açık",
+        'open_now': "Açık",
+        'all_categories': "Tüm ürünler",
+        'all': "Tümü",
+        'products_count': "ürün",
+        'sale': "İndirim",
+        'add_to_cart': "Sepete ekle",
+        'about_product': "Ürün hakkında",
+        'seller_chat': "Satıcıyla sohbet",
+        'home': "Ana Sayfa",
+        'no_reviews': "Yorum yok",
+        'view_on_map': "Haritada gör",
+        'our_socials': "Sosyal medya hesaplarımız",
+        'reviews': "yorum",
+    }
+}
+
+
 # -----------------------------------------------------------------
 # STOREFRONT HOME & CATALOG
 # -----------------------------------------------------------------
@@ -36,7 +172,15 @@ def storefront_home_view(request, subdomain=None):
             return landing_view(request)
         raise Http404('Магазин не найден')
 
-    lang = getattr(request, 'language', store.default_language or 'ru')
+    query_lang = request.GET.get('lang')
+    if query_lang in ['uz', 'ru', 'en', 'tr']:
+        lang = query_lang
+    else:
+        lang = getattr(request, 'language', store.default_language or 'uz')
+    if lang not in ['uz', 'ru', 'en', 'tr']:
+        lang = 'uz'
+
+    store._current_lang = lang
 
     categories = Category.objects.filter(store=store, is_active=True).order_by('sort_order', 'id')
     products = Product.objects.filter(store=store, is_active=True).prefetch_related('images', 'variations')
@@ -71,7 +215,7 @@ def storefront_home_view(request, subdomain=None):
         products = products.order_by('-is_featured', '-created_at')
 
     # Telegram Mini App detection
-    is_tma = request.GET.get('tma') == '1' or 'Telegram' in request.headers.get('User-Agent', '')
+    is_tma = bool(request.GET.get('tma') == '1' or request.session.get('telegram_user_id'))
 
     from apps.orders.models import MarketingBanner
     banners = MarketingBanner.objects.filter(store=store, is_active=True).order_by('sort_order', 'id')
@@ -181,10 +325,18 @@ def storefront_home_view(request, subdomain=None):
                         else:
                             products = preview_prods
 
+    for p in products:
+        p.display_name = p.get_name(lang) if hasattr(p, 'get_name') else (getattr(p, f'name_{lang}', None) or getattr(p, 'name_uz', '') or getattr(p, 'name_ru', ''))
+        p.display_description = p.get_description(lang) if hasattr(p, 'get_description') else (getattr(p, f'description_{lang}', None) or getattr(p, 'description_uz', '') or getattr(p, 'description_ru', ''))
+
+    for c in categories:
+        c.display_name = c.get_name(lang) if hasattr(c, 'get_name') else (getattr(c, f'name_{lang}', None) or getattr(c, 'name_uz', '') or getattr(c, 'name_ru', ''))
+
     cart = request.session.get('cart', {}) if hasattr(request, 'session') else {}
     cart_count = sum(item.get('quantity', 1) for item in cart.values())
     subtotal = sum(item.get('total_price', 0) for item in cart.values())
 
+    t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
     context = {
         'store': store,
         'banners': banners,
@@ -195,6 +347,8 @@ def storefront_home_view(request, subdomain=None):
         'search_q': search_q,
         'sort': sort,
         'lang': lang,
+        'current_lang': lang,
+        't': t,
         'is_tma': is_tma,
         'cart': cart,
         'cart_count': cart_count,
@@ -404,6 +558,25 @@ def checkout_view(request, subdomain=None):
         delivery_method = request.POST.get('delivery_method', Order.DeliveryMethods.COURIER)
         delivery_city = request.POST.get('delivery_city', 'Ташкент').strip()
         delivery_address = request.POST.get('delivery_address', '').strip()
+        delivery_street = request.POST.get('delivery_street', '').strip()
+        delivery_entrance = request.POST.get('delivery_entrance', '').strip()
+        delivery_floor = request.POST.get('delivery_floor', '').strip()
+        delivery_apartment = request.POST.get('delivery_apartment', '').strip()
+        delivery_domofon = request.POST.get('delivery_domofon', '').strip()
+        delivery_landmark = request.POST.get('delivery_landmark', '').strip()
+
+        if delivery_street:
+            full_addr = delivery_street
+            details = []
+            if delivery_entrance: details.append(f"podezd {delivery_entrance}")
+            if delivery_floor: details.append(f"etaj {delivery_floor}")
+            if delivery_apartment: details.append(f"kv. {delivery_apartment}")
+            if delivery_domofon: details.append(f"domofon: {delivery_domofon}")
+            if delivery_landmark: details.append(f"mo'ljal: {delivery_landmark}")
+            if details:
+                full_addr += f" ({', '.join(details)})"
+            delivery_address = full_addr
+
         payment_method = request.POST.get('payment_method', Order.PaymentMethods.CASH)
         notes = request.POST.get('notes', '').strip()
         promo_code_str = request.POST.get('promo_code', '').strip().upper()
@@ -412,7 +585,7 @@ def checkout_view(request, subdomain=None):
         if not customer_name or not customer_phone:
             error = 'Пожалуйста, укажите ваше имя и номер телефона'
         elif delivery_method == Order.DeliveryMethods.COURIER and not delivery_address:
-            error = 'Пожалуйста, укажите адрес доставки'
+            error = 'Пожалуйста, укажите адрес доставки на карте или в поле ввода'
         else:
             # Promo calculation
             discount_amount = Decimal('0')
@@ -439,14 +612,11 @@ def checkout_view(request, subdomain=None):
             total_amount = max(Decimal('0'), subtotal - discount_amount + delivery_fee)
 
             # Detect source: Telegram Mini App vs Web
+            # Only genuine Telegram users (with non-empty telegram_user_id) are marked as TMA; all web browser visits are WEB
+            telegram_user_id = request.POST.get('telegram_user_id')
             is_from_telegram = bool(
-                telegram_user_id or 
-                request.POST.get('is_tma') == '1' or 
-                request.GET.get('tma') == '1' or 
-                request.session.get('is_tma') == True or 
-                request.COOKIES.get('is_tma') == '1' or 
-                'Telegram' in request.headers.get('User-Agent', '')
-            )
+                telegram_user_id and str(telegram_user_id).strip() not in ['', 'None', 'null', 'undefined', '0']
+            ) or (request.POST.get('is_tma') == '1' and bool(request.session.get('telegram_user_id')))
             source = Order.Sources.TELEGRAM_MINI_APP if is_from_telegram else Order.Sources.WEB
 
             branch_id = request.POST.get('branch_id')
@@ -540,14 +710,7 @@ def checkout_view(request, subdomain=None):
                 return redirect(f'/store/{store.subdomain}/order/{order.order_number}/success/')
             return redirect(f'/order/{order.order_number}/success/')
 
-    is_tma = bool(
-        request.GET.get('tma') == '1' or 
-        request.session.get('is_tma') == True or 
-        request.COOKIES.get('is_tma') == '1' or 
-        'Telegram' in request.headers.get('User-Agent', '')
-    )
-    if is_tma:
-        request.session['is_tma'] = True
+    is_tma = bool(request.GET.get('tma') == '1' or request.session.get('telegram_user_id'))
     branches = store.branches.filter(is_active=True)
     saved_phone = request.session.get('customer_phone', '')
     saved_name = request.session.get('customer_name', '')
@@ -729,7 +892,18 @@ def product_detail_page_view(request, product_id, subdomain=None):
         raise Http404("Магазин не найден")
 
     product = get_object_or_404(Product, id=product_id, store=store, is_active=True)
-    lang = getattr(request, 'language', 'ru')
+    query_lang = request.GET.get('lang')
+    if query_lang in ['uz', 'ru', 'en', 'tr']:
+        lang = query_lang
+    else:
+        lang = getattr(request, 'language', store.default_language or 'uz')
+    if lang not in ['uz', 'ru', 'en', 'tr']:
+        lang = 'uz'
+
+    store._current_lang = lang
+
+    product.display_name = product.get_name(lang) if hasattr(product, 'get_name') else (getattr(product, f'name_{lang}', None) or getattr(product, 'name_uz', '') or getattr(product, 'name_ru', ''))
+    product.display_description = product.get_description(lang) if hasattr(product, 'get_description') else (getattr(product, f'description_{lang}', None) or getattr(product, 'description_uz', '') or getattr(product, 'description_ru', ''))
 
     # Cart context
     cart = request.session.get('cart', {})
@@ -757,9 +931,14 @@ def product_detail_page_view(request, product_id, subdomain=None):
             is_active=True
         ).exclude(id=product.id)[:8]
 
+    for rp in related_products:
+        rp.display_name = rp.get_name(lang) if hasattr(rp, 'get_name') else (getattr(rp, f'name_{lang}', None) or getattr(rp, 'name_uz', '') or getattr(rp, 'name_ru', ''))
+
     # Payment & branches settings
     pay_settings, _ = StorePaymentSetting.objects.get_or_create(store=store)
     branches = store.branches.filter(is_active=True)
+
+    t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
 
     context = {
         'store': store,
@@ -775,6 +954,8 @@ def product_detail_page_view(request, product_id, subdomain=None):
         'pay_settings': pay_settings,
         'branches': branches,
         'lang': lang,
+        'current_lang': lang,
+        't': t,
         'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
     }
     return render(request, 'storefront/product_detail.html', context)
