@@ -58,6 +58,36 @@ def check_tunnel_healthy(url):
         return False
 
 
+def sync_all_bots_menu_button(base_url=None):
+    """Automatically update Telegram Chat Menu Button for all active bots to the active HTTPS URL"""
+    try:
+        from apps.stores.models import Store
+        from apps.telegram_bot.services import setup_bot_menu_button
+
+        target_base = (base_url or get_public_https_base_url()).rstrip('/')
+        if not target_base or not target_base.startswith('https://'):
+            logger.warning(f"Cannot sync bots menu button, invalid base URL: {target_base}")
+            return False
+
+        stores = Store.objects.filter(is_active=True).exclude(telegram_bot_token='')
+        count = 0
+        for s in stores:
+            token = (s.telegram_bot_token or '').strip()
+            if token:
+                tma_url = f"{target_base}/store/{s.subdomain}/?tma=1"
+                btn_name = s.telegram_button_name or "Do'kon"
+                ok, res_msg = setup_bot_menu_button(token, tma_url, btn_name)
+                if ok:
+                    count += 1
+                    logger.info(f"Updated Telegram Menu Button for @{s.telegram_bot_username or s.name} -> {tma_url}")
+                else:
+                    logger.warning(f"Could not update menu button for @{s.telegram_bot_username}: {res_msg}")
+        return True
+    except Exception as e:
+        logger.error(f"Error in sync_all_bots_menu_button: {e}")
+        return False
+
+
 def get_public_https_base_url():
     """Returns the best available public HTTPS base URL for WebApp"""
     # 1. Environment variable
@@ -65,26 +95,24 @@ def get_public_https_base_url():
     if env_url and env_url.startswith('https://'):
         return env_url.rstrip('/')
 
-    # 2. Stored tunnel
+    # 2. Check stored tunnel in file
     stored = get_stored_tunnel_url()
     if stored and check_tunnel_healthy(stored):
         return stored
 
-    # 3. Fallback active localhost.run URL from running tasks
+    # 3. Check cloudflared task logs or running brain logs for active trycloudflare URL
     try:
-        # Check task logs or grep for lhr.life
         log_dir = os.path.join(os.path.expanduser('~'), '.gemini/antigravity/brain')
         for root, dirs, files in os.walk(log_dir):
             for file in files:
                 if file.endswith('.log'):
                     log_path = os.path.join(root, file)
-                    if os.path.getsize(log_path) < 100000:
+                    if os.path.exists(log_path) and os.path.getsize(log_path) < 200000:
                         try:
                             with open(log_path, 'r', errors='ignore') as f:
                                 content = f.read()
-                                match = re.search(r'(https://[a-zA-Z0-9-]+\.(?:trycloudflare\.com|lhr\.life))', content)
-                                if match:
-                                    t_url = match.group(1)
+                                matches = re.findall(r'(https://[a-zA-Z0-9-]+\.(?:trycloudflare\.com|lhr\.life))', content)
+                                for t_url in reversed(matches):
                                     if check_tunnel_healthy(t_url):
                                         set_stored_tunnel_url(t_url)
                                         return t_url
@@ -93,4 +121,5 @@ def get_public_https_base_url():
     except Exception:
         pass
 
-    return stored or "https://machines-tower-life-processors.trycloudflare.com"
+    return stored or "https://urban-directors-python-magnetic.trycloudflare.com"
+

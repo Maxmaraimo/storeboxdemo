@@ -17,17 +17,8 @@ def telegram_webhook_view(request, subdomain):
     if request.method == 'POST':
         try:
             data = json.loads(request.body.decode('utf-8'))
-            message = data.get('message') or data.get('channel_post') or {}
-            chat = message.get('chat') or {}
-            chat_id = chat.get('id')
-            text = (message.get('text') or '').strip()
-
-            storefront_url = f"http://127.0.0.1:8000/store/{store.subdomain}/"
-            welcome_text = store.telegram_welcome_message or f"Assalomu alaykum! {store.name} do'konimizga xush kelibsiz. Quyidagi tugma orqali xarid qilishingiz mumkin."
-
-            if chat_id and (text.startswith('/start') or not text):
-                send_telegram_welcome(store.telegram_bot_token, chat_id, welcome_text, storefront_url)
-
+            from apps.telegram_bot.services import process_telegram_update
+            process_telegram_update(store, data)
             return JsonResponse({'status': 'ok'})
         except Exception as e:
             logger.error(f"Error handling webhook for {subdomain}: {e}")

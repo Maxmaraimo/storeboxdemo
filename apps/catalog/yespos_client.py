@@ -231,6 +231,29 @@ class YesPosClient:
             logger.info(f"Live YES POS catalog fetch failed: {e}. Falling back to demo catalog.")
         return MOCK_CATALOG
 
+    def _save_product_image(self, product, image_url, remote_id):
+        """Download image from remote URL and save as ProductImage"""
+        if not image_url or not image_url.startswith('http'):
+            return
+        try:
+            from django.core.files.base import ContentFile
+            from apps.catalog.models import ProductImage
+
+            if not product.images.exists():
+                resp = requests.get(image_url, timeout=5)
+                if resp.status_code == 200 and resp.content:
+                    ext = 'jpg'
+                    lower_url = image_url.lower()
+                    if '.png' in lower_url:
+                        ext = 'png'
+                    elif '.webp' in lower_url:
+                        ext = 'webp'
+                    filename = f"yp_{remote_id}_{product.id}.{ext}"
+                    pimg = ProductImage(product=product, is_primary=True)
+                    pimg.image.save(filename, ContentFile(resp.content), save=True)
+        except Exception as e:
+            logger.debug(f"Could not download local image for {product.name_ru}: {e}")
+
     def import_products(self, store, selected_items):
         """
         selected_items: list of dicts:
@@ -262,6 +285,18 @@ class YesPosClient:
             ikpu = str(item.get('ikpu') or '').strip()
             description = str(item.get('description') or '').strip()
 
+            # Resolve image URL
+            image_raw = str(item.get('image') or item.get('image_url') or item.get('path') or '').strip()
+            if not image_raw:
+                # Fallback to MOCK_CATALOG if image wasn't supplied
+                for mcat in MOCK_CATALOG:
+                    for mp in mcat.get('products', []):
+                        if str(mp.get('id')) == str(remote_id) or mp.get('name') == name:
+                            image_raw = mp.get('image', '')
+                            break
+                    if image_raw:
+                        break
+
             # 2. Check if already linked
             link = YesPosProductLink.objects.filter(store=store, remote_product_id=remote_id).first()
             if link and link.product:
@@ -272,7 +307,12 @@ class YesPosClient:
                     product.barcode = barcode
                 if ikpu and not product.ikpu_code:
                     product.ikpu_code = ikpu
+                if image_raw and not product.image_url:
+                    product.image_url = image_raw
                 product.save()
+
+                if image_raw and not product.images.exists():
+                    self._save_product_image(product, image_raw, remote_id)
 
                 link.remote_price = price
                 link.remote_stock = stock
@@ -298,11 +338,15 @@ class YesPosClient:
                     stock=stock,
                     barcode=barcode,
                     ikpu_code=ikpu,
+                    image_url=image_raw,
                     description_ru=description,
                     description_uz=description,
                     is_active=True,
                     track_stock=True
                 )
+
+                if image_raw:
+                    self._save_product_image(product, image_raw, remote_id)
 
                 YesPosProductLink.objects.update_or_create(
                     store=store,
@@ -325,14 +369,12 @@ class YesPosClient:
 
     def sync_store_products(self, store):
         """
-        Synchronize stock and prices for all linked products in store
+        Synchronize stock, prices, and missing images for all linked products in store
         """
         connection = getattr(store, 'yespos_connection', None)
         if not connection or not connection.is_active:
             raise Exception('Подключение к YES POS не активно')
 
-        # In live mode, query /marketplace/products/info?page=1&limit=500
-        # In mock mode, update prices/stocks from MOCK_CATALOG
         catalog = self.get_catalog(connection.api_key, connection.branch_id)
         prod_map = {}
         for cat in catalog:
@@ -347,10 +389,16 @@ class YesPosClient:
                 product = link.product
                 new_price = Decimal(str(remote_data.get('price', product.price)))
                 new_stock = int(remote_data.get('stock', product.stock))
+                remote_image = remote_data.get('image') or remote_data.get('image_url') or ''
 
                 product.price = new_price
                 product.stock = new_stock
+                if remote_image and not product.image_url:
+                    product.image_url = remote_image
                 product.save()
+
+                if remote_image and not product.images.exists():
+                    self._save_product_image(product, remote_image, link.remote_product_id)
 
                 link.remote_price = new_price
                 link.remote_stock = new_stock
@@ -362,3 +410,4 @@ class YesPosClient:
         connection.save()
 
         return {'updated': updated_count}
+
