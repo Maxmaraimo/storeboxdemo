@@ -241,7 +241,7 @@
                                     <div class="flex items-center gap-3 min-w-0">
                                         <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/80 overflow-hidden flex items-center justify-center shrink-0">
                                             <template x-if="p.primary_image_url">
-                                                <img :src="p.primary_image_url" class="w-full h-full object-cover">
+                                                <img :src="p.primary_image_url" class="w-full h-full object-cover" :class="p.stock <= 0 ? 'grayscale opacity-75' : ''">
                                             </template>
                                             <template x-if="!p.primary_image_url">
                                                 <i data-lucide="package" class="w-5 h-5 text-slate-400"></i>
@@ -249,9 +249,14 @@
                                         </div>
                                         <div class="min-w-0">
                                             <div class="font-bold text-xs sm:text-sm text-slate-900 truncate" x-text="p.name_uz || p.name_ru"></div>
-                                            <div class="flex items-center gap-2 mt-0.5">
+                                            <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                                                 <span class="font-extrabold text-xs text-brand font-mono" x-text="Number(p.price).toLocaleString() + ' UZS'"></span>
-                                                <span class="text-[10px] text-slate-400 font-medium">| Qoldiq: <b class="text-slate-700" x-text="p.stock + ' ' + (p.unit || 'dona')"></b></span>
+                                                <template x-if="p.stock > 0">
+                                                    <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded-md font-bold" x-text="'Qoldiq: ' + p.stock + ' ' + (p.unit || 'dona')"></span>
+                                                </template>
+                                                <template x-if="p.stock <= 0">
+                                                    <span class="text-[10px] text-rose-600 bg-rose-50 border border-rose-200/60 px-1.5 py-0.5 rounded-md font-bold">Qoldiq: 0 (Tugagan)</span>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>

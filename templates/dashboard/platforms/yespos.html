@@ -819,7 +819,7 @@ window.yesposManager = function() {
                                             <input type="checkbox" :checked="selectedProductIds.includes(p.id)" class="w-4 h-4 rounded text-slate-900 focus:ring-0 cursor-pointer shrink-0">
                                             <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
                                                 <template x-if="p.image">
-                                                    <img :src="p.image" class="w-full h-full object-cover" @error="p.image = ''" loading="lazy">
+                                                    <img :src="p.image" class="w-full h-full object-cover" :class="p.stock <= 0 ? 'grayscale opacity-70' : ''" @error="p.image = ''" loading="lazy">
                                                 </template>
                                                 <template x-if="!p.image">
                                                     <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
@@ -831,9 +831,14 @@ window.yesposManager = function() {
                                                     <span x-text="'Арт: ' + (p.sku || p.id)"></span>
                                                     <span x-show="p.barcode" x-text="'ШК: ' + p.barcode"></span>
                                                 </div>
-                                                <div class="text-[11px] font-semibold text-slate-800 mt-0.5">
+                                                <div class="text-[11px] font-semibold text-slate-800 mt-0.5 flex items-center gap-1.5 flex-wrap">
                                                     <span x-text="Number(p.price).toLocaleString() + ' UZS'"></span>
-                                                    <span class="text-[10px] text-slate-500 font-normal" x-text="' • ' + p.stock + ' шт.'"></span>
+                                                    <template x-if="p.stock > 0">
+                                                        <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded-md font-bold" x-text="'Qoldiq: ' + p.stock + ' dona'"></span>
+                                                    </template>
+                                                    <template x-if="p.stock <= 0">
+                                                        <span class="text-[10px] text-rose-600 bg-rose-50 border border-rose-200/80 px-1.5 py-0.5 rounded-md font-bold">Qoldiq: 0 (Tugagan)</span>
+                                                    </template>
                                                 </div>
                                             </div>
                                         </div>

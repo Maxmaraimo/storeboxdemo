@@ -199,7 +199,7 @@ class YesPosClient:
                             if p_id:
                                 try:
                                     raw_stk = float(item.get('stock', item.get('quantity', 0)) or 0)
-                                    stk_val = int(raw_stk) if raw_stk.is_integer() else round(raw_stk, 3)
+                                    stk_val = max(0, int(raw_stk) if raw_stk.is_integer() else int(round(raw_stk)))
                                 except (ValueError, TypeError):
                                     stk_val = 0
                                 try:
@@ -244,7 +244,7 @@ class YesPosClient:
 
                         try:
                             raw_stk = float(info.get('stock', p.get('stock', 0)) or 0)
-                            stock_val = int(raw_stk) if raw_stk.is_integer() else round(raw_stk, 3)
+                            stock_val = max(0, int(raw_stk) if raw_stk.is_integer() else int(round(raw_stk)))
                         except (ValueError, TypeError):
                             stock_val = 0
 
@@ -416,7 +416,8 @@ class YesPosClient:
                 price = Decimal('0')
 
             try:
-                stock = int(float(item.get('stock') or 0))
+                raw_stock = float(item.get('stock') or 0)
+                stock = max(0, int(raw_stock)) if raw_stock.is_integer() else max(0, int(round(raw_stock)))
             except (ValueError, TypeError):
                 stock = 0
 
@@ -526,9 +527,10 @@ class YesPosClient:
                     new_price = product.price
 
                 try:
-                    new_stock = int(float(remote_data.get('stock', product.stock) or 0))
+                    raw_stk = float(remote_data.get('stock', product.stock) or 0)
+                    new_stock = max(0, int(raw_stk) if raw_stk.is_integer() else int(round(raw_stk)))
                 except Exception:
-                    new_stock = product.stock
+                    new_stock = max(0, product.stock)
 
                 remote_image = remote_data.get('image') or remote_data.get('image_url') or ''
 
