@@ -1,6 +1,11 @@
+import os
+import time
+import hashlib
 import requests
 import logging
 from decimal import Decimal
+from django.conf import settings
+from django.core.cache import cache
 from django.utils import timezone
 from django.utils.text import slugify
 from apps.catalog.models import Product, Category, YesPosConnection, YesPosCategoryLink, YesPosProductLink
@@ -9,6 +14,12 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_YESPOS_API_BASE_URL = 'https://marketplace.yestask.uz'
 DEFAULT_YESPOS_MEDIA_HOST = 'http://app.yespos.uz:8263'
+
+# Strict rate-limiting & caching constants to prevent DDoS / overloading YES POS
+CATALOG_CACHE_TTL = 900          # 15 minutes catalog caching
+BRANCHES_CACHE_TTL = 3600        # 1 hour branch caching
+CATALOG_COOLDOWN_SECONDS = 60    # Minimum 60 seconds between live API hits
+FAILED_IMAGE_CACHE_TTL = 21600   # 6 hours negative cache for broken/404 image paths
 
 # Realistic fallback mock data for testing/demo when live API key is simulated or API unreachable
 MOCK_BRANCHES = [
@@ -154,10 +165,21 @@ class YesPosClient:
             logger.warning(f"YES POS API error ({url}): {e}")
             raise e
 
-    def get_branches(self, api_key):
-        """Returns list of branches: [{'id': ..., 'name': ...}]"""
+    def get_branches(self, api_key, force_refresh=False):
+        """Returns list of branches: [{'id': ..., 'name': ...}] with 1h cache to prevent API floods"""
         if any(k in (api_key or '').lower() for k in ['demo', 'mock']):
             return MOCK_BRANCHES
+        if not api_key:
+            return []
+
+        key_hash = hashlib.md5(api_key.strip().encode()).hexdigest()
+        cache_key = f"yp_branches_{key_hash}"
+
+        if not force_refresh:
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return cached
+
         try:
             res = self._post('/branch/list', api_key, timeout=15)
             branches = []
@@ -172,16 +194,41 @@ class YesPosClient:
                         display_name = f"{display_name} ({b_addr})"
                     branches.append({'id': b_id, 'name': display_name})
             if branches:
+                cache.set(cache_key, branches, BRANCHES_CACHE_TTL)
                 return branches
             return []
         except Exception as e:
             logger.error(f"Live YES POS branch fetch failed: {e}")
+            cached = cache.get(cache_key)
+            if cached:
+                return cached
             raise e
 
-    def get_catalog(self, api_key, branch_id=None):
-        """Returns catalog categories with products and stock/price"""
+    def get_catalog(self, api_key, branch_id=None, force_refresh=False):
+        """Returns catalog categories with products and stock/price with 15m cache and 60s cooldown"""
         if any(k in (api_key or '').lower() for k in ['demo', 'mock']):
             return MOCK_CATALOG
+        if not api_key:
+            return []
+
+        clean_branch = str(branch_id or '').strip()
+        key_hash = hashlib.md5(f"{api_key.strip()}_{clean_branch}".encode()).hexdigest()
+        cache_key = f"yp_catalog_{key_hash}"
+        cooldown_key = f"yp_catalog_cooldown_{key_hash}"
+
+        cached_catalog = cache.get(cache_key)
+
+        # 1. If not forcing refresh, immediately return cached snapshot if available
+        if not force_refresh and cached_catalog is not None:
+            logger.info(f"Serving YES POS catalog from cache ({len(cached_catalog)} categories)")
+            return cached_catalog
+
+        # 2. If force_refresh was requested, check cooldown to protect YES POS server from DDoS
+        if force_refresh and cache.get(cooldown_key):
+            logger.warning("YES POS rate limit protection: cooldown active (60s). Returning cached catalog.")
+            if cached_catalog is not None:
+                return cached_catalog
+
         try:
             res = self._post('/marketplace/products', api_key, timeout=15)
             categories = []
@@ -279,9 +326,17 @@ class YesPosClient:
                             'raw_image': raw_cat_img,
                             'products': cat_prods
                         })
+
+                # Cache catalog for 15 minutes and set 60s cooldown
+                if categories:
+                    cache.set(cache_key, categories, CATALOG_CACHE_TTL)
+                    cache.set(cooldown_key, True, CATALOG_COOLDOWN_SECONDS)
                 return categories
         except Exception as e:
             logger.error(f"Live YES POS catalog fetch failed: {e}")
+            if cached_catalog is not None:
+                logger.warning("Falling back to cached YES POS catalog after live API failure")
+                return cached_catalog
             raise e
         return []
 
@@ -310,63 +365,124 @@ class YesPosClient:
         return f"/dashboard/api/yespos/image/?path={clean_path}"
 
     def _save_product_image(self, product, image_url_or_path, remote_id):
-        """Download image from remote URL or raw path and save as ProductImage"""
+        """Download image from remote URL or raw path and save as ProductImage using disk cache first"""
         if not image_url_or_path:
             return
-        remote_url = self.get_remote_image_url(image_url_or_path)
-        if not remote_url:
+        clean_path = str(image_url_or_path).strip()
+        if not clean_path or clean_path.lower().startswith('parent_'):
             return
-        try:
-            from django.core.files.base import ContentFile
-            from apps.catalog.models import ProductImage
 
-            if not product.images.exists():
-                resp = requests.get(remote_url, timeout=10)
-                if resp.status_code == 200 and resp.content:
-                    ext = 'jpg'
-                    if resp.content.startswith(b'\x89PNG') or '.png' in remote_url.lower():
-                        ext = 'png'
-                    elif resp.content.startswith(b'RIFF') and b'WEBP' in resp.content[:16]:
-                        ext = 'webp'
-                    elif '.webp' in remote_url.lower():
-                        ext = 'webp'
-                    filename = f"yp_{remote_id}_{product.id}.{ext}"
-                    pimg = ProductImage(product=product, is_primary=True)
-                    pimg.image.save(filename, ContentFile(resp.content), save=True)
-                    # Also set primary image url on product
-                    if hasattr(product, 'image') and not product.image:
-                        product.image = pimg.image
-                        product.save(update_fields=['image'])
+        from apps.catalog.models import ProductImage
+        if product.images.exists():
+            return
+
+        path_hash = hashlib.md5(clean_path.encode()).hexdigest()
+        failed_key = f"yp_failed_img_{path_hash}"
+        if cache.get(failed_key):
+            return
+
+        cache_dir = os.path.join(settings.MEDIA_ROOT, 'yespos_cache')
+        os.makedirs(cache_dir, exist_ok=True)
+        cached_file_path = None
+        for ext_candidate in ['png', 'jpg', 'webp']:
+            test_path = os.path.join(cache_dir, f"{path_hash}.{ext_candidate}")
+            if os.path.exists(test_path) and os.path.getsize(test_path) > 0:
+                cached_file_path = test_path
+                break
+
+        from django.core.files.base import ContentFile
+        try:
+            if cached_file_path:
+                with open(cached_file_path, 'rb') as f:
+                    content = f.read()
+                ext = cached_file_path.split('.')[-1]
+            else:
+                remote_url = self.get_remote_image_url(clean_path)
+                if not remote_url:
+                    return
+                # Polite sleep so requests are paced out and not sent as a burst flood
+                time.sleep(0.15)
+                resp = requests.get(remote_url, timeout=7)
+                if resp.status_code != 200 or not resp.content:
+                    cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)
+                    return
+                content = resp.content
+                ext = 'jpg'
+                if content.startswith(b'\x89PNG') or '.png' in remote_url.lower():
+                    ext = 'png'
+                elif (content.startswith(b'RIFF') and b'WEBP' in content[:16]) or '.webp' in remote_url.lower():
+                    ext = 'webp'
+
+                save_cache_path = os.path.join(cache_dir, f"{path_hash}.{ext}")
+                with open(save_cache_path, 'wb') as f:
+                    f.write(content)
+
+            filename = f"yp_{remote_id}_{product.id}.{ext}"
+            pimg = ProductImage(product=product, is_primary=True)
+            pimg.image.save(filename, ContentFile(content), save=True)
+            if hasattr(product, 'image') and not product.image:
+                product.image = pimg.image
+                product.save(update_fields=['image'])
         except Exception as e:
             logger.debug(f"Could not download local image for {product.name_ru}: {e}")
+            cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)
 
     def _save_category_image(self, category, image_url_or_path, remote_id):
-        """Download image from remote URL or raw path and save as Category image"""
-        if not image_url_or_path:
+        """Download image from remote URL or raw path and save as Category image using disk cache first"""
+        if not image_url_or_path or category.image:
             return
-        remote_url = self.get_remote_image_url(image_url_or_path)
-        if not remote_url:
+        clean_path = str(image_url_or_path).strip()
+        if not clean_path or clean_path.lower().startswith('parent_'):
             return
-        try:
-            from django.core.files.base import ContentFile
 
-            if not category.image:
-                resp = requests.get(remote_url, timeout=10)
-                if resp.status_code == 200 and resp.content:
-                    ext = 'jpg'
-                    if resp.content.startswith(b'\x89PNG') or '.png' in remote_url.lower():
-                        ext = 'png'
-                    elif resp.content.startswith(b'RIFF') and b'WEBP' in resp.content[:16]:
-                        ext = 'webp'
-                    elif '.webp' in remote_url.lower():
-                        ext = 'webp'
-                    filename = f"cat_{remote_id}_{category.id}.{ext}"
-                    category.image.save(filename, ContentFile(resp.content), save=True)
-                    if not category.image_url:
-                        category.image_url = remote_url
-                        category.save(update_fields=['image_url'])
+        path_hash = hashlib.md5(clean_path.encode()).hexdigest()
+        failed_key = f"yp_failed_img_{path_hash}"
+        if cache.get(failed_key):
+            return
+
+        cache_dir = os.path.join(settings.MEDIA_ROOT, 'yespos_cache')
+        os.makedirs(cache_dir, exist_ok=True)
+        cached_file_path = None
+        for ext_candidate in ['png', 'jpg', 'webp']:
+            test_path = os.path.join(cache_dir, f"{path_hash}.{ext_candidate}")
+            if os.path.exists(test_path) and os.path.getsize(test_path) > 0:
+                cached_file_path = test_path
+                break
+
+        from django.core.files.base import ContentFile
+        try:
+            if cached_file_path:
+                with open(cached_file_path, 'rb') as f:
+                    content = f.read()
+                ext = cached_file_path.split('.')[-1]
+            else:
+                remote_url = self.get_remote_image_url(clean_path)
+                if not remote_url:
+                    return
+                time.sleep(0.15)
+                resp = requests.get(remote_url, timeout=7)
+                if resp.status_code != 200 or not resp.content:
+                    cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)
+                    return
+                content = resp.content
+                ext = 'jpg'
+                if content.startswith(b'\x89PNG') or '.png' in remote_url.lower():
+                    ext = 'png'
+                elif (content.startswith(b'RIFF') and b'WEBP' in content[:16]) or '.webp' in remote_url.lower():
+                    ext = 'webp'
+
+                save_cache_path = os.path.join(cache_dir, f"{path_hash}.{ext}")
+                with open(save_cache_path, 'wb') as f:
+                    f.write(content)
+
+            filename = f"cat_{remote_id}_{category.id}.{ext}"
+            category.image.save(filename, ContentFile(content), save=True)
+            if not category.image_url:
+                category.image_url = self.get_remote_image_url(clean_path)
+                category.save(update_fields=['image_url'])
         except Exception as e:
             logger.debug(f"Could not download local image for category {category.name_ru}: {e}")
+            cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)
 
     def import_products(self, store, selected_items):
         """

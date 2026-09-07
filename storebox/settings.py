@@ -12,6 +12,9 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'http://*.lvh.me:8000',
+    'http://176.96.243.203',
+    'http://176.96.243.203:8000',
+    'https://176.96.243.203',
     'https://*.platform.uz',
     'http://*.storebox.uz',
     'https://*.storebox.uz',
@@ -21,6 +24,13 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.app',
     'https://*.trycloudflare.com',
 ]
+
+extra_csrf = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if extra_csrf:
+    for _origin in extra_csrf.split(','):
+        _origin_clean = _origin.strip()
+        if _origin_clean and _origin_clean not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_origin_clean)
 
 # Dynamically add stored tunnel URL if present
 _tunnel_file = BASE_DIR / '.tunnel_url'
@@ -138,6 +148,19 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Cache configuration for fast response and rate-limiting external API calls
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': BASE_DIR / '.cache',
+        'TIMEOUT': 1800,  # 30 minutes default TTL
+        'OPTIONS': {
+            'MAX_ENTRIES': 5000,
+            'CULL_FREQUENCY': 3,
+        }
+    }
+}
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'

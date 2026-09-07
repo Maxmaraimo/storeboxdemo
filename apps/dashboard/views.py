@@ -1,13 +1,17 @@
+import os
 import json
 import random
+import hashlib
 import datetime
 import urllib.parse
 import requests
 from decimal import Decimal
+from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, HttpResponseNotFound
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, HttpResponseNotFound, FileResponse
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from django.utils.text import slugify
@@ -2517,9 +2521,11 @@ def yespos_catalog_api(request):
     if not api_key:
         return JsonResponse({'success': False, 'error': 'YES POS API kaliti topilmadi'}, status=400)
 
+    force_refresh = request.GET.get('force') == '1'
+
     try:
         client = YesPosClient()
-        catalog = client.get_catalog(api_key, branch_id)
+        catalog = client.get_catalog(api_key, branch_id, force_refresh=force_refresh)
     except Exception as e:
         return JsonResponse({'success': False, 'error': f"YES POS xatosi: {str(e)}"}, status=400)
 
@@ -2539,39 +2545,65 @@ def yespos_catalog_api(request):
 
 
 def yespos_image_proxy(request):
-    """Proxy product images from YES POS to prevent mixed-content or CORS issues in browser"""
-    path = request.GET.get('path', '').strip().lstrip('/')
-    if not path or '..' in path:
+    """Proxy product images with permanent local disk caching to strictly protect YES POS from request floods"""
+    raw_path = request.GET.get('path', '').strip()
+    if not raw_path or '..' in raw_path:
         return HttpResponseNotFound('Invalid image path')
 
+    clean_path = raw_path.lstrip('/')
+    if not clean_path or clean_path.lower().startswith('parent_'):
+        return HttpResponseNotFound('Empty or invalid image')
+
+    path_hash = hashlib.md5(clean_path.encode()).hexdigest()
+    failed_key = f"yp_failed_img_{path_hash}"
+    if cache.get(failed_key):
+        return HttpResponseNotFound('Image unavailable')
+
+    cache_dir = os.path.join(settings.MEDIA_ROOT, 'yespos_cache')
+    os.makedirs(cache_dir, exist_ok=True)
+
+    # 1. Check if already on disk in cache
+    for ext_candidate in ['png', 'jpg', 'webp']:
+        test_file = os.path.join(cache_dir, f"{path_hash}.{ext_candidate}")
+        if os.path.exists(test_file) and os.path.getsize(test_file) > 0:
+            content_type = 'image/png' if ext_candidate == 'png' else ('image/webp' if ext_candidate == 'webp' else 'image/jpeg')
+            try:
+                response = FileResponse(open(test_file, 'rb'), content_type=content_type)
+                response['Cache-Control'] = 'public, max-age=2592000, immutable'
+                return response
+            except Exception:
+                pass
+
+    # 2. Not on disk: fetch ONCE from YES POS with safe lock
     client = YesPosClient()
-    remote_url = client.get_remote_image_url(path)
+    remote_url = client.get_remote_image_url(clean_path)
     if not remote_url:
-        return HttpResponseNotFound('Invalid image target')
+        return HttpResponseNotFound('Invalid image URL')
 
     try:
-        resp = requests.get(remote_url, timeout=8)
+        resp = requests.get(remote_url, timeout=6)
         if resp.status_code == 200 and resp.content:
-            content_type = resp.headers.get('Content-Type') or 'image/jpeg'
-            if content_type == 'application/octet-stream' or 'html' in content_type:
-                if resp.content.startswith(b'\x89PNG'):
-                    content_type = 'image/png'
-                elif resp.content.startswith(b'\xff\xd8\xff'):
-                    content_type = 'image/jpeg'
-                elif resp.content.startswith(b'RIFF') and b'WEBP' in resp.content[:16]:
-                    content_type = 'image/webp'
-                elif path.lower().endswith('.png'):
-                    content_type = 'image/png'
-                elif path.lower().endswith('.webp'):
-                    content_type = 'image/webp'
-                else:
-                    content_type = 'image/jpeg'
+            content = resp.content
+            ext = 'jpg'
+            content_type = 'image/jpeg'
+            if content.startswith(b'\x89PNG') or '.png' in clean_path.lower():
+                ext = 'png'
+                content_type = 'image/png'
+            elif (content.startswith(b'RIFF') and b'WEBP' in content[:16]) or '.webp' in clean_path.lower():
+                ext = 'webp'
+                content_type = 'image/webp'
 
-            response = HttpResponse(resp.content, content_type=content_type)
-            response['Cache-Control'] = 'public, max-age=86400'
+            save_path = os.path.join(cache_dir, f"{path_hash}.{ext}")
+            with open(save_path, 'wb') as f:
+                f.write(content)
+
+            response = HttpResponse(content, content_type=content_type)
+            response['Cache-Control'] = 'public, max-age=2592000, immutable'
             return response
+        else:
+            cache.set(failed_key, True, 21600)
     except Exception as e:
-        pass
+        cache.set(failed_key, True, 21600)
 
     return HttpResponseNotFound('Image not found')
 
@@ -2619,13 +2651,23 @@ def yespos_sync_api(request):
     if not connection or not connection.is_active:
         return JsonResponse({'success': False, 'error': 'YES POS ulanmagan'}, status=400)
 
+    # Strict rate-limiting on sync: max once per 60 seconds to protect YES POS
+    sync_cooldown_key = f"yp_sync_cooldown_{store.id}"
+    if cache.get(sync_cooldown_key):
+        return JsonResponse({
+            'success': True,
+            'updated': 0,
+            'message': 'YES POS serverini asrash maqsadida so‘rovlar cheklangan. Maʼlumotlar yaqinda yangilangan (keyingi yangilash 1 daqiqadan so‘ng).'
+        })
+
     try:
         client = YesPosClient()
         result = client.sync_store_products(store)
+        cache.set(sync_cooldown_key, True, 60)
         return JsonResponse({
             'success': True,
             'updated': result['updated'],
-            'message': f"{result['updated']} ta tovar narxlari va qoldiqlari sinxronlashtirildi."
+            'message': f"{result['updated']} ta tovar narxlari va qoldiqlari muvaffaqiyatli yangilandi."
         })
     except Exception as e:
         return JsonResponse({

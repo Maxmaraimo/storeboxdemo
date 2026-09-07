@@ -34,6 +34,7 @@ window.yesposManager = function() {
         isSyncing: false,
         searchQuery: '',
         categories: [],
+        selectedModalCatId: 'all',
         selectedProductIds: [],
 
         init() {
@@ -143,18 +144,27 @@ window.yesposManager = function() {
             }
         },
 
-        async openCatalogModal() {
+        async openCatalogModal(force = false) {
             this.isCatalogOpen = true;
             this.selectedProductIds = [];
-            this.isLoadingCatalog = true;
             this.catalogError = '';
+
+            // If already loaded and not force-refreshing, reuse catalog immediately (ZERO network calls to YES POS!)
+            if (!force && this.categories && this.categories.length > 0) {
+                this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                return;
+            }
+
+            this.isLoadingCatalog = true;
             this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
 
             try {
-                const res = await fetch('/dashboard/api/yespos/catalog/');
+                const url = force ? '/dashboard/api/yespos/catalog/?force=1' : '/dashboard/api/yespos/catalog/';
+                const res = await fetch(url);
                 const data = await res.json();
                 if (data.success && data.categories) {
                     this.categories = data.categories;
+                    if (window.showToast && force) window.showToast('Каталог YES POS успешно обновлен');
                 } else {
                     this.catalogError = data.error || 'Не удалось получить каталог товаров YES POS';
                 }
@@ -168,9 +178,13 @@ window.yesposManager = function() {
         },
 
         get filteredCategories() {
+            let list = this.categories;
+            if (this.selectedModalCatId && this.selectedModalCatId !== 'all') {
+                list = list.filter(cat => String(cat.id) === String(this.selectedModalCatId));
+            }
             const q = this.searchQuery.trim().toLowerCase();
-            if (!q) return this.categories;
-            return this.categories.map(cat => {
+            if (!q) return list;
+            return list.map(cat => {
                 const prods = (cat.products || []).filter(p => {
                     return (p.name && p.name.toLowerCase().includes(q)) ||
                            (p.sku && p.sku.toLowerCase().includes(q)) ||
@@ -747,27 +761,48 @@ window.yesposManager = function() {
                         <h3 class="text-lg font-bold text-slate-900">Каталог товаров YES POS</h3>
                         <p class="text-xs text-slate-500 mt-0.5">Выберите товары для импорта в витрину вашего магазина StoreBox</p>
                     </div>
-                    <button type="button" id="closeCatalogBtn" @click="isCatalogOpen = false" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="openCatalogModal(true)" :disabled="isLoadingCatalog" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50" title="Обновить каталог с сервера YES POS">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5" :class="isLoadingCatalog ? 'animate-spin' : ''"></i>
+                            <span class="hidden sm:inline">Обновить</span>
+                        </button>
+                        <button type="button" id="closeCatalogBtn" @click="isCatalogOpen = false" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Search & Filters -->
-                <div class="p-4 bg-slate-50/80 border-b border-slate-200/80 flex flex-col sm:flex-row items-center gap-3 shrink-0">
-                    <div class="relative flex-1 w-full">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                            <i data-lucide="search" class="w-4 h-4"></i>
+                <div class="p-4 bg-slate-50/80 border-b border-slate-200/80 flex flex-col gap-3 shrink-0">
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full">
+                        <div class="relative flex-1 w-full">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i data-lucide="search" class="w-4 h-4"></i>
+                            </div>
+                            <input type="text" x-model="searchQuery" placeholder="Поиск по названию, артикулу или штрихкоду..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-hidden focus:border-slate-900">
                         </div>
-                        <input type="text" x-model="searchQuery" placeholder="Поиск по названию, артикулу или штрихкоду..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-hidden focus:border-slate-900">
+
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <button type="button" id="selectAllCatalogBtn" @click="toggleSelectAll()" class="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer shrink-0">
+                                <span x-text="isAllSelected ? 'Снять выделение' : 'Выбрать все'">Выбрать все</span>
+                            </button>
+                            <div class="text-xs font-medium text-slate-500 px-2 shrink-0">
+                                Выбрано: <span class="font-bold text-slate-900" x-text="selectedProductIds.length">0</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <button type="button" id="selectAllCatalogBtn" @click="toggleSelectAll()" class="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer shrink-0">
-                            <span x-text="isAllSelected ? 'Снять выделение' : 'Выбрать все'">Выбрать все</span>
+                    <!-- Category Pills Filter to prevent rendering 500 images at once -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full text-xs" x-show="categories.length > 0">
+                        <button type="button" @click="selectedModalCatId = 'all'" class="px-3 py-1 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer" :class="selectedModalCatId === 'all' ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'">
+                            Все категории (<span x-text="categories.reduce((acc, c) => acc + (c.products ? c.products.length : 0), 0)"></span>)
                         </button>
-                        <div class="text-xs font-medium text-slate-500 px-2 shrink-0">
-                            Выбрано: <span class="font-bold text-slate-900" x-text="selectedProductIds.length">0</span>
-                        </div>
+                        <template x-for="cat in categories" :key="cat.id">
+                            <button type="button" @click="selectedModalCatId = cat.id" class="px-3 py-1 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5" :class="selectedModalCatId === cat.id ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'">
+                                <span x-text="cat.name"></span>
+                                <span class="text-[10px] opacity-75" x-text="'(' + (cat.products ? cat.products.length : 0) + ')'"></span>
+                            </button>
+                        </template>
                     </div>
                 </div>
 
