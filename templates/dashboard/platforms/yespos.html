@@ -221,7 +221,10 @@ window.yesposManager = function() {
                     if (this.selectedProductIds.includes(p.id)) {
                         items.push({
                             remote_id: p.id,
+                            category_id: cat.id,
                             category_name: cat.name,
+                            category_image: cat.image,
+                            category_raw_image: cat.raw_image || cat.image,
                             name: p.name,
                             sku: p.sku,
                             barcode: p.barcode,
@@ -791,11 +794,20 @@ window.yesposManager = function() {
                     <template x-for="cat in filteredCategories" :key="cat.id">
                         <div class="pt-3 first:pt-0">
                             <div class="flex items-center justify-between mb-3">
-                                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                    <i data-lucide="folder" class="w-3.5 h-3.5 text-amber-500"></i>
-                                    <span x-text="cat.name"></span>
-                                    <span class="text-[10px] text-slate-400 font-normal" x-text="'(' + cat.products.length + ')'"></span>
-                                </h4>
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200/60 shrink-0 overflow-hidden flex items-center justify-center shadow-2xs">
+                                        <template x-if="cat.image">
+                                            <img :src="cat.image" class="w-full h-full object-cover" @error="cat.image = ''" loading="lazy">
+                                        </template>
+                                        <template x-if="!cat.image">
+                                            <i data-lucide="folder" class="w-4 h-4 text-amber-500"></i>
+                                        </template>
+                                    </div>
+                                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span x-text="cat.name"></span>
+                                        <span class="text-[10px] text-slate-400 font-normal" x-text="'(' + cat.products.length + ')'"></span>
+                                    </h4>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">

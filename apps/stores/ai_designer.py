@@ -45,9 +45,9 @@ NICHE_PRESETS = {
             'en': "Fresh Collection"
         },
         'categories': [
-            {'slug': 'guldastalar', 'name_uz': "Guldastalar", 'name_ru': "Букеты", 'icon': 'flower'},
-            {'slug': 'atirgullar', 'name_uz': "Atirgullar", 'name_ru': "Розы", 'icon': 'sparkles'},
-            {'slug': 'sovgalar', 'name_uz': "Sovg'alar & Qutilar", 'name_ru': "Подарки и боксы", 'icon': 'gift'},
+            {'slug': 'guldastalar', 'name_uz': "Guldastalar", 'name_ru': "Букеты", 'icon': 'flower', 'image_url': 'https://images.unsplash.com/photo-1520763185298-1b434c919102?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'atirgullar', 'name_uz': "Atirgullar", 'name_ru': "Розы", 'icon': 'sparkles', 'image_url': 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'sovgalar', 'name_uz': "Sovg'alar & Qutilar", 'name_ru': "Подарки и боксы", 'icon': 'gift', 'image_url': 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80'},
         ],
         'products': [
             {
@@ -159,10 +159,10 @@ NICHE_PRESETS = {
             'en': "Hot & Fast"
         },
         'categories': [
-            {'slug': 'fast-food', 'name_uz': "Fast-Fud & Pitsa", 'name_ru': "Фастфуд и Пицца", 'icon': 'pizza'},
-            {'slug': 'issiq-taomlar', 'name_uz': "Issiq taomlar", 'name_ru': "Горячие блюда", 'icon': 'utensils'},
-            {'slug': 'salatlar', 'name_uz': "Salatlar", 'name_ru': "Салаты", 'icon': 'salad'},
-            {'slug': 'ichimliklar', 'name_uz': "Ichimliklar & Desertlar", 'name_ru': "Напитки и десерты", 'icon': 'coffee'},
+            {'slug': 'fast-food', 'name_uz': "Fast-Fud & Pitsa", 'name_ru': "Фастфуд и Пицца", 'icon': 'pizza', 'image_url': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'issiq-taomlar', 'name_uz': "Issiq taomlar", 'name_ru': "Горячие блюда", 'icon': 'utensils', 'image_url': 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'salatlar', 'name_uz': "Salatlar", 'name_ru': "Салаты", 'icon': 'salad', 'image_url': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'ichimliklar', 'name_uz': "Ichimliklar & Desertlar", 'name_ru': "Напитки и десерты", 'icon': 'coffee', 'image_url': 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80'},
         ],
         'products': [
             {
@@ -272,9 +272,9 @@ NICHE_PRESETS = {
             'en': "1 Year Warranty"
         },
         'categories': [
-            {'slug': 'smartfonlar', 'name_uz': "Smartfonlar", 'name_ru': "Смартфоны", 'icon': 'smartphone'},
-            {'slug': 'noutbuklar', 'name_uz': "Noutbuklar & Planshetlar", 'name_ru': "Ноутбуки и планшеты", 'icon': 'laptop'},
-            {'slug': 'audio-aksessuar', 'name_uz': "Audio & Aksessuarlar", 'name_ru': "Аудио и гаджеты", 'icon': 'headphones'},
+            {'slug': 'smartfonlar', 'name_uz': "Smartfonlar", 'name_ru': "Смартфоны", 'icon': 'smartphone', 'image_url': 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'noutbuklar', 'name_uz': "Noutbuklar & Planshetlar", 'name_ru': "Ноутбуки и планшеты", 'icon': 'laptop', 'image_url': 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'audio-aksessuar', 'name_uz': "Audio & Aksessuarlar", 'name_ru': "Аудио и гаджеты", 'icon': 'headphones', 'image_url': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80'},
         ],
         'products': [
             {
@@ -372,9 +372,9 @@ NICHE_PRESETS = {
             'en': "New Arrival"
         },
         'categories': [
-            {'slug': 'ustki-kiyim', 'name_uz': "Ustki kiyimlar", 'name_ru': "Верхняя одежда", 'icon': 'shirt'},
-            {'slug': 'poyabzal', 'name_uz': "Poyabzal & Krossovkalar", 'name_ru': "Обувь и кроссовки", 'icon': 'footprints'},
-            {'slug': 'sumkalar', 'name_uz': "Sumkalar & Aksessuarlar", 'name_ru': "Сумки и аксессуары", 'icon': 'shopping-bag'},
+            {'slug': 'ustki-kiyim', 'name_uz': "Ustki kiyimlar", 'name_ru': "Верхняя одежда", 'icon': 'shirt', 'image_url': 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'poyabzal', 'name_uz': "Poyabzal & Krossovkalar", 'name_ru': "Обувь и кроссовки", 'icon': 'footprints', 'image_url': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'sumkalar', 'name_uz': "Sumkalar & Aksessuarlar", 'name_ru': "Сумки и аксессуары", 'icon': 'shopping-bag', 'image_url': 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=600&q=80'},
         ],
         'products': [
             {
@@ -457,11 +457,25 @@ NICHE_PRESETS = {
             'en': "100% Organic"
         },
         'categories': [
-            {'slug': 'mevalar', 'name_uz': "Mevalar & Sabzavotlar", 'name_ru': "Фрукты и овощи", 'icon': 'apple'},
-            {'slug': 'sut-non', 'name_uz': "Sut va Non mahsulotlari", 'name_ru': "Молоко и выпечка", 'icon': 'milk'},
-            {'slug': 'bakaleya', 'name_uz': "Bakaleya & Yog'lar", 'name_ru': "Бакалея и масла", 'icon': 'package'},
+            {'slug': 'sabzavotlar', 'name_uz': "Sabzavotlar", 'name_ru': "Овощи", 'icon': 'carrot', 'image_url': 'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'mevalar', 'name_uz': "Mevalar", 'name_ru': "Фрукты", 'icon': 'apple', 'image_url': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'gosht', 'name_uz': "G'osht mahsulotlari", 'name_ru': "Мясные продукты", 'icon': 'beef', 'image_url': 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'kolbasa', 'name_uz': "Kolbasa mahsulotlari", 'name_ru': "Колбасные изделия", 'icon': 'utensils', 'image_url': 'https://images.unsplash.com/photo-1628268909376-e8c44bb3067f?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'sut-non', 'name_uz': "Sut va Non mahsulotlari", 'name_ru': "Молоко и выпечка", 'icon': 'milk', 'image_url': 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'bakaleya', 'name_uz': "Bakaleya & Yog'lar", 'name_ru': "Бакалея и масла", 'icon': 'package', 'image_url': 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'},
         ],
         'products': [
+            {
+                'slug': 'kartoshka-kg',
+                'name_uz': "Kartoshka yangi hosil (1 kg)",
+                'name_ru': "Картофель свежий отборный (1 кг)",
+                'price': 5400,
+                'old_price': 6000,
+                'category_slug': 'sabzavotlar',
+                'image_url': 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=800&q=80',
+                'description_uz': "Toza yuvilgan, sarxil va mazali kartoshka.",
+                'description_ru': "Свежий фермерский картофель отличного качества."
+            },
             {
                 'slug': 'bananlar-ekvador',
                 'name_uz': "Yangi terilgan bananlar (1 kg)",
@@ -472,6 +486,28 @@ NICHE_PRESETS = {
                 'image_url': 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=800&q=80',
                 'description_uz': "Shirin va xushbo'y pishgan ekvador bananlari.",
                 'description_ru': "Спелые отборные бананы с высоким содержанием калия."
+            },
+            {
+                'slug': 'mol-goshti-lahm',
+                'name_uz': "Yangi mol go'shti (lahm, 1 kg)",
+                'name_ru': "Свежая говядина мякоть (1 кг)",
+                'price': 95000,
+                'old_price': 105000,
+                'category_slug': 'gosht',
+                'image_url': 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?auto=format&fit=crop&w=800&q=80',
+                'description_uz': "Halol va yangi so'yilgan yosh mol go'shti.",
+                'description_ru': "Свежее фермерское мясо без кости, халяль."
+            },
+            {
+                'slug': 'servelat-kolbasa',
+                'name_uz': "Servelat yarim dudlangan kolbasa (1 kg)",
+                'name_ru': "Сервелат полукопченый (1 кг)",
+                'price': 58000,
+                'old_price': 65000,
+                'category_slug': 'kolbasa',
+                'image_url': 'https://images.unsplash.com/photo-1628268909376-e8c44bb3067f?auto=format&fit=crop&w=800&q=80',
+                'description_uz': "A'lo navli mol go'shtidan xushbo'y ziravorlar bilan tayyorlangan.",
+                'description_ru': "Ароматный мясной сервелат из отборного мяса со специями."
             },
             {
                 'slug': 'fermer-suti-32',
@@ -545,9 +581,9 @@ NICHE_PRESETS = {
             'en': "Original Brand"
         },
         'categories': [
-            {'slug': 'yuz-parvarishi', 'name_uz': "Yuz parvarishi", 'name_ru': "Уход за кожей", 'icon': 'sparkles'},
-            {'slug': 'makiyaj', 'name_uz': "Makiyaj vositalari", 'name_ru': "Декоративная косметика", 'icon': 'palette'},
-            {'slug': 'parfyum', 'name_uz': "Eksklyuziv Parfyum", 'name_ru': "Селективная парфюмерия", 'icon': 'flower'},
+            {'slug': 'yuz-parvarishi', 'name_uz': "Yuz parvarishi", 'name_ru': "Уход за кожей", 'icon': 'sparkles', 'image_url': 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'makiyaj', 'name_uz': "Makiyaj vositalari", 'name_ru': "Декоративная косметика", 'icon': 'palette', 'image_url': 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'parfyum', 'name_uz': "Eksklyuziv Parfyum", 'name_ru': "Селективная парфюмерия", 'icon': 'flower', 'image_url': 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=600&q=80'},
         ],
         'products': [
             {
@@ -622,9 +658,9 @@ NICHE_PRESETS = {
             'en': "Freshly Baked"
         },
         'categories': [
-            {'slug': 'qahva-ichimlik', 'name_uz': "Qahva & Choylar", 'name_ru': "Кофе и чай", 'icon': 'coffee'},
-            {'slug': 'shirinliklar', 'name_uz': "Desertlar & Tortlar", 'name_ru': "Десерты и торты", 'icon': 'cake'},
-            {'slug': 'pishiriqlar', 'name_uz': "Pishiriqlar & Kruassan", 'name_ru': "Выпечка и круассаны", 'icon': 'cookie'},
+            {'slug': 'qahva-ichimlik', 'name_uz': "Qahva & Choylar", 'name_ru': "Кофе и чай", 'icon': 'coffee', 'image_url': 'https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'shirinliklar', 'name_uz': "Desertlar & Tortlar", 'name_ru': "Десерты и торты", 'icon': 'cake', 'image_url': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80'},
+            {'slug': 'pishiriqlar', 'name_uz': "Pishiriqlar & Kruassan", 'name_ru': "Выпечка и круассаны", 'icon': 'cookie', 'image_url': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80'},
         ],
         'products': [
             {
@@ -847,11 +883,37 @@ def apply_niche_catalog_to_store(store, niche_key, custom_prompt=None, lang='uz'
     primary_banner.save()
 
     # 3. Clean up previous categories and products so the store doesn't mix different niches
+    has_yespos = Product.objects.filter(store=store, yespos_links__isnull=False).exists()
+    
+    if has_yespos:
+        # STRICT PROTECTION FOR YES POS STORES:
+        # Never generate mock products or mock categories!
+        # Only design styling and marketing banner are updated.
+        yespos_cat_ids = set(Product.objects.filter(store=store, yespos_links__isnull=False).values_list('category_id', flat=True))
+        Category.objects.filter(store=store, id__in=yespos_cat_ids).update(is_active=True)
+        Product.objects.filter(store=store, yespos_links__isnull=False).update(is_active=True)
+        # Deactivate any mock/dummy products and non-YES POS categories
+        Product.objects.filter(store=store, yespos_links__isnull=True).update(is_active=False)
+        Category.objects.filter(store=store).exclude(id__in=yespos_cat_ids).update(is_active=False)
+        return {
+            'status': 'ok',
+            'theme': theme,
+            'banner': {
+                'title': primary_banner.title,
+                'subtitle': primary_banner.subtitle,
+                'image_url': primary_banner.image_url
+            },
+            'categories_count': len(yespos_cat_ids),
+            'products_created': 0,
+            'products_updated': 0,
+            'note': 'YES POS inventory strictly preserved'
+        }
+
     if replace_existing:
         Category.objects.filter(store=store).update(is_active=False)
         Product.objects.filter(store=store).update(is_active=False)
 
-    # 4. Create Categories for the chosen niche
+    # 4. Create Categories for the chosen niche (only for stores without YES POS)
     category_map = {}
     for cat_data in theme.get('categories', []):
         cat_slug = cat_data.get('slug') or slugify(cat_data['name_uz'])
@@ -863,9 +925,13 @@ def apply_niche_catalog_to_store(store, niche_key, custom_prompt=None, lang='uz'
                 'name_ru': cat_data.get('name_ru', cat_data['name_uz']),
                 'name_en': cat_data.get('name_en', cat_data['name_uz']),
                 'icon': cat_data.get('icon', 'tag'),
+                'image_url': cat_data.get('image_url', ''),
                 'is_active': True
             }
         )
+        if cat_data.get('image_url') and not cat.image and not cat.image_url:
+            cat.image_url = cat_data['image_url']
+            cat.save(update_fields=['image_url'])
         category_map[cat_slug] = cat
 
     # 5. Populate Products with High-Resolution Photos

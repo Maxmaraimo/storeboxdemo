@@ -28,6 +28,10 @@ class Category(models.Model):
             return self.image_url
         return None
 
+    @property
+    def active_products_count(self):
+        return self.products.filter(is_active=True).count()
+
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'

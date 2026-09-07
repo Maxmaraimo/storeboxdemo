@@ -216,6 +216,13 @@ class YesPosClient:
                 for cat in raw_cats:
                     c_id = str(cat.get('id') or cat.get('category_id') or '')
                     c_name = str(cat.get('name') or cat.get('category_name') or '').strip() or f"Категория {c_id}"
+                    raw_cat_img = str(cat.get('image') or cat.get('path') or '').strip()
+                    if raw_cat_img and not raw_cat_img.lower().startswith('parent_'):
+                        cat_img_url = self.get_catalog_image_url(raw_cat_img)
+                    else:
+                        cat_img_url = ''
+                        raw_cat_img = ''
+
                     cat_prods = []
                     for p in cat.get('products', cat.get('items', [])):
                         pid = str(p.get('id') or p.get('product_id', ''))
@@ -243,9 +250,9 @@ class YesPosClient:
 
                         raw_img = str(p.get('image') or p.get('path') or '').strip()
                         if raw_img and not raw_img.lower().startswith('parent_'):
-                            cat_img_url = self.get_catalog_image_url(raw_img)
+                            prod_img_url = self.get_catalog_image_url(raw_img)
                         else:
-                            cat_img_url = ''
+                            prod_img_url = ''
                             raw_img = ''
 
                         cat_prods.append({
@@ -257,13 +264,19 @@ class YesPosClient:
                             'price': price_val,
                             'stock': stock_val,
                             'description': str(p.get('description') or ''),
-                            'image': cat_img_url,
+                            'image': prod_img_url,
                             'raw_image': raw_img,
+                            'category_id': c_id,
+                            'category_name': c_name,
+                            'category_image': cat_img_url,
+                            'category_raw_image': raw_cat_img,
                         })
                     if c_id:
                         categories.append({
                             'id': c_id,
                             'name': c_name,
+                            'image': cat_img_url,
+                            'raw_image': raw_cat_img,
                             'products': cat_prods
                         })
                 return categories
@@ -327,6 +340,34 @@ class YesPosClient:
         except Exception as e:
             logger.debug(f"Could not download local image for {product.name_ru}: {e}")
 
+    def _save_category_image(self, category, image_url_or_path, remote_id):
+        """Download image from remote URL or raw path and save as Category image"""
+        if not image_url_or_path:
+            return
+        remote_url = self.get_remote_image_url(image_url_or_path)
+        if not remote_url:
+            return
+        try:
+            from django.core.files.base import ContentFile
+
+            if not category.image:
+                resp = requests.get(remote_url, timeout=10)
+                if resp.status_code == 200 and resp.content:
+                    ext = 'jpg'
+                    if resp.content.startswith(b'\x89PNG') or '.png' in remote_url.lower():
+                        ext = 'png'
+                    elif resp.content.startswith(b'RIFF') and b'WEBP' in resp.content[:16]:
+                        ext = 'webp'
+                    elif '.webp' in remote_url.lower():
+                        ext = 'webp'
+                    filename = f"cat_{remote_id}_{category.id}.{ext}"
+                    category.image.save(filename, ContentFile(resp.content), save=True)
+                    if not category.image_url:
+                        category.image_url = remote_url
+                        category.save(update_fields=['image_url'])
+        except Exception as e:
+            logger.debug(f"Could not download local image for category {category.name_ru}: {e}")
+
     def import_products(self, store, selected_items):
         """
         selected_items: list of dicts:
@@ -343,7 +384,7 @@ class YesPosClient:
 
             # 1. Resolve or create category
             cat_name = item.get('category_name', 'Импорт YES POS').strip()
-            category = Category.objects.filter(store=store, name_ru=cat_name).first()
+            category = Category.objects.filter(store=store, name_ru=cat_name).first() or Category.objects.filter(store=store, name_uz=cat_name).first()
             if not category:
                 base_slug = slugify(cat_name) or f'category-{remote_id}'
                 c_slug = base_slug
@@ -355,8 +396,19 @@ class YesPosClient:
                     store=store,
                     name_ru=cat_name,
                     name_uz=cat_name,
-                    slug=c_slug
+                    slug=c_slug,
+                    is_active=True
                 )
+            elif not category.is_active:
+                category.is_active = True
+                category.save(update_fields=['is_active'])
+
+            # Check if category needs image
+            cat_raw_img = str(item.get('category_raw_image') or item.get('category_image') or '').strip()
+            if 'path=' in cat_raw_img:
+                cat_raw_img = cat_raw_img.split('path=')[-1].split('&')[0]
+            if cat_raw_img and not category.image:
+                self._save_category_image(category, cat_raw_img, item.get('category_id') or remote_id)
 
             try:
                 price = Decimal(str(item.get('price') or 0))
@@ -494,6 +546,15 @@ class YesPosClient:
                 link.last_synced_at = timezone.now()
                 link.save()
                 updated_count += 1
+
+        # Also sync category images if store categories are missing images
+        for cat in catalog:
+            c_name = cat.get('name')
+            raw_c_img = cat.get('raw_image') or cat.get('image')
+            if c_name and raw_c_img:
+                store_cat = Category.objects.filter(store=store, name_ru=c_name).first() or Category.objects.filter(store=store, name_uz=c_name).first()
+                if store_cat and not store_cat.image:
+                    self._save_category_image(store_cat, raw_c_img, cat.get('id', 'cat'))
 
         connection.last_sync_at = timezone.now()
         connection.save()

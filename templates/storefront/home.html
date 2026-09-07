@@ -21,30 +21,47 @@
     {% endwith %}
     {% endif %}
 
-    <!-- CATEGORIES SCROLL BAR (Video 05:28) -->
+    <!-- VISUAL CATEGORIES GRID WITH BARCHASI -->
+    {% if not search_q and categories %}
     <div>
-        <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            <a href="/store/{{ store.subdomain }}/"
-               class="px-4 py-2.5 rounded-2xl text-xs font-bold shrink-0 transition-all shadow-2xs flex items-center gap-2 {% if not current_category %}bg-brand text-white shadow-brand/20{% else %}bg-white border border-slate-200 text-slate-700 hover:bg-slate-50{% endif %}">
-                <i data-lucide="layout-grid" class="w-4 h-4"></i>
-                <span>{{ t.all|default:"Barchasi" }}</span>
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs sm:text-sm font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-4 h-4 text-brand"></i>
+                <span>{{ t.categories|default:"Kategoriyalar" }}</span>
+            </h3>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3">
+            <!-- "Barchasi" Card -->
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if request.GET.preview %}?preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% endif %}"
+               class="group rounded-2xl p-3 border transition-all flex flex-col items-center text-center {% if not current_category %}bg-brand/5 border-brand ring-2 ring-brand/20 shadow-xs{% else %}bg-white border-slate-200/80 hover:border-brand/40 hover:shadow-md{% endif %}">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl {% if not current_category %}bg-brand text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-brand/10 group-hover:text-brand{% endif %} overflow-hidden flex items-center justify-center mb-2.5 shrink-0 group-hover:scale-105 transition-all duration-300">
+                    <i data-lucide="layout-grid" class="w-8 h-8"></i>
+                </div>
+                <span class="text-xs font-bold {% if not current_category %}text-brand{% else %}text-slate-900 group-hover:text-brand{% endif %} transition-colors line-clamp-1">{{ t.all|default:"Barchasi" }}</span>
+                <span class="text-[10px] {% if not current_category %}text-brand/70 font-semibold{% else %}text-slate-400 font-medium{% endif %} mt-0.5">{{ total_products_count|default:products.count }} {{ t.products_count|default:"ta mahsulot" }}</span>
             </a>
 
+            <!-- Categories Cards -->
             {% for cat in categories %}
-            <a href="?cat={{ cat.slug }}"
-               class="px-4 py-2.5 rounded-2xl text-xs font-bold shrink-0 transition-all shadow-2xs flex items-center gap-2 {% if current_category.id == cat.id %}bg-brand text-white shadow-brand/20{% else %}bg-white border border-slate-200 text-slate-700 hover:bg-slate-50{% endif %}">
-                {% if cat.primary_image_url %}
-                <img src="{{ cat.primary_image_url }}" class="w-4 h-4 rounded-full object-cover">
-                {% elif cat.image %}
-                <img src="{{ cat.image.url }}" class="w-4 h-4 rounded-full object-cover">
-                {% else %}
-                <i data-lucide="{{ cat.icon|default:'tag' }}" class="w-4 h-4"></i>
-                {% endif %}
-                <span>{{ cat.display_name }}</span>
+            <a href="?cat={{ cat.slug }}{% if request.GET.preview %}&preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% endif %}"
+               class="group rounded-2xl p-3 border transition-all flex flex-col items-center text-center {% if current_category.id == cat.id or current_category.slug == cat.slug %}bg-brand/5 border-brand ring-2 ring-brand/20 shadow-xs{% else %}bg-white border-slate-200/80 hover:border-brand/40 hover:shadow-md{% endif %}">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 overflow-hidden flex items-center justify-center mb-2.5 shrink-0 group-hover:scale-105 transition-transform duration-300 {% if current_category.id == cat.id or current_category.slug == cat.slug %}ring-2 ring-brand/30{% endif %}">
+                    {% if cat.primary_image_url %}
+                    <img src="{{ cat.primary_image_url }}" alt="{{ cat.display_name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                    <div class="w-full h-full items-center justify-center hidden text-slate-400 bg-slate-100">
+                        <i data-lucide="{{ cat.icon|default:'folder' }}" class="w-8 h-8"></i>
+                    </div>
+                    {% else %}
+                    <i data-lucide="{{ cat.icon|default:'folder' }}" class="w-8 h-8 text-slate-400"></i>
+                    {% endif %}
+                </div>
+                <span class="text-xs font-bold {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-brand{% else %}text-slate-900 group-hover:text-brand{% endif %} transition-colors line-clamp-1">{{ cat.display_name }}</span>
+                <span class="text-[10px] {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-brand/70 font-semibold{% else %}text-slate-400 font-medium{% endif %} mt-0.5">{{ cat.active_products_count|default:0 }} {{ t.products_count|default:"ta mahsulot" }}</span>
             </a>
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 
     <!-- PRODUCTS SECTION (Dynamic Grid or Compact Restaurant Menu) -->
     <div>

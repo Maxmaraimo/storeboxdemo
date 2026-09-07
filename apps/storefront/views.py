@@ -184,6 +184,7 @@ def storefront_home_view(request, subdomain=None):
 
     categories = Category.objects.filter(store=store, is_active=True).order_by('sort_order', 'id')
     products = Product.objects.filter(store=store, is_active=True).prefetch_related('images', 'variations')
+    total_products_count = products.count()
 
     # Category filter
     cat_slug = request.GET.get('cat') or request.GET.get('category')
@@ -271,6 +272,12 @@ def storefront_home_view(request, subdomain=None):
                             self.image = None
                             self.image_url = c_dict.get('image_url')
                             self.primary_image_url = c_dict.get('image_url')
+                            self.active_products_count = c_dict.get('products_count', 6)
+                            self.products_count = c_dict.get('products_count', 6)
+                            self.products = type('MockQuerySet', (), {
+                                'count': lambda self: 6,
+                                'filter': lambda self, *a, **k: type('MockQS', (), {'count': lambda s: 6})()
+                            })()
                         def get_name(self, l='uz'):
                             if l == 'ru' and self.name_ru:
                                 return self.name_ru
@@ -319,6 +326,7 @@ def storefront_home_view(request, subdomain=None):
                                 return self.description_uz
 
                         preview_prods = [MockProduct(p, i) for i, p in enumerate(niche_data['products'])]
+                        total_products_count = len(preview_prods)
                         if cat_slug:
                             filtered = [p for p in preview_prods if p.category_slug == cat_slug]
                             products = filtered if filtered else preview_prods
@@ -342,6 +350,7 @@ def storefront_home_view(request, subdomain=None):
         'banners': banners,
         'categories': categories,
         'products': products,
+        'total_products_count': total_products_count,
         'selected_category': selected_category,
         'current_category': selected_category,
         'search_q': search_q,

@@ -1028,6 +1028,11 @@ def products_list_view(request):
         return redirect('dashboard:onboarding')
 
     products = Product.objects.filter(store=store).select_related('category').prefetch_related('images', 'variations')
+    categories = Category.objects.filter(store=store).order_by('-is_active', 'sort_order', 'id')
+    selected_category = request.GET.get('category', '').strip()
+    if selected_category:
+        products = products.filter(category_id=selected_category)
+
     query = request.GET.get('q', '').strip()
     if query:
         products = products.filter(Q(name_uz__icontains=query) | Q(name_ru__icontains=query) | Q(name_en__icontains=query))
@@ -1035,6 +1040,8 @@ def products_list_view(request):
     return render(request, 'dashboard/catalog/products.html', {
         'store': store,
         'products': products,
+        'categories': categories,
+        'selected_category': selected_category,
         'query': query
     })
 
@@ -1191,6 +1198,7 @@ def product_create_or_edit_view(request, product_id=None):
         'categories': categories,
         'units': Product.Units.choices,
         'error': error,
+        'selected_category_id': request.GET.get('category', '').strip(),
     })
 
 
@@ -1206,19 +1214,249 @@ def categories_list_view(request):
             name_uz = request.POST.get('name_uz', '').strip()
             name_ru = request.POST.get('name_ru', '').strip()
             name_en = request.POST.get('name_en', '').strip()
-            slug = slugify(name_uz) or 'cat'
+            icon = request.POST.get('icon', 'folder').strip()
+            image_url = request.POST.get('image_url', '').strip()
+            is_active = request.POST.get('is_active') in ['1', 'true', 'True', True, 'on']
+            slug = slugify(name_uz or name_ru) or 'cat'
             if Category.objects.filter(store=store, slug=slug).exists():
                 slug = f'{slug}-{Category.objects.filter(store=store).count() + 1}'
-            Category.objects.create(store=store, name_uz=name_uz, name_ru=name_ru, name_en=name_en, slug=slug)
+            cat = Category(store=store, name_uz=name_uz, name_ru=name_ru, name_en=name_en, slug=slug, icon=icon, image_url=image_url, is_active=is_active)
+            if request.FILES.get('image'):
+                cat.image = request.FILES['image']
+            cat.save()
+        elif action == 'update':
+            cat_id = request.POST.get('category_id')
+            cat = Category.objects.filter(id=cat_id, store=store).first()
+            if cat:
+                cat.name_uz = request.POST.get('name_uz', cat.name_uz).strip()
+                cat.name_ru = request.POST.get('name_ru', cat.name_ru).strip()
+                cat.name_en = request.POST.get('name_en', cat.name_en).strip()
+                cat.icon = request.POST.get('icon', cat.icon or 'folder').strip()
+                if 'is_active' in request.POST:
+                    cat.is_active = request.POST.get('is_active') in ['1', 'true', 'True', True, 'on']
+                img_url = request.POST.get('image_url', '').strip()
+                if img_url:
+                    cat.image_url = img_url
+                if request.FILES.get('image'):
+                    cat.image = request.FILES['image']
+                cat.save()
         elif action == 'delete':
             cat_id = request.POST.get('category_id')
             Category.objects.filter(id=cat_id, store=store).delete()
+        elif action == 'toggle_active':
+            cat_id = request.POST.get('category_id')
+            cat = Category.objects.filter(id=cat_id, store=store).first()
+            if cat:
+                cat.is_active = not cat.is_active
+                cat.save(update_fields=['is_active'])
+                return JsonResponse({
+                    'status': 'ok',
+                    'is_active': cat.is_active,
+                    'message': f"«{cat.name_uz or cat.name_ru}» " + ("saytga qo'shildi (faol)!" if cat.is_active else "saytdan yashirildi!")
+                })
+            return JsonResponse({'status': 'error', 'message': 'Kategoriya topilmadi'}, status=404)
+        elif action == 'quick_add_product':
+            cat_id = request.POST.get('category_id')
+            cat = Category.objects.filter(id=cat_id, store=store).first()
+            if not cat:
+                return JsonResponse({'status': 'error', 'message': 'Kategoriya topilmadi'}, status=404)
+            name_uz = request.POST.get('name_uz', '').strip()
+            name_ru = request.POST.get('name_ru', '').strip() or name_uz
+            price_raw = request.POST.get('price', '0').replace(' ', '').replace(',', '.')
+            stock_raw = request.POST.get('stock', '10').strip() or '10'
+            image_url = request.POST.get('image_url', '').strip()
+            image_file = request.FILES.get('image')
+
+            if not name_uz:
+                return JsonResponse({'status': 'error', 'message': 'Mahsulot nomini kiriting'}, status=400)
+            try:
+                price = Decimal(price_raw or '0')
+            except Exception:
+                price = Decimal('0')
+            try:
+                stock = int(stock_raw)
+            except Exception:
+                stock = 10
+
+            slug = slugify(name_uz) or f"prod-{random.randint(100, 999)}"
+            base_slug = slug
+            cnt = 1
+            while Product.objects.filter(store=store, slug=slug).exists():
+                slug = f"{base_slug}-{cnt}"
+                cnt += 1
+
+            prod = Product.objects.create(
+                store=store,
+                category=cat,
+                name_uz=name_uz,
+                name_ru=name_ru,
+                slug=slug,
+                price=price,
+                stock=stock,
+                image_url=image_url,
+                is_active=True
+            )
+            if image_file:
+                ProductImage.objects.create(product=prod, image=image_file, is_primary=True)
+
+            return JsonResponse({
+                'status': 'ok',
+                'product': {
+                    'id': prod.id,
+                    'name_uz': prod.name_uz,
+                    'name_ru': prod.name_ru or '',
+                    'price': float(prod.price),
+                    'stock': prod.stock,
+                    'unit': prod.unit,
+                    'is_active': prod.is_active,
+                    'primary_image_url': prod.primary_image_url or '',
+                    'edit_url': f'/dashboard/products/{prod.id}/edit/'
+                },
+                'message': f"«{prod.name_uz}» tovari muvaffaqiyatli qo'shildi!"
+            })
         return redirect('dashboard:categories')
 
-    categories = Category.objects.filter(store=store).annotate(products_count=Count('products'))
+    categories = Category.objects.filter(store=store).annotate(
+        products_count=Count('products', filter=Q(products__is_active=True)),
+        total_products_count=Count('products')
+    ).order_by('-is_active', 'sort_order', 'id')
+
     return render(request, 'dashboard/catalog/categories.html', {
         'store': store,
         'categories': categories
+    })
+
+
+@login_required
+def category_products_api(request, category_id):
+    store = get_merchant_store(request)
+    if not store:
+        return JsonResponse({'status': 'error', 'message': 'Do\'kon topilmadi'}, status=404)
+
+    cat = get_object_or_404(Category, id=category_id, store=store)
+    products = Product.objects.filter(category=cat, store=store).prefetch_related('images').order_by('-is_active', 'name_uz')
+
+    prods_data = []
+    for p in products:
+        prods_data.append({
+            'id': p.id,
+            'name_uz': p.name_uz,
+            'name_ru': p.name_ru or '',
+            'price': float(p.price),
+            'old_price': float(p.old_price) if p.old_price else None,
+            'stock': p.stock,
+            'unit': p.unit,
+            'is_active': p.is_active,
+            'primary_image_url': p.primary_image_url or '',
+            'edit_url': f'/dashboard/products/{p.id}/edit/'
+        })
+
+    return JsonResponse({
+        'status': 'ok',
+        'category': {
+            'id': cat.id,
+            'name_uz': cat.name_uz,
+            'name_ru': cat.name_ru or '',
+            'primary_image_url': cat.primary_image_url or '',
+            'is_active': cat.is_active,
+            'products_count': len(prods_data),
+        },
+        'products': prods_data
+    })
+
+
+@login_required
+def category_toggle_active_api(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Faqat POST so\'rovi qabul qilinadi'}, status=405)
+    store = get_merchant_store(request)
+    if not store:
+        return JsonResponse({'status': 'error', 'message': 'Do\'kon topilmadi'}, status=404)
+
+    cat_id = request.POST.get('category_id')
+    cat = Category.objects.filter(id=cat_id, store=store).first()
+    if not cat:
+        return JsonResponse({'status': 'error', 'message': 'Kategoriya topilmadi'}, status=404)
+
+    cat.is_active = not cat.is_active
+    cat.save(update_fields=['is_active'])
+
+    return JsonResponse({
+        'status': 'ok',
+        'is_active': cat.is_active,
+        'message': f"«{cat.name_uz or cat.name_ru}» " + ("saytga qo'shildi (faol)!" if cat.is_active else "saytdan yashirildi!")
+    })
+
+
+@login_required
+def category_quick_add_product_api(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Faqat POST so\'rovi qabul qilinadi'}, status=405)
+    store = get_merchant_store(request)
+    if not store:
+        return JsonResponse({'status': 'error', 'message': 'Do\'kon topilmadi'}, status=404)
+
+    cat_id = request.POST.get('category_id')
+    cat = Category.objects.filter(id=cat_id, store=store).first()
+    if not cat:
+        return JsonResponse({'status': 'error', 'message': 'Kategoriya topilmadi'}, status=404)
+
+    name_uz = request.POST.get('name_uz', '').strip()
+    name_ru = request.POST.get('name_ru', '').strip() or name_uz
+    price_str = request.POST.get('price', '0').replace(' ', '').replace(',', '.')
+    stock_str = request.POST.get('stock', '10').strip() or '10'
+    image_url = request.POST.get('image_url', '').strip()
+    image_file = request.FILES.get('image')
+
+    if not name_uz:
+        return JsonResponse({'status': 'error', 'message': 'Mahsulot nomini kiriting'}, status=400)
+
+    try:
+        price = Decimal(price_str or '0')
+    except Exception:
+        price = Decimal('0')
+
+    try:
+        stock = int(stock_str)
+    except Exception:
+        stock = 10
+
+    slug = slugify(name_uz) or f"prod-{random.randint(100, 999)}"
+    base_slug = slug
+    counter = 1
+    while Product.objects.filter(store=store, slug=slug).exists():
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    prod = Product.objects.create(
+        store=store,
+        category=cat,
+        name_uz=name_uz,
+        name_ru=name_ru,
+        slug=slug,
+        price=price,
+        stock=stock,
+        image_url=image_url,
+        is_active=True
+    )
+
+    if image_file:
+        ProductImage.objects.create(product=prod, image=image_file, is_primary=True)
+
+    return JsonResponse({
+        'status': 'ok',
+        'product': {
+            'id': prod.id,
+            'name_uz': prod.name_uz,
+            'name_ru': prod.name_ru or '',
+            'price': float(prod.price),
+            'stock': prod.stock,
+            'unit': prod.unit,
+            'is_active': prod.is_active,
+            'primary_image_url': prod.primary_image_url or '',
+            'edit_url': f'/dashboard/products/{prod.id}/edit/'
+        },
+        'message': f"«{prod.name_uz}» tovari muvaffaqiyatli qo'shildi!"
     })
 
 
@@ -1642,16 +1880,13 @@ def platforms_view(request):
                 primary_banner.is_active = True
                 primary_banner.save()
 
-            # If user checked 'generate_catalog', or niche changed, or catalog is mismatched, automatically sync catalog
-            from apps.catalog.models import Category
+            # If user explicitly checked 'generate_catalog' and the store is empty (no YES POS and no existing products)
+            from apps.catalog.models import Category, Product
             from apps.stores.ai_designer import NICHE_PRESETS, apply_niche_catalog_to_store
-            active_cat_slugs = set(Category.objects.filter(store=store, is_active=True).values_list('slug', flat=True))
-            niche_data = NICHE_PRESETS.get(store.theme_business_niche, {})
-            expected_slugs = set(c['slug'] for c in niche_data.get('categories', []))
-            has_mismatched_catalog = bool(expected_slugs and not (expected_slugs & active_cat_slugs))
-            niche_changed = bool(old_niche and store.theme_business_niche != old_niche)
+            has_yespos = Product.objects.filter(store=store, yespos_links__isnull=False).exists()
+            has_products = Product.objects.filter(store=store, is_active=True).exists()
 
-            if (request.POST.get('generate_catalog') == '1' or niche_changed or has_mismatched_catalog) and store.theme_business_niche:
+            if request.POST.get('generate_catalog') == '1' and not has_yespos and not has_products and store.theme_business_niche:
                 apply_niche_catalog_to_store(
                     store,
                     store.theme_business_niche,
@@ -1675,11 +1910,14 @@ def platforms_view(request):
     from apps.telegram_bot.services import get_store_webapp_url
     from apps.orders.models import MarketingBanner
     from apps.stores.ai_designer import NICHE_PRESETS
+    from apps.catalog.models import Product
     web_app_url = get_store_webapp_url(store)
     storefront_url = f"http://127.0.0.1:8000/store/{store.subdomain}/"
     bot_link = f"https://t.me/{store.telegram_bot_username}" if store.telegram_bot_username else f"https://t.me/storebox_{store.subdomain}_bot"
     primary_banner = MarketingBanner.objects.filter(store=store, is_active=True).first()
     sub_tab = request.GET.get('sub', 'design')
+    has_yespos = Product.objects.filter(store=store, yespos_links__isnull=False).exists()
+    active_products_count = Product.objects.filter(store=store, is_active=True).count()
 
     return render(request, 'dashboard/platforms/platforms.html', {
         'store': store,
@@ -1691,6 +1929,8 @@ def platforms_view(request):
         'bot_link': bot_link,
         'primary_banner': primary_banner,
         'niche_presets': NICHE_PRESETS,
+        'has_yespos': has_yespos,
+        'active_products_count': active_products_count,
     })
 
 

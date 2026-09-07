@@ -5,17 +5,41 @@
 {% block dashboard_content %}
 <div class="space-y-6" x-data="categoriesApp()">
 
-    <!-- Header & Action (Video 08:32) -->
+    <!-- Header & Action -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Kategoriyalar ro'yxati</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Katalog mahsulotlarini bo'limlar bo'yicha ajratish</p>
+            <p class="text-xs text-slate-500 mt-0.5">Katalog mahsulotlarini bo'limlar bo'yicha ajratish, saytda ko'rsatish va tovarlarni boshqarish</p>
         </div>
 
-        <button type="button" @click="addModalOpen = true" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            <span>Kategoriya qo'shish</span>
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ store.subdomain|default:''|yesno:'/store/'|add:store.subdomain|add:'/,#' }}" target="_blank" class="px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors">
+                <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400"></i>
+                <span>Saytda ko'rish</span>
+            </a>
+            <button type="button" @click="addModalOpen = true" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs transition-all active:scale-95">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Kategoriya qo'shish</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Info Banner for Storefront Visibility -->
+    <div class="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <i data-lucide="store" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h4 class="text-xs font-black text-emerald-950">Saytda qaysi kategoriyalar ko'rinishini boshqaring</h4>
+                <p class="text-[11px] text-emerald-800 mt-0.5">«Saytda ko'rsatish» tugmachasini bosish orqali kategoriyani bir zumda saytga qo'shishingiz yoki vaqtincha yashirishingiz mumkin.</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <span class="text-xs font-bold text-emerald-900 bg-white px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
+                Jami: <b class="font-mono text-emerald-600">{{ categories|length }}</b> ta kategoriya
+            </span>
+        </div>
     </div>
 
     <!-- Categories Table -->
@@ -24,39 +48,110 @@
             <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
                     <tr>
-                        <th class="py-3.5 px-4">Belgi</th>
+                        <th class="py-3.5 px-4 w-16">Rasm</th>
                         <th class="py-3.5 px-4">Kategoriya nomi</th>
-                        <th class="py-3.5 px-4">Mahsulotlar soni</th>
-                        <th class="py-3.5 px-4 text-right">Harakat</th>
+                        <th class="py-3.5 px-4">Tovarlar</th>
+                        <th class="py-3.5 px-4 text-center">Saytda ko'rsatish</th>
+                        <th class="py-3.5 px-4 text-right">Harakatlar</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
                     {% for cat in categories %}
-                    <tr id="cat-row-{{ cat.id }}" class="hover:bg-slate-50/60 transition-colors">
-                        <td class="py-3.5 px-4">
-                            <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-                                <i data-lucide="{{ cat.icon|default:'tag' }}" class="w-4 h-4"></i>
+                    <tr id="cat-row-{{ cat.id }}" class="hover:bg-slate-50/70 transition-colors group">
+                        <!-- Category Image / Icon -->
+                        <td class="py-3 px-4">
+                            <div @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat.name_uz|default:cat.name_ru|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
+                                 class="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200/80 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs cursor-pointer hover:ring-2 hover:ring-brand/40 transition-all">
+                                {% if cat.primary_image_url %}
+                                    <img src="{{ cat.primary_image_url }}" alt="{{ cat.name_uz|default:cat.name_ru }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                                    <div class="w-full h-full items-center justify-center hidden text-slate-500 bg-slate-100">
+                                        <i data-lucide="{{ cat.icon|default:'folder' }}" class="w-5 h-5"></i>
+                                    </div>
+                                {% else %}
+                                    <i data-lucide="{{ cat.icon|default:'folder' }}" class="w-5 h-5 text-slate-400"></i>
+                                {% endif %}
                             </div>
                         </td>
-                        <td class="py-3.5 px-4">
-                            <div class="font-bold text-slate-900">{{ cat.name_uz|default:cat.name_ru }}</div>
+
+                        <!-- Category Name & Quick View Link -->
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-2">
+                                <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat.name_uz|default:cat.name_ru|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
+                                        class="font-black text-slate-900 text-sm text-left hover:text-brand transition-colors flex items-center gap-1.5 group/btn">
+                                    <span>{{ cat.name_uz|default:cat.name_ru }}</span>
+                                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400 group-hover/btn:text-brand group-hover/btn:translate-x-0.5 transition-all"></i>
+                                </button>
+                            </div>
                             {% if cat.name_ru and cat.name_uz != cat.name_ru %}
-                            <div class="text-[10px] text-slate-400">{{ cat.name_ru }}</div>
+                            <div class="text-[11px] text-slate-400 font-normal mt-0.5">{{ cat.name_ru }}</div>
                             {% endif %}
                         </td>
-                        <td class="py-3.5 px-4 font-mono font-bold text-slate-600">
-                            {{ cat.products.count }} ta
-                        </td>
-                        <td class="py-3.5 px-4 text-right">
-                            <button type="button" @click="deleteCategory('{{ cat.id }}')" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+
+                        <!-- Products Count & View Button -->
+                        <td class="py-3 px-4">
+                            <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat.name_uz|default:cat.name_ru|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold transition-all group/cnt">
+                                <i data-lucide="package" class="w-3.5 h-3.5 text-slate-500 group-hover/cnt:text-brand"></i>
+                                <span id="cat-count-{{ cat.id }}" class="font-mono">{{ cat.active_products_count|default:cat.products_count|default:0 }} ta tovar</span>
+                                <span class="text-[10px] text-brand font-semibold hover:underline ml-1">Ko'rish</span>
                             </button>
+                        </td>
+
+                        <!-- Publish on Site Toggle (Saytda ko'rsatish / qo'shish) -->
+                        <td class="py-3 px-4 text-center">
+                            <div class="inline-flex flex-col items-center gap-1">
+                                <button type="button" @click="toggleActive({{ cat.id }})"
+                                        id="toggle-btn-{{ cat.id }}"
+                                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none {% if cat.is_active %}bg-emerald-500{% else %}bg-slate-300{% endif %}"
+                                        role="switch" aria-checked="{{ cat.is_active|yesno:'true,false' }}"
+                                        title="{% if cat.is_active %}Saytdan yashirish{% else %}Saytga qo'shish{% endif %}">
+                                    <span class="sr-only">Saytda ko'rsatish</span>
+                                    <span id="toggle-dot-{{ cat.id }}"
+                                          class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out {% if cat.is_active %}translate-x-5{% else %}translate-x-0{% endif %}"></span>
+                                </button>
+                                <span id="toggle-label-{{ cat.id }}" class="text-[10px] font-extrabold {% if cat.is_active %}text-emerald-700{% else %}text-slate-400{% endif %}">
+                                    {% if cat.is_active %}Saytda faol{% else %}Yashiringan{% endif %}
+                                </span>
+                            </div>
+                        </td>
+
+                        <!-- Actions (Add Product, View, Edit, Delete) -->
+                        <td class="py-3 px-4 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <!-- + Add Product Button -->
+                                <button type="button" @click="openQuickAddProduct({{ cat.id }}, '{{ cat.name_uz|default:cat.name_ru|escapejs }}')"
+                                        class="px-2.5 py-1.5 rounded-xl bg-brand/10 hover:bg-brand text-brand hover:text-white font-bold text-xs transition-all flex items-center gap-1 shadow-2xs"
+                                        title="Ushbu kategoriyaga tovar qo'shish">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                    <span class="hidden md:inline">Tovar qo'shish</span>
+                                </button>
+
+                                <!-- View Products Drawer -->
+                                <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat.name_uz|default:cat.name_ru|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
+                                        class="p-2 rounded-xl text-slate-500 hover:text-brand hover:bg-slate-100 transition-colors" title="Tovarlarni ko'rish">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+
+                                <!-- Edit Category -->
+                                <button type="button" @click="editCategory({id: '{{ cat.id }}', name_uz: '{{ cat.name_uz|escapejs }}', name_ru: '{{ cat.name_ru|escapejs }}', icon: '{{ cat.icon|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image_url: '{{ cat.primary_image_url|default:''|escapejs }}'})"
+                                        class="p-2 rounded-xl text-slate-500 hover:text-brand hover:bg-slate-100 transition-colors" title="Tahrirlash">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+
+                                <!-- Delete Category -->
+                                <button type="button" @click="deleteCategory('{{ cat.id }}')"
+                                        class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 transition-colors" title="O'chirish">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="py-12 text-center text-slate-400">
-                            Hozircha kategoriyalar mavjud emas
+                        <td colspan="5" class="py-12 text-center text-slate-400">
+                            <i data-lucide="folder-open" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+                            <p class="font-bold">Hozircha kategoriyalar mavjud emas</p>
+                            <p class="text-[11px] text-slate-400 mt-1">«Kategoriya qo'shish» tugmasi orqali yangi kategoriya yarating</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -65,7 +160,205 @@
         </div>
     </div>
 
-    <!-- ADD CATEGORY MODAL (Video 03:00) -->
+    <!-- ========================================================================= -->
+    <!-- 1. SLIDE-OVER DRAWER: VIEW PRODUCTS IN CATEGORY                          -->
+    <!-- ========================================================================= -->
+    <div x-show="productsDrawerOpen" x-cloak class="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-xs flex justify-end">
+        <div @click.away="productsDrawerOpen = false"
+             x-show="productsDrawerOpen"
+             x-transition:enter="transform transition ease-in-out duration-300"
+             x-transition:enter-start="translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transform transition ease-in-out duration-300"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="translate-x-full"
+             class="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col">
+
+            <!-- Drawer Header -->
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between gap-4 bg-slate-50/70 shrink-0">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
+                        <template x-if="activeCategory.image">
+                            <img :src="activeCategory.image" class="w-full h-full object-cover">
+                        </template>
+                        <template x-if="!activeCategory.image">
+                            <i data-lucide="folder" class="w-6 h-6 text-brand"></i>
+                        </template>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-black text-lg text-slate-900 truncate" x-text="activeCategory.name"></h3>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider"
+                                  :class="activeCategory.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'"
+                                  x-text="activeCategory.is_active ? 'Saytda faol' : 'Yashiringan'"></span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            Katalogdagi tovarlar: <span class="font-bold font-mono text-slate-800" x-text="categoryProducts.length"></span> ta
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="toggleActive(activeCategory.id)"
+                            class="px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5"
+                            :class="activeCategory.is_active ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'">
+                        <i data-lucide="power" class="w-3.5 h-3.5" :class="activeCategory.is_active ? 'text-emerald-600' : 'text-slate-400'"></i>
+                        <span x-text="activeCategory.is_active ? 'Saytda faol' : 'Saytga qo\'shish'"></span>
+                    </button>
+                    <button type="button" @click="productsDrawerOpen = false" class="w-8 h-8 rounded-xl bg-slate-200/80 hover:bg-slate-300 text-slate-600 flex items-center justify-center text-lg font-black transition-colors">×</button>
+                </div>
+            </div>
+
+            <!-- Drawer Action Bar -->
+            <div class="px-6 py-3 bg-white border-b border-slate-100 flex items-center justify-between gap-3 shrink-0">
+                <button type="button" @click="openQuickAddProduct(activeCategory.id, activeCategory.name)"
+                        class="px-3.5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>+ Tovar qo'shish</span>
+                </button>
+
+                <a :href="'/dashboard/products/?category=' + activeCategory.id"
+                   class="text-xs font-bold text-slate-600 hover:text-brand flex items-center gap-1 transition-colors">
+                    <span>Mahsulotlar sahifasida ko'rish</span>
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                </a>
+            </div>
+
+            <!-- Drawer Body: Products List -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-3">
+                <!-- Loading state -->
+                <div x-show="loadingProducts" class="py-16 text-center text-slate-400 text-xs">
+                    <div class="w-8 h-8 border-3 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <span>Tovarlar yuklanmoqda...</span>
+                </div>
+
+                <!-- Products list -->
+                <div x-show="!loadingProducts">
+                    <template x-if="categoryProducts.length > 0">
+                        <div class="divide-y divide-slate-100 border border-slate-200/80 rounded-2xl overflow-hidden shadow-2xs">
+                            <template x-for="p in categoryProducts" :key="p.id">
+                                <div class="p-3.5 bg-white hover:bg-slate-50 flex items-center justify-between gap-3 transition-colors">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/80 overflow-hidden flex items-center justify-center shrink-0">
+                                            <template x-if="p.primary_image_url">
+                                                <img :src="p.primary_image_url" class="w-full h-full object-cover">
+                                            </template>
+                                            <template x-if="!p.primary_image_url">
+                                                <i data-lucide="package" class="w-5 h-5 text-slate-400"></i>
+                                            </template>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-xs sm:text-sm text-slate-900 truncate" x-text="p.name_uz || p.name_ru"></div>
+                                            <div class="flex items-center gap-2 mt-0.5">
+                                                <span class="font-extrabold text-xs text-brand font-mono" x-text="Number(p.price).toLocaleString() + ' UZS'"></span>
+                                                <span class="text-[10px] text-slate-400 font-medium">| Qoldiq: <b class="text-slate-700" x-text="p.stock + ' ' + (p.unit || 'dona')"></b></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                                              :class="p.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
+                                              x-text="p.is_active ? 'Faol' : 'Nofaol'"></span>
+                                        <a :href="p.edit_url" class="p-2 rounded-lg text-slate-400 hover:text-brand hover:bg-slate-100 transition-colors" title="Tahrirlash">
+                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Empty state -->
+                    <template x-if="categoryProducts.length === 0">
+                        <div class="py-16 text-center border-2 border-dashed border-slate-200 rounded-3xl p-8 bg-slate-50/50">
+                            <i data-lucide="package-open" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
+                            <h4 class="font-black text-slate-800 text-sm">Ushbu kategoriyada hali tovarlar yo'q</h4>
+                            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Tezkor tugma orqali hoziroq ushbu bo'limga mahsulot qo'shishingiz mumkin</p>
+                            <button type="button" @click="openQuickAddProduct(activeCategory.id, activeCategory.name)"
+                                    class="mt-4 px-4 py-2 rounded-xl bg-brand text-white font-black text-xs hover:bg-brand-dark transition-all inline-flex items-center gap-1.5 shadow-xs">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Birinchi tovarni qo'shish</span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 2. QUICK ADD PRODUCT MODAL                                               -->
+    <!-- ========================================================================= -->
+    <div x-show="quickAddModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="quickAddModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-black text-base text-slate-900">Kategoriyaga tovar qo'shish</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Bo'lim: <b class="text-brand font-bold" x-text="targetCategoryName"></b></p>
+                </div>
+                <button type="button" @click="quickAddModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <form @submit.prevent="submitQuickProduct()" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Mahsulot nomi (O'zbekcha) *</label>
+                    <input type="text" x-model="quickProd.name_uz" required placeholder="Masalan: Go'shtli somsa"
+                           class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Mahsulot nomi (Русский)</label>
+                    <input type="text" x-model="quickProd.name_ru" placeholder="Например: Самса с мясом"
+                           class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Sotuv narxi (UZS) *</label>
+                        <input type="number" x-model="quickProd.price" required placeholder="15000"
+                               class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono font-bold">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Qoldiq (dona)</label>
+                        <input type="number" x-model="quickProd.stock" value="10" placeholder="10"
+                               class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Mahsulot fotosurati (Fayl yuklash)</label>
+                    <input type="file" id="quickProdFile" accept="image/*"
+                           class="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand/10 file:text-brand">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Yoki rasm havolasi (URL)</label>
+                    <input type="url" x-model="quickProd.image_url" placeholder="https://images.unsplash.com/..."
+                           class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+
+                <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <a :href="'/dashboard/products/new/?category=' + targetCategoryId"
+                       class="text-[11px] font-bold text-brand hover:underline flex items-center gap-1">
+                        <span>Kengaytirilgan shakl</span>
+                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                    </a>
+                    <div class="flex gap-2">
+                        <button type="button" @click="quickAddModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                        <button type="submit" :disabled="savingProduct" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black shadow-xs hover:bg-brand-dark disabled:opacity-50 flex items-center gap-1">
+                            <span x-show="!savingProduct">Saqlash</span>
+                            <span x-show="savingProduct">Saqlanmoqda...</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 3. ADD CATEGORY MODAL                                                    -->
+    <!-- ========================================================================= -->
     <div x-show="addModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="addModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -73,7 +366,7 @@
                 <button type="button" @click="addModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
 
-            <form method="POST" action="/dashboard/categories/" class="space-y-4 text-xs">
+            <form method="POST" action="/dashboard/categories/" enctype="multipart/form-data" class="space-y-4 text-xs">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create">
 
@@ -88,13 +381,95 @@
                 </div>
 
                 <div>
+                    <label class="block font-bold text-slate-700 mb-1">Kategoriya rasmi (Fayl yuklash)</label>
+                    <input type="file" name="image" accept="image/*" class="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand/10 file:text-brand">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Yoki rasm havolasi (URL)</label>
+                    <input type="url" name="image_url" placeholder="https://..." class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+
+                <div>
                     <label class="block font-bold text-slate-700 mb-1">Belgi (Icon)</label>
-                    <input type="text" name="icon" value="tag" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                    <input type="text" name="icon" value="folder" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+
+                <!-- Publish on Site checkbox -->
+                <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200/80 flex items-center gap-2.5">
+                    <input type="checkbox" id="addCatActive" name="is_active" value="1" checked class="rounded border-emerald-400 text-brand focus:ring-brand w-4 h-4">
+                    <label for="addCatActive" class="text-xs font-bold text-emerald-950 cursor-pointer">
+                        Saytda ko'rsatish (Darhol sayt vitrinasiga qo'shish)
+                    </label>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
                     <button type="button" @click="addModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Saqlash</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black shadow-xs hover:bg-brand-dark">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 4. EDIT CATEGORY MODAL                                                   -->
+    <!-- ========================================================================= -->
+    <div x-show="editModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="editModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900">Kategoriyani tahrirlash</h3>
+                <button type="button" @click="editModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <form method="POST" action="/dashboard/categories/" enctype="multipart/form-data" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="category_id" :value="editingCat.id">
+
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200/60" x-show="editingCat.image_url">
+                    <img :src="editingCat.image_url" class="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0">
+                    <div>
+                        <div class="font-bold text-slate-800 text-xs">Joriy rasm</div>
+                        <div class="text-[10px] text-slate-400">Yangi fayl tanlasangiz rasm yangilanadi</div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Kategoriya nomi (O'zbekcha) *</label>
+                    <input type="text" name="name_uz" required x-model="editingCat.name_uz" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Kategoriya nomi (Русский)</label>
+                    <input type="text" name="name_ru" x-model="editingCat.name_ru" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Yangi rasm yuklash</label>
+                    <input type="file" name="image" accept="image/*" class="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand/10 file:text-brand">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Rasm havolasi (URL)</label>
+                    <input type="url" name="image_url" x-model="editingCat.image_url" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Belgi (Icon)</label>
+                    <input type="text" name="icon" x-model="editingCat.icon" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                </div>
+
+                <!-- Publish on Site checkbox in Edit Modal -->
+                <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center gap-2.5">
+                    <input type="checkbox" id="editCatActive" name="is_active" value="1" :checked="editingCat.is_active" class="rounded border-slate-300 text-brand focus:ring-brand w-4 h-4">
+                    <label for="editCatActive" class="text-xs font-bold text-slate-800 cursor-pointer">
+                        Saytda ko'rsatish (Faol bo'lsin)
+                    </label>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" @click="editModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black shadow-xs hover:bg-brand-dark">Saqlash</button>
                 </div>
             </form>
         </div>
@@ -105,9 +480,185 @@
     function categoriesApp() {
         return {
             addModalOpen: false,
+            editModalOpen: false,
+            productsDrawerOpen: false,
+            quickAddModalOpen: false,
+            loadingProducts: false,
+            savingProduct: false,
 
+            activeCategory: { id: null, name: '', is_active: true, image: '' },
+            categoryProducts: [],
+
+            targetCategoryId: null,
+            targetCategoryName: '',
+            quickProd: { name_uz: '', name_ru: '', price: '', stock: 10, image_url: '' },
+
+            editingCat: { id: '', name_uz: '', name_ru: '', icon: 'folder', image_url: '', is_active: true },
+
+            init() {
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+
+            // 1. OPEN PRODUCTS DRAWER
+            openProductsDrawer(cat) {
+                this.activeCategory = { ...cat };
+                this.productsDrawerOpen = true;
+                this.loadingProducts = true;
+                this.categoryProducts = [];
+
+                fetch(`/dashboard/api/categories/${cat.id}/products/`)
+                    .then(res => res.json())
+                    .then(data => {
+                        this.loadingProducts = false;
+                        if (data.status === 'ok') {
+                            this.categoryProducts = data.products || [];
+                            this.activeCategory.is_active = data.category.is_active;
+                            this.$nextTick(() => {
+                                if (window.lucide) lucide.createIcons();
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        this.loadingProducts = false;
+                        console.error('Error fetching category products:', err);
+                    });
+            },
+
+            // 2. TOGGLE PUBLISH ON SITE (Saytga qo'shish / yashirish)
+            toggleActive(catId) {
+                const fd = new FormData();
+                fd.append('category_id', catId);
+
+                fetch('/dashboard/api/categories/toggle-active/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        const isNowActive = data.is_active;
+
+                        // Update in Drawer if open
+                        if (this.activeCategory.id === catId) {
+                            this.activeCategory.is_active = isNowActive;
+                        }
+
+                        // Update in Table row
+                        const btn = document.getElementById(`toggle-btn-${catId}`);
+                        const dot = document.getElementById(`toggle-dot-${catId}`);
+                        const label = document.getElementById(`toggle-label-${catId}`);
+
+                        if (btn && dot && label) {
+                            if (isNowActive) {
+                                btn.classList.remove('bg-slate-300');
+                                btn.classList.add('bg-emerald-500');
+                                dot.classList.remove('translate-x-0');
+                                dot.classList.add('translate-x-5');
+                                label.classList.remove('text-slate-400');
+                                label.classList.add('text-emerald-700');
+                                label.textContent = 'Saytda faol';
+                            } else {
+                                btn.classList.remove('bg-emerald-500');
+                                btn.classList.add('bg-slate-300');
+                                dot.classList.remove('translate-x-5');
+                                dot.classList.add('translate-x-0');
+                                label.classList.remove('text-emerald-700');
+                                label.classList.add('text-slate-400');
+                                label.textContent = 'Yashiringan';
+                            }
+                        }
+
+                        if (window.showToast) {
+                            showToast(data.message);
+                        }
+                    }
+                })
+                .catch(err => console.error('Error toggling category active:', err));
+            },
+
+            // 3. OPEN QUICK ADD PRODUCT MODAL
+            openQuickAddProduct(catId, catName) {
+                this.targetCategoryId = catId;
+                this.targetCategoryName = catName;
+                this.quickProd = { name_uz: '', name_ru: '', price: '', stock: 10, image_url: '' };
+                const fileInput = document.getElementById('quickProdFile');
+                if (fileInput) fileInput.value = '';
+                this.quickAddModalOpen = true;
+            },
+
+            // 4. SUBMIT QUICK ADD PRODUCT
+            submitQuickProduct() {
+                if (!this.quickProd.name_uz || !this.quickProd.price) {
+                    alert('Iltimos, tovar nomi va narxini kiriting');
+                    return;
+                }
+                this.savingProduct = true;
+
+                const fd = new FormData();
+                fd.append('category_id', this.targetCategoryId);
+                fd.append('name_uz', this.quickProd.name_uz);
+                fd.append('name_ru', this.quickProd.name_ru || this.quickProd.name_uz);
+                fd.append('price', this.quickProd.price);
+                fd.append('stock', this.quickProd.stock || 10);
+                fd.append('image_url', this.quickProd.image_url || '');
+
+                const fileInput = document.getElementById('quickProdFile');
+                if (fileInput && fileInput.files[0]) {
+                    fd.append('image', fileInput.files[0]);
+                }
+
+                fetch('/dashboard/api/categories/quick-add-product/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    this.savingProduct = false;
+                    if (data.status === 'ok') {
+                        this.quickAddModalOpen = false;
+
+                        // Add to Drawer list if drawer is open for this category
+                        if (this.productsDrawerOpen && this.activeCategory.id === this.targetCategoryId) {
+                            this.categoryProducts.unshift(data.product);
+                        }
+
+                        // Update table counter badge
+                        const countBadge = document.getElementById(`cat-count-${this.targetCategoryId}`);
+                        if (countBadge) {
+                            const current = parseInt(countBadge.textContent) || 0;
+                            countBadge.textContent = `${current + 1} ta tovar`;
+                        }
+
+                        if (window.showToast) {
+                            showToast(data.message);
+                        }
+
+                        this.$nextTick(() => {
+                            if (window.lucide) lucide.createIcons();
+                        });
+                    } else {
+                        alert(data.message || 'Xatolik yuz berdi');
+                    }
+                })
+                .catch(err => {
+                    this.savingProduct = false;
+                    console.error('Error creating product:', err);
+                });
+            },
+
+            // 5. EDIT CATEGORY
+            editCategory(cat) {
+                this.editingCat = { ...cat };
+                this.editModalOpen = true;
+            },
+
+            // 6. DELETE CATEGORY
             deleteCategory(id) {
-                if (!confirm("Kategoriyani o'chirmoqchimisiz?")) return;
+                if (!confirm("Haqiqatan ham ushbu kategoriyani o'chirmoqchimisiz?")) return;
                 const fd = new FormData();
                 fd.append('action', 'delete');
                 fd.append('category_id', id);
@@ -120,7 +671,7 @@
                 .then(() => {
                     const row = document.getElementById(`cat-row-${id}`);
                     if (row) row.remove();
-                    showToast("Kategoriya o'chirildi!");
+                    if (window.showToast) showToast("Kategoriya o'chirildi!");
                 });
             }
         }
