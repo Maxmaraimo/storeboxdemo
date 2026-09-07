@@ -1,0 +1,534 @@
+{% extends "super_admin/base_super_admin.html" %}
+{% load humanize %}
+
+{% block title %}Серверы и магазины — StoreBox Billing{% endblock %}
+{% block header_title %}Серверы / Магазины{% endblock %}
+{% block header_subtitle %}Центральный реестр всех инстансов платформы StoreBox ({{ total_count }} серверов){% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2" x-data="{ createModalOpen: false }">
+    <!-- Export CSV button -->
+    <a href="{% url 'super_admin:servers_export_csv' %}"
+       class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm transition">
+        <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
+        <span>EXPORT (CSV)</span>
+    </a>
+
+    <!-- Add Server Button -->
+    <button @click="$dispatch('open-create-modal')"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition">
+        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+        <span>Добавить сервер</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div x-data="{ createModalOpen: false, renewModalOpen: false, activeStoreId: null, activeStoreSubdomain: '', activeStorePlan: 'STANDARD' }"
+     @open-create-modal.window="createModalOpen = true">
+
+    <!-- KPI Summary Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <!-- Total Stores -->
+        <a href="{% url 'super_admin:servers_list' %}"
+           class="bg-white border rounded-lg p-3 transition hover:border-blue-400 shadow-xs {% if current_status == 'all' and not current_days %}border-blue-500 ring-1 ring-blue-500/20{% else %}border-slate-200{% endif %}">
+            <div class="flex items-center justify-between">
+                <span class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Всего серверов</span>
+                <span class="p-1 rounded bg-slate-100 text-slate-600">
+                    <i data-lucide="server" class="w-3.5 h-3.5"></i>
+                </span>
+            </div>
+            <div class="mt-1.5 flex items-baseline gap-2">
+                <span class="text-xl font-bold font-mono text-slate-900">{{ total_count }}</span>
+                <span class="text-xxs text-slate-500">инстансов</span>
+            </div>
+        </a>
+
+        <!-- Active Stores -->
+        <a href="{% url 'super_admin:servers_list' %}?status=active"
+           class="bg-white border rounded-lg p-3 transition hover:border-emerald-400 shadow-xs {% if current_status == 'active' %}border-emerald-500 ring-1 ring-emerald-500/20{% else %}border-slate-200{% endif %}">
+            <div class="flex items-center justify-between">
+                <span class="text-xxs font-semibold uppercase tracking-wider text-emerald-700">Активные</span>
+                <span class="p-1 rounded bg-emerald-50 text-emerald-600">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                </span>
+            </div>
+            <div class="mt-1.5 flex items-baseline gap-2">
+                <span class="text-xl font-bold font-mono text-emerald-600">{{ active_count }}</span>
+                <span class="text-xxs text-emerald-600/80">лицензия валидна</span>
+            </div>
+        </a>
+
+        <!-- Expiring Soon (<7 days) -->
+        <a href="{% url 'super_admin:servers_list' %}?status=expiring"
+           class="bg-white border rounded-lg p-3 transition hover:border-amber-400 shadow-xs {% if current_status == 'expiring' %}border-amber-500 ring-1 ring-amber-500/20{% else %}border-slate-200{% endif %}">
+            <div class="flex items-center justify-between">
+                <span class="text-xxs font-semibold uppercase tracking-wider text-amber-700">Истекают &le; 7 дн.</span>
+                <span class="p-1 rounded bg-amber-50 text-amber-600">
+                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                </span>
+            </div>
+            <div class="mt-1.5 flex items-baseline gap-2">
+                <span class="text-xl font-bold font-mono text-amber-600">{{ expiring_count }}</span>
+                <span class="text-xxs text-amber-700 font-medium">требуют счет</span>
+            </div>
+        </a>
+
+        <!-- Expired -->
+        <a href="{% url 'super_admin:servers_list' %}?status=expired"
+           class="bg-white border rounded-lg p-3 transition hover:border-rose-400 shadow-xs {% if current_status == 'expired' %}border-rose-500 ring-1 ring-rose-500/20{% else %}border-slate-200{% endif %}">
+            <div class="flex items-center justify-between">
+                <span class="text-xxs font-semibold uppercase tracking-wider text-rose-700">Истекшие</span>
+                <span class="p-1 rounded bg-rose-50 text-rose-600">
+                    <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                </span>
+            </div>
+            <div class="mt-1.5 flex items-baseline gap-2">
+                <span class="text-xl font-bold font-mono text-rose-600">{{ expired_count }}</span>
+                <span class="text-xxs text-rose-600/80">доступ заблокирован</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- Filter & Search Toolbar (iBox Density) -->
+    <div class="bg-white border border-slate-200 rounded-lg p-3 mb-4 shadow-xs">
+        <form method="GET" action="{% url 'super_admin:servers_list' %}" class="flex flex-wrap items-center gap-2.5">
+            <!-- Search Query -->
+            <div class="relative flex-1 min-w-[240px]">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text"
+                       name="q"
+                       value="{{ current_q }}"
+                       placeholder="Поиск по серверу, поддомену, клиенту, компании, телефону..."
+                       class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-mono">
+            </div>
+
+            <!-- Partner Filter -->
+            <div class="min-w-[180px]">
+                <select name="partner"
+                        onchange="this.form.submit()"
+                        class="w-full py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">Все партнеры / селлеры</option>
+                    {% for p in partners %}
+                    <option value="{{ p.id }}" {% if current_partner == p.id|stringformat:"s" %}selected{% endif %}>
+                        {{ p.name }} ({{ p.code }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="min-w-[150px]">
+                <select name="status"
+                        onchange="this.form.submit()"
+                        class="w-full py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="all" {% if current_status == 'all' %}selected{% endif %}>Все статусы</option>
+                    <option value="active" {% if current_status == 'active' %}selected{% endif %}>Активные лицензии</option>
+                    <option value="expiring" {% if current_status == 'expiring' %}selected{% endif %}>Истекают (&le; 7 дней)</option>
+                    <option value="expired" {% if current_status == 'expired' %}selected{% endif %}>Истекшие</option>
+                    <option value="disabled" {% if current_status == 'disabled' %}selected{% endif %}>Отключенные вручную</option>
+                </select>
+            </div>
+
+            <!-- Days Filter -->
+            <div class="w-[120px]">
+                <select name="days"
+                        onchange="this.form.submit()"
+                        class="w-full py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+                    <option value="">Дней до конца</option>
+                    <option value="3" {% if current_days == '3' %}selected{% endif %}>&le; 3 дней</option>
+                    <option value="7" {% if current_days == '7' %}selected{% endif %}>&le; 7 дней</option>
+                    <option value="14" {% if current_days == '14' %}selected{% endif %}>&le; 14 дней</option>
+                    <option value="30" {% if current_days == '30' %}selected{% endif %}>&le; 30 дней</option>
+                </select>
+            </div>
+
+            <!-- Submit button -->
+            <button type="submit"
+                    class="px-3 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded hover:bg-slate-900 transition flex items-center gap-1">
+                <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                <span>Применить</span>
+            </button>
+
+            <!-- Reset filters -->
+            {% if current_q or current_partner or current_status != 'all' or current_days %}
+            <a href="{% url 'super_admin:servers_list' %}"
+               class="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-800 hover:underline">
+                Сбросить
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Main High-Density Data Grid (iBox Style) -->
+    <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse dense-table">
+                <thead>
+                    <tr>
+                        <th class="w-12 text-center">ID</th>
+                        <th class="min-w-[200px]">Домен / Поддомен</th>
+                        <th class="min-w-[150px]">Партнер / Селлер</th>
+                        <th class="min-w-[170px]">Окончание лицензии</th>
+                        <th class="min-w-[180px]">Имя клиента</th>
+                        <th class="min-w-[160px]">Компания</th>
+                        <th class="w-24 text-center">Активность</th>
+                        <th class="min-w-[200px]">Комментарии</th>
+                        <th class="w-28 text-right pr-4">Действия</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-normal">
+                    {% for store in stores %}
+                    <tr class="transition hover:bg-blue-50/40">
+                        <!-- ID -->
+                        <td class="text-center font-mono text-xxs font-semibold text-slate-500">
+                            #{{ store.id }}
+                        </td>
+
+                        <!-- Domain / Subdomain -->
+                        <td>
+                            <div class="flex items-start gap-1.5">
+                                <div>
+                                    <a href="{% url 'super_admin:server_detail' store.id %}"
+                                       class="font-mono text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1">
+                                        {{ store.subdomain }}.storebox.uz
+                                        <i data-lucide="chevron-right" class="w-3 h-3 text-slate-400"></i>
+                                    </a>
+                                    <div class="text-xxs text-slate-700 font-medium truncate max-w-[220px]" title="{{ store.name }}">
+                                        {{ store.name }}
+                                    </div>
+                                    <a href="/store/{{ store.subdomain }}/" target="_blank" class="text-xxs text-slate-400 hover:text-emerald-600 inline-flex items-center gap-0.5 mt-0.5">
+                                        <i data-lucide="external-link" class="w-2.5 h-2.5"></i>
+                                        <span>Открыть витрину</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Partner / Reseller -->
+                        <td>
+                            {% if store.partner %}
+                            <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xxs font-medium bg-slate-100 text-slate-700 border border-slate-200" title="{{ store.partner.name }}">
+                                <i data-lucide="briefcase" class="w-3 h-3 text-slate-500"></i>
+                                <span class="truncate max-w-[130px]">{{ store.partner.name }}</span>
+                            </div>
+                            <div class="text-xxs font-mono text-slate-400 pl-1">{{ store.partner.code }}</div>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xxs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                StoreBox Direct
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- License Expiry Date & Days Left Pill -->
+                        <td>
+                            {% if store.license_expires_at %}
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-mono text-xs text-slate-800 font-semibold">
+                                    {{ store.license_expires_at|date:"d.m.Y" }}
+                                </span>
+                                
+                                <!-- Status Badge based on days remaining -->
+                                {% if store.license_status == 'EXPIRED' %}
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xxs font-mono font-bold bg-rose-100 text-rose-700 border border-rose-200" title="Лицензия просрочена">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+                                    {{ store.license_days_left }} дн.
+                                </span>
+                                {% elif store.license_status == 'EXPIRING' %}
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xxs font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse" title="Истекает в ближайшие дни">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                                    +{{ store.license_days_left }} дн.
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xxs font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    +{{ store.license_days_left }} дн.
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xxs text-slate-500 font-mono mt-0.5">
+                                Тариф: <span class="font-semibold text-slate-700">{{ store.get_license_plan_display }}</span>
+                            </div>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xxs font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                Бессрочно
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Client Name & Contact -->
+                        <td>
+                            <div class="text-xs font-semibold text-slate-900 truncate max-w-[170px]" title="{{ store.owner_display_name }}">
+                                {{ store.owner_display_name }}
+                            </div>
+                            <div class="font-mono text-xxs text-slate-500 flex items-center gap-1 mt-0.5">
+                                <i data-lucide="phone" class="w-2.5 h-2.5 text-slate-400"></i>
+                                <span>{{ store.contact_phone|default:"—" }}</span>
+                            </div>
+                        </td>
+
+                        <!-- Company / Legal Entity -->
+                        <td>
+                            <div class="text-xs text-slate-700 font-medium truncate max-w-[150px]" title="{{ store.company_name|default:'Не указано' }}">
+                                {{ store.company_name|default:"—" }}
+                            </div>
+                            <div class="text-xxs text-slate-400">
+                                Баланс: <span class="font-mono font-semibold text-slate-600">{{ store.merchant_balance.balance|intcomma }} UZS</span>
+                            </div>
+                        </td>
+
+                        <!-- Activity Dot -->
+                        <td class="text-center">
+                            {% if store.is_active %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xxs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200" title="Сервер онлайн и обслуживает заказы">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Активен
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xxs font-medium bg-slate-100 text-slate-600 border border-slate-200" title="Сервер отключен">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                Отключен
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Admin Comment / Notes -->
+                        <td>
+                            <div class="text-xxs text-slate-600 line-clamp-2 max-w-[220px]" title="{{ store.admin_comment }}">
+                                {{ store.admin_comment|default:"—" }}
+                            </div>
+                        </td>
+
+                        <!-- Quick Actions -->
+                        <td class="text-right pr-4">
+                            <div class="flex items-center justify-end space-x-1">
+                                <!-- Profile Hub -->
+                                <a href="{% url 'super_admin:server_detail' store.id %}"
+                                   title="Открыть глубокий профиль"
+                                   class="p-1 rounded text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition">
+                                    <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                                </a>
+
+                                <!-- Fast Renew BUY Button -->
+                                <button @click="activeStoreId = {{ store.id }}; activeStoreSubdomain = '{{ store.subdomain }}'; activeStorePlan = '{{ store.license_plan }}'; renewModalOpen = true;"
+                                        type="button"
+                                        title="Продлить лицензию (BUY)"
+                                        class="p-1 rounded text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition">
+                                    <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+                                </button>
+
+                                <!-- Direct View Store -->
+                                <a href="/store/{{ store.subdomain }}/"
+                                   target="_blank"
+                                   title="Витрина магазина"
+                                   class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+                                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-10 text-slate-400">
+                            <div class="max-w-xs mx-auto text-center">
+                                <i data-lucide="search-x" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                                <div class="text-xs font-medium text-slate-700">Серверы не найдены</div>
+                                <div class="text-xxs text-slate-400 mt-1">Попробуйте изменить параметры поиска или сбросить фильтры</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        {% if page_obj.has_other_pages %}
+        <div class="bg-slate-50 border-t border-slate-200 px-4 py-2.5 flex items-center justify-between text-xs text-slate-600">
+            <div>
+                Показано <span class="font-semibold">{{ page_obj.start_index }}</span> - <span class="font-semibold">{{ page_obj.end_index }}</span> из <span class="font-semibold font-mono">{{ page_obj.paginator.count }}</span> серверов
+            </div>
+            <div class="flex items-center space-x-1">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_partner %}&partner={{ current_partner }}{% endif %}{% if current_status != 'all' %}&status={{ current_status }}{% endif %}{% if current_days %}&days={{ current_days }}{% endif %}"
+                   class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-100 text-xxs font-medium">
+                    &larr; Назад
+                </a>
+                {% endif %}
+
+                <span class="px-2 py-1 font-mono text-xxs font-bold text-blue-600 bg-blue-50 border border-blue-200 rounded">
+                    {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_partner %}&partner={{ current_partner }}{% endif %}{% if current_status != 'all' %}&status={{ current_status }}{% endif %}{% if current_days %}&days={{ current_days }}{% endif %}"
+                   class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-100 text-xxs font-medium">
+                    Вперед &rarr;
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 1. Modal: Quick Add Server -->
+    <div x-show="createModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
+         @keydown.escape.window="createModalOpen = false">
+        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden"
+             @click.away="createModalOpen = false">
+            <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-blue-400"></i>
+                    <h3 class="text-xs font-bold uppercase tracking-wider">Создать новый сервер / тенант</h3>
+                </div>
+                <button @click="createModalOpen = false" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'super_admin:server_create' %}" class="p-4 space-y-3">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Название магазина / бренда *</label>
+                    <input type="text" name="name" required placeholder="Например: Samarkand Halva" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Поддомен (.storebox.uz) *</label>
+                    <div class="flex items-center">
+                        <input type="text" name="subdomain" required placeholder="halva" class="flex-1 px-3 py-1.5 text-xs border border-slate-300 rounded-l focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono">
+                        <span class="bg-slate-100 border border-l-0 border-slate-300 px-2.5 py-1.5 text-xs text-slate-500 rounded-r font-mono">.storebox.uz</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Телефон клиента *</label>
+                        <input type="text" name="phone" required placeholder="+998901234567" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Юр. лицо / Компания</label>
+                        <input type="text" name="company_name" placeholder="OOO / ChP" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Партнер / Селлер</label>
+                        <select name="partner" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
+                            <option value="">StoreBox Direct</option>
+                            {% for p in partners %}
+                            <option value="{{ p.id }}">{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Тарифный план</label>
+                        <select name="plan" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium">
+                            <option value="START">Старт (99,000 UZS/мес)</option>
+                            <option value="STANDARD" selected>Стандарт (199,000 UZS/мес)</option>
+                            <option value="PRO">Профессиональный (349,000 UZS/мес)</option>
+                            <option value="ENTERPRISE">Корпоративный (599,000 UZS/мес)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Срок лицензии при старте</label>
+                    <select name="months" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
+                        <option value="1" selected>1 месяц (30 дней)</option>
+                        <option value="3">3 месяца (90 дней)</option>
+                        <option value="6">6 месяцев (180 дней)</option>
+                        <option value="12">12 месяцев (365 дней)</option>
+                    </select>
+                </div>
+
+                <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
+                    <button @click="createModalOpen = false" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800">
+                        Отмена
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-sm">
+                        Зарегистрировать сервер
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Modal: Quick BUY / Renew License -->
+    <div x-show="renewModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
+         @keydown.escape.window="renewModalOpen = false">
+        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden"
+             @click.away="renewModalOpen = false">
+            <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="shopping-cart" class="w-4 h-4 text-emerald-400"></i>
+                    <h3 class="text-xs font-bold uppercase tracking-wider">
+                        Продлить лицензию (BUY): <span x-text="activeStoreSubdomain" class="font-mono text-emerald-400"></span>
+                    </h3>
+                </div>
+                <button @click="renewModalOpen = false" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form :action="'/super-admin/servers/' + activeStoreId + '/renew/'" method="POST" class="p-4 space-y-3">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Период продления</label>
+                    <select name="months" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-semibold text-slate-800">
+                        <option value="1" selected>+ 1 месяц (30 дней)</option>
+                        <option value="3">+ 3 месяца (90 дней)</option>
+                        <option value="6">+ 6 месяцев (180 дней)</option>
+                        <option value="12">+ 12 месяцев (1 год)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Тарифный план</label>
+                        <select name="plan" x-model="activeStorePlan" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium">
+                            <option value="START">Старт</option>
+                            <option value="STANDARD">Стандарт</option>
+                            <option value="PRO">Профессиональный</option>
+                            <option value="ENTERPRISE">Корпоративный</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Сумма к списанию (UZS)</label>
+                        <input type="text" name="amount" value="199000" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-mono font-bold text-slate-800">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Статус инвойса</label>
+                    <select name="payment_status" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
+                        <option value="PAID" selected>Оплачен (Провести списание сразу)</option>
+                        <option value="PENDING">Выставить счет (Ожидание оплаты)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Основание / Примечание</label>
+                    <input type="text" name="notes" placeholder="Продление через SuperAdmin" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
+                    <button @click="renewModalOpen = false" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800">
+                        Отмена
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        <span>Подтвердить продление</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

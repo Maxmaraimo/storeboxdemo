@@ -72,6 +72,7 @@ urlpatterns = [
     path('api/yespos/connect/', views.yespos_connect_api, name='yespos_connect_api'),
     path('api/yespos/disconnect/', views.yespos_disconnect_api, name='yespos_disconnect_api'),
     path('api/yespos/catalog/', views.yespos_catalog_api, name='yespos_catalog_api'),
+    path('api/yespos/image/', views.yespos_image_proxy, name='yespos_image_proxy'),
     path('api/yespos/import/', views.yespos_import_api, name='yespos_import_api'),
     path('api/yespos/sync/', views.yespos_sync_api, name='yespos_sync_api'),
 ]

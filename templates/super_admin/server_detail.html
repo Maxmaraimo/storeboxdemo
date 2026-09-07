@@ -1,0 +1,938 @@
+{% extends "super_admin/base_super_admin.html" %}
+{% load humanize %}
+
+{% block title %}{{ store.subdomain }} — Сервер #{{ store.id }} — StoreBox Billing{% endblock %}
+{% block header_title %}Сервер #{{ store.id }}: {{ store.name }}{% endblock %}
+{% block header_subtitle %}{{ store.subdomain }}.storebox.uz | Владелец: {{ store.owner_display_name }}{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2">
+    <!-- Back to Servers -->
+    <a href="{% url 'super_admin:servers_list' %}"
+       class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition shadow-xs">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+        <span>К реестру серверов</span>
+    </a>
+
+    <!-- Storefront Link -->
+    <a href="/store/{{ store.subdomain }}/" target="_blank"
+       class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition shadow-xs">
+        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+        <span>Витрина</span>
+    </a>
+
+    <!-- Toggle Status Button Form -->
+    <form method="POST" action="{% url 'super_admin:server_toggle_status' store.id %}" class="inline">
+        {% csrf_token %}
+        <button type="submit"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md shadow-xs transition
+                       {% if store.is_active %}border border-slate-300 bg-white text-slate-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300
+                       {% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}">
+            <i data-lucide="power" class="w-3.5 h-3.5"></i>
+            <span>{% if store.is_active %}Отключить{% else %}Включить{% endif %}</span>
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block content %}
+<div x-data="{ renewModalOpen: false }">
+
+    <!-- Top Server Identity Banner (iBox Header) -->
+    <div class="bg-white border border-slate-200 rounded-lg p-4 mb-4 shadow-xs">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-start space-x-3.5">
+                <div class="w-12 h-12 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-blue-400 flex-shrink-0 shadow-sm">
+                    <i data-lucide="server" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                            #{{ store.id }}
+                        </span>
+                        <h2 class="text-base font-bold text-slate-900 font-mono">
+                            {{ store.subdomain }}.storebox.uz
+                        </h2>
+                        {% if store.is_active %}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xxs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            ONLINE / АКТИВЕН
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xxs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                            ОТКЛЮЧЕН
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="text-xs text-slate-500 mt-1 flex items-center gap-3 flex-wrap">
+                        <span>Бренд: <strong class="text-slate-800">{{ store.name }}</strong></span>
+                        <span class="text-slate-300">&bull;</span>
+                        <span>Компания: <strong class="text-slate-800">{{ store.company_name|default:"Не указано" }}</strong></span>
+                        <span class="text-slate-300">&bull;</span>
+                        <span>Партнер: <strong class="text-slate-800">{{ store.partner.name|default:"StoreBox Direct" }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- License Fast Summary & Quick BUY -->
+            <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                <div>
+                    <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Срок лицензии</div>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="font-mono text-sm font-bold text-slate-900">
+                            {{ store.license_expires_at|date:"d.m.Y"|default:"Бессрочно" }}
+                        </span>
+                        {% if store.license_status == 'EXPIRED' %}
+                        <span class="px-1.5 py-0.5 rounded text-xxs font-mono font-bold bg-rose-100 text-rose-700">Истек</span>
+                        {% elif store.license_status == 'EXPIRING' %}
+                        <span class="px-1.5 py-0.5 rounded text-xxs font-mono font-bold bg-amber-100 text-amber-700 animate-pulse">+{{ store.license_days_left }} дн.</span>
+                        {% elif store.license_days_left %}
+                        <span class="px-1.5 py-0.5 rounded text-xxs font-mono font-semibold bg-emerald-50 text-emerald-700">+{{ store.license_days_left }} дн.</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-xxs text-slate-500 font-mono mt-0.5">
+                        Тариф: <span class="font-bold text-blue-600">{{ store.get_license_plan_display }}</span>
+                    </div>
+                </div>
+                <button @click="renewModalOpen = true"
+                        type="button"
+                        class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 transition">
+                    <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+                    <span>BUY / Продлить</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace: Vertical iBox Tab Navigation + Content Area -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+
+        <!-- Left Vertical iBox Sub-Navigation -->
+        <aside class="md:col-span-3 lg:col-span-2">
+            <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden p-1.5 space-y-0.5">
+                <!-- 1. Information -->
+                <a href="?tab=info"
+                   class="flex items-center gap-2 px-3 py-2 rounded text-xs font-medium transition {% if active_tab == 'info' %}bg-blue-600 text-white font-semibold shadow-xs{% else %}text-slate-700 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                    <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                    <span>Информация</span>
+                </a>
+
+                <!-- 2. Reconciliation (Сверка) -->
+                <a href="?tab=reconciliation"
+                   class="flex items-center gap-2 px-3 py-2 rounded text-xs font-medium transition {% if active_tab == 'reconciliation' %}bg-blue-600 text-white font-semibold shadow-xs{% else %}text-slate-700 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                    <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+                    <span>Сверка (Акт)</span>
+                </a>
+
+                <!-- 3. Subscriptions (Подписки) -->
+                <a href="?tab=subscriptions"
+                   class="flex items-center gap-2 px-3 py-2 rounded text-xs font-medium transition {% if active_tab == 'subscriptions' %}bg-blue-600 text-white font-semibold shadow-xs{% else %}text-slate-700 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                    <i data-lucide="badge-percent" class="w-3.5 h-3.5"></i>
+                    <span>Подписки</span>
+                </a>
+
+                <!-- 4. Payments (Платежи) -->
+                <a href="?tab=payments"
+                   class="flex items-center gap-2 px-3 py-2 rounded text-xs font-medium transition {% if active_tab == 'payments' %}bg-blue-600 text-white font-semibold shadow-xs{% else %}text-slate-700 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                    <i data-lucide="arrow-left-right" class="w-3.5 h-3.5"></i>
+                    <span>Платежи</span>
+                </a>
+
+                <!-- 5. Statistics -->
+                <a href="?tab=statistics"
+                   class="flex items-center gap-2 px-3 py-2 rounded text-xs font-medium transition {% if active_tab == 'statistics' %}bg-blue-600 text-white font-semibold shadow-xs{% else %}text-slate-700 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                    <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i>
+                    <span>Статистика</span>
+                </a>
+
+                <!-- 6. Notes -->
+                <a href="?tab=notes"
+                   class="flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition {% if active_tab == 'notes' %}bg-blue-600 text-white font-semibold shadow-xs{% else %}text-slate-700 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="sticky-note" class="w-3.5 h-3.5"></i>
+                        <span>Заметки</span>
+                    </div>
+                    {% if notes.count %}
+                    <span class="text-xxs font-mono px-1.5 py-0.2 rounded {% if active_tab == 'notes' %}bg-blue-700 text-white{% else %}bg-slate-200 text-slate-700{% endif %}">
+                        {{ notes.count }}
+                    </span>
+                    {% endif %}
+                </a>
+
+                <!-- 7. Logs -->
+                <a href="?tab=logs"
+                   class="flex items-center gap-2 px-3 py-2 rounded text-xs font-medium transition {% if active_tab == 'logs' %}bg-blue-600 text-white font-semibold shadow-xs{% else %}text-slate-700 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                    <i data-lucide="scroll-text" class="w-3.5 h-3.5"></i>
+                    <span>Логи</span>
+                </a>
+
+                <!-- 8. Sent SMS -->
+                <a href="?tab=sms"
+                   class="flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition {% if active_tab == 'sms' %}bg-blue-600 text-white font-semibold shadow-xs{% else %}text-slate-700 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+                        <span>Отправленные SMS</span>
+                    </div>
+                    {% if sms_count %}
+                    <span class="text-xxs font-mono px-1.5 py-0.2 rounded {% if active_tab == 'sms' %}bg-blue-700 text-white{% else %}bg-slate-200 text-slate-700{% endif %}">
+                        {{ sms_count }}
+                    </span>
+                    {% endif %}
+                </a>
+            </div>
+        </aside>
+
+        <!-- Right Content Panels based on active_tab -->
+        <div class="md:col-span-9 lg:col-span-10">
+
+            <!-- TAB 1: INFORMATION -->
+            {% if active_tab == 'info' %}
+            <div class="space-y-4">
+                <!-- Merchant & Legal Grid -->
+                <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 border-b border-slate-100 pb-2 mb-3 flex items-center gap-1.5">
+                        <i data-lucide="building" class="w-4 h-4 text-blue-500"></i>
+                        <span>Основные данные клиента и компании</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div>
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Имя мерчанта:</span>
+                            <div class="font-semibold text-slate-900 mt-0.5">{{ store.owner_display_name }}</div>
+                            <div class="text-slate-500 font-mono text-xxs">Логин: {{ store.owner.username }}</div>
+                        </div>
+
+                        <div>
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Контактный телефон:</span>
+                            <div class="font-mono font-semibold text-slate-900 mt-0.5">{{ store.contact_phone|default:"Не указан" }}</div>
+                        </div>
+
+                        <div>
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Email:</span>
+                            <div class="font-mono text-slate-700 mt-0.5">{{ store.owner.email|default:"—" }}</div>
+                        </div>
+
+                        <div>
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Юридическое лицо:</span>
+                            <div class="font-semibold text-slate-900 mt-0.5">{{ store.company_name|default:"Не указано" }}</div>
+                        </div>
+
+                        <div>
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Партнер / Реселлер:</span>
+                            <div class="font-semibold text-slate-900 mt-0.5">{{ store.partner.name|default:"StoreBox Direct" }}</div>
+                        </div>
+
+                        <div>
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Дата регистрации:</span>
+                            <div class="font-mono text-slate-700 mt-0.5">{{ store.created_at|date:"d.m.Y H:i" }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Storefront & Integration Channels -->
+                <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 border-b border-slate-100 pb-2 mb-3 flex items-center gap-1.5">
+                        <i data-lucide="radio" class="w-4 h-4 text-emerald-500"></i>
+                        <span>Каналы продаж и интеграции</span>
+                    </h3>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Филиалы:</span>
+                            <div class="text-lg font-bold font-mono text-slate-800 mt-1">{{ branches_count }}</div>
+                            <div class="text-xxs text-slate-500">физических точек</div>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Каталог товаров:</span>
+                            <div class="text-lg font-bold font-mono text-slate-800 mt-1">{{ products_count }}</div>
+                            <div class="text-xxs text-slate-500">в {{ categories_count }} категориях</div>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Telegram Бот:</span>
+                            {% if store.telegram_bot_token %}
+                            <div class="text-xs font-bold text-emerald-600 mt-1 flex items-center gap-1">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                <span>Подключен</span>
+                            </div>
+                            <div class="text-xxs font-mono text-slate-500 truncate">@{{ store.telegram_bot_username|default:"bot" }}</div>
+                            {% else %}
+                            <div class="text-xs font-bold text-slate-400 mt-1">Не подключен</div>
+                            <div class="text-xxs text-slate-400">токен отсутствует</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Платежные шлюзы:</span>
+                            <div class="flex items-center gap-1 mt-1 text-xxs font-mono font-medium">
+                                <span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Click</span>
+                                <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">Payme</span>
+                                <span class="px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Uzum</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- TAB 2: RECONCILIATION (СВЕРКА) -->
+            {% if active_tab == 'reconciliation' %}
+            <div class="space-y-4">
+                <!-- Balance & Ledger KPIs -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Текущий баланс мерчанта</div>
+                        <div class="text-xl font-bold font-mono text-slate-900 mt-1">
+                            {{ merchant_balance.balance|intcomma }} <span class="text-xs text-slate-500 font-sans">UZS</span>
+                        </div>
+                        <div class="text-xxs text-emerald-600 mt-0.5">Взаиморасчеты синхронизированы</div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-rose-600">Всего списаний (Дебет)</div>
+                        <div class="text-xl font-bold font-mono text-rose-600 mt-1">
+                            -{{ total_debit|intcomma }} <span class="text-xs text-rose-400 font-sans">UZS</span>
+                        </div>
+                        <div class="text-xxs text-slate-400 mt-0.5">Лицензии, SMS, услуги</div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-emerald-600">Всего пополнений (Кредит)</div>
+                        <div class="text-xl font-bold font-mono text-emerald-600 mt-1">
+                            +{{ total_credit|intcomma }} <span class="text-xs text-emerald-400 font-sans">UZS</span>
+                        </div>
+                        <div class="text-xxs text-slate-400 mt-0.5">Платежные шлюзы, банк</div>
+                    </div>
+                </div>
+
+                <!-- Ledger Table -->
+                <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+                    <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <div class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-blue-600"></i>
+                            <span>Акт сверки / Журнал взаиморасчетов</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse dense-table">
+                            <thead>
+                                <tr>
+                                    <th class="w-32">Дата и время</th>
+                                    <th class="w-36">Операция</th>
+                                    <th>Основание / Описание</th>
+                                    <th class="w-28 text-right">Дебет (-)</th>
+                                    <th class="w-28 text-right">Кредит (+)</th>
+                                    <th class="w-32 text-right">Баланс после</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in reconciliation_entries %}
+                                <tr>
+                                    <td class="font-mono text-xxs text-slate-500">
+                                        {{ entry.created_at|date:"d.m.Y H:i" }}
+                                    </td>
+                                    <td>
+                                        <span class="inline-block px-1.5 py-0.5 rounded text-xxs font-medium
+                                            {% if entry.operation_type == 'LICENSE' %}bg-blue-50 text-blue-700 border border-blue-200
+                                            {% elif entry.operation_type == 'TOPUP' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                                            {% elif entry.operation_type == 'SMS' %}bg-amber-50 text-amber-700 border border-amber-200
+                                            {% else %}bg-slate-100 text-slate-700{% endif %}">
+                                            {{ entry.get_operation_type_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-xs text-slate-700">
+                                        {{ entry.description }}
+                                        {% if entry.reference_doc %}
+                                        <a href="{% url 'super_admin:document_download' entry.reference_doc.id %}" target="_blank" class="text-blue-600 hover:underline font-mono text-xxs ml-1">
+                                            [#{{ entry.reference_doc.doc_number }}]
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-right font-mono font-semibold text-rose-600 text-xs">
+                                        {% if entry.debit %}-{{ entry.debit|intcomma }}{% else %}—{% endif %}
+                                    </td>
+                                    <td class="text-right font-mono font-semibold text-emerald-600 text-xs">
+                                        {% if entry.credit %}+{{ entry.credit|intcomma }}{% else %}—{% endif %}
+                                    </td>
+                                    <td class="text-right font-mono font-bold text-slate-800 text-xs">
+                                        {{ entry.balance_after|intcomma }} UZS
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-8 text-slate-400 text-xs">
+                                        Записей в акте сверки пока нет
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- TAB 3: SUBSCRIPTIONS (ПОДПИСКИ) -->
+            {% if active_tab == 'subscriptions' %}
+            <div class="space-y-4">
+                <!-- Active Plan Card -->
+                <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                        <div>
+                            <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Действующий тарифный план</div>
+                            <div class="text-lg font-bold text-blue-600 mt-0.5">
+                                {{ store.get_license_plan_display }}
+                            </div>
+                        </div>
+                        <button @click="renewModalOpen = true"
+                                type="button"
+                                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 transition">
+                            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                            <span>Продлить лицензию (BUY)</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div>
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Дата окончания:</span>
+                            <div class="font-mono font-bold text-slate-900 mt-0.5 text-sm">
+                                {{ store.license_expires_at|date:"d.m.Y H:i"|default:"Бессрочно" }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Оставшийся период:</span>
+                            <div class="mt-0.5">
+                                {% if store.license_status == 'EXPIRED' %}
+                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-700">
+                                    Истек ({{ store.license_days_left }} дн.)
+                                </span>
+                                {% elif store.license_status == 'EXPIRING' %}
+                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 animate-pulse">
+                                    Истекает через {{ store.license_days_left }} дн.
+                                </span>
+                                {% elif store.license_days_left %}
+                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-700">
+                                    Активен еще {{ store.license_days_left }} дней
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-xxs text-slate-400 uppercase font-semibold">Стоимость тарифа:</span>
+                            <div class="font-mono font-semibold text-slate-700 mt-0.5">
+                                199,000 UZS / месяц
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invoice History Table -->
+                <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+                    <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <div class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="receipt" class="w-4 h-4 text-blue-600"></i>
+                            <span>История счетов и инвойсов подписки</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse dense-table">
+                            <thead>
+                                <tr>
+                                    <th class="w-32">Номер счета</th>
+                                    <th class="w-28">Дата</th>
+                                    <th>Назначение</th>
+                                    <th class="w-28 text-right">Сумма</th>
+                                    <th class="w-28 text-center">Статус</th>
+                                    <th class="w-20 text-right pr-4">Печать</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inv in invoices %}
+                                <tr>
+                                    <td class="font-mono text-xs font-bold text-blue-600">
+                                        #{{ inv.doc_number }}
+                                    </td>
+                                    <td class="font-mono text-xxs text-slate-500">
+                                        {{ inv.issue_date|date:"d.m.Y" }}
+                                    </td>
+                                    <td class="text-xs text-slate-700">
+                                        {{ inv.description }}
+                                    </td>
+                                    <td class="text-right font-mono font-bold text-slate-800 text-xs">
+                                        {{ inv.amount|intcomma }} UZS
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="inline-block px-2 py-0.5 rounded text-xxs font-bold
+                                            {% if inv.status == 'PAID' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                                            {% elif inv.status == 'PENDING' %}bg-amber-50 text-amber-700 border border-amber-200
+                                            {% else %}bg-slate-100 text-slate-600{% endif %}">
+                                            {{ inv.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-right pr-4">
+                                        <a href="{% url 'super_admin:document_download' inv.id %}" target="_blank"
+                                           class="p-1 rounded text-slate-400 hover:text-blue-600 transition inline-block" title="Распечатать счет">
+                                            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-6 text-slate-400 text-xs">
+                                        Счетов за подписку еще не выставлялось
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- TAB 4: PAYMENTS (ПЛАТЕЖИ) -->
+            {% if active_tab == 'payments' %}
+            <div class="space-y-4">
+                <!-- Payments Overview -->
+                <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs flex items-center justify-between">
+                    <div>
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Общий объем успешных платежей</div>
+                        <div class="text-xl font-bold font-mono text-emerald-600 mt-0.5">
+                            {{ total_tx_amount|intcomma }} <span class="text-xs font-sans text-slate-500">UZS</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-500 text-right">
+                        Всего транзакций: <span class="font-mono font-bold text-slate-800">{{ transactions.count }}</span>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse dense-table">
+                            <thead>
+                                <tr>
+                                    <th class="w-32">Дата и время</th>
+                                    <th class="w-24">Шлюз</th>
+                                    <th class="w-28">ID транзакции</th>
+                                    <th class="w-24">Заказ</th>
+                                    <th class="w-28 text-right">Сумма (UZS)</th>
+                                    <th class="w-28 text-center">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in transactions %}
+                                <tr>
+                                    <td class="font-mono text-xxs text-slate-500">
+                                        {{ tx.created_at|date:"d.m.Y H:i:s" }}
+                                    </td>
+                                    <td>
+                                        <span class="inline-block px-1.5 py-0.5 rounded text-xxs font-mono font-semibold
+                                            {% if tx.provider == 'CLICK' %}bg-blue-50 text-blue-700
+                                            {% elif tx.provider == 'PAYME' %}bg-emerald-50 text-emerald-700
+                                            {% elif tx.provider == 'UZUM' %}bg-purple-50 text-purple-700
+                                            {% else %}bg-slate-100 text-slate-700{% endif %}">
+                                            {{ tx.provider }}
+                                        </span>
+                                    </td>
+                                    <td class="font-mono text-xxs text-slate-700">
+                                        {{ tx.transaction_id|default:"—" }}
+                                    </td>
+                                    <td class="font-mono text-xxs font-bold text-blue-600">
+                                        #{{ tx.order.id }}
+                                    </td>
+                                    <td class="text-right font-mono font-bold text-slate-900 text-xs">
+                                        {{ tx.amount|intcomma }}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="inline-block px-1.5 py-0.5 rounded text-xxs font-bold
+                                            {% if tx.state == 'COMPLETED' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                                            {% elif tx.state == 'CANCELLED' %}bg-rose-50 text-rose-700 border border-rose-200
+                                            {% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %}">
+                                            {{ tx.get_state_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-8 text-slate-400 text-xs">
+                                        Транзакций пока нет
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- TAB 5: STATISTICS -->
+            {% if active_tab == 'statistics' %}
+            <div class="space-y-4">
+                <!-- Metric Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Всего заказов</div>
+                        <div class="text-xl font-bold font-mono text-slate-900 mt-1">{{ orders_count }}</div>
+                        <div class="text-xxs text-slate-400">за все время</div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Товарооборот (GMV)</div>
+                        <div class="text-xl font-bold font-mono text-emerald-600 mt-1">{{ total_revenue|intcomma }} <span class="text-xs font-sans text-slate-500">UZS</span></div>
+                        <div class="text-xxs text-slate-400">успешные заказы</div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Средний чек</div>
+                        <div class="text-xl font-bold font-mono text-blue-600 mt-1">{{ avg_ticket|intcomma }} <span class="text-xs font-sans text-slate-500">UZS</span></div>
+                        <div class="text-xxs text-slate-400">на 1 заказ</div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Доставлено / Отменено</div>
+                        <div class="text-xl font-bold font-mono text-slate-800 mt-1">
+                            <span class="text-emerald-600">{{ delivered_orders_count }}</span> / <span class="text-rose-600">{{ cancelled_orders_count }}</span>
+                        </div>
+                        <div class="text-xxs text-slate-400">статусы заказов</div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Chart -->
+                <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+                    <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+                        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Динамика активности заказов (Последние 14 дней)
+                        </h4>
+                        <span class="text-xxs text-slate-400 font-mono">Real-time DB query</span>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="tenantActivityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- TAB 6: NOTES -->
+            {% if active_tab == 'notes' %}
+            <div class="space-y-4">
+                <!-- Add Note Form -->
+                <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i data-lucide="plus" class="w-3.5 h-3.5 text-blue-600"></i>
+                        <span>Добавить служебную заметку администратора</span>
+                    </h4>
+                    <form method="POST" action="{% url 'super_admin:server_add_note' store.id %}" class="space-y-2">
+                        {% csrf_token %}
+                        <textarea name="note_text" required rows="2" placeholder="Введите внутренний комментарий по тенанту (договоренности, особенности, звонки)..." class="w-full p-2.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none"></textarea>
+                        <div class="flex items-center justify-between pt-1">
+                            <label class="flex items-center space-x-1.5 text-xs text-slate-600 cursor-pointer">
+                                <input type="checkbox" name="is_pinned" value="true" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span>Закрепить сверху</span>
+                            </label>
+                            <button type="submit" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-sm">
+                                Сохранить заметку
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Notes Thread -->
+                <div class="space-y-2">
+                    {% for note in notes %}
+                    <div class="bg-white border {% if note.is_pinned %}border-blue-300 bg-blue-50/20{% else %}border-slate-200{% endif %} rounded-lg p-3 shadow-xs">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xxs font-bold">
+                                    {{ note.author.username|slice:":2"|upper }}
+                                </div>
+                                <div>
+                                    <span class="text-xs font-bold text-slate-900">{{ note.author.first_name|default:note.author.username }}</span>
+                                    <span class="text-xxs font-mono text-slate-400 ml-1.5">{{ note.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                {% if note.is_pinned %}
+                                <span class="px-1.5 py-0.2 rounded text-xxs font-semibold bg-blue-100 text-blue-700">
+                                    Закреплено
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <a href="{% url 'super_admin:server_delete_note' store.id note.id %}"
+                               class="text-slate-400 hover:text-rose-600 p-1 transition"
+                               title="Удалить заметку">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                            </a>
+                        </div>
+                        <div class="text-xs text-slate-800 mt-2 pl-8">
+                            {{ note.note_text }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8 bg-white border border-slate-200 rounded-lg text-slate-400 text-xs">
+                        Служебных заметок пока нет
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- TAB 7: LOGS -->
+            {% if active_tab == 'logs' %}
+            <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+                <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <div class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="scroll-text" class="w-4 h-4 text-purple-600"></i>
+                        <span>Системный аудит действий в магазине</span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse dense-table">
+                        <thead>
+                            <tr>
+                                <th class="w-36">Время</th>
+                                <th class="w-36">Пользователь</th>
+                                <th class="w-48">Событие</th>
+                                <th>Детали</th>
+                                <th class="w-28 font-mono">IP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in audit_logs %}
+                            <tr>
+                                <td class="font-mono text-xxs text-slate-500">
+                                    {{ log.created_at|date:"d.m.Y H:i:s" }}
+                                </td>
+                                <td class="text-xs font-semibold text-slate-800">
+                                    {{ log.actor_name|default:"System" }}
+                                </td>
+                                <td>
+                                    <span class="inline-block px-1.5 py-0.5 rounded text-xxs font-medium bg-slate-100 text-slate-700">
+                                        {{ log.action }}
+                                    </span>
+                                </td>
+                                <td class="text-xs text-slate-600">
+                                    {{ log.details }}
+                                </td>
+                                <td class="font-mono text-xxs text-slate-400">
+                                    {{ log.ip_address }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-slate-400 text-xs">
+                                    Логи аудита пока пусты
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- TAB 8: SENT SMS -->
+            {% if active_tab == 'sms' %}
+            <div class="space-y-4">
+                <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div>
+                            <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Всего отправлено SMS</div>
+                            <div class="text-lg font-bold font-mono text-slate-900 mt-0.5">{{ sms_count }}</div>
+                        </div>
+                        <div class="border-l border-slate-200 pl-4">
+                            <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Затраты на SMS-шлюз</div>
+                            <div class="text-lg font-bold font-mono text-rose-600 mt-0.5">{{ sms_total_cost|intcomma }} UZS</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse dense-table">
+                            <thead>
+                                <tr>
+                                    <th class="w-32">Время отправки</th>
+                                    <th class="w-32">Получатель</th>
+                                    <th class="w-28">Тип</th>
+                                    <th>Текст SMS</th>
+                                    <th class="w-24 text-center">Статус</th>
+                                    <th class="w-20 text-right pr-4">Стоимость</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sms in sms_logs %}
+                                <tr>
+                                    <td class="font-mono text-xxs text-slate-500">
+                                        {{ sms.sent_at|date:"d.m.Y H:i:s" }}
+                                    </td>
+                                    <td class="font-mono text-xs font-semibold text-slate-900">
+                                        {{ sms.recipient }}
+                                    </td>
+                                    <td>
+                                        <span class="inline-block px-1.5 py-0.5 rounded text-xxs font-medium bg-slate-100 text-slate-700">
+                                            {{ sms.get_sms_type_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-xs text-slate-700">
+                                        {{ sms.message_text }}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="inline-block px-1.5 py-0.5 rounded text-xxs font-bold
+                                            {% if sms.status == 'DELIVERED' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                                            {% elif sms.status == 'FAILED' %}bg-rose-50 text-rose-700 border border-rose-200
+                                            {% else %}bg-slate-100 text-slate-600{% endif %}">
+                                            {{ sms.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-right pr-4 font-mono font-medium text-slate-700 text-xs">
+                                        {{ sms.cost }} UZS
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-8 text-slate-400 text-xs">
+                                        SMS-сообщений не зарегистрировано
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Modal: BUY / Renew License -->
+    <div x-show="renewModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
+         @keydown.escape.window="renewModalOpen = false">
+        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden"
+             @click.away="renewModalOpen = false">
+            <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="shopping-cart" class="w-4 h-4 text-emerald-400"></i>
+                    <h3 class="text-xs font-bold uppercase tracking-wider">
+                        Продление лицензии: <span class="font-mono text-emerald-400">{{ store.subdomain }}</span>
+                    </h3>
+                </div>
+                <button @click="renewModalOpen = false" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form action="{% url 'super_admin:server_renew_license' store.id %}" method="POST" class="p-4 space-y-3">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Срок продления</label>
+                    <select name="months" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-semibold text-slate-800">
+                        <option value="1" selected>+ 1 месяц (30 дней)</option>
+                        <option value="3">+ 3 месяца (90 дней)</option>
+                        <option value="6">+ 6 месяцев (180 дней)</option>
+                        <option value="12">+ 12 месяцев (1 год)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Тарифный план</label>
+                        <select name="plan" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium">
+                            <option value="START" {% if store.license_plan == 'START' %}selected{% endif %}>Старт</option>
+                            <option value="STANDARD" {% if store.license_plan == 'STANDARD' %}selected{% endif %}>Стандарт</option>
+                            <option value="PRO" {% if store.license_plan == 'PRO' %}selected{% endif %}>Профессиональный</option>
+                            <option value="ENTERPRISE" {% if store.license_plan == 'ENTERPRISE' %}selected{% endif %}>Корпоративный</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Сумма к списанию (UZS)</label>
+                        <input type="text" name="amount" value="199000" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-mono font-bold text-slate-800">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Статус инвойса</label>
+                    <select name="payment_status" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
+                        <option value="PAID" selected>Оплачен (Провести списание сразу)</option>
+                        <option value="PENDING">Выставить счет (Ожидание оплаты)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Основание / Примечание</label>
+                    <input type="text" name="notes" placeholder="Продление через SuperAdmin" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
+                    <button @click="renewModalOpen = false" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800">
+                        Отмена
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        <span>Подтвердить продление</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if active_tab == 'statistics' %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('tenantActivityChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ chart_labels|safe }},
+                    datasets: [{
+                        label: 'Количество заказов в день',
+                        data: {{ chart_values|safe }},
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#2563eb'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                font: { size: 11 }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 11 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

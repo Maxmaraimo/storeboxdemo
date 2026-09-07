@@ -7,7 +7,7 @@ from decimal import Decimal
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, HttpResponseNotFound
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from django.utils.text import slugify
@@ -2274,8 +2274,14 @@ def yespos_catalog_api(request):
     api_key = connection.api_key if connection else request.GET.get('api_key', '').strip()
     branch_id = connection.branch_id if connection else request.GET.get('branch_id', '').strip()
 
-    client = YesPosClient()
-    catalog = client.get_catalog(api_key, branch_id)
+    if not api_key:
+        return JsonResponse({'success': False, 'error': 'YES POS API kaliti topilmadi'}, status=400)
+
+    try:
+        client = YesPosClient()
+        catalog = client.get_catalog(api_key, branch_id)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f"YES POS xatosi: {str(e)}"}, status=400)
 
     # Check which products are already linked
     linked_ids = set(
@@ -2290,6 +2296,44 @@ def yespos_catalog_api(request):
         'success': True,
         'categories': catalog
     })
+
+
+def yespos_image_proxy(request):
+    """Proxy product images from YES POS to prevent mixed-content or CORS issues in browser"""
+    path = request.GET.get('path', '').strip().lstrip('/')
+    if not path or '..' in path:
+        return HttpResponseNotFound('Invalid image path')
+
+    client = YesPosClient()
+    remote_url = client.get_remote_image_url(path)
+    if not remote_url:
+        return HttpResponseNotFound('Invalid image target')
+
+    try:
+        resp = requests.get(remote_url, timeout=8)
+        if resp.status_code == 200 and resp.content:
+            content_type = resp.headers.get('Content-Type') or 'image/jpeg'
+            if content_type == 'application/octet-stream' or 'html' in content_type:
+                if resp.content.startswith(b'\x89PNG'):
+                    content_type = 'image/png'
+                elif resp.content.startswith(b'\xff\xd8\xff'):
+                    content_type = 'image/jpeg'
+                elif resp.content.startswith(b'RIFF') and b'WEBP' in resp.content[:16]:
+                    content_type = 'image/webp'
+                elif path.lower().endswith('.png'):
+                    content_type = 'image/png'
+                elif path.lower().endswith('.webp'):
+                    content_type = 'image/webp'
+                else:
+                    content_type = 'image/jpeg'
+
+            response = HttpResponse(resp.content, content_type=content_type)
+            response['Cache-Control'] = 'public, max-age=86400'
+            return response
+    except Exception as e:
+        pass
+
+    return HttpResponseNotFound('Image not found')
 
 
 @login_required

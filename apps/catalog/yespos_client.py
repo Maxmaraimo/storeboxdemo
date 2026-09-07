@@ -8,6 +8,7 @@ from apps.catalog.models import Product, Category, YesPosConnection, YesPosCateg
 logger = logging.getLogger(__name__)
 
 DEFAULT_YESPOS_API_BASE_URL = 'https://marketplace.yestask.uz'
+DEFAULT_YESPOS_MEDIA_HOST = 'http://app.yespos.uz:8263'
 
 # Realistic fallback mock data for testing/demo when live API key is simulated or API unreachable
 MOCK_BRANCHES = [
@@ -130,7 +131,7 @@ class YesPosClient:
     def __init__(self, base_url=None):
         self.base_url = (base_url or DEFAULT_YESPOS_API_BASE_URL).rstrip('/')
 
-    def _post(self, path, api_key, branch_id=None, timeout=4):
+    def _post(self, path, api_key, branch_id=None, timeout=15):
         url = f"{self.base_url}/api/v1{path}"
         headers = {
             'API-Key': api_key,
@@ -155,29 +156,34 @@ class YesPosClient:
 
     def get_branches(self, api_key):
         """Returns list of branches: [{'id': ..., 'name': ...}]"""
-        if any(k in (api_key or '').lower() for k in ['demo', 'test', 'mock']):
+        if any(k in (api_key or '').lower() for k in ['demo', 'mock']):
             return MOCK_BRANCHES
         try:
-            res = self._post('/branch/list', api_key)
+            res = self._post('/branch/list', api_key, timeout=15)
             branches = []
             rows = res.get('branches', res.get('items', [])) if isinstance(res, dict) else (res if isinstance(res, list) else [])
             for r in rows:
-                b_id = str(r.get('id') or r.get('branch_id') or r.get('branchId', ''))
+                b_id = str(r.get('id') or r.get('branch_id') or r.get('branchId', '')).strip()
                 b_name = str(r.get('name') or r.get('branch_name', '')).strip()
-                if b_id and b_name:
-                    branches.append({'id': b_id, 'name': b_name})
+                b_addr = str(r.get('address') or '').strip()
+                if b_id:
+                    display_name = b_name or f"Филиал {b_id}"
+                    if b_addr:
+                        display_name = f"{display_name} ({b_addr})"
+                    branches.append({'id': b_id, 'name': display_name})
             if branches:
                 return branches
+            return []
         except Exception as e:
-            logger.info(f"Live YES POS branch fetch failed: {e}. Falling back to demo branches.")
-        return MOCK_BRANCHES
+            logger.error(f"Live YES POS branch fetch failed: {e}")
+            raise e
 
     def get_catalog(self, api_key, branch_id=None):
         """Returns catalog categories with products and stock/price"""
-        if any(k in (api_key or '').lower() for k in ['demo', 'test', 'mock']):
+        if any(k in (api_key or '').lower() for k in ['demo', 'mock']):
             return MOCK_CATALOG
         try:
-            res = self._post('/marketplace/products', api_key)
+            res = self._post('/marketplace/products', api_key, timeout=15)
             categories = []
             # Extract categories from response
             raw_cats = res.get('categories', res.get('items', [])) if isinstance(res, dict) else (res if isinstance(res, list) else [])
@@ -186,71 +192,138 @@ class YesPosClient:
                 info_map = {}
                 if branch_id:
                     try:
-                        info_res = self._post(f'/marketplace/products/info?page=1&limit=500', api_key, branch_id=branch_id)
+                        info_res = self._post('/marketplace/products/info?page=1&limit=500', api_key, branch_id=branch_id, timeout=20)
                         info_items = info_res.get('items', info_res.get('products', [])) if isinstance(info_res, dict) else (info_res if isinstance(info_res, list) else [])
                         for item in info_items:
-                            p_id = str(item.get('product_id') or item.get('productId') or item.get('id', ''))
+                            p_id = str(item.get('product_id') or item.get('productId') or item.get('id', '')).strip()
                             if p_id:
+                                try:
+                                    raw_stk = float(item.get('stock', item.get('quantity', 0)) or 0)
+                                    stk_val = int(raw_stk) if raw_stk.is_integer() else round(raw_stk, 3)
+                                except (ValueError, TypeError):
+                                    stk_val = 0
+                                try:
+                                    prc_val = float(item.get('price', 0) or 0)
+                                except (ValueError, TypeError):
+                                    prc_val = 0.0
                                 info_map[p_id] = {
-                                    'price': float(item.get('price', 0) or 0),
-                                    'stock': int(item.get('stock', item.get('quantity', 0)) or 0)
+                                    'price': prc_val,
+                                    'stock': stk_val
                                 }
                     except Exception as err:
                         logger.warning(f"Could not fetch product info: {err}")
 
                 for cat in raw_cats:
                     c_id = str(cat.get('id') or cat.get('category_id') or '')
-                    c_name = str(cat.get('name') or cat.get('category_name') or '').strip()
+                    c_name = str(cat.get('name') or cat.get('category_name') or '').strip() or f"Категория {c_id}"
                     cat_prods = []
                     for p in cat.get('products', cat.get('items', [])):
                         pid = str(p.get('id') or p.get('product_id', ''))
                         pname = str(p.get('name') or p.get('title', '')).strip()
-                        if not pid or not pname:
+                        if not pname:
+                            sku_val = p.get('sku') or p.get('article')
+                            if sku_val:
+                                pname = f"Товар {sku_val}"
+                            else:
+                                pname = f"Товар {pid}"
+                        if not pid:
                             continue
                         info = info_map.get(pid, {})
+                        
+                        try:
+                            price_val = float(info.get('price', p.get('price', 0)) or 0)
+                        except (ValueError, TypeError):
+                            price_val = 0.0
+
+                        try:
+                            raw_stk = float(info.get('stock', p.get('stock', 0)) or 0)
+                            stock_val = int(raw_stk) if raw_stk.is_integer() else round(raw_stk, 3)
+                        except (ValueError, TypeError):
+                            stock_val = 0
+
+                        raw_img = str(p.get('image') or p.get('path') or '').strip()
+                        if raw_img and not raw_img.lower().startswith('parent_'):
+                            cat_img_url = self.get_catalog_image_url(raw_img)
+                        else:
+                            cat_img_url = ''
+                            raw_img = ''
+
                         cat_prods.append({
                             'id': pid,
                             'name': pname,
                             'sku': str(p.get('sku') or p.get('article') or ''),
                             'barcode': str(p.get('barcode') or ''),
                             'ikpu': str(p.get('classcode') or p.get('ikpu') or ''),
-                            'price': info.get('price', float(p.get('price', 0) or 0)),
-                            'stock': info.get('stock', int(p.get('stock', 0) or 0)),
+                            'price': price_val,
+                            'stock': stock_val,
                             'description': str(p.get('description') or ''),
-                            'image': p.get('image') or p.get('path') or '',
+                            'image': cat_img_url,
+                            'raw_image': raw_img,
                         })
-                    if c_id and c_name:
+                    if c_id:
                         categories.append({
                             'id': c_id,
                             'name': c_name,
                             'products': cat_prods
                         })
-                if categories:
-                    return categories
+                return categories
         except Exception as e:
-            logger.info(f"Live YES POS catalog fetch failed: {e}. Falling back to demo catalog.")
-        return MOCK_CATALOG
+            logger.error(f"Live YES POS catalog fetch failed: {e}")
+            raise e
+        return []
 
-    def _save_product_image(self, product, image_url, remote_id):
-        """Download image from remote URL and save as ProductImage"""
-        if not image_url or not image_url.startswith('http'):
+    def get_remote_image_url(self, image_path):
+        """Converts raw image path (e.g. temp-images/upload-123.png) to direct downloadable URL"""
+        if not image_path:
+            return ''
+        image_str = str(image_path).strip()
+        if not image_str or image_str.lower().startswith('parent_'):
+            return ''
+        if image_str.startswith('http://') or image_str.startswith('https://'):
+            return image_str
+        clean_path = image_str.lstrip('/')
+        return f"{DEFAULT_YESPOS_MEDIA_HOST}/getImage?path={clean_path}"
+
+    def get_catalog_image_url(self, image_path):
+        """Converts raw image path to StoreBox proxy URL for browser display"""
+        if not image_path:
+            return ''
+        image_str = str(image_path).strip()
+        if not image_str or image_str.lower().startswith('parent_'):
+            return ''
+        if image_str.startswith('http://') or image_str.startswith('https://'):
+            return image_str
+        clean_path = image_str.lstrip('/')
+        return f"/dashboard/api/yespos/image/?path={clean_path}"
+
+    def _save_product_image(self, product, image_url_or_path, remote_id):
+        """Download image from remote URL or raw path and save as ProductImage"""
+        if not image_url_or_path:
+            return
+        remote_url = self.get_remote_image_url(image_url_or_path)
+        if not remote_url:
             return
         try:
             from django.core.files.base import ContentFile
             from apps.catalog.models import ProductImage
 
             if not product.images.exists():
-                resp = requests.get(image_url, timeout=5)
+                resp = requests.get(remote_url, timeout=10)
                 if resp.status_code == 200 and resp.content:
                     ext = 'jpg'
-                    lower_url = image_url.lower()
-                    if '.png' in lower_url:
+                    if resp.content.startswith(b'\x89PNG') or '.png' in remote_url.lower():
                         ext = 'png'
-                    elif '.webp' in lower_url:
+                    elif resp.content.startswith(b'RIFF') and b'WEBP' in resp.content[:16]:
+                        ext = 'webp'
+                    elif '.webp' in remote_url.lower():
                         ext = 'webp'
                     filename = f"yp_{remote_id}_{product.id}.{ext}"
                     pimg = ProductImage(product=product, is_primary=True)
                     pimg.image.save(filename, ContentFile(resp.content), save=True)
+                    # Also set primary image url on product
+                    if hasattr(product, 'image') and not product.image:
+                        product.image = pimg.image
+                        product.save(update_fields=['image'])
         except Exception as e:
             logger.debug(f"Could not download local image for {product.name_ru}: {e}")
 
@@ -270,32 +343,40 @@ class YesPosClient:
 
             # 1. Resolve or create category
             cat_name = item.get('category_name', 'Импорт YES POS').strip()
-            category, _ = Category.objects.get_or_create(
-                store=store,
-                name_ru=cat_name,
-                defaults={
-                    'name_uz': cat_name,
-                    'slug': slugify(cat_name) or f'category-{remote_id}',
-                }
-            )
+            category = Category.objects.filter(store=store, name_ru=cat_name).first()
+            if not category:
+                base_slug = slugify(cat_name) or f'category-{remote_id}'
+                c_slug = base_slug
+                counter = 1
+                while Category.objects.filter(store=store, slug=c_slug).exists():
+                    c_slug = f'{base_slug}-{counter}'
+                    counter += 1
+                category = Category.objects.create(
+                    store=store,
+                    name_ru=cat_name,
+                    name_uz=cat_name,
+                    slug=c_slug
+                )
 
-            price = Decimal(str(item.get('price') or 0))
-            stock = int(item.get('stock') or 0)
+            try:
+                price = Decimal(str(item.get('price') or 0))
+            except Exception:
+                price = Decimal('0')
+
+            try:
+                stock = int(float(item.get('stock') or 0))
+            except (ValueError, TypeError):
+                stock = 0
+
             barcode = str(item.get('barcode') or '').strip()
             ikpu = str(item.get('ikpu') or '').strip()
             description = str(item.get('description') or '').strip()
 
             # Resolve image URL
-            image_raw = str(item.get('image') or item.get('image_url') or item.get('path') or '').strip()
-            if not image_raw:
-                # Fallback to MOCK_CATALOG if image wasn't supplied
-                for mcat in MOCK_CATALOG:
-                    for mp in mcat.get('products', []):
-                        if str(mp.get('id')) == str(remote_id) or mp.get('name') == name:
-                            image_raw = mp.get('image', '')
-                            break
-                    if image_raw:
-                        break
+            raw_img = str(item.get('raw_image') or item.get('image') or item.get('image_url') or item.get('path') or '').strip()
+            if 'path=' in raw_img:
+                raw_img = raw_img.split('path=')[-1].split('&')[0]
+            clean_remote_url = self.get_remote_image_url(raw_img) if raw_img else ''
 
             # 2. Check if already linked
             link = YesPosProductLink.objects.filter(store=store, remote_product_id=remote_id).first()
@@ -307,12 +388,12 @@ class YesPosClient:
                     product.barcode = barcode
                 if ikpu and not product.ikpu_code:
                     product.ikpu_code = ikpu
-                if image_raw and not product.image_url:
-                    product.image_url = image_raw
+                if clean_remote_url and not product.image_url:
+                    product.image_url = clean_remote_url
                 product.save()
 
-                if image_raw and not product.images.exists():
-                    self._save_product_image(product, image_raw, remote_id)
+                if raw_img and not product.images.exists():
+                    self._save_product_image(product, raw_img, remote_id)
 
                 link.remote_price = price
                 link.remote_stock = stock
@@ -338,15 +419,15 @@ class YesPosClient:
                     stock=stock,
                     barcode=barcode,
                     ikpu_code=ikpu,
-                    image_url=image_raw,
+                    image_url=clean_remote_url,
                     description_ru=description,
                     description_uz=description,
                     is_active=True,
                     track_stock=True
                 )
 
-                if image_raw:
-                    self._save_product_image(product, image_raw, remote_id)
+                if raw_img:
+                    self._save_product_image(product, raw_img, remote_id)
 
                 YesPosProductLink.objects.update_or_create(
                     store=store,
@@ -387,8 +468,16 @@ class YesPosClient:
             remote_data = prod_map.get(str(link.remote_product_id))
             if remote_data:
                 product = link.product
-                new_price = Decimal(str(remote_data.get('price', product.price)))
-                new_stock = int(remote_data.get('stock', product.stock))
+                try:
+                    new_price = Decimal(str(remote_data.get('price', product.price) or 0))
+                except Exception:
+                    new_price = product.price
+
+                try:
+                    new_stock = int(float(remote_data.get('stock', product.stock) or 0))
+                except Exception:
+                    new_stock = product.stock
+
                 remote_image = remote_data.get('image') or remote_data.get('image_url') or ''
 
                 product.price = new_price

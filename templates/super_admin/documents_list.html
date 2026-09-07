@@ -1,0 +1,145 @@
+{% extends "super_admin/base_super_admin.html" %}
+{% load humanize %}
+
+{% block title %}Документы и счета — StoreBox Billing{% endblock %}
+{% block header_title %}Документы и финансовая отчетность{% endblock %}
+{% block header_subtitle %}Реестр счетов, актов выполненных работ и договоров оферты{% endblock %}
+
+{% block content %}
+<div>
+    <!-- KPI Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Общая сумма выставленных счетов</div>
+            <div class="text-xl font-bold font-mono text-slate-900 mt-1">{{ total_sum|intcomma }} <span class="text-xs font-sans text-slate-500">UZS</span></div>
+            <div class="text-xxs text-slate-400">за весь период платформы</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="text-xxs font-semibold uppercase tracking-wider text-emerald-600">Оплачено мерчантами</div>
+            <div class="text-xl font-bold font-mono text-emerald-600 mt-1">{{ paid_sum|intcomma }} <span class="text-xs font-sans text-emerald-500">UZS</span></div>
+            <div class="text-xxs text-slate-400">поступило на расчетный счет</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="text-xxs font-semibold uppercase tracking-wider text-amber-600">Ожидает оплаты</div>
+            <div class="text-xl font-bold font-mono text-amber-600 mt-1">{{ pending_sum|intcomma }} <span class="text-xs font-sans text-amber-500">UZS</span></div>
+            <div class="text-xxs text-slate-400">дебиторская задолженность</div>
+        </div>
+    </div>
+
+    <!-- Filter Toolbar -->
+    <div class="bg-white border border-slate-200 rounded-lg p-3 mb-4 shadow-xs">
+        <form method="GET" action="{% url 'super_admin:documents_list' %}" class="flex flex-wrap items-center gap-2.5">
+            <div class="relative flex-1 min-w-[220px]">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text"
+                       name="q"
+                       value="{{ current_search }}"
+                       placeholder="Поиск по номеру счета, магазину, поддомену..."
+                       class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+            </div>
+
+            <div class="min-w-[160px]">
+                <select name="type" onchange="this.form.submit()" class="w-full py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">Все типы документов</option>
+                    <option value="INVOICE" {% if current_type == 'INVOICE' %}selected{% endif %}>Счет на оплату (Инвойс)</option>
+                    <option value="ACT" {% if current_type == 'ACT' %}selected{% endif %}>Акт выполненных работ</option>
+                    <option value="CONTRACT" {% if current_type == 'CONTRACT' %}selected{% endif %}>Договор подписки</option>
+                    <option value="RECONCILIATION" {% if current_type == 'RECONCILIATION' %}selected{% endif %}>Акт сверки взаиморасчетов</option>
+                </select>
+            </div>
+
+            <div class="min-w-[140px]">
+                <select name="status" onchange="this.form.submit()" class="w-full py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">Все статусы</option>
+                    <option value="PAID" {% if current_status == 'PAID' %}selected{% endif %}>Оплачен</option>
+                    <option value="PENDING" {% if current_status == 'PENDING' %}selected{% endif %}>Ожидает оплаты</option>
+                    <option value="OVERDUE" {% if current_status == 'OVERDUE' %}selected{% endif %}>Просрочен</option>
+                </select>
+            </div>
+
+            <button type="submit" class="px-3 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded hover:bg-slate-900 transition flex items-center gap-1">
+                <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                <span>Найти</span>
+            </button>
+
+            {% if current_search or current_type or current_status %}
+            <a href="{% url 'super_admin:documents_list' %}" class="px-2 text-xs text-slate-500 hover:text-slate-800 hover:underline">
+                Сбросить
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Documents Table -->
+    <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse dense-table">
+                <thead>
+                    <tr>
+                        <th class="w-32">Номер документа</th>
+                        <th class="w-28">Дата</th>
+                        <th class="w-36">Тип</th>
+                        <th class="min-w-[180px]">Сервер / Магазин</th>
+                        <th class="min-w-[140px]">Партнер</th>
+                        <th class="w-32 text-right">Сумма (UZS)</th>
+                        <th class="w-28 text-center">Статус</th>
+                        <th class="w-16 text-right pr-4">Печать</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documents %}
+                    <tr>
+                        <td class="font-mono text-xs font-bold text-blue-600">
+                            {{ doc.doc_number }}
+                        </td>
+                        <td class="font-mono text-xxs text-slate-500">
+                            {{ doc.issue_date|date:"d.m.Y" }}
+                        </td>
+                        <td>
+                            <span class="inline-block px-1.5 py-0.5 rounded text-xxs font-medium bg-slate-100 text-slate-700">
+                                {{ doc.get_doc_type_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'super_admin:server_detail' doc.store.id %}" class="text-xs font-semibold text-slate-900 hover:text-blue-600 hover:underline">
+                                {{ doc.store.name }}
+                            </a>
+                            <div class="text-xxs font-mono text-slate-500">{{ doc.store.subdomain }}.storebox.uz</div>
+                        </td>
+                        <td class="text-xs text-slate-600">
+                            {{ doc.partner.name|default:"StoreBox Direct" }}
+                        </td>
+                        <td class="text-right font-mono font-bold text-slate-900 text-xs">
+                            {{ doc.amount|intcomma }}
+                        </td>
+                        <td class="text-center">
+                            <span class="inline-block px-2 py-0.5 rounded text-xxs font-bold
+                                {% if doc.status == 'PAID' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                                {% elif doc.status == 'PENDING' %}bg-amber-50 text-amber-700 border border-amber-200
+                                {% elif doc.status == 'OVERDUE' %}bg-rose-50 text-rose-700 border border-rose-200
+                                {% else %}bg-slate-100 text-slate-600{% endif %}">
+                                {{ doc.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="text-right pr-4">
+                            <a href="{% url 'super_admin:document_download' doc.id %}" target="_blank"
+                               class="p-1 rounded text-slate-400 hover:text-blue-600 transition inline-block" title="Распечатать / PDF">
+                                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-slate-400 text-xs">
+                            Документы не найдены
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

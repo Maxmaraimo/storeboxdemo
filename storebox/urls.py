@@ -33,6 +33,9 @@ urlpatterns = [
     # Telegram Bot & Webhook
     path('telegram/', include('apps.telegram_bot.urls')),
 
+    # Super-Admin Billing & Global System Operations (billing.ibox.io architecture)
+    path('super-admin/', include('apps.super_admin.urls')),
+
     # Public Storefront & TMA (includes root fallback)
     path('', include('apps.storefront.urls')),
 ]

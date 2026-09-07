@@ -189,6 +189,30 @@ class Store(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Enterprise Billing & iBox Sync fields
+    company_name = models.CharField(max_length=200, blank=True, default='', verbose_name='Юр. лицо / Компания')
+    partner = models.ForeignKey(
+        'super_admin.Partner',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='stores',
+        verbose_name='Партнер / Селлер'
+    )
+    license_plan = models.CharField(
+        max_length=30,
+        default='STANDARD',
+        choices=[
+            ('START', 'Старт'),
+            ('STANDARD', 'Стандарт'),
+            ('PRO', 'Профессиональный'),
+            ('ENTERPRISE', 'Корпоративный'),
+        ],
+        verbose_name='Тарифный план'
+    )
+    license_expires_at = models.DateTimeField(null=True, blank=True, verbose_name='Окончание лицензии')
+    admin_comment = models.TextField(blank=True, default='', verbose_name='Служебный комментарий')
+
     class Meta:
         verbose_name = 'Магазин'
         verbose_name_plural = 'Магазины'
@@ -196,6 +220,35 @@ class Store(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.subdomain})"
+
+    @property
+    def license_days_left(self):
+        if not self.license_expires_at:
+            return None
+        diff = self.license_expires_at - timezone.now()
+        return diff.days
+
+    @property
+    def license_status(self):
+        days = self.license_days_left
+        if days is None:
+            return 'LIFETIME'
+        if days < 0:
+            return 'EXPIRED'
+        if days <= 7:
+            return 'EXPIRING'
+        return 'ACTIVE'
+
+    @property
+    def owner_display_name(self):
+        if self.owner:
+            name = f"{self.owner.first_name} {self.owner.last_name}".strip()
+            return name if name else self.owner.username
+        return "—"
+
+    @property
+    def contact_phone(self):
+        return self.phone or (self.owner.phone if self.owner else '') or ''
 
     def get_full_domain(self):
         platform_domain = getattr(settings, 'PLATFORM_DOMAIN', 'storebox.uz')

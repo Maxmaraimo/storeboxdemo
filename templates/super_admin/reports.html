@@ -1,0 +1,236 @@
+{% extends "super_admin/base_super_admin.html" %}
+{% load humanize %}
+
+{% block title %}Глобальная SaaS Аналитика и Отчеты — StoreBox Billing{% endblock %}
+{% block header_title %}SaaS Отчеты & Аналитика платформы{% endblock %}
+{% block header_subtitle %}Ключевые показатели роста StoreBox: MRR, ARR, GMV и динамика подключений{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+    <!-- KPI Metric Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <!-- Platform GMV -->
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Платформенный GMV</span>
+                <span class="p-1 rounded bg-emerald-50 text-emerald-600">
+                    <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+                </span>
+            </div>
+            <div class="mt-1.5 flex items-baseline gap-1.5">
+                <span class="text-xl font-bold font-mono text-emerald-600">{{ platform_gmv|intcomma }}</span>
+                <span class="text-xxs font-sans text-slate-400">UZS</span>
+            </div>
+            <div class="text-xxs text-slate-400 mt-0.5">совокупный оборот мерчантов</div>
+        </div>
+
+        <!-- MRR -->
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xxs font-semibold uppercase tracking-wider text-slate-500">MRR (Ежемесячный доход)</span>
+                <span class="p-1 rounded bg-blue-50 text-blue-600">
+                    <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+                </span>
+            </div>
+            <div class="mt-1.5 flex items-baseline gap-1.5">
+                <span class="text-xl font-bold font-mono text-blue-600">{{ mrr_estimate|intcomma }}</span>
+                <span class="text-xxs font-sans text-slate-400">UZS</span>
+            </div>
+            <div class="text-xxs text-slate-400 mt-0.5">по действующим подпискам</div>
+        </div>
+
+        <!-- ARR -->
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xxs font-semibold uppercase tracking-wider text-slate-500">ARR (Годовой прогноз)</span>
+                <span class="p-1 rounded bg-purple-50 text-purple-600">
+                    <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i>
+                </span>
+            </div>
+            <div class="mt-1.5 flex items-baseline gap-1.5">
+                <span class="text-xl font-bold font-mono text-purple-600">{{ arr_estimate|intcomma }}</span>
+                <span class="text-xxs font-sans text-slate-400">UZS</span>
+            </div>
+            <div class="text-xxs text-slate-400 mt-0.5">прогнозируемый годовой оборот</div>
+        </div>
+
+        <!-- Active Stores Ratio -->
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Активные инстансы</span>
+                <span class="p-1 rounded bg-slate-100 text-slate-600">
+                    <i data-lucide="server" class="w-3.5 h-3.5"></i>
+                </span>
+            </div>
+            <div class="mt-1.5 flex items-baseline gap-1.5">
+                <span class="text-xl font-bold font-mono text-slate-900">{{ active_stores }} / {{ total_stores }}</span>
+                <span class="text-xxs font-mono text-emerald-600 font-bold">
+                    {% if total_stores %}{% widthratio active_stores total_stores 100 %}%{% else %}0%{% endif %}
+                </span>
+            </div>
+            <div class="text-xxs text-slate-400 mt-0.5">конверсия в активных тенантов</div>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Growth Dynamics Chart -->
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                <i data-lucide="line-chart" class="w-3.5 h-3.5 text-blue-600"></i>
+                <span>Динамика подключения магазинов (Последние 6 месяцев)</span>
+            </h4>
+            <div class="h-64">
+                <canvas id="growthChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Category Distribution Chart -->
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-purple-600"></i>
+                <span>Распределение магазинов по категориям</span>
+            </h4>
+            <div class="h-64 flex items-center justify-center">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performing Stores Table -->
+    <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+        <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <div class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i>
+                <span>Топ магазинов по объему выручки (GMV)</span>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse dense-table">
+                <thead>
+                    <tr>
+                        <th class="w-12 text-center">Ранг</th>
+                        <th>Магазин / Сервер</th>
+                        <th>Категория</th>
+                        <th class="w-32 text-center">Всего заказов</th>
+                        <th class="w-36 text-right">Товарооборот (UZS)</th>
+                        <th class="w-28 text-center">Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in top_stores %}
+                    <tr>
+                        <td class="text-center font-mono font-bold text-slate-500 text-xs">
+                            #{{ forloop.counter }}
+                        </td>
+                        <td>
+                            <a href="{% url 'super_admin:server_detail' s.id %}" class="text-xs font-bold text-blue-600 hover:underline">
+                                {{ s.name }}
+                            </a>
+                            <div class="text-xxs font-mono text-slate-400">{{ s.subdomain }}.storebox.uz</div>
+                        </td>
+                        <td class="text-xs text-slate-700">
+                            {{ s.get_business_category_display }}
+                        </td>
+                        <td class="text-center font-mono font-bold text-slate-800 text-xs">
+                            {{ s.orders_total }}
+                        </td>
+                        <td class="text-right font-mono font-bold text-emerald-600 text-xs">
+                            {{ s.revenue|default:0|intcomma }} UZS
+                        </td>
+                        <td class="text-center">
+                            {% if s.is_active %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xxs font-bold bg-emerald-50 text-emerald-700">
+                                Активен
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xxs font-bold bg-slate-100 text-slate-600">
+                                Отключен
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-6 text-slate-400 text-xs">
+                            Данные по товарообороту формируются
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Growth Chart
+        const growthCtx = document.getElementById('growthChart');
+        if (growthCtx) {
+            new Chart(growthCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ trend_labels|safe }},
+                    datasets: [{
+                        label: 'Новые регистрации магазинов',
+                        data: {{ trend_counts|safe }},
+                        backgroundColor: '#2563eb',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0, font: { size: 11 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 11 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Category Chart
+        const catCtx = document.getElementById('categoryChart');
+        if (catCtx) {
+            const categories = [
+                {% for c in category_stats %}
+                { label: '{{ c.business_category }}', count: {{ c.count }} },
+                {% endfor %}
+            ];
+            new Chart(catCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories.map(c => c.label),
+                    datasets: [{
+                        data: categories.map(c => c.count),
+                        backgroundColor: ['#2563eb', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { boxWidth: 12, font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

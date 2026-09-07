@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'apps.dashboard',
     'apps.storefront',
     'apps.telegram_bot',
+    'apps.super_admin',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'

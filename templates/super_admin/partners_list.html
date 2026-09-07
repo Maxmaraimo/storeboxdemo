@@ -1,0 +1,173 @@
+{% extends "super_admin/base_super_admin.html" %}
+{% load humanize %}
+
+{% block title %}Партнеры и селлеры — StoreBox Billing{% endblock %}
+{% block header_title %}Партнеры / Селлеры{% endblock %}
+{% block header_subtitle %}Управление сетью партнеров, реселлеров и начислением комиссионных{% endblock %}
+
+{% block header_actions %}
+<button @click="partnerModalOpen = true"
+        type="button"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition">
+    <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+    <span>Добавить партнера</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<div x-data="{ partnerModalOpen: false }">
+
+    <!-- KPI Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Всего партнеров</div>
+            <div class="text-xl font-bold font-mono text-slate-900 mt-1">{{ total_partners }}</div>
+            <div class="text-xxs text-slate-400">активные агентства и реселлеры</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Начисленные комиссии</div>
+            <div class="text-xl font-bold font-mono text-emerald-600 mt-1">{{ total_commission_paid|intcomma }} <span class="text-xs font-sans text-slate-500">UZS</span></div>
+            <div class="text-xxs text-slate-400">к выплате партнерам</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+            <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Средняя комиссионная ставка</div>
+            <div class="text-xl font-bold font-mono text-blue-600 mt-1">15.0%</div>
+            <div class="text-xxs text-slate-400">от стоимости подписок</div>
+        </div>
+    </div>
+
+    <!-- Partners Table -->
+    <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse dense-table">
+                <thead>
+                    <tr>
+                        <th class="w-24 font-mono">Код</th>
+                        <th class="min-w-[200px]">Наименование компании / Партнера</th>
+                        <th class="min-w-[150px]">Контактное лицо</th>
+                        <th class="w-36">Телефон</th>
+                        <th class="w-24 text-center">Комиссия</th>
+                        <th class="w-32 text-center">Серверов (Магазинов)</th>
+                        <th class="w-32 text-right">Баланс (UZS)</th>
+                        <th class="w-24 text-center">Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in partners %}
+                    <tr>
+                        <td class="font-mono text-xs font-bold text-blue-600">
+                            {{ p.code }}
+                        </td>
+                        <td>
+                            <div class="text-xs font-bold text-slate-900">{{ p.name }}</div>
+                            <div class="text-xxs text-slate-500">{{ p.notes|default:"—" }}</div>
+                        </td>
+                        <td class="text-xs text-slate-800">
+                            {{ p.contact_person|default:"—" }}
+                        </td>
+                        <td class="font-mono text-xxs text-slate-600">
+                            {{ p.phone|default:"—" }}
+                        </td>
+                        <td class="text-center font-mono font-bold text-emerald-600 text-xs">
+                            {{ p.commission_rate }}%
+                        </td>
+                        <td class="text-center">
+                            <span class="inline-block px-2 py-0.5 rounded font-mono text-xxs font-bold bg-blue-50 text-blue-700">
+                                {{ p.active_count }} / {{ p.stores_count }}
+                            </span>
+                        </td>
+                        <td class="text-right font-mono font-bold text-slate-900 text-xs">
+                            {{ p.balance|intcomma }}
+                        </td>
+                        <td class="text-center">
+                            {% if p.is_active %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xxs font-bold bg-emerald-50 text-emerald-700">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                Активен
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xxs font-bold bg-slate-100 text-slate-500">
+                                Отключен
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-slate-400 text-xs">
+                            Партнеров пока нет
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal: Add Partner -->
+    <div x-show="partnerModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
+         @keydown.escape.window="partnerModalOpen = false">
+        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden"
+             @click.away="partnerModalOpen = false">
+            <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="user-plus" class="w-4 h-4 text-blue-400"></i>
+                    <h3 class="text-xs font-bold uppercase tracking-wider">Подключить нового партнера</h3>
+                </div>
+                <button @click="partnerModalOpen = false" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'super_admin:partner_create' %}" class="p-4 space-y-3">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Наименование партнера / компании *</label>
+                    <input type="text" name="name" required placeholder="Например: IT Retail Solutions LLC" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Код партнера *</label>
+                        <input type="text" name="code" required placeholder="PTN-04" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Комиссионная ставка (%)</label>
+                        <input type="text" name="commission_rate" value="15.00" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Контактное лицо</label>
+                        <input type="text" name="contact_person" placeholder="Имя Фамилия" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Телефон</label>
+                        <input type="text" name="phone" placeholder="+998 90 123 45 67" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Email</label>
+                    <input type="email" name="email" placeholder="partner@domain.uz" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
+                    <button @click="partnerModalOpen = false" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800">
+                        Отмена
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-sm">
+                        Сохранить партнера
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ doc.get_doc_type_display }} #{{ doc.doc_number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; background: white; }
+            .print-page { border: none !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 py-8 text-slate-800 text-sm">
+    <!-- Top Action Toolbar -->
+    <div class="max-w-3xl mx-auto mb-4 flex items-center justify-between no-print px-4">
+        <a href="javascript:window.history.back()" class="text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1">
+            &larr; Вернуться назад
+        </a>
+        <button onclick="window.print()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1.5">
+            <span>Распечатать документ (PDF)</span>
+        </button>
+    </div>
+
+    <!-- Printable Sheet -->
+    <div class="max-w-3xl mx-auto bg-white border border-slate-200 shadow-lg rounded-lg p-8 print-page">
+        <!-- Header -->
+        <div class="flex items-start justify-between border-b border-slate-200 pb-6">
+            <div>
+                <div class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <span>StoreBox SaaS Platform</span>
+                </div>
+                <div class="text-xs text-slate-500 mt-1">OOO «STOREBOX TECHNOLOGIES»</div>
+                <div class="text-xs text-slate-500">ИНН: 308945123 | ОКЭД: 62010</div>
+                <div class="text-xs text-slate-500">г. Ташкент, ул. Амира Темура, 107Б</div>
+                <div class="text-xs text-slate-500">Р/С: 20208000900543210001 в АКБ «Капиталбанк»</div>
+            </div>
+
+            <div class="text-right">
+                <div class="text-lg font-bold font-mono text-blue-600 uppercase">{{ doc.get_doc_type_display }}</div>
+                <div class="text-sm font-mono font-bold text-slate-900 mt-0.5">№ {{ doc.doc_number }}</div>
+                <div class="text-xs text-slate-500 mt-1">Дата: {{ doc.issue_date|date:"d.m.Y" }}</div>
+                <div class="mt-2">
+                    <span class="inline-block px-2.5 py-0.5 rounded text-xs font-bold font-mono
+                        {% if doc.status == 'PAID' %}bg-emerald-100 text-emerald-800
+                        {% elif doc.status == 'PENDING' %}bg-amber-100 text-amber-800
+                        {% else %}bg-slate-100 text-slate-800{% endif %}">
+                        {{ doc.get_status_display|upper }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer & Service Target -->
+        <div class="grid grid-cols-2 gap-6 my-6 text-xs">
+            <div class="p-3 bg-slate-50 rounded border border-slate-200">
+                <div class="text-xxs font-bold uppercase tracking-wider text-slate-400 mb-1">Заказчик (Плательщик):</div>
+                <div class="font-bold text-slate-900 text-sm">{{ doc.store.company_name|default:doc.store.name }}</div>
+                <div class="text-slate-600 mt-0.5">Владелец: {{ doc.store.owner_display_name }}</div>
+                <div class="text-slate-600">Телефон: {{ doc.store.contact_phone }}</div>
+                <div class="text-slate-600 font-mono">Домен: {{ doc.store.subdomain }}.storebox.uz</div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded border border-slate-200">
+                <div class="text-xxs font-bold uppercase tracking-wider text-slate-400 mb-1">Партнер / Обслуживание:</div>
+                <div class="font-bold text-slate-900 text-sm">{{ doc.partner.name|default:"StoreBox Direct Support" }}</div>
+                <div class="text-slate-600 mt-0.5">Код партнера: {{ doc.partner.code|default:"PTN-DIRECT" }}</div>
+                <div class="text-slate-600">Контакты: {{ doc.partner.phone|default:"+998 78 123 45 67" }}</div>
+            </div>
+        </div>
+
+        <!-- Line items table -->
+        <table class="w-full text-left border-collapse my-6 text-xs">
+            <thead>
+                <tr class="bg-slate-100 border-y border-slate-200">
+                    <th class="py-2.5 px-3 w-12 text-center">№</th>
+                    <th class="py-2.5 px-3">Наименование услуги</th>
+                    <th class="py-2.5 px-3 w-20 text-center">Кол-во</th>
+                    <th class="py-2.5 px-3 w-28 text-right">Цена (UZS)</th>
+                    <th class="py-2.5 px-3 w-32 text-right">Сумма (UZS)</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                <tr>
+                    <td class="py-3 px-3 text-center font-mono">1</td>
+                    <td class="py-3 px-3">
+                        <div class="font-bold text-slate-900">{{ doc.description }}</div>
+                        <div class="text-xxs text-slate-500 mt-0.5">Предоставление доступа к программному комплексу StoreBox SaaS Platform</div>
+                    </td>
+                    <td class="py-3 px-3 text-center font-mono">1</td>
+                    <td class="py-3 px-3 text-right font-mono font-semibold">{{ doc.amount|intcomma }}</td>
+                    <td class="py-3 px-3 text-right font-mono font-bold text-slate-900">{{ doc.amount|intcomma }}</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="border-t-2 border-slate-300 font-bold">
+                    <td colspan="4" class="py-3 px-3 text-right text-slate-600">ИТОГО К ОПЛАТЕ:</td>
+                    <td class="py-3 px-3 text-right font-mono text-base text-blue-600">{{ doc.amount|intcomma }} UZS</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Legal Seals & Signatures -->
+        <div class="mt-12 pt-6 border-t border-slate-200 grid grid-cols-2 gap-8 text-xs">
+            <div>
+                <div class="font-bold text-slate-900">Исполнитель:</div>
+                <div class="text-slate-500 mt-1">Генеральный директор OOO «STOREBOX TECHNOLOGIES»</div>
+                <div class="mt-6 border-b border-slate-300 w-48"></div>
+                <div class="text-xxs text-slate-400 mt-1">Подпись / М.П.</div>
+            </div>
+
+            <div>
+                <div class="font-bold text-slate-900">Заказчик:</div>
+                <div class="text-slate-500 mt-1">{{ doc.store.owner_display_name }}</div>
+                <div class="mt-6 border-b border-slate-300 w-48"></div>
+                <div class="text-xxs text-slate-400 mt-1">Подпись / М.П.</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

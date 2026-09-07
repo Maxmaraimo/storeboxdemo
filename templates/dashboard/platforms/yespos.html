@@ -29,6 +29,7 @@ window.yesposManager = function() {
         // Catalog modal state
         isCatalogOpen: false,
         isLoadingCatalog: false,
+        catalogError: '',
         isImporting: false,
         isSyncing: false,
         searchQuery: '',
@@ -146,6 +147,7 @@ window.yesposManager = function() {
             this.isCatalogOpen = true;
             this.selectedProductIds = [];
             this.isLoadingCatalog = true;
+            this.catalogError = '';
             this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
 
             try {
@@ -153,9 +155,12 @@ window.yesposManager = function() {
                 const data = await res.json();
                 if (data.success && data.categories) {
                     this.categories = data.categories;
+                } else {
+                    this.catalogError = data.error || 'Не удалось получить каталог товаров YES POS';
                 }
             } catch (err) {
                 console.error(err);
+                this.catalogError = 'Ошибка сетевого запроса к серверу';
             } finally {
                 this.isLoadingCatalog = false;
                 this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
@@ -224,7 +229,8 @@ window.yesposManager = function() {
                             price: p.price,
                             stock: p.stock,
                             description: p.description,
-                            image: p.image
+                            image: p.image,
+                            raw_image: p.raw_image || p.image
                         });
                     }
                 }
@@ -516,7 +522,11 @@ window.yesposManager = function() {
                     <tr class="hover:bg-slate-50/80 transition-colors">
                         <td class="py-3 px-4 font-semibold text-slate-900 flex items-center gap-3">
                             <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                                {% if item.product.primary_image_url %}
+                                <img src="{{ item.product.primary_image_url }}" class="w-full h-full object-cover">
+                                {% else %}
                                 <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
+                                {% endif %}
                             </div>
                             <div>
                                 <div>{{ item.product.get_name }}</div>
@@ -760,6 +770,11 @@ window.yesposManager = function() {
 
                 <!-- Products List in Modal -->
                 <div class="p-6 overflow-y-auto flex-1 min-h-0 divide-y divide-slate-100 space-y-4">
+                    <div x-show="catalogError" class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                        <span x-text="catalogError"></span>
+                    </div>
+
                     <template x-if="isLoadingCatalog">
                         <div class="py-16 text-center text-slate-400">
                             <i data-lucide="refresh-cw" class="w-8 h-8 animate-spin mx-auto mb-2 text-slate-500"></i>
@@ -767,7 +782,7 @@ window.yesposManager = function() {
                         </div>
                     </template>
 
-                    <template x-if="!isLoadingCatalog && filteredCategories.length === 0">
+                    <template x-if="!isLoadingCatalog && !catalogError && filteredCategories.length === 0">
                         <div class="py-12 text-center text-slate-400">
                             <p class="text-xs">Товары не найдены</p>
                         </div>
@@ -792,7 +807,7 @@ window.yesposManager = function() {
                                             <input type="checkbox" :checked="selectedProductIds.includes(p.id)" class="w-4 h-4 rounded text-slate-900 focus:ring-0 cursor-pointer shrink-0">
                                             <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
                                                 <template x-if="p.image">
-                                                    <img :src="p.image" class="w-full h-full object-cover">
+                                                    <img :src="p.image" class="w-full h-full object-cover" @error="p.image = ''" loading="lazy">
                                                 </template>
                                                 <template x-if="!p.image">
                                                     <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>

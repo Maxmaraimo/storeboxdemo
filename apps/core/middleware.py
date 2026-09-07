@@ -68,8 +68,12 @@ class SubdomainTenantMiddleware:
             if param_store:
                 subdomain = param_store
 
-            # If user is in /store/<subdomain>/ URL path fallback for ultra-flexible routing
-            if path.startswith('/store/'):
+            # If user is in /super-admin, never treat as storefront
+            if path.startswith('/super-admin'):
+                request.store = None
+                request.is_platform_root = True
+                subdomain = None
+            elif path.startswith('/store/'):
                 parts = path.strip('/').split('/')
                 if len(parts) >= 2:
                     subdomain = parts[1]
@@ -77,7 +81,7 @@ class SubdomainTenantMiddleware:
             elif not subdomain and request.session.get('current_store_subdomain'):
                 subdomain = request.session.get('current_store_subdomain')
 
-            if subdomain and subdomain not in ['www', 'api', 'app', 'admin']:
+            if subdomain and subdomain not in ['www', 'api', 'app', 'admin', 'super-admin']:
                 try:
                     store = Store.objects.filter(subdomain__iexact=subdomain, is_active=True).first()
                     if store:
@@ -86,7 +90,7 @@ class SubdomainTenantMiddleware:
                     else:
                         # Unknown store - only show 404 on actual store pages, not system/order/auth paths
                         safe_prefixes = (
-                            '/dashboard', '/login', '/register', '/logout', '/accounts',
+                            '/super-admin', '/dashboard', '/login', '/register', '/logout', '/accounts',
                             '/order', '/profile', '/cart', '/checkout', '/auth',
                             '/platform', '/payments', '/telegram', '/api'
                         )
