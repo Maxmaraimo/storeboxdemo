@@ -16,11 +16,25 @@ def dashboard_summary_view(request):
         return Response({"error": "Dokon topilmadi"}, status=404)
 
     period = request.GET.get("period", "today")
+    custom_start = request.GET.get("start_date", "").strip()
+    custom_end = request.GET.get("end_date", "").strip()
     now = timezone.now()
 
     store_orders = Order.objects.filter(store=store)
 
-    if period == "today":
+    if custom_start and custom_end:
+        try:
+            s_date = timezone.datetime.strptime(custom_start, "%Y-%m-%d").date()
+            e_date = timezone.datetime.strptime(custom_end, "%Y-%m-%d").date()
+            if s_date > e_date:
+                s_date, e_date = e_date, s_date
+            start_date = timezone.make_aware(timezone.datetime.combine(s_date, timezone.datetime.min.time()))
+            end_date = timezone.make_aware(timezone.datetime.combine(e_date, timezone.datetime.max.time()))
+            period = "custom"
+        except Exception:
+            start_date = (now - timezone.timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = now
+    elif period == "today":
         start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
         end_date = now
     elif period == "week":
@@ -36,7 +50,7 @@ def dashboard_summary_view(request):
         start_date = (now - timezone.timedelta(days=365)).replace(hour=0, minute=0, second=0, microsecond=0)
         end_date = now
     else:
-        start_date = (now - timezone.timedelta(days=30)).replace(hour=0, minute=0, second=0, microsecond=0)
+        start_date = (now - timezone.timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
         end_date = now
 
     orders_scope = store_orders.filter(created_at__range=(start_date, end_date))
@@ -67,9 +81,16 @@ def dashboard_summary_view(request):
     # Timeline chart
     chart_labels = []
     chart_revenue = []
-    days_to_plot = 7 if period in ["today", "week"] else (30 if period == "month" else 12)
     
-    if period in ["today", "week"]:
+    if period == "today":
+        chart_labels = [f"{h:02d}:00" for h in range(0, 24, 2)]
+        chart_revenue = [0.0] * 12
+        for o in orders_scope.exclude(status=Order.OrderStatuses.CANCELLED):
+            local_hour = timezone.localtime(o.created_at).hour
+            slot = local_hour // 2
+            if slot < 12:
+                chart_revenue[slot] += float(o.total_amount)
+    elif period == "week":
         for i in range(6, -1, -1):
             day_date = (now - timezone.timedelta(days=i)).date()
             label = day_date.strftime("%d.%m")
@@ -78,13 +99,36 @@ def dashboard_summary_view(request):
             ).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(tot=Sum("total_amount"))["tot"] or 0
             chart_labels.append(label)
             chart_revenue.append(float(rev))
-    else:
+    elif period == "custom":
+        num_days = max(1, (end_date.date() - start_date.date()).days + 1)
+        step = max(1, num_days // 10)
+        curr = start_date.date()
+        while curr <= end_date.date():
+            next_curr = min(end_date.date() + timezone.timedelta(days=1), curr + timezone.timedelta(days=step))
+            rev = store_orders.filter(
+                created_at__date__gte=curr,
+                created_at__date__lt=next_curr
+            ).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(tot=Sum("total_amount"))["tot"] or 0
+            chart_labels.append(curr.strftime("%d.%m"))
+            chart_revenue.append(float(rev))
+            curr = next_curr
+    elif period == "month":
         for i in range(29, -1, -3):
             day_date = (now - timezone.timedelta(days=i)).date()
             label = day_date.strftime("%d.%m")
             rev = store_orders.filter(
                 created_at__date__gte=day_date,
                 created_at__date__lt=day_date + timezone.timedelta(days=3)
+            ).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(tot=Sum("total_amount"))["tot"] or 0
+            chart_labels.append(label)
+            chart_revenue.append(float(rev))
+    else: # quarter or year
+        for i in range(11, -1, -1):
+            day_date = (now - timezone.timedelta(days=i * 30)).date()
+            label = day_date.strftime("%m.%y")
+            rev = store_orders.filter(
+                created_at__date__gte=day_date,
+                created_at__date__lt=day_date + timezone.timedelta(days=30)
             ).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(tot=Sum("total_amount"))["tot"] or 0
             chart_labels.append(label)
             chart_revenue.append(float(rev))

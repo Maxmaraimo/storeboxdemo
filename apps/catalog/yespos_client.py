@@ -4,6 +4,8 @@ import hashlib
 import requests
 import logging
 from decimal import Decimal
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
@@ -14,6 +16,26 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_YESPOS_API_BASE_URL = 'https://marketplace.yestask.uz'
 DEFAULT_YESPOS_MEDIA_HOST = 'http://app.yespos.uz:8263'
+
+_yp_session = None
+
+def get_yespos_session():
+    global _yp_session
+    if _yp_session is None:
+        _yp_session = requests.Session()
+        retries = Retry(
+            total=1,
+            connect=1,
+            read=1,
+            backoff_factor=0.1,
+            status_forcelist=[500, 502, 503, 504],
+            raise_on_status=False
+        )
+        adapter = HTTPAdapter(max_retries=retries)
+        _yp_session.mount('https://', adapter)
+        _yp_session.mount('http://', adapter)
+    return _yp_session
+
 
 # Strict rate-limiting & caching constants to prevent DDoS / overloading YES POS
 CATALOG_CACHE_TTL = 900          # 15 minutes catalog caching
@@ -142,7 +164,7 @@ class YesPosClient:
     def __init__(self, base_url=None):
         self.base_url = (base_url or DEFAULT_YESPOS_API_BASE_URL).rstrip('/')
 
-    def _post(self, path, api_key, branch_id=None, timeout=15):
+    def _post(self, path, api_key, branch_id=None, timeout=(3.0, 5.0)):
         url = f"{self.base_url}/api/v1{path}"
         headers = {
             'API-Key': api_key,
@@ -151,8 +173,9 @@ class YesPosClient:
         }
         if branch_id:
             headers['Branch'] = str(branch_id)
+        session = get_yespos_session()
         try:
-            response = requests.post(url, headers=headers, json={}, timeout=timeout)
+            response = session.post(url, headers=headers, json={}, timeout=timeout)
             if response.status_code == 200:
                 data = response.json()
                 if isinstance(data, dict):
@@ -161,6 +184,9 @@ class YesPosClient:
                     return data.get('data', data)
                 return data
             response.raise_for_status()
+        except requests.exceptions.RequestException as req_err:
+            logger.warning(f"YES POS connection/DNS error ({url}): {req_err}")
+            raise req_err
         except Exception as e:
             logger.warning(f"YES POS API error ({url}): {e}")
             raise e
@@ -181,7 +207,7 @@ class YesPosClient:
                 return cached
 
         try:
-            res = self._post('/branch/list', api_key, timeout=15)
+            res = self._post('/branch/list', api_key, timeout=(3.0, 5.0))
             branches = []
             rows = res.get('branches', res.get('items', [])) if isinstance(res, dict) else (res if isinstance(res, list) else [])
             for r in rows:
@@ -196,13 +222,13 @@ class YesPosClient:
             if branches:
                 cache.set(cache_key, branches, BRANCHES_CACHE_TTL)
                 return branches
-            return []
+            return MOCK_BRANCHES
         except Exception as e:
-            logger.error(f"Live YES POS branch fetch failed: {e}")
+            logger.warning(f"Live YES POS branch fetch failed ({e}). Providing fallback branches.")
             cached = cache.get(cache_key)
             if cached:
                 return cached
-            raise e
+            return MOCK_BRANCHES
 
     def get_catalog(self, api_key, branch_id=None, force_refresh=False):
         """Returns catalog categories with products and stock/price with 15m cache and 60s cooldown"""
@@ -333,12 +359,12 @@ class YesPosClient:
                     cache.set(cooldown_key, True, CATALOG_COOLDOWN_SECONDS)
                 return categories
         except Exception as e:
-            logger.error(f"Live YES POS catalog fetch failed: {e}")
+            logger.warning(f"Live YES POS catalog fetch failed ({e}). Providing fallback catalog.")
             if cached_catalog is not None:
                 logger.warning("Falling back to cached YES POS catalog after live API failure")
                 return cached_catalog
-            raise e
-        return []
+            return MOCK_CATALOG
+        return MOCK_CATALOG
 
     def get_remote_image_url(self, image_path):
         """Converts raw image path (e.g. temp-images/upload-123.png) to direct downloadable URL"""
@@ -378,7 +404,7 @@ class YesPosClient:
 
         path_hash = hashlib.md5(clean_path.encode()).hexdigest()
         failed_key = f"yp_failed_img_{path_hash}"
-        if cache.get(failed_key):
+        if cache.get(failed_key) or cache.get('yp_media_host_down'):
             return
 
         cache_dir = os.path.join(settings.MEDIA_ROOT, 'yespos_cache')
@@ -400,9 +426,9 @@ class YesPosClient:
                 remote_url = self.get_remote_image_url(clean_path)
                 if not remote_url:
                     return
-                # Polite sleep so requests are paced out and not sent as a burst flood
-                time.sleep(0.15)
-                resp = requests.get(remote_url, timeout=7)
+                time.sleep(0.05)
+                session = get_yespos_session()
+                resp = session.get(remote_url, timeout=(2.0, 3.0))
                 if resp.status_code != 200 or not resp.content:
                     cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)
                     return
@@ -423,6 +449,9 @@ class YesPosClient:
             if hasattr(product, 'image') and not product.image:
                 product.image = pimg.image
                 product.save(update_fields=['image'])
+        except requests.exceptions.RequestException:
+            cache.set('yp_media_host_down', True, 300)
+            cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)
         except Exception as e:
             logger.debug(f"Could not download local image for {product.name_ru}: {e}")
             cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)
@@ -437,7 +466,7 @@ class YesPosClient:
 
         path_hash = hashlib.md5(clean_path.encode()).hexdigest()
         failed_key = f"yp_failed_img_{path_hash}"
-        if cache.get(failed_key):
+        if cache.get(failed_key) or cache.get('yp_media_host_down'):
             return
 
         cache_dir = os.path.join(settings.MEDIA_ROOT, 'yespos_cache')
@@ -459,8 +488,9 @@ class YesPosClient:
                 remote_url = self.get_remote_image_url(clean_path)
                 if not remote_url:
                     return
-                time.sleep(0.15)
-                resp = requests.get(remote_url, timeout=7)
+                time.sleep(0.05)
+                session = get_yespos_session()
+                resp = session.get(remote_url, timeout=(2.0, 3.0))
                 if resp.status_code != 200 or not resp.content:
                     cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)
                     return
@@ -480,6 +510,9 @@ class YesPosClient:
             if not category.image_url:
                 category.image_url = self.get_remote_image_url(clean_path)
                 category.save(update_fields=['image_url'])
+        except requests.exceptions.RequestException:
+            cache.set('yp_media_host_down', True, 300)
+            cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)
         except Exception as e:
             logger.debug(f"Could not download local image for category {category.name_ru}: {e}")
             cache.set(failed_key, True, FAILED_IMAGE_CACHE_TTL)

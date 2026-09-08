@@ -5,7 +5,26 @@ from apps.core import views as core_views
 app_name = 'dashboard'
 
 urlpatterns = [
-    path('', views.dashboard_home_view, name='home'),
+    # Modern React 19 SPA routes
+    path('', views.dashboard_spa_view, name='home'),
+    path('orders/', views.dashboard_spa_view, name='orders'),
+    path('products/', views.dashboard_spa_view, name='products'),
+    path('categories/', views.dashboard_spa_view, name='categories'),
+    path('customers/', views.dashboard_spa_view, name='customers'),
+    path('chats/', views.dashboard_spa_view, name='chats'),
+    path('warehouse/', views.dashboard_spa_view, name='warehouse'),
+    path('discounts/', views.dashboard_spa_view, name='discounts'),
+    path('ikpu/', views.dashboard_spa_view, name='ikpu'),
+    path('marketing/', views.dashboard_spa_view, name='marketing'),
+    path('platforms/', views.dashboard_spa_view, name='platforms'),
+    path('platforms/qr/', views.dashboard_spa_view, name='platforms_qr'),
+    path('qr/', views.dashboard_spa_view, name='qr'),
+    path('design/', views.dashboard_spa_view, name='design'),
+    path('yespos/', views.dashboard_spa_view, name='yespos'),
+    path('settings/', views.dashboard_spa_view, name='settings_general'),
+    path('settings/<path:subpath>/', views.dashboard_spa_view, name='settings_sub'),
+    path('robo-market/', views.dashboard_spa_view, name='robo_market'),
+
     path('lang/<str:lang>/', core_views.switch_language_view, name='dashboard_switch_language'),
     path('onboarding/', views.onboarding_wizard_view, name='onboarding'),
     
@@ -20,7 +39,7 @@ urlpatterns = [
     path('api/geo-search/', views.geo_search_api, name='api_geo_search'),
     path('api/geo-reverse/', views.geo_reverse_api, name='api_geo_reverse'),
     path('api/topup-balance/', views.topup_balance_api, name='topup_balance_api'),
-        path('api/add-card/', views.add_card_api, name='add_card_api'),
+    path('api/add-card/', views.add_card_api, name='add_card_api'),
     path('api/toggle-payment/', views.toggle_payment_api, name='toggle_payment_api'),
     path('api/update-order-status/', views.update_order_status_api, name='update_order_status_api'),
     path('api/orders/<int:order_id>/', views.order_detail_api, name='order_detail_api'),
@@ -33,44 +52,39 @@ urlpatterns = [
     path('api/switch-store/<int:store_id>/', views.switch_store_api, name='switch_store_api'),
     path('orders/export/', views.export_orders_csv, name='export_orders_csv'),
 
-    # Catalog & Warehouse (from Video)
-    path('products/', views.products_list_view, name='products'),
+    # Product/category modification endpoints
     path('products/new/', views.product_create_or_edit_view, name='product_create'),
     path('products/create/', views.product_create_or_edit_view, name='product_create_alias'),
     path('products/<int:product_id>/edit/', views.product_create_or_edit_view, name='product_edit'),
     path('products/<int:product_id>/delete/', views.product_delete_view, name='product_delete'),
-    path('categories/', views.categories_list_view, name='categories'),
     path('api/categories/<int:category_id>/products/', views.category_products_api, name='category_products_api'),
     path('api/categories/toggle-active/', views.category_toggle_active_api, name='category_toggle_active_api'),
     path('api/categories/quick-add-product/', views.category_quick_add_product_api, name='category_quick_add_product_api'),
-    path('warehouse/', views.warehouse_view, name='warehouse'),
-    path('ikpu/', views.ikpu_view, name='ikpu'),
-    path('discounts/', views.discounts_view, name='discounts'),
-
-    # Orders
-    path('orders/', views.orders_list_view, name='orders'),
     path('orders/<int:order_id>/', views.order_detail_view, name='order_detail'),
 
-    # Customers & Chats
-    path('customers/', views.customers_list_view, name='customers'),
-    path('chats/', views.chats_view, name='chats'),
+    # Legacy views (accessible under /dashboard/legacy/)
+    path('legacy/', views.dashboard_home_view, name='legacy_home'),
+    path('legacy/products/', views.products_list_view, name='legacy_products'),
+    path('legacy/categories/', views.categories_list_view, name='legacy_categories'),
+    path('legacy/warehouse/', views.warehouse_view, name='legacy_warehouse'),
+    path('legacy/ikpu/', views.ikpu_view, name='legacy_ikpu'),
+    path('legacy/discounts/', views.discounts_view, name='legacy_discounts'),
+    path('legacy/orders/', views.orders_list_view, name='legacy_orders'),
+    path('legacy/customers/', views.customers_list_view, name='legacy_customers'),
+    path('legacy/chats/', views.chats_view, name='legacy_chats'),
+    path('legacy/marketing/', views.marketing_view, name='legacy_marketing'),
+    path('legacy/platforms/', views.platforms_view, name='legacy_platforms'),
+    path('legacy/settings/', views.settings_general_view, name='legacy_settings_general'),
+    path('legacy/settings/branches/', views.settings_branches_view, name='legacy_settings_branches'),
+    path('legacy/settings/staff/', views.settings_staff_view, name='legacy_settings_staff'),
+    path('legacy/settings/tariffs/', views.settings_tariffs_view, name='legacy_settings_tariffs'),
+    path('legacy/settings/telegram/', views.settings_telegram_view, name='legacy_settings_telegram'),
+    path('legacy/settings/delivery/', views.settings_delivery_view, name='legacy_settings_delivery'),
+    path('legacy/settings/payments/', views.settings_payments_view, name='legacy_settings_payments'),
+    path('legacy/robo-market/', views.robo_market_view, name='legacy_robo_market'),
+    path('legacy/yespos/', views.yespos_view, name='legacy_yespos'),
 
-    # Marketing & Platforms (QR Catalog, Telegram, Website)
-    path('marketing/', views.marketing_view, name='marketing'),
-    path('platforms/', views.platforms_view, name='platforms'),
-
-    # Settings & Integrations
-    path('settings/', views.settings_general_view, name='settings_general'),
-    path('settings/branches/', views.settings_branches_view, name='settings_branches'),
-    path('settings/staff/', views.settings_staff_view, name='settings_staff'),
-    path('settings/tariffs/', views.settings_tariffs_view, name='settings_tariffs'),
-    path('settings/telegram/', views.settings_telegram_view, name='settings_telegram'),
-    path('settings/delivery/', views.settings_delivery_view, name='settings_delivery'),
-    path('settings/payments/', views.settings_payments_view, name='settings_payments'),
-    path('robo-market/', views.robo_market_view, name='robo_market'),
-
-    # YES POS Integration (from mainstore/storebox)
-    path('yespos/', views.yespos_view, name='yespos'),
+    # YES POS API
     path('api/yespos/test/', views.yespos_test_api, name='yespos_test_api'),
     path('api/yespos/connect/', views.yespos_connect_api, name='yespos_connect_api'),
     path('api/yespos/disconnect/', views.yespos_disconnect_api, name='yespos_disconnect_api'),

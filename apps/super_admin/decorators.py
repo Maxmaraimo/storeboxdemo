@@ -16,6 +16,7 @@ def superadmin_required(view_func):
         
         is_super = (
             request.user.is_superuser or
+            request.user.is_staff or
             getattr(request.user, 'role', None) == User.Roles.SUPERADMIN or
             getattr(request.user, 'is_platform_admin', False)
         )

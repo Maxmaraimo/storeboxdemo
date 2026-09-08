@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.dashboard import views as old_views
-from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings
+from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design
 
 app_name = "api_v1"
 
@@ -35,7 +35,15 @@ urlpatterns = [
     path("settings/store/", views_settings.store_settings_view, name="store_settings"),
     path("translations/<str:lang_code>/", views_settings.translations_view, name="translations"),
 
+    # AI Design Studio & QR Catalog
+    path("design/theme/", views_design.design_theme_get_view, name="design_theme_get"),
+    path("design/theme/save/", views_design.design_theme_save_view, name="design_theme_save"),
+    path("design/ai-suggest/", views_design.design_ai_suggest_view, name="design_ai_suggest"),
+    path("design/apply-niche/", views_design.design_apply_niche_view, name="design_apply_niche"),
+    path("platforms/qr/", views_design.qr_catalog_settings_view, name="qr_catalog_settings"),
+
     # YES POS Integration endpoints
+    path("yespos/status/", views_catalog.yespos_status_view, name="yespos_status"),
     path("yespos/test/", old_views.yespos_test_api, name="yespos_test"),
     path("yespos/connect/", old_views.yespos_connect_api, name="yespos_connect"),
     path("yespos/disconnect/", old_views.yespos_disconnect_api, name="yespos_disconnect"),

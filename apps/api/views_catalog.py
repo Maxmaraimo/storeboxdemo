@@ -85,3 +85,27 @@ def category_toggle_active_view(request, category_id):
         "is_active": category.is_active,
         "category": CategorySerializer(category).data
     })
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def yespos_status_view(request):
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Dokon topilmadi"}, status=404)
+    from apps.catalog.models import YesPosConnection, YesPosProductLink
+    conn = YesPosConnection.objects.filter(store=store).first()
+    linked_count = YesPosProductLink.objects.filter(store=store).count()
+    if not conn:
+        return Response({
+            "is_connected": False,
+            "linked_products_count": linked_count
+        })
+    return Response({
+        "is_connected": conn.is_active,
+        "branch_id": conn.branch_id,
+        "branch_name": conn.branch_name,
+        "last_sync_at": conn.last_sync_at.isoformat() if conn.last_sync_at else None,
+        "api_key_masked": (conn.api_key[:4] + "****" + conn.api_key[-4:]) if len(conn.api_key) > 8 else "****",
+        "linked_products_count": linked_count
+    })
+

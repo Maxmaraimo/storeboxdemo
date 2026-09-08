@@ -807,6 +807,13 @@ def dashboard_spa_view(request, *args, **kwargs):
     store = get_merchant_store(request)
     if not store:
         return redirect('dashboard:onboarding')
+    dist_index_path = os.path.join(settings.BASE_DIR, 'static', 'dist', 'index.html')
+    if os.path.exists(dist_index_path):
+        try:
+            with open(dist_index_path, 'r', encoding='utf-8') as f:
+                return HttpResponse(f.read(), content_type='text/html')
+        except Exception:
+            pass
     return render(request, 'dashboard/spa_index.html', {
         'store': store,
         'user': request.user,

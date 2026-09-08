@@ -563,5 +563,45 @@ export const translations: Record<Language, Record<string, string>> = {
 
 export function getTranslation(lang: Language = "uz", key: string): string {
   const dict = translations[lang] || translations["uz"];
-  return dict[key] || translations["ru"]?.[key] || key;
+  if (dict[key]) return dict[key];
+
+  // Try stripping nav_ prefix
+  if (key.startsWith("nav_")) {
+    const stripped = key.slice(4);
+    if (dict[stripped]) return dict[stripped];
+    if (translations["uz"]?.[stripped]) return translations["uz"][stripped];
+    if (translations["ru"]?.[stripped]) return translations["ru"][stripped];
+  }
+
+  // Common navigation fallbacks
+  const navFallbacks: Record<string, Record<Language, string>> = {
+    nav_dashboard: { uz: "Boshqaruv paneli", ru: "Панель управления", en: "Dashboard" },
+    nav_orders: { uz: "Buyurtmalar", ru: "Заказы", en: "Orders" },
+    nav_customers: { uz: "Mijozlar", ru: "Клиенты", en: "Customers" },
+    nav_chat: { uz: "Chat", ru: "Чат", en: "Chat" },
+    nav_catalog: { uz: "Katalog", ru: "Каталог", en: "Catalog" },
+    nav_products: { uz: "Mahsulotlar", ru: "Товары", en: "Products" },
+    nav_categories: { uz: "Kategoriyalar", ru: "Категории", en: "Categories" },
+    nav_warehouse: { uz: "Omborxona", ru: "Склад", en: "Warehouse" },
+    nav_discounts: { uz: "Chegirma", ru: "Скидки", en: "Discounts" },
+    nav_ikpu: { uz: "IKPU", ru: "ИКПУ", en: "IKPU" },
+    nav_marketing: { uz: "Marketing", ru: "Маркетинг", en: "Marketing" },
+    nav_platforms: { uz: "Platformalar", ru: "Платформы", en: "Platforms" },
+    nav_design: { uz: "Dizayn & AI Studio", ru: "Дизайн и AI Студия", en: "Design & AI Studio" },
+    nav_qr: { uz: "QR Katalog", ru: "QR-меню", en: "QR Catalog" },
+    nav_yespos: { uz: "YES POS", ru: "YES POS", en: "YES POS" },
+    nav_payments: { uz: "To'lov turi", ru: "Способы оплаты", en: "Payment Methods" },
+    nav_delivery: { uz: "Yetkazib berish", ru: "Доставка", en: "Delivery" },
+    nav_branches: { uz: "Filiallar", ru: "Филиалы", en: "Branches" },
+    nav_staff: { uz: "Xodimlar", ru: "Сотрудники", en: "Staff" },
+    nav_tariffs: { uz: "Tarif rejasi", ru: "Тарифный план", en: "Tariff Plans" },
+    nav_market: { uz: "StoreBox market", ru: "Маркет интеграций", en: "StoreBox Market" },
+    nav_settings: { uz: "Sozlamalar", ru: "Настройки", en: "Settings" },
+  };
+
+  if (navFallbacks[key]) {
+    return navFallbacks[key][lang] || navFallbacks[key]["uz"];
+  }
+
+  return translations["ru"]?.[key] || translations["uz"]?.[key] || key;
 }

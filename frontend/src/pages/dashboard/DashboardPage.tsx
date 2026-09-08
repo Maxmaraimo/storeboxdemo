@@ -31,11 +31,18 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 export const DashboardPage: React.FC = () => {
   const { store, t } = useAuth();
   const [period, setPeriod] = useState("today");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [activeDateRange, setActiveDateRange] = useState<{ start: string; end: string } | null>(null);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-summary", period],
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["dashboard-summary", period, activeDateRange?.start, activeDateRange?.end],
     queryFn: async () => {
-      const res = await api.get(`/dashboard/summary/?period=${period}`);
+      let url = `/dashboard/summary/?period=${period}`;
+      if (period === "custom" && activeDateRange) {
+        url = `/dashboard/summary/?start_date=${activeDateRange.start}&end_date=${activeDateRange.end}`;
+      }
+      const res = await api.get(url);
       return res.data as {
         metrics: DashboardMetrics;
         charts: DashboardCharts;
@@ -58,26 +65,82 @@ export const DashboardPage: React.FC = () => {
     { id: "year", label: t("period_year") || "Har yil" },
   ];
 
+  const handleApplyCustomRange = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!startDate || !endDate) return;
+    setPeriod("custom");
+    setActiveDateRange({ start: startDate, end: endDate });
+  };
+
   return (
     <div className="space-y-6">
-      {/* PERIOD FILTER BAR */}
+      {/* PERIOD FILTER & CUSTOM DATE BAR */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-500">{t("period_label") || "Muddati:"}</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-4 h-4 text-slate-400" />
+            <span className="text-xs font-bold text-slate-500">{t("period_label") || "Muddati:"}</span>
+          </div>
+
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
             {periods.map((p) => (
               <button
                 key={p.id}
-                onClick={() => setPeriod(p.id)}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  period === p.id ? "bg-brand text-white shadow-xs font-black" : "text-slate-600 hover:text-slate-900"
+                onClick={() => {
+                  setPeriod(p.id);
+                  setActiveDateRange(null);
+                }}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  period === p.id && !activeDateRange
+                    ? "bg-brand text-white shadow-xs font-black"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {p.label}
               </button>
             ))}
           </div>
+
+          {isFetching && (
+            <span className="flex items-center gap-1 text-[11px] font-bold text-brand bg-emerald-50 px-2 py-1 rounded-lg animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand"></span>
+              Yangilanmoqda...
+            </span>
+          )}
         </div>
+
+        {/* Custom Date Range Picker Form */}
+        <form onSubmit={handleApplyCustomRange} className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
+            <span className="text-slate-400 font-medium text-[11px]">Dan:</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-transparent text-slate-800 font-semibold focus:outline-none text-xs"
+            />
+          </div>
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
+            <span className="text-slate-400 font-medium text-[11px]">Gacha:</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-transparent text-slate-800 font-semibold focus:outline-none text-xs"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={!startDate || !endDate}
+            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+              period === "custom" && activeDateRange
+                ? "bg-slate-900 text-white shadow-xs font-black"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+            } disabled:opacity-40`}
+          >
+            Oraliqni qo'llash
+          </button>
+        </form>
       </div>
 
       {/* 3 KPI METRIC CARDS */}
