@@ -1,6 +1,6 @@
 {% extends 'dashboard/base_dashboard.html' %}
 
-{% block title %}Kategoriyalar — StoreBox{% endblock %}
+{% block title %}{{ t.categories_list_title }} — StoreBox{% endblock %}
 
 {% block dashboard_content %}
 <div class="space-y-6" x-data="categoriesApp()">
@@ -8,18 +8,18 @@
     <!-- Header & Action -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Kategoriyalar ro'yxati</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Katalog mahsulotlarini bo'limlar bo'yicha ajratish, saytda ko'rsatish va tovarlarni boshqarish</p>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{{ t.categories_list_title }}</h1>
+            <p class="text-xs text-slate-500 mt-0.5">{{ t.categories_list_subtitle }}</p>
         </div>
 
         <div class="flex items-center gap-2">
             <a href="{{ store.subdomain|default:''|yesno:'/store/'|add:store.subdomain|add:'/,#' }}" target="_blank" class="px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors">
                 <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400"></i>
-                <span>Saytda ko'rish</span>
+                <span>{{ t.view_on_site }}</span>
             </a>
             <button type="button" @click="addModalOpen = true" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs transition-all active:scale-95">
                 <i data-lucide="plus" class="w-4 h-4"></i>
-                <span>Kategoriya qo'shish</span>
+                <span>{{ t.add_category_btn }}</span>
             </button>
         </div>
     </div>
@@ -31,13 +31,13 @@
                 <i data-lucide="store" class="w-5 h-5"></i>
             </div>
             <div>
-                <h4 class="text-xs font-black text-emerald-950">Saytda qaysi kategoriyalar ko'rinishini boshqaring</h4>
-                <p class="text-[11px] text-emerald-800 mt-0.5">«Saytda ko'rsatish» tugmachasini bosish orqali kategoriyani bir zumda saytga qo'shishingiz yoki vaqtincha yashirishingiz mumkin.</p>
+                <h4 class="text-xs font-black text-emerald-950">{{ t.category_visibility_banner }}</h4>
+                <p class="text-[11px] text-emerald-800 mt-0.5">{{ t.category_visibility_desc }}</p>
             </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
             <span class="text-xs font-bold text-emerald-900 bg-white px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
-                Jami: <b class="font-mono text-emerald-600">{{ categories|length }}</b> ta kategoriya
+                {{ t.total_categories }} <b class="font-mono text-emerald-600">{{ categories|length }}</b> {{ t.categories_unit }}
             </span>
         </div>
     </div>
@@ -48,11 +48,11 @@
             <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
                     <tr>
-                        <th class="py-3.5 px-4 w-16">Rasm</th>
-                        <th class="py-3.5 px-4">Kategoriya nomi</th>
-                        <th class="py-3.5 px-4">Tovarlar</th>
-                        <th class="py-3.5 px-4 text-center">Saytda ko'rsatish</th>
-                        <th class="py-3.5 px-4 text-right">Harakatlar</th>
+                        <th class="py-3.5 px-4 w-16">{{ t.th_cat_image }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_cat_name }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_cat_products }}</th>
+                        <th class="py-3.5 px-4 text-center">{{ t.th_show_on_site }}</th>
+                        <th class="py-3.5 px-4 text-right">{{ t.th_cat_actions }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -92,25 +92,24 @@
                             <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat.name_uz|default:cat.name_ru|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold transition-all group/cnt">
                                 <i data-lucide="package" class="w-3.5 h-3.5 text-slate-500 group-hover/cnt:text-brand"></i>
-                                <span id="cat-count-{{ cat.id }}" class="font-mono">{{ cat.active_products_count|default:cat.products_count|default:0 }} ta tovar</span>
-                                <span class="text-[10px] text-brand font-semibold hover:underline ml-1">Ko'rish</span>
+                                <span id="cat-count-{{ cat.id }}" class="font-mono">{{ cat.active_products_count|default:cat.products_count|default:0 }} {{ t.products_count_unit }}</span>
+                                <span class="text-[10px] text-brand font-semibold hover:underline ml-1">{{ t.view_btn }}</span>
                             </button>
                         </td>
 
-                        <!-- Publish on Site Toggle (Saytda ko'rsatish / qo'shish) -->
+                        <!-- Publish on Site Toggle -->
                         <td class="py-3 px-4 text-center">
                             <div class="inline-flex flex-col items-center gap-1">
                                 <button type="button" @click="toggleActive({{ cat.id }})"
                                         id="toggle-btn-{{ cat.id }}"
                                         class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none {% if cat.is_active %}bg-emerald-500{% else %}bg-slate-300{% endif %}"
-                                        role="switch" aria-checked="{{ cat.is_active|yesno:'true,false' }}"
-                                        title="{% if cat.is_active %}Saytdan yashirish{% else %}Saytga qo'shish{% endif %}">
-                                    <span class="sr-only">Saytda ko'rsatish</span>
+                                        role="switch" aria-checked="{{ cat.is_active|yesno:'true,false' }}">
+                                    <span class="sr-only">{{ t.th_show_on_site }}</span>
                                     <span id="toggle-dot-{{ cat.id }}"
                                           class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out {% if cat.is_active %}translate-x-5{% else %}translate-x-0{% endif %}"></span>
                                 </button>
                                 <span id="toggle-label-{{ cat.id }}" class="text-[10px] font-extrabold {% if cat.is_active %}text-emerald-700{% else %}text-slate-400{% endif %}">
-                                    {% if cat.is_active %}Saytda faol{% else %}Yashiringan{% endif %}
+                                    {% if cat.is_active %}{{ t.cat_active }}{% else %}{{ t.cat_inactive }}{% endif %}
                                 </span>
                             </div>
                         </td>

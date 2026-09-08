@@ -6,12 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ t.dashboard }} — StoreBox{% endblock %}</title>
 
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+                    },
                     colors: {
                         brand: {
                             DEFAULT: '#10B981',
@@ -25,14 +34,18 @@
         }
     </script>
     <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- HTMX 2.0.4 -->
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
+    <!-- QRious for high-resolution QR generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
     <style>
         [x-cloak] { display: none !important; }
@@ -41,11 +54,23 @@
             top: 0;
             left: 0;
             height: 3px;
-            background: linear-gradient(90deg, #10B981, #059669, #34D399);
+            background: linear-gradient(90deg, #10B981, #059669, #34D399, #10B981);
+            background-size: 200% 100%;
             width: 0%;
-            z-index: 9999;
-            transition: width 0.25s ease-out, opacity 0.3s ease;
+            z-index: 99999;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+            transition: width 0.2s ease-out, opacity 0.2s ease;
             pointer-events: none;
+            opacity: 0;
+        }
+        #spa-progress-bar.htmx-request {
+            opacity: 1 !important;
+            width: 75% !important;
+            animation: htmxProgressPulse 1.2s infinite linear;
+        }
+        @keyframes htmxProgressPulse {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
         }
         .spa-nav-active {
             background-color: #10B981 !important;
@@ -55,6 +80,22 @@
         .spa-nav-active i {
             color: #ffffff !important;
         }
+        .spa-sub-active {
+            background-color: #ECFDF5 !important;
+            color: #059669 !important;
+            font-weight: 700 !important;
+        }
+        #main-content,
+        #dashboard-main-content {
+            transition: opacity 100ms ease-out;
+        }
+        #main-content.spa-loading,
+        #main-content.htmx-request,
+        #dashboard-main-content.spa-loading,
+        #dashboard-main-content.htmx-request {
+            opacity: 0.65;
+            pointer-events: none;
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
@@ -63,326 +104,551 @@
     <!-- SPA TOP PROGRESS BAR (Subtle smooth indicator) -->
     <div id="spa-progress-bar"></div>
 
-    <!-- TOP NAVBAR (StoreBox Video Layout) -->
-    <header class="bg-white border-b border-slate-200/80 sticky top-0 z-40 h-16 flex items-center px-4 sm:px-6 justify-between gap-4 shadow-2xs">
-        
-        <!-- Left: StoreBox Logo & Store Switcher -->
-        <div class="flex items-center gap-4 sm:gap-6">
-            <a href="/dashboard/" class="flex items-center gap-2 spa-link">
-                <div class="w-8 h-8 rounded-xl bg-brand text-white flex items-center justify-center font-black text-sm shadow-xs">
-                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-                </div>
-                <span class="text-xl font-black text-slate-900 tracking-tight hidden sm:inline">store<span class="text-brand">box</span></span>
-            </a>
+    <!-- MAIN LAYOUT WRAPPER (Full-height Sidebar + Content Column) -->
+    <div class="min-h-screen flex bg-slate-50">
 
-            <!-- Store Switcher Dropdown (Video 07:47) -->
-            <div class="flex items-center gap-1.5">
+        <!-- 1. LEFT DESKTOP SIDEBAR (Full height sticky, matching new design) -->
+        <aside class="w-64 bg-white border-r border-slate-200/80 shrink-0 hidden lg:flex flex-col justify-between p-4 sticky top-0 h-screen overflow-y-auto">
+            <div class="space-y-4">
+                <!-- LOGO -->
+                <div class="flex items-center justify-between px-2 pt-1 pb-2 border-b border-slate-100">
+                    <a href="/dashboard/"
+                       hx-boost="true"
+                       hx-target="#main-content"
+                       hx-select="#main-content"
+                       hx-swap="innerHTML"
+                       hx-sync="this:replace"
+                       hx-push-url="true"
+                       hx-indicator="#spa-progress-bar"
+                       class="flex items-center gap-2.5 group spa-link">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-dark to-brand flex items-center justify-center text-white font-black text-base shadow-xs group-hover:scale-105 transition-transform">
+                            S
+                        </div>
+                        <div>
+                            <div class="text-sm font-black tracking-tight text-slate-900 leading-none">
+                                Store<span class="text-brand">Box</span>
+                            </div>
+                            <div class="text-[9px] font-mono font-bold text-slate-400 mt-0.5">PLATFORM 2.0</div>
+                        </div>
+                    </a>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        PRO
+                    </span>
+                </div>
+
+                <!-- STORE SWITCHER -->
                 <div class="relative" x-data="{ open: false }">
-                    <button type="button" @click="open = !open" class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold hover:bg-slate-50">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                        <span class="max-w-[120px] truncate text-slate-900">{{ store.name|default:"StoreBox" }}</span>
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 transition-colors text-left">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <div class="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                                {{ store.name|slice:":1"|upper|default:"S" }}
+                            </div>
+                            <div class="truncate">
+                                <div class="text-xs font-black text-slate-900 truncate">{{ store.name|default:"StoreBox" }}</div>
+                                <div class="text-[10px] text-slate-400 font-mono truncate">{{ store.subdomain }}.storebox.uz</div>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                     </button>
 
-                    <div x-show="open" @click.away="open = false" x-cloak class="absolute left-0 mt-1 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 text-xs space-y-1">
+                    <div x-show="open" @click.away="open = false" x-cloak class="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 space-y-1 text-xs">
                         {% for s in request.user.stores.all %}
-                        <a href="/dashboard/api/switch-store/{{ s.id }}/" class="p-2 rounded-xl flex items-center justify-between {% if s.id == store.id %}bg-emerald-50 text-emerald-800 font-bold{% else %}hover:bg-slate-50 text-slate-700{% endif %}">
+                        <a href="/dashboard/api/switch-store/{{ s.id }}/" class="w-full flex items-center justify-between p-2 rounded-xl text-left text-xs font-bold transition-colors {% if s.id == store.id %}bg-emerald-50 text-brand font-black{% else %}hover:bg-slate-50 text-slate-700{% endif %}">
                             <span class="truncate">{{ s.name|default:s.subdomain }}</span>
-                            {% if s.id == store.id %}<i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i>{% endif %}
+                            {% if s.id == store.id %}<span class="text-[10px] font-mono">✓</span>{% endif %}
                         </a>
                         {% endfor %}
                         <div class="border-t border-slate-100 my-1"></div>
-                        <button type="button" @click="createStoreModalOpen = true; open = false" class="w-full flex items-center gap-2 p-2 rounded-xl text-brand font-bold hover:bg-brand/5 text-left">
+                        <button type="button" @click="createStoreModalOpen = true; open = false" class="w-full flex items-center gap-2 p-2 rounded-xl text-brand font-bold hover:bg-brand/5 text-left text-xs">
                             <i data-lucide="plus-circle" class="w-4 h-4"></i>
                             <span>{{ t.add_store }}</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Quick Plus Button (Video birinchi.mov 00:55) -->
-                <button type="button" @click="createStoreModalOpen = true" class="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm hover:bg-brand-dark shadow-xs transition-transform active:scale-95" title="{{ t.add_business }}">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                </button>
-            </div>
+                <!-- 14-SECTION NAVIGATION -->
+                <nav class="space-y-1 text-xs font-bold text-slate-600" id="sidebar-nav"
+                     hx-boost="true"
+                     hx-target="#main-content"
+                     hx-select="#main-content"
+                     hx-swap="innerHTML"
+                     hx-sync="this:replace"
+                     hx-push-url="true"
+                     hx-indicator="#spa-progress-bar">
 
-            <!-- View Storefront & Design Studio Links -->
-            <div class="hidden md:flex items-center gap-2.5">
-                <a href="/dashboard/platforms/?tab=website&sub=design" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-colors border border-emerald-200/60">
-                    <i data-lucide="palette" class="w-3.5 h-3.5 text-emerald-600"></i>
-                    <span>Dizayn studio (AI)</span>
-                </a>
-                <a href="/store/{{ store.subdomain }}/" target="_blank" class="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900">
-                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                    <span>{{ t.view_site }}</span>
-                </a>
-            </div>
-        </div>
-
-        <!-- Right: Language, Support, Balance, Notifications, Profile -->
-        <div class="flex items-center gap-2 sm:gap-3">
-
-            <!-- Language Dropdown -->
-            <div class="relative" x-data="{ open: false }">
-                <button type="button" @click="open = !open" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                    {% if current_lang == 'ru' %}
-                        <span>🇷🇺 Рус</span>
-                    {% elif current_lang == 'en' %}
-                        <span>🇺🇸 Eng</span>
-                    {% else %}
-                        <span>🇺🇿 O'zb</span>
-                    {% endif %}
-                    <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
-                </button>
-                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50 text-xs font-semibold">
-                    <a href="/lang/uz/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'uz' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
-                        <span class="flex items-center gap-2"><span>🇺🇿</span> <span>O'zbek</span></span>
-                        {% if current_lang == 'uz' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                    <!-- 1. Boshqaruv paneli -->
+                    <a href="/dashboard/" data-path="/dashboard/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        <span>{{ t.dashboard }}</span>
                     </a>
-                    <a href="/lang/ru/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'ru' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
-                        <span class="flex items-center gap-2"><span>🇷🇺</span> <span>Русский</span></span>
-                        {% if current_lang == 'ru' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+
+                    <!-- 2. Buyurtmalar -->
+                    <a href="/dashboard/orders/" data-path="/dashboard/orders/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                        <span class="flex-1">{{ t.orders }}</span>
                     </a>
-                    <a href="/lang/en/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'en' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
-                        <span class="flex items-center gap-2"><span>🇺🇸</span> <span>English</span></span>
-                        {% if current_lang == 'en' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+
+                    <!-- 3. Mijozlar -->
+                    <a href="/dashboard/customers/" data-path="/dashboard/customers/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                        <span>{{ t.customers }}</span>
                     </a>
-                </div>
-            </div>
 
-            <!-- Support Help Popup (Video 10:23) -->
-            <div class="relative" x-data="{ open: false }">
-                <button type="button" @click="open = !open" class="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 text-xs font-bold">
-                    ?
-                </button>
-                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 text-xs">
-                    <div class="font-bold text-slate-900 flex items-center gap-2">
-                        <i data-lucide="headphones" class="w-4 h-4 text-brand"></i>
-                        <span>{{ t.support }}</span>
-                    </div>
-                    <div class="space-y-1 text-slate-600">
-                        <div class="font-mono font-bold text-slate-900">+998(78) 113 82 12</div>
-                        <a href="https://t.me/storebox_support" target="_blank" class="text-brand font-semibold hover:underline block">
-                            {{ t.telegram_support }}
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Balance Pill + Top up Button (Video 07:47 & 10:30) -->
-            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
-                <div class="text-[11px] font-bold text-slate-600">
-                    {{ t.balance_text }} <span class="text-slate-900 font-black" x-text="balance.toLocaleString() + ' UZS'"></span>
-                </div>
-                <button type="button" @click="topupModalOpen = true" class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black hover:bg-emerald-600 shadow-2xs">
-                    +
-                </button>
-            </div>
-
-            <!-- Notifications Bell (Video 10:25) -->
-            <button type="button" @click="notifDrawerOpen = true" class="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 relative">
-                <i data-lucide="bell" class="w-4 h-4"></i>
-                <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand"></span>
-            </button>
-
-            {% if request.user.is_superuser or request.user.role == 'SUPERADMIN' %}
-            <a href="/super-admin/servers/" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold transition shadow-xs border border-slate-700">
-                <i data-lucide="shield" class="w-3.5 h-3.5 text-blue-400"></i>
-                <span>Super Admin</span>
-            </a>
-            {% endif %}
-
-            <!-- User Avatar & Profile Dropdown (Video 10:33) -->
-            <div class="relative" x-data="{ open: false }">
-                <button type="button" @click="open = !open" class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-slate-50">
-                    <div class="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
-                        {{ request.user.username|slice:":1"|upper }}
-                    </div>
-                    <span class="text-xs font-bold text-slate-800 hidden md:inline">{{ request.user.username }}</span>
-                </button>
-
-                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-50 text-xs space-y-1">
-                    <div class="p-2 border-b border-slate-100 mb-1">
-                        <div class="font-black text-slate-900">{{ request.user.username }}</div>
-                        <div class="text-[10px] text-emerald-600 font-bold">{{ t.trial_days_left }}</div>
-                    </div>
-                    {% if request.user.is_superuser or request.user.role == 'SUPERADMIN' %}
-                    <a href="/super-admin/servers/" class="flex items-center gap-2 p-2 rounded-xl bg-blue-50 text-blue-800 font-bold hover:bg-blue-100">
-                        <i data-lucide="shield" class="w-4 h-4 text-blue-600"></i>
-                        <span>Super Admin (Billing)</span>
+                    <!-- 4. Chat -->
+                    <a href="/dashboard/chats/" data-path="/dashboard/chats/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="message-square" class="w-4 h-4"></i>
+                        <span>{{ t.chat }}</span>
                     </a>
-                    {% endif %}
-                    <a href="/dashboard/settings/" class="flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 spa-link">
-                        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
-                        <span>{{ t.edit_profile }}</span>
-                    </a>
-                    <a href="/dashboard/platforms/" class="flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 spa-link">
-                        <i data-lucide="smartphone" class="w-4 h-4 text-slate-400"></i>
-                        <span>{{ t.platforms }}</span>
-                    </a>
-                    <button type="button" @click="topupModalOpen = true; open = false" class="w-full flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 text-left">
-                        <i data-lucide="credit-card" class="w-4 h-4 text-slate-400"></i>
-                        <span>{{ t.my_cards }}</span>
-                    </button>
-                    <div class="border-t border-slate-100 my-1"></div>
-                    <a href="/logout/" class="flex items-center gap-2 p-2 rounded-xl text-rose-600 font-bold hover:bg-rose-50">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span>{{ t.logout }}</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
 
-    <!-- 7-DAY TRIAL BANNER (Video 07:47) -->
-    <div x-show="showTrialBanner" class="bg-emerald-50 border-b border-emerald-200/80 px-4 py-2.5 text-xs text-emerald-900 font-bold flex items-center justify-between">
-        <div class="flex items-center gap-2 mx-auto sm:mx-0">
-            <i data-lucide="sparkles" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-            <span>{{ t.trial_banner }}</span>
-        </div>
-        <button type="button" @click="showTrialBanner = false" class="text-emerald-700 hover:text-emerald-900 text-sm font-black">×</button>
-    </div>
-
-    <!-- MAIN APP WRAPPER: SIDEBAR + CONTENT -->
-    <div class="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 gap-6">
-
-        <!-- 14-SECTION SIDEBAR (Video 07:46 - 10:14) -->
-        <aside class="w-60 shrink-0 hidden lg:block space-y-6">
-            <nav class="space-y-1 text-xs font-bold text-slate-600" id="sidebar-nav">
-
-                <!-- 1. Boshqaruv paneli -->
-                <a href="/dashboard/" data-path="/dashboard/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-                    <span>{{ t.dashboard }}</span>
-                </a>
-
-                <!-- 2. Buyurtmalar -->
-                <a href="/dashboard/orders/" data-path="/dashboard/orders/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-                    <span>{{ t.orders }}</span>
-                </a>
-
-                <!-- 3. Mijozlar -->
-                <a href="/dashboard/customers/" data-path="/dashboard/customers/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="users" class="w-4 h-4"></i>
-                    <span>{{ t.customers }}</span>
-                </a>
-
-                <!-- 4. Chat -->
-                <a href="/dashboard/chats/" data-path="/dashboard/chats/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="message-square" class="w-4 h-4"></i>
-                    <span>{{ t.chat }}</span>
-                </a>
-
-                <!-- 5. Mahsulotlar (Accordion) -->
-                <div x-data="{ open: true }" class="space-y-1">
-                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="package" class="w-4 h-4"></i>
-                            <span>{{ t.products }}</span>
+                    <!-- 5. Mahsulotlar (Accordion) -->
+                    <div x-data="{ open: true }" class="space-y-1">
+                        <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="package" class="w-4 h-4"></i>
+                                <span>{{ t.products }}</span>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                            <a href="/dashboard/categories/" data-path="/dashboard/categories/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.categories }}</a>
+                            <a href="/dashboard/products/" data-path="/dashboard/products/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.all_products }}</a>
+                            <a href="/dashboard/discounts/" data-path="/dashboard/discounts/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.discounts }}</a>
+                            <a href="/dashboard/ikpu/" data-path="/dashboard/ikpu/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.ikpu }}</a>
+                            <a href="/dashboard/warehouse/" data-path="/dashboard/warehouse/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.warehouse }}</a>
                         </div>
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
-                    </button>
-                    <div x-show="open" class="pl-7 space-y-1 text-[11px]">
-                        <a href="/dashboard/categories/" data-path="/dashboard/categories/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.categories }}</a>
-                        <a href="/dashboard/products/" data-path="/dashboard/products/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.all_products }}</a>
-                        <a href="/dashboard/discounts/" data-path="/dashboard/discounts/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.discounts }}</a>
-                        <a href="/dashboard/ikpu/" data-path="/dashboard/ikpu/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.ikpu }}</a>
-                        <a href="/dashboard/warehouse/" data-path="/dashboard/warehouse/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.warehouse }}</a>
                     </div>
-                </div>
 
-                <!-- 6. Marketing (Accordion) -->
-                <div x-data="{ open: false }" class="space-y-1">
-                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="megaphone" class="w-4 h-4"></i>
-                            <span>{{ t.marketing }}</span>
+                    <!-- 6. Marketing (Accordion) -->
+                    <div x-data="{ open: false }" class="space-y-1">
+                        <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="megaphone" class="w-4 h-4"></i>
+                                <span>{{ t.marketing }}</span>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                            <a href="/dashboard/marketing/?tab=rassilka" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.broadcast }}</a>
+                            <a href="/dashboard/marketing/?tab=promokod" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.promocodes }}</a>
+                            <a href="/dashboard/marketing/?tab=manbalar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.sources }}</a>
+                            <a href="/dashboard/marketing/?tab=sms" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.sms_broadcast }}</a>
+                            <a href="/dashboard/marketing/?tab=kanal_post" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.channel_post }}</a>
+                            <a href="/dashboard/marketing/?tab=banner" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.banner }}</a>
+                            <a href="/dashboard/marketing/?tab=sharhlar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.reviews }}</a>
                         </div>
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
-                    </button>
-                    <div x-show="open" class="pl-7 space-y-1 text-[11px]">
-                        <a href="/dashboard/marketing/?tab=rassilka" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.broadcast }}</a>
-                        <a href="/dashboard/marketing/?tab=promokod" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.promocodes }}</a>
-                        <a href="/dashboard/marketing/?tab=manbalar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.sources }}</a>
-                        <a href="/dashboard/marketing/?tab=sms" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.sms_broadcast }}</a>
-                        <a href="/dashboard/marketing/?tab=kanal_post" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.channel_post }}</a>
-                        <a href="/dashboard/marketing/?tab=banner" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.banner }}</a>
-                        <a href="/dashboard/marketing/?tab=sharhlar" data-path="/dashboard/marketing/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.reviews }}</a>
                     </div>
-                </div>
 
-                <!-- 7. Platformalar -->
-                <div x-data="{ open: false }" class="space-y-1">
-                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="share-2" class="w-4 h-4"></i>
-                            <span>{{ t.platforms }}</span>
+                    <!-- 7. Platformalar -->
+                    <div x-data="{ open: false }" class="space-y-1">
+                        <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="share-2" class="w-4 h-4"></i>
+                                <span>{{ t.platforms }}</span>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                            <a href="/dashboard/platforms/?tab=telegram" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.telegram_bot }}</a>
+                            <a href="/dashboard/platforms/?tab=website&sub=design" data-path="/dashboard/platforms/" class="sidebar-subitem flex items-center justify-between py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">
+                                <span>Dizayn & Ko'rinish</span>
+                                <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">AI</span>
+                            </a>
+                            <a href="/dashboard/platforms/?tab=website" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.website }}</a>
+                            <a href="/dashboard/platforms/?tab=qr" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.qr_catalog }}</a>
+                            <a href="/dashboard/yespos/" data-path="/dashboard/yespos/" class="sidebar-subitem flex items-center justify-between py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">
+                                <span>{{ t.yespos_import }}</span>
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">POS</span>
+                            </a>
                         </div>
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
-                    </button>
-                    <div x-show="open" class="pl-7 space-y-1 text-[11px]">
-                        <a href="/dashboard/platforms/?tab=telegram" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.telegram_bot }}</a>
-                        <a href="/dashboard/platforms/?tab=website&sub=design" data-path="/dashboard/platforms/" class="sidebar-subitem flex items-center justify-between py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">
-                            <span>Dizayn & Ko'rinish</span>
-                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">AI</span>
-                        </a>
-                        <a href="/dashboard/platforms/?tab=website" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.website }}</a>
-                        <a href="/dashboard/platforms/?tab=qr" data-path="/dashboard/platforms/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.qr_catalog }}</a>
-                        <a href="/dashboard/yespos/" data-path="/dashboard/yespos/" class="sidebar-subitem flex items-center justify-between py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">
-                            <span>{{ t.yespos_import }}</span>
-                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">POS</span>
-                        </a>
                     </div>
-                </div>
 
-                <!-- 8. To'lov turi -->
-                <a href="/dashboard/settings/payments/" data-path="/dashboard/settings/payments/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="credit-card" class="w-4 h-4"></i>
-                    <span>{{ t.payment_methods }}</span>
-                </a>
+                    <!-- 8. To'lov turi -->
+                    <a href="/dashboard/settings/payments/" data-path="/dashboard/settings/payments/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="credit-card" class="w-4 h-4"></i>
+                        <span>{{ t.payment_methods }}</span>
+                    </a>
 
-                <!-- 9. Yetkazib berish -->
-                <a href="/dashboard/settings/delivery/" data-path="/dashboard/settings/delivery/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="truck" class="w-4 h-4"></i>
-                    <span>{{ t.delivery }}</span>
-                </a>
+                    <!-- 9. Yetkazib berish -->
+                    <a href="/dashboard/settings/delivery/" data-path="/dashboard/settings/delivery/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="truck" class="w-4 h-4"></i>
+                        <span>{{ t.delivery }}</span>
+                    </a>
 
-                <!-- 10. Filiallar -->
-                <a href="/dashboard/settings/branches/" data-path="/dashboard/settings/branches/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="map-pin" class="w-4 h-4"></i>
-                    <span>{{ t.branches }}</span>
-                </a>
+                    <!-- 10. Filiallar -->
+                    <a href="/dashboard/settings/branches/" data-path="/dashboard/settings/branches/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        <span>{{ t.branches }}</span>
+                    </a>
 
-                <!-- 11. Xodimlar -->
-                <a href="/dashboard/settings/staff/" data-path="/dashboard/settings/staff/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="user-check" class="w-4 h-4"></i>
-                    <span>{{ t.staff }}</span>
-                </a>
+                    <!-- 11. Xodimlar -->
+                    <a href="/dashboard/settings/staff/" data-path="/dashboard/settings/staff/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="user-check" class="w-4 h-4"></i>
+                        <span>{{ t.staff }}</span>
+                    </a>
 
-                <!-- 12. Tarif rejasi -->
-                <a href="/dashboard/settings/tariffs/" data-path="/dashboard/settings/tariffs/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="badge-percent" class="w-4 h-4"></i>
-                    <span>{{ t.tariffs }}</span>
-                </a>
+                    <!-- 12. Tarif rejasi -->
+                    <a href="/dashboard/settings/tariffs/" data-path="/dashboard/settings/tariffs/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="badge-percent" class="w-4 h-4"></i>
+                        <span>{{ t.tariffs }}</span>
+                    </a>
 
-                <!-- 13. StoreBox Market (Integrations) -->
-                <a href="/dashboard/robo-market/" data-path="/dashboard/robo-market/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="store" class="w-4 h-4"></i>
-                    <span>{{ t.storebox_market }}</span>
-                </a>
+                    <!-- 13. StoreBox Market (Integrations) -->
+                    <a href="/dashboard/robo-market/" data-path="/dashboard/robo-market/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="store" class="w-4 h-4"></i>
+                        <span>{{ t.storebox_market }}</span>
+                    </a>
 
-                <!-- 14. Sozlamalar -->
-                <a href="/dashboard/settings/" data-path="/dashboard/settings/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                    <i data-lucide="settings" class="w-4 h-4"></i>
-                    <span>{{ t.settings }}</span>
+                    <!-- 14. Sozlamalar -->
+                    <a href="/dashboard/settings/" data-path="/dashboard/settings/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        <span>{{ t.settings }}</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- FOOTER STORE LINK -->
+            <div class="pt-4 border-t border-slate-100">
+                <a href="/store/{{ store.subdomain }}/" target="_blank" rel="noopener noreferrer" class="p-3 rounded-2xl bg-emerald-50/60 border border-emerald-200/60 flex items-center justify-between group hover:bg-emerald-100/60 transition-colors">
+                    <div class="flex items-center gap-2 truncate">
+                        <i data-lucide="store" class="w-4 h-4 text-brand"></i>
+                        <span class="text-xs font-bold text-slate-800 truncate">{{ t.view_site|default:"Saytni ko'rish" }}</span>
+                    </div>
+                    <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400 group-hover:text-brand transition-colors shrink-0"></i>
                 </a>
-            </nav>
+            </div>
         </aside>
 
-        <!-- DYNAMIC SPA CONTENT CONTAINER (No full page reload!) -->
-        <main id="dashboard-main-content" class="flex-1 overflow-x-hidden min-h-[600px] transition-opacity duration-200">
-            {% block dashboard_content %}{% endblock %}
-        </main>
+        <!-- 2. MOBILE DRAWER SIDEBAR (Full navigation on mobile/tablet) -->
+        <div x-show="mobileSidebarOpen" class="fixed inset-0 z-50 lg:hidden" x-cloak>
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" @click="mobileSidebarOpen = false"></div>
+            <div class="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-2xl p-5 overflow-y-auto flex flex-col justify-between"
+                 hx-boost="true"
+                 hx-target="#main-content"
+                 hx-select="#main-content"
+                 hx-swap="innerHTML"
+                 hx-sync="this:replace"
+                 hx-push-url="true"
+                 hx-indicator="#spa-progress-bar">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-dark to-brand text-white flex items-center justify-center font-black text-sm">
+                                S
+                            </div>
+                            <span class="text-lg font-black text-slate-900">store<span class="text-brand">box</span></span>
+                        </div>
+                        <button type="button" @click="mobileSidebarOpen = false" class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 text-base font-black">
+                            ✕
+                        </button>
+                    </div>
+
+                    <nav class="space-y-1 text-xs font-bold text-slate-600">
+                        <!-- 1. Boshqaruv paneli -->
+                        <a href="/dashboard/" data-path="/dashboard/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>{{ t.dashboard }}</span>
+                        </a>
+
+                        <!-- 2. Buyurtmalar -->
+                        <a href="/dashboard/orders/" data-path="/dashboard/orders/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                            <span>{{ t.orders }}</span>
+                        </a>
+
+                        <!-- 3. Mijozlar -->
+                        <a href="/dashboard/customers/" data-path="/dashboard/customers/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                            <span>{{ t.customers }}</span>
+                        </a>
+
+                        <!-- 4. Chat -->
+                        <a href="/dashboard/chats/" data-path="/dashboard/chats/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            <span>{{ t.chat }}</span>
+                        </a>
+
+                        <!-- 5. Mahsulotlar -->
+                        <div x-data="{ open: true }" class="space-y-1">
+                            <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="package" class="w-4 h-4"></i>
+                                    <span>{{ t.products }}</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                            </button>
+                            <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                                <a href="/dashboard/categories/" data-path="/dashboard/categories/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.categories }}</a>
+                                <a href="/dashboard/products/" data-path="/dashboard/products/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.all_products }}</a>
+                                <a href="/dashboard/discounts/" data-path="/dashboard/discounts/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.discounts }}</a>
+                                <a href="/dashboard/ikpu/" data-path="/dashboard/ikpu/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.ikpu }}</a>
+                                <a href="/dashboard/warehouse/" data-path="/dashboard/warehouse/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.warehouse }}</a>
+                            </div>
+                        </div>
+
+                        <!-- 6. Marketing -->
+                        <div x-data="{ open: false }" class="space-y-1">
+                            <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="megaphone" class="w-4 h-4"></i>
+                                    <span>{{ t.marketing }}</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                            </button>
+                            <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                                <a href="/dashboard/marketing/?tab=rassilka" data-path="/dashboard/marketing/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.broadcast }}</a>
+                                <a href="/dashboard/marketing/?tab=promokod" data-path="/dashboard/marketing/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.promocodes }}</a>
+                                <a href="/dashboard/marketing/?tab=manbalar" data-path="/dashboard/marketing/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.sources }}</a>
+                                <a href="/dashboard/marketing/?tab=sms" data-path="/dashboard/marketing/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.sms_broadcast }}</a>
+                                <a href="/dashboard/marketing/?tab=kanal_post" data-path="/dashboard/marketing/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.channel_post }}</a>
+                                <a href="/dashboard/marketing/?tab=banner" data-path="/dashboard/marketing/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.banner }}</a>
+                                <a href="/dashboard/marketing/?tab=sharhlar" data-path="/dashboard/marketing/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.reviews }}</a>
+                            </div>
+                        </div>
+
+                        <!-- 7. Platformalar -->
+                        <div x-data="{ open: false }" class="space-y-1">
+                            <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                                    <span>{{ t.platforms }}</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                            </button>
+                            <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                                <a href="/dashboard/platforms/?tab=telegram" data-path="/dashboard/platforms/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.telegram_bot }}</a>
+                                <a href="/dashboard/platforms/?tab=website&sub=design" data-path="/dashboard/platforms/" @click="mobileSidebarOpen = false" class="sidebar-subitem flex items-center justify-between py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">
+                                    <span>Dizayn & Ko'rinish</span>
+                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">AI</span>
+                                </a>
+                                <a href="/dashboard/platforms/?tab=website" data-path="/dashboard/platforms/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.website }}</a>
+                                <a href="/dashboard/platforms/?tab=qr" data-path="/dashboard/platforms/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">{{ t.qr_catalog }}</a>
+                                <a href="/dashboard/yespos/" data-path="/dashboard/yespos/" @click="mobileSidebarOpen = false" class="sidebar-subitem flex items-center justify-between py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">
+                                    <span>{{ t.yespos_import }}</span>
+                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">POS</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- 8. To'lov turi -->
+                        <a href="/dashboard/settings/payments/" data-path="/dashboard/settings/payments/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="credit-card" class="w-4 h-4"></i>
+                            <span>{{ t.payment_methods }}</span>
+                        </a>
+
+                        <!-- 9. Yetkazib berish -->
+                        <a href="/dashboard/settings/delivery/" data-path="/dashboard/settings/delivery/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="truck" class="w-4 h-4"></i>
+                            <span>{{ t.delivery }}</span>
+                        </a>
+
+                        <!-- 10. Filiallar -->
+                        <a href="/dashboard/settings/branches/" data-path="/dashboard/settings/branches/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            <span>{{ t.branches }}</span>
+                        </a>
+
+                        <!-- 11. Xodimlar -->
+                        <a href="/dashboard/settings/staff/" data-path="/dashboard/settings/staff/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="user-check" class="w-4 h-4"></i>
+                            <span>{{ t.staff }}</span>
+                        </a>
+
+                        <!-- 12. Tarif rejasi -->
+                        <a href="/dashboard/settings/tariffs/" data-path="/dashboard/settings/tariffs/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="badge-percent" class="w-4 h-4"></i>
+                            <span>{{ t.tariffs }}</span>
+                        </a>
+
+                        <!-- 13. StoreBox Market -->
+                        <a href="/dashboard/robo-market/" data-path="/dashboard/robo-market/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="store" class="w-4 h-4"></i>
+                            <span>{{ t.storebox_market }}</span>
+                        </a>
+
+                        <!-- 14. Sozlamalar -->
+                        <a href="/dashboard/settings/" data-path="/dashboard/settings/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                            <span>{{ t.settings }}</span>
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Bottom Store Links in Mobile Drawer -->
+                <div class="pt-4 mt-4 border-t border-slate-100 space-y-2">
+                    <a href="/store/{{ store.subdomain }}/" target="_blank" class="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-50">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        <span>{{ t.view_site }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. RIGHT CONTENT AREA: HEADER + MAIN CONTENT -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- HEADER (h-16, sticky top-0, z-30) -->
+            <header class="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+                <!-- Left: Mobile Toggle + Store Subdomain Badge + AI Design Button -->
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="mobileSidebarOpen = true" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors" title="Menu">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+
+                    <a href="/store/{{ store.subdomain }}/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors text-xs font-mono font-bold text-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>{{ store.subdomain }}.storebox.uz</span>
+                    </a>
+
+                    <a href="/dashboard/platforms/?tab=website&sub=design" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-colors border border-emerald-200/60">
+                        <i data-lucide="palette" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>Dizayn studio (AI)</span>
+                    </a>
+                </div>
+
+                <!-- Right: Balance, Lang, Support, Notifications, Profile -->
+                <div class="flex items-center gap-2 sm:gap-3">
+
+                    <!-- Balance Pill + Top up Button -->
+                    <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
+                        <div class="text-[11px] font-bold text-slate-600">
+                            {{ t.balance_text }} <span class="text-slate-900 font-black font-mono" x-text="balance.toLocaleString() + ' UZS'"></span>
+                        </div>
+                        <button type="button" @click="topupModalOpen = true" class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black hover:bg-emerald-600 shadow-2xs transition-transform active:scale-95">+</button>
+                    </div>
+
+                    <!-- Language Dropdown -->
+                    <div id="header-lang-wrapper" class="relative" x-data="{ open: false }" hx-boost="false">
+                        <button type="button" @click="open = !open" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                            {% if current_lang == 'ru' %}
+                                <span>🇷🇺 Рус</span>
+                            {% elif current_lang == 'en' %}
+                                <span>🇺🇸 Eng</span>
+                            {% else %}
+                                <span>🇺🇿 O'zb</span>
+                            {% endif %}
+                            <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1.5 w-36 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 z-50 text-xs font-semibold">
+                            <a href="/lang/uz/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'uz' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
+                                <span class="flex items-center gap-2"><span>🇺🇿</span> <span>O'zbek</span></span>
+                                {% if current_lang == 'uz' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                            </a>
+                            <a href="/lang/ru/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'ru' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
+                                <span class="flex items-center gap-2"><span>🇷🇺</span> <span>Русский</span></span>
+                                {% if current_lang == 'ru' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                            </a>
+                            <a href="/lang/en/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'en' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
+                                <span class="flex items-center gap-2"><span>🇺🇸</span> <span>English</span></span>
+                                {% if current_lang == 'en' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Support Help Popup -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 text-xs font-bold transition-colors">
+                            <i data-lucide="headphones" class="w-4 h-4 text-brand"></i>
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 text-xs">
+                            <div class="font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="headphones" class="w-4 h-4 text-brand"></i>
+                                <span>{{ t.support }}</span>
+                            </div>
+                            <div class="space-y-1 text-slate-600">
+                                <div class="font-mono font-bold text-slate-900">+998(78) 113 82 12</div>
+                                <a href="https://t.me/storebox_support" target="_blank" class="text-brand font-semibold hover:underline block">
+                                    {{ t.telegram_support }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Bell -->
+                    <button type="button" @click="notifDrawerOpen = true" class="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 relative">
+                        <i data-lucide="bell" class="w-4 h-4"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand"></span>
+                    </button>
+
+                    {% if request.user.is_superuser or request.user.role == 'SUPERADMIN' %}
+                    <a href="/super-admin/servers/" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold transition shadow-xs border border-slate-700">
+                        <i data-lucide="shield" class="w-3.5 h-3.5 text-blue-400"></i>
+                        <span>Super Admin</span>
+                    </a>
+                    {% endif %}
+
+                    <!-- User Profile Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-50">
+                            <div class="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+                                {{ request.user.username|slice:":1"|upper }}
+                            </div>
+                            <span class="text-xs font-bold text-slate-800 hidden md:inline">{{ request.user.username }}</span>
+                            <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400 hidden md:inline"></i>
+                        </button>
+
+                        <div x-show="open" @click.away="open = false" x-cloak
+                             hx-boost="true"
+                             hx-target="#main-content"
+                             hx-select="#main-content"
+                             hx-swap="innerHTML"
+                             hx-sync="this:replace"
+                             hx-push-url="true"
+                             hx-indicator="#spa-progress-bar"
+                             class="absolute right-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-50 text-xs space-y-1">
+                            <div class="p-2 border-b border-slate-100 mb-1">
+                                <div class="font-black text-slate-900">{{ request.user.username }}</div>
+                                <div class="text-[10px] text-emerald-600 font-bold">{{ t.trial_days_left }}</div>
+                            </div>
+                            {% if request.user.is_superuser or request.user.role == 'SUPERADMIN' %}
+                            <a href="/super-admin/servers/" class="flex items-center gap-2 p-2 rounded-xl bg-blue-50 text-blue-800 font-bold hover:bg-blue-100">
+                                <i data-lucide="shield" class="w-4 h-4 text-blue-600"></i>
+                                <span>Super Admin (Billing)</span>
+                            </a>
+                            {% endif %}
+                            <a href="/dashboard/settings/" class="flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 spa-link">
+                                <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                                <span>{{ t.edit_profile }}</span>
+                            </a>
+                            <a href="/dashboard/platforms/" class="flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 spa-link">
+                                <i data-lucide="smartphone" class="w-4 h-4 text-slate-400"></i>
+                                <span>{{ t.platforms }}</span>
+                            </a>
+                            <button type="button" @click="topupModalOpen = true; open = false" class="w-full flex items-center gap-2 p-2 rounded-xl text-slate-700 hover:bg-slate-50 text-left">
+                                <i data-lucide="credit-card" class="w-4 h-4 text-slate-400"></i>
+                                <span>{{ t.my_cards }}</span>
+                            </button>
+                            <div class="border-t border-slate-100 my-1"></div>
+                            <a href="/logout/" class="flex items-center gap-2 p-2 rounded-xl text-rose-600 font-bold hover:bg-rose-50">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                <span>{{ t.logout }}</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 7-DAY TRIAL BANNER -->
+            <div x-show="showTrialBanner" class="bg-emerald-50 border-b border-emerald-200/80 px-4 sm:px-6 py-2.5 text-xs text-emerald-900 font-bold flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                    <span>{{ t.trial_banner }}</span>
+                </div>
+                <button type="button" @click="showTrialBanner = false" class="text-emerald-700 hover:text-emerald-900 text-sm font-black">×</button>
+            </div>
+
+            <!-- DYNAMIC SPA CONTENT CONTAINER (No full page reload!) -->
+            <main id="main-content"
+                  hx-boost="true"
+                  hx-target="#main-content"
+                  hx-select="#main-content"
+                  hx-swap="innerHTML"
+                  hx-sync="this:replace"
+                  hx-push-url="true"
+                  hx-indicator="#spa-progress-bar"
+                  class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto transition-opacity duration-200">
+                {% block dashboard_content %}{% endblock %}
+            </main>
+        </div>
     </div>
 
     <!-- ============================================================= -->
@@ -464,10 +730,22 @@
     </div>
 
     <!-- TOAST NOTIFICATION -->
-    <div id="spa-toast" class="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div id="spa-toast" class="fixed bottom-20 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
         <i data-lucide="check-circle-2" class="w-4 h-4 text-brand"></i>
         <span id="spa-toast-text">Sozlama saqlandi!</span>
     </div>
+
+    <!-- FLOATING LIVE TELEGRAM SUPPORT ("Прямая связь") -->
+    <a href="https://t.me/storebox_support" target="_blank"
+       class="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-slate-900 text-white shadow-xl hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 group border border-slate-700/60"
+       title="{% if current_lang == 'ru' %}Прямая связь через Telegram{% elif current_lang == 'en' %}Direct Telegram Support{% else %}Telegram orqali to'g'ridan-to'g'ri bog'lanish{% endif %}">
+        <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        <i data-lucide="send" class="w-3.5 h-3.5 text-sky-400 group-hover:translate-x-0.5 transition-transform"></i>
+        <span class="text-xs font-bold tracking-tight">{% if current_lang == 'ru' %}Прямая связь{% elif current_lang == 'en' %}Direct Support{% else %}To'g'ridan-to'g'ri aloqa{% endif %}</span>
+    </a>
 
     <!-- ============================================================= -->
     <!-- SEAMLESS SPA ROUTING SCRIPT (Zero Full-Page Reload)           -->
@@ -488,51 +766,256 @@
         function startProgressBar() {
             if (!spaProgressBar) return;
             spaProgressBar.style.opacity = '1';
-            spaProgressBar.style.width = '30%';
-            setTimeout(() => { if (spaProgressBar.style.opacity === '1') spaProgressBar.style.width = '70%'; }, 150);
+            spaProgressBar.style.width = '35%';
+            if (window._spaProgressTimer) clearTimeout(window._spaProgressTimer);
+            window._spaProgressTimer = setTimeout(() => {
+                if (spaProgressBar.style.opacity === '1') spaProgressBar.style.width = '75%';
+            }, 150);
         }
         function finishProgressBar() {
             if (!spaProgressBar) return;
+            if (window._spaProgressTimer) clearTimeout(window._spaProgressTimer);
             spaProgressBar.style.width = '100%';
             setTimeout(() => {
                 spaProgressBar.style.opacity = '0';
                 setTimeout(() => { spaProgressBar.style.width = '0%'; }, 300);
-            }, 200);
+            }, 180);
         }
 
         function updateSidebarHighlights(currentUrl) {
-            const path = currentUrl.split('?')[0];
-            document.querySelectorAll('#sidebar-nav .sidebar-item').forEach(el => {
-                const itemPath = el.getAttribute('data-path');
-                if (itemPath === path || (path === '/dashboard/' && itemPath === '/dashboard/')) {
-                    el.classList.add('spa-nav-active');
-                } else if (itemPath !== '/dashboard/' && path.startsWith(itemPath)) {
+            const parsedUrl = new URL(currentUrl, window.location.origin);
+            const currentPath = parsedUrl.pathname;
+            const currentSearch = parsedUrl.search;
+            const fullRelative = currentPath + currentSearch;
+
+            // 1. Sidebar Items
+            const items = document.querySelectorAll('.sidebar-item');
+            items.forEach(el => {
+                const itemPath = el.getAttribute('data-path') || el.getAttribute('href');
+                if (!itemPath) return;
+                const cleanItemPath = itemPath.split('?')[0];
+
+                let isActive = false;
+                if (cleanItemPath === '/dashboard/') {
+                    isActive = (currentPath === '/dashboard/');
+                } else if (cleanItemPath === currentPath) {
+                    isActive = true;
+                } else if (currentPath.startsWith(cleanItemPath) && cleanItemPath !== '/dashboard/') {
+                    const isMoreSpecificAvailable = Array.from(items).some(other => {
+                        const oPath = (other.getAttribute('data-path') || other.getAttribute('href') || '').split('?')[0];
+                        return oPath !== cleanItemPath && oPath.length > cleanItemPath.length && currentPath.startsWith(oPath);
+                    });
+                    if (!isMoreSpecificAvailable) {
+                        isActive = true;
+                    }
+                }
+
+                if (isActive) {
                     el.classList.add('spa-nav-active');
                 } else {
                     el.classList.remove('spa-nav-active');
                 }
             });
+
+            // 2. Sidebar Subitems
+            let matchedSubitem = null;
+            const subitems = document.querySelectorAll('.sidebar-subitem');
+            subitems.forEach(el => {
+                const href = el.getAttribute('href') || '';
+                const itemPath = el.getAttribute('data-path') || href.split('?')[0];
+                let isSubActive = false;
+
+                if (href && (href === fullRelative || href === currentPath)) {
+                    isSubActive = true;
+                } else if (!currentSearch && itemPath === currentPath) {
+                    isSubActive = true;
+                }
+
+                if (isSubActive && !matchedSubitem) {
+                    matchedSubitem = el;
+                    el.classList.add('spa-sub-active');
+                } else {
+                    el.classList.remove('spa-sub-active');
+                }
+            });
+
+            // If a subitem is active, automatically expand its parent accordion
+            if (matchedSubitem) {
+                const accordionContainer = matchedSubitem.closest('[x-data]');
+                if (accordionContainer && window.Alpine) {
+                    try {
+                        const data = Alpine.$data(accordionContainer);
+                        if (data && 'open' in data) {
+                            data.open = true;
+                        }
+                    } catch (err) {}
+                }
+            }
         }
 
-        function spaNavigate(url) {
+        function updateLanguageLinks(currentUrl) {
+            const urlObj = new URL(currentUrl, window.location.origin);
+            const nextParam = encodeURIComponent(urlObj.pathname + urlObj.search);
+            document.querySelectorAll('#header-lang-wrapper a[href*="/lang/"]').forEach(a => {
+                const href = a.getAttribute('href') || '';
+                const match = href.match(/\/lang\/([a-z]{2})\//);
+                if (match) {
+                    a.setAttribute('href', `/lang/${match[1]}/?next=${nextParam}`);
+                }
+            });
+        }
+
+        // =========================================================
+        // SCRIPT EXECUTION ENGINE FOR DYNAMIC SPA NAVIGATION
+        // =========================================================
+        function runPageScripts(container) {
+            if (!container) return;
+            const scripts = Array.from(container.querySelectorAll('script'));
+            scripts.forEach(script => {
+                try {
+                    if (script.src) {
+                        if (!document.querySelector(`script[src="${script.src}"]`)) {
+                            const s = document.createElement('script');
+                            Array.from(script.attributes).forEach(attr => s.setAttribute(attr.name, attr.value));
+                            document.head.appendChild(s);
+                        }
+                    } else {
+                        const code = script.textContent.trim();
+                        if (code) {
+                            (window.execScript || window.eval)(code);
+                        }
+                    }
+                } catch (err) {
+                    console.error('[StoreBox Script Error]', err);
+                } finally {
+                    script.remove();
+                }
+            });
+        }
+
+        function hydrateMainContent(target, currentUrl) {
+            if (!target) return;
+
+            // 1. Run all inline/page scripts first so all Alpine components (categoriesApp, productsApp, etc.) are declared on window
+            runPageScripts(target);
+
+            // 2. Re-hydrate Alpine.js directives
+            if (window.Alpine) {
+                try {
+                    Alpine.initTree(target);
+                } catch (err) {
+                    console.error('[Alpine init error]', err);
+                }
+            }
+
+            // 3. Remove x-cloak safety fallback so page content is never hidden
+            target.querySelectorAll('[x-cloak]').forEach(el => el.removeAttribute('x-cloak'));
+
+            // 4. Re-render Lucide SVG icons
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+
+            // 5. Update sidebar active highlights
+            updateSidebarHighlights(currentUrl || window.location.href);
+
+            // 6. Update language switcher target URLs
+            updateLanguageLinks(currentUrl || window.location.href);
+        }
+
+        // =========================================================
+        // HTMX LIFECYCLE LISTENERS (Instant, Single-Request SPA)
+        // =========================================================
+        document.addEventListener('htmx:beforeRequest', function(evt) {
             startProgressBar();
-            window.location.href = url;
-        }
+            const main = document.getElementById('main-content');
+            if (main) main.classList.add('spa-loading');
+        });
 
-        // Show smooth progress bar when clicking dashboard links
-        document.addEventListener('click', (e) => {
-            const link = e.target.closest('a');
-            if (!link) return;
-            const href = link.getAttribute('href');
-            if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
-            if (href.startsWith('/dashboard/') && !link.hasAttribute('download') && !link.hasAttribute('target') && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-                startProgressBar();
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            finishProgressBar();
+            const main = document.getElementById('main-content');
+            if (main) main.classList.remove('spa-loading');
+        });
+
+        document.addEventListener('htmx:responseError', function(evt) {
+            finishProgressBar();
+            const main = document.getElementById('main-content');
+            if (main) main.classList.remove('spa-loading');
+            console.error('[HTMX Response Error]', evt.detail);
+        });
+
+        document.addEventListener('htmx:sendError', function(evt) {
+            finishProgressBar();
+            const main = document.getElementById('main-content');
+            if (main) main.classList.remove('spa-loading');
+            console.error('[HTMX Send Error]', evt.detail);
+        });
+
+        document.addEventListener('htmx:swapError', function(evt) {
+            finishProgressBar();
+            const main = document.getElementById('main-content');
+            if (main) main.classList.remove('spa-loading');
+            console.error('[HTMX Swap Error]', evt.detail);
+        });
+
+        document.addEventListener('htmx:beforeSwap', function(evt) {
+            const target = evt.detail.target;
+            if (target && target.id === 'main-content') {
+                if (window.Alpine && typeof Alpine.destroyTree === 'function') {
+                    try {
+                        Alpine.destroyTree(target);
+                    } catch (e) {}
+                }
             }
         });
 
-        // Initialize active state on page load
+        document.addEventListener('htmx:afterSwap', function(evt) {
+            const target = evt.detail.target;
+            if (target && target.id === 'main-content') {
+                hydrateMainContent(target, window.location.href);
+
+                // If language was switched, update header and sidebar labels
+                if (evt.detail.xhr && evt.detail.xhr.responseText && evt.detail.requestConfig && evt.detail.requestConfig.path && evt.detail.requestConfig.path.includes('/lang/')) {
+                    const doc = new DOMParser().parseFromString(evt.detail.xhr.responseText, 'text/html');
+                    const newLang = doc.querySelector('#header-lang-wrapper');
+                    const curLang = document.getElementById('header-lang-wrapper');
+                    if (newLang && curLang) {
+                        curLang.innerHTML = newLang.innerHTML;
+                        if (window.Alpine) Alpine.initTree(curLang);
+                    }
+                    const newNav = doc.querySelector('#sidebar-nav');
+                    const curNav = document.getElementById('sidebar-nav');
+                    if (newNav && curNav) {
+                        curNav.innerHTML = newNav.innerHTML;
+                        if (window.Alpine) Alpine.initTree(curNav);
+                        if (window.lucide) lucide.createIcons();
+                    }
+                }
+            }
+        });
+
+        // Browser Back / Forward button navigation
+        document.addEventListener('htmx:historyRestore', function(evt) {
+            const main = document.getElementById('main-content');
+            if (main) {
+                hydrateMainContent(main, window.location.href);
+            }
+        });
+
+        document.addEventListener('htmx:afterSettle', function(evt) {
+            const currentPath = window.location.pathname;
+            if (window._lastSpaPath !== undefined && window._lastSpaPath !== currentPath) {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+            }
+            window._lastSpaPath = currentPath;
+        });
+
+        // Initialize active highlights and icons on initial page load
         document.addEventListener('DOMContentLoaded', () => {
-            updateSidebarHighlights(window.location.pathname);
+            window._lastSpaPath = window.location.pathname;
+            updateSidebarHighlights(window.location.href);
+            updateLanguageLinks(window.location.href);
             if (window.lucide) lucide.createIcons();
             finishProgressBar();
         });
@@ -619,6 +1102,7 @@
     <script>
         function dashboardApp() {
             return {
+                mobileSidebarOpen: false,
                 showTrialBanner: true,
                 topupModalOpen: false,
                 notifDrawerOpen: false,

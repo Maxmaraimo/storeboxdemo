@@ -802,6 +802,18 @@ def onboarding_wizard_view(request):
 # -----------------------------------------------------------------
 
 @login_required
+def dashboard_spa_view(request, *args, **kwargs):
+    """Serves the modern React 19 SPA dashboard directly within Django."""
+    store = get_merchant_store(request)
+    if not store:
+        return redirect('dashboard:onboarding')
+    return render(request, 'dashboard/spa_index.html', {
+        'store': store,
+        'user': request.user,
+    })
+
+
+@login_required
 def dashboard_home_view(request):
     store = get_merchant_store(request)
     if not store:

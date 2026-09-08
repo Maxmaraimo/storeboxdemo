@@ -6,32 +6,32 @@
     <!-- PERIOD FILTER BAR (Video 07:47) -->
     <div class="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-slate-500">Muddati:</span>
+            <span class="text-xs font-bold text-slate-500">{{ t.period_label }}</span>
             <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                <a href="?period=today" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'today' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Bugun</a>
-                <a href="?period=week" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'week' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Har hafta</a>
-                <a href="?period=month" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'month' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Har oy</a>
-                <a href="?period=quarter" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'quarter' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Chorak</a>
-                <a href="?period=year" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'year' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">Har yil</a>
+                <a href="?period=today" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'today' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">{{ t.period_today }}</a>
+                <a href="?period=week" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'week' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">{{ t.period_week }}</a>
+                <a href="?period=month" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'month' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">{{ t.period_month }}</a>
+                <a href="?period=quarter" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'quarter' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">{{ t.period_quarter }}</a>
+                <a href="?period=year" class="px-3 py-1.5 rounded-lg transition-all {% if period == 'year' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}">{{ t.period_year }}</a>
             </div>
         </div>
 
         <form method="GET" class="flex items-center gap-2 text-xs">
-            <span class="text-slate-400 font-bold hidden sm:inline">Oraliq:</span>
+            <span class="text-slate-400 font-bold hidden sm:inline">{{ t.date_range_label }}</span>
             <input type="date" name="start_date" value="{{ start_date_val }}" required class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-slate-700 text-xs focus:outline-none focus:border-brand">
             <span class="text-slate-400">—</span>
             <input type="date" name="end_date" value="{{ end_date_val }}" required class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-slate-700 text-xs focus:outline-none focus:border-brand">
-            <button type="submit" class="px-4 py-1.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors shadow-xs">Qo'llash</button>
+            <button type="submit" class="px-4 py-1.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors shadow-xs">{{ t.apply_btn }}</button>
         </form>
     </div>
 
     <!-- 3 KPI METRIC CARDS (Video 07:48) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        <!-- Card 1: Daromadlar -->
+        <!-- Card 1: Revenue -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-3">
             <div class="flex items-center justify-between">
-                <span class="font-bold text-xs text-slate-500 uppercase tracking-wider">Daromadlar</span>
+                <span class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.revenue }}</span>
                 <span class="text-xs font-mono font-bold text-slate-400">UZS</span>
             </div>
             <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
@@ -39,61 +39,61 @@
             </div>
             <div class="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
                 <div class="flex justify-between">
-                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Sotuvlar summasi:</span>
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>{{ t.sales_sum }}</span>
                     <span class="font-mono font-bold">{{ sotuvlar_summasi|floatformat:0 }} UZS</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>Yetkazib berish summasi:</span>
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>{{ t.delivery_fee }}</span>
                     <span class="font-mono font-bold">{{ yetkazib_berish_summasi|floatformat:0 }} UZS</span>
                 </div>
                 <div class="flex justify-between text-emerald-700 font-black">
-                    <span>Foyda:</span>
+                    <span>{{ t.net_income }}</span>
                     <span class="font-mono">{{ foyda|floatformat:0 }} UZS</span>
                 </div>
             </div>
         </div>
 
-        <!-- Card 2: Buyurtmalar -->
+        <!-- Card 2: Orders -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-3">
             <div class="flex items-center justify-between">
-                <span class="font-bold text-xs text-slate-500 uppercase tracking-wider">Buyurtmalar</span>
+                <span class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.orders_count_title }}</span>
                 <i data-lucide="shopping-cart" class="w-4 h-4 text-slate-400"></i>
             </div>
             <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
-                {{ orders_count }} <span class="text-xs text-slate-400 font-normal">ta</span>
+                {{ orders_count }} <span class="text-xs text-slate-400 font-normal">{{ t.pcs_unit }}</span>
             </div>
             <div class="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
                 <div class="flex justify-between">
-                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Yangi:</span>
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>{{ t.new_orders }}</span>
                     <span class="font-mono font-bold">{{ yangi_orders }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Tayyor / Yetkazilgan:</span>
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>{{ t.ready_delivered }}</span>
                     <span class="font-mono font-bold">{{ tayyor_orders }}</span>
                 </div>
                 <div class="flex justify-between text-rose-500">
-                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Bekor qilindi:</span>
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>{{ t.cancelled_orders }}</span>
                     <span class="font-mono font-bold">{{ bekor_qilindi }}</span>
                 </div>
             </div>
         </div>
 
-        <!-- Card 3: Jami Mijozlar -->
+        <!-- Card 3: Customers -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-3">
             <div class="flex items-center justify-between">
-                <span class="font-bold text-xs text-slate-500 uppercase tracking-wider">Jami mijozlar</span>
+                <span class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.total_customers_title }}</span>
                 <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
             </div>
             <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
-                {{ total_customers }} <span class="text-xs text-slate-400 font-normal">ta</span>
+                {{ total_customers }} <span class="text-xs text-slate-400 font-normal">{{ t.pcs_unit }}</span>
             </div>
             <div class="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
                 <div class="flex justify-between">
-                    <span>Yangi mijozlar:</span>
+                    <span>{{ t.new_customers }}</span>
                     <span class="font-mono font-bold">{{ total_customers }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span>O'rtacha buyurtma:</span>
+                    <span>{{ t.avg_order }}</span>
                     <span class="font-mono font-bold">{{ avg_order|floatformat:0 }} UZS</span>
                 </div>
             </div>
@@ -102,18 +102,18 @@
 
     <!-- CHARTS ROW: REVENUE + ORDERS BY CHANNELS (Video 07:49) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- Daromadlar statistikasi -->
+        <!-- Revenue stats -->
         <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-            <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Daromadlar statistikasi</div>
+            <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.revenue_stats }}</div>
             <div class="h-64">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
 
-        <!-- Buyurtmalar statistikasi (Telegram vs Web vs Click) -->
+        <!-- Orders stats (Telegram vs Web vs Click) -->
         <div class="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4 flex flex-col justify-between">
             <div class="space-y-4">
-                <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Buyurtmalar statistikasi</div>
+                <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.orders_stats }}</div>
                 
                 <!-- Channels list -->
                 <div class="space-y-3 text-xs font-semibold">
@@ -122,17 +122,17 @@
                             <div class="w-6 h-6 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xs font-black">T</div>
                             <div>
                                 <div class="font-bold text-slate-900">Telegram bot</div>
-                                <div class="text-[10px] text-slate-400">{{ tma_cnt }} ta buyurtma</div>
+                                <div class="text-[10px] text-slate-400">{{ tma_cnt }} {{ t.orders_unit }}</div>
                             </div>
                         </div>
                         {% if store.telegram_bot_username %}
                         <a href="https://t.me/{{ store.telegram_bot_username }}" target="_blank" class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 flex items-center gap-1">
-                            <span>Botni ochish</span>
+                            <span>{{ t.open_bot }}</span>
                             <i data-lucide="external-link" class="w-3 h-3"></i>
                         </a>
                         {% else %}
                         <a href="/dashboard/platforms/?tab=telegram" class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100">
-                            Bot yaratish
+                            {{ t.create_bot }}
                         </a>
                         {% endif %}
                     </div>
@@ -141,12 +141,12 @@
                         <div class="flex items-center gap-2.5">
                             <div class="w-6 h-6 rounded-lg bg-brand text-white flex items-center justify-center text-xs font-black">W</div>
                             <div>
-                                <div class="font-bold text-slate-900">Veb-sayt</div>
-                                <div class="text-[10px] text-slate-400">{{ web_cnt }} ta buyurtma</div>
+                                <div class="font-bold text-slate-900">{{ t.website }}</div>
+                                <div class="text-[10px] text-slate-400">{{ web_cnt }} {{ t.orders_unit }}</div>
                             </div>
                         </div>
                         <a href="/store/{{ store.subdomain }}/" target="_blank" class="px-3 py-1 rounded-lg bg-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-300">
-                            Saytni ochish
+                            {{ t.open_site }}
                         </a>
                     </div>
 
@@ -155,18 +155,18 @@
                             <div class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-black">C</div>
                             <div>
                                 <div class="font-bold text-slate-900">Click Shop</div>
-                                <div class="text-[10px] text-slate-400">Onlayn to'lov</div>
+                                <div class="text-[10px] text-slate-400">{{ t.th_payment }}</div>
                             </div>
                         </div>
                         <a href="/dashboard/settings/payments/" class="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-bold hover:bg-blue-100">
-                            Ariza yuborish
+                            {{ t.apply_btn_click }}
                         </a>
                     </div>
                 </div>
             </div>
 
             <div class="text-[11px] text-slate-400 text-center pt-2">
-                Barcha savdo kanallari avtomatik ravishda bitta tizimda sinxronlanadi
+                {{ t.all_channels_sync }}
             </div>
         </div>
     </div>
@@ -174,24 +174,33 @@
     <!-- LOWER ROW: TRAFFIC SOURCE + TOP PRODUCTS + DELIVERIES MAP (Video 07:58 - 08:00) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        <!-- Trafik manbai -->
+        <!-- Traffic source -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-            <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Trafik manbai</div>
+            <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.traffic_source }}</div>
             <div class="h-44 flex items-center justify-center">
                 <canvas id="trafficChart"></canvas>
             </div>
             <div class="flex justify-around text-xs font-bold text-slate-600 pt-2 border-t border-slate-100">
-                <span class="text-blue-500">• Veb-sayt ({{ web_cnt }})</span>
+                <span class="text-blue-500">• {{ t.website }} ({{ web_cnt }})</span>
                 <span class="text-brand">• Telegram ({{ tma_cnt }})</span>
             </div>
         </div>
 
-        <!-- Top mahsulotlar (Period-scoped) -->
+        <!-- Top products (Period-scoped) -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
             <div class="flex items-center justify-between">
-                <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Top mahsulotlar</div>
+                <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.top_products }}</div>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {% if has_period_sales %}bg-brand/10 text-brand{% else %}bg-slate-100 text-slate-500{% endif %}">
-                    {% if has_period_sales %}{{ period_display }}{% else %}Umumiy{% endif %}
+                    {% if has_period_sales %}
+                        {% if period == 'today' %}{{ t.period_today }}
+                        {% elif period == 'week' %}{{ t.period_week }}
+                        {% elif period == 'month' %}{{ t.period_month }}
+                        {% elif period == 'quarter' %}{{ t.period_quarter }}
+                        {% elif period == 'year' %}{{ t.period_year }}
+                        {% else %}{{ period_display }}{% endif %}
+                    {% else %}
+                        {{ t.general_period }}
+                    {% endif %}
                 </span>
             </div>
             <div class="space-y-2 text-xs font-semibold max-h-48 overflow-y-auto">
@@ -199,23 +208,23 @@
                 <div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                     <span class="truncate max-w-[140px] font-bold text-slate-800">{{ tp.product_name }}</span>
                     <div class="text-right">
-                        <span class="font-mono font-bold text-brand">{{ tp.sold_qty }} ta</span>
+                        <span class="font-mono font-bold text-brand">{{ tp.sold_qty }} {{ t.pcs_unit }}</span>
                         {% if tp.sold_sum %}
                         <span class="text-[10px] font-mono text-slate-400 block">{{ tp.sold_sum|floatformat:0 }} UZS</span>
                         {% endif %}
                     </div>
                 </div>
                 {% empty %}
-                <div class="text-center text-slate-400 py-8">Hozircha sotuvlar yo'q</div>
+                <div class="text-center text-slate-400 py-8">{{ t.no_sales_yet }}</div>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- Buyurtma xaritasi (Leaflet Deliveries Map Video 08:00) -->
+        <!-- Orders map (Leaflet Deliveries Map Video 08:00) -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
             <div class="flex items-center justify-between">
-                <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">Buyurtma xaritasi</div>
-                <span class="text-[10px] text-emerald-600 font-bold">Jonli GPS</span>
+                <div class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.orders_map }}</div>
+                <span class="text-[10px] text-emerald-600 font-bold">{{ t.live_gps }}</span>
             </div>
             <div class="rounded-2xl overflow-hidden border border-slate-200">
                 <div id="analyticsMap" class="w-full h-44 bg-slate-100"></div>
@@ -226,57 +235,85 @@
 
 <script>
     function initDashboardCharts() {
+        // Destroy existing Chart.js instances if any
+        if (window._dashboardRevChart) {
+            try { window._dashboardRevChart.destroy(); } catch(e){}
+            window._dashboardRevChart = null;
+        }
+        if (window._dashboardTrfChart) {
+            try { window._dashboardTrfChart.destroy(); } catch(e){}
+            window._dashboardTrfChart = null;
+        }
+        if (window._dashboardAnalyticsMap) {
+            try { window._dashboardAnalyticsMap.remove(); } catch(e){}
+            window._dashboardAnalyticsMap = null;
+        }
+
         // 1. Revenue Chart
         const revCtx = document.getElementById('revenueChart');
-        if (revCtx && !revCtx.chartInstance) {
-            revCtx.chartInstance = new Chart(revCtx, {
-                type: 'bar',
-                data: {
-                    labels: JSON.parse('{{ chart_labels_json|safe }}'),
-                    datasets: [{
-                        label: 'Tushum (UZS)',
-                        data: JSON.parse('{{ chart_revenue_json|safe }}'),
-                        backgroundColor: '#10B981',
-                        borderRadius: 8,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+        if (revCtx) {
+            if (typeof Chart !== 'undefined') {
+                const existing = Chart.getChart(revCtx);
+                if (existing) existing.destroy();
+                window._dashboardRevChart = new Chart(revCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: JSON.parse('{{ chart_labels_json|safe }}'),
+                        datasets: [{
+                            label: '{{ t.revenue }} (UZS)',
+                            data: JSON.parse('{{ chart_revenue_json|safe }}'),
+                            backgroundColor: '#10B981',
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         // 2. Traffic Donut
         const trfCtx = document.getElementById('trafficChart');
-        if (trfCtx && !trfCtx.chartInstance) {
-            trfCtx.chartInstance = new Chart(trfCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Veb-sayt', 'Telegram'],
-                    datasets: [{
-                        data: [Number('{{ web_cnt }}') || 1, Number('{{ tma_cnt }}') || 0],
-                        backgroundColor: ['#3B82F6', '#10B981'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '75%',
-                    plugins: { legend: { display: false } }
-                }
-            });
+        if (trfCtx) {
+            if (typeof Chart !== 'undefined') {
+                const existing = Chart.getChart(trfCtx);
+                if (existing) existing.destroy();
+                const webVal = Number('{{ web_cnt|default:0 }}');
+                const tmaVal = Number('{{ tma_cnt|default:0 }}');
+                const chartData = (webVal === 0 && tmaVal === 0) ? [1, 1] : [webVal, tmaVal];
+                const chartColors = (webVal === 0 && tmaVal === 0) ? ['#cbd5e1', '#e2e8f0'] : ['#3B82F6', '#10B981'];
+
+                window._dashboardTrfChart = new Chart(trfCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['{{ t.website }}', 'Telegram'],
+                        datasets: [{
+                            data: chartData,
+                            backgroundColor: chartColors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
         }
 
         // 3. Leaflet Deliveries Map
         const mapContainer = document.getElementById('analyticsMap');
-        if (mapContainer && !mapContainer._leaflet_id && typeof L !== 'undefined') {
+        if (mapContainer && typeof L !== 'undefined') {
+            mapContainer._leaflet_id = null;
             const mapOrders = JSON.parse('{{ map_orders_json|safe }}');
             const defaultLat = mapOrders.length > 0 ? mapOrders[0].lat : 41.2995;
             const defaultLng = mapOrders.length > 0 ? mapOrders[0].lng : 69.2401;
@@ -289,6 +326,7 @@
                     `<b>#${o.num} — ${o.client}</b><br>${o.total ? o.total.toLocaleString() + ' UZS' : ''}`
                 );
             });
+            window._dashboardAnalyticsMap = map;
         }
     }
 

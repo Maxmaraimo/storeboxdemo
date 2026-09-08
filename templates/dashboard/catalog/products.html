@@ -1,6 +1,6 @@
 {% extends 'dashboard/base_dashboard.html' %}
 
-{% block title %}Mahsulotlar — StoreBox{% endblock %}
+{% block title %}{{ t.products_list_title }} — StoreBox{% endblock %}
 
 {% block dashboard_content %}
 <div class="space-y-6" x-data="productsApp()">
@@ -8,19 +8,19 @@
     <!-- Header & Action (Video 08:34) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Mahsulotlar ro'yxati</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Katalogdagi tovarlar, narxlar va qoldiqlar</p>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{{ t.products_list_title }}</h1>
+            <p class="text-xs text-slate-500 mt-0.5">{{ t.products_list_subtitle }}</p>
         </div>
 
         <div class="flex items-center gap-2">
             <button type="button" @click="showToast('Excel/1C orqali import tizimi ochilmoqda...')" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center gap-1.5 shadow-2xs">
                 <i data-lucide="upload" class="w-3.5 h-3.5 text-slate-500"></i>
-                <span>Import qilish</span>
+                <span>{{ t.import_btn }}</span>
             </button>
 
             <a href="/dashboard/products/new/" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs spa-link">
                 <i data-lucide="plus" class="w-4 h-4"></i>
-                <span>Mahsulot qo'shish</span>
+                <span>{{ t.add_product_btn }}</span>
             </a>
         </div>
     </div>
@@ -28,14 +28,14 @@
     <!-- Category Filter Pills & Search -->
     <div class="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-2xs flex flex-wrap items-center justify-between gap-4">
         <form method="GET" class="flex-1 max-w-md relative">
-            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Mahsulot nomi bo'yicha qidirish..."
+            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="{{ t.search_product_ph }}"
                    class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold placeholder-slate-400 focus:outline-none focus:border-brand">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
         </form>
 
         <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-bold">
             <a href="/dashboard/products/" class="px-3 py-1.5 rounded-xl whitespace-nowrap {% if not selected_category %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:bg-slate-100{% endif %} spa-link">
-                Barchasi
+                {{ t.all_filter }}
             </a>
             {% for cat in categories %}
             <a href="/dashboard/products/?category={{ cat.id }}" class="px-3 py-1.5 rounded-xl whitespace-nowrap {% if selected_category == cat.id|stringformat:'i' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:bg-slate-100{% endif %} spa-link">
@@ -51,22 +51,22 @@
             <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
                     <tr>
-                        <th class="py-3.5 px-4">Tovar</th>
-                        <th class="py-3.5 px-4">Kategoriya</th>
-                        <th class="py-3.5 px-4">Sotuv narxi</th>
-                        <th class="py-3.5 px-4">Qoldiq</th>
-                        <th class="py-3.5 px-4">Birligi</th>
-                        <th class="py-3.5 px-4">Holat</th>
-                        <th class="py-3.5 px-4 text-right">Harakat</th>
+                        <th class="py-3.5 px-4">{{ t.th_photo }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_category }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_price }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_stock }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_unit }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_status_col }}</th>
+                        <th class="py-3.5 px-4 text-right">{{ t.th_act }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
                     {% for p in products %}
-                    <tr id="prod-row-{{ p.id }}" class="hover:bg-slate-50/60 transition-colors">
+                    <tr id="prod-row-{{ p.id }}" class="hover:bg-slate-50/60 transition-colors {% if p.stock == 0 %}opacity-50 grayscale{% endif %}">
                         <!-- Image & Title -->
                         <td class="py-3.5 px-4 flex items-center gap-3">
                             {% if p.primary_image_url %}
-                            <img src="{{ p.primary_image_url }}" alt="{{ p.name_uz }}" class="w-12 h-12 rounded-xl object-cover border border-slate-100 shrink-0">
+                            <img src="{{ p.primary_image_url }}" alt="{{ p.name_uz }}" class="w-12 h-12 rounded-xl object-cover border border-slate-100 shrink-0 {% if p.stock == 0 %}grayscale{% endif %}">
                             {% else %}
                             <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
                                 <i data-lucide="image" class="w-5 h-5"></i>
@@ -95,7 +95,7 @@
 
                         <!-- Stock -->
                         <td class="py-3.5 px-4">
-                            <span class="font-mono font-bold text-slate-900">{{ p.stock }}</span>
+                            <span class="font-mono font-bold {% if p.stock == 0 %}text-rose-500{% else %}text-slate-900{% endif %}">{{ p.stock }}</span>
                         </td>
 
                         <!-- Unit -->
@@ -105,9 +105,19 @@
 
                         <!-- Status -->
                         <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black {% if p.is_active %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-slate-100 text-slate-500{% endif %}">
-                                {% if p.is_active %}Sotuvda{% else %}To'xtatilgan{% endif %}
+                            {% if p.stock == 0 %}
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-600 border border-rose-200">
+                                {{ t.out_of_stock }}
                             </span>
+                            {% elif p.is_active %}
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                {{ t.in_stock }}
+                            </span>
+                            {% else %}
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-500">
+                                {{ t.out_of_stock }}
+                            </span>
+                            {% endif %}
                         </td>
 
                         <!-- Actions -->
@@ -123,7 +133,7 @@
                     {% empty %}
                     <tr>
                         <td colspan="7" class="py-12 text-center text-slate-400">
-                            Mahsulotlar mavjud emas
+                            {{ t.no_products_found }}
                         </td>
                     </tr>
                     {% endfor %}
@@ -137,7 +147,7 @@
     function productsApp() {
         return {
             deleteProduct(id) {
-                if (!confirm("Mahsulotni o'chirmoqchimisiz?")) return;
+                if (!confirm("{{ t.delete_product_confirm }}")) return;
                 fetch(`/dashboard/products/${id}/delete/`, {
                     method: 'POST',
                     headers: { 
@@ -149,7 +159,7 @@
                 .then(data => {
                     const row = document.getElementById(`prod-row-${id}`);
                     if (row) row.remove();
-                    showToast("Mahsulot o'chirildi!");
+                    showToast("{{ t.product_deleted }}");
                 })
                 .catch(() => {
                     const row = document.getElementById(`prod-row-${id}`);

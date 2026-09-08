@@ -21,6 +21,9 @@ urlpatterns = [
     path('api/geo-search/', dashboard_views.geo_search_api, name='root_geo_search'),
     path('api/geo-reverse/', dashboard_views.geo_reverse_api, name='root_geo_reverse'),
 
+    # REST API v1 for React / Next.js SPA
+    path('api/v1/', include('apps.api.urls')),
+
     # Merchant Dashboard
     path('dashboard/', include('apps.dashboard.urls')),
 

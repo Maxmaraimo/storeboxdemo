@@ -1,7 +1,7 @@
 {% extends 'dashboard/base_dashboard.html' %}
 {% load humanize %}
 
-{% block title %}Buyurtmalar — StoreBox{% endblock %}
+{% block title %}{{ t.orders_list_title }} — StoreBox{% endblock %}
 
 {% block dashboard_content %}
 <div class="space-y-6" x-data="ordersApp()">
@@ -9,75 +9,75 @@
     <!-- HEADER & ACTION BUTTONS (Video 08:08) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Buyurtmalar ro'yxati</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Do'koningizga veb-sayt va Telegram orqali kelib tushgan barcha buyurtmalar</p>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{{ t.orders_list_title }}</h1>
+            <p class="text-xs text-slate-500 mt-0.5">{{ t.orders_list_subtitle }}</p>
         </div>
 
         <div class="flex items-center gap-2">
-            <!-- Yig'ish varaqasi (Packing slip) -->
+            <!-- Packing slip -->
             <button type="button" @click="packingSlipOpen = true" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center gap-1.5 shadow-2xs transition-colors">
                 <i data-lucide="printer" class="w-3.5 h-3.5 text-slate-500"></i>
-                <span>Yig'ish varaqasi</span>
+                <span>{{ t.packing_slip }}</span>
             </button>
 
-            <!-- Avto-javob -->
+            <!-- Auto reply -->
             <button type="button" @click="autoReplyModal = true" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center gap-1.5 shadow-2xs transition-colors">
                 <i data-lucide="bot" class="w-3.5 h-3.5 text-slate-500"></i>
-                <span>Avto-javob</span>
+                <span>{{ t.auto_reply }}</span>
             </button>
 
-            <!-- Eksport -->
+            <!-- Export -->
             <a href="/dashboard/orders/export/" download class="px-3.5 py-2 rounded-xl bg-brand text-white text-xs font-bold hover:bg-brand-dark flex items-center gap-1.5 shadow-xs transition-colors">
                 <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                <span>Eksport</span>
+                <span>{{ t.export_btn }}</span>
             </a>
         </div>
     </div>
 
     <!-- STAT SUMMARY CARDS -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <!-- 1. Jami buyurtmalar -->
+        <!-- 1. All orders -->
         <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Jami buyurtmalar</p>
-                <h3 class="text-xl sm:text-2xl font-black text-slate-900 mt-1">{{ counts.all }} <span class="text-xs font-bold text-slate-400">ta</span></h3>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ t.orders_count_title }}</p>
+                <h3 class="text-xl sm:text-2xl font-black text-slate-900 mt-1">{{ counts.all }} <span class="text-xs font-bold text-slate-400">{{ t.pcs_unit }}</span></h3>
             </div>
             <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
                 <i data-lucide="shopping-bag" class="w-5 h-5"></i>
             </div>
         </div>
 
-        <!-- 2. Yangi buyurtmalar -->
+        <!-- 2. New orders -->
         <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
                 <div class="flex items-center gap-1.5">
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Yangi buyurtmalar</p>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ t.status_new }}</p>
                     {% if counts.new > 0 %}
                     <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                     {% endif %}
                 </div>
-                <h3 class="text-xl sm:text-2xl font-black text-amber-600 mt-1">{{ counts.new }} <span class="text-xs font-bold text-slate-400">ta</span></h3>
+                <h3 class="text-xl sm:text-2xl font-black text-amber-600 mt-1">{{ counts.new }} <span class="text-xs font-bold text-slate-400">{{ t.pcs_unit }}</span></h3>
             </div>
             <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
                 <i data-lucide="bell-ring" class="w-5 h-5"></i>
             </div>
         </div>
 
-        <!-- 3. Jarayonda va Yo'lda -->
+        <!-- 3. In progress & Delivering -->
         <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Jarayonda & Yo'lda</p>
-                <h3 class="text-xl sm:text-2xl font-black text-blue-600 mt-1">{{ counts.processing|add:counts.in_delivery }} <span class="text-xs font-bold text-slate-400">ta</span></h3>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ t.status_accepted }} & {{ t.status_delivering }}</p>
+                <h3 class="text-xl sm:text-2xl font-black text-blue-600 mt-1">{{ counts.processing|add:counts.in_delivery }} <span class="text-xs font-bold text-slate-400">{{ t.pcs_unit }}</span></h3>
             </div>
             <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <i data-lucide="truck" class="w-5 h-5"></i>
             </div>
         </div>
 
-        <!-- 4. Jami tushum -->
+        <!-- 4. Total revenue -->
         <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Jami tushum</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ t.revenue }}</p>
                 <h3 class="text-base sm:text-lg font-black text-emerald-600 mt-1">{{ counts.total_revenue|floatformat:0|intcomma }} <span class="text-[10px] font-bold text-slate-400">UZS</span></h3>
             </div>
             <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -90,32 +90,32 @@
     <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-slate-200 text-xs font-bold">
         <a href="/dashboard/orders/?status=ALL"
            class="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap {% if current_status == 'ALL' or not current_status %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-            <span>Barchasi</span>
+            <span>{{ t.status_all }}</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {% if current_status == 'ALL' or not current_status %}bg-white/25 text-white{% else %}bg-slate-200 text-slate-700{% endif %}">{{ counts.all }}</span>
         </a>
         <a href="/dashboard/orders/?status=NEW"
            class="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap {% if current_status == 'NEW' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-            <span>Yangi</span>
+            <span>{{ t.status_new }}</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if current_status == 'NEW' %}bg-white/25 text-white{% else %}bg-amber-100 text-amber-800{% endif %}">{{ counts.new }}</span>
         </a>
         <a href="/dashboard/orders/?status=PROCESSING"
            class="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap {% if current_status == 'PROCESSING' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-            <span>Jarayonda</span>
+            <span>{{ t.status_accepted }}</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {% if current_status == 'PROCESSING' %}bg-white/25 text-white{% else %}bg-blue-100 text-blue-800{% endif %}">{{ counts.processing }}</span>
         </a>
         <a href="/dashboard/orders/?status=READY"
            class="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap {% if current_status == 'READY' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-            <span>Tayyor</span>
+            <span>{{ t.status_ready }}</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {% if current_status == 'READY' %}bg-white/25 text-white{% else %}bg-indigo-100 text-indigo-800{% endif %}">{{ counts.ready }}</span>
         </a>
         <a href="/dashboard/orders/?status=IN_DELIVERY"
            class="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap {% if current_status == 'IN_DELIVERY' or current_status == 'SHIPPED' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-            <span>Yo'lda</span>
+            <span>{{ t.status_delivering }}</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {% if current_status == 'IN_DELIVERY' or current_status == 'SHIPPED' %}bg-white/25 text-white{% else %}bg-purple-100 text-purple-800{% endif %}">{{ counts.in_delivery }}</span>
         </a>
         <a href="/dashboard/orders/?status=HISTORY"
            class="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap {% if current_status == 'HISTORY' or current_status == 'DELIVERED' %}bg-brand text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-            <span>Buyurtmalar tarixi</span>
+            <span>{{ t.status_completed }}</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {% if current_status == 'HISTORY' or current_status == 'DELIVERED' %}bg-white/25 text-white{% else %}bg-slate-200 text-slate-700{% endif %}">{{ counts.history }}</span>
         </a>
     </div>
@@ -126,13 +126,13 @@
             {% if current_status %}
             <input type="hidden" name="status" value="{{ current_status }}">
             {% endif %}
-            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Buyurtma ID'si (#RB-...), mijoz ismi yoki telefon..."
+            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="{{ t.search_order_ph }}"
                    class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold placeholder-slate-400 focus:outline-none focus:border-brand focus:bg-white transition-all">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
         </form>
 
         <div class="flex items-center gap-3 text-xs font-bold text-slate-500">
-            <span>Ko'rsatilmoqda: <strong class="text-slate-900">{{ orders.count }} ta buyurtma</strong></span>
+            <span>{{ t.th_order_num }}: <strong class="text-slate-900">{{ orders.count }} {{ t.pcs_unit }}</strong></span>
         </div>
     </div>
 
@@ -142,13 +142,13 @@
             <table class="w-full text-left text-xs border-collapse table-fixed min-w-[720px]">
                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80 text-[10px] uppercase tracking-wider">
                     <tr>
-                        <th class="py-2.5 px-2.5 w-[110px]">Buyurtma</th>
-                        <th class="py-2.5 px-2 w-[135px]">Mijoz</th>
-                        <th class="py-2.5 px-2 w-[110px]">Mahsulot</th>
-                        <th class="py-2.5 px-2 w-[125px]">To'lov</th>
-                        <th class="py-2.5 px-2 w-[120px]">Yetkazish</th>
-                        <th class="py-2.5 px-2 w-[80px]">Holat</th>
-                        <th class="py-2.5 px-2.5 text-right w-[60px]">Amal</th>
+                        <th class="py-2.5 px-2.5 w-[110px]">{{ t.th_order_num }}</th>
+                        <th class="py-2.5 px-2 w-[135px]">{{ t.th_client }}</th>
+                        <th class="py-2.5 px-2 w-[110px]">{{ t.th_product_name }}</th>
+                        <th class="py-2.5 px-2 w-[125px]">{{ t.th_payment }}</th>
+                        <th class="py-2.5 px-2 w-[120px]">{{ t.th_delivery }}</th>
+                        <th class="py-2.5 px-2 w-[80px]">{{ t.th_status }}</th>
+                        <th class="py-2.5 px-2.5 text-right w-[60px]">{{ t.th_action }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
