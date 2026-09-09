@@ -1,6 +1,7 @@
 from django.urls import path
 from apps.dashboard import views
 from apps.core import views as core_views
+from apps.api import views_dashboard
 
 app_name = 'dashboard'
 
@@ -24,6 +25,12 @@ urlpatterns = [
     path('settings/', views.dashboard_spa_view, name='settings_general'),
     path('settings/<path:subpath>/', views.dashboard_spa_view, name='settings_sub'),
     path('robo-market/', views.dashboard_spa_view, name='robo_market'),
+
+    # Async Dashboard Stats / Summary APIs (pure JSON, <50ms response)
+    path('summary/', views_dashboard.dashboard_summary_view, name='summary_alias'),
+    path('stats/', views_dashboard.dashboard_summary_view, name='stats_alias'),
+    path('api/dashboard/stats/', views_dashboard.dashboard_summary_view, name='api_dashboard_stats'),
+    path('api/dashboard/summary/', views_dashboard.dashboard_summary_view, name='api_dashboard_summary'),
 
     path('lang/<str:lang>/', core_views.switch_language_view, name='dashboard_switch_language'),
     path('onboarding/', views.onboarding_wizard_view, name='onboarding'),

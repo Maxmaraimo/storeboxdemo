@@ -42,7 +42,7 @@ export const PlatformsPage: React.FC = () => {
           <div className="pt-2 text-xs font-bold text-brand">Ochish →</div>
         </Link>
 
-        <Link to="/yespos" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 hover:border-brand transition-colors block">
+        <a href="/dashboard/yespos/" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 hover:border-brand transition-colors block">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
               <Database className="w-5 h-5" />
@@ -53,7 +53,7 @@ export const PlatformsPage: React.FC = () => {
             </div>
           </div>
           <div className="pt-2 text-xs font-bold text-brand">Ochish →</div>
-        </Link>
+        </a>
 
         <Link to="/design" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 hover:border-brand transition-colors block">
           <div className="flex items-center gap-3">

@@ -44,6 +44,9 @@ window.yesposManager = function() {
         openConnectDrawer() {
             this.isDrawerOpen = true;
             this.drawerError = '';
+            if (!this.apiKey && '{{ connection.api_key|default:""|escapejs }}') {
+                this.apiKey = '{{ connection.api_key|default:""|escapejs }}';
+            }
             if (this.branchId) {
                 this.selectedBranchId = this.branchId;
             }
@@ -145,6 +148,7 @@ window.yesposManager = function() {
         },
 
         async openCatalogModal(force = false) {
+            if (this.isLoadingCatalog) return;
             this.isCatalogOpen = true;
             this.selectedProductIds = [];
             this.catalogError = '';
@@ -227,6 +231,7 @@ window.yesposManager = function() {
         },
 
         async importSelectedProducts() {
+            if (this.isImporting) return;
             if (this.selectedProductIds.length === 0) return;
             this.isImporting = true;
             const items = [];
@@ -278,6 +283,7 @@ window.yesposManager = function() {
         },
 
         async syncProducts() {
+            if (this.isSyncing) return;
             this.isSyncing = true;
             try {
                 const res = await fetch('/dashboard/api/yespos/sync/', {
@@ -674,7 +680,7 @@ window.yesposManager = function() {
                             <label class="block text-xs font-semibold text-slate-800">
                                 API-ключ YES POS <span class="text-rose-500">*</span>
                             </label>
-                            <button type="button" id="demoKeyBtn" @click="apiKey = 'yp_demo_api_key_tashkent'; testApiKey()" class="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer">
+                            <button type="button" id="demoKeyBtn" @click="apiKey = '51831431-a0c91e12ebd08bd18fb7c679f1944beea5b69054331eec6b'; testApiKey()" class="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer">
                                 Вставить тестовый ключ
                             </button>
                         </div>

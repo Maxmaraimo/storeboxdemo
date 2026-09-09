@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from apps.dashboard import views as dashboard_views
 from apps.core import views as core_views
+from apps.api import views_dashboard
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -20,6 +21,8 @@ urlpatterns = [
     path('onboarding/', dashboard_views.onboarding_wizard_view, name='onboarding'),
     path('api/geo-search/', dashboard_views.geo_search_api, name='root_geo_search'),
     path('api/geo-reverse/', dashboard_views.geo_reverse_api, name='root_geo_reverse'),
+    path('api/dashboard/stats/', views_dashboard.dashboard_summary_view, name='root_dashboard_stats'),
+    path('api/dashboard/summary/', views_dashboard.dashboard_summary_view, name='root_dashboard_summary'),
 
     # REST API v1 for React / Next.js SPA
     path('api/v1/', include('apps.api.urls')),

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Database,
@@ -65,7 +65,7 @@ export const YesPosPage: React.FC = () => {
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Connection form state
-  const [apiKeyInput, setApiKeyInput] = useState("demo-yespos-key");
+  const [apiKeyInput, setApiKeyInput] = useState("51831431-a0c91e12ebd08bd18fb7c679f1944beea5b69054331eec6b");
   const [testingConnection, setTestingConnection] = useState(false);
   const [branches, setBranches] = useState<BranchItem[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState("");
@@ -170,6 +170,7 @@ export const YesPosPage: React.FC = () => {
 
   // 5. Fast Sync
   const handleSync = async () => {
+    if (syncing) return;
     setSyncing(true);
     setMsg(null);
     try {
@@ -189,6 +190,7 @@ export const YesPosPage: React.FC = () => {
 
   // 6. Fetch Catalog
   const handleLoadCatalog = async () => {
+    if (loadingCatalog) return;
     setLoadingCatalog(true);
     setMsg(null);
     try {
@@ -229,6 +231,7 @@ export const YesPosPage: React.FC = () => {
 
   // 8. Import Selected Products
   const handleImportSelected = async () => {
+    if (importing) return;
     const itemsToImport: any[] = [];
     catalog.forEach((cat) => {
       cat.products.forEach((p) => {

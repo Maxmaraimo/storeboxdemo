@@ -673,6 +673,165 @@
     </div>
 
     <!-- ============================================================= -->
+    <!-- NAVIGATION SIDE DRAWER (Burger Menu & Catalog)                -->
+    <!-- ============================================================= -->
+    <div x-show="sideDrawerOpen" x-cloak class="fixed inset-0 z-50 flex justify-start bg-slate-900/60 backdrop-blur-xs"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div @click.away="sideDrawerOpen = false"
+             class="w-full max-w-xs sm:max-w-sm bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden"
+             x-transition:enter="transition ease-out duration-300 transform"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200 transform"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full">
+
+            <!-- Drawer Header: Brand info + Close -->
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" class="flex items-center gap-3">
+                    {% if store.logo %}
+                    <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="w-10 h-10 rounded-2xl object-cover border border-slate-200 shadow-2xs">
+                    {% else %}
+                    <div class="w-10 h-10 rounded-2xl bg-brand text-white flex items-center justify-center font-black text-base shadow-2xs">
+                        {{ store.name|slice:":1" }}
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h4 class="font-black text-sm text-slate-900 tracking-tight leading-tight">{{ store.name }}</h4>
+                        <span class="text-[10px] text-emerald-600 font-bold block mt-0.5">🟢 {{ store.is_currently_open.1|default:"Ochiq" }}</span>
+                    </div>
+                </a>
+                <button type="button" @click="sideDrawerOpen = false" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-lg cursor-pointer">
+                    ×
+                </button>
+            </div>
+
+            <!-- Drawer Navigation Links & Categories -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-5">
+                <!-- Search bar on mobile inside drawer -->
+                <div>
+                    <form action="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" method="GET" class="relative">
+                        <input type="text" name="q" value="{{ search_q|default:'' }}" placeholder="{{ t.search_placeholder|default:'Mahsulotlarni qidirish...' }}"
+                               class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                    </form>
+                </div>
+
+                <!-- Main Shortcuts -->
+                <div class="space-y-1">
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" @click="sideDrawerOpen = false" class="flex items-center gap-3 px-3 py-2 rounded-xl font-bold text-xs text-slate-800 hover:bg-slate-100 transition-colors">
+                        <i data-lucide="home" class="w-4 h-4 text-slate-400"></i>
+                        <span>{{ t.home|default:"Bosh sahifa" }}</span>
+                    </a>
+                    <button type="button" @click="cartDrawerOpen = true; sideDrawerOpen = false;" class="w-full flex items-center justify-between px-3 py-2 rounded-xl font-bold text-xs text-slate-800 hover:bg-slate-100 transition-colors text-left">
+                        <span class="flex items-center gap-3">
+                            <i data-lucide="shopping-bag" class="w-4 h-4 text-slate-400"></i>
+                            <span>{{ t.cart|default:"Savat" }}</span>
+                        </span>
+                        <span class="px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-black" x-text="cartCount + ' ta'"></span>
+                    </button>
+                </div>
+
+                <!-- Categories list -->
+                {% if categories %}
+                <div>
+                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3 mb-2 flex items-center justify-between">
+                        <span>{{ t.categories|default:"Kategoriyalar" }}</span>
+                        <span class="text-[9px] font-bold text-slate-400">{{ categories|length }}</span>
+                    </div>
+                    <div class="space-y-1 max-h-60 overflow-y-auto pr-1">
+                        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" @click="sideDrawerOpen = false" class="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-brand/5 hover:text-brand transition-colors">
+                            <span class="flex items-center gap-2.5">
+                                <i data-lucide="layout-grid" class="w-4 h-4 text-slate-400"></i>
+                                <span>{{ t.all|default:"Barchasi" }}</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-bold">{{ total_products_count|default:products.count }}</span>
+                        </a>
+                        {% for cat in categories %}
+                        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}?cat={{ cat.slug }}" @click="sideDrawerOpen = false" class="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-brand/5 hover:text-brand transition-colors">
+                            <span class="flex items-center gap-2.5 truncate">
+                                {% if cat.primary_image_url %}
+                                <img src="{{ cat.primary_image_url }}" class="w-4 h-4 rounded-md object-cover">
+                                {% else %}
+                                <i data-lucide="folder" class="w-4 h-4 text-slate-400"></i>
+                                {% endif %}
+                                <span class="truncate">{{ cat.display_name }}</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-bold">{{ cat.active_products_count|default:0 }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Information pages -->
+                <div>
+                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3 mb-2">
+                        <span>Ma'lumotlar</span>
+                    </div>
+                    <div class="space-y-1">
+                        {% if store.branches.exists %}
+                        <button type="button" @click="infoModal = 'branches'; sideDrawerOpen = false;" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 text-left cursor-pointer">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+                            <span>{{ t.branches|default:"Do'kon filiallari" }}</span>
+                        </button>
+                        {% endif %}
+                        <button type="button" @click="infoModal = 'delivery'; sideDrawerOpen = false;" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 text-left cursor-pointer">
+                            <i data-lucide="truck" class="w-4 h-4 text-slate-400"></i>
+                            <span>{{ t.delivery_terms|default:"Yetkazib berish shartlari" }}</span>
+                        </button>
+                        <button type="button" @click="infoModal = 'returns'; sideDrawerOpen = false;" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 text-left cursor-pointer">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-slate-400"></i>
+                            <span>{{ t.return_terms|default:"Qaytarish va almashtirish" }}</span>
+                        </button>
+                        <button type="button" @click="infoModal = 'about'; sideDrawerOpen = false;" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 text-left cursor-pointer">
+                            <i data-lucide="info" class="w-4 h-4 text-slate-400"></i>
+                            <span>{{ t.about_us|default:"Biz haqimizda" }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Language Switcher in Drawer -->
+                <div>
+                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3 mb-2">
+                        <span>Til / Язык</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5 px-1">
+                        <a href="?lang=uz" class="py-1.5 px-2 rounded-xl text-xs font-bold text-center border {% if current_lang == 'uz' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
+                            O'zbek
+                        </a>
+                        <a href="?lang=ru" class="py-1.5 px-2 rounded-xl text-xs font-bold text-center border {% if current_lang == 'ru' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
+                            Русский
+                        </a>
+                        <a href="?lang=en" class="py-1.5 px-2 rounded-xl text-xs font-bold text-center border {% if current_lang == 'en' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
+                            English
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drawer Footer: Contacts & Phone -->
+            <div class="p-4 border-t border-slate-100 bg-slate-50/70 space-y-2">
+                {% if store.phone %}
+                <a href="tel:{{ store.phone }}" class="flex items-center gap-2.5 text-xs font-bold text-slate-800 hover:text-brand">
+                    <i data-lucide="phone" class="w-4 h-4 text-brand"></i>
+                    <span>{{ store.phone }}</span>
+                </a>
+                {% endif %}
+                <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1">
+                    <span>StoreBox platformasi</span>
+                    <span>v2.0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
     <!-- CART DRAWER (Video ikkinchi.mov 00:36)                         -->
     <!-- ============================================================= -->
     <div x-show="cartDrawerOpen" x-cloak class="fixed inset-0 z-50 flex justify-end bg-slate-900/50 backdrop-blur-xs">
@@ -835,6 +994,16 @@
                 cartDrawerOpen: false,
                 wishlistModalOpen: false,
                 infoModal: null,
+
+                init() {
+                    this.$watch('sideDrawerOpen', val => {
+                        if (val) {
+                            this.$nextTick(() => {
+                                if (window.lucide) window.lucide.createIcons();
+                            });
+                        }
+                    });
+                },
 
                 toggleWishlist(productId) {
                     const idx = this.wishlist.indexOf(productId);

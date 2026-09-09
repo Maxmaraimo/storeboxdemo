@@ -16,11 +16,22 @@ def design_theme_get_view(request):
     banner_data = {
         "title": banner.title if banner else f"«{store.name}»",
         "subtitle": banner.subtitle if banner else "",
-        "image_url": banner.image_url if banner else (banner.image.url if banner and banner.image else "")
+        "image_url": banner.image.url if (banner and banner.image) else (banner.image_url if banner else "")
     }
 
     niches = [
-        {"id": n_id, "name": n_info.get("name_uz", n_id), "emoji": n_info.get("emoji", "✨")}
+        {
+            "id": n_id,
+            "name": n_info.get("name_uz", n_id),
+            "name_ru": n_info.get("name_ru", n_id),
+            "emoji": n_info.get("emoji", "✨"),
+            "primary_color": n_info.get("primary_color", "#10B981"),
+            "bg_color": n_info.get("bg_color", "#F8FAFC"),
+            "card_style": n_info.get("card_style", "modern"),
+            "banner_images": n_info.get("banner_images", []),
+            "titles": n_info.get("titles", {}),
+            "subtitles": n_info.get("subtitles", {})
+        }
         for n_id, n_info in NICHE_PRESETS.items()
     ]
 
@@ -32,6 +43,7 @@ def design_theme_get_view(request):
         "theme_image_aspect": store.theme_image_aspect or "portrait",
         "theme_button_style": store.theme_button_style or "solid",
         "theme_business_niche": store.theme_business_niche or "flowers",
+        "logo_url": store.logo.url if store.logo else "",
         "banner": banner_data,
         "store_name": store.name,
         "subdomain": store.subdomain,
@@ -89,9 +101,79 @@ def design_theme_save_view(request):
         lang = getattr(request, "language", "uz")
         apply_niche_catalog_to_store(store, store.theme_business_niche or "restaurant", lang=lang)
 
+    # Store Name update
+    if "store_name" in data and str(data["store_name"]).strip():
+        store.name = str(data["store_name"]).strip()
+        store.save(update_fields=["name"])
+
     return Response({
         "success": True,
         "message": "Dizayn va mavzu sozlamalari muvaffaqiyatli saqlandi!"
+    })
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def design_logo_upload_view(request):
+    """Uploads store logo image directly from merchant device."""
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Dokon topilmadi"}, status=404)
+
+    logo_file = request.FILES.get("logo") or request.FILES.get("image") or request.FILES.get("file")
+    if not logo_file:
+        return Response({"error": "Logotip fayli tanlanmadi"}, status=400)
+
+    store.logo = logo_file
+    store.save(update_fields=["logo"])
+    return Response({
+        "success": True,
+        "logo_url": store.logo.url,
+        "message": "Logotip muvaffaqiyatli yuklandi!"
+    })
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def design_logo_delete_view(request):
+    """Removes the store logo."""
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Dokon topilmadi"}, status=404)
+
+    if store.logo:
+        store.logo.delete(save=False)
+        store.logo = None
+        store.save(update_fields=["logo"])
+    return Response({
+        "success": True,
+        "message": "Logotip olib tashlandi."
+    })
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def design_banner_upload_view(request):
+    """Uploads custom banner image directly from merchant device."""
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Dokon topilmadi"}, status=404)
+
+    banner_file = request.FILES.get("banner_file") or request.FILES.get("image") or request.FILES.get("file")
+    if not banner_file:
+        return Response({"error": "Banner fayli tanlanmadi"}, status=400)
+
+    primary_banner = MarketingBanner.objects.filter(store=store).first()
+    if not primary_banner:
+        primary_banner = MarketingBanner(store=store, title=f"«{store.name}»")
+
+    primary_banner.image = banner_file
+    primary_banner.image_url = ""
+    primary_banner.is_active = True
+    primary_banner.save()
+
+    return Response({
+        "success": True,
+        "image_url": primary_banner.image.url,
+        "banner_id": primary_banner.id,
+        "message": "Banner rasmi muvaffaqiyatli yuklandi!"
     })
 
 @api_view(["POST"])
@@ -152,8 +234,18 @@ def qr_catalog_settings_view(request):
                 pass
         if "qr_sub_text_color" in data:
             store.qr_sub_text_color = data["qr_sub_text_color"]
+
+        # Support direct logo upload from QR page
+        logo_file = request.FILES.get("logo") or request.FILES.get("file")
+        if logo_file:
+            store.logo = logo_file
+
         store.save()
-        return Response({"success": True, "message": "QR katalog sozlamalari muvaffaqiyatli saqlandi!"})
+        return Response({
+            "success": True,
+            "logo_url": store.logo.url if store.logo else "",
+            "message": "QR katalog sozlamalari muvaffaqiyatli saqlandi!"
+        })
 
     # GET
     store_url = f"https://{store.subdomain}.storebox.uz"
@@ -167,10 +259,10 @@ def qr_catalog_settings_view(request):
         "qr_paper_size": store.qr_paper_size or "A5",
         "qr_bg_color": store.qr_bg_color or "#FFFFFF",
         "qr_code_color": store.qr_code_color or "#0F172A",
-        "qr_main_text": store.qr_main_text or store.name,
+        "qr_main_text": store.qr_main_text or "Online buyurtma",
         "qr_main_text_size": store.qr_main_text_size or 24,
         "qr_main_text_color": store.qr_main_text_color or "#0F172A",
-        "qr_sub_text": store.qr_sub_text or "Online buyurtma va menyu",
-        "qr_sub_text_size": store.qr_sub_text_size or 12,
+        "qr_sub_text": store.qr_sub_text or "Menyuni ko'rish uchun QR kodni skanerlang",
+        "qr_sub_text_size": store.qr_sub_text_size or 13,
         "qr_sub_text_color": store.qr_sub_text_color or "#64748B"
     })

@@ -26,6 +26,9 @@ class Category(models.Model):
             return self.image.url
         if self.image_url:
             return self.image_url
+        first_p = self.products.filter(is_active=True).first() or self.products.first()
+        if first_p and first_p.primary_image_url:
+            return first_p.primary_image_url
         return None
 
     @property

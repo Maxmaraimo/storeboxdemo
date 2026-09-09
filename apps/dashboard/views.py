@@ -2542,11 +2542,20 @@ def yespos_catalog_api(request):
 
     force_refresh = request.GET.get('force') == '1'
 
+    # Anti-spam in-flight deduplication: if already fetching, reuse cache
+    cat_lock_key = f"yp_catalog_lock_{store.id}"
+    if force_refresh:
+        if not cache.add(cat_lock_key, True, timeout=15):
+            force_refresh = False
+
     try:
         client = YesPosClient()
-        catalog = client.get_catalog(api_key, branch_id, force_refresh=force_refresh)
+        catalog = client.get_catalog(api_key, branch_id, force_refresh=force_refresh, store=store)
     except Exception as e:
         return JsonResponse({'success': False, 'error': f"YES POS xatosi: {str(e)}"}, status=400)
+    finally:
+        if force_refresh:
+            cache.delete(cat_lock_key)
 
     # Check which products are already linked
     linked_ids = set(
@@ -2564,7 +2573,7 @@ def yespos_catalog_api(request):
 
 
 def yespos_image_proxy(request):
-    """Proxy product images with permanent local disk caching to strictly protect YES POS from request floods"""
+    """Proxy product images with disk caching and circuit breaker to protect YES POS from floods"""
     raw_path = request.GET.get('path', '').strip()
     if not raw_path or '..' in raw_path:
         return HttpResponseNotFound('Invalid image path')
@@ -2575,7 +2584,7 @@ def yespos_image_proxy(request):
 
     path_hash = hashlib.md5(clean_path.encode()).hexdigest()
     failed_key = f"yp_failed_img_{path_hash}"
-    if cache.get(failed_key):
+    if cache.get(failed_key) or cache.get('yp_media_host_down'):
         return HttpResponseNotFound('Image unavailable')
 
     cache_dir = os.path.join(settings.MEDIA_ROOT, 'yespos_cache')
@@ -2593,14 +2602,16 @@ def yespos_image_proxy(request):
             except Exception:
                 pass
 
-    # 2. Not on disk: fetch ONCE from YES POS with safe lock
+    # 2. Fetch ONCE from remote media host with 0 retries and strict timeout
     client = YesPosClient()
     remote_url = client.get_remote_image_url(clean_path)
     if not remote_url:
         return HttpResponseNotFound('Invalid image URL')
 
     try:
-        resp = requests.get(remote_url, timeout=6)
+        from apps.catalog.yespos_client import get_yespos_session
+        session = get_yespos_session()
+        resp = session.get(remote_url, timeout=(2.0, 3.0))
         if resp.status_code == 200 and resp.content:
             content = resp.content
             ext = 'jpg'
@@ -2620,9 +2631,11 @@ def yespos_image_proxy(request):
             response['Cache-Control'] = 'public, max-age=2592000, immutable'
             return response
         else:
-            cache.set(failed_key, True, 21600)
+            cache.set(failed_key, True, 86400)
     except Exception as e:
-        cache.set(failed_key, True, 21600)
+        # Trip media host circuit breaker on connection error to save server
+        cache.set('yp_media_host_down', True, 3600)
+        cache.set(failed_key, True, 86400)
 
     return HttpResponseNotFound('Image not found')
 
@@ -2645,16 +2658,29 @@ def yespos_import_api(request):
     if not items:
         return JsonResponse({'success': False, 'error': 'Import qilish uchun tovarlar tanlanmadi'}, status=400)
 
-    client = YesPosClient()
-    result = client.import_products(store, items)
+    # Anti-duplicate in-flight lock: reject concurrent clicks
+    import_lock_key = f"yp_import_inflight_{store.id}"
+    if not cache.add(import_lock_key, True, timeout=60):
+        return JsonResponse({
+            'success': False,
+            'error': 'Import jarayoni allaqachon bajarilmoqda. Iltimos, kuting.'
+        }, status=429)
 
-    return JsonResponse({
-        'success': True,
-        'created': result['created'],
-        'updated': result['updated'],
-        'total': result['total'],
-        'message': f"Muvaffaqiyatli import qilindi: {result['created']} yangi, {result['updated']} yangilandi."
-    })
+    try:
+        client = YesPosClient()
+        result = client.import_products(store, items)
+        return JsonResponse({
+            'success': True,
+            'created': result['created'],
+            'updated': result['updated'],
+            'total': result['total'],
+            'message': f"Muvaffaqiyatli import qilindi: {result['created']} yangi, {result['updated']} yangilandi."
+        })
+    except Exception as e:
+        logger.warning(f"Error during yespos_import_api for store {store.id}: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    finally:
+        cache.delete(import_lock_key)
 
 
 @login_required
@@ -2670,26 +2696,37 @@ def yespos_sync_api(request):
     if not connection or not connection.is_active:
         return JsonResponse({'success': False, 'error': 'YES POS ulanmagan'}, status=400)
 
-    # Strict rate-limiting on sync: max once per 60 seconds to protect YES POS
-    sync_cooldown_key = f"yp_sync_cooldown_{store.id}"
-    if cache.get(sync_cooldown_key):
+    # 1. Anti-spam in-flight lock: prevents concurrent duplicate clicks
+    sync_lock_key = f"yp_sync_inflight_{store.id}"
+    if not cache.add(sync_lock_key, True, timeout=30):
         return JsonResponse({
-            'success': True,
-            'updated': 0,
-            'message': 'YES POS serverini asrash maqsadida so‘rovlar cheklangan. Maʼlumotlar yaqinda yangilangan (keyingi yangilash 1 daqiqadan so‘ng).'
-        })
+            'success': False,
+            'error': 'Sinxronizatsiya allaqachon bajarilmoqda. Iltimos, kuting.'
+        }, status=429)
 
     try:
+        # 2. Cooldown check: at least 15 seconds between sync executions
+        sync_cooldown_key = f"yp_sync_cooldown_{store.id}"
+        if cache.get(sync_cooldown_key):
+            return JsonResponse({
+                'success': True,
+                'updated': 0,
+                'message': 'Maʼlumotlar yaqinda yangilangan. Serverni asrash uchun keyingi yangilash 15 soniyadan so‘ng.'
+            })
+
         client = YesPosClient()
         result = client.sync_store_products(store)
-        cache.set(sync_cooldown_key, True, 60)
+        cache.set(sync_cooldown_key, True, 15)
         return JsonResponse({
             'success': True,
             'updated': result['updated'],
             'message': f"{result['updated']} ta tovar narxlari va qoldiqlari muvaffaqiyatli yangilandi."
         })
     except Exception as e:
+        logger.warning(f"Error during yespos_sync_api for store {store.id}: {e}")
         return JsonResponse({
             'success': False,
             'error': str(e)
         }, status=400)
+    finally:
+        cache.delete(sync_lock_key)

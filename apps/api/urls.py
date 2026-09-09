@@ -14,6 +14,7 @@ urlpatterns = [
 
     # Dashboard Summary & Charts
     path("dashboard/summary/", views_dashboard.dashboard_summary_view, name="dashboard_summary"),
+    path("dashboard/stats/", views_dashboard.dashboard_summary_view, name="dashboard_stats"),
 
     # Orders
     path("orders/", views_orders.orders_list_view, name="orders_list"),
@@ -38,6 +39,9 @@ urlpatterns = [
     # AI Design Studio & QR Catalog
     path("design/theme/", views_design.design_theme_get_view, name="design_theme_get"),
     path("design/theme/save/", views_design.design_theme_save_view, name="design_theme_save"),
+    path("design/logo/upload/", views_design.design_logo_upload_view, name="design_logo_upload"),
+    path("design/logo/delete/", views_design.design_logo_delete_view, name="design_logo_delete"),
+    path("design/banner/upload/", views_design.design_banner_upload_view, name="design_banner_upload"),
     path("design/ai-suggest/", views_design.design_ai_suggest_view, name="design_ai_suggest"),
     path("design/apply-niche/", views_design.design_apply_niche_view, name="design_apply_niche"),
     path("platforms/qr/", views_design.qr_catalog_settings_view, name="qr_catalog_settings"),
