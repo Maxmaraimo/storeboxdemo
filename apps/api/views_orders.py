@@ -81,10 +81,18 @@ def update_order_status_view(request, order_id):
     if new_status not in valid_statuses:
         return Response({"error": f"Noto`g`ri holat: {new_status}"}, status=400)
 
+    old_status = order.status
     order.status = new_status
     order.save(update_fields=["status", "updated_at"])
+
+    if new_status == Order.OrderStatuses.CANCELLED and old_status != Order.OrderStatuses.CANCELLED:
+        for item in order.items.all():
+            if item.product:
+                item.product.stock += item.quantity
+                item.product.save(update_fields=["stock", "updated_at"])
 
     return Response({
         "message": f"Buyurtma holati {order.get_status_display()} ga o`zgartirildi",
         "order": OrderSerializer(order).data
     })
+

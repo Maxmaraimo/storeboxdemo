@@ -221,6 +221,11 @@ def storefront_home_view(request, subdomain=None):
     from apps.orders.models import MarketingBanner
     banners = MarketingBanner.objects.filter(store=store, is_active=True).order_by('sort_order', 'id')
 
+    # Template override (for direct testing and preview)
+    req_template = request.GET.get('template')
+    if req_template in ['restaurant', 'universal', 'boutique']:
+        store.theme_template = req_template
+
     # Live Preview overrides for interactive dashboard design customizer
     if request.GET.get('preview') == '1':
         if request.GET.get('primary_color'):

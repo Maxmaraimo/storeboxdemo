@@ -73,13 +73,21 @@ class SubdomainTenantMiddleware:
                 request.store = None
                 request.is_platform_root = True
                 subdomain = None
+            elif path == '/' and not subdomain:
+                # Platform root on main host without subdomain is ALWAYS platform landing
+                request.store = None
+                request.is_platform_root = True
+                subdomain = None
             elif path.startswith('/store/'):
                 parts = path.strip('/').split('/')
                 if len(parts) >= 2:
                     subdomain = parts[1]
                     request.session['current_store_subdomain'] = subdomain
             elif not subdomain and request.session.get('current_store_subdomain'):
-                subdomain = request.session.get('current_store_subdomain')
+                # Only fallback to session store for store-specific subpaths (like /cart/, /checkout/, /order/)
+                store_specific_paths = ('/cart', '/checkout', '/order', '/profile', '/product')
+                if any(path.startswith(p) for p in store_specific_paths):
+                    subdomain = request.session.get('current_store_subdomain')
 
             if subdomain and subdomain not in ['www', 'api', 'app', 'admin', 'super-admin']:
                 try:

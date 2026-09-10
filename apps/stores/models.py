@@ -122,6 +122,17 @@ class Store(models.Model):
         default='#F8FAFC',
         verbose_name='Цвет фона сайта'
     )
+    class ThemeTemplates(models.TextChoices):
+        RESTAURANT = 'restaurant', 'Restoran & Yetkazib berish'
+        UNIVERSAL = 'universal', "Universal do'kon"
+        BOUTIQUE = 'boutique', 'Vizual Butik & Moda'
+
+    theme_template = models.CharField(
+        max_length=30,
+        choices=ThemeTemplates.choices,
+        default=ThemeTemplates.UNIVERSAL,
+        verbose_name='Шаблон витрины'
+    )
     theme_business_niche = models.CharField(
         max_length=50,
         blank=True,

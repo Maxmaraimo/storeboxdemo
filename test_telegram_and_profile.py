@@ -1,3 +1,9 @@
+try:
+    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    async_playwright = None
+    sync_playwright = None
 import os
 import sys
 import time
@@ -11,7 +17,6 @@ django.setup()
 from apps.stores.models import Store
 from apps.orders.models import Order, OrderItem, Customer
 from apps.telegram_bot.services import get_bot_info, process_telegram_update, format_order_telegram_message, send_telegram_notification
-from playwright.sync_api import sync_playwright
 
 def test_telegram_services():
     print("\n--- 1. TESTING TELEGRAM BOT SERVICES & USER TOKEN ---")

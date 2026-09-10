@@ -464,6 +464,11 @@ def register_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard:home')
 
+    plan = request.GET.get('plan', '').strip().lower() or request.POST.get('plan', '').strip().lower()
+    duration = request.GET.get('duration', '').strip() or request.POST.get('duration', '').strip()
+    if plan and plan not in ['start', 'basic', 'pro', 'professional']:
+        plan = 'basic'
+
     error = None
     if request.method == 'POST':
         phone = request.POST.get('phone', '').strip()
@@ -539,14 +544,49 @@ def register_view(request):
                     role=User.Roles.MERCHANT
                 )
                 login(request, user)
+                if plan:
+                    request.session['selected_plan'] = plan
+                if duration:
+                    request.session['selected_duration'] = duration
                 return redirect('dashboard:onboarding')
+
+    plan_labels = {
+        'start': 'Start (300 000 UZS)',
+        'basic': 'Basic (500 000 UZS)',
+        'pro': 'Professional (900 000 UZS)',
+        'professional': 'Professional (900 000 UZS)'
+    }
 
     return render(request, 'dashboard/auth/register.html', {
         'error': error,
+        'selected_plan': plan,
+        'selected_plan_label': plan_labels.get(plan, ''),
+        'selected_duration': duration,
         'submitted_country': request.POST.get('country_code', 'uz'),
         'submitted_phone': request.POST.get('phone', ''),
         'submitted_email': request.POST.get('email', '')
     })
+
+
+def dev_login_view(request):
+    if settings.DEBUG:
+        from apps.accounts.models import User
+        from apps.stores.models import Store
+        from django.contrib.auth import login
+        user = User.objects.filter(role=User.Roles.MERCHANT).first() or User.objects.filter(is_superuser=True).first()
+        if user:
+            login(request, user)
+            store = user.stores.filter(is_active=True).first() or Store.objects.filter(is_active=True).first()
+            if store:
+                request.session['merchant_current_store_id'] = store.id
+                request.session['current_store_subdomain'] = store.subdomain
+        theme = request.GET.get('theme')
+        next_url = request.GET.get('next') or '/dashboard/'
+        if theme:
+            delimiter = '&' if '?' in next_url else '?'
+            next_url = f"{next_url}{delimiter}theme={theme}"
+        return redirect(next_url)
+    return HttpResponseForbidden()
 
 
 def login_view(request):

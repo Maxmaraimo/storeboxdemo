@@ -73,8 +73,8 @@
                                  class="absolute left-0 top-full mt-1.5 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-1.5 max-h-56 overflow-y-auto space-y-0.5">
                                 <template x-for="c in countries" :key="c.id">
                                     <button type="button" @click="selectCountry(c)"
-                                            class="w-full px-3 py-2 rounded-xl text-left text-xs font-bold flex items-center gap-2 hover:bg-emerald-50 transition-colors"
-                                            :class="selectedCountry.id === c.id ? 'bg-emerald-50 text-brand' : 'text-slate-700'">
+                                            class="w-full px-3 py-2 rounded-xl text-left text-xs font-bold flex items-center gap-2 hover:bg-violet-50 transition-colors"
+                                            :class="selectedCountry.id === c.id ? 'bg-violet-50 text-brand' : 'text-slate-700'">
                                         <span class="text-base" x-text="c.flag"></span>
                                         <span class="flex-1 truncate" x-text="c.nameRu || c.name"></span>
                                         <span class="font-mono text-[11px] text-slate-400" x-text="c.dialCode"></span>
@@ -150,7 +150,7 @@
                         </p>
                     </div>
                     <button type="button" @click="locateMe()"
-                            class="flex items-center gap-1.5 text-xs font-bold text-brand hover:text-brand-dark transition-colors px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 shadow-2xs">
+                            class="flex items-center gap-1.5 text-xs font-bold text-brand hover:text-brand-dark transition-colors px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 shadow-2xs">
                         <i data-lucide="crosshair" class="w-3.5 h-3.5" :class="isLocating ? 'animate-spin' : ''"></i>
                         <span x-text="isLocating ? '{% if lang == 'uz' %}Aniqlanmoqda...{% else %}Определение...{% endif %}' : '{% if lang == 'uz' %}Mening joylashuvim{% else %}Мое местоположение{% endif %}'"></span>
                     </button>
@@ -215,8 +215,8 @@
                          class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-100">
                         <template x-for="res in searchResults" :key="res.lat + '_' + res.lng + '_' + res.display_name">
                             <div @click="selectSearchResult(res)" data-action="select-loc"
-                                 class="p-3 text-xs hover:bg-emerald-50/70 cursor-pointer flex items-start gap-3 transition-colors group">
-                                <div class="w-7 h-7 rounded-lg bg-emerald-100 text-brand flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-brand group-hover:text-white transition-colors">
+                                 class="p-3 text-xs hover:bg-violet-50/70 cursor-pointer flex items-start gap-3 transition-colors group">
+                                <div class="w-7 h-7 rounded-lg bg-violet-100 text-brand flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-brand group-hover:text-white transition-colors">
                                     <i data-lucide="map-pin" class="w-4 h-4"></i>
                                 </div>
                                 <div class="min-w-0 flex-1">
@@ -240,9 +240,9 @@
                 </div>
 
                 <!-- Selected Address Confirmation Badge -->
-                <div class="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/80 flex items-center justify-between text-xs transition-all">
+                <div class="p-3 rounded-xl bg-violet-50/80 border border-violet-200/80 flex items-center justify-between text-xs transition-all">
                     <div class="flex items-center gap-2 min-w-0">
-                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0" :class="isReverseGeocoding ? 'animate-pulse text-amber-500' : ''"></i>
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-violet-600 shrink-0" :class="isReverseGeocoding ? 'animate-pulse text-amber-500' : ''"></i>
                         <span class="text-slate-700 truncate">
                             {% if lang == 'uz' %}Tanlangan manzil:{% else %}Выбранный адрес:{% endif %}
                             <strong class="text-slate-900 ml-1" x-text="deliveryStreet || '{% if lang == 'uz' %}Xaritadan tanlang{% else %}Выберите на карте{% endif %}'"></strong>

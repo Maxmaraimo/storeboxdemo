@@ -128,3 +128,63 @@ class PaymentGatewaysTests(TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.order.payment_status, Order.PaymentStatuses.PAID)
         self.assertEqual(self.order.payment_method, Order.PaymentMethods.PAYME)
+
+    def test_uzum_webhook_workflow(self):
+        payload = {
+            'order_number': self.order.order_number,
+            'status': 'SUCCESS',
+            'transactionId': 'uzum_9999'
+        }
+        res = self.client.post('/payments/uzum/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()['status'], 'ok')
+
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.payment_status, Order.PaymentStatuses.PAID)
+        self.assertEqual(self.order.payment_method, Order.PaymentMethods.UZUM)
+
+    def test_simulate_payment(self):
+        res = self.client.get(f'/payments/simulate/{self.order.order_number}/?gateway=CLICK')
+        self.assertEqual(res.status_code, 302)
+        self.assertIn('/order/SB-PAY-100/success/', res.url)
+
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.payment_status, Order.PaymentStatuses.PAID)
+        self.assertEqual(self.order.payment_method, Order.PaymentMethods.CLICK)
+
+    def test_duplicate_click_prepare_idempotency(self):
+        # First prepare succeeds
+        prepare_payload = {
+            'click_trans_id': '789012',
+            'service_id': 'TEST_SERVICE',
+            'merchant_trans_id': self.order.order_number,
+            'amount': '65000.00',
+            'action': '0',
+            'sign_time': '2026-09-03 12:00:00',
+            'sign_string': 'dummy'
+        }
+        res1 = self.client.post('/payments/click/prepare/', data=prepare_payload)
+        self.assertEqual(res1.status_code, 200)
+        self.assertEqual(res1.json()['error'], 0)
+
+        # Mark paid
+        self.order.payment_status = Order.PaymentStatuses.PAID
+        self.order.save()
+
+        # Duplicate prepare returns error -4 (already paid)
+        res2 = self.client.post('/payments/click/prepare/', data=prepare_payload)
+        self.assertEqual(res2.status_code, 200)
+        self.assertEqual(res2.json()['error'], -4)
+
+    def test_payment_service_layer(self):
+        from apps.payments.services import PaymentService, ClickProvider, PaymeProvider, UzumPayProvider
+
+        click_p = PaymentService.get_provider(self.store, 'CLICK')
+        self.assertIsInstance(click_p, ClickProvider)
+
+        click_url = PaymentService.get_payment_url(self.order, 'CLICK')
+        self.assertIn('my.click.uz', click_url)
+        self.assertIn(self.order.order_number, click_url)
+
+        payme_url = PaymentService.get_payment_url(self.order, 'PAYME')
+        self.assertIn('checkout.paycom.uz', payme_url)

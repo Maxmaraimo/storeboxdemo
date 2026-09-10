@@ -1,6 +1,11 @@
+try:
+    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    async_playwright = None
+    sync_playwright = None
 import asyncio
 import os
-from playwright.async_api import async_playwright
 
 async def run_full_browser_verification():
     print("==================================================================")

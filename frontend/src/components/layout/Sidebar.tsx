@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -6,30 +6,44 @@ import {
   Users,
   MessageSquare,
   Package,
+  FolderTree,
+  Tag,
+  Barcode,
+  Boxes,
   Megaphone,
-  Share2,
+  Bot,
+  Sparkles,
+  QrCode,
+  Monitor,
+  Store as StoreIcon,
   CreditCard,
   Truck,
   MapPin,
   UserCheck,
   BadgePercent,
-  Store as StoreIcon,
   Settings,
-  ChevronDown,
-  ExternalLink,
-  QrCode,
-  Sparkles,
-  Database
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { store, stores, switchStore, t } = useAuth();
-  const [catalogOpen, setCatalogOpen] = useState(true);
-  const [marketingOpen, setMarketingOpen] = useState(false);
-  const [platformsOpen, setPlatformsOpen] = useState(true);
-  const [storeSelectOpen, setStoreSelectOpen] = useState(false);
+  const { store } = useAuth();
+  // Expanded by default for clear readability, with toggle to collapse
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    const saved = localStorage.getItem("storebox_sidebar_expanded");
+    return saved !== null ? saved === "true" : true;
+  });
+
+  const toggleExpand = () => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem("storebox_sidebar_expanded", String(next));
+      return next;
+    });
+  };
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -37,259 +51,212 @@ export const Sidebar: React.FC = () => {
     return false;
   };
 
-  const navItemClass = (active: boolean) =>
-    `flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-      active
-        ? "bg-brand text-white shadow-xs font-black"
-        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
-    }`;
-
-  const subItemClass = (active: boolean) =>
-    `block py-1.5 px-3 rounded-xl text-[11px] font-bold transition-colors ${
-      active ? "text-brand bg-emerald-50/80 font-black" : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-    }`;
+  const navSections = [
+    {
+      title: "Asosiy",
+      items: [
+        { path: "/", icon: LayoutDashboard, label: "Boshqaruv paneli", badge: null },
+        { path: "/orders", icon: ShoppingCart, label: "Buyurtmalar", badge: "12" },
+        { path: "/customers", icon: Users, label: "Mijozlar", badge: null },
+        { path: "/chats", icon: MessageSquare, label: "Xabarlar & Chat", badge: "3" },
+      ],
+    },
+    {
+      title: "Mahsulotlar & Ombor",
+      items: [
+        { path: "/products", icon: Package, label: "Barcha mahsulotlar", badge: null },
+        { path: "/categories", icon: FolderTree, label: "Kategoriyalar", badge: null },
+        { path: "/discounts", icon: Tag, label: "Chegirmalar", badge: null },
+        { path: "/ikpu", icon: Barcode, label: "IKPU kodlari", badge: null },
+        { path: "/warehouse", icon: Boxes, label: "Omborxona", badge: null },
+      ],
+    },
+    {
+      title: "Marketing & Integratsiyalar",
+      items: [
+        { path: "/marketing", icon: Megaphone, label: "Marketing & Aksiya", badge: null },
+        { path: "/platforms", icon: Bot, label: "Telegram Bot", badge: null },
+        { path: "/design", icon: Sparkles, label: "Dizayn & AI vitrina", badge: "AI" },
+        { path: "/platforms/qr", icon: QrCode, label: "QR Menyu & Katalog", badge: null },
+        { path: "/yespos", icon: Monitor, label: "YesPOS integratsiya", badge: "POS" },
+        { path: "/robo-market", icon: StoreIcon, label: "StoreBox Market", badge: null },
+      ],
+    },
+    {
+      title: "Sozlamalar",
+      items: [
+        { path: "/settings/payments", icon: CreditCard, label: "To'lov tizimlari", badge: null },
+        { path: "/settings/delivery", icon: Truck, label: "Yetkazib berish", badge: null },
+        { path: "/settings/branches", icon: MapPin, label: "Filiallar", badge: null },
+        { path: "/settings/staff", icon: UserCheck, label: "Xodimlar & Rollar", badge: null },
+        { path: "/settings/tariffs", icon: BadgePercent, label: "Tarif rejalari", badge: null },
+        { path: "/settings", icon: Settings, label: "Asosiy sozlamalar", badge: null },
+      ],
+    },
+  ];
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200/80 shrink-0 hidden lg:flex flex-col justify-between p-4 sticky top-0 h-screen overflow-y-auto">
-      <div className="space-y-4">
-        {/* LOGO */}
-        <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b border-slate-100">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-dark to-brand flex items-center justify-center text-white font-black text-base shadow-xs group-hover:scale-105 transition-transform">
-              S
+    <aside
+      className={`bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 rounded-[28px] shadow-lg shadow-black/[0.03] dark:shadow-black/40 shrink-0 hidden lg:flex flex-col justify-between py-4 px-3 sticky top-4 h-[calc(100vh-32px)] transition-all duration-300 z-40 ${
+        isExpanded ? "w-64" : "w-[72px]"
+      }`}
+    >
+      {/* 1. TOP LOGO & STORE SUBDOMAIN */}
+      <div className="flex flex-col gap-3 pb-3 border-b border-black/[0.06] dark:border-white/10">
+        <div className="flex items-center justify-between px-1">
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 group overflow-hidden"
+            title="StoreBox Dashboard"
+          >
+            {/* Apple 6-dot Cluster Icon */}
+            <div className="w-10 h-10 rounded-2xl bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                <circle cx="12" cy="5" r="2.5" />
+                <circle cx="18" cy="8.5" r="2.5" />
+                <circle cx="18" cy="15.5" r="2.5" />
+                <circle cx="12" cy="19" r="2.5" />
+                <circle cx="6" cy="15.5" r="2.5" />
+                <circle cx="6" cy="8.5" r="2.5" />
+                <circle cx="12" cy="12" r="1.8" className="opacity-60" />
+              </svg>
             </div>
-            <div>
-              <div className="text-sm font-black tracking-tight text-slate-900 leading-none">
-                Store<span className="text-brand">Box</span>
-              </div>
-              <div className="text-[9px] font-mono font-bold text-slate-400 mt-0.5">PLATFORM 2.0</div>
-            </div>
-          </Link>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-            PRO
-          </span>
-        </div>
 
-        {/* STORE SWITCHER */}
-        <div className="relative">
+            {isExpanded && (
+              <div className="text-left truncate">
+                <div className="text-sm font-black tracking-tight text-neutral-900 dark:text-white leading-none">
+                  Store<span className="text-neutral-500 dark:text-neutral-400">Box</span>
+                </div>
+                <div className="text-[9px] font-mono font-bold text-neutral-400 mt-0.5 tracking-wider">
+                  STUDIO 2.0
+                </div>
+              </div>
+            )}
+          </Link>
+
+          {/* Collapse/Expand Toggle Button */}
           <button
             type="button"
-            onClick={() => setStoreSelectOpen(!storeSelectOpen)}
-            className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 transition-colors text-left"
+            onClick={toggleExpand}
+            className="w-7 h-7 rounded-xl flex items-center justify-center text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+            title={isExpanded ? "Kichraytirish" : "Kengaytirish"}
           >
-            <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-black shrink-0">
-                {store?.name?.charAt(0) || "S"}
-              </div>
-              <div className="truncate">
-                <div className="text-xs font-black text-slate-900 truncate">{store?.name || "StoreBox"}</div>
-                <div className="text-[10px] text-slate-400 font-mono truncate">{store?.subdomain}.storebox.uz</div>
-              </div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            {isExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
-
-          {storeSelectOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 space-y-1">
-              {stores.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => {
-                    switchStore(s.id);
-                    setStoreSelectOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs font-bold transition-colors ${
-                    s.id === store?.id ? "bg-emerald-50 text-brand" : "hover:bg-slate-50 text-slate-700"
-                  }`}
-                >
-                  <span className="truncate">{s.name}</span>
-                  {s.id === store?.id && <span className="text-[10px] font-mono">✓</span>}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* 14-SECTION NAVIGATION */}
-        <nav className="space-y-1">
-          {/* 1. Dashboard */}
-          <Link to="/" className={navItemClass(isActive("/"))}>
-            <LayoutDashboard className="w-4 h-4" />
-            <span>{t("dashboard")}</span>
-          </Link>
-
-          {/* 2. Orders */}
-          <Link to="/orders" className={navItemClass(isActive("/orders"))}>
-            <ShoppingCart className="w-4 h-4" />
-            <span className="flex-1">{t("orders")}</span>
-          </Link>
-
-          {/* 3. Customers */}
-          <Link to="/customers" className={navItemClass(isActive("/customers"))}>
-            <Users className="w-4 h-4" />
-            <span>{t("customers")}</span>
-          </Link>
-
-          {/* 4. Chat */}
-          <Link to="/chats" className={navItemClass(isActive("/chats"))}>
-            <MessageSquare className="w-4 h-4" />
-            <span>{t("chat")}</span>
-          </Link>
-
-          {/* 5. Products (Accordion) */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setCatalogOpen(!catalogOpen)}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-            >
-              <div className="flex items-center gap-3">
-                <Package className="w-4 h-4" />
-                <span>{t("products")}</span>
-              </div>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${catalogOpen ? "rotate-180" : ""}`} />
-            </button>
-            {catalogOpen && (
-              <div className="pl-7 space-y-1 pt-1">
-                <Link to="/categories" className={subItemClass(isActive("/categories"))}>
-                  {t("categories")}
-                </Link>
-                <Link to="/products" className={subItemClass(isActive("/products"))}>
-                  {t("all_products")}
-                </Link>
-                <Link to="/discounts" className={subItemClass(isActive("/discounts"))}>
-                  {t("discounts")}
-                </Link>
-                <Link to="/ikpu" className={subItemClass(isActive("/ikpu"))}>
-                  {t("ikpu")}
-                </Link>
-                <Link to="/warehouse" className={subItemClass(isActive("/warehouse"))}>
-                  {t("warehouse")}
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* 6. Marketing (Accordion) */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setMarketingOpen(!marketingOpen)}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-            >
-              <div className="flex items-center gap-3">
-                <Megaphone className="w-4 h-4" />
-                <span>{t("marketing")}</span>
-              </div>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${marketingOpen ? "rotate-180" : ""}`} />
-            </button>
-            {marketingOpen && (
-              <div className="pl-7 space-y-1 pt-1">
-                <Link to="/marketing" className={subItemClass(isActive("/marketing"))}>
-                  {t("broadcast")}
-                </Link>
-                <Link to="/marketing?tab=promokod" className={subItemClass(location.search.includes("promokod"))}>
-                  {t("promocodes")}
-                </Link>
-                <Link to="/marketing?tab=banner" className={subItemClass(location.search.includes("banner"))}>
-                  {t("banner")}
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* 7. Platforms (Accordion) */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setPlatformsOpen(!platformsOpen)}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-            >
-              <div className="flex items-center gap-3">
-                <Share2 className="w-4 h-4" />
-                <span>{t("platforms")}</span>
-              </div>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${platformsOpen ? "rotate-180" : ""}`} />
-            </button>
-            {platformsOpen && (
-              <div className="pl-7 space-y-1 pt-1">
-                <Link to="/platforms" className={subItemClass(isActive("/platforms") && !isActive("/platforms/qr"))}>
-                  {t("telegram_bot")}
-                </Link>
-                <Link to="/design" className={`${subItemClass(isActive("/design"))} flex items-center justify-between`}>
-                  <span>Dizayn & AI</span>
-                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">AI</span>
-                </Link>
-                <Link to="/platforms/qr" className={`${subItemClass(isActive("/platforms/qr"))} flex items-center justify-between`}>
-                  <span>{t("qr_catalog")}</span>
-                  <QrCode className="w-3.5 h-3.5 text-slate-400" />
-                </Link>
-                <Link to="/yespos" className={`${subItemClass(isActive("/yespos"))} flex items-center justify-between`}>
-                  <span>{t("yespos_import")}</span>
-                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">POS</span>
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* 8. Payments */}
-          <Link to="/settings/payments" className={navItemClass(isActive("/settings/payments"))}>
-            <CreditCard className="w-4 h-4" />
-            <span>{t("payment_methods")}</span>
-          </Link>
-
-          {/* 9. Delivery */}
-          <Link to="/settings/delivery" className={navItemClass(isActive("/settings/delivery"))}>
-            <Truck className="w-4 h-4" />
-            <span>{t("delivery")}</span>
-          </Link>
-
-          {/* 10. Branches */}
-          <Link to="/settings/branches" className={navItemClass(isActive("/settings/branches"))}>
-            <MapPin className="w-4 h-4" />
-            <span>{t("branches")}</span>
-          </Link>
-
-          {/* 11. Staff */}
-          <Link to="/settings/staff" className={navItemClass(isActive("/settings/staff"))}>
-            <UserCheck className="w-4 h-4" />
-            <span>{t("staff")}</span>
-          </Link>
-
-          {/* 12. Tariffs */}
-          <Link to="/settings/tariffs" className={navItemClass(isActive("/settings/tariffs"))}>
-            <BadgePercent className="w-4 h-4" />
-            <span>{t("tariffs")}</span>
-          </Link>
-
-          {/* 13. StoreBox Market */}
-          <Link to="/robo-market" className={navItemClass(isActive("/robo-market"))}>
-            <StoreIcon className="w-4 h-4" />
-            <span>{t("storebox_market")}</span>
-          </Link>
-
-          {/* 14. Settings */}
-          <Link to="/settings" className={navItemClass(isActive("/settings") && !isActive("/settings/"))}>
-            <Settings className="w-4 h-4" />
-            <span>{t("settings")}</span>
-          </Link>
-        </nav>
+        {/* Live Store Subdomain Pill */}
+        {isExpanded && store?.subdomain && (
+          <a
+            href={`/store/${store.subdomain}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-2.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/[0.04] dark:border-white/10 flex items-center justify-between text-[11px] font-mono font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors group"
+            title="Do'kon vitrinasini ochish"
+          >
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="truncate">{store.subdomain}.storebox.uz</span>
+            </div>
+            <ExternalLink className="w-3 h-3 text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white shrink-0" />
+          </a>
+        )}
       </div>
 
-      {/* FOOTER STORE LINK */}
-      {store?.subdomain && (
-        <a
-          href={`/store/${store.subdomain}/`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-3 rounded-2xl bg-emerald-50/60 border border-emerald-200/60 flex items-center justify-between group hover:bg-emerald-100/60 transition-colors"
-        >
-          <div className="flex items-center gap-2 truncate">
-            <StoreIcon className="w-4 h-4 text-brand" />
-            <span className="text-xs font-bold text-slate-800 truncate">{t("view_site")}</span>
+      {/* 2. SCROLLABLE NAVIGATION LIST */}
+      <nav className="flex-1 overflow-y-auto no-scrollbar py-2 space-y-4">
+        {navSections.map((section, sIdx) => (
+          <div key={sIdx} className="space-y-1">
+            {isExpanded && (
+              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                {section.title}
+              </div>
+            )}
+
+            {section.items.map((item) => {
+              const active = isActive(item.path);
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`relative flex items-center rounded-2xl transition-all duration-150 group ${
+                    isExpanded
+                      ? "px-3 py-2 gap-2.5 w-full text-xs"
+                      : "w-11 h-11 mx-auto justify-center"
+                  } ${
+                    active
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-sm font-bold"
+                      : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 font-medium"
+                  }`}
+                  title={!isExpanded ? item.label : undefined}
+                >
+                  <Icon
+                    className={`w-4 h-4 shrink-0 transition-transform ${
+                      active ? "scale-105" : "group-hover:scale-105"
+                    }`}
+                  />
+
+                  {isExpanded && (
+                    <span className="truncate flex-1">{item.label}</span>
+                  )}
+
+                  {/* Badges */}
+                  {item.badge && (
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                        isExpanded ? "shrink-0 ml-auto" : "absolute -top-1 -right-1"
+                      } ${
+                        active
+                          ? "bg-white/20 dark:bg-black/20 text-white dark:text-neutral-900"
+                          : item.badge === "AI"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                          : item.badge === "POS"
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                          : "bg-rose-500 text-white"
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+
+                  {/* Tooltip for collapsed view */}
+                  {!isExpanded && (
+                    <div className="absolute left-full ml-3 px-2.5 py-1 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-[11px] font-semibold whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
+                      {item.label}
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
           </div>
-          <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-brand transition-colors shrink-0" />
-        </a>
+        ))}
+      </nav>
+
+      {/* 3. FOOTER: STOREFRONT LINK */}
+      {store?.subdomain && (
+        <div className="pt-2 border-t border-black/[0.06] dark:border-white/10">
+          <a
+            href={`/store/${store.subdomain}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center rounded-2xl bg-neutral-100/80 dark:bg-white/5 border border-black/[0.06] dark:border-white/10 hover:bg-neutral-200/60 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all ${
+              isExpanded ? "p-2.5 gap-2.5 justify-between" : "w-11 h-11 mx-auto justify-center"
+            }`}
+            title="Do'kon saytini ko'rish"
+          >
+            <div className="flex items-center gap-2 truncate">
+              <StoreIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              {isExpanded && (
+                <span className="text-xs font-bold truncate">Veb-saytni ko'rish</span>
+              )}
+            </div>
+            {isExpanded && (
+              <ExternalLink className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+            )}
+          </a>
+        </div>
       )}
     </aside>
   );

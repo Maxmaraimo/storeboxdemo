@@ -248,7 +248,10 @@ def process_telegram_update(store, update):
 
     if text.startswith('/start') or text.startswith('/menu') or text.lower() in ("do'kon", "menyu"):
         welcome_template = store.telegram_welcome_message or "Assalomu alaykum {user}! {bot} botiga xush kelibsiz! 🍷\n\nQuyidagi tugma orqali katalogimizni ko'rishingiz va buyurtma berishingiz mumkin:"
-        welcome_text = welcome_template.replace('{user}', user_first_name).replace('{bot}', store.name)
+        if '{user}' in welcome_template or '{bot}' in welcome_template:
+            welcome_text = welcome_template.replace('{user}', user_first_name).replace('{bot}', store.name)
+        else:
+            welcome_text = f"Assalomu alaykum, {user_first_name}!\n\n{welcome_template}"
 
         # 1. Inline Buttons (with WebApp)
         inline_keyboard = [

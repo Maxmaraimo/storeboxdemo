@@ -72,23 +72,23 @@ export const OrdersPage: React.FC = () => {
       </div>
 
       {/* STATUS TABS */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-slate-200 text-xs font-bold">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-black/[0.06] dark:border-white/10 text-xs font-bold">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setStatus(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
               status === tab.id
-                ? "bg-brand text-white shadow-xs font-black"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xs font-black"
+                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             }`}
           >
             <span>{tab.label}</span>
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                 status === tab.id
-                  ? "bg-white/25 text-white"
-                  : tab.badgeColor || "bg-slate-200 text-slate-700"
+                  ? "bg-white/20 dark:bg-black/20 text-white dark:text-neutral-900"
+                  : "bg-black/10 dark:bg-white/10 text-neutral-700 dark:text-neutral-300"
               }`}
             >
               {tab.count}
@@ -193,26 +193,26 @@ export const OrdersPage: React.FC = () => {
 
       {/* SLIDE-OVER ORDER DETAIL DRAWER */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/50 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-white dark:bg-[#18181b] border-l border-black/[0.06] dark:border-white/10 h-full shadow-2xl flex flex-col justify-between overflow-y-auto">
             <div className="p-6 space-y-6">
               {/* Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-4 border-b border-black/[0.06] dark:border-white/10">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-mono font-black text-lg text-slate-900">#{selectedOrder.order_number}</h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <h3 className="font-mono font-black text-lg text-neutral-900 dark:text-white">#{selectedOrder.order_number}</h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                       {selectedOrder.status_display}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
                     {new Date(selectedOrder.created_at).toLocaleString()}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedOrder(null)}
-                  className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                  className="p-1.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/10 text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -245,6 +245,16 @@ export const OrdersPage: React.FC = () => {
                     className="py-2 px-3 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs"
                   >
                     Yetkazildi (Yopish)
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm("Buyurtmani bekor qilishni tasdiqlaysizmi? Mahsulotlar qoldiqqa qaytariladi.")) {
+                        updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "CANCELLED" });
+                      }
+                    }}
+                    className="py-2 px-3 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs col-span-2"
+                  >
+                    Bekor qilish (Qoldiqni qaytarish)
                   </button>
                 </div>
               </div>

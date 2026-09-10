@@ -3,60 +3,199 @@
 {% block storefront_body %}
 <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8" x-data="homeCatalog()">
 
-    <!-- BANNERS SLIDER (if active) -->
+    <!-- BANNERS SLIDER (Dynamic multi-banner carousel with auto-play, touch swipe & navigation) -->
     {% if banners %}
-    {% with b=banners|first %}
-    <div class="relative rounded-3xl overflow-hidden text-white p-6 sm:p-10 shadow-lg min-h-[160px] sm:min-h-[220px] flex items-center"
-         style="background: linear-gradient(to right, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.45)){% if b.display_image_url %}, url('{{ b.display_image_url|safe }}'){% elif b.image %}, url('{{ b.image.url|safe }}'){% elif b.image_url %}, url('{{ b.image_url|safe }}'){% endif %}; background-size: cover; background-position: center;">
-        <div class="max-w-xl space-y-2 z-10">
-            <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider">
-                {{ t.sale|default:"Aksiya" }}
-            </span>
-            <h2 class="text-xl sm:text-3xl font-black tracking-tight text-white drop-shadow-sm">{{ b.title|safe }}</h2>
-            {% if b.subtitle %}
-            <p class="text-xs sm:text-sm text-slate-100/90 font-medium leading-relaxed drop-shadow-sm">{{ b.subtitle|safe }}</p>
-            {% endif %}
+    <div class="relative rounded-3xl overflow-hidden shadow-lg group select-none"
+         x-data="{
+            slide: 0,
+            total: {{ banners|length }},
+            timer: null,
+            touchStartX: 0,
+            touchEndX: 0,
+            init() {
+                if (this.total > 1) {
+                    this.timer = setInterval(() => { this.next() }, 5000);
+                }
+            },
+            next() {
+                this.slide = (this.slide + 1) % this.total;
+            },
+            prev() {
+                this.slide = (this.slide - 1 + this.total) % this.total;
+            },
+            pause() {
+                if (this.timer) clearInterval(this.timer);
+            },
+            resume() {
+                if (this.total > 1) {
+                    this.pause();
+                    this.timer = setInterval(() => { this.next() }, 5000);
+                }
+            },
+            handleTouchStart(e) {
+                this.touchStartX = e.changedTouches[0].screenX;
+            },
+            handleTouchEnd(e) {
+                this.touchEndX = e.changedTouches[0].screenX;
+                if (this.touchStartX - this.touchEndX > 45) {
+                    this.next();
+                } else if (this.touchEndX - this.touchStartX > 45) {
+                    this.prev();
+                }
+            }
+         }"
+         @mouseenter="pause()"
+         @mouseleave="resume()"
+         @touchstart="handleTouchStart($event)"
+         @touchend="handleTouchEnd($event)">
+        
+        <!-- Slides Track -->
+        <div id="bannerTrack" class="bannerTrack flex transition-transform duration-500 ease-out"
+             :style="`transform: translateX(-${slide * 100}%);`">
+            {% for b in banners %}
+            <div class="w-full shrink-0 relative p-6 sm:p-10 text-white min-h-[180px] sm:min-h-[230px] md:min-h-[270px] flex items-center"
+                 data-store-banner-container
+                 style="background: linear-gradient(to right, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.45)){% if b.display_image_url %}, url('{{ b.display_image_url|safe }}'){% elif b.image %}, url('{{ b.image.url|safe }}'){% elif b.image_url %}, url('{{ b.image_url|safe }}'){% endif %}; background-size: cover; background-position: center;">
+                <div class="max-w-xl space-y-2 z-10">
+                    <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider inline-block">
+                        {{ t.sale|default:"Aksiya" }}
+                    </span>
+                    <h2 class="text-xl sm:text-3xl md:text-4xl font-black tracking-tight text-white drop-shadow-sm" data-store-banner-title>{{ b.title|safe }}</h2>
+                    {% if b.subtitle %}
+                    <p class="text-xs sm:text-sm text-slate-100/90 font-medium leading-relaxed drop-shadow-sm max-w-lg" data-store-banner-subtitle>{{ b.subtitle|safe }}</p>
+                    {% endif %}
+                    {% if b.link and b.link != '/' %}
+                    <div class="pt-2">
+                        <a href="{{ b.link }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs shadow-md transition-all">
+                            <span>Batafsil ko'rish</span>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
         </div>
+
+        {% if banners|length > 1 %}
+        <!-- Prev/Next Chevrons -->
+        <button type="button" @click="prev()" aria-label="Oldingi"
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer z-20 shadow-md">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </button>
+        <button type="button" @click="next()" aria-label="Keyingi"
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer z-20 shadow-md">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+        </button>
+
+        <!-- Slide Dots -->
+        <div id="bannerIndicators" class="bannerIndicators absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
+            <template x-for="i in total" :key="i">
+                <button type="button" @click="slide = i - 1"
+                        :class="slide === (i - 1) ? 'w-6 bg-white' : 'w-2 bg-white/50 hover:bg-white/80'"
+                        class="h-2 rounded-full transition-all duration-300 cursor-pointer"></button>
+            </template>
+        </div>
+        {% endif %}
     </div>
-    {% endwith %}
     {% endif %}
 
-    <!-- VISUAL CATEGORIES GRID WITH BARCHASI -->
+    <!-- RESTAURANT TEMPLATE SERVICE & SCHEDULE BAR -->
+    {% if store.theme_template == 'restaurant' %}
+    <div class="rounded-2xl p-4 bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
+                <i data-lucide="utensils" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="font-black text-slate-900 flex items-center gap-2">
+                    {% with status=store.is_currently_open %}
+                    {% if status.0 %}
+                    <span class="inline-flex items-center gap-1.5 text-emerald-600 font-black">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        {{ status.1 }}
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1.5 text-rose-600 font-black">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        {{ status.1 }}
+                    </span>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="text-[11px] text-slate-400 font-medium mt-0.5">Yetkazib berish: {{ store.delivery_time_estimate|default:"30-45 daqiqa" }}</div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                <i data-lucide="bike" class="w-4 h-4 text-brand"></i>
+                <span>{{ store.free_delivery_threshold|floatformat:0 }} UZS dan bepul</span>
+            </div>
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                <i data-lucide="store" class="w-4 h-4 text-brand"></i>
+                <span>Olib ketish</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- VISUAL CATEGORIES SECTION: SMOOTH HORIZONTAL CAROUSEL WITH PREV/NEXT CONTROLS -->
     {% if not search_q and categories %}
-    <div>
-        <div class="flex items-center justify-between mb-3">
+    <div class="space-y-3" x-data="{
+        scrollLeft() {
+            $refs.categoryTrack.scrollBy({ left: -280, behavior: 'smooth' });
+        },
+        scrollRight() {
+            $refs.categoryTrack.scrollBy({ left: 280, behavior: 'smooth' });
+        }
+    }">
+        <div class="flex items-center justify-between">
             <h3 class="text-xs sm:text-sm font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="layers" class="w-4 h-4 text-brand"></i>
                 <span>{{ t.categories|default:"Kategoriyalar" }}</span>
             </h3>
+
+            <!-- Nav Arrows for Carousel Scrolling -->
+            <div class="flex items-center gap-1.5">
+                <button type="button" @click="scrollLeft()" title="Oldingi"
+                        class="w-7 h-7 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center shadow-2xs hover:shadow-xs transition-all cursor-pointer">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                <button type="button" @click="scrollRight()" title="Keyingi"
+                        class="w-7 h-7 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center shadow-2xs hover:shadow-xs transition-all cursor-pointer">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3">
-            <!-- "Barchasi" Card -->
-            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if request.GET.preview %}?preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% endif %}"
-               class="group rounded-2xl p-3 border transition-all flex flex-col items-center text-center {% if not current_category %}bg-brand/5 border-brand ring-2 ring-brand/20 shadow-xs{% else %}bg-white border-slate-200/80 hover:border-brand/40 hover:shadow-md{% endif %}">
-                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl {% if not current_category %}bg-brand text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-brand/10 group-hover:text-brand{% endif %} overflow-hidden flex items-center justify-center mb-2.5 shrink-0 group-hover:scale-105 transition-all duration-300">
-                    <i data-lucide="layout-grid" class="w-8 h-8"></i>
+
+        <!-- Scrollable Category Track -->
+        <div x-ref="categoryTrack" class="flex items-stretch gap-3 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <!-- All Categories ('Barchasi') Card -->
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if request.GET.preview %}?preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% if request.GET.template %}&template={{ request.GET.template }}{% endif %}{% elif request.GET.template %}?template={{ request.GET.template }}{% endif %}"
+               class="shrink-0 w-24 sm:w-28 flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-200 group {% if not current_category %}bg-brand/10 border-brand ring-2 ring-brand/20 shadow-xs{% else %}bg-white border-slate-200/80 hover:border-brand/40 hover:shadow-md{% endif %}">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl {% if not current_category %}bg-brand text-white shadow-xs{% else %}bg-slate-100 text-slate-600 group-hover:bg-brand/10 group-hover:text-brand{% endif %} overflow-hidden flex items-center justify-center mb-2 shrink-0 group-hover:scale-105 transition-all duration-300">
+                    <i data-lucide="layout-grid" class="w-6 h-6"></i>
                 </div>
-                <span class="text-xs font-bold {% if not current_category %}text-brand{% else %}text-slate-900 group-hover:text-brand{% endif %} transition-colors line-clamp-1">{{ t.all|default:"Barchasi" }}</span>
-                <span class="text-[10px] {% if not current_category %}text-brand/70 font-semibold{% else %}text-slate-400 font-medium{% endif %} mt-0.5">{{ total_products_count|default:products.count }} {{ t.products_count|default:"ta mahsulot" }}</span>
+                <span class="text-xs font-bold {% if not current_category %}text-brand font-extrabold{% else %}text-slate-900 group-hover:text-brand{% endif %} transition-colors truncate max-w-full block">{{ t.all|default:"Barchasi" }}</span>
+                <span class="text-[10px] {% if not current_category %}text-brand/70 font-semibold{% else %}text-slate-400 font-medium{% endif %} mt-0.5 block">{{ total_products_count|default:products.count }} {{ t.products_count|default:"ta" }}</span>
             </a>
 
-            <!-- Categories Cards -->
+            <!-- Categories Loop -->
             {% for cat in categories %}
-            <a href="?cat={{ cat.slug }}{% if request.GET.preview %}&preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% endif %}"
-               class="group rounded-2xl p-3 border transition-all flex flex-col items-center text-center {% if current_category.id == cat.id or current_category.slug == cat.slug %}bg-brand/5 border-brand ring-2 ring-brand/20 shadow-xs{% else %}bg-white border-slate-200/80 hover:border-brand/40 hover:shadow-md{% endif %}">
-                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 overflow-hidden flex items-center justify-center mb-2.5 shrink-0 group-hover:scale-105 transition-transform duration-300 {% if current_category.id == cat.id or current_category.slug == cat.slug %}ring-2 ring-brand/30{% endif %}">
+            <a href="?cat={{ cat.slug }}{% if request.GET.preview %}&preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% if request.GET.template %}&template={{ request.GET.template }}{% endif %}{% elif request.GET.template %}?template={{ request.GET.template }}&cat={{ cat.slug }}{% endif %}"
+               class="shrink-0 w-24 sm:w-28 flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-200 group {% if current_category.id == cat.id or current_category.slug == cat.slug %}bg-brand/10 border-brand ring-2 ring-brand/20 shadow-xs{% else %}bg-white border-slate-200/80 hover:border-brand/40 hover:shadow-md{% endif %}">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-100 overflow-hidden flex items-center justify-center mb-2 shrink-0 group-hover:scale-105 transition-all duration-300 {% if current_category.id == cat.id or current_category.slug == cat.slug %}ring-2 ring-brand/30{% endif %}">
                     {% if cat.primary_image_url %}
                     <img src="{{ cat.primary_image_url }}" alt="{{ cat.display_name }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
                     <div class="w-full h-full items-center justify-center hidden text-slate-400 bg-slate-100">
-                        <i data-lucide="{{ cat.icon|default:'folder' }}" class="w-8 h-8"></i>
+                        <i data-lucide="{{ cat.icon|default:'folder' }}" class="w-6 h-6"></i>
                     </div>
                     {% else %}
-                    <i data-lucide="{{ cat.icon|default:'folder' }}" class="w-8 h-8 text-slate-400"></i>
+                    <i data-lucide="{{ cat.icon|default:'folder' }}" class="w-6 h-6 text-slate-400"></i>
                     {% endif %}
                 </div>
-                <span class="text-xs font-bold {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-brand{% else %}text-slate-900 group-hover:text-brand{% endif %} transition-colors line-clamp-1">{{ cat.display_name }}</span>
-                <span class="text-[10px] {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-brand/70 font-semibold{% else %}text-slate-400 font-medium{% endif %} mt-0.5">{{ cat.active_products_count|default:0 }} {{ t.products_count|default:"ta mahsulot" }}</span>
+                <span class="text-xs font-bold {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-brand font-extrabold{% else %}text-slate-900 group-hover:text-brand{% endif %} transition-colors truncate max-w-full block">{{ cat.display_name }}</span>
+                <span class="text-[10px] {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-brand/70 font-semibold{% else %}text-slate-400 font-medium{% endif %} mt-0.5 block">{{ cat.active_products_count|default:0 }} {{ t.products_count|default:"ta" }}</span>
             </a>
             {% endfor %}
         </div>
@@ -72,9 +211,9 @@
             <span class="text-xs font-bold text-slate-400">{{ products|length }} {{ t.products_count|default:"ta mahsulot" }}</span>
         </div>
 
-        {% if store.theme_card_style == 'compact' %}
-        <!-- COMPACT RESTAURANT / FOOD MENU LIST -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% if store.theme_template == 'restaurant' or store.theme_card_style == 'compact' %}
+        <!-- 1. RESTAURANT / FOOD MENU TEMPLATE -->
+        <div class="storebox-tpl-restaurant grid grid-cols-1 md:grid-cols-2 gap-4">
             {% for product in products %}
             <div class="bg-white rounded-2xl border border-slate-200/80 p-3.5 flex items-center justify-between gap-3 shadow-xs hover:shadow-md transition-all group">
                 <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="flex items-center gap-3.5 min-w-0 flex-1">
@@ -147,9 +286,104 @@
             {% endfor %}
         </div>
 
+        {% elif store.theme_template == 'boutique' %}
+        <!-- 2. VISUAL BOUTIQUE & FASHION LOOKBOOK TEMPLATE -->
+        <div class="storebox-tpl-boutique grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {% for product in products %}
+            <div class="group flex flex-col justify-between">
+                <div class="relative w-full aspect-[3/4] bg-slate-100 rounded-2xl overflow-hidden mb-3 border border-slate-200/60 group-hover:border-brand/40 group-hover:shadow-xl transition-all duration-500">
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="block w-full h-full">
+                        {% if product.primary_image_url %}
+                        <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-slate-300"><i data-lucide="image" class="w-10 h-10"></i></div>
+                        {% endif %}
+                    </a>
+                    <!-- Badges -->
+                    {% if product.discount_percent %}
+                    <span class="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[10px] tracking-wider uppercase shadow-sm">-{{ product.discount_percent }}%</span>
+                    {% else %}
+                    <span class="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white font-bold text-[9px] tracking-widest uppercase">Kolleksiya</span>
+                    {% endif %}
+                    
+                    <!-- Wishlist -->
+                    <button type="button" @click.stop="toggleWishlist({{ product.id }})"
+                            class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-xs text-slate-400 hover:text-rose-500 transition-colors">
+                        <i data-lucide="heart" class="w-4 h-4" :class="isInWishlist({{ product.id }}) ? 'fill-rose-500 text-rose-500' : ''"></i>
+                    </button>
+
+                    <!-- Desktop Hover Action Button -->
+                    {% if product.is_in_stock %}
+                    <div class="absolute inset-x-3 bottom-3 hidden sm:flex opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <template x-if="!cartItems['{{ product.id }}_0']">
+                            <button type="button" @click="addToCart({{ product.id }})"
+                                    class="w-full py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white backdrop-blur-md font-bold text-xs shadow-lg flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                                <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                                <span>{{ t.buy|default:"Sotib olish" }}</span>
+                            </button>
+                        </template>
+                        <template x-if="cartItems['{{ product.id }}_0']">
+                            <div class="w-full flex items-center justify-between border border-white/20 bg-slate-900/90 text-white rounded-xl p-1 backdrop-blur-md">
+                                <button type="button" @click="updateCart('{{ product.id }}_0', 'decrease')" class="w-7 h-7 rounded-lg bg-white/20 hover:bg-white/30 text-white font-black text-xs flex items-center justify-center">-</button>
+                                <span class="text-xs font-black text-white px-2" x-text="cartItems['{{ product.id }}_0'].quantity"></span>
+                                <button type="button" @click="updateCart('{{ product.id }}_0', 'increase')" class="w-7 h-7 rounded-lg bg-white/20 hover:bg-white/30 text-white font-black text-xs flex items-center justify-center">+</button>
+                            </div>
+                        </template>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Boutique Info -->
+                <div class="space-y-1">
+                    <div class="text-[10px] uppercase font-bold tracking-widest text-slate-400">{{ store.name }}</div>
+                    <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1 group-hover:text-brand transition-colors">
+                        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}">{{ product.display_name }}</a>
+                    </h3>
+                    <div class="flex items-baseline justify-between pt-1">
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xs sm:text-sm font-black text-slate-900">{{ product.price|floatformat:0 }} UZS</span>
+                            {% if product.old_price %}
+                            <span class="text-[10px] text-slate-400 line-through">{{ product.old_price|floatformat:0 }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="text-[10px] font-semibold {% if product.is_in_stock %}text-emerald-600{% else %}text-rose-500{% endif %}">
+                            {% if product.is_in_stock %}Mavjud{% else %}Tugagan{% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Mobile direct Buy button -->
+                    <div class="sm:hidden pt-2">
+                        {% if product.is_in_stock %}
+                        <template x-if="!cartItems['{{ product.id }}_0']">
+                            <button type="button" @click="addToCart({{ product.id }})"
+                                    class="w-full py-2 rounded-xl bg-brand text-white font-bold text-xs flex items-center justify-center gap-1">
+                                <i data-lucide="shopping-bag" class="w-3 h-3"></i>
+                                <span>{{ t.buy|default:"Sotib olish" }}</span>
+                            </button>
+                        </template>
+                        <template x-if="cartItems['{{ product.id }}_0']">
+                            <div class="flex items-center justify-between border border-brand/40 bg-brand/5 rounded-xl p-1">
+                                <button type="button" @click="updateCart('{{ product.id }}_0', 'decrease')" class="w-7 h-7 rounded-lg bg-white text-brand font-black text-xs shadow-xs flex items-center justify-center">-</button>
+                                <span class="text-xs font-black text-slate-900 px-1" x-text="cartItems['{{ product.id }}_0'].quantity"></span>
+                                <button type="button" @click="updateCart('{{ product.id }}_0', 'increase')" class="w-7 h-7 rounded-lg bg-white text-brand font-black text-xs shadow-xs flex items-center justify-center">+</button>
+                            </div>
+                        </template>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full py-16 text-center text-slate-400 text-xs font-semibold">
+                <i data-lucide="package-search" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
+                <p>{{ t.empty_products|default:"Hozircha mahsulotlar mavjud emas" }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
         {% else %}
+        <!-- 3. UNIVERSAL E-COMMERCE GRID TEMPLATE (STANDARD) -->
         <!-- STANDARD / MODERN / MINIMAL / BOLD GRID -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+        <div class="storebox-tpl-universal grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
             {% for product in products %}
             <div class="overflow-hidden transition-all flex flex-col justify-between group
                  {% if store.theme_card_style == 'minimal' %}bg-transparent border-0 shadow-none

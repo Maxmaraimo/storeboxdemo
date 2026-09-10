@@ -3,22 +3,36 @@
 {% block title %}Ro'yxatdan o'tish — StoreBox{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-[#F8FAFC] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 text-slate-800 relative"
+<div class="min-h-screen bg-gradient-to-b from-[#080417] via-[#0D0726] to-[#140B35] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
      x-data="phoneRegister()">
-    <div class="max-w-md w-full space-y-7 relative z-10 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-xl">
+    <!-- Ambient Volumetric Lighting -->
+    <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[700px] h-[450px] bg-violet-600/25 blur-[160px] pointer-events-none rounded-full"></div>
+    <div class="absolute bottom-10 right-10 w-[400px] h-[400px] bg-indigo-600/20 blur-[150px] pointer-events-none rounded-full"></div>
+
+    <div class="max-w-md w-full space-y-7 relative z-10 bg-white/90 dark:bg-[#120D2E]/90 backdrop-blur-3xl p-8 sm:p-10 rounded-[32px] border border-white/80 dark:border-white/15 shadow-2xl transition-all">
         <div class="text-center">
-            <a href="/" class="inline-flex items-center gap-2 mb-4">
-                <div class="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/30">
-                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            <a href="/" class="inline-flex items-center gap-2.5 mb-4 group">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#6035EE] via-[#7C3AED] to-[#A78BFA] flex items-center justify-center text-white shadow-lg shadow-purple-600/30 group-hover:scale-105 transition transform">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
                 </div>
-                <span class="text-2xl font-black text-slate-900 tracking-tight">store<span class="text-emerald-500">box</span>.uz</span>
+                <span class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">store<span class="text-violet-600 dark:text-violet-400">box</span>.uz</span>
             </a>
-            <h2 class="text-xl font-black text-slate-900 tracking-tight">Tezkor ro'yxatdan o'tish</h2>
-            <p class="mt-1 text-xs text-slate-500 font-medium">10 daqiqada o'z internet-do'koningiz va Telegram-vitrinangizni oching</p>
+            <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Tezkor ro'yxatdan o'tish</h2>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">10 daqiqada o'z internet-do'koningiz va Telegram-vitrinangizni oching</p>
         </div>
 
+        {% if selected_plan_label %}
+        <div class="p-3.5 rounded-2xl bg-violet-50 dark:bg-violet-950/40 border border-violet-200/80 dark:border-violet-800/40 text-violet-900 dark:text-violet-200 text-xs font-bold flex items-center justify-between shadow-xs">
+            <span class="flex items-center gap-2">
+                <i data-lucide="crown" class="w-4 h-4 text-violet-600 dark:text-violet-400"></i>
+                <span>Tanlangan tarif: {{ selected_plan_label }}</span>
+            </span>
+            <span class="text-[10px] bg-violet-600 text-white px-2.5 py-0.5 rounded-full font-black uppercase">{{ selected_plan }}</span>
+        </div>
+        {% endif %}
+
         {% if error %}
-        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+        <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center gap-2.5 shadow-xs">
             <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500 shrink-0"></i>
             <span>{{ error }}</span>
         </div>
@@ -26,18 +40,24 @@
 
         <form method="POST" @submit="handleSubmit($event)" class="mt-5 space-y-4">
             {% csrf_token %}
+            {% if selected_plan %}
+            <input type="hidden" name="plan" value="{{ selected_plan }}">
+            {% endif %}
+            {% if selected_duration %}
+            <input type="hidden" name="duration" value="{{ selected_duration }}">
+            {% endif %}
 
             <!-- 1. COUNTRY SELECTOR & PHONE MASK INPUT -->
             <div>
                 <div class="flex items-center justify-between mb-1.5">
-                    <label class="block text-xs font-bold text-slate-700">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
                         Telefon raqam:
                     </label>
                     <span class="text-[11px] font-bold text-slate-400" x-text="selectedCountry.name + ' (' + selectedCountry.dialCode + ')'"></span>
                 </div>
 
-                <div class="relative flex rounded-xl bg-slate-50 border transition-all"
-                     :class="phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : (isFocused ? 'border-emerald-500 ring-2 ring-emerald-500/10' : 'border-slate-200')">
+                <div class="relative flex rounded-2xl bg-slate-50/80 dark:bg-white/5 border transition-all"
+                     :class="phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : (isFocused ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-slate-200 dark:border-white/10')">
                     
                     <!-- Country Selector Dropdown Trigger -->
                     <div class="relative">
@@ -45,8 +65,8 @@
                                 id="countryTriggerBtn"
                                 @click="countryMenuOpen = !countryMenuOpen" 
                                 @keydown.escape="countryMenuOpen = false"
-                                class="h-full px-3 py-2.5 rounded-l-xl bg-slate-100 hover:bg-slate-200/80 border-r border-slate-200 flex items-center gap-1.5 text-xs font-bold text-slate-800 transition-colors cursor-pointer select-none">
-                            <span class="text-base leading-none" x-text="selectedCountry.flag"></span>
+                                class="h-full px-3 py-3 rounded-l-2xl bg-slate-100/80 dark:bg-white/5 hover:bg-slate-200/80 dark:hover:bg-white/10 border-r border-slate-200 dark:border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer select-none">
+                            <span class="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300" x-text="selectedCountry.codeBadge || selectedCountry.id.toUpperCase()"></span>
                             <span class="font-mono text-xs" x-text="selectedCountry.dialCode"></span>
                             <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="countryMenuOpen ? 'rotate-180' : ''"></i>
                         </button>
@@ -80,18 +100,18 @@
                                     <button type="button" 
                                             @click="selectCountry(c)"
                                             class="w-full px-3 py-2 rounded-xl text-left flex items-center justify-between gap-2 hover:bg-slate-100 transition-all cursor-pointer group"
-                                            :class="selectedCountry.id === c.id ? 'bg-emerald-50 font-bold text-emerald-950' : 'text-slate-700'">
+                                            :class="selectedCountry.id === c.id ? 'bg-violet-50 font-bold text-violet-950' : 'text-slate-700'">
                                         <div class="flex items-center gap-2.5 min-w-0">
-                                            <span class="text-lg leading-none" x-text="c.flag"></span>
+                                            <span class="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-slate-100 text-slate-700" x-text="c.codeBadge || c.id.toUpperCase()"></span>
                                             <div class="truncate text-xs">
                                                 <span class="font-bold" x-text="c.name"></span>
                                                 <span class="text-[10px] text-slate-400 ml-1" x-text="'(' + c.nameRu + ')'"></span>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-2 shrink-0">
-                                            <span class="font-mono text-xs text-slate-500 font-bold group-hover:text-emerald-600" x-text="c.dialCode"></span>
+                                            <span class="font-mono text-xs text-slate-500 font-bold group-hover:text-violet-600" x-text="c.dialCode"></span>
                                             <template x-if="selectedCountry.id === c.id">
-                                                <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
+                                                <i data-lucide="check" class="w-4 h-4 text-violet-600"></i>
                                             </template>
                                         </div>
                                     </button>
@@ -241,7 +261,7 @@ function phoneRegister() {
                 nameRu: "Узбекистан",
                 dialCode: '+998',
                 code: '998',
-                flag: '🇺🇿',
+                codeBadge: 'UZ',
                 digits: 9,
                 placeholder: '(90) 123-45-67',
                 format(d) {
@@ -260,7 +280,7 @@ function phoneRegister() {
                 nameRu: "Россия",
                 dialCode: '+7',
                 code: '7',
-                flag: '🇷🇺',
+                codeBadge: 'RU',
                 digits: 10,
                 placeholder: '(912) 345-67-89',
                 format(d) {
@@ -279,7 +299,7 @@ function phoneRegister() {
                 nameRu: "Казахстан",
                 dialCode: '+7',
                 code: '7',
-                flag: '🇰🇿',
+                codeBadge: 'KZ',
                 digits: 10,
                 placeholder: '(777) 123-45-67',
                 format(d) {
@@ -298,7 +318,7 @@ function phoneRegister() {
                 nameRu: "Кыргызстан",
                 dialCode: '+996',
                 code: '996',
-                flag: '🇰🇬',
+                codeBadge: 'KG',
                 digits: 9,
                 placeholder: '(555) 12-34-56',
                 format(d) {
@@ -317,7 +337,7 @@ function phoneRegister() {
                 nameRu: "Таджикистан",
                 dialCode: '+992',
                 code: '992',
-                flag: '🇹🇯',
+                codeBadge: 'TJ',
                 digits: 9,
                 placeholder: '(90) 123-4567',
                 format(d) {
@@ -335,7 +355,7 @@ function phoneRegister() {
                 nameRu: "Турция",
                 dialCode: '+90',
                 code: '90',
-                flag: '🇹🇷',
+                codeBadge: 'TR',
                 digits: 10,
                 placeholder: '(532) 123-4567',
                 format(d) {
@@ -353,7 +373,7 @@ function phoneRegister() {
                 nameRu: "ОАЭ (Дубай)",
                 dialCode: '+971',
                 code: '971',
-                flag: '🇦🇪',
+                codeBadge: 'AE',
                 digits: 9,
                 placeholder: '(50) 123-4567',
                 format(d) {
@@ -371,7 +391,7 @@ function phoneRegister() {
                 nameRu: "США / Канада",
                 dialCode: '+1',
                 code: '1',
-                flag: '🇺🇸',
+                codeBadge: 'US',
                 digits: 10,
                 placeholder: '(202) 555-0123',
                 format(d) {
@@ -389,7 +409,7 @@ function phoneRegister() {
                 nameRu: "Другая страна",
                 dialCode: '+',
                 code: '',
-                flag: '🌐',
+                codeBadge: 'INT',
                 digits: 15,
                 placeholder: '1234567890',
                 format(d) {

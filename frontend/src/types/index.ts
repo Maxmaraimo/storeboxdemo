@@ -57,8 +57,12 @@ export interface Product {
   name_en?: string;
   price: string;
   old_price?: string | null;
+  cost_price?: string | number | null;
   stock: number;
   unit: string;
+  barcode?: string;
+  ikpu_code?: string;
+  description_uz?: string;
   is_active: boolean;
   primary_image_url?: string | null;
   category?: number | null;

@@ -13,6 +13,7 @@ urlpatterns = [
     path('lang/<str:lang>/', core_views.switch_language_view, name='switch_language'),
 
     # Auth & Onboarding
+    path('dev-login/', dashboard_views.dev_login_view, name='dev_login'),
     path('register/', dashboard_views.register_view, name='register'),
     path('login/', dashboard_views.login_view, name='login'),
     path('auth/login/', dashboard_views.login_view, name='auth_login'),
@@ -23,6 +24,8 @@ urlpatterns = [
     path('api/geo-reverse/', dashboard_views.geo_reverse_api, name='root_geo_reverse'),
     path('api/dashboard/stats/', views_dashboard.dashboard_summary_view, name='root_dashboard_stats'),
     path('api/dashboard/summary/', views_dashboard.dashboard_summary_view, name='root_dashboard_summary'),
+    path('api/lead/', core_views.lead_inquiry_api, name='root_lead_api'),
+    path('api/lead-inquiry/', core_views.lead_inquiry_api, name='root_lead_inquiry_api'),
 
     # REST API v1 for React / Next.js SPA
     path('api/v1/', include('apps.api.urls')),
@@ -34,6 +37,7 @@ urlpatterns = [
     path('payments/', include('apps.payments.urls')),
 
     # Core platform landing & i18n
+    path('', core_views.landing_view, name='root_landing'),
     path('platform/', include('apps.core.urls')),
 
     # Telegram Bot & Webhook
@@ -47,5 +51,7 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+    urlpatterns += staticfiles_urlpatterns()
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

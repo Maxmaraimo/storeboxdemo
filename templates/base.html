@@ -5,19 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}StoreBox — SaaS-платформа интернет-магазинов Узбекистана{% endblock %}</title>
 
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS with darkMode: 'class' -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: 'var(--color-primary, #10B981)',
-                        'primary-hover': 'var(--color-primary-hover, #059669)',
+                        primary: 'var(--color-primary, #7C3AED)',
+                        'primary-hover': 'var(--color-primary-hover, #6D28D9)',
+                        brand: {
+                            DEFAULT: '#7C3AED',
+                            hover: '#6D28D9',
+                            dark: '#5B21B6',
+                            light: '#A78BFA'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
                     }
                 }
             }
         }
+    </script>
+
+    <!-- Theme Initializer (Prevents FOUC) -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('storebox_theme') || 
+                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            window.__currentTheme = savedTheme;
+            window.toggleTheme = function() {
+                const isDark = document.documentElement.classList.toggle('dark');
+                const newTheme = isDark ? 'dark' : 'light';
+                localStorage.setItem('storebox_theme', newTheme);
+                window.__currentTheme = newTheme;
+                window.dispatchEvent(new CustomEvent('themechanged', { detail: newTheme }));
+                return newTheme;
+            };
+        })();
     </script>
 
     <!-- Alpine.js -->
@@ -35,23 +68,55 @@
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
-    <!-- Custom Fonts -->
+    <!-- Custom Fonts: Plus Jakarta Sans & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .font-mono-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
         }
         [x-cloak] { display: none !important; }
         /* Hide scrollbars but keep functionality */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Apple Glass Design Tokens */
+        :root {
+            --apple-glass-light-bg: rgba(255, 255, 255, 0.76);
+            --apple-glass-light-border: rgba(255, 255, 255, 0.9);
+            --apple-glass-light-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.05), 0 4px 16px -2px rgba(0, 0, 0, 0.02);
+            --apple-glass-dark-bg: rgba(20, 14, 40, 0.75);
+            --apple-glass-dark-border: rgba(255, 255, 255, 0.12);
+            --apple-glass-dark-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+        }
+
+        .apple-card-light {
+            background: var(--apple-glass-light-bg);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--apple-glass-light-border);
+            box-shadow: var(--apple-glass-light-shadow);
+        }
+
+        .dark .apple-card-dark,
+        .apple-card-dark {
+            background: var(--apple-glass-dark-bg);
+            backdrop-filter: blur(32px) saturate(200%);
+            -webkit-backdrop-filter: blur(32px);
+            border: 1px solid var(--apple-glass-dark-border);
+            box-shadow: var(--apple-glass-dark-shadow);
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="h-full text-slate-900 antialiased selection:bg-emerald-500 selection:text-white">
+<body class="h-full bg-slate-50 dark:bg-[#070414] text-slate-900 dark:text-slate-100 antialiased selection:bg-violet-600 selection:text-white transition-colors duration-300">
     {% block content %}{% endblock %}
 
     <script>

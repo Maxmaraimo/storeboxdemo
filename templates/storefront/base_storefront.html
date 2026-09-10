@@ -41,8 +41,47 @@
         .text-brand { color: var(--brand-color) !important; }
         .border-brand { border-color: var(--brand-color) !important; }
         .hover\:bg-brand-dark:hover { filter: brightness(0.9); }
-        .hover-bg-brand:hover { background-color: var(--brand-color); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
+    <script>
+        // Real-time live theme preview message listener (from Design & AI Studio)
+        window.addEventListener('message', function(event) {
+            if (!event.data || typeof event.data !== 'object') return;
+            if (event.data.type === 'STOREBOX_THEME_PREVIEW') {
+                var data = event.data;
+                if (data.primaryColor) {
+                    document.documentElement.style.setProperty('--brand-color', data.primaryColor);
+                }
+                if (data.bgColor) {
+                    document.documentElement.style.setProperty('--bg-color', data.bgColor);
+                    document.body.style.backgroundColor = data.bgColor;
+                    document.documentElement.style.backgroundColor = data.bgColor;
+                }
+                if (data.bannerTitle !== undefined) {
+                    var titles = document.querySelectorAll('[data-store-banner-title]');
+                    titles.forEach(function(el) { el.textContent = data.bannerTitle; });
+                }
+                if (data.bannerSubtitle !== undefined) {
+                    var subs = document.querySelectorAll('[data-store-banner-subtitle]');
+                    subs.forEach(function(el) { el.textContent = data.bannerSubtitle; });
+                }
+                if (data.bannerImageUrl) {
+                    var bContainers = document.querySelectorAll('[data-store-banner-container]');
+                    bContainers.forEach(function(el) {
+                        el.style.backgroundImage = "linear-gradient(to right, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.45)), url('" + data.bannerImageUrl + "')";
+                    });
+                }
+                if (data.template) {
+                    var currentUrl = new URL(window.location.href);
+                    if (currentUrl.searchParams.get('template') !== data.template) {
+                        currentUrl.searchParams.set('template', data.template);
+                        window.location.href = currentUrl.toString();
+                    }
+                }
+            }
+        });
+    </script>
     <script>
         (function() {
             var isRealTma = false;
@@ -189,9 +228,49 @@
         {% block storefront_body %}{% endblock %}
     </div>
 
-    <!-- FOOTER WITH SOCIAL MEDIA & LEGAL LINKS -->
-    <footer class="bg-white border-t border-slate-200 mt-12 py-8">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
+    <!-- RICH MODERN STOREFRONT FOOTER (Robosell Benchmark) -->
+    <footer class="bg-white border-t border-slate-200/80 mt-14 pt-10 pb-16">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
+            <!-- Top Footer Row: Store Brand, Hours, and Phone -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pb-8 border-b border-slate-100 items-center text-center md:text-left">
+                <!-- Store Info -->
+                <div class="flex flex-col sm:flex-row items-center gap-3.5 justify-center md:justify-start">
+                    {% if store.logo %}
+                    <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="w-12 h-12 rounded-2xl object-cover border border-slate-200 shrink-0">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-2xl bg-brand/10 text-brand flex items-center justify-center font-black text-lg shrink-0">
+                        {{ store.name|slice:":1"|upper }}
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h4 class="text-sm sm:text-base font-black text-slate-900">{{ store.name }}</h4>
+                        <p class="text-xs text-slate-500 mt-0.5">Online buyurtma va yetkazib berish xizmati</p>
+                    </div>
+                </div>
+
+                <!-- Working Hours -->
+                <div class="flex flex-col items-center justify-center space-y-1">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ish vaqti</span>
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-brand"></i>
+                        <span>09:00 — 23:00 (Har kuni)</span>
+                    </div>
+                </div>
+
+                <!-- Phone & Support Contact -->
+                <div class="flex flex-col items-center md:items-end justify-center space-y-1">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mijozlarni qo'llab-quvvatlash</span>
+                    {% if store.phone %}
+                    <a href="tel:{{ store.phone }}" class="font-mono font-bold text-sm text-slate-900 hover:text-brand transition-colors flex items-center gap-1.5">
+                        <i data-lucide="phone-call" class="w-3.5 h-3.5 text-brand"></i>
+                        <span>{{ store.phone }}</span>
+                    </a>
+                    {% else %}
+                    <span class="font-mono font-bold text-xs text-slate-600">+998 (78) 113-82-12</span>
+                    {% endif %}
+                </div>
+            </div>
+
             <!-- Social Media Icons Row -->
             {% if store.instagram_username or store.telegram_channel or store.facebook or store.youtube or store.tiktok or store.whatsapp %}
             <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pb-6 border-b border-slate-100">
@@ -240,6 +319,7 @@
             </div>
             {% endif %}
 
+            <!-- Navigation Links & Powered by StoreBox badge -->
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-500">
                 <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
                     <button type="button" @click="infoModal = 'about'" class="hover:text-slate-900 transition-colors">{{ t.about_us|default:'Biz haqimizda' }}</button>
@@ -247,13 +327,12 @@
                     <button type="button" @click="infoModal = 'delivery'" class="hover:text-slate-900 transition-colors">{{ t.delivery_terms|default:'Yetkazib berish shartlari' }}</button>
                     <button type="button" @click="infoModal = 'returns'" class="hover:text-slate-900 transition-colors">{{ t.return_terms|default:'Qaytarish va almashtirish shartlari' }}</button>
                 </div>
-                <div class="flex items-center gap-3">
-                    {% if store.phone %}
-                    <a href="tel:{{ store.phone }}" class="font-mono font-bold text-slate-800 hover:text-brand transition-colors">
-                        {{ store.phone }}
-                    </a>
-                    {% endif %}
-                </div>
+
+                <!-- Platform attribution -->
+                <a href="/" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 hover:bg-violet-50 text-slate-600 hover:text-violet-700 transition-colors border border-slate-200">
+                    <span class="text-[10px] font-medium">Platforma:</span>
+                    <span class="text-[10px] font-black tracking-tight text-violet-600">StoreBox.uz</span>
+                </a>
             </div>
         </div>
     </footer>

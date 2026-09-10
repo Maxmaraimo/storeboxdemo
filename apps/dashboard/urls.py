@@ -34,6 +34,7 @@ urlpatterns = [
 
     path('lang/<str:lang>/', core_views.switch_language_view, name='dashboard_switch_language'),
     path('onboarding/', views.onboarding_wizard_view, name='onboarding'),
+    path('dev-login/', views.dev_login_view, name='dev_login'),
     
     # APIs
     path('api/check-subdomain/', views.check_subdomain_api, name='check_subdomain'),

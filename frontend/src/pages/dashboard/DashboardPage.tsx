@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   TrendingUp,
@@ -8,41 +9,124 @@ import {
   MapPin,
   Calendar,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  RefreshCw,
+  DollarSign,
+  Package,
+  Plus,
+  MessageSquare,
+  Boxes,
+  Megaphone,
+  CheckCircle2,
+  Clock,
+  Send,
+  Globe,
+  BarChart3,
+  LineChart as LineChartIcon
 } from "lucide-react";
-import { Bar, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
   ArcElement,
+  Filler
 } from "chart.js";
+import { Bar, Line, Doughnut } from "react-chartjs-2";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
-import { DashboardMetrics, DashboardCharts, TopProduct, MapOrder } from "../../types";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  Filler
+);
+
+// Fix leaflet default pin icon issue
+const defaultPinIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+interface DashboardMetrics {
+  period: string;
+  revenue: number;
+  sales_sum: number;
+  delivery_fee: number;
+  orders_count: number;
+  new_orders: number;
+  ready_orders: number;
+  cancelled_orders: number;
+  total_customers: number;
+  avg_order: number;
+  web_cnt: number;
+  tma_cnt: number;
+}
+
+interface DashboardCharts {
+  labels: string[];
+  revenue: number[];
+  traffic: {
+    web: number;
+    telegram: number;
+  };
+}
+
+interface TopProduct {
+  product_name: string;
+  sold_qty: number;
+  sold_sum: number;
+}
+
+interface MapOrder {
+  num: string;
+  client: string;
+  lat: number;
+  lng: number;
+  total: number;
+  status: string;
+}
 
 export const DashboardPage: React.FC = () => {
-  const { store, t } = useAuth();
-  const [period, setPeriod] = useState("today");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [activeDateRange, setActiveDateRange] = useState<{ start: string; end: string } | null>(null);
+  const { store } = useAuth();
+  const [period, setPeriod] = useState<string>("today");
+  const [currency, setCurrency] = useState<"UZS" | "USD">("UZS");
+  const [chartType, setChartType] = useState<"bar" | "line">("bar");
 
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["dashboard-summary", period, activeDateRange?.start, activeDateRange?.end],
+  const UZS_TO_USD_RATE = 12800;
+
+  const formatMoney = (sum: number) => {
+    if (currency === "USD") {
+      const usd = sum / UZS_TO_USD_RATE;
+      return `$${usd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    return `${Math.round(sum).toLocaleString("uz-UZ")} UZS`;
+  };
+
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ["dashboard-summary", period],
     queryFn: async () => {
-      let url = `/dashboard/summary/?period=${period}`;
-      if (period === "custom" && activeDateRange) {
-        url = `/dashboard/summary/?start_date=${activeDateRange.start}&end_date=${activeDateRange.end}`;
-      }
-      const res = await api.get(url);
+      const res = await api.get(`/dashboard/summary/?period=${period}`);
       return res.data as {
         metrics: DashboardMetrics;
         charts: DashboardCharts;
@@ -50,6 +134,7 @@ export const DashboardPage: React.FC = () => {
         map_orders: MapOrder[];
       };
     },
+    refetchInterval: 30000, // auto-refresh every 30s
   });
 
   const metrics = data?.metrics;
@@ -58,42 +143,134 @@ export const DashboardPage: React.FC = () => {
   const mapOrders = data?.map_orders || [];
 
   const periods = [
-    { id: "today", label: t("period_today") || "Bugun" },
-    { id: "week", label: t("period_week") || "Har hafta" },
-    { id: "month", label: t("period_month") || "Har oy" },
-    { id: "quarter", label: t("period_quarter") || "Chorak" },
-    { id: "year", label: t("period_year") || "Har yil" },
+    { id: "today", label: "Bugun" },
+    { id: "week", label: "Oxirgi 7 kun" },
+    { id: "month", label: "Oxirgi 30 kun" },
+    { id: "quarter", label: "Shu chorak" },
+    { id: "year", label: "Har yil" },
   ];
 
-  const handleApplyCustomRange = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!startDate || !endDate) return;
-    setPeriod("custom");
-    setActiveDateRange({ start: startDate, end: endDate });
+  const totalTraffic = (charts?.traffic?.web || 0) + (charts?.traffic?.telegram || 0);
+  const webTrafficPct = totalTraffic > 0 ? Math.round(((charts?.traffic?.web || 0) / totalTraffic) * 100) : 50;
+  const tmaTrafficPct = totalTraffic > 0 ? 100 - webTrafficPct : 50;
+
+  // Chart configurations with pure neutral theme
+  const chartData = {
+    labels: charts?.labels || [],
+    datasets: [
+      {
+        label: `Tushum (${currency})`,
+        data: (charts?.revenue || []).map((val) =>
+          currency === "USD" ? Number((val / UZS_TO_USD_RATE).toFixed(2)) : val
+        ),
+        backgroundColor: chartType === "bar" ? "rgba(16, 185, 129, 0.85)" : "rgba(16, 185, 129, 0.15)",
+        borderColor: "#10B981",
+        borderWidth: chartType === "line" ? 3 : 0,
+        borderRadius: chartType === "bar" ? 8 : 0,
+        fill: chartType === "line",
+        tension: 0.35,
+        pointBackgroundColor: "#10B981",
+        pointBorderColor: "#FFFFFF",
+        pointBorderWidth: 2,
+        pointRadius: chartType === "line" ? 4 : 0,
+        pointHoverRadius: 6,
+      },
+    ],
+  };
+
+  const chartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "rgba(24, 24, 27, 0.95)",
+        titleColor: "#FFFFFF",
+        bodyColor: "#E4E4E7",
+        padding: 10,
+        cornerRadius: 12,
+        callbacks: {
+          label: (context: any) => {
+            const rawVal = context.raw;
+            if (currency === "USD") {
+              return `Tushum: $${rawVal.toLocaleString()}`;
+            }
+            return `Tushum: ${Math.round(rawVal).toLocaleString("uz-UZ")} UZS`;
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        grid: {
+          color: "rgba(160, 160, 160, 0.08)",
+        },
+        ticks: {
+          font: { size: 11 },
+          color: "#9CA3AF",
+          callback: (value: any) => {
+            if (currency === "USD") return `$${value}`;
+            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+            if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+            return value;
+          },
+        },
+      },
+      x: {
+        grid: { display: false },
+        ticks: {
+          font: { size: 11 },
+          color: "#9CA3AF",
+        },
+      },
+    },
+  };
+
+  const doughnutData = {
+    labels: ["Telegram Bot", "Veb-sayt"],
+    datasets: [
+      {
+        data: [charts?.traffic?.telegram || 0, charts?.traffic?.web || 0],
+        backgroundColor: ["#10B981", "#3B82F6"],
+        borderWidth: 0,
+        hoverOffset: 4,
+      },
+    ],
   };
 
   return (
-    <div className="space-y-6">
-      {/* PERIOD FILTER & CUSTOM DATE BAR */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-bold text-slate-500">{t("period_label") || "Muddati:"}</span>
+    <div className="space-y-6 pb-12">
+      {/* ======================================================== */}
+      {/* 1. TOP HEADER BAR: STORE TITLE & WORKING PERIOD CONTROLS */}
+      {/* ======================================================== */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              Jonli monitoring tizimi
+            </span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white tracking-tight">
+            {store?.name || "Boshqaruv paneli"}
+          </h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+            Real vaqtdagi savdolar, buyurtmalar, mijozlar va logistika ko'rsatkichlari
+          </p>
+        </div>
 
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+        {/* Action Controls: Periods, Currency, Refresh */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Working Period filter pills */}
+          <div className="flex items-center gap-1 bg-white/80 dark:bg-white/5 p-1 rounded-2xl border border-black/[0.06] dark:border-white/10 text-xs font-semibold shadow-2xs backdrop-blur-xl">
             {periods.map((p) => (
               <button
                 key={p.id}
-                onClick={() => {
-                  setPeriod(p.id);
-                  setActiveDateRange(null);
-                }}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  period === p.id && !activeDateRange
-                    ? "bg-brand text-white shadow-xs font-black"
-                    : "text-slate-600 hover:text-slate-900"
+                onClick={() => setPeriod(p.id)}
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                  period === p.id
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xs font-bold"
+                    : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
                 }`}
               >
                 {p.label}
@@ -101,246 +278,325 @@ export const DashboardPage: React.FC = () => {
             ))}
           </div>
 
-          {isFetching && (
-            <span className="flex items-center gap-1 text-[11px] font-bold text-brand bg-emerald-50 px-2 py-1 rounded-lg animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand"></span>
-              Yangilanmoqda...
-            </span>
-          )}
-        </div>
+          {/* Currency Switcher */}
+          <div className="flex items-center gap-1 bg-white/80 dark:bg-white/5 p-1 rounded-2xl border border-black/[0.06] dark:border-white/10 text-xs font-bold shadow-2xs backdrop-blur-xl">
+            <button
+              type="button"
+              onClick={() => setCurrency("UZS")}
+              className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                currency === "UZS"
+                  ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xs font-bold"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+              }`}
+            >
+              UZS
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrency("USD")}
+              className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                currency === "USD"
+                  ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xs font-bold"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+              }`}
+            >
+              USD
+            </button>
+          </div>
 
-        {/* Custom Date Range Picker Form */}
-        <form onSubmit={handleApplyCustomRange} className="flex flex-wrap items-center gap-2 text-xs">
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
-            <span className="text-slate-400 font-medium text-[11px]">Dan:</span>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="bg-transparent text-slate-800 font-semibold focus:outline-none text-xs"
-            />
-          </div>
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
-            <span className="text-slate-400 font-medium text-[11px]">Gacha:</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="bg-transparent text-slate-800 font-semibold focus:outline-none text-xs"
-            />
-          </div>
+          {/* Refresh Button */}
           <button
-            type="submit"
-            disabled={!startDate || !endDate}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-              period === "custom" && activeDateRange
-                ? "bg-slate-900 text-white shadow-xs font-black"
-                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-            } disabled:opacity-40`}
+            type="button"
+            onClick={() => refetch()}
+            className="w-9 h-9 rounded-2xl bg-white/80 dark:bg-white/5 border border-black/[0.06] dark:border-white/10 flex items-center justify-center text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors shadow-2xs cursor-pointer"
+            title="Ma'lumotlarni yangilash"
           >
-            Oraliqni qo'llash
+            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-emerald-500" : ""}`} />
           </button>
-        </form>
-      </div>
-
-      {/* 3 KPI METRIC CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Revenue */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-xs text-slate-500 uppercase tracking-wider">{t("revenue") || "Daromadlar"}</span>
-            <span className="text-xs font-mono font-bold text-slate-400">UZS</span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
-            {metrics?.revenue?.toLocaleString() || 0} <span className="text-xs text-slate-400 font-normal">UZS</span>
-          </div>
-          <div className="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
-            <div className="flex justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                {t("sales_sum") || "Sotuvlar summasi:"}
-              </span>
-              <span className="font-mono font-bold">{metrics?.sales_sum?.toLocaleString() || 0} UZS</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                {t("delivery_fee") || "Yetkazib berish summasi:"}
-              </span>
-              <span className="font-mono font-bold">{metrics?.delivery_fee?.toLocaleString() || 0} UZS</span>
-            </div>
-            <div className="flex justify-between text-emerald-700 font-black">
-              <span>{t("net_income") || "Foyda:"}</span>
-              <span className="font-mono">{metrics?.revenue?.toLocaleString() || 0} UZS</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Orders */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-xs text-slate-500 uppercase tracking-wider">{t("orders_count_title") || "Buyurtmalar"}</span>
-            <ShoppingCart className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
-            {metrics?.orders_count || 0} <span className="text-xs text-slate-400 font-normal">{t("pcs_unit") || "ta"}</span>
-          </div>
-          <div className="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
-            <div className="flex justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                {t("new_orders") || "Yangi:"}
-              </span>
-              <span className="font-mono font-bold">{metrics?.new_orders || 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                {t("ready_delivered") || "Tayyor / Yetkazilgan:"}
-              </span>
-              <span className="font-mono font-bold">{metrics?.ready_orders || 0}</span>
-            </div>
-            <div className="flex justify-between text-rose-500">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                {t("cancelled_orders") || "Bekor qilindi:"}
-              </span>
-              <span className="font-mono font-bold">{metrics?.cancelled_orders || 0}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Customers */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-xs text-slate-500 uppercase tracking-wider">{t("total_customers_title") || "Jami mijozlar"}</span>
-            <Users className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
-            {metrics?.total_customers || 0} <span className="text-xs text-slate-400 font-normal">{t("pcs_unit") || "ta"}</span>
-          </div>
-          <div className="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
-            <div className="flex justify-between">
-              <span>{t("new_customers") || "Yangi mijozlar:"}</span>
-              <span className="font-mono font-bold">{metrics?.total_customers || 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>{t("avg_order") || "O`rtacha buyurtma:"}</span>
-              <span className="font-mono font-bold">{metrics?.avg_order?.toLocaleString() || 0} UZS</span>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* CHARTS ROW: REVENUE + ORDERS BY CHANNELS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Revenue Bar Chart */}
-        <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-          <div className="font-bold text-xs text-slate-500 uppercase tracking-wider">{t("revenue_stats") || "Daromadlar statistikasi"}</div>
-          <div className="h-64">
-            {charts && (
-              <Bar
-                data={{
-                  labels: charts.labels,
-                  datasets: [
-                    {
-                      label: `${t("revenue") || "Tushum"} (UZS)`,
-                      data: charts.revenue,
-                      backgroundColor: "#10B981",
-                      borderRadius: 8,
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { legend: { display: false } },
-                  scales: {
-                    y: { grid: { color: "#f1f5f9" }, ticks: { font: { size: 10 } } },
-                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-                  },
-                }}
-              />
+      {/* ======================================================== */}
+      {/* 2. TOP 4 APPLE GLASSMORPHISM REAL KPI CARDS             */}
+      {/* ======================================================== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Jami tushum (Total Revenue) */}
+        <div className="bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                Jami tushum
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
+                {formatMoney(metrics?.revenue || 0)}
+              </div>
+              <div className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
+                Yetkazib berish bilan: {formatMoney(metrics?.sales_sum || 0)}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              Faol savdolar
+            </span>
+            <span className="text-neutral-400 text-[11px]">
+              {periods.find((p) => p.id === period)?.label}
+            </span>
+          </div>
+        </div>
+
+        {/* Card 2: Buyurtmalar soni (Total Orders) */}
+        <div className="bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                Buyurtmalar
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <ShoppingCart className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
+                {metrics?.orders_count || 0} <span className="text-base font-normal text-neutral-400">ta</span>
+              </div>
+              <div className="flex items-center gap-2 mt-1 text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+                <span className="text-emerald-600 font-bold">{metrics?.new_orders || 0} yangi</span>
+                <span>•</span>
+                <span>{metrics?.ready_orders || 0} tayyor</span>
+                {metrics?.cancelled_orders ? (
+                  <>
+                    <span>•</span>
+                    <span className="text-rose-500">{metrics.cancelled_orders} bekor</span>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
+            <Link
+              to="/orders"
+              className="text-neutral-900 dark:text-white font-bold hover:underline flex items-center gap-1"
+            >
+              <span>Buyurtmalarga o'tish</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
+            <span className="text-neutral-400 text-[11px]">Boshqaruv</span>
+          </div>
+        </div>
+
+        {/* Card 3: Faol mijozlar (Active Customers) */}
+        <div className="bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                Mijozlar bazasi
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                <Users className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
+                {metrics?.total_customers || 0} <span className="text-base font-normal text-neutral-400">nafar</span>
+              </div>
+              <div className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
+                Doimiy va qayta xarid qilganlar
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
+            <Link
+              to="/customers"
+              className="text-neutral-900 dark:text-white font-bold hover:underline flex items-center gap-1"
+            >
+              <span>Mijozlar ro'yxati</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
+            <span className="text-neutral-400 text-[11px]">CRM</span>
+          </div>
+        </div>
+
+        {/* Card 4: O'rtacha chek (Average Check) */}
+        <div className="bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                O'rtacha chek
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                <DollarSign className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
+                {formatMoney(metrics?.avg_order || 0)}
+              </div>
+              <div className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
+                Bitta xarid uchun o'rtacha qiymat
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Barqaror
+            </span>
+            <span className="text-neutral-400 text-[11px]">Ko'rsatkich</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ======================================================== */}
+      {/* 3. MIDDLE SECTION: REVENUE DYNAMICS & SALES CHANNELS     */}
+      {/* ======================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left: Revenue Chart (8 cols) */}
+        <div className="lg:col-span-8 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                Savdolar grafigi
+              </div>
+              <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
+                Tushum dinamikasi
+              </h2>
+            </div>
+
+            {/* Bar vs Line Switcher */}
+            <div className="flex items-center gap-1 bg-neutral-100 dark:bg-white/5 p-1 rounded-xl border border-black/[0.04] dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => setChartType("bar")}
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  chartType === "bar"
+                    ? "bg-white dark:bg-white/20 text-neutral-900 dark:text-white shadow-2xs"
+                    : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+                }`}
+                title="Ustunli grafik"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartType("line")}
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  chartType === "line"
+                    ? "bg-white dark:bg-white/20 text-neutral-900 dark:text-white shadow-2xs"
+                    : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+                }`}
+                title="Chiziqli grafik"
+              >
+                <LineChartIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="h-64 sm:h-72 w-full">
+            {charts && charts.labels && charts.labels.length > 0 ? (
+              chartType === "bar" ? (
+                <Bar data={chartData} options={chartOptions} />
+              ) : (
+                <Line data={chartData} options={chartOptions} />
+              )
+            ) : (
+              <div className="h-full flex items-center justify-center text-neutral-400 text-xs font-medium">
+                Tanlangan davr uchun savdo ma'lumotlari mavjud emas
+              </div>
             )}
           </div>
         </div>
 
-        {/* Orders Stats by Channel */}
-        <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="font-bold text-xs text-slate-500 uppercase tracking-wider">{t("orders_stats") || "Buyurtmalar statistikasi"}</div>
-            <div className="space-y-3 text-xs font-semibold">
-              {/* Telegram bot */}
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xs font-black">T</div>
+        {/* Right: Sales Channels & Traffic (4 cols) */}
+        <div className="lg:col-span-4 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+              Savdo kanallari
+            </div>
+            <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5 mb-4">
+              Buyurtmalar manbai
+            </h2>
+
+            {/* Channels Cards */}
+            <div className="space-y-3">
+              {/* Telegram Bot */}
+              <div className="p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-white/5 border border-black/[0.04] dark:border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold">
+                    <Send className="w-4 h-4" />
+                  </div>
                   <div>
-                    <div className="font-bold text-slate-900">Telegram bot</div>
-                    <div className="text-[10px] text-slate-400">{metrics?.tma_cnt || 0} {t("orders_unit") || "ta buyurtma"}</div>
+                    <div className="text-xs font-bold text-neutral-900 dark:text-white">Telegram Bot</div>
+                    <div className="text-[10px] text-neutral-400">
+                      {metrics?.tma_cnt || 0} ta buyurtma ({tmaTrafficPct}%)
+                    </div>
                   </div>
                 </div>
+
                 {store?.telegram_bot_username ? (
                   <a
                     href={`https://t.me/${store.telegram_bot_username}`}
                     target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 flex items-center gap-1"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-300 text-[11px] font-bold hover:bg-sky-100 dark:hover:bg-sky-900/60 flex items-center gap-1 transition-colors"
                   >
-                    <span>{t("open_bot") || "Botni ochish"}</span>
+                    <span>Ochish</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 ) : (
-                  <span className="text-[10px] text-slate-400 font-bold">{t("create_bot") || "Bot yaratish"}</span>
+                  <Link
+                    to="/platforms"
+                    className="px-2.5 py-1.5 rounded-xl bg-neutral-200 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 text-[11px] font-bold hover:bg-neutral-300 transition-colors"
+                  >
+                    Ulash
+                  </Link>
                 )}
               </div>
 
-              {/* Website */}
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-lg bg-brand text-white flex items-center justify-center text-xs font-black">W</div>
+              {/* Web Storefront */}
+              <div className="p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-white/5 border border-black/[0.04] dark:border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
+                    <Globe className="w-4 h-4" />
+                  </div>
                   <div>
-                    <div className="font-bold text-slate-900">{t("website") || "Veb-sayt"}</div>
-                    <div className="text-[10px] text-slate-400">{metrics?.web_cnt || 0} {t("orders_unit") || "ta buyurtma"}</div>
+                    <div className="text-xs font-bold text-neutral-900 dark:text-white">Veb-sayt</div>
+                    <div className="text-[10px] text-neutral-400">
+                      {metrics?.web_cnt || 0} ta buyurtma ({webTrafficPct}%)
+                    </div>
                   </div>
                 </div>
+
                 {store?.subdomain && (
                   <a
                     href={`/store/${store.subdomain}/`}
                     target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-1 rounded-lg bg-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-300"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 text-[11px] font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center gap-1 transition-colors"
                   >
-                    {t("open_site") || "Saytni ochish"}
+                    <span>Sayt</span>
+                    <ExternalLink className="w-3 h-3" />
                   </a>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-400 text-center pt-2">
-            {t("all_channels_sync") || "Barcha savdo kanallari avtomatik ravishda bitta tizimda sinxronlanadi"}
-          </div>
-        </div>
-      </div>
-
-      {/* LOWER ROW: TRAFFIC SOURCE + TOP PRODUCTS + DELIVERIES MAP */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Traffic source */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-          <div className="font-bold text-xs text-slate-500 uppercase tracking-wider">{t("traffic_source") || "Trafik manbai"}</div>
-          <div className="h-44 flex items-center justify-center">
-            {charts && (
+          {/* Doughnut Traffic chart */}
+          <div className="pt-4 mt-4 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between">
+            <div className="w-24 h-24 relative">
               <Doughnut
-                data={{
-                  labels: [t("website") || "Veb-sayt", "Telegram"],
-                  datasets: [
-                    {
-                      data: [charts.traffic.web || 0, charts.traffic.telegram || 0],
-                      backgroundColor: ["#3B82F6", "#10B981"],
-                      borderWidth: 0,
-                    },
-                  ],
-                }}
+                data={doughnutData}
                 options={{
                   responsive: true,
                   maintainAspectRatio: false,
@@ -348,60 +604,207 @@ export const DashboardPage: React.FC = () => {
                   plugins: { legend: { display: false } },
                 }}
               />
-            )}
-          </div>
-          <div className="flex justify-around text-xs font-bold text-slate-600 pt-2 border-t border-slate-100">
-            <span className="text-blue-500">• {t("website") || "Veb-sayt"} ({metrics?.web_cnt || 0})</span>
-            <span className="text-brand">• Telegram ({metrics?.tma_cnt || 0})</span>
-          </div>
-        </div>
-
-        {/* Top products */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="font-bold text-xs text-slate-500 uppercase tracking-wider">{t("top_products") || "Top mahsulotlar"}</div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand/10 text-brand">
-              {periods.find((p) => p.id === period)?.label}
-            </span>
-          </div>
-          <div className="space-y-2 text-xs font-semibold max-h-48 overflow-y-auto">
-            {topProducts.map((tp, idx) => (
-              <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                <span className="truncate max-w-[140px] font-bold text-slate-800">{tp.product_name}</span>
-                <div className="text-right">
-                  <span className="font-mono font-bold text-brand">{tp.sold_qty} {t("pcs_unit") || "ta"}</span>
-                  {tp.sold_sum && (
-                    <span className="text-[10px] font-mono text-slate-400 block">{tp.sold_sum.toLocaleString()} UZS</span>
-                  )}
-                </div>
+            </div>
+            <div className="space-y-1 text-right text-xs">
+              <div className="flex items-center justify-end gap-1.5 font-bold text-sky-500">
+                <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+                <span>Telegram: {tmaTrafficPct}%</span>
               </div>
-            ))}
-            {topProducts.length === 0 && (
-              <div className="text-center text-slate-400 py-8">{t("no_sales_yet") || "Hozircha sotuvlar yo`q"}</div>
-            )}
+              <div className="flex items-center justify-end gap-1.5 font-bold text-emerald-500">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Veb-sayt: {webTrafficPct}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ======================================================== */}
+      {/* 4. LOWER ROW: TOP PRODUCTS & LIVE ORDERS MAP             */}
+      {/* ======================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left: Top Products List (6 cols) */}
+        <div className="lg:col-span-6 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                  Sotuvlar yetakchilari
+                </div>
+                <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
+                  Top mahsulotlar
+                </h2>
+              </div>
+              <Link
+                to="/products"
+                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+              >
+                <span>Barcha mahsulotlar</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="space-y-2.5">
+              {topProducts.map((p, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50/80 dark:bg-white/5 border border-black/[0.04] dark:border-white/5 hover:bg-neutral-100/80 dark:hover:bg-white/10 transition-colors"
+                >
+                  <div className="flex items-center gap-3 truncate">
+                    <span className="w-6 h-6 rounded-xl bg-neutral-200 dark:bg-white/10 text-neutral-800 dark:text-white font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <div className="truncate">
+                      <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
+                        {p.product_name}
+                      </div>
+                      <div className="text-[10px] text-neutral-400">
+                        {p.sold_qty} dona sotildi
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0 font-mono text-xs font-bold text-neutral-900 dark:text-white">
+                    {formatMoney(p.sold_sum || 0)}
+                  </div>
+                </div>
+              ))}
+
+              {topProducts.length === 0 && (
+                <div className="py-10 text-center space-y-2">
+                  <Package className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mx-auto" />
+                  <div className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                    Hozircha sotilgan mahsulotlar mavjud emas
+                  </div>
+                  <Link
+                    to="/products"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs font-bold shadow-xs hover:bg-black transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Mahsulot qo'shish</span>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Orders Map (Leaflet) */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="font-bold text-xs text-slate-500 uppercase tracking-wider">{t("orders_map") || "Buyurtma xaritasi"}</div>
-            <span className="text-[10px] text-emerald-600 font-bold">{t("live_gps") || "Jonli GPS"}</span>
+        {/* Right: Deliveries Map (6 cols) */}
+        <div className="lg:col-span-6 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                  Logistika & Manzillar
+                </div>
+                <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
+                  Jonli buyurtmalar xaritasi
+                </h2>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <span>GPS faol</span>
+              </span>
+            </div>
+
+            <div className="rounded-2xl overflow-hidden border border-black/[0.06] dark:border-white/10 h-64 relative z-10">
+              <MapContainer
+                center={[41.2995, 69.2401]}
+                zoom={11}
+                scrollWheelZoom={false}
+                style={{ height: "100%", width: "100%" }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {mapOrders.map((o, idx) => (
+                  <Marker key={idx} position={[o.lat, o.lng]} icon={defaultPinIcon}>
+                    <Popup>
+                      <div className="text-xs space-y-1">
+                        <div className="font-bold text-slate-900">#{o.num} — {o.client}</div>
+                        <div className="font-mono text-emerald-600 font-bold">{formatMoney(o.total)}</div>
+                        <div className="text-[10px] text-slate-500">{o.status}</div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
           </div>
-          <div className="rounded-2xl overflow-hidden border border-slate-200 h-44">
-            <MapContainer center={[41.2995, 69.2401]} zoom={11} style={{ height: "100%", width: "100%" }}>
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              {mapOrders.map((o, idx) => (
-                <Marker key={idx} position={[o.lat, o.lng]}>
-                  <Popup>
-                    <b>#{o.num} — {o.client}</b><br />
-                    {o.total?.toLocaleString()} UZS
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+
+          <div className="pt-3 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs text-neutral-400">
+            <span>Xaritadagi nuqtalar: {mapOrders.length} ta yetkazuv manzili</span>
+            <Link to="/orders" className="text-neutral-900 dark:text-white font-bold hover:underline">
+              Barcha buyurtmalar
+            </Link>
           </div>
         </div>
+      </div>
+
+      {/* ======================================================== */}
+      {/* 5. QUICK ACTIONS ROW (Direct access to platform features) */}
+      {/* ======================================================== */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Link
+          to="/products"
+          className="p-3.5 rounded-2xl bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-all shadow-xs flex items-center gap-3 group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+            <Package className="w-4 h-4" />
+          </div>
+          <div className="truncate">
+            <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
+              Mahsulotlar
+            </div>
+            <div className="text-[10px] text-neutral-400">Katalog boshqaruvi</div>
+          </div>
+        </Link>
+
+        <Link
+          to="/orders"
+          className="p-3.5 rounded-2xl bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-all shadow-xs flex items-center gap-3 group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+            <ShoppingCart className="w-4 h-4" />
+          </div>
+          <div className="truncate">
+            <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
+              Buyurtmalar
+            </div>
+            <div className="text-[10px] text-neutral-400">Holat va yetkazish</div>
+          </div>
+        </Link>
+
+        <Link
+          to="/chats"
+          className="p-3.5 rounded-2xl bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-all shadow-xs flex items-center gap-3 group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+            <MessageSquare className="w-4 h-4" />
+          </div>
+          <div className="truncate">
+            <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
+              Mijozlar chati
+            </div>
+            <div className="text-[10px] text-neutral-400">Tezkor javoblar</div>
+          </div>
+        </Link>
+
+        <Link
+          to="/marketing"
+          className="p-3.5 rounded-2xl bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-all shadow-xs flex items-center gap-3 group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+            <Megaphone className="w-4 h-4" />
+          </div>
+          <div className="truncate">
+            <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
+              Marketing
+            </div>
+            <div className="text-[10px] text-neutral-400">Aksiya va xabarnoma</div>
+          </div>
+        </Link>
       </div>
     </div>
   );

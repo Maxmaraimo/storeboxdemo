@@ -1,3 +1,9 @@
+try:
+    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    async_playwright = None
+    sync_playwright = None
 import os
 import sys
 import django
@@ -5,7 +11,6 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'storebox.settings')
 django.setup()
 
-from playwright.sync_api import sync_playwright
 from apps.stores.models import Store
 from apps.catalog.models import Product, Category
 from apps.orders.models import Order, OrderItem, Customer

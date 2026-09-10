@@ -210,3 +210,96 @@ class MultiTenantAndCatalogTests(TestCase):
         res = self.client.get('/dashboard/orders/export/')
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res['Content-Type'], 'text/csv; charset=utf-8')
+
+    def test_landing_page_multilingual_and_robosell_sections(self):
+        # 1. Uzbek landing page
+        res_uz = self.client.get('/?lang=uz')
+        self.assertEqual(res_uz.status_code, 200)
+        self.assertContains(res_uz, "15 daqiqada")
+        self.assertContains(res_uz, "onlayn biznesingizni boshlang")
+        self.assertContains(res_uz, "heroMockupWindow")
+        self.assertContains(res_uz, "StoreBox Afzalliklari")
+        self.assertContains(res_uz, "Moslashuvchan dizayn")
+        self.assertContains(res_uz, "StoreBox Restoran")
+        self.assertContains(res_uz, "StoreBox Do'kon")
+        self.assertContains(res_uz, "StoreBox qanday ishlaydi?")
+        self.assertContains(res_uz, "Yo'riqnoma")
+        self.assertContains(res_uz, "STOREBOX BILAN SIZ ENG MINIMAL YO'QOTISHLARNI KO'RIB CHIQAYLIK")
+        self.assertContains(res_uz, "+998(78) 113 82 12")
+
+        # 2. Russian landing page (Verify full Russian translation)
+        res_ru = self.client.get('/?lang=ru')
+        self.assertEqual(res_ru.status_code, 200)
+        self.assertContains(res_ru, "За 15 минут")
+        self.assertContains(res_ru, "запустите онлайн-бизнес")
+        self.assertContains(res_ru, "Преимущества StoreBox")
+        self.assertContains(res_ru, "Адаптивный дизайн")
+        self.assertContains(res_ru, "StoreBox Ресторан")
+        self.assertContains(res_ru, "StoreBox Магазин")
+        self.assertContains(res_ru, "Как работает StoreBox?")
+        self.assertContains(res_ru, "Инструкция")
+        self.assertContains(res_ru, "ДАВАЙТЕ ОЦЕНИМ МИНИМАЛЬНУЮ ЭКОНОМИЮ СО STOREBOX")
+        self.assertContains(res_ru, "Остались вопросы?")
+
+        # 3. English landing page (Verify full English translation)
+        res_en = self.client.get('/?lang=en')
+        self.assertEqual(res_en.status_code, 200)
+        self.assertContains(res_en, "In 15 minutes")
+        self.assertContains(res_en, "launch your online business")
+        self.assertContains(res_en, "StoreBox Advantages")
+        self.assertContains(res_en, "Adaptive Design")
+        self.assertContains(res_en, "StoreBox Restaurant")
+        self.assertContains(res_en, "StoreBox Retail")
+        self.assertContains(res_en, "How StoreBox Works")
+        self.assertContains(res_en, "Guide")
+        self.assertContains(res_en, "MINIMAL EXPENDITURE SAVINGS WITH STOREBOX")
+        self.assertContains(res_en, "Still have questions?")
+
+    def test_lead_inquiry_api(self):
+        from apps.core.models import LeadInquiry
+
+        # 1. Invalid request - empty name
+        res = self.client.post('/api/lead/', data={
+            'name': '',
+            'phone': '+998901234567'
+        }, content_type='application/json')
+        self.assertEqual(res.status_code, 400)
+        self.assertFalse(res.json()['success'])
+
+        # 2. Invalid request - invalid phone
+        res = self.client.post('/api/lead/', data={
+            'name': 'Otabek',
+            'phone': '123'
+        }, content_type='application/json')
+        self.assertEqual(res.status_code, 400)
+        self.assertFalse(res.json()['success'])
+
+        # 3. Valid request (JSON)
+        res = self.client.post('/api/lead/', data={
+            'name': 'Shavkat Rahimov',
+            'company': 'Silk Road Tech',
+            'phone': '+998 90 777 88 99',
+            'message': 'Bizga do\'kon va Telegram bot kerak'
+        }, content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        self.assertIn('lead_id', data)
+
+        lead = LeadInquiry.objects.get(id=data['lead_id'])
+        self.assertEqual(lead.name, 'Shavkat Rahimov')
+        self.assertEqual(lead.phone, '+998907778899')
+        self.assertEqual(lead.company, 'Silk Road Tech')
+        self.assertEqual(lead.status, LeadInquiry.Statuses.NEW)
+
+        # 4. Valid request (Form data)
+        res = self.client.post('/platform/api/lead/', data={
+            'name': 'Dilnoza Karimova',
+            'company': 'Beauty Bar',
+            'phone': '998931112233',
+            'message': 'Narxlar haqida savol'
+        })
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.json()['success'])
+        self.assertTrue(LeadInquiry.objects.filter(name='Dilnoza Karimova').exists())
+

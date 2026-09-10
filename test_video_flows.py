@@ -1,7 +1,12 @@
+try:
+    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    async_playwright = None
+    sync_playwright = None
 import os
 import sys
 import time
-from playwright.sync_api import sync_playwright
 
 def test_video_flows():
     with sync_playwright() as p:

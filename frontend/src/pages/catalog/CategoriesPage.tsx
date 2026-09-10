@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FolderTree, Store, Package, Check, Eye } from "lucide-react";
+import { FolderTree, Store, Package, Plus, Edit2, Trash2, X, Check } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Category } from "../../types";
@@ -9,11 +9,57 @@ export const CategoriesPage: React.FC = () => {
   const { t } = useAuth();
   const queryClient = useQueryClient();
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [formNameUz, setFormNameUz] = useState("");
+  const [formNameRu, setFormNameRu] = useState("");
+  const [formImage, setFormImage] = useState("");
+  const [formError, setFormError] = useState("");
+
   const { data, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       const res = await api.get("/categories/");
       return res.data as { categories: Category[]; total: number };
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      setFormError("");
+      if (!formNameUz.trim()) {
+        throw new Error("Kategoriya nomini kiriting");
+      }
+      const payload: any = {
+        name_uz: formNameUz.trim(),
+        name_ru: formNameRu.trim() || formNameUz.trim(),
+      };
+      if (formImage.trim()) {
+        payload.primary_image_url = formImage.trim();
+      }
+
+      if (editingCategory) {
+        return (await api.patch(`/categories/${editingCategory.id}/`, payload)).data;
+      } else {
+        return (await api.post("/categories/", payload)).data;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      closeModal();
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.error || err.message || "Xatolik yuz berdi";
+      setFormError(typeof msg === "object" ? JSON.stringify(msg) : msg);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/categories/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 
@@ -26,6 +72,30 @@ export const CategoriesPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
+
+  const openCreateModal = () => {
+    setEditingCategory(null);
+    setFormNameUz("");
+    setFormNameRu("");
+    setFormImage("");
+    setFormError("");
+    setModalOpen(true);
+  };
+
+  const openEditModal = (cat: Category) => {
+    setEditingCategory(cat);
+    setFormNameUz(cat.name_uz || "");
+    setFormNameRu(cat.name_ru || "");
+    setFormImage(cat.primary_image_url || "");
+    setFormError("");
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingCategory(null);
+    setFormError("");
+  };
 
   const categories = data?.categories || [];
 
@@ -41,6 +111,14 @@ export const CategoriesPage: React.FC = () => {
             {t("categories_list_subtitle") || "Katalog mahsulotlarini bo`limlar bo`yicha ajratish"}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={openCreateModal}
+          className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Yangi kategoriya</span>
+        </button>
       </div>
 
       {/* BANNER */}
@@ -75,6 +153,7 @@ export const CategoriesPage: React.FC = () => {
                 <th className="py-3.5 px-4">{t("th_cat_name") || "Kategoriya nomi"}</th>
                 <th className="py-3.5 px-4">{t("th_cat_products") || "Tovarlar"}</th>
                 <th className="py-3.5 px-4 text-center">{t("th_show_on_site") || "Saytda ko`rsatish"}</th>
+                <th className="py-3.5 px-4 text-right">Amallar</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -112,12 +191,128 @@ export const CategoriesPage: React.FC = () => {
                       {cat.is_active ? t("cat_active") || "Saytda faol" : t("cat_inactive") || "Yashiringan"}
                     </button>
                   </td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(cat)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                        title="Tahrirlash"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`'${cat.name_uz}' kategoriyasini o'chirishni tasdiqlaysizmi?`)) {
+                            deleteMutation.mutate(cat.id);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
+                        title="O'chirish"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
+              {categories.length === 0 && !isLoading && (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                    Kategoriyalar mavjud emas. Yuqoridagi "Yangi kategoriya" tugmasi orqali qo'shing.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* CREATE / EDIT MODAL */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-black text-slate-900">
+                {editingCategory ? "Kategoriyani tahrirlash" : "Yangi kategoriya qo'shish"}
+              </h3>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold">
+                {formError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Kategoriya nomi (O'zbekcha) *
+                </label>
+                <input
+                  type="text"
+                  value={formNameUz}
+                  onChange={(e) => setFormNameUz(e.target.value)}
+                  placeholder="Masalan: Pitsalar, Ichimliklar, Kiyimlar"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Kategoriya nomi (Ruscha)
+                </label>
+                <input
+                  type="text"
+                  value={formNameRu}
+                  onChange={(e) => setFormNameRu(e.target.value)}
+                  placeholder="Например: Пиццы, Напитки"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Rasm havolasi (URL)
+                </label>
+                <input
+                  type="url"
+                  value={formImage}
+                  onChange={(e) => setFormImage(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+              >
+                Bekor qilish
+              </button>
+              <button
+                type="button"
+                onClick={() => saveMutation.mutate()}
+                disabled={saveMutation.isPending}
+                className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50"
+              >
+                {saveMutation.isPending ? "Saqlanmoqda..." : "Saqlash"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
