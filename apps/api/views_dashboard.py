@@ -1,12 +1,179 @@
 from decimal import Decimal
 import json
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, Count
+from django.db.models.functions import TruncDate
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from apps.orders.models import Order, OrderItem, Customer, ChatMessage
 from .views_auth import get_merchant_store
+
+MONTH_NAMES_UZ_SHORT = ["", "Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"]
+
+def get_dashboard_heatmap_data(store):
+    """Computes a GitHub-style 52-week activity calendar matrix for merchant orders."""
+    now = timezone.now()
+    today = timezone.localdate(now)
+    
+    today_weekday = today.weekday() # Monday is 0, Sunday is 6
+    start_date = today - timezone.timedelta(days=(52 * 7) + today_weekday)
+    
+    orders_qs = Order.objects.filter(
+        store=store,
+        created_at__date__gte=start_date,
+        created_at__date__lte=today
+    ).exclude(status=Order.OrderStatuses.CANCELLED)
+    
+    daily_stats = (
+        orders_qs.annotate(d=TruncDate('created_at'))
+        .values('d')
+        .annotate(
+            count=Count('id'),
+            revenue=Sum('total_amount')
+        )
+    )
+    
+    stats_by_date = {
+        row['d'].strftime('%Y-%m-%d'): {
+            'count': row['count'],
+            'revenue': float(row['revenue'] or 0)
+        }
+        for row in daily_stats
+    }
+    
+    days = []
+    weeks = []
+    curr = start_date
+    
+    total_orders = 0
+    total_revenue = 0.0
+    active_days = 0
+    max_orders_day = 0
+    best_date = None
+    longest_streak = 0
+    temp_streak = 0
+    
+    current_week_days = []
+    current_week_index = 0
+    last_labeled_month = None
+    
+    while curr <= today:
+        d_str = curr.strftime('%Y-%m-%d')
+        stat = stats_by_date.get(d_str, {'count': 0, 'revenue': 0.0})
+        cnt = stat['count']
+        rev = stat['revenue']
+        
+        if cnt == 0:
+            level = 0
+        elif cnt <= 2:
+            level = 1
+        elif cnt <= 5:
+            level = 2
+        elif cnt <= 9:
+            level = 3
+        else:
+            level = 4
+            
+        if cnt > 0:
+            total_orders += cnt
+            total_revenue += rev
+            active_days += 1
+            temp_streak += 1
+            if temp_streak > longest_streak:
+                longest_streak = temp_streak
+            if cnt > max_orders_day:
+                max_orders_day = cnt
+                best_date = d_str
+        else:
+            temp_streak = 0
+            
+        day_obj = {
+            'date': d_str,
+            'count': cnt,
+            'revenue': rev,
+            'level': level,
+            'weekday': curr.weekday(),
+            'month': curr.month,
+            'day': curr.day,
+            'year': curr.year,
+            'is_today': (curr == today),
+            'is_future': False
+        }
+        days.append(day_obj)
+        current_week_days.append(day_obj)
+        
+        if curr.weekday() == 6:
+            month_for_week = current_week_days[0]['month']
+            label = None
+            if month_for_week != last_labeled_month:
+                label = MONTH_NAMES_UZ_SHORT[month_for_week]
+                last_labeled_month = month_for_week
+                
+            weeks.append({
+                'week_index': current_week_index,
+                'month_label': label,
+                'days': current_week_days
+            })
+            current_week_index += 1
+            current_week_days = []
+            
+        curr += timezone.timedelta(days=1)
+        
+    if current_week_days:
+        month_for_week = current_week_days[0]['month']
+        label = None
+        if month_for_week != last_labeled_month:
+            label = MONTH_NAMES_UZ_SHORT[month_for_week]
+            last_labeled_month = month_for_week
+            
+        for pad_w in range(len(current_week_days), 7):
+            pad_date = today + timezone.timedelta(days=(pad_w - today.weekday()))
+            current_week_days.append({
+                'date': pad_date.strftime('%Y-%m-%d'),
+                'count': 0,
+                'revenue': 0.0,
+                'level': -1,
+                'weekday': pad_w,
+                'month': pad_date.month,
+                'day': pad_date.day,
+                'year': pad_date.year,
+                'is_today': False,
+                'is_future': True
+            })
+            
+        weeks.append({
+            'week_index': current_week_index,
+            'month_label': label,
+            'days': current_week_days
+        })
+        
+    current_streak = 0
+    check_day = today
+    while check_day >= start_date:
+        d_str = check_day.strftime('%Y-%m-%d')
+        if stats_by_date.get(d_str, {}).get('count', 0) > 0:
+            current_streak += 1
+            check_day -= timezone.timedelta(days=1)
+        else:
+            if check_day == today:
+                check_day -= timezone.timedelta(days=1)
+                continue
+            break
+
+    return {
+        'total_orders': total_orders,
+        'total_revenue': total_revenue,
+        'active_days': active_days,
+        'max_orders_day': max_orders_day,
+        'best_date': best_date,
+        'longest_streak': longest_streak,
+        'current_streak': current_streak,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': today.strftime('%Y-%m-%d'),
+        'weeks': weeks,
+        'days': days
+    }
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -180,7 +347,8 @@ def dashboard_summary_view(request):
             "traffic": {
                 "web": web_cnt,
                 "telegram": tma_cnt
-            }
+            },
+            "heatmap": get_dashboard_heatmap_data(store),
         },
         "top_products": top_products,
         "map_orders": map_orders

@@ -43,6 +43,10 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import {
+  ContributionHeatmap,
+  DashboardHeatmap,
+} from "../../components/charts/ContributionHeatmap";
 
 ChartJS.register(
   CategoryScale,
@@ -90,6 +94,7 @@ interface DashboardCharts {
     web: number;
     telegram: number;
   };
+  heatmap?: DashboardHeatmap;
 }
 
 interface TopProduct {
@@ -111,7 +116,7 @@ export const DashboardPage: React.FC = () => {
   const { store } = useAuth();
   const [period, setPeriod] = useState<string>("today");
   const [currency, setCurrency] = useState<"UZS" | "USD">("UZS");
-  const [chartType, setChartType] = useState<"bar" | "line">("bar");
+  const [chartType, setChartType] = useState<"bar" | "line" | "heatmap">("bar");
 
   const UZS_TO_USD_RATE = 12800;
 
@@ -466,14 +471,14 @@ export const DashboardPage: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-                Savdolar grafigi
+                {chartType === "heatmap" ? "Faollik taqvimi" : "Savdolar grafigi"}
               </div>
               <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
-                Tushum dinamikasi
+                {chartType === "heatmap" ? "Yillik buyurtmalar xaritasi" : "Tushum dinamikasi"}
               </h2>
             </div>
 
-            {/* Bar vs Line Switcher */}
+            {/* Bar vs Line vs GitHub Heatmap Switcher */}
             <div className="flex items-center gap-1 bg-neutral-100 dark:bg-white/5 p-1 rounded-xl border border-black/[0.04] dark:border-white/10">
               <button
                 type="button"
@@ -499,18 +504,51 @@ export const DashboardPage: React.FC = () => {
               >
                 <LineChartIcon className="w-3.5 h-3.5" />
               </button>
+              <button
+                type="button"
+                onClick={() => setChartType("heatmap")}
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  chartType === "heatmap"
+                    ? "bg-white dark:bg-white/20 text-emerald-600 dark:text-emerald-400 shadow-2xs"
+                    : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+                }`}
+                title="GitHub uslubidagi faollik xaritasi (Heatmap)"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+                  <rect x="1" y="2" width="3" height="3" rx="0.75" />
+                  <rect x="5" y="2" width="3" height="3" rx="0.75" />
+                  <rect x="9" y="2" width="3" height="3" rx="0.75" />
+                  <rect x="13" y="2" width="3" height="3" rx="0.75" />
+                  <rect x="1" y="6.5" width="3" height="3" rx="0.75" />
+                  <rect x="5" y="6.5" width="3" height="3" rx="0.75" />
+                  <rect x="9" y="6.5" width="3" height="3" rx="0.75" />
+                  <rect x="13" y="6.5" width="3" height="3" rx="0.75" />
+                  <rect x="1" y="11" width="3" height="3" rx="0.75" />
+                  <rect x="5" y="11" width="3" height="3" rx="0.75" />
+                  <rect x="9" y="11" width="3" height="3" rx="0.75" />
+                  <rect x="13" y="11" width="3" height="3" rx="0.75" />
+                </svg>
+              </button>
             </div>
           </div>
 
-          <div className="h-64 sm:h-72 w-full">
-            {charts && charts.labels && charts.labels.length > 0 ? (
-              chartType === "bar" ? (
-                <Bar data={chartData} options={chartOptions} />
-              ) : (
-                <Line data={chartData} options={chartOptions} />
-              )
+          <div className="min-h-[16rem] sm:min-h-[18rem] w-full flex items-center">
+            {chartType === "heatmap" ? (
+              <ContributionHeatmap
+                heatmap={charts?.heatmap}
+                currency={currency}
+                formatMoney={formatMoney}
+              />
+            ) : charts && charts.labels && charts.labels.length > 0 ? (
+              <div className="h-64 sm:h-72 w-full">
+                {chartType === "bar" ? (
+                  <Bar data={chartData} options={chartOptions} />
+                ) : (
+                  <Line data={chartData} options={chartOptions} />
+                )}
+              </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-neutral-400 text-xs font-medium">
+              <div className="h-full w-full flex items-center justify-center text-neutral-400 text-xs font-medium">
                 Tanlangan davr uchun savdo ma'lumotlari mavjud emas
               </div>
             )}
