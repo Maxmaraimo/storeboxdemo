@@ -27,10 +27,13 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useNotifications } from "../../context/NotificationContext";
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
   const { store } = useAuth();
+  const { newOrdersCount, unreadChatsCount } = useNotifications();
+
   // Expanded by default for clear readability, with toggle to collapse
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
     const saved = localStorage.getItem("storebox_sidebar_expanded");
@@ -56,9 +59,19 @@ export const Sidebar: React.FC = () => {
       title: "Asosiy",
       items: [
         { path: "/", icon: LayoutDashboard, label: "Boshqaruv paneli", badge: null },
-        { path: "/orders", icon: ShoppingCart, label: "Buyurtmalar", badge: "12" },
+        {
+          path: "/orders",
+          icon: ShoppingCart,
+          label: "Buyurtmalar",
+          badge: newOrdersCount > 0 ? String(newOrdersCount) : null,
+        },
         { path: "/customers", icon: Users, label: "Mijozlar", badge: null },
-        { path: "/chats", icon: MessageSquare, label: "Xabarlar & Chat", badge: "3" },
+        {
+          path: "/chats",
+          icon: MessageSquare,
+          label: "Xabarlar & Chat",
+          badge: unreadChatsCount > 0 ? String(unreadChatsCount) : null,
+        },
       ],
     },
     {

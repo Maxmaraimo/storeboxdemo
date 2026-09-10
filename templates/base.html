@@ -34,7 +34,9 @@
     <!-- Theme Initializer (Prevents FOUC) -->
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('storebox_theme') || 
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryTheme = urlParams.get('theme');
+            const savedTheme = queryTheme || localStorage.getItem('storebox_theme') || 
                 (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             if (savedTheme === 'dark') {
                 document.documentElement.classList.add('dark');
@@ -89,11 +91,11 @@
 
         /* Apple Glass Design Tokens */
         :root {
-            --apple-glass-light-bg: rgba(255, 255, 255, 0.76);
-            --apple-glass-light-border: rgba(255, 255, 255, 0.9);
+            --apple-glass-light-bg: rgba(255, 255, 255, 0.80);
+            --apple-glass-light-border: rgba(0, 0, 0, 0.06);
             --apple-glass-light-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.05), 0 4px 16px -2px rgba(0, 0, 0, 0.02);
-            --apple-glass-dark-bg: rgba(20, 14, 40, 0.75);
-            --apple-glass-dark-border: rgba(255, 255, 255, 0.12);
+            --apple-glass-dark-bg: rgba(24, 24, 27, 0.80);
+            --apple-glass-dark-border: rgba(255, 255, 255, 0.10);
             --apple-glass-dark-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
         }
 
@@ -108,15 +110,15 @@
         .dark .apple-card-dark,
         .apple-card-dark {
             background: var(--apple-glass-dark-bg);
-            backdrop-filter: blur(32px) saturate(200%);
-            -webkit-backdrop-filter: blur(32px);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px);
             border: 1px solid var(--apple-glass-dark-border);
             box-shadow: var(--apple-glass-dark-shadow);
         }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="h-full bg-slate-50 dark:bg-[#070414] text-slate-900 dark:text-slate-100 antialiased selection:bg-violet-600 selection:text-white transition-colors duration-300">
+<body class="h-full bg-[#F5F5F7] dark:bg-[#0A0A0C] text-neutral-900 dark:text-neutral-100 antialiased selection:bg-neutral-900 selection:text-white dark:selection:bg-white dark:selection:text-neutral-900 transition-colors duration-300">
     {% block content %}{% endblock %}
 
     <script>

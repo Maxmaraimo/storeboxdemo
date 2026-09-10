@@ -190,3 +190,61 @@ class OrderWorkflowEndToEndTests(TestCase):
         self.assertIsNotNone(tx)
         self.assertEqual(tx.state, PaymentTransaction.States.COMPLETED)
 
+    def test_dashboard_notifications_and_badges_real_counts(self):
+        from apps.orders.models import ChatMessage
+        self.client.force_login(self.merchant)
+
+        # 1. Initially 0 new orders and 0 unread chats
+        res = self.client.get('/api/v1/dashboard/notifications/')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data['new_orders_count'], 0)
+        self.assertEqual(data['unread_chats_count'], 0)
+        self.assertEqual(data['total_unread'], 0)
+        self.assertEqual(len(data['notifications']), 0)
+
+        # 2. Create 1 new order and 1 customer chat message
+        order = Order.objects.create(
+            store=self.store,
+            order_number='NOTIF-ORD-01',
+            customer_name='Dilshod',
+            customer_phone='+998901112233',
+            subtotal=Decimal('50000'),
+            total_amount=Decimal('50000'),
+            status=Order.OrderStatuses.NEW
+        )
+        msg = ChatMessage.objects.create(
+            store=self.store,
+            customer_phone='+998901112233',
+            customer_name='Dilshod',
+            sender=ChatMessage.Senders.CUSTOMER,
+            message='Salom, yetkazib berish qancha vaqt oladi?',
+            is_read=False
+        )
+
+        res2 = self.client.get('/api/v1/dashboard/notifications/')
+        self.assertEqual(res2.status_code, 200)
+        data2 = res2.json()
+        self.assertEqual(data2['new_orders_count'], 1)
+        self.assertEqual(data2['unread_chats_count'], 1)
+        self.assertEqual(data2['total_unread'], 2)
+        self.assertEqual(len(data2['notifications']), 2)
+
+        # 3. Mark all notifications/chats as read
+        mark_res = self.client.post('/api/v1/dashboard/notifications/mark-read/')
+        self.assertEqual(mark_res.status_code, 200)
+
+        res3 = self.client.get('/api/v1/dashboard/notifications/')
+        data3 = res3.json()
+        self.assertEqual(data3['unread_chats_count'], 0)
+        self.assertEqual(data3['new_orders_count'], 1)
+
+        # 4. Process the order
+        order.status = Order.OrderStatuses.PROCESSING
+        order.save()
+
+        res4 = self.client.get('/api/v1/dashboard/notifications/')
+        data4 = res4.json()
+        self.assertEqual(data4['new_orders_count'], 0)
+        self.assertEqual(data4['total_unread'], 0)
+

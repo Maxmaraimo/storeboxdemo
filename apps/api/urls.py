@@ -8,13 +8,16 @@ urlpatterns = [
     # Auth
     path("auth/csrf/", views_auth.csrf_view, name="auth_csrf"),
     path("auth/login/", views_auth.login_view, name="auth_login"),
+    path("auth/register/", views_auth.register_view, name="auth_register"),
     path("auth/me/", views_auth.me_view, name="auth_me"),
     path("auth/logout/", views_auth.logout_view, name="auth_logout"),
     path("auth/switch-store/<int:store_id>/", views_auth.switch_store_view, name="auth_switch_store"),
 
-    # Dashboard Summary & Charts
+    # Dashboard Summary & Charts & Notifications
     path("dashboard/summary/", views_dashboard.dashboard_summary_view, name="dashboard_summary"),
     path("dashboard/stats/", views_dashboard.dashboard_summary_view, name="dashboard_stats"),
+    path("dashboard/notifications/", views_dashboard.dashboard_notifications_view, name="dashboard_notifications"),
+    path("dashboard/notifications/mark-read/", views_dashboard.dashboard_mark_notifications_read_view, name="dashboard_notifications_mark_read"),
 
     # Orders
     path("orders/", views_orders.orders_list_view, name="orders_list"),

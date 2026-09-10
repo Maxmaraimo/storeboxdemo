@@ -5,7 +5,7 @@ from django.db.models import Sum
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from apps.orders.models import Order, OrderItem, Customer
+from apps.orders.models import Order, OrderItem, Customer, ChatMessage
 from .views_auth import get_merchant_store
 
 @api_view(["GET"])
@@ -185,3 +185,81 @@ def dashboard_summary_view(request):
         "top_products": top_products,
         "map_orders": map_orders
     })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def dashboard_notifications_view(request):
+    """Returns dynamic real-time unread counts and notification items for the store."""
+    store = get_merchant_store(request)
+    if not store:
+        return Response({
+            "new_orders_count": 0,
+            "unread_chats_count": 0,
+            "total_unread": 0,
+            "notifications": []
+        })
+
+    new_orders_qs = Order.objects.filter(store=store, status=Order.OrderStatuses.NEW).order_by("-created_at")
+    new_orders_count = new_orders_qs.count()
+
+    unread_chats_qs = ChatMessage.objects.filter(
+        store=store,
+        sender=ChatMessage.Senders.CUSTOMER,
+        is_read=False
+    ).order_by("-created_at")
+    unread_chats_count = unread_chats_qs.values("customer_phone").distinct().count()
+
+    total_unread = new_orders_count + unread_chats_count
+
+    notifications = []
+    for o in new_orders_qs[:10]:
+        notifications.append({
+            "id": f"order_{o.id}",
+            "type": "order",
+            "title": f"Yangi buyurtma #{o.order_number}",
+            "body": f"{o.customer_name or 'Mijoz'} - {float(o.total_amount):,.0f} so'm",
+            "created_at": o.created_at.isoformat(),
+            "url": "/orders",
+            "is_read": False,
+        })
+
+    seen_phones = set()
+    for m in unread_chats_qs[:20]:
+        if m.customer_phone not in seen_phones:
+            seen_phones.add(m.customer_phone)
+            notifications.append({
+                "id": f"chat_{m.id}",
+                "type": "chat",
+                "title": f"Yangi xabar: {m.customer_name or m.customer_phone}",
+                "body": m.message[:60] + ("..." if len(m.message) > 60 else ""),
+                "created_at": m.created_at.isoformat(),
+                "url": "/chats",
+                "is_read": False,
+            })
+
+    notifications.sort(key=lambda x: x["created_at"], reverse=True)
+
+    return Response({
+        "new_orders_count": new_orders_count,
+        "unread_chats_count": unread_chats_count,
+        "total_unread": total_unread,
+        "notifications": notifications[:15],
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def dashboard_mark_notifications_read_view(request):
+    """Marks unread customer chat messages as read for this store."""
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Dokon topilmadi"}, status=404)
+
+    ChatMessage.objects.filter(
+        store=store,
+        sender=ChatMessage.Senders.CUSTOMER,
+        is_read=False
+    ).update(is_read=True)
+
+    return Response({"message": "Barcha xabarlar o'qildi deb belgilandi", "success": True})

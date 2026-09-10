@@ -55,6 +55,10 @@ UI_TRANSLATIONS = {
         'view_on_map': "Xaritada ko'rish",
         'our_socials': "Ijtimoiy tarmoqlarimiz",
         'reviews': "sharh",
+        'welcome_back': "Xush kelibsiz,",
+        'categories': "Kategoriyalar",
+        'new_arrivals': "Yangi mahsulotlar",
+        'see_all': "Barchasi",
     },
     'ru': {
         'search_placeholder': "Поиск товаров и категорий",
@@ -88,6 +92,10 @@ UI_TRANSLATIONS = {
         'view_on_map': "Посмотреть на карте",
         'our_socials': "Наши соцсети",
         'reviews': "отзывов",
+        'welcome_back': "С возвращением,",
+        'categories': "Категории",
+        'new_arrivals': "Новинки",
+        'see_all': "Все",
     },
     'en': {
         'search_placeholder': "Search products and categories",
@@ -121,6 +129,10 @@ UI_TRANSLATIONS = {
         'view_on_map': "View on map",
         'our_socials': "Our social media",
         'reviews': "reviews",
+        'welcome_back': "Welcome back,",
+        'categories': "Categories",
+        'new_arrivals': "New arrivals",
+        'see_all': "See all",
     },
     'tr': {
         'search_placeholder': "Ürün ve kategori ara",
@@ -154,6 +166,10 @@ UI_TRANSLATIONS = {
         'view_on_map': "Haritada gör",
         'our_socials': "Sosyal medya hesaplarımız",
         'reviews': "yorum",
+        'welcome_back': "Tekrar hoş geldiniz,",
+        'categories': "Kategoriler",
+        'new_arrivals': "Yeni gelenler",
+        'see_all': "Tümü",
     }
 }
 

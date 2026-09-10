@@ -131,13 +131,26 @@
             <span>StoreBox platformasida ishlab chiqilgan</span>
         </div>
 
-        <!-- MAIN STOREFRONT HEADER -->
-        <header class="bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-2xs">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        <!-- MAIN STOREFRONT HEADER (Pinterest Flawle Neo-Minimalist Style) -->
+        <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-2xs">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 sm:py-0 sm:h-16 flex items-center justify-between gap-3 sm:gap-4">
                 
-                <!-- Left: Menu Drawer Trigger + Store Logo -->
-                <div class="flex items-center gap-3">
-                    <button type="button" @click="sideDrawerOpen = true" class="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50">
+                <!-- MOBILE HEADER: Welcome back, [User] + Menu Trigger (Matching Pinterest Header) -->
+                <div class="sm:hidden flex items-center gap-3">
+                    <button type="button" @click="sideDrawerOpen = true" class="w-9 h-9 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors">
+                        <i data-lucide="menu" class="w-4 h-4"></i>
+                    </button>
+                    <div>
+                        <div class="text-[11px] font-medium text-slate-400 leading-none mb-0.5">{{ t.welcome_back|default:"Welcome back," }}</div>
+                        <div class="text-base font-black text-slate-900 leading-tight tracking-tight">
+                            <span x-text="customerLoggedIn ? customerName : '{{ request.session.customer_name|default:store.name }}'">{{ request.session.customer_name|default:store.name }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DESKTOP HEADER: Store Logo & Brand Name -->
+                <div class="hidden sm:flex items-center gap-3.5">
+                    <button type="button" @click="sideDrawerOpen = true" class="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors">
                         <i data-lucide="menu" class="w-5 h-5"></i>
                     </button>
 
@@ -149,74 +162,78 @@
                             {{ store.name|slice:":1" }}
                         </div>
                         {% endif %}
-                        <div class="hidden sm:block">
+                        <div>
                             <span class="font-black text-sm text-slate-900 tracking-tight block">{{ store.name }}</span>
-                            <span class="text-[10px] text-emerald-600 font-bold block leading-none">🟢 {{ store.is_currently_open.1 }}</span>
+                            <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1.5 leading-none mt-0.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>{{ store.is_currently_open.1 }}</span>
+                            </span>
                         </div>
                     </a>
                 </div>
 
-                <!-- Center: Search Input -->
+                <!-- DESKTOP CENTER: Minimalist Search Capsule -->
                 <div class="flex-1 max-w-md hidden md:block">
                     <form action="/store/{{ store.subdomain }}/" method="GET" class="relative">
                         <input type="text" name="q" value="{{ query|default:'' }}" placeholder="{{ t.search_placeholder|default:'Mahsulotlar va toifalarni qidirish' }}"
-                               class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                               class="w-full pl-10 pr-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-slate-900 focus:bg-white transition-all">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
                     </form>
                 </div>
 
-                <!-- Right: Wishlist, Cart, Profile, Language -->
+                <!-- RIGHT CONTROLS: Mobile Circular Search & Cart, Desktop Actions -->
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Mobile Minimalist Circular Search Button (Matching Pinterest 'Q' circle) -->
+                    <button type="button" @click="searchModalOpen = true"
+                            class="sm:hidden w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-800 transition-colors"
+                            aria-label="Qidiruv">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </button>
+
                     <!-- Wishlist (Sevimmlar) -->
-                    <button type="button" @click="wishlistModalOpen = true" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 relative text-xs font-bold text-slate-700">
+                    <button type="button" @click="wishlistModalOpen = true" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 relative text-xs font-bold text-slate-700 transition-all">
                         <i data-lucide="heart" class="w-4 h-4 text-slate-500"></i>
-                        <span class="hidden sm:inline">{{ t.favorites|default:'Sevimmlar' }}</span>
+                        <span>{{ t.favorites|default:'Sevimmlar' }}</span>
                         <span x-show="wishlist.length > 0" class="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center" x-text="wishlist.length"></span>
                     </button>
 
                     <!-- Cart (Savat) -->
-                    <a href="/store/{{ store.subdomain }}/checkout/" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-brand text-white text-xs font-bold shadow-xs hover:bg-brand-dark">
+                    <a href="/store/{{ store.subdomain }}/checkout/" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold shadow-xs hover:bg-black transition-all">
                         <i data-lucide="shopping-bag" class="w-4 h-4"></i>
                         <span class="hidden sm:inline">{{ t.cart|default:'Savat' }}</span>
-                        <span class="w-4 h-4 rounded-full bg-white text-brand text-[10px] font-black flex items-center justify-center" x-text="cartCount">0</span>
+                        <span class="px-1.5 py-0.2 rounded-full bg-white text-slate-900 text-[10px] font-black flex items-center justify-center" x-text="cartCount">0</span>
                     </a>
 
-                    <!-- User Profile Button (Dedicated Profile Page) -->
+                    <!-- User Profile Button (Desktop) -->
                     <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}"
-                       class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold hover:bg-slate-50 transition-colors">
+                       class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 text-xs font-bold hover:bg-slate-50 transition-colors">
                         <i data-lucide="user" class="w-4 h-4 text-slate-600"></i>
                         <span x-text="customerLoggedIn ? customerName : '{{ t.login|default:'Kirish' }}'">{{ t.login|default:'Kirish' }}</span>
                     </a>
 
-                    <!-- Language Switcher (UZ, RU, EN, TR) -->
+                    <!-- Language Switcher (Clean Badges, 0 emojis) -->
                     <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                            {% if current_lang == 'ru' %}
-                                <span>🇷🇺 Рус</span>
-                            {% elif current_lang == 'en' %}
-                                <span>🇬🇧 Eng</span>
-                            {% elif current_lang == 'tr' %}
-                                <span>🇹🇷 Tür</span>
-                            {% else %}
-                                <span>🇺🇿 O'zb</span>
-                            {% endif %}
+                        <button @click="open = !open" type="button" class="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                            <span class="px-1 py-0.2 text-[10px] font-black bg-slate-100 rounded text-slate-700 uppercase">
+                                {{ current_lang|default:'uz' }}
+                            </span>
                             <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
                         </button>
-                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50 text-xs font-semibold">
-                            <a href="?lang=uz" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'uz' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
-                                <span class="flex items-center gap-2"><span>🇺🇿</span> <span>O'zbek</span></span>
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-32 bg-white border border-slate-200 rounded-2xl shadow-xl py-1 z-50 text-xs font-semibold overflow-hidden">
+                            <a href="?lang=uz" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'uz' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
+                                <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">UZ</span> <span>O'zbek</span></span>
                                 {% if current_lang == 'uz' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
                             </a>
-                            <a href="?lang=ru" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'ru' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
-                                <span class="flex items-center gap-2"><span>🇷🇺</span> <span>Русский</span></span>
+                            <a href="?lang=ru" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'ru' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
+                                <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">RU</span> <span>Русский</span></span>
                                 {% if current_lang == 'ru' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
                             </a>
-                            <a href="?lang=en" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'en' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
-                                <span class="flex items-center gap-2"><span>🇬🇧</span> <span>English</span></span>
+                            <a href="?lang=en" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'en' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
+                                <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">EN</span> <span>English</span></span>
                                 {% if current_lang == 'en' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
                             </a>
-                            <a href="?lang=tr" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'tr' %}text-brand font-bold bg-emerald-50/50{% else %}text-slate-700{% endif %}">
-                                <span class="flex items-center gap-2"><span>🇹🇷</span> <span>Türkçe</span></span>
+                            <a href="?lang=tr" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'tr' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
+                                <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">TR</span> <span>Türkçe</span></span>
                                 {% if current_lang == 'tr' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
                             </a>
                         </div>
@@ -351,7 +368,7 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Telefon raqami</label>
                     <div class="flex items-center rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 gap-2">
-                        <span class="text-sm">🇺🇿</span>
+                        <span class="text-xs font-bold text-slate-500">UZ</span>
                         <input type="tel" x-model="customerPhoneInput" placeholder="+998 90 123 45 67" class="bg-transparent text-xs font-mono font-bold w-full focus:outline-none">
                     </div>
                     <span class="text-[10px] text-slate-400 block mt-1">Tizimga kirish orqali siz maxfiylik siyosatiga rozilik bildirasiz</span>
@@ -682,14 +699,16 @@
             <div class="flex-1 overflow-y-auto space-y-3 pr-1">
                 <template x-if="isLoadingOrders">
                     <div class="py-12 text-center text-slate-400 text-xs">
-                        <div class="inline-block animate-spin mb-2">⏳</div>
+                        <i data-lucide="loader-2" class="w-6 h-6 mx-auto animate-spin mb-2 text-brand"></i>
                         <div>Buyurtmalar yuklanmoqda...</div>
                     </div>
                 </template>
 
                 <template x-if="!isLoadingOrders && customerOrders.length === 0">
                     <div class="py-12 text-center space-y-3">
-                        <div class="w-16 h-16 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 text-2xl">🛍</div>
+                        <div class="w-16 h-16 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400">
+                            <i data-lucide="shopping-bag" class="w-7 h-7"></i>
+                        </div>
                         <div>
                             <div class="font-black text-sm text-slate-800">Sizda hali buyurtmalar yo'q</div>
                             <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Do'konimiz katalogidan sevimli mahsulotlaringizni tanlang va buyurtma bering</p>
@@ -782,7 +801,10 @@
                     {% endif %}
                     <div>
                         <h4 class="font-black text-sm text-slate-900 tracking-tight leading-tight">{{ store.name }}</h4>
-                        <span class="text-[10px] text-emerald-600 font-bold block mt-0.5">🟢 {{ store.is_currently_open.1|default:"Ochiq" }}</span>
+                        <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1.5 mt-0.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>{{ store.is_currently_open.1|default:"Ochiq" }}</span>
+                        </span>
                     </div>
                 </a>
                 <button type="button" @click="sideDrawerOpen = false" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-lg cursor-pointer">
@@ -930,7 +952,9 @@
             <div class="flex-1 overflow-y-auto p-4 space-y-3">
                 <template x-if="cartCount === 0">
                     <div class="py-16 text-center text-slate-400 text-xs">
-                        <div class="w-12 h-12 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 mb-2">🛍</div>
+                        <div class="w-12 h-12 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 mb-2">
+                            <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                        </div>
                         Savatingiz hozircha bo'sh
                     </div>
                 </template>
@@ -942,7 +966,9 @@
                                 <img :src="item.image" class="w-full h-full object-cover">
                             </template>
                             <template x-if="!item.image">
-                                <div class="w-full h-full flex items-center justify-center text-slate-400 text-xs">📦</div>
+                                <div class="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                                    <i data-lucide="package" class="w-5 h-5"></i>
+                                </div>
                             </template>
                         </div>
                         <div class="flex-1 min-w-0">
@@ -995,7 +1021,9 @@
             <div class="flex-1 overflow-y-auto space-y-2">
                 <template x-if="wishlist.length === 0">
                     <div class="py-12 text-center text-slate-400 text-xs">
-                        <div class="w-12 h-12 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 mb-2">❤️</div>
+                        <div class="w-12 h-12 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 mb-2">
+                            <i data-lucide="heart" class="w-5 h-5 text-slate-300"></i>
+                        </div>
                         Hozircha sevimli mahsulotlar yo'q
                     </div>
                 </template>
@@ -1009,41 +1037,138 @@
     </div>
 
     <!-- ============================================================= -->
-    <!-- 5-TAB MOBILE & TMA BOTTOM BAR (Video 00:10-00:58)             -->
+    <!-- 5-TAB MOBILE BOTTOM BAR (Pinterest Flawle Minimalist Style)   -->
     <!-- ============================================================= -->
-    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-4 py-2 flex items-center justify-around text-[10px] font-bold text-slate-500 shadow-lg">
-        <!-- 1. Bosh sahifa -->
-        <a href="/store/{{ store.subdomain }}/" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand">
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-5 py-2 flex items-center justify-around shadow-2xl">
+        <!-- 1. Bosh sahifa (Home with active line indicator) -->
+        <a href="/store/{{ store.subdomain }}/" class="flex flex-col items-center justify-center gap-1 text-slate-900 py-1 transition-colors group">
             <i data-lucide="home" class="w-5 h-5"></i>
-            <span>Bosh sahifa</span>
+            <span class="w-4 h-0.5 bg-slate-900 rounded-full transition-all"></span>
         </a>
 
-        <!-- 2. Katalog -->
-        <button type="button" @click="sideDrawerOpen = true" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand">
+        <!-- 2. Katalog (Grid / 4 squares) -->
+        <button type="button" @click="sideDrawerOpen = true" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-900 py-1 transition-colors">
             <i data-lucide="layout-grid" class="w-5 h-5"></i>
-            <span>Katalog</span>
+            <span class="w-4 h-0.5 bg-transparent rounded-full"></span>
         </button>
 
-        <!-- 3. Savat -->
-        <button type="button" @click="cartDrawerOpen = true" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand relative">
-            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-            <span>Savat</span>
-            <span x-show="cartCount > 0" class="absolute -top-1 right-1 w-4 h-4 rounded-full bg-brand text-white text-[9px] font-black flex items-center justify-center" x-text="cartCount"></span>
+        <!-- 3. AI Assistant (Speech bubble with AI tag) -->
+        <button type="button" @click="aiModalOpen = true" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-900 py-1 transition-colors relative">
+            <div class="relative flex items-center justify-center">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+                <span class="absolute text-[8px] font-black tracking-tighter text-slate-800">AI</span>
+            </div>
+            <span class="w-4 h-0.5 bg-transparent rounded-full"></span>
         </button>
 
-        <!-- 4. Sevimmlilar -->
-        <button type="button" @click="wishlistModalOpen = true" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand relative">
-            <i data-lucide="heart" class="w-5 h-5"></i>
-            <span>Sevimmlilar</span>
-            <span x-show="wishlist.length > 0" class="absolute -top-1 right-2 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center" x-text="wishlist.length"></span>
+        <!-- 4. Savat (Shopping Bag with notification pill) -->
+        <button type="button" @click="cartDrawerOpen = true" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-900 py-1 transition-colors relative">
+            <div class="relative">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                <span class="absolute -top-1.5 -right-2 px-1 min-w-[15px] h-3.5 rounded-full bg-slate-900 text-white text-[9px] font-black flex items-center justify-center" x-text="cartCount">0</span>
+            </div>
+            <span class="w-4 h-0.5 bg-transparent rounded-full"></span>
         </button>
 
-        <!-- 5. Profil -->
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}" class="flex flex-col items-center gap-1 text-slate-600 hover:text-brand focus:text-brand">
+        <!-- 5. Profil (User Avatar) -->
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-900 py-1 transition-colors">
             <i data-lucide="user" class="w-5 h-5"></i>
-            <span>Profil</span>
+            <span class="w-4 h-0.5 bg-transparent rounded-full"></span>
         </a>
     </nav>
+
+    <!-- MOBILE FULL-SCREEN / SLIDE-DOWN SEARCH MODAL -->
+    <div x-show="searchModalOpen" x-cloak class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex flex-col justify-start p-4">
+        <div class="bg-white rounded-3xl p-4 shadow-2xl border border-slate-200/80 max-w-lg w-full mx-auto space-y-3 animate-in fade-in slide-in-from-top-4 duration-200"
+             @click.away="searchModalOpen = false">
+            <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </div>
+                <form action="/store/{{ store.subdomain }}/" method="GET" class="flex-1">
+                    <input type="text" name="q" value="{{ search_q|default:'' }}" autofocus
+                           placeholder="{{ t.search_placeholder|default:'Mahsulotlar va toifalarni qidirish...' }}"
+                           class="w-full bg-transparent text-sm font-bold text-slate-900 focus:outline-none placeholder:text-slate-400">
+                </form>
+                <button type="button" @click="searchModalOpen = false" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs font-bold">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-1">Ommabop qidiruvlar</div>
+            <div class="flex flex-wrap gap-1.5 pb-1">
+                {% for c in categories|slice:":6" %}
+                <a href="?cat={{ c.slug }}" @click="searchModalOpen = false" class="px-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-colors">
+                    {{ c.display_name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- STOREBOX AI SHOPPING ASSISTANT MODAL -->
+    <div x-show="aiModalOpen" x-cloak class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full sm:max-w-md rounded-t-[32px] sm:rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in slide-in-from-bottom-6 duration-200"
+             @click.away="aiModalOpen = false">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300 animate-pulse"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-sm tracking-tight flex items-center gap-1.5">
+                            <span>StoreBox AI Konsultant</span>
+                            <span class="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">Online</span>
+                        </h3>
+                        <p class="text-[10px] text-slate-300">{{ store.name }} bo'yicha aqlli yordamchi</p>
+                    </div>
+                </div>
+                <button type="button" @click="aiModalOpen = false" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs font-bold">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+
+            <!-- Messages Stream -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 min-h-[260px] bg-slate-50/50">
+                <template x-for="(m, idx) in aiMessages" :key="idx">
+                    <div class="flex gap-2.5" :class="m.sender === 'user' ? 'justify-end' : 'justify-start'">
+                        <div x-show="m.sender === 'ai'" class="w-7 h-7 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-black">
+                            AI
+                        </div>
+                        <div class="max-w-[80%] rounded-2xl px-3.5 py-2.5 text-xs font-medium leading-relaxed"
+                             :class="m.sender === 'user' ? 'bg-slate-900 text-white rounded-br-none font-semibold' : 'bg-white border border-slate-200/80 text-slate-800 shadow-2xs rounded-tl-none'">
+                            <span x-text="m.text"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Quick Suggestions -->
+            <div class="px-4 py-2 border-t border-slate-100 bg-white flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <button type="button" @click="askAiQuick('Eng ommabop mahsulotlarni ko\'rsat')"
+                        class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 shrink-0 transition-colors">
+                    Top mahsulotlar
+                </button>
+                <button type="button" @click="askAiQuick('Aksiyadagi tovarlar bormi?')"
+                        class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 shrink-0 transition-colors">
+                    Aksiyalar
+                </button>
+                <button type="button" @click="askAiQuick('Yetkazib berish qancha vaqt oladi?')"
+                        class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 shrink-0 transition-colors">
+                    Yetkazib berish
+                </button>
+            </div>
+
+            <!-- Input Bar -->
+            <form @submit.prevent="sendAiMessage()" class="p-3 border-t border-slate-100 bg-white flex items-center gap-2">
+                <input type="text" x-model="aiInputText" placeholder="Mahsulot haqida so'rang..."
+                       class="flex-1 bg-slate-100 border border-slate-200 rounded-full px-4 py-2 text-xs font-medium focus:outline-none focus:border-slate-900 focus:bg-white transition-all">
+                <button type="submit" class="w-8 h-8 rounded-full bg-slate-900 hover:bg-black text-white flex items-center justify-center shrink-0 shadow-sm active:scale-95 transition-all">
+                    <i data-lucide="arrow-up" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <script>
         function storefrontApp() {
@@ -1072,10 +1197,43 @@
                 sideDrawerOpen: false,
                 cartDrawerOpen: false,
                 wishlistModalOpen: false,
+                searchModalOpen: false,
+                aiModalOpen: false,
                 infoModal: null,
+
+                aiMessages: [
+                    { sender: 'ai', text: "Salom! Men {{ store.name }} AI yordamchisiman. Sizga bugun qaysi mahsulotni tanlashda yordam beray?" }
+                ],
+                aiInputText: '',
+
+                sendAiMessage() {
+                    if (!this.aiInputText.trim()) return;
+                    const text = this.aiInputText.trim();
+                    this.aiMessages.push({ sender: 'user', text: text });
+                    this.aiInputText = '';
+                    setTimeout(() => {
+                        this.aiMessages.push({
+                            sender: 'ai',
+                            text: "Ajoyib tanlov! Siz uchun do'konimiz katalogidagi eng yangi va mashhur tovarlarni tavsiya qilaman. Savatga qo'shish uchun tovar ustidagi «+» tugmasini bosing."
+                        });
+                        this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                    }, 400);
+                },
+
+                askAiQuick(prompt) {
+                    this.aiInputText = prompt;
+                    this.sendAiMessage();
+                },
 
                 init() {
                     this.$watch('sideDrawerOpen', val => {
+                        if (val) {
+                            this.$nextTick(() => {
+                                if (window.lucide) window.lucide.createIcons();
+                            });
+                        }
+                    });
+                    this.$watch('aiModalOpen', val => {
                         if (val) {
                             this.$nextTick(() => {
                                 if (window.lucide) window.lucide.createIcons();

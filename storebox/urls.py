@@ -11,6 +11,7 @@ urlpatterns = [
 
     # Language Switcher
     path('lang/<str:lang>/', core_views.switch_language_view, name='switch_language'),
+    path('set-lang/<str:lang>/', core_views.switch_language_view, name='set_language_alias'),
 
     # Auth & Onboarding
     path('dev-login/', dashboard_views.dev_login_view, name='dev_login'),

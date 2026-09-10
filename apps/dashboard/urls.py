@@ -33,6 +33,9 @@ urlpatterns = [
     path('api/dashboard/summary/', views_dashboard.dashboard_summary_view, name='api_dashboard_summary'),
 
     path('lang/<str:lang>/', core_views.switch_language_view, name='dashboard_switch_language'),
+    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
+    path('logout/', views.logout_view, name='logout'),
     path('onboarding/', views.onboarding_wizard_view, name='onboarding'),
     path('dev-login/', views.dev_login_view, name='dev_login'),
     

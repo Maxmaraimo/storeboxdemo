@@ -12,16 +12,21 @@ import {
   LogOut,
   Check,
   Headphones,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ShoppingCart,
+  MessageSquare
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useNotifications } from "../../context/NotificationContext";
 import { Language } from "../../i18n/translations";
 
 export const Header: React.FC = () => {
   const { user, store, logout, lang, setLang, t } = useAuth();
+  const { totalUnread, notifications, markAllRead } = useNotifications();
   const navigate = useNavigate();
   const [langOpen, setLangOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
     return document.documentElement.classList.contains("dark");
   });
@@ -116,15 +121,91 @@ export const Header: React.FC = () => {
           {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-neutral-700" />}
         </button>
 
-        {/* Notification Bell with Red Badge (from Photo 1, 2, 3) */}
+        {/* Notification Bell with Dynamic Red Badge & Dropdown */}
         <div className="relative">
           <button
             type="button"
-            className="w-9 h-9 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+            onClick={() => setNotifOpen(!notifOpen)}
+            className="w-9 h-9 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer relative"
+            title={totalUnread > 0 ? `${totalUnread} ta yangi bildirishnoma` : "Bildirishnomalar"}
           >
             <Bell className="w-4 h-4" />
-            <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-2 right-2 ring-2 ring-white dark:ring-slate-900"></span>
+            {totalUnread > 0 && (
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 absolute top-2 right-2 ring-2 ring-white dark:ring-[#18181b] animate-pulse"></span>
+            )}
           </button>
+
+          {notifOpen && (
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 rounded-3xl shadow-2xl p-4 z-50 space-y-3">
+              <div className="flex items-center justify-between pb-2.5 border-b border-black/[0.06] dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-neutral-900 dark:text-white">Bildirishnomalar</span>
+                  {totalUnread > 0 ? (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white">
+                      {totalUnread} yangi
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-neutral-500 dark:text-neutral-400">
+                      0
+                    </span>
+                  )}
+                </div>
+                {totalUnread > 0 && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await markAllRead();
+                    }}
+                    className="text-[11px] font-bold text-brand hover:underline cursor-pointer"
+                  >
+                    Barchasini o'qish
+                  </button>
+                )}
+              </div>
+
+              {/* Notification list or empty state */}
+              {notifications.length === 0 ? (
+                <div className="py-8 text-center space-y-2">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                    <Check className="w-5 h-5" />
+                  </div>
+                  <div className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                    Yangi bildirishnomalar yo'q
+                  </div>
+                  <p className="text-[11px] text-neutral-400 max-w-[220px] mx-auto">
+                    Barcha buyurtmalar va xabarlar ko'rib chiqilgan
+                  </p>
+                </div>
+              ) : (
+                <div className="max-h-80 overflow-y-auto space-y-2 pr-1 no-scrollbar">
+                  {notifications.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={item.url}
+                      onClick={() => setNotifOpen(false)}
+                      className="flex items-start gap-3 p-2.5 rounded-2xl bg-neutral-50 dark:bg-white/5 hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer border border-black/[0.03] dark:border-white/5"
+                    >
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                        item.type === "order" 
+                          ? "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400" 
+                          : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
+                      }`}>
+                        {item.type === "order" ? <ShoppingCart className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
+                          {item.title}
+                        </div>
+                        <div className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">
+                          {item.body}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Language Selector */}

@@ -32,9 +32,19 @@
         {% endif %}
 
         {% if error %}
-        <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center gap-2.5 shadow-xs">
-            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500 shrink-0"></i>
-            <span>{{ error }}</span>
+        <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-300 text-xs font-bold space-y-2 shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500 shrink-0"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% if user_already_registered %}
+            <div class="pt-1">
+                <a href="/login/?login={{ submitted_phone|urlencode }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-[11px] transition-colors shadow-xs">
+                    <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                    <span>Tizimga kirish</span>
+                </a>
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 
@@ -175,19 +185,19 @@
 
             <!-- 2. EMAIL (OPTIONAL) -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1.5">Email (ixtiyoriy)</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Email (ixtiyoriy)</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="mail" class="w-4 h-4"></i>
                     </div>
                     <input type="email" name="email" placeholder="merchant@store.uz" value="{{ submitted_email|default:'' }}"
-                           class="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors">
+                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all">
                 </div>
             </div>
 
             <!-- 3. PASSWORD -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1.5">Parol</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Parol</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="lock" class="w-4 h-4"></i>
@@ -197,10 +207,10 @@
                            x-model="password"
                            required 
                            placeholder="Kamida 6 ta belgi"
-                           class="block w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors">
+                           class="block w-full pl-10 pr-10 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all">
                     <button type="button" 
                             @click="showPassword = !showPassword"
-                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer">
+                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
                         <i :data-lucide="showPassword ? 'eye-off' : 'eye'" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -208,7 +218,7 @@
 
             <!-- 4. PASSWORD CONFIRM -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1.5">Parolni tasdiqlang</label>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Parolni tasdiqlang</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="lock" class="w-4 h-4"></i>
@@ -218,10 +228,10 @@
                            x-model="passwordConfirm"
                            required 
                            placeholder="Parolni qaytadan kiriting"
-                           class="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors">
+                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all">
                 </div>
                 <template x-if="password && passwordConfirm && password !== passwordConfirm">
-                    <p class="text-[11px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                    <p class="text-[11px] font-bold text-rose-600 dark:text-rose-400 mt-1 flex items-center gap-1">
                         <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Parollar bir-biriga mos kelmadi
                     </p>
                 </template>
@@ -229,15 +239,15 @@
 
             <!-- SUBMIT BUTTON -->
             <button type="submit" 
-                    class="w-full py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white font-extrabold text-xs transition-all shadow-md shadow-emerald-500/25 mt-2 flex items-center justify-center gap-2 cursor-pointer">
+                    class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#6035EE] via-[#7C3AED] to-[#A855F7] hover:opacity-95 active:scale-[0.99] text-white font-black text-xs transition-all shadow-lg shadow-purple-600/30 mt-2 flex items-center justify-center gap-2 cursor-pointer">
                 <i data-lucide="user-plus" class="w-4 h-4"></i>
                 <span>Davom etish va do'kon yaratish</span>
             </button>
         </form>
 
-        <div class="pt-4 border-t border-slate-100 text-center text-xs text-slate-500 font-medium">
+        <div class="pt-4 border-t border-slate-100 dark:border-white/10 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
             Hisobingiz bormi?
-            <a href="/login/" class="font-bold text-emerald-600 hover:underline ml-1">Kirish</a>
+            <a href="/login/" class="font-bold text-violet-600 dark:text-violet-400 hover:underline ml-1">Kirish</a>
         </div>
     </div>
 </div>
@@ -484,10 +494,10 @@ function phoneRegister() {
         },
 
         handleKeyDown(e) {
-            // Allow control keys
+            // Allow control keys and +
             const allowed = [
                 'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 
-                'Home', 'End', 'Enter'
+                'Home', 'End', 'Enter', '+'
             ];
             if (allowed.includes(e.key) || e.ctrlKey || e.metaKey) {
                 return;
@@ -499,8 +509,8 @@ function phoneRegister() {
                 return;
             }
 
-            // Prevent typing more digits than allowed
-            if (this.rawDigits.length >= this.selectedCountry.digits) {
+            // Prevent typing excessive digits while allowing prefix
+            if (this.rawDigits.length >= (this.selectedCountry.digits + 4)) {
                 const input = e.target;
                 if (input.selectionStart === input.selectionEnd) {
                     e.preventDefault();
@@ -510,7 +520,18 @@ function phoneRegister() {
 
         handleInput(e) {
             const val = e.target.value;
-            const digits = val.replace(/\D/g, '');
+            let digits = val.replace(/\D/g, '');
+
+            // Auto-detect and strip country code if typed in input
+            if (digits.startsWith('998') && digits.length >= 4) {
+                this.selectedCountry = this.countries.find(c => c.id === 'uz') || this.selectedCountry;
+                digits = digits.slice(3);
+            } else if (digits.startsWith('8') && digits.length === 10 && this.selectedCountry.id === 'uz') {
+                digits = digits.slice(1);
+            } else if (digits.startsWith('7') && digits.length >= 11) {
+                this.selectedCountry = this.countries.find(c => c.id === 'ru') || this.selectedCountry;
+                digits = digits.slice(1);
+            }
 
             this.rawDigits = digits.slice(0, this.selectedCountry.digits);
             this.phoneError = '';
@@ -573,14 +594,20 @@ function phoneRegister() {
 
         handleSubmit(e) {
             this.phoneError = '';
-            if (this.rawDigits.length === 0) {
+            let raw = this.rawDigits;
+            if (this.selectedCountry.id === 'uz' && raw.startsWith('998') && raw.length >= 12) {
+                raw = raw.slice(3);
+                this.rawDigits = raw;
+            }
+
+            if (!raw || raw.length === 0) {
                 e.preventDefault();
                 this.phoneError = "Iltimos, telefon raqamini kiriting";
                 if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
                 return;
             }
 
-            if (this.selectedCountry.id !== 'other' && this.rawDigits.length < this.selectedCountry.digits) {
+            if (this.selectedCountry.id !== 'other' && raw.length < this.selectedCountry.digits) {
                 e.preventDefault();
                 this.phoneError = `Iltimos, telefon raqamini to'liq kiriting (${this.selectedCountry.digits} ta raqam bo'lishi kerak)`;
                 if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
@@ -589,7 +616,24 @@ function phoneRegister() {
 
             if (this.password && this.passwordConfirm && this.password !== this.passwordConfirm) {
                 e.preventDefault();
+                this.phoneError = "Parollar bir-biriga mos kelmadi";
                 return;
+            }
+
+            if (!this.password || this.password.length < 6) {
+                e.preventDefault();
+                this.phoneError = "Parol kamida 6 ta belgidan iborat bo'lishi kerak";
+                return;
+            }
+
+            // Sync hidden inputs explicitly before form submits
+            const phoneField = e.target.querySelector('input[name="phone"]');
+            if (phoneField) {
+                phoneField.value = this.fullPhoneNumber;
+            }
+            const countryField = e.target.querySelector('input[name="country_code"]');
+            if (countryField) {
+                countryField.value = this.selectedCountry.id;
             }
         }
     }

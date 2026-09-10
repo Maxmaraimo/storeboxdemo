@@ -31,7 +31,7 @@
         </div>
         {% endif %}
 
-        <form method="POST" class="mt-6 space-y-4">
+        <form method="POST" class="mt-6 space-y-4" x-data="{ showPass: false }">
             {% csrf_token %}
             <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Telefon raqam yoki Email</label>
@@ -39,7 +39,7 @@
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="phone" class="w-4 h-4"></i>
                     </div>
-                    <input type="text" name="login" required placeholder="+998 90 123 45 67" value="{{ request.POST.login }}"
+                    <input type="text" name="login" required placeholder="+998 90 123 45 67" value="{{ prefill_login|default:'' }}"
                            class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all">
                 </div>
             </div>
@@ -50,8 +50,11 @@
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="lock" class="w-4 h-4"></i>
                     </div>
-                    <input type="password" name="password" required placeholder="••••••••"
-                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all">
+                    <input :type="showPass ? 'text' : 'password'" name="password" required placeholder="••••••••"
+                           class="block w-full pl-10 pr-10 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all">
+                    <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+                        <i :data-lucide="showPass ? 'eye-off' : 'eye'" class="w-4 h-4"></i>
+                    </button>
                 </div>
             </div>
 

@@ -484,7 +484,9 @@ def register_view(request):
         if not phone:
             error = "Iltimos, telefon raqamini kiriting"
         elif country_code == 'uz':
-            if len(clean_digits) == 9:
+            if len(clean_digits) == 10 and clean_digits.startswith('8'):
+                clean_digits = '998' + clean_digits[1:]
+            elif len(clean_digits) == 9:
                 clean_digits = '998' + clean_digits
             if len(clean_digits) != 12 or not clean_digits.startswith('998'):
                 error = "Iltimos, O'zbekiston telefon raqamini to'liq kiriting (9 ta raqam, masalan: +998 90 123 45 67)"
@@ -522,12 +524,22 @@ def register_view(request):
             if len(clean_digits) < 8 or len(clean_digits) > 15:
                 error = "Iltimos, to'liq xalqaro telefon raqamini kiriting"
 
+        user_already_registered = False
         if not error:
             normalized_phone = f"+{clean_digits}"
             username = clean_digits
 
             from django.db.models import Q
-            if User.objects.filter(Q(username=username) | Q(phone=normalized_phone) | Q(phone=phone)).exists():
+            matching_user = User.objects.filter(
+                Q(username=username) | 
+                Q(phone=normalized_phone) | 
+                Q(phone=phone) |
+                (Q(phone__endswith=clean_digits[-9:]) if len(clean_digits) >= 9 else Q(pk__in=[])) |
+                (Q(username__endswith=clean_digits[-9:]) if len(clean_digits) >= 9 else Q(pk__in=[]))
+            ).first()
+
+            if matching_user:
+                user_already_registered = True
                 error = "Ushbu telefon raqamiga ega foydalanuvchi allaqachon ro'yxatdan o'tgan. Iltimos, tizimga kiring."
             elif not password:
                 error = 'Iltimos, maxfiy parolni kiriting'
@@ -559,6 +571,7 @@ def register_view(request):
 
     return render(request, 'dashboard/auth/register.html', {
         'error': error,
+        'user_already_registered': locals().get('user_already_registered', False),
         'selected_plan': plan,
         'selected_plan_label': plan_labels.get(plan, ''),
         'selected_duration': duration,
@@ -592,7 +605,7 @@ def dev_login_view(request):
 def login_view(request):
     if request.user.is_authenticated:
         next_url = request.GET.get('next') or request.POST.get('next')
-        if next_url and next_url.startswith('/'):
+        if next_url and next_url.startswith('/') and not next_url.startswith('/login') and not next_url.startswith('/dashboard/login'):
             return redirect(next_url)
         return redirect('dashboard:home')
 
@@ -603,6 +616,7 @@ def login_view(request):
 
         clean = login_val.replace('+', '').replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
 
+        from django.db.models import Q
         target_user = None
         if User.objects.filter(username=clean).exists():
             target_user = User.objects.filter(username=clean).first()
@@ -614,8 +628,8 @@ def login_view(request):
             target_user = User.objects.filter(phone=f"+{clean}").first()
         elif len(clean) == 9 and User.objects.filter(username=f"998{clean}").exists():
             target_user = User.objects.filter(username=f"998{clean}").first()
-        elif len(clean) >= 9 and User.objects.filter(username__endswith=clean[-9:]).exists():
-            target_user = User.objects.filter(username__endswith=clean[-9:]).first()
+        elif len(clean) >= 9 and User.objects.filter(Q(username__endswith=clean[-9:]) | Q(phone__endswith=clean[-9:]) | Q(phone__contains=clean[-9:])).exists():
+            target_user = User.objects.filter(Q(username__endswith=clean[-9:]) | Q(phone__endswith=clean[-9:]) | Q(phone__contains=clean[-9:])).first()
         elif '@' in login_val:
             target_user = User.objects.filter(email=login_val).first()
 
@@ -631,7 +645,7 @@ def login_view(request):
         if user:
             login(request, user)
             next_url = request.GET.get('next') or request.POST.get('next')
-            if next_url and next_url.startswith('/'):
+            if next_url and next_url.startswith('/') and not next_url.startswith('/login') and not next_url.startswith('/dashboard/login'):
                 return redirect(next_url)
             store = get_merchant_store(request)
             if not user.stores.exists() and not (user.is_superuser and store):
@@ -640,7 +654,8 @@ def login_view(request):
         else:
             error = "Неверный логин (телефон) или пароль / Noto'g'ri telefon raqami yoki parol"
 
-    return render(request, 'dashboard/auth/login.html', {'error': error})
+    prefill_login = request.GET.get('login', '') or request.POST.get('login', '')
+    return render(request, 'dashboard/auth/login.html', {'error': error, 'prefill_login': prefill_login})
 
 
 def logout_view(request):

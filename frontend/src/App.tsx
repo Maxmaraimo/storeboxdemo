@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { AppLayout } from "./components/layout/AppLayout";
 import { LoginPage } from "./pages/auth/LoginPage";
 import { DashboardPage } from "./pages/dashboard/DashboardPage";
@@ -42,37 +43,39 @@ export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter basename={basename}>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
+        <NotificationProvider>
+          <BrowserRouter basename={basename}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
 
-            <Route path="/" element={<AppLayout />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="orders" element={<OrdersPage />} />
-              <Route path="products" element={<ProductsPage />} />
-              <Route path="categories" element={<CategoriesPage />} />
-              <Route path="discounts" element={<DiscountsPage />} />
-              <Route path="ikpu" element={<IkpuPage />} />
-              <Route path="warehouse" element={<WarehousePage />} />
-              <Route path="customers" element={<CustomersPage />} />
-              <Route path="chats" element={<ChatsPage />} />
-              <Route path="marketing" element={<MarketingPage />} />
-              <Route path="platforms" element={<PlatformsPage />} />
-              <Route path="platforms/qr" element={<QrCatalogPage />} />
-              <Route path="qr" element={<QrCatalogPage />} />
-              <Route path="design" element={<DesignStudioPage />} />
-              <Route path="yespos" element={<YesPosPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="settings/branches" element={<BranchesPage />} />
-              <Route path="settings/staff" element={<StaffPage />} />
-              <Route path="settings/tariffs" element={<TariffsPage />} />
-              <Route path="settings/delivery" element={<DeliveryPage />} />
-              <Route path="settings/payments" element={<PaymentsPage />} />
-              <Route path="robo-market" element={<RoboMarketPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+              <Route path="/" element={<AppLayout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="orders" element={<OrdersPage />} />
+                <Route path="products" element={<ProductsPage />} />
+                <Route path="categories" element={<CategoriesPage />} />
+                <Route path="discounts" element={<DiscountsPage />} />
+                <Route path="ikpu" element={<IkpuPage />} />
+                <Route path="warehouse" element={<WarehousePage />} />
+                <Route path="customers" element={<CustomersPage />} />
+                <Route path="chats" element={<ChatsPage />} />
+                <Route path="marketing" element={<MarketingPage />} />
+                <Route path="platforms" element={<PlatformsPage />} />
+                <Route path="platforms/qr" element={<QrCatalogPage />} />
+                <Route path="qr" element={<QrCatalogPage />} />
+                <Route path="design" element={<DesignStudioPage />} />
+                <Route path="yespos" element={<YesPosPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="settings/branches" element={<BranchesPage />} />
+                <Route path="settings/staff" element={<StaffPage />} />
+                <Route path="settings/tariffs" element={<TariffsPage />} />
+                <Route path="settings/delivery" element={<DeliveryPage />} />
+                <Route path="settings/payments" element={<PaymentsPage />} />
+                <Route path="robo-market" element={<RoboMarketPage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
