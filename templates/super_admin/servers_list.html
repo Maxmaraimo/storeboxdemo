@@ -6,7 +6,7 @@
 {% block header_subtitle %}Центральный реестр всех инстансов платформы StoreBox ({{ total_count }} серверов){% endblock %}
 
 {% block header_actions %}
-<div class="flex items-center space-x-2" x-data="{ createModalOpen: false }">
+<div class="flex items-center space-x-2">
     <!-- Export CSV button -->
     <a href="{% url 'super_admin:servers_export_csv' %}"
        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm transition">
@@ -15,9 +15,12 @@
     </a>
 
     <!-- Add Server Button -->
-    <button @click="$dispatch('open-create-modal')"
+    <button id="btnOpenCreateServerModal"
+            onclick="window.SuperAdmin.openCreateServerModal()"
+            @click="createModalOpen = true"
             type="button"
-            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition">
+            data-testid="superadmin-add-server-btn"
+            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition cursor-pointer">
         <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
         <span>Добавить сервер</span>
     </button>
@@ -25,8 +28,7 @@
 {% endblock %}
 
 {% block content %}
-<div x-data="{ createModalOpen: false, renewModalOpen: false, activeStoreId: null, activeStoreSubdomain: '', activeStorePlan: 'STANDARD' }"
-     @open-create-modal.window="createModalOpen = true">
+<div id="serversWorkspace">
 
     <!-- KPI Summary Grid -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -310,10 +312,12 @@
                                 </a>
 
                                 <!-- Fast Renew BUY Button -->
-                                <button @click="activeStoreId = {{ store.id }}; activeStoreSubdomain = '{{ store.subdomain }}'; activeStorePlan = '{{ store.license_plan }}'; renewModalOpen = true;"
+                                <button onclick="window.SuperAdmin.openRenewModal({{ store.id }}, '{{ store.subdomain }}', '{{ store.license_plan }}')"
+                                        @click="activeStoreId = {{ store.id }}; activeStoreSubdomain = '{{ store.subdomain }}'; activeStorePlan = '{{ store.license_plan }}'; renewModalOpen = true;"
                                         type="button"
+                                        data-testid="superadmin-renew-btn-{{ store.id }}"
                                         title="Продлить лицензию (BUY)"
-                                        class="p-1 rounded text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition">
+                                        class="p-1 rounded text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition cursor-pointer">
                                     <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
                                 </button>
 
@@ -372,23 +376,20 @@
     </div>
 
     <!-- 1. Modal: Quick Add Server -->
-    <div x-show="createModalOpen"
-         x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
-         @keydown.escape.window="createModalOpen = false">
-        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden"
-             @click.away="createModalOpen = false">
+    <div id="createServerModal"
+         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden">
             <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
                 <div class="flex items-center space-x-2">
                     <i data-lucide="plus-circle" class="w-4 h-4 text-blue-400"></i>
                     <h3 class="text-xs font-bold uppercase tracking-wider">Создать новый сервер / тенант</h3>
                 </div>
-                <button @click="createModalOpen = false" class="text-slate-400 hover:text-white">
+                <button onclick="window.SuperAdmin.closeCreateServerModal()" type="button" class="text-slate-400 hover:text-white cursor-pointer">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <form method="POST" action="{% url 'super_admin:server_create' %}" class="p-4 space-y-3">
+            <form id="createServerForm" method="POST" action="{% url 'super_admin:server_create' %}" class="p-4 space-y-3">
                 {% csrf_token %}
                 <div>
                     <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Название магазина / бренда *</label>
@@ -446,11 +447,12 @@
                 </div>
 
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
-                    <button @click="createModalOpen = false" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800">
+                    <button onclick="window.SuperAdmin.closeCreateServerModal()" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 cursor-pointer">
                         Отмена
                     </button>
-                    <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-sm">
-                        Зарегистрировать сервер
+                    <button id="btnSubmitCreateServer" type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded shadow-sm flex items-center gap-1 cursor-pointer">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        <span>Создать сервер</span>
                     </button>
                 </div>
             </form>
@@ -458,25 +460,22 @@
     </div>
 
     <!-- 2. Modal: Quick BUY / Renew License -->
-    <div x-show="renewModalOpen"
-         x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
-         @keydown.escape.window="renewModalOpen = false">
-        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden"
-             @click.away="renewModalOpen = false">
+    <div id="renewLicenseModal"
+         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden">
             <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
                 <div class="flex items-center space-x-2">
                     <i data-lucide="shopping-cart" class="w-4 h-4 text-emerald-400"></i>
                     <h3 class="text-xs font-bold uppercase tracking-wider">
-                        Продлить лицензию (BUY): <span x-text="activeStoreSubdomain" class="font-mono text-emerald-400"></span>
+                        Продлить лицензию (BUY): <span id="renewModalSubdomain" class="font-mono text-emerald-400"></span>
                     </h3>
                 </div>
-                <button @click="renewModalOpen = false" class="text-slate-400 hover:text-white">
+                <button onclick="window.SuperAdmin.closeRenewModal()" type="button" class="text-slate-400 hover:text-white cursor-pointer">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <form :action="'/super-admin/servers/' + activeStoreId + '/renew/'" method="POST" class="p-4 space-y-3">
+            <form id="renewLicenseForm" :action="'/super-admin/servers/' + activeStoreId + '/renew/'" method="POST" class="p-4 space-y-3">
                 {% csrf_token %}
                 <div>
                     <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Период продления</label>
@@ -491,7 +490,7 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Тарифный план</label>
-                        <select name="plan" x-model="activeStorePlan" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium">
+                        <select id="renewPlanSelect" name="plan" x-model="activeStorePlan" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium">
                             <option value="START">Старт</option>
                             <option value="STANDARD">Стандарт</option>
                             <option value="PRO">Профессиональный</option>
@@ -518,10 +517,10 @@
                 </div>
 
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
-                    <button @click="renewModalOpen = false" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800">
+                    <button onclick="window.SuperAdmin.closeRenewModal()" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 cursor-pointer">
                         Отмена
                     </button>
-                    <button type="submit" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1">
+                    <button id="btnSubmitRenew" type="submit" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1 cursor-pointer">
                         <i data-lucide="check" class="w-3.5 h-3.5"></i>
                         <span>Подтвердить продление</span>
                     </button>
@@ -531,4 +530,36 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    window.addEventListener('open-create-modal', function() {
+        const m = document.getElementById('createServerModal');
+        if (m) { m.classList.remove('hidden'); m.style.display = 'flex'; }
+    });
+    window.addEventListener('close-create-modal', function() {
+        const m = document.getElementById('createServerModal');
+        if (m) { m.classList.add('hidden'); m.style.display = 'none'; }
+    });
+    window.addEventListener('open-renew-modal', function(e) {
+        const m = document.getElementById('renewLicenseModal');
+        if (m) {
+            m.classList.remove('hidden');
+            m.style.display = 'flex';
+            if (e.detail) {
+                const sub = document.getElementById('renewModalSubdomain');
+                if (sub) sub.textContent = e.detail.subdomain || '';
+                const form = document.getElementById('renewLicenseForm');
+                if (form) form.action = '/super-admin/servers/' + e.detail.storeId + '/renew/';
+                const plan = document.getElementById('renewPlanSelect');
+                if (plan && e.detail.plan) plan.value = e.detail.plan;
+            }
+        }
+    });
+    window.addEventListener('close-renew-modal', function() {
+        const m = document.getElementById('renewLicenseModal');
+        if (m) { m.classList.add('hidden'); m.style.display = 'none'; }
+    });
+</script>
 {% endblock %}

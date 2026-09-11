@@ -90,6 +90,12 @@ class ProductSerializer(serializers.ModelSerializer):
         data = data.copy()
         if "unit" in data:
             data["unit"] = normalize_unit(data.get("unit"))
+        if data.get("cost_price") in [None, "", "null"]:
+            data["cost_price"] = 0
+        if data.get("stock") in [None, "", "null"]:
+            data["stock"] = 0
+        if data.get("category") in [None, "", "null", "undefined"]:
+            data["category"] = None
         if not self.instance and not data.get("slug"):
             name = data.get("name_uz") or data.get("name_ru") or "prod"
             data["slug"] = slugify(name) or f"prod-{random.randint(1000, 9999)}"

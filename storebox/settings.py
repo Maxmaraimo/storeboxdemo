@@ -83,6 +83,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
+    'apps.core.security_middleware.RateLimitDdosMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -93,6 +94,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Tenant middleware
     'apps.core.middleware.SubdomainTenantMiddleware',
+    # Security headers hardening
+    'apps.core.security_middleware.SecurityHeadersMiddleware',
 ]
 
 ROOT_URLCONF = 'storebox.urls'
@@ -213,3 +216,11 @@ REST_FRAMEWORK = {
 # Platform configuration
 PLATFORM_DOMAIN = os.environ.get('PLATFORM_DOMAIN', 'storebox.uz')
 PLATFORM_NAME = 'StoreBox Uzbekistan'
+
+# Security & Session Hardening
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True

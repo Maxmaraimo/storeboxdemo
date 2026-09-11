@@ -243,7 +243,7 @@ def storefront_home_view(request, subdomain=None):
         store.theme_template = req_template
 
     # Live Preview overrides for interactive dashboard design customizer
-    if request.GET.get('preview') == '1':
+    if request.GET.get('preview') == '1' or request.GET.get('card_style') or request.GET.get('primary_color'):
         if request.GET.get('primary_color'):
             store.primary_color = request.GET.get('primary_color').strip()
         if request.GET.get('card_style'):
@@ -256,6 +256,24 @@ def storefront_home_view(request, subdomain=None):
             store.theme_button_style = request.GET.get('button_style').strip()
         if request.GET.get('bg_color'):
             store.theme_bg_color = request.GET.get('bg_color').strip()
+
+    # Determine effective card style for layout rendering
+    req_card_style = request.GET.get('card_style')
+    if req_card_style in ['modern', 'minimal', 'compact']:
+        effective_card_style = req_card_style
+    elif req_template in ['restaurant', 'boutique', 'universal']:
+        if req_template == 'restaurant':
+            effective_card_style = 'compact'
+        elif req_template == 'boutique':
+            effective_card_style = 'minimal'
+        else:
+            effective_card_style = 'modern'
+    elif store.theme_template == 'restaurant':
+        effective_card_style = 'compact'
+    elif store.theme_template == 'boutique':
+        effective_card_style = 'minimal'
+    else:
+        effective_card_style = store.theme_card_style or 'modern'
 
         # Preview Banner
         p_title = request.GET.get('preview_banner_title', '').strip()
@@ -394,6 +412,7 @@ def storefront_home_view(request, subdomain=None):
     t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
     context = {
         'store': store,
+        'effective_card_style': effective_card_style,
         'banners': banners,
         'categories': categories,
         'products': products,

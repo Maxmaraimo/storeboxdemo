@@ -35,14 +35,10 @@
         }
     </script>
 
-    <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Offline-Ready Vendored Scripts -->
+    <script src="{% static 'vendor/alpine.min.js' %}" defer></script>
+    <script src="{% static 'vendor/lucide.min.js' %}"></script>
+    <script src="{% static 'vendor/chart.min.js' %}"></script>
 
     <style>
         [x-cloak] { display: none !important; }
@@ -87,7 +83,8 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="h-full font-sans text-slate-800 antialiased flex flex-col" x-data="{ sidebarOpen: false }">
+<body class="h-full font-sans text-slate-800 antialiased flex flex-col"
+      x-data="{ sidebarOpen: false, createModalOpen: false, renewModalOpen: false, partnerModalOpen: false, activeStoreId: null, activeStoreSubdomain: '', activeStorePlan: 'STANDARD' }">
 
     <!-- Top Status / Announcement Bar -->
     <div class="bg-slate-900 text-slate-300 text-xs px-4 py-1.5 flex items-center justify-between border-b border-slate-800 z-50">
@@ -254,10 +251,73 @@
         </div>
     </div>
 
-    <!-- Initialize Lucide Icons -->
+    <!-- Global SuperAdmin Core Controller -->
     <script>
+        window.SuperAdmin = {
+            openCreateServerModal: function() {
+                const body = document.querySelector('body');
+                if (body && window.Alpine && window.Alpine.$data) {
+                    try { window.Alpine.$data(body).createModalOpen = true; } catch(e) {}
+                }
+                const modal = document.getElementById('createServerModal');
+                if (modal) {
+                    modal.removeAttribute('x-cloak');
+                    modal.classList.remove('hidden');
+                    modal.style.display = 'flex';
+                }
+            },
+            closeCreateServerModal: function() {
+                const body = document.querySelector('body');
+                if (body && window.Alpine && window.Alpine.$data) {
+                    try { window.Alpine.$data(body).createModalOpen = false; } catch(e) {}
+                }
+                const modal = document.getElementById('createServerModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                }
+            },
+            openRenewModal: function(storeId, subdomain, plan) {
+                const body = document.querySelector('body');
+                if (body && window.Alpine && window.Alpine.$data) {
+                    try {
+                        const d = window.Alpine.$data(body);
+                        d.renewModalOpen = true;
+                        d.activeStoreId = storeId;
+                        d.activeStoreSubdomain = subdomain || '';
+                        d.activeStorePlan = plan || 'STANDARD';
+                    } catch(e) {}
+                }
+                const modal = document.getElementById('renewLicenseModal');
+                if (modal) {
+                    modal.removeAttribute('x-cloak');
+                    modal.classList.remove('hidden');
+                    modal.style.display = 'flex';
+                    const subSpan = document.getElementById('renewModalSubdomain');
+                    if (subSpan) subSpan.textContent = subdomain || '';
+                    const form = document.getElementById('renewLicenseForm');
+                    if (form) form.action = '/super-admin/servers/' + storeId + '/renew/';
+                    const planSelect = document.getElementById('renewPlanSelect');
+                    if (planSelect && plan) planSelect.value = plan;
+                }
+            },
+            closeRenewModal: function() {
+                const body = document.querySelector('body');
+                if (body && window.Alpine && window.Alpine.$data) {
+                    try { window.Alpine.$data(body).renewModalOpen = false; } catch(e) {}
+                }
+                const modal = document.getElementById('renewLicenseModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                }
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
-            lucide.createIcons();
+            if (window.lucide && window.lucide.createIcons) {
+                window.lucide.createIcons();
+            }
         });
     </script>
     {% block extra_scripts %}{% endblock %}

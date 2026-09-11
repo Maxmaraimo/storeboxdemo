@@ -21,6 +21,7 @@ import { DiscountsPage } from "./pages/catalog/DiscountsPage";
 import { IkpuPage } from "./pages/catalog/IkpuPage";
 import { MarketingPage } from "./pages/marketing/MarketingPage";
 import { PlatformsPage } from "./pages/platforms/PlatformsPage";
+import { TelegramBotPage } from "./pages/platforms/TelegramBotPage";
 import { BranchesPage } from "./pages/settings/BranchesPage";
 import { StaffPage } from "./pages/settings/StaffPage";
 import { TariffsPage } from "./pages/settings/TariffsPage";
@@ -59,7 +60,8 @@ export const App: React.FC = () => {
                 <Route path="customers" element={<CustomersPage />} />
                 <Route path="chats" element={<ChatsPage />} />
                 <Route path="marketing" element={<MarketingPage />} />
-                <Route path="platforms" element={<PlatformsPage />} />
+                <Route path="platforms" element={<TelegramBotPage />} />
+                <Route path="telegram" element={<TelegramBotPage />} />
                 <Route path="platforms/qr" element={<QrCatalogPage />} />
                 <Route path="qr" element={<QrCatalogPage />} />
                 <Route path="design" element={<DesignStudioPage />} />

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   TrendingUp,
@@ -113,8 +113,10 @@ interface MapOrder {
 }
 
 export const DashboardPage: React.FC = () => {
-  const { store } = useAuth();
-  const [period, setPeriod] = useState<string>("today");
+  const { store, t } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const period = searchParams.get("period") || "today";
+  const branch = searchParams.get("branch") || "all";
   const [currency, setCurrency] = useState<"UZS" | "USD">("UZS");
   const [chartType, setChartType] = useState<"bar" | "line" | "heatmap">("bar");
 
@@ -129,9 +131,10 @@ export const DashboardPage: React.FC = () => {
   };
 
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["dashboard-summary", period],
+    queryKey: ["dashboard-summary", period, branch, store?.id],
     queryFn: async () => {
-      const res = await api.get(`/dashboard/summary/?period=${period}`);
+      const branchParam = branch !== "all" ? `&branch=${branch}` : "";
+      const res = await api.get(`/dashboard/summary/?period=${period}${branchParam}`);
       return res.data as {
         metrics: DashboardMetrics;
         charts: DashboardCharts;
@@ -148,11 +151,11 @@ export const DashboardPage: React.FC = () => {
   const mapOrders = data?.map_orders || [];
 
   const periods = [
-    { id: "today", label: "Bugun" },
-    { id: "week", label: "Oxirgi 7 kun" },
-    { id: "month", label: "Oxirgi 30 kun" },
-    { id: "quarter", label: "Shu chorak" },
-    { id: "year", label: "Har yil" },
+    { id: "today", label: t("today") || "Bugun" },
+    { id: "week", label: t("last_7_days") || "Oxirgi 7 kun" },
+    { id: "month", label: t("last_30_days") || "Oxirgi 30 kun" },
+    { id: "quarter", label: t("this_quarter") || "Shu chorak" },
+    { id: "year", label: t("this_year") || "Har yil" },
   ];
 
   const totalTraffic = (charts?.traffic?.web || 0) + (charts?.traffic?.telegram || 0);
@@ -253,14 +256,14 @@ export const DashboardPage: React.FC = () => {
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Jonli monitoring tizimi
+              {t("live_monitoring") || "Jonli monitoring tizimi"}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white tracking-tight">
-            {store?.name || "Boshqaruv paneli"}
+            {store?.name || t("dashboard") || "Boshqaruv paneli"}
           </h1>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Real vaqtdagi savdolar, buyurtmalar, mijozlar va logistika ko'rsatkichlari
+            {t("live_monitoring_sub") || "Real vaqtdagi savdolar, buyurtmalar, mijozlar va logistika ko'rsatkichlari"}
           </p>
         </div>
 
@@ -271,7 +274,17 @@ export const DashboardPage: React.FC = () => {
             {periods.map((p) => (
               <button
                 key={p.id}
-                onClick={() => setPeriod(p.id)}
+                onClick={() => {
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    if (p.id === "today") {
+                      next.delete("period");
+                    } else {
+                      next.set("period", p.id);
+                    }
+                    return next;
+                  });
+                }}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   period === p.id
                     ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xs font-bold"
@@ -314,7 +327,7 @@ export const DashboardPage: React.FC = () => {
             type="button"
             onClick={() => refetch()}
             className="w-9 h-9 rounded-2xl bg-white/80 dark:bg-white/5 border border-black/[0.06] dark:border-white/10 flex items-center justify-center text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors shadow-2xs cursor-pointer"
-            title="Ma'lumotlarni yangilash"
+            title={t("refresh_data") || "Ma'lumotlarni yangilash"}
           >
             <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-emerald-500" : ""}`} />
           </button>
@@ -330,7 +343,7 @@ export const DashboardPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
-                Jami tushum
+                {t("total_revenue") || "Jami tushum"}
               </span>
               <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <TrendingUp className="w-4 h-4" />
@@ -341,7 +354,7 @@ export const DashboardPage: React.FC = () => {
                 {formatMoney(metrics?.revenue || 0)}
               </div>
               <div className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
-                Yetkazib berish bilan: {formatMoney(metrics?.sales_sum || 0)}
+                {t("with_delivery") || "Yetkazib berish bilan:"} {formatMoney(metrics?.sales_sum || 0)}
               </div>
             </div>
           </div>
@@ -349,7 +362,7 @@ export const DashboardPage: React.FC = () => {
           <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
             <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
               <ArrowUpRight className="w-3.5 h-3.5" />
-              Faol savdolar
+              {t("active_sales") || "Faol savdolar"}
             </span>
             <span className="text-neutral-400 text-[11px]">
               {periods.find((p) => p.id === period)?.label}
@@ -362,7 +375,7 @@ export const DashboardPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
-                Buyurtmalar
+                {t("orders") || "Buyurtmalar"}
               </span>
               <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                 <ShoppingCart className="w-4 h-4" />
@@ -370,16 +383,16 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-2">
               <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
-                {metrics?.orders_count || 0} <span className="text-base font-normal text-neutral-400">ta</span>
+                {metrics?.orders_count || 0} <span className="text-base font-normal text-neutral-400">{t("pcs_unit") || "ta"}</span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-                <span className="text-emerald-600 font-bold">{metrics?.new_orders || 0} yangi</span>
+                <span className="text-emerald-600 font-bold">{metrics?.new_orders || 0} {t("new") || "yangi"}</span>
                 <span>•</span>
-                <span>{metrics?.ready_orders || 0} tayyor</span>
+                <span>{metrics?.ready_orders || 0} {t("status_ready") || "tayyor"}</span>
                 {metrics?.cancelled_orders ? (
                   <>
                     <span>•</span>
-                    <span className="text-rose-500">{metrics.cancelled_orders} bekor</span>
+                    <span className="text-rose-500">{metrics.cancelled_orders} {t("status_cancelled") || "bekor"}</span>
                   </>
                 ) : null}
               </div>
@@ -391,10 +404,10 @@ export const DashboardPage: React.FC = () => {
               to="/orders"
               className="text-neutral-900 dark:text-white font-bold hover:underline flex items-center gap-1"
             >
-              <span>Buyurtmalarga o'tish</span>
+              <span>{t("go_to_orders") || "Buyurtmalarga o'tish"}</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
-            <span className="text-neutral-400 text-[11px]">Boshqaruv</span>
+            <span className="text-neutral-400 text-[11px]">{t("management") || "Boshqaruv"}</span>
           </div>
         </div>
 
@@ -403,7 +416,7 @@ export const DashboardPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
-                Mijozlar bazasi
+                {t("customer_base") || "Mijozlar bazasi"}
               </span>
               <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                 <Users className="w-4 h-4" />
@@ -411,10 +424,10 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-2">
               <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
-                {metrics?.total_customers || 0} <span className="text-base font-normal text-neutral-400">nafar</span>
+                {metrics?.total_customers || 0}
               </div>
               <div className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
-                Doimiy va qayta xarid qilganlar
+                {t("regular_repeat_buyers") || "Doimiy va qayta xarid qilganlar"}
               </div>
             </div>
           </div>
@@ -424,7 +437,7 @@ export const DashboardPage: React.FC = () => {
               to="/customers"
               className="text-neutral-900 dark:text-white font-bold hover:underline flex items-center gap-1"
             >
-              <span>Mijozlar ro'yxati</span>
+              <span>{t("go_to_customers") || "Mijozlar ro'yxati"}</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
             <span className="text-neutral-400 text-[11px]">CRM</span>
@@ -436,7 +449,7 @@ export const DashboardPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
-                O'rtacha chek
+                {t("avg_check_title") || "O'rtacha chek"}
               </span>
               <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 <DollarSign className="w-4 h-4" />
@@ -447,7 +460,7 @@ export const DashboardPage: React.FC = () => {
                 {formatMoney(metrics?.avg_order || 0)}
               </div>
               <div className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
-                Bitta xarid uchun o'rtacha qiymat
+                {t("single_order_value") || "Bitta xarid uchun o'rtacha qiymat"}
               </div>
             </div>
           </div>
@@ -455,9 +468,9 @@ export const DashboardPage: React.FC = () => {
           <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
             <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Barqaror
+              {t("stable_metric") || "Barqaror"}
             </span>
-            <span className="text-neutral-400 text-[11px]">Ko'rsatkich</span>
+            <span className="text-neutral-400 text-[11px]">{t("indicator") || "Ko'rsatkich"}</span>
           </div>
         </div>
       </div>
@@ -474,7 +487,7 @@ export const DashboardPage: React.FC = () => {
                 {chartType === "heatmap" ? "Faollik taqvimi" : "Savdolar grafigi"}
               </div>
               <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
-                {chartType === "heatmap" ? "Yillik buyurtmalar xaritasi" : "Tushum dinamikasi"}
+                {chartType === "heatmap" ? "Yillik buyurtmalar xaritasi" : (t("revenue_dynamics") || "Tushum dinamikasi")}
               </h2>
             </div>
 
@@ -549,7 +562,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             ) : (
               <div className="h-full w-full flex items-center justify-center text-neutral-400 text-xs font-medium">
-                Tanlangan davr uchun savdo ma'lumotlari mavjud emas
+                {t("no_sales_yet") || "Tanlangan davr uchun savdo ma'lumotlari mavjud emas"}
               </div>
             )}
           </div>
@@ -559,10 +572,10 @@ export const DashboardPage: React.FC = () => {
         <div className="lg:col-span-4 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-              Savdo kanallari
+              {t("traffic_source") || "Savdo kanallari"}
             </div>
             <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5 mb-4">
-              Buyurtmalar manbai
+              {t("order_sources") || "Buyurtmalar manbai"}
             </h2>
 
             {/* Channels Cards */}
@@ -670,14 +683,14 @@ export const DashboardPage: React.FC = () => {
                   Sotuvlar yetakchilari
                 </div>
                 <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
-                  Top mahsulotlar
+                  {t("top_products") || "Top mahsulotlar"}
                 </h2>
               </div>
               <Link
                 to="/products"
                 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
               >
-                <span>Barcha mahsulotlar</span>
+                <span>{t("all_products") || "Barcha mahsulotlar"}</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -697,7 +710,7 @@ export const DashboardPage: React.FC = () => {
                         {p.product_name}
                       </div>
                       <div className="text-[10px] text-neutral-400">
-                        {p.sold_qty} dona sotildi
+                        {p.sold_qty} {t("pcs_unit") || "dona"}
                       </div>
                     </div>
                   </div>
@@ -712,14 +725,14 @@ export const DashboardPage: React.FC = () => {
                 <div className="py-10 text-center space-y-2">
                   <Package className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mx-auto" />
                   <div className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-                    Hozircha sotilgan mahsulotlar mavjud emas
+                    {t("no_sales_yet") || "Hozircha sotilgan mahsulotlar mavjud emas"}
                   </div>
                   <Link
                     to="/products"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs font-bold shadow-xs hover:bg-black transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Mahsulot qo'shish</span>
+                    <span>{t("products") || "Mahsulot qo'shish"}</span>
                   </Link>
                 </div>
               )}
@@ -736,12 +749,12 @@ export const DashboardPage: React.FC = () => {
                   Logistika & Manzillar
                 </div>
                 <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
-                  Jonli buyurtmalar xaritasi
+                  {t("orders_map") || "Jonli buyurtmalar xaritasi"}
                 </h2>
               </div>
               <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                <span>GPS faol</span>
+                <span>{t("live_gps") || "GPS faol"}</span>
               </span>
             </div>
 
@@ -772,9 +785,9 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <div className="pt-3 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs text-neutral-400">
-            <span>Xaritadagi nuqtalar: {mapOrders.length} ta yetkazuv manzili</span>
+            <span>{mapOrders.length} {t("orders_unit") || "ta buyurtma"}</span>
             <Link to="/orders" className="text-neutral-900 dark:text-white font-bold hover:underline">
-              Barcha buyurtmalar
+              {t("all_orders") || "Barcha buyurtmalar"}
             </Link>
           </div>
         </div>
@@ -793,7 +806,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="truncate">
             <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
-              Mahsulotlar
+              {t("products") || "Mahsulotlar"}
             </div>
             <div className="text-[10px] text-neutral-400">Katalog boshqaruvi</div>
           </div>
@@ -808,7 +821,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="truncate">
             <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
-              Buyurtmalar
+              {t("orders") || "Buyurtmalar"}
             </div>
             <div className="text-[10px] text-neutral-400">Holat va yetkazish</div>
           </div>
@@ -823,7 +836,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="truncate">
             <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
-              Mijozlar chati
+              {t("chat") || "Mijozlar chati"}
             </div>
             <div className="text-[10px] text-neutral-400">Tezkor javoblar</div>
           </div>
@@ -838,7 +851,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="truncate">
             <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
-              Marketing
+              {t("marketing") || "Marketing"}
             </div>
             <div className="text-[10px] text-neutral-400">Aksiya va xabarnoma</div>
           </div>

@@ -636,9 +636,6 @@ def login_view(request):
         user = None
         if target_user:
             user = authenticate(request, username=target_user.username, password=password)
-            if not user and password in ['admin', 'admin123']:
-                if target_user.check_password('admin123') or target_user.check_password('admin'):
-                    user = target_user
         else:
             user = authenticate(request, username=clean, password=password)
 

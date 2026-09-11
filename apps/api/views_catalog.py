@@ -41,6 +41,12 @@ def products_list_create_view(request):
         name = data.get("name_uz") or data.get("name_ru") or "Yangi mahsulot"
         if not data.get("slug"):
             data["slug"] = _get_unique_slug(Product, store, name)
+        if data.get("category") in ["", "null", "undefined", None]:
+            data["category"] = None
+        if data.get("cost_price") in ["", "null", "undefined", None]:
+            data["cost_price"] = 0
+        if data.get("stock") in ["", "null", "undefined", None]:
+            data["stock"] = 0
         if "unit" in data:
             data["unit"] = normalize_unit(data.get("unit"))
 
@@ -64,7 +70,7 @@ def products_list_create_view(request):
             Q(name_ru__icontains=query) |
             Q(name_en__icontains=query) |
             Q(barcode__icontains=query) |
-            Q(description_uz__icontains=query)
+            Q(ikpu_code__icontains=query)
         )
 
     return Response({
@@ -95,6 +101,12 @@ def product_detail_update_delete_view(request, product_id):
 
     if request.method in ["PUT", "PATCH"]:
         data = request.data.copy()
+        if "category" in data and data.get("category") in ["", "null", "undefined", None]:
+            data["category"] = None
+        if "cost_price" in data and data.get("cost_price") in ["", "null", "undefined", None]:
+            data["cost_price"] = 0
+        if "stock" in data and data.get("stock") in ["", "null", "undefined", None]:
+            data["stock"] = 0
         if "unit" in data:
             data["unit"] = normalize_unit(data.get("unit"))
         if "name_uz" in data and not data.get("slug"):

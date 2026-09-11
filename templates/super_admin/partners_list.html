@@ -6,9 +6,11 @@
 {% block header_subtitle %}Управление сетью партнеров, реселлеров и начислением комиссионных{% endblock %}
 
 {% block header_actions %}
-<button @click="partnerModalOpen = true"
+<button @click="$dispatch('open-create-partner'); partnerModalOpen = true"
+        id="btnOpenCreatePartner"
+        onclick="if(window.SuperAdminPartner){window.SuperAdminPartner.openModal();} else { document.getElementById('createPartnerModal').classList.remove('hidden'); }"
         type="button"
-        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition">
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition cursor-pointer">
     <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
     <span>Добавить партнера</span>
 </button>
@@ -107,23 +109,24 @@
     </div>
 
     <!-- Modal: Add Partner -->
-    <div x-show="partnerModalOpen"
-         x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
-         @keydown.escape.window="partnerModalOpen = false">
-        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden"
-             @click.away="partnerModalOpen = false">
+    <div id="createPartnerModal"
+         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden">
             <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
                 <div class="flex items-center space-x-2">
                     <i data-lucide="user-plus" class="w-4 h-4 text-blue-400"></i>
                     <h3 class="text-xs font-bold uppercase tracking-wider">Подключить нового партнера</h3>
                 </div>
-                <button @click="partnerModalOpen = false" class="text-slate-400 hover:text-white">
+                <button @click="partnerModalOpen = false"
+                        id="btnCloseCreatePartnerModalX"
+                        onclick="if(window.SuperAdminPartner){window.SuperAdminPartner.closeModal();} else { document.getElementById('createPartnerModal').classList.add('hidden'); }"
+                        type="button"
+                        class="text-slate-400 hover:text-white cursor-pointer">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <form method="POST" action="{% url 'super_admin:partner_create' %}" class="p-4 space-y-3">
+            <form id="createPartnerForm" method="POST" action="{% url 'super_admin:partner_create' %}" class="p-4 space-y-3">
                 {% csrf_token %}
                 <div>
                     <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Наименование партнера / компании *</label>
@@ -158,10 +161,14 @@
                 </div>
 
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
-                    <button @click="partnerModalOpen = false" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800">
+                    <button @click="partnerModalOpen = false"
+                            id="btnCancelCreatePartnerModal"
+                            onclick="if(window.SuperAdminPartner){window.SuperAdminPartner.closeModal();} else { document.getElementById('createPartnerModal').classList.add('hidden'); }"
+                            type="button"
+                            class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 cursor-pointer">
                         Отмена
                     </button>
-                    <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-sm">
+                    <button type="submit" id="btnSubmitCreatePartner" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-sm cursor-pointer">
                         Сохранить партнера
                     </button>
                 </div>
@@ -170,4 +177,26 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    window.SuperAdminPartner = {
+        openModal: function() {
+            var modal = document.getElementById('createPartnerModal');
+            if (modal) {
+                modal.removeAttribute('x-cloak');
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+            }
+        },
+        closeModal: function() {
+            var modal = document.getElementById('createPartnerModal');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.add('hidden');
+            }
+        }
+    };
+</script>
 {% endblock %}

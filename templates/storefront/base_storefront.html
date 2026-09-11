@@ -41,6 +41,32 @@
         .text-brand { color: var(--brand-color) !important; }
         .border-brand { border-color: var(--brand-color) !important; }
         .hover\:bg-brand-dark:hover { filter: brightness(0.9); }
+        .btn-brand {
+            background-color: var(--brand-color) !important;
+            color: #ffffff !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-brand:hover {
+            filter: brightness(0.92);
+        }
+        .btn-brand:active {
+            transform: scale(0.95);
+        }
+        .btn-brand-soft {
+            background-color: color-mix(in srgb, var(--brand-color) 12%, #f1f5f9) !important;
+            color: var(--brand-color) !important;
+            transition: all 0.2s ease;
+        }
+        .btn-brand-soft:hover {
+            background-color: var(--brand-color) !important;
+            color: #ffffff !important;
+        }
+        .active-category-pill {
+            background-color: var(--brand-color) !important;
+            color: #ffffff !important;
+            border-color: var(--brand-color) !important;
+            box-shadow: 0 4px 16px color-mix(in srgb, var(--brand-color) 32%, transparent);
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -57,6 +83,13 @@
                     document.documentElement.style.setProperty('--bg-color', data.bgColor);
                     document.body.style.backgroundColor = data.bgColor;
                     document.documentElement.style.backgroundColor = data.bgColor;
+                }
+                if (data.cardStyle) {
+                    var currentUrl = new URL(window.location.href);
+                    if (currentUrl.searchParams.get('card_style') !== data.cardStyle) {
+                        currentUrl.searchParams.set('card_style', data.cardStyle);
+                        window.location.href = currentUrl.toString();
+                    }
                 }
                 if (data.bannerTitle !== undefined) {
                     var titles = document.querySelectorAll('[data-store-banner-title]');
@@ -122,17 +155,19 @@
     </script>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-full font-sans text-slate-800 antialiased flex flex-col justify-between" style="background-color: {{ store.theme_bg_color|default:'#F8FAFC' }};" x-data="storefrontApp()">
+<body class="min-h-full font-sans text-slate-800 antialiased flex flex-col justify-between selection:bg-slate-900 selection:text-white" 
+      style="background: radial-gradient(110% 60% at 50% -10%, {% if store.primary_color %}{{ store.primary_color }}12{% else %}rgba(15,23,42,0.05){% endif %} 0%, rgba(248, 250, 252, 0.4) 60%, transparent 100%), {{ store.theme_bg_color|default:'#F8FAFC' }};" 
+      x-data="storefrontApp()">
 
     <div>
         <!-- TOP STOREBOX BADGE STRIP (Video 05:27) -->
-        <div class="bg-slate-900 text-white text-[11px] py-1 px-4 text-center font-bold tracking-wide flex items-center justify-center gap-1.5">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-            <span>StoreBox platformasida ishlab chiqilgan</span>
+        <div class="bg-slate-950 text-slate-300 text-[10.5px] py-1 px-4 text-center font-medium tracking-wider flex items-center justify-center gap-1.5 border-b border-white/[0.06]">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>StoreBox platformasida yaratilgan</span>
         </div>
 
-        <!-- MAIN STOREFRONT HEADER (Robosell & AyazFramer Neo-Minimalist Style) -->
-        <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-2xs">
+        <!-- MAIN STOREFRONT HEADER (Luxury Glassmorphic & Minimalist Style) -->
+        <header class="bg-white/80 backdrop-blur-xl border-b border-slate-900/[0.05] sticky top-0 z-40 transition-all shadow-[0_4px_25px_rgba(0,0,0,0.02)]">
             <div class="max-w-6xl mx-auto px-4 sm:px-6">
                 <!-- TOP ROW: Mobile Header & Desktop Main Bar -->
                 <div class="py-2.5 sm:py-0 sm:h-16 flex items-center justify-between gap-2.5 sm:gap-4">
@@ -227,7 +262,7 @@
                         </button>
 
                         <!-- Cart (Savat) -->
-                        <a href="/store/{{ store.subdomain }}/checkout/" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold shadow-xs hover:bg-black transition-all">
+                        <a href="/store/{{ store.subdomain }}/checkout/" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full btn-brand text-white text-xs font-bold shadow-xs transition-all">
                             <i data-lucide="shopping-bag" class="w-4 h-4"></i>
                             <span class="hidden sm:inline">{{ t.cart|default:'Savat' }}</span>
                             <span class="px-1.5 py-0.2 rounded-full bg-white text-slate-900 text-[10px] font-black flex items-center justify-center" x-text="cartCount">0</span>
@@ -1254,10 +1289,10 @@
     <!-- ============================================================= -->
     <!-- 5-TAB MOBILE BOTTOM BAR (Modern E-Commerce Tactile Navigation)  -->
     <!-- ============================================================= -->
-    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200/80 px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-4px_25px_rgba(0,0,0,0.06)]">
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-2xl border-t border-slate-900/[0.06] px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
         <!-- 1. Bosh sahifa (Home) -->
         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}"
-           class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-700 hover:text-brand active:scale-95 transition-all">
+           class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-900 active:scale-95 transition-all">
             <i data-lucide="home" class="w-5 h-5"></i>
             <span class="text-[10px] font-bold tracking-tight">Asosiy</span>
         </a>

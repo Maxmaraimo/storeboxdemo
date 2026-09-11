@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -31,7 +31,7 @@ import { useNotifications } from "../../context/NotificationContext";
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { store } = useAuth();
+  const { store, t } = useAuth();
   const { newOrdersCount, unreadChatsCount } = useNotifications();
 
   // Expanded by default for clear readability, with toggle to collapse
@@ -48,65 +48,96 @@ export const Sidebar: React.FC = () => {
     });
   };
 
+  const navSections = useMemo(
+    () => [
+      {
+        title: t("main_section") || "Asosiy",
+        items: [
+          { path: "/", icon: LayoutDashboard, label: t("dashboard") || "Boshqaruv paneli", badge: null },
+          {
+            path: "/orders",
+            icon: ShoppingCart,
+            label: t("orders") || "Buyurtmalar",
+            badge: newOrdersCount > 0 ? String(newOrdersCount) : null,
+          },
+          { path: "/customers", icon: Users, label: t("customers") || "Mijozlar", badge: null },
+          {
+            path: "/chats",
+            icon: MessageSquare,
+            label: t("chat") || "Xabarlar & Chat",
+            badge: unreadChatsCount > 0 ? String(unreadChatsCount) : null,
+          },
+        ],
+      },
+      {
+        title: t("catalog_section") || "Mahsulotlar & Ombor",
+        items: [
+          { path: "/products", icon: Package, label: t("all_products") || "Barcha mahsulotlar", badge: null },
+          { path: "/categories", icon: FolderTree, label: t("categories") || "Kategoriyalar", badge: null },
+          { path: "/discounts", icon: Tag, label: t("discounts") || "Chegirmalar", badge: null },
+          { path: "/ikpu", icon: Barcode, label: t("ikpu") || "IKPU kodlari", badge: null },
+          { path: "/warehouse", icon: Boxes, label: t("warehouse") || "Omborxona", badge: null },
+        ],
+      },
+      {
+        title: t("marketing_section") || "Marketing & Integratsiyalar",
+        items: [
+          { path: "/marketing", icon: Megaphone, label: t("marketing") || "Marketing & Aksiya", badge: null },
+          { path: "/platforms", icon: Bot, label: t("telegram_bot") || "Telegram Bot", badge: null },
+          { path: "/design", icon: Sparkles, label: t("design_ai") || "Dizayn & AI vitrina", badge: "AI" },
+          { path: "/platforms/qr", icon: QrCode, label: t("qr_catalog") || "QR Menyu & Katalog", badge: null },
+          { path: "/yespos", icon: Monitor, label: t("yespos_import") || "YesPOS integratsiya", badge: "POS" },
+          { path: "/robo-market", icon: StoreIcon, label: t("storebox_market") || "StoreBox Market", badge: null },
+        ],
+      },
+      {
+        title: t("settings_section") || "Sozlamalar",
+        items: [
+          { path: "/settings/payments", icon: CreditCard, label: t("payment_methods") || "To'lov tizimlari", badge: null },
+          { path: "/settings/delivery", icon: Truck, label: t("delivery") || "Yetkazib berish", badge: null },
+          { path: "/settings/branches", icon: MapPin, label: t("branches") || "Filiallar", badge: null },
+          { path: "/settings/staff", icon: UserCheck, label: t("staff") || "Xodimlar & Rollar", badge: null },
+          { path: "/settings/tariffs", icon: BadgePercent, label: t("tariffs") || "Tarif rejalari", badge: null },
+          { path: "/settings", icon: Settings, label: t("settings") || "Asosiy sozlamalar", badge: null },
+        ],
+      },
+    ],
+    [t, newOrdersCount, unreadChatsCount]
+  );
+
+  const allNavPaths = useMemo(
+    () => navSections.flatMap((section) => section.items.map((item) => item.path)),
+    [navSections]
+  );
+
   const isActive = (path: string) => {
-    if (path === "/" && location.pathname === "/") return true;
-    if (path !== "/" && location.pathname.startsWith(path)) return true;
+    const current = location.pathname.replace(/\/+$/, "") || "/";
+    const target = path.replace(/\/+$/, "") || "/";
+
+    if (target === "/") {
+      return current === "/";
+    }
+
+    if (current === target) {
+      return true;
+    }
+
+    // Prefix match for nested sub-routes (e.g., /orders/123 -> /orders),
+    // but only if there is NO more specific route defined in the sidebar menu (e.g. /platforms vs /platforms/qr)
+    if (current.startsWith(target + "/")) {
+      const hasMoreSpecific = allNavPaths.some((otherPath) => {
+        const other = otherPath.replace(/\/+$/, "") || "/";
+        return (
+          other !== target &&
+          other.length > target.length &&
+          (current === other || current.startsWith(other + "/"))
+        );
+      });
+      return !hasMoreSpecific;
+    }
+
     return false;
   };
-
-  const navSections = [
-    {
-      title: "Asosiy",
-      items: [
-        { path: "/", icon: LayoutDashboard, label: "Boshqaruv paneli", badge: null },
-        {
-          path: "/orders",
-          icon: ShoppingCart,
-          label: "Buyurtmalar",
-          badge: newOrdersCount > 0 ? String(newOrdersCount) : null,
-        },
-        { path: "/customers", icon: Users, label: "Mijozlar", badge: null },
-        {
-          path: "/chats",
-          icon: MessageSquare,
-          label: "Xabarlar & Chat",
-          badge: unreadChatsCount > 0 ? String(unreadChatsCount) : null,
-        },
-      ],
-    },
-    {
-      title: "Mahsulotlar & Ombor",
-      items: [
-        { path: "/products", icon: Package, label: "Barcha mahsulotlar", badge: null },
-        { path: "/categories", icon: FolderTree, label: "Kategoriyalar", badge: null },
-        { path: "/discounts", icon: Tag, label: "Chegirmalar", badge: null },
-        { path: "/ikpu", icon: Barcode, label: "IKPU kodlari", badge: null },
-        { path: "/warehouse", icon: Boxes, label: "Omborxona", badge: null },
-      ],
-    },
-    {
-      title: "Marketing & Integratsiyalar",
-      items: [
-        { path: "/marketing", icon: Megaphone, label: "Marketing & Aksiya", badge: null },
-        { path: "/platforms", icon: Bot, label: "Telegram Bot", badge: null },
-        { path: "/design", icon: Sparkles, label: "Dizayn & AI vitrina", badge: "AI" },
-        { path: "/platforms/qr", icon: QrCode, label: "QR Menyu & Katalog", badge: null },
-        { path: "/yespos", icon: Monitor, label: "YesPOS integratsiya", badge: "POS" },
-        { path: "/robo-market", icon: StoreIcon, label: "StoreBox Market", badge: null },
-      ],
-    },
-    {
-      title: "Sozlamalar",
-      items: [
-        { path: "/settings/payments", icon: CreditCard, label: "To'lov tizimlari", badge: null },
-        { path: "/settings/delivery", icon: Truck, label: "Yetkazib berish", badge: null },
-        { path: "/settings/branches", icon: MapPin, label: "Filiallar", badge: null },
-        { path: "/settings/staff", icon: UserCheck, label: "Xodimlar & Rollar", badge: null },
-        { path: "/settings/tariffs", icon: BadgePercent, label: "Tarif rejalari", badge: null },
-        { path: "/settings", icon: Settings, label: "Asosiy sozlamalar", badge: null },
-      ],
-    },
-  ];
 
   return (
     <aside

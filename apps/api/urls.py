@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.dashboard import views as old_views
-from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations
+from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations, views_telegram, views_yespos
 
 app_name = "api_v1"
 
@@ -83,11 +83,18 @@ urlpatterns = [
     path("platforms/qr/", views_design.qr_catalog_settings_view, name="qr_catalog_settings"),
 
     # YES POS Integration endpoints
-    path("yespos/status/", views_catalog.yespos_status_view, name="yespos_status"),
-    path("yespos/test/", old_views.yespos_test_api, name="yespos_test"),
-    path("yespos/connect/", old_views.yespos_connect_api, name="yespos_connect"),
-    path("yespos/disconnect/", old_views.yespos_disconnect_api, name="yespos_disconnect"),
-    path("yespos/catalog/", old_views.yespos_catalog_api, name="yespos_catalog"),
-    path("yespos/import/", old_views.yespos_import_api, name="yespos_import"),
-    path("yespos/sync/", old_views.yespos_sync_api, name="yespos_sync"),
+    path("yespos/status/", views_yespos.yespos_status_view, name="yespos_status"),
+    path("yespos/test/", views_yespos.yespos_test_view, name="yespos_test"),
+    path("yespos/connect/", views_yespos.yespos_connect_view, name="yespos_connect"),
+    path("yespos/disconnect/", views_yespos.yespos_disconnect_view, name="yespos_disconnect"),
+    path("yespos/catalog/", views_yespos.yespos_catalog_view, name="yespos_catalog"),
+    path("yespos/import/", views_yespos.yespos_import_view, name="yespos_import"),
+    path("yespos/sync/", views_yespos.yespos_sync_view, name="yespos_sync"),
+
+    # Telegram Bot & TMA Integration endpoints
+    path("telegram/status/", views_telegram.telegram_status_view, name="telegram_status"),
+    path("telegram/save/", views_telegram.telegram_save_view, name="telegram_save"),
+    path("telegram/disconnect/", views_telegram.telegram_disconnect_view, name="telegram_disconnect"),
+    path("telegram/setup-menu/", views_telegram.telegram_setup_menu_view, name="telegram_setup_menu"),
+    path("telegram/test/", views_telegram.telegram_test_view, name="telegram_test"),
 ]

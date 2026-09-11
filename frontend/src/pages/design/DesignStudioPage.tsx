@@ -244,6 +244,7 @@ export const DesignStudioPage: React.FC = () => {
           type: "STOREBOX_THEME_PREVIEW",
           primaryColor,
           bgColor: themeBgColor,
+          cardStyle,
           bannerTitle: activePrimaryBanner?.title || "",
           bannerSubtitle: activePrimaryBanner?.subtitle || "",
           bannerImageUrl: activePrimaryBanner?.image_url || "",
@@ -256,7 +257,7 @@ export const DesignStudioPage: React.FC = () => {
 
   useEffect(() => {
     sendThemeMessage();
-  }, [primaryColor, themeBgColor, banners, logoUrl]);
+  }, [primaryColor, themeBgColor, cardStyle, banners, logoUrl]);
 
   // Revert unsaved changes back to initial state
   const handleResetChanges = () => {
@@ -1136,7 +1137,7 @@ export const DesignStudioPage: React.FC = () => {
                   >
                     <iframe
                       ref={iframeRef}
-                      key={`desktop-${previewKey}-${themeTemplate}`}
+                      key={`desktop-${previewKey}-${themeTemplate}-${cardStyle}`}
                       src={previewUrl}
                       onLoad={sendThemeMessage}
                       title="Storefront Desktop Preview"
@@ -1157,7 +1158,7 @@ export const DesignStudioPage: React.FC = () => {
                   <div className="w-full h-full rounded-[38px] overflow-hidden bg-white relative">
                     <iframe
                       ref={iframeRef}
-                      key={`mobile-${previewKey}-${themeTemplate}`}
+                      key={`mobile-${previewKey}-${themeTemplate}-${cardStyle}`}
                       src={previewUrl}
                       onLoad={sendThemeMessage}
                       title="Storefront Mobile Preview"

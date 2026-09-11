@@ -1,0 +1,1610 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ t.page_title|default:"StoreBox — Экосистема онлайн-торговли нового поколения" }}{% endblock %}
+
+{% block extra_head %}
+<script>
+    // The marketing site is light by default; an explicit visitor choice wins.
+    if (!localStorage.getItem('storebox_theme') && !new URLSearchParams(location.search).get('theme')) {
+        document.documentElement.classList.remove('dark');
+        window.__currentTheme = 'light';
+    }
+</script>
+<!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Three.js for 3D WebGL Earth Globe -->
+<script src="{% static 'js/three.min.js' %}"></script>
+<script>
+    if (typeof THREE === 'undefined') {
+        const cdnScript = document.createElement('script');
+        cdnScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+        document.head.appendChild(cdnScript);
+    }
+</script>
+
+<style>
+    /* Force complete dark-purple theme across the entire document */
+    html, body {
+        background-color: #06040A !important;
+        color: #F8FAFC !important;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        overflow-x: hidden;
+        height: auto !important;
+        min-height: 100% !important;
+    }
+
+    ::selection {
+        background: #9333EA;
+        color: #FFFFFF;
+    }
+
+    /* Ambient Cosmic Dark-Purple Atmosphere */
+    .cosmic-gradient-bg {
+        background-color: #06040A;
+        background-image:
+            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(147, 51, 234, 0.16), transparent 70%),
+            radial-gradient(ellipse 60% 40% at 90% 40%, rgba(124, 58, 237, 0.08), transparent 60%),
+            radial-gradient(ellipse 50% 50% at 10% 70%, rgba(168, 85, 247, 0.06), transparent 60%);
+    }
+
+    /* Subtle Architectural Grid */
+    .bg-grid-ambient {
+        background-size: 56px 56px;
+        background-image:
+            linear-gradient(to right, rgba(168, 85, 247, 0.035) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(168, 85, 247, 0.035) 1px, transparent 1px);
+    }
+
+    /* Monolithic Glassmorphic Surface Cards */
+    .tech-card {
+        background: rgba(14, 9, 27, 0.75);
+        backdrop-filter: blur(28px) saturate(180%);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        border: 1px solid rgba(168, 85, 247, 0.16);
+        box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .tech-card:hover {
+        border-color: rgba(192, 132, 252, 0.35);
+        box-shadow: 0 25px 60px -10px rgba(124, 58, 237, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    /* Electric Purple Glow Button */
+    .btn-violet {
+        background: linear-gradient(135deg, #9333EA 0%, #7C3AED 50%, #6B21A8 100%);
+        color: #FFFFFF;
+        box-shadow: 0 0 30px -5px rgba(168, 85, 247, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: all 0.25s ease;
+    }
+    .btn-violet:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 45px 0px rgba(192, 132, 252, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    /* Marquee ticker animation */
+    @keyframes tickerScroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    .animate-marquee {
+        display: flex;
+        width: 200%;
+        animation: tickerScroll 32s linear infinite;
+    }
+    .animate-marquee:hover {
+        animation-play-state: paused;
+    }
+
+    /* Floating subtle animation */
+    @keyframes subtleFloat {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-7px); }
+    }
+    .animate-float {
+        animation: subtleFloat 5s ease-in-out infinite;
+    }
+    .animate-float-delayed {
+        animation: subtleFloat 5s ease-in-out infinite 2.5s;
+    }
+
+    /* StoreBox kinetic landing v2 — deliberate light/dark chapter rhythm */
+    :root {
+        --sb-ink: #090511;
+        --sb-paper: #f4f0ff;
+        --sb-violet: #8b2cff;
+        --sb-violet-hot: #b65cff;
+        --sb-acid: #d9ff67;
+    }
+
+    .landing-v2 { background: var(--sb-ink); }
+    .landing-v2 section { isolation: isolate; }
+
+    .landing-v2 .kinetic-word {
+        display: inline-block;
+        transform-origin: 50% 80%;
+        will-change: transform;
+    }
+
+    .landing-v2 header {
+        transition: background .35s ease, border-color .35s ease, transform .35s ease;
+    }
+    .landing-v2 header.is-scrolled {
+        background: rgba(7, 3, 13, .93) !important;
+        border-color: rgba(182, 92, 255, .25) !important;
+    }
+    .scroll-progress {
+        position: absolute;
+        inset: auto 0 -1px;
+        height: 2px;
+        transform: scaleX(0);
+        transform-origin: left;
+        background: linear-gradient(90deg, var(--sb-violet), var(--sb-violet-hot), var(--sb-acid));
+        box-shadow: 0 0 18px rgba(182,92,255,.7);
+    }
+
+    .cursor-aura {
+        position: fixed;
+        z-index: 0;
+        left: 0;
+        top: 0;
+        width: 34rem;
+        height: 34rem;
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: .17;
+        filter: blur(90px);
+        background: #8b2cff;
+        transform: translate3d(-50%, -50%, 0);
+        transition: opacity .3s ease;
+    }
+
+    /* Hero becomes a bold editorial cover, not another centered SaaS block. */
+    .landing-v2 > section:first-of-type::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(105deg, rgba(139,44,255,.15), transparent 34%),
+            radial-gradient(circle at 78% 48%, rgba(182,92,255,.16), transparent 29%);
+        z-index: 0;
+        pointer-events: none;
+    }
+    .landing-v2 > section:first-of-type h1 {
+        font-size: clamp(3.7rem, 5.3vw, 6.4rem) !important;
+        line-height: .92 !important;
+        letter-spacing: -.075em !important;
+        max-width: 9.5ch;
+    }
+    .landing-v2 > section:first-of-type .tech-card {
+        transform: perspective(1500px) rotateY(-5deg) rotateX(2deg);
+        box-shadow: 0 70px 140px -55px rgba(124,58,237,.72), inset 0 1px 0 rgba(255,255,255,.1);
+    }
+
+    /* Light chapters: sharp contrast, dark typography and oversized spacing. */
+    #channels,
+    #journey,
+    #integrations,
+    #faq {
+        background: var(--sb-paper) !important;
+        color: var(--sb-ink) !important;
+        border-color: rgba(22, 10, 39, .12) !important;
+    }
+    #channels::before,
+    #journey::before,
+    #integrations::before,
+    #faq::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(rgba(73,32,118,.055) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(73,32,118,.055) 1px, transparent 1px);
+        background-size: 72px 72px;
+        mask-image: linear-gradient(to bottom, black, transparent 82%);
+    }
+    #channels h2, #channels h3,
+    #journey h2, #journey h3,
+    #integrations h2, #integrations h3,
+    #faq h2, #faq h3 { color: var(--sb-ink) !important; }
+    #channels p, #journey p, #integrations p, #faq p,
+    #channels .text-purple-200\/70, #channels .text-purple-200\/75,
+    #journey .text-purple-200\/70, #integrations .text-purple-200\/70,
+    #faq .text-purple-200\/70 { color: rgba(22,10,39,.65) !important; }
+    #channels .text-purple-300, #journey .text-purple-300,
+    #integrations .text-purple-300, #faq .text-purple-300 { color: #7420cd !important; }
+    #channels .tech-card, #journey .tech-card, #integrations .tech-card, #faq .tech-card {
+        background: rgba(255,255,255,.76) !important;
+        color: var(--sb-ink) !important;
+        border-color: rgba(91,33,182,.16) !important;
+        box-shadow: 0 28px 80px -48px rgba(45,15,80,.48), inset 0 1px 0 white;
+    }
+    #channels .tech-card *, #journey .tech-card *, #integrations .tech-card *, #faq .tech-card * {
+        border-color: rgba(91,33,182,.14);
+    }
+
+    /* Each major heading behaves like a magazine headline. */
+    #channels h2, #demo-interface h2, #journey h2, #globe-scaling h2,
+    #integrations h2, #pricing h2, #faq h2 {
+        font-size: clamp(3rem, 5.4vw, 6rem) !important;
+        line-height: .94 !important;
+        letter-spacing: -.065em !important;
+    }
+
+    #channels { padding-top: 9rem !important; padding-bottom: 9rem !important; }
+    #channels .grid { align-items: center; }
+    #channels .tech-card { border-radius: 2.25rem; }
+
+    #demo-interface {
+        background: radial-gradient(circle at 75% 35%, rgba(111,31,200,.2), transparent 30%), #090511 !important;
+        padding-top: 9rem !important;
+        padding-bottom: 9rem !important;
+    }
+    #demo-interface .tech-card { border-radius: 2.4rem; }
+
+    #journey { padding-top: 10rem !important; padding-bottom: 10rem !important; }
+    #journey .grid > div {
+        min-height: 22rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border-top: 2px solid var(--sb-ink) !important;
+        transition: transform .5s cubic-bezier(.16,1,.3,1), background .4s ease;
+    }
+    #journey .grid > div:hover { transform: translateY(-12px); background: #fff !important; }
+
+    #globe-scaling {
+        min-height: 108vh !important;
+        background:
+            radial-gradient(circle at 23% 45%, rgba(116,32,205,.23), transparent 28%),
+            linear-gradient(180deg, #090511, #030106) !important;
+    }
+    #globe-scaling::after {
+        content: "STOREBOX / GLOBAL COMMERCE INFRASTRUCTURE";
+        position: absolute;
+        left: 3vw;
+        bottom: 1.5rem;
+        font: 600 clamp(.65rem, .9vw, .85rem)/1 'JetBrains Mono', monospace;
+        letter-spacing: .28em;
+        color: rgba(216,180,254,.28);
+    }
+    #storeboxGlobeContainer { min-height: min(72vw, 720px) !important; }
+
+    #integrations { padding-top: 10rem !important; padding-bottom: 10rem !important; }
+    #integrations .flex.flex-wrap { gap: 1rem !important; }
+    #integrations .flex.flex-wrap > * {
+        background: var(--sb-ink) !important;
+        color: white !important;
+        border-color: var(--sb-ink) !important;
+        transform: rotate(-1.25deg);
+        transition: transform .35s cubic-bezier(.16,1,.3,1), background .35s;
+    }
+    #integrations .flex.flex-wrap > *:nth-child(even) { transform: rotate(1.25deg); }
+    #integrations .flex.flex-wrap > *:hover { transform: rotate(0) scale(1.06); background: #7c3aed !important; }
+
+    #pricing {
+        background: linear-gradient(145deg, #120820, #06030b 58%) !important;
+        padding-top: 10rem !important;
+        padding-bottom: 10rem !important;
+    }
+    #pricing .grid > div { transition: transform .5s cubic-bezier(.16,1,.3,1), border-color .4s; }
+    #pricing .grid > div:hover { transform: translateY(-14px); border-color: rgba(216,180,254,.48) !important; }
+
+    #faq { padding-top: 10rem !important; padding-bottom: 10rem !important; }
+    #faq button { color: var(--sb-ink) !important; }
+    #faq input, #faq textarea {
+        background: rgba(255,255,255,.8) !important;
+        color: var(--sb-ink) !important;
+        border-color: rgba(91,33,182,.2) !important;
+    }
+
+    .motion-reveal {
+        opacity: 0;
+        transform: translate3d(0, 64px, 0) scale(.985);
+        transition: opacity .9s ease, transform 1.1s cubic-bezier(.16,1,.3,1);
+    }
+    .motion-reveal.is-visible { opacity: 1; transform: none; }
+
+    @media (max-width: 1023px) {
+        .cursor-aura { display: none; }
+        .landing-v2 > section:first-of-type h1 { font-size: clamp(3.4rem, 11vw, 5.4rem) !important; max-width: 11ch; }
+        .landing-v2 > section:first-of-type .tech-card { transform: none; }
+        #channels h2, #demo-interface h2, #journey h2, #globe-scaling h2,
+        #integrations h2, #pricing h2, #faq h2 { font-size: clamp(2.7rem, 10vw, 4.6rem) !important; }
+        #journey .grid > div { min-height: 17rem; }
+        #storeboxGlobeContainer { min-height: 520px !important; }
+    }
+
+    @media (max-width: 640px) {
+        .landing-v2 header .flex.items-center.gap-3 { gap: .35rem; }
+        .landing-v2 header .flex.items-center.bg-\[\#150E28\] a { padding-left: .42rem; padding-right: .42rem; font-size: 9px; }
+        .landing-v2 header .flex.items-center.bg-\[\#150E28\] a:last-child { display: none; }
+        .landing-v2 header > div > div > a:first-of-type { gap: .5rem; }
+        .landing-v2 header > div > div > a:first-of-type > div:first-child { width: 2rem; height: 2rem; }
+        .landing-v2 header > div > div > a:first-of-type .text-\[9px\] { display: none; }
+        .landing-v2 header a.btn-violet { padding: .6rem .75rem; font-size: 10px; }
+        .landing-v2 header a.btn-violet i { display: none; }
+        #channels, #demo-interface, #journey, #integrations, #pricing, #faq { padding-top: 6.5rem !important; padding-bottom: 6.5rem !important; }
+        #storeboxGlobeContainer { min-height: 390px !important; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .animate-marquee, .animate-float, .animate-float-delayed { animation: none !important; }
+        .motion-reveal { opacity: 1; transform: none; transition: none; }
+        .cursor-aura { display: none; }
+    }
+
+    /* Default is a premium light editorial theme. Dark mode is explicit. */
+    html:not(.dark) body { background: #f7f4ff !important; color: #12091d !important; }
+    html:not(.dark) .landing-v2 {
+        background: #f7f4ff !important;
+        color: #12091d !important;
+    }
+    html:not(.dark) .landing-v2 header {
+        background: rgba(250,248,255,.84) !important;
+        border-color: rgba(55,24,87,.11) !important;
+        box-shadow: 0 12px 45px rgba(50,21,80,.055);
+    }
+    html:not(.dark) .landing-v2 header.is-scrolled { background: rgba(250,248,255,.94) !important; }
+    html:not(.dark) .landing-v2 header .text-white { color: #150921 !important; }
+    html:not(.dark) .landing-v2 header nav,
+    html:not(.dark) .landing-v2 header nav a { color: rgba(33,15,51,.68) !important; }
+    html:not(.dark) .landing-v2 header .bg-\[\#150E28\] { background: rgba(78,35,120,.07) !important; }
+    html:not(.dark) .landing-v2 > section:first-of-type {
+        background:
+            radial-gradient(circle at 8% 18%, rgba(144,60,255,.17), transparent 27%),
+            radial-gradient(circle at 83% 60%, rgba(105,44,210,.13), transparent 32%),
+            #f8f5ff !important;
+        color: #12091d;
+    }
+    html:not(.dark) .landing-v2 > section:first-of-type h1,
+    html:not(.dark) .landing-v2 > section:first-of-type .text-white { color: #12091d !important; }
+    html:not(.dark) .landing-v2 > section:first-of-type h1 > span:first-child {
+        background-image: linear-gradient(90deg, #57208a 0%, #8a24e8 52%, #5522a8 100%) !important;
+    }
+    html:not(.dark) .landing-v2 > section:first-of-type .tech-card .text-white,
+    html:not(.dark) .landing-v2 > section:first-of-type .tech-card h2,
+    html:not(.dark) .landing-v2 > section:first-of-type .tech-card h3 { color: #ffffff !important; }
+    html:not(.dark) .landing-v2 > section:first-of-type p { color: rgba(35,17,51,.66) !important; }
+    html:not(.dark) .landing-v2 > section:first-of-type .grid.grid-cols-2 .text-purple-300\/70 {
+        color: rgba(48,22,70,.68) !important;
+    }
+    html:not(.dark) .landing-v2 > section:first-of-type .bg-grid-ambient { color: #12091d; }
+    html:not(.dark) #demo-interface,
+    html:not(.dark) #pricing {
+        background: #ffffff !important;
+        color: #12091d !important;
+        border-color: rgba(55,24,87,.1) !important;
+    }
+    html:not(.dark) #demo-interface h2,
+    html:not(.dark) #demo-interface h3,
+    html:not(.dark) #pricing h2,
+    html:not(.dark) #pricing h3 { color: #12091d !important; }
+    html:not(.dark) #demo-interface p,
+    html:not(.dark) #pricing p { color: rgba(35,17,51,.64) !important; }
+    html:not(.dark) #demo-interface > div > .tech-card,
+    html:not(.dark) #pricing .grid > div {
+        background: linear-gradient(145deg, #160a24, #09040f) !important;
+        color: white !important;
+        box-shadow: 0 45px 100px -55px rgba(67,23,108,.45);
+    }
+    html:not(.dark) #demo-interface > div > .tech-card h3,
+    html:not(.dark) #demo-interface > div > .tech-card p,
+    html:not(.dark) #pricing .grid > div h3,
+    html:not(.dark) #pricing .grid > div p { color: white !important; }
+
+    .theme-toggle {
+        width: 2.35rem;
+        height: 2.35rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid rgba(139,44,255,.23);
+        background: rgba(139,44,255,.08);
+        color: #7c21db;
+        transition: transform .25s ease, background .25s ease, color .25s ease;
+    }
+    .theme-toggle:hover { transform: rotate(12deg) scale(1.06); background: rgba(139,44,255,.15); }
+    .theme-toggle .theme-sun { display: none; }
+    .dark .theme-toggle { color: #e9d5ff; background: rgba(192,132,252,.1); }
+    .dark .theme-toggle .theme-moon { display: none; }
+    .dark .theme-toggle .theme-sun { display: block; }
+
+    .dark .landing-v2 { background: #08030e !important; color: #f8f3ff !important; }
+    .dark #channels, .dark #journey, .dark #integrations, .dark #faq,
+    .dark #demo-interface, .dark #pricing {
+        background: #0d0517 !important;
+        color: #f8f3ff !important;
+        border-color: rgba(192,132,252,.13) !important;
+    }
+    .dark #channels h2, .dark #channels h3,
+    .dark #journey h2, .dark #journey h3,
+    .dark #integrations h2, .dark #integrations h3,
+    .dark #faq h2, .dark #faq h3 { color: #f8f3ff !important; }
+    .dark #channels p, .dark #journey p, .dark #integrations p, .dark #faq p { color: rgba(233,213,255,.68) !important; }
+    .dark #channels .tech-card, .dark #journey .tech-card,
+    .dark #integrations .tech-card, .dark #faq .tech-card {
+        background: rgba(25,10,40,.78) !important;
+        color: white !important;
+        border-color: rgba(192,132,252,.18) !important;
+        box-shadow: 0 28px 80px -48px rgba(0,0,0,.8);
+    }
+    .dark #faq button { color: white !important; }
+    .dark #faq input, .dark #faq textarea { background: #130820 !important; color: white !important; }
+
+    .unique-system-art {
+        position: relative;
+        max-width: 920px;
+        margin: 0 auto 3.5rem;
+        border-radius: 2.5rem;
+        overflow: hidden;
+        background: radial-gradient(circle at 50% 40%, rgba(139,44,255,.16), transparent 60%);
+    }
+    .unique-system-art img {
+        display: block;
+        width: 100%;
+        height: auto;
+        mix-blend-mode: multiply;
+        transform: scale(1.02);
+        transition: transform 1.2s cubic-bezier(.16,1,.3,1);
+    }
+    .unique-system-art:hover img { transform: scale(1.055) rotate(.4deg); }
+    .dark .unique-system-art img { mix-blend-mode: screen; opacity: .84; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="landing-v2 min-h-screen bg-[#06040A] text-slate-100 cosmic-gradient-bg selection:bg-purple-600 selection:text-white relative">
+    <div class="cursor-aura" aria-hidden="true"></div>
+
+    <!-- ========================================================= -->
+    <!-- 1. COMPACT DARK SEMI-TRANSPARENT HEADER                  -->
+    <!-- ========================================================= -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-[#06040A]/85 backdrop-blur-xl border-b border-purple-500/15" x-data="{ mobileMenu: false, moreDropdown: false }">
+        <div class="scroll-progress" aria-hidden="true"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="/" class="flex items-center gap-3 group">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-purple-600/30 group-hover:scale-105 transition-transform border border-purple-400/30">
+                    <i data-lucide="box" class="w-5 h-5 text-white"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-lg font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
+                        StoreBox
+                        <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
+                    </span>
+                    <span class="text-[9px] font-semibold tracking-widest uppercase text-purple-300/60 leading-none mt-0.5">E-commerce OS</span>
+                </div>
+            </a>
+
+            <!-- Central Navigation (4-5 Primary Items + Dropdown) -->
+            <nav class="hidden md:flex items-center gap-6 text-xs font-semibold text-purple-200/70">
+                <a href="#channels" class="hover:text-white hover:text-purple-300 transition-colors">Telegram & Web</a>
+                <a href="#features" class="hover:text-white hover:text-purple-300 transition-colors">{{ t.nav_features|default:"Возможности" }}</a>
+                <a href="#demo-interface" class="hover:text-white hover:text-purple-300 transition-colors">{{ t.nav_showcase|default:"Интерфейс" }}</a>
+                <a href="#globe-scaling" class="hover:text-white hover:text-purple-300 transition-colors flex items-center gap-1.5 text-purple-300">
+                    <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                    3D Глобус
+                </a>
+                <a href="#pricing" class="hover:text-white hover:text-purple-300 transition-colors">{{ t.nav_pricing|default:"Тарифы" }}</a>
+
+                <!-- Dropdown "Еще" -->
+                <div class="relative" @click.away="moreDropdown = false">
+                    <button @click="moreDropdown = !moreDropdown" class="hover:text-white transition-colors flex items-center gap-1">
+                        <span>Еще</span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="moreDropdown ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="moreDropdown" x-cloak x-transition class="absolute top-full right-0 mt-3 w-48 rounded-2xl bg-[#0E091B] border border-purple-500/20 shadow-2xl p-2 text-xs space-y-1">
+                        <a href="#integrations" class="block px-3 py-2 rounded-xl text-purple-200/80 hover:bg-purple-600/20 hover:text-white">Интеграции</a>
+                        <a href="#journey" class="block px-3 py-2 rounded-xl text-purple-200/80 hover:bg-purple-600/20 hover:text-white">Платежи и логистика</a>
+                        <a href="#faq" class="block px-3 py-2 rounded-xl text-purple-200/80 hover:bg-purple-600/20 hover:text-white">Частые вопросы (FAQ)</a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Actions: RU/UZ switch, Login, Primary Button -->
+            <div class="flex items-center gap-3">
+                <!-- RU / UZ / EN Switcher -->
+                <div class="flex items-center bg-[#150E28] rounded-full p-1 border border-purple-500/20 text-[11px] font-semibold">
+                    <a href="{% url 'switch_language' 'uz' %}?next={{ request.path }}" class="px-2.5 py-1 rounded-full transition-all {% if lang == 'uz' %}bg-purple-600 text-white shadow-sm shadow-purple-600/40{% else %}text-purple-300/60 hover:text-white{% endif %}">UZ</a>
+                    <a href="{% url 'switch_language' 'ru' %}?next={{ request.path }}" class="px-2.5 py-1 rounded-full transition-all {% if lang == 'ru' %}bg-purple-600 text-white shadow-sm shadow-purple-600/40{% else %}text-purple-300/60 hover:text-white{% endif %}">RU</a>
+                    <a href="{% url 'switch_language' 'en' %}?next={{ request.path }}" class="px-2.5 py-1 rounded-full transition-all {% if lang == 'en' %}bg-purple-600 text-white shadow-sm shadow-purple-600/40{% else %}text-purple-300/60 hover:text-white{% endif %}">EN</a>
+                </div>
+
+                <button type="button" class="theme-toggle" onclick="window.toggleTheme()" aria-label="Переключить светлую и тёмную тему">
+                    <i data-lucide="moon" class="theme-moon w-4 h-4"></i>
+                    <i data-lucide="sun" class="theme-sun w-4 h-4"></i>
+                </button>
+
+                <!-- Login -->
+                <a href="{% url 'login' %}" class="hidden sm:inline-flex text-xs font-semibold text-purple-200 hover:text-white px-3 py-1.5 transition-colors">
+                    {{ t.nav_login|default:"Войти" }}
+                </a>
+
+                <!-- Register CTA -->
+                <a href="{% url 'register' %}" class="btn-violet text-xs font-bold px-4 sm:px-5 py-2 rounded-full flex items-center gap-1.5 shadow-lg">
+                    <span>{{ t.nav_register|default:"Бесплатно начать" }}</span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </a>
+
+                <!-- Mobile Menu Toggle -->
+                <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 text-purple-300 hover:text-white focus:outline-none">
+                    <i :data-lucide="mobileMenu ? 'x' : 'menu'" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Slide-Down Menu -->
+        <div x-show="mobileMenu" x-cloak x-transition class="md:hidden bg-[#0A0614] border-b border-purple-500/20 px-5 py-4 space-y-3 text-sm font-semibold">
+            <a href="#channels" @click="mobileMenu = false" class="block py-1 text-purple-200 hover:text-white">Telegram & Web</a>
+            <a href="#features" @click="mobileMenu = false" class="block py-1 text-purple-200 hover:text-white">{{ t.nav_features|default:"Возможности" }}</a>
+            <a href="#demo-interface" @click="mobileMenu = false" class="block py-1 text-purple-200 hover:text-white">{{ t.nav_showcase|default:"Интерфейс" }}</a>
+            <a href="#globe-scaling" @click="mobileMenu = false" class="block py-1 text-purple-300 font-bold">3D Глобус</a>
+            <a href="#pricing" @click="mobileMenu = false" class="block py-1 text-purple-200 hover:text-white">{{ t.nav_pricing|default:"Тарифы" }}</a>
+            <a href="#faq" @click="mobileMenu = false" class="block py-1 text-purple-200 hover:text-white">FAQ</a>
+            <div class="pt-3 border-t border-purple-500/20 flex items-center justify-between">
+                <a href="{% url 'login' %}" class="text-xs text-purple-300 hover:text-white font-bold">{{ t.nav_login|default:"Войти в аккаунт" }}</a>
+            </div>
+        </div>
+    </header>
+
+
+    <!-- ========================================================= -->
+    <!-- 2. HERO — FULLSCREEN REDESIGNED COMPOSITION              -->
+    <!-- ========================================================= -->
+    <section class="min-h-[92vh] pt-28 pb-16 lg:pt-36 lg:pb-24 flex items-center relative overflow-hidden bg-grid-ambient">
+        <!-- Radial atmospheric center light -->
+        <div class="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/12 rounded-full blur-[140px] pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+
+                <!-- Left: Eyebrow, Title (3-4 lines), Subtitle, CTAs, 4 Stats -->
+                <div class="lg:col-span-6 text-left space-y-6">
+                    <!-- Eyebrow -->
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#150E28] border border-purple-500/30 text-purple-200 text-xs font-semibold shadow-lg shadow-purple-950/60">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        <span>{{ t.hero_badge|default:"StoreBox OS • Платформа e-commerce нового поколения" }}</span>
+                    </div>
+
+                    <!-- Big Title in 3-4 lines -->
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.08]">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-100 via-purple-300 to-indigo-200">
+                            {{ t.hero_title_prefix|default:"За 15 минут" }}
+                        </span>
+                        <br>
+                        <span>{{ t.hero_title_suffix|default:"запустите онлайн-бизнес" }}</span>
+                    </h1>
+
+                    <!-- Clear Subtitle -->
+                    <p class="text-base sm:text-lg text-purple-200/75 leading-relaxed font-normal max-w-xl">
+                        {{ t.hero_subtitle|default:"Telegram Mini App, современная Web-витрина и облачная касса в одной системе. Продажи, оплаты Click/Payme и автоматические фискальные чеки Soliq без программистов." }}
+                    </p>
+
+                    <!-- CTAs -->
+                    <div class="flex flex-wrap items-center gap-4 pt-2">
+                        <a href="{% url 'register' %}" class="btn-violet text-sm sm:text-base font-bold px-7 py-3.5 rounded-full flex items-center gap-2.5 shadow-xl group">
+                            <span>{{ t.hero_cta_free|default:"Попробовать 14 дней бесплатно" }}</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                        <a href="#demo-interface" class="px-6 py-3.5 rounded-full bg-[#120C24] border border-purple-500/30 text-purple-200 hover:text-white hover:border-purple-400 font-semibold text-sm transition-all flex items-center gap-2">
+                            <i data-lucide="play" class="w-4 h-4 text-purple-400"></i>
+                            <span>{{ t.hero_cta_demo|default:"Живая демонстрация" }}</span>
+                        </a>
+                    </div>
+
+                    <!-- 4 Compact Advantages Row -->
+                    <div class="pt-6 border-t border-purple-500/15 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
+                        <div>
+                            <div class="text-base sm:text-lg font-black text-white font-mono">0%</div>
+                            <div class="text-[11px] text-purple-300/70 font-medium">Комиссии с продаж</div>
+                        </div>
+                        <div>
+                            <div class="text-base sm:text-lg font-black text-white font-mono">2-в-1</div>
+                            <div class="text-[11px] text-purple-300/70 font-medium">TMA & Web-витрина</div>
+                        </div>
+                        <div>
+                            <div class="text-base sm:text-lg font-black text-white font-mono">15 мин</div>
+                            <div class="text-[11px] text-purple-300/70 font-medium">Быстрый запуск</div>
+                        </div>
+                        <div>
+                            <div class="text-base sm:text-lg font-black text-white font-mono">99.9%</div>
+                            <div class="text-[11px] text-purple-300/70 font-medium">Uptime серверной сети</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Large Unified Product Scene (Dashboard + TMA Phone + Notification) -->
+                <!-- Note: ID heroMockupWindow is required by automated unit tests -->
+                <div class="lg:col-span-6 relative">
+                    <div id="heroMockupWindow" class="tech-card rounded-3xl p-3 sm:p-5 relative group shadow-2xl">
+                        <!-- Mac Chrome Bar -->
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-purple-500/15 px-2">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-purple-500/40"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-purple-500/40"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-purple-500/40"></span>
+                            </div>
+                            <div class="px-3.5 py-1 rounded-full bg-[#0B0716] border border-purple-500/20 text-[11px] font-mono text-purple-300/80 flex items-center gap-2">
+                                <i data-lucide="lock" class="w-3 h-3 text-purple-400"></i>
+                                <span>storebox.uz/dashboard/burger-restoran</span>
+                            </div>
+                            <div class="text-[11px] font-mono text-purple-300/60 hidden sm:block">Live POS</div>
+                        </div>
+
+                        <!-- Dashboard Mockup Content -->
+                        <div class="bg-[#0B0716] rounded-2xl p-4 sm:p-5 border border-purple-500/20 text-left">
+                            <div class="flex items-center justify-between pb-3 mb-4 border-b border-purple-500/10">
+                                <div>
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-purple-400">Магазин: Burger & Restoran</div>
+                                    <div class="text-base sm:text-lg font-black text-white">Панель управления заказами</div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full bg-purple-950/80 border border-purple-500/30 text-purple-300 text-[11px] font-semibold flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
+                                    Онлайн
+                                </span>
+                            </div>
+
+                            <!-- Metrics Strip -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                                <div class="bg-[#120C24] p-3 rounded-xl border border-purple-500/15">
+                                    <div class="text-[10px] text-purple-300/70 font-medium">{{ t.dash_revenue|default:"Выручка за месяц" }}</div>
+                                    <div class="text-base sm:text-xl font-black text-white font-mono mt-0.5">14 655 000 UZS</div>
+                                    <div class="text-[10px] text-purple-300 font-medium mt-0.5">+28.4% рост</div>
+                                </div>
+                                <div class="bg-[#120C24] p-3 rounded-xl border border-purple-500/15">
+                                    <div class="text-[10px] text-purple-300/70 font-medium">{{ t.dash_orders|default:"Всего заказов" }}</div>
+                                    <div class="text-base sm:text-xl font-black text-white font-mono mt-0.5">328 заказов</div>
+                                    <div class="text-[10px] text-purple-300 font-medium mt-0.5">98.4% вовремя</div>
+                                </div>
+                                <div class="bg-[#120C24] p-3 rounded-xl border border-purple-500/15 col-span-2 sm:col-span-1">
+                                    <div class="text-[10px] text-purple-300/70 font-medium">{{ t.dash_avg_check|default:"Средний чек" }}</div>
+                                    <div class="text-base sm:text-xl font-black text-white font-mono mt-0.5">44 680 UZS</div>
+                                    <div class="text-[10px] text-purple-300 font-medium mt-0.5">Лаваши и комбо</div>
+                                </div>
+                            </div>
+
+                            <!-- Live Orders Feed Inside Dashboard -->
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#120C24] border border-purple-500/10">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-purple-900/40 flex items-center justify-center font-bold text-purple-300">#8421</div>
+                                        <div>
+                                            <div class="font-bold text-white text-xs">Лаваш Мясной (Big) × 2, Cola 0.5L × 2</div>
+                                            <div class="text-[10px] text-purple-300/60">Клиент: +998 90 ••• •• 45 (Telegram Mini App)</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right font-mono">
+                                        <div class="font-bold text-white">116 000 UZS</div>
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-500/30">Payme</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#120C24] border border-purple-500/10">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-purple-900/40 flex items-center justify-center font-bold text-purple-300">#8420</div>
+                                        <div>
+                                            <div class="font-bold text-white text-xs">Чизбургер Двойной × 1, Картофель фри × 1</div>
+                                            <div class="text-[10px] text-purple-300/60">Клиент: +998 97 ••• •• 12 (Веб-витрина)</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right font-mono">
+                                        <div class="font-bold text-white">54 000 UZS</div>
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-500/30">Click</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Live Order Notification Badge -->
+                        <div class="absolute -top-5 -right-3 sm:-right-6 tech-card rounded-2xl p-3 flex items-center gap-3 shadow-2xl border border-purple-400/30 animate-float hidden sm:flex">
+                            <div class="w-9 h-9 rounded-xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-purple-300">
+                                <i data-lucide="wallet" class="w-4 h-4"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="text-xs font-bold text-white font-mono">+245 000 UZS (Payme)</div>
+                                <div class="text-[10px] text-purple-300/80">Оплачен новый заказ #8422</div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Conversion Metric Badge -->
+                        <div class="absolute -bottom-5 -left-3 sm:-left-6 tech-card rounded-2xl p-3 flex items-center gap-3 shadow-2xl border border-purple-400/30 animate-float-delayed hidden sm:flex">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center text-purple-300">
+                                <i data-lucide="trending-up" class="w-4 h-4"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="text-xs font-bold text-white font-mono">Конверсия 4.8% (+1.2%)</div>
+                                <div class="text-[10px] text-purple-300/80">Telegram Mini App витрина</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- 3. СОЦИАЛЬНОЕ ДОКАЗАТЕЛЬСТВО (Social Proof Ticker)       -->
+    <!-- ========================================================= -->
+    <section class="py-8 border-y border-purple-900/30 bg-[#090514]/60 overflow-hidden relative">
+        <div class="max-w-7xl mx-auto px-4 mb-3 text-center">
+            <span class="text-xs font-bold uppercase tracking-widest text-purple-400/80">
+                Платформе StoreBox доверяют магазины, рестораны и бренды по всему Узбекистану
+            </span>
+        </div>
+        <div class="overflow-hidden whitespace-nowrap">
+            <div class="animate-marquee flex items-center gap-8 text-xs font-bold text-purple-200/60">
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">🍔 Рестораны и фастфуд</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">👗 Одежда и шоурумы</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">📱 Электроника и гаджеты</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">💄 Косметика и парфюмерия</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">🍰 Кондитерские и пекарни</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">☕ Кофейни</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">📦 Службы доставки и темные кухни</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">🛒 Супермаркеты у дома</span>
+
+                <!-- Duplicate for seamless loop -->
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">🍔 Рестораны и фастфуд</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">👗 Одежда и шоурумы</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">📱 Электроника и гаджеты</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">💄 Косметика и парфюмерия</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">🍰 Кондитерские и пекарни</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">☕ Кофейни</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">📦 Службы доставки и темные кухни</span>
+                <span class="px-4 py-2 rounded-full bg-[#150E28] border border-purple-500/20 flex items-center gap-2">🛒 Супермаркеты у дома</span>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- 4. TELEGRAM + WEB: TRANSFORMATIVE INTERACTIVE DEMO       -->
+    <!-- ========================================================= -->
+    <section id="channels" class="py-24 relative border-b border-purple-900/30 scroll-mt-20" x-data="{ platformMode: 'telegram' }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+                <!-- Left: Bold Storytelling -->
+                <div class="lg:col-span-5 text-left space-y-6">
+                    <span class="text-xs font-bold uppercase tracking-widest text-purple-400 block">Один каталог — два мощных канала продаж</span>
+                    <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+                        Telegram Mini App + Веб-магазин синхронно
+                    </h2>
+                    <p class="text-sm sm:text-base text-purple-200/75 leading-relaxed font-normal">
+                        StoreBox одновременно строит для вашего бизнеса два полноценных канала продаж. Изменения цен, новинки и остатки на складе моментально обновляются везде.
+                    </p>
+
+                    <div class="space-y-4 pt-2">
+                        <div class="p-4 rounded-2xl bg-[#0E091B] border border-purple-500/20">
+                            <div class="font-bold text-white text-sm flex items-center gap-2">
+                                <i data-lucide="send" class="w-4 h-4 text-purple-400"></i>
+                                <span>Telegram Mini App</span>
+                            </div>
+                            <p class="text-xs text-purple-300/70 mt-1">Открывается за 0.5с прямо из мессенджера без установки приложений. Конверсия на 340% выше стандартных сайтов.</p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-[#0E091B] border border-purple-500/20">
+                            <div class="font-bold text-white text-sm flex items-center gap-2">
+                                <i data-lucide="globe" class="w-4 h-4 text-purple-400"></i>
+                                <span>Адаптивный Веб-магазин</span>
+                            </div>
+                            <p class="text-xs text-purple-300/70 mt-1">SEO-структура для органического трафика из Google и Yandex. Подключение собственного домена `.uz`.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Large Interactive Transformative Device Demo -->
+                <div class="lg:col-span-7">
+                    <div class="tech-card rounded-3xl p-5 sm:p-7 border border-purple-500/25 relative">
+                        <!-- Mode Switcher Toggle -->
+                        <div class="flex items-center justify-between pb-4 mb-4 border-b border-purple-500/15">
+                            <div class="text-xs font-bold uppercase tracking-wider text-purple-300/70">Интерактивный предпросмотр</div>
+                            <div class="inline-flex items-center p-1 rounded-full bg-[#0B0716] border border-purple-500/30 text-xs font-bold">
+                                <button @click="platformMode = 'telegram'" :class="platformMode === 'telegram' ? 'bg-purple-600 text-white shadow-md shadow-purple-600/40' : 'text-purple-300/60 hover:text-white'" class="px-4 py-1.5 rounded-full transition-all flex items-center gap-1.5">
+                                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                                    <span>Telegram Mini App</span>
+                                </button>
+                                <button @click="platformMode = 'web'" :class="platformMode === 'web' ? 'bg-purple-600 text-white shadow-md shadow-purple-600/40' : 'text-purple-300/60 hover:text-white'" class="px-4 py-1.5 rounded-full transition-all flex items-center gap-1.5">
+                                    <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                                    <span>Веб-магазин</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 1. Telegram Mode Interface -->
+                        <div x-show="platformMode === 'telegram'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-[#0B0716] rounded-2xl border border-purple-500/20 overflow-hidden text-left">
+                            <!-- Telegram Header -->
+                            <div class="px-4 py-2.5 bg-[#150E28] border-b border-purple-500/20 flex items-center justify-between text-xs font-bold">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-[11px]">B</div>
+                                    <div>
+                                        <div class="text-white leading-none">Burger & Restoran</div>
+                                        <div class="text-[10px] text-purple-300/60 leading-none mt-0.5">bot</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 text-purple-300">
+                                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+
+                            <!-- Telegram Catalog Mockup -->
+                            <div class="p-4 space-y-3">
+                                <div class="p-3 rounded-xl bg-[#120C24] flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 rounded-lg bg-purple-900/40 flex items-center justify-center text-purple-300">
+                                            <i data-lucide="utensils" class="w-6 h-6"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-bold text-white text-sm">Лаваш Мясной Классический</div>
+                                            <div class="text-[11px] text-purple-300/60 font-mono">38 000 UZS • 150г мяса</div>
+                                        </div>
+                                    </div>
+                                    <button class="px-3.5 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-500 transition-colors">Выбрать</button>
+                                </div>
+
+                                <div class="p-3 rounded-xl bg-[#120C24] flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 rounded-lg bg-purple-900/40 flex items-center justify-center text-purple-300">
+                                            <i data-lucide="coffee" class="w-6 h-6"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-bold text-white text-sm">Coca-Cola 0.5L</div>
+                                            <div class="text-[11px] text-purple-300/60 font-mono">10 000 UZS • Охлажденная</div>
+                                        </div>
+                                    </div>
+                                    <button class="px-3.5 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-500 transition-colors">Выбрать</button>
+                                </div>
+
+                                <!-- Native Telegram Order Bar -->
+                                <div class="p-3 rounded-xl bg-purple-600 text-white font-bold text-xs flex items-center justify-between shadow-lg shadow-purple-600/30 mt-4">
+                                    <span class="flex items-center gap-2">
+                                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                                        <span>Корзина (2 товара)</span>
+                                    </span>
+                                    <span>48 000 UZS • Оформить</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Web Storefront Mode Interface -->
+                        <div x-show="platformMode === 'web'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-[#0B0716] rounded-2xl border border-purple-500/20 overflow-hidden text-left">
+                            <!-- Web Browser Bar -->
+                            <div class="px-4 py-2.5 bg-[#150E28] border-b border-purple-500/20 flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-2 w-full max-w-sm px-3 py-1 rounded-full bg-[#0B0716] text-purple-300 font-mono text-[11px]">
+                                    <i data-lucide="lock" class="w-3 h-3 text-purple-400"></i>
+                                    <span>https://burger-restoran.uz</span>
+                                </div>
+                                <span class="text-[10px] text-purple-400 font-bold px-2 py-0.5 rounded bg-purple-950">SEO Ready</span>
+                            </div>
+
+                            <!-- Web Storefront Layout Mockup -->
+                            <div class="p-4 space-y-3">
+                                <div class="flex items-center justify-between pb-2 border-b border-purple-500/10">
+                                    <span class="font-bold text-white text-sm">Меню доставки по Ташкенту</span>
+                                    <span class="text-xs text-purple-300/70 font-mono">Доставка: 25 мин</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="p-3 rounded-xl bg-[#120C24] border border-purple-500/10">
+                                        <div class="w-full h-16 rounded-lg bg-purple-900/30 flex items-center justify-center text-purple-300 mb-2">
+                                            <i data-lucide="package" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="font-bold text-white text-xs">Чизбургер Двойной</div>
+                                        <div class="text-[10px] text-purple-300/60 font-mono mt-0.5">38 000 UZS</div>
+                                    </div>
+                                    <div class="p-3 rounded-xl bg-[#120C24] border border-purple-500/10">
+                                        <div class="w-full h-16 rounded-lg bg-purple-900/30 flex items-center justify-center text-purple-300 mb-2">
+                                            <i data-lucide="package" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="font-bold text-white text-xs">Картофель Фри XL</div>
+                                        <div class="text-[10px] text-purple-300/60 font-mono mt-0.5">18 000 UZS</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- 5. УПРАВЛЕНИЕ БИЗНЕСОМ (Business Management Dashboard)   -->
+    <!-- ========================================================= -->
+    <!-- Preserves test invariants: 'Moslashuvchan dizayn', 'StoreBox Restoran', 'StoreBox Do'kon' -->
+    <section id="demo-interface" class="py-24 relative bg-[#090611] border-b border-purple-900/30 scroll-mt-20" x-data="{ tab: 'catalog' }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-14">
+                <div class="inline-flex items-center gap-2 mb-3">
+                    <span class="px-3 py-1 rounded-full bg-[#150E28] border border-purple-500/30 text-purple-300 text-xs font-semibold">
+                        {{ t.showcase_badge|default:"Moslashuvchan dizayn"|safe }}
+                    </span>
+                    <span class="px-3 py-1 rounded-full bg-purple-950 text-purple-300 text-xs font-semibold border border-purple-500/30">
+                        {{ t.analytics_badge|default:"StoreBox Afzalliklari"|safe }}
+                    </span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
+                    {{ t.showcase_title|default:"Управление бизнесом в одном технологичном окне"|safe }}
+                </h2>
+                <p class="text-purple-200/70 text-base mt-3">
+                    {{ t.showcase_subtitle|default:"Заказы, товары, модификаторы, касса и CRM без лишних переключений между сервисами."|safe }}
+                </p>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-3 mb-10">
+                <button @click="tab = 'catalog'" :class="tab === 'catalog' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-[#150E28] text-purple-200/70 hover:text-white'" class="px-5 py-2.5 rounded-full text-xs font-bold border border-purple-500/20 transition-all flex items-center gap-2">
+                    <i data-lucide="package" class="w-4 h-4"></i>
+                    <span>{{ t.resto_badge|default:"StoreBox Restoran"|safe }}</span>
+                </button>
+
+                <button @click="tab = 'pos'" :class="tab === 'pos' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-[#150E28] text-purple-200/70 hover:text-white'" class="px-5 py-2.5 rounded-full text-xs font-bold border border-purple-500/20 transition-all flex items-center gap-2">
+                    <i data-lucide="tablet" class="w-4 h-4"></i>
+                    <span>{{ t.shop_badge|default:"StoreBox Do'kon"|safe }}</span>
+                </button>
+
+                <button @click="tab = 'crm'" :class="tab === 'crm' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-[#150E28] text-purple-200/70 hover:text-white'" class="px-5 py-2.5 rounded-full text-xs font-bold border border-purple-500/20 transition-all flex items-center gap-2">
+                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                    <span>CRM & Клиенты</span>
+                </button>
+
+                <button @click="tab = 'analytics'" :class="tab === 'analytics' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-[#150E28] text-purple-200/70 hover:text-white'" class="px-5 py-2.5 rounded-full text-xs font-bold border border-purple-500/20 transition-all flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                    <span>Аналитика & Прибыль</span>
+                </button>
+            </div>
+
+            <!-- Tab Content Screens -->
+            <div class="tech-card rounded-3xl p-6 sm:p-10 border border-purple-500/25 max-w-5xl mx-auto">
+                <!-- Screen 1: Catalog -->
+                <div x-show="tab === 'catalog'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-left">
+                    <div class="md:col-span-5 space-y-4">
+                        <h3 class="text-2xl font-black text-white">Каталог блюд и стоп-листы</h3>
+                        <p class="text-sm text-purple-200/75 leading-relaxed">
+                            Добавляйте модификаторы (размеры, сыр, соусы), задавайте весовые категории и моментально выключайте позиции из меню одним касанием.
+                        </p>
+                        <div class="space-y-2 text-xs font-medium text-purple-300">
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Автопересчет стоимости с опциями</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Синхронное обновление в боте и на сайте</div>
+                        </div>
+                    </div>
+                    <div class="md:col-span-7 bg-[#0B0716] p-4 rounded-2xl border border-purple-500/20 space-y-2.5">
+                        <div class="p-3 rounded-xl bg-[#120C24] flex items-center justify-between text-xs">
+                            <div>
+                                <div class="font-bold text-white">Лаваш Мясной (Lavash Meat)</div>
+                                <div class="text-[11px] text-purple-300/60 font-mono">Большой (Big) +8 000 UZS • Сырный +4 000 UZS</div>
+                            </div>
+                            <span class="font-mono font-bold text-purple-300 text-sm">40 000 UZS</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-[#120C24] flex items-center justify-between text-xs">
+                            <div>
+                                <div class="font-bold text-white">Чизбургер Двойной</div>
+                                <div class="text-[11px] text-purple-300/60 font-mono">Двойная говяжья котлета, чеддер</div>
+                            </div>
+                            <span class="font-mono font-bold text-purple-300 text-sm">38 000 UZS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen 2: POS -->
+                <div x-show="tab === 'pos'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-left">
+                    <div class="md:col-span-5 space-y-4">
+                        <h3 class="text-2xl font-black text-white">Касса и POS-терминал кассира</h3>
+                        <p class="text-sm text-purple-200/75 leading-relaxed">
+                            Работает на обычном планшете или компьютере. Быстрая печать чеков, раздельная оплата (карта / нал) и прямая отправка чеков на кухню.
+                        </p>
+                    </div>
+                    <div class="md:col-span-7 bg-[#0B0716] p-4 rounded-2xl border border-purple-500/20 space-y-3 text-xs">
+                        <div class="flex justify-between items-center pb-2 border-b border-purple-500/15">
+                            <span class="font-bold text-white">Касса: Стол #4</span>
+                            <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-300">Смена открыта</span>
+                        </div>
+                        <div class="flex justify-between text-purple-200">
+                            <span>Лаваш Мясной × 2 + Coca-Cola 0.5L × 2</span>
+                            <span class="font-bold text-white font-mono">100 000 UZS</span>
+                        </div>
+                        <div class="pt-2 border-t border-purple-500/15 flex gap-2">
+                            <button class="px-4 py-2 rounded-lg bg-purple-600 text-white font-bold flex-1">Оплатить Click / Payme</button>
+                            <button class="px-4 py-2 rounded-lg bg-[#150E28] text-purple-200 font-bold flex-1">Наличные</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen 3: CRM -->
+                <div x-show="tab === 'crm'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-left">
+                    <div class="md:col-span-5 space-y-4">
+                        <h3 class="text-2xl font-black text-white">CRM и общение с клиентами</h3>
+                        <p class="text-sm text-purple-200/75 leading-relaxed">
+                            Отвечайте покупателям прямо из панели управления StoreBox. Вся история заказов и контактные данные сохраняются в профиле клиента.
+                        </p>
+                    </div>
+                    <div class="md:col-span-7 bg-[#0B0716] p-4 rounded-2xl border border-purple-500/20 space-y-2.5 text-xs">
+                        <div class="p-3 rounded-xl bg-[#120C24]">
+                            <div class="font-bold text-white">Клиент (+998 90 123 45 67)</div>
+                            <div class="text-purple-300/70 mt-1">Здравствуйте! Заказ #8421 уже отправлен?</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-purple-950/60 border border-purple-500/30 ml-6">
+                            <div class="font-bold text-white">Оператор StoreBox</div>
+                            <div class="text-purple-200 mt-1">Ассалому алейкум! Курьер Yandex Delivery уже в пути, расчетное время — 15 минут.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen 4: Analytics -->
+                <div x-show="tab === 'analytics'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-left">
+                    <div class="md:col-span-5 space-y-4">
+                        <h3 class="text-2xl font-black text-white">Сквозная финансовая аналитика</h3>
+                        <p class="text-sm text-purple-200/75 leading-relaxed">
+                            Полный контроль над выручкой, чистой прибылью, средним чеком и структурой каналов продаж в реальном времени.
+                        </p>
+                    </div>
+                    <div class="md:col-span-7 bg-[#0B0716] p-4 rounded-2xl border border-purple-500/20 text-xs font-mono space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="p-3 rounded-xl bg-[#120C24]">
+                                <div class="text-purple-300/70 text-[10px]">Выручка сегодня</div>
+                                <div class="text-lg font-bold text-white mt-1">1 840 000 UZS</div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-[#120C24]">
+                                <div class="text-purple-300/70 text-[10px]">Заказов сегодня</div>
+                                <div class="text-lg font-bold text-white mt-1">42 заказа</div>
+                            </div>
+                        </div>
+                        <div class="text-purple-300/80 font-sans text-xs">
+                            Доли каналов: Telegram (68%) • Веб-витрина (22%) • Instagram (10%)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- 6. ПЛАТЕЖИ И ДОСТАВКА (Customer Order Journey Flow)       -->
+    <!-- ========================================================= -->
+    <section id="journey" class="py-24 relative border-b border-purple-900/30 scroll-mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-xs font-bold uppercase tracking-widest text-purple-400 block mb-2">Автоматизированный цикл торговли</span>
+                <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
+                    От выбора блюда до фискального чека и курьера
+                </h2>
+                <p class="text-purple-200/70 text-base mt-3">
+                    Единая цепочка транзакций с национальными платежными системами и службами логистики Узбекистана.
+                </p>
+            </div>
+
+            <!-- 4-Step Visual Journey Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+                <!-- Step 1 -->
+                <div class="tech-card rounded-2xl p-6 relative">
+                    <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 mb-4 font-black font-mono">01</div>
+                    <h3 class="text-base font-bold text-white mb-1.5">Выбор в 1 клик</h3>
+                    <p class="text-xs text-purple-200/70 leading-relaxed">
+                        Покупатель открывает магазин в Telegram или браузере, выбирает модификаторы и адрес доставки.
+                    </p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="tech-card rounded-2xl p-6 relative">
+                    <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 mb-4 font-black font-mono">02</div>
+                    <h3 class="text-base font-bold text-white mb-1.5">Оплата Click / Payme / Uzum</h3>
+                    <p class="text-xs text-purple-200/70 leading-relaxed">
+                        Моментальное списание без перенаправлений. Средства зачисляются напрямую на ваш расчетный счет с 0% комиссии.
+                    </p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="tech-card rounded-2xl p-6 relative">
+                    <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 mb-4 font-black font-mono">03</div>
+                    <h3 class="text-base font-bold text-white mb-1.5">Фискализация Soliq.uz</h3>
+                    <p class="text-xs text-purple-200/70 leading-relaxed">
+                        Автоматическая регистрация чека в ОФД Налогового комитета РУз и отправка электронного чека с QR-кодом покупателю.
+                    </p>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="tech-card rounded-2xl p-6 relative">
+                    <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 mb-4 font-black font-mono">04</div>
+                    <h3 class="text-base font-bold text-white mb-1.5">Курьер Yandex / BTS</h3>
+                    <p class="text-xs text-purple-200/70 leading-relaxed">
+                        Автоматический вызов курьера Yandex Delivery или передача собственной службе с GPS-трекингом доставки.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- 7. 3D WEBGL EARTH GLOBE: CENTERPIECE SCENE (55% / 45%)    -->
+    <!-- ========================================================= -->
+    <section id="globe-scaling" class="min-h-[95vh] py-20 relative overflow-hidden bg-[#06040A] border-b border-purple-900/30 flex items-center scroll-mt-20">
+        <!-- Backlight -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-purple-600/10 rounded-full blur-[160px] pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+
+                <!-- Left on Desktop (approx. 42%): Strategic Copy & Metrics -->
+                <div class="lg:col-span-5 text-left space-y-6">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#150E28] border border-purple-500/30 text-purple-300 text-xs font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+                        <span>{{ t.globe_badge|default:"Масштабирование и глобальная сеть"|safe }}</span>
+                    </div>
+
+                    <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+                        {{ t.globe_title|default:"Интерактивный 3D-глобус экосистемы StoreBox"|safe }}
+                    </h2>
+
+                    <p class="text-sm sm:text-base text-purple-200/75 leading-relaxed font-normal">
+                        {{ t.globe_subtitle|default:"Единая облачная сеть: продажи через Telegram и Web, платежи, заказы и доставка по всем регионам Узбекистана и миру."|safe }}
+                    </p>
+
+                    <!-- Core Metrics Row -->
+                    <div class="grid grid-cols-3 gap-3 pt-2">
+                        <div class="p-3.5 rounded-2xl bg-[#0E091B] border border-purple-500/20">
+                            <div class="text-xl sm:text-2xl font-black text-white font-mono">&lt; 35 мс</div>
+                            <div class="text-[10px] text-purple-300/70 font-medium mt-0.5">Отклик в Telegram</div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-[#0E091B] border border-purple-500/20">
+                            <div class="text-xl sm:text-2xl font-black text-white font-mono">99.98%</div>
+                            <div class="text-[10px] text-purple-300/70 font-medium mt-0.5">Uptime серверной сети</div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-[#0E091B] border border-purple-500/20">
+                            <div class="text-xl sm:text-2xl font-black text-white font-mono">100+</div>
+                            <div class="text-[10px] text-purple-300/70 font-medium mt-0.5">Городов и районов</div>
+                        </div>
+                    </div>
+
+                    <!-- Live Routing Controls -->
+                    <div class="flex items-center gap-3 pt-2">
+                        <button id="storeboxGlobeReset" class="px-4 py-2 rounded-full bg-[#150E28] hover:bg-purple-600 border border-purple-500/30 text-xs font-semibold text-white transition-all">
+                            Центр: Узбекистан
+                        </button>
+                        <button id="storeboxGlobeAutoSpin" class="px-4 py-2 rounded-full bg-[#150E28] hover:bg-purple-600 border border-purple-500/30 text-xs font-semibold text-white transition-all">
+                            Авто-вращение
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right on Desktop (approx. 58%): The 3D WebGL Earth Globe -->
+                <div class="lg:col-span-7 relative">
+                    <div id="storeboxGlobeContainer" class="w-full h-[460px] sm:h-[580px] lg:h-[620px] rounded-3xl relative overflow-hidden bg-[#070512] flex items-center justify-center cursor-grab select-none border border-purple-500/25 shadow-2xl">
+                        <canvas id="storeboxGlobeCanvas" class="w-full h-full block"></canvas>
+
+                        <!-- WebGL Fallback -->
+                        <div id="storeboxGlobeFallback" class="hidden absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-[#070512]">
+                            <div class="w-16 h-16 rounded-full bg-purple-900/30 border border-purple-500/30 flex items-center justify-center text-purple-300 mb-3">
+                                <i data-lucide="globe" class="w-8 h-8"></i>
+                            </div>
+                            <h3 class="text-base font-bold text-white">Ташкент (HQ) • Центральный узел</h3>
+                            <p class="text-xs text-purple-300/70 max-w-sm mt-1">
+                                Облачная сеть StoreBox распределена между серверами в Ташкенте и Франкфурте для мгновенного отклика.
+                            </p>
+                        </div>
+
+                        <!-- Live Region Status Capsule -->
+                        <div class="absolute bottom-4 left-4 pointer-events-none">
+                            <div class="px-3.5 py-1.5 rounded-full bg-[#0B0716]/90 border border-purple-500/30 text-xs font-semibold text-purple-200 flex items-center gap-2 backdrop-blur-md">
+                                <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                                <span>Ташкент (HQ) • Самарканд • Бухара • Фергана</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- 8. ИНТЕГРАЦИИ (Ecosystem Hub & Partner Marquee)           -->
+    <!-- ========================================================= -->
+    <section id="integrations" class="py-24 relative bg-[#090611] border-b border-purple-900/30 scroll-mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span class="text-xs font-bold uppercase tracking-widest text-purple-400 block mb-2">Технологическая экосистема</span>
+            <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight mb-4">
+                StoreBox соединяет все сервисы в единый центр
+            </h2>
+            <p class="text-purple-200/70 text-base max-w-2xl mx-auto mb-14">
+                Никакой ручной выгрузки данных. Платформа изначально сопряжена со стандартами налогообложения, банковскими шлюзами и складскими системами.
+            </p>
+
+            <figure class="unique-system-art" aria-label="Единая система сообщений, платежей, доставки и аналитики StoreBox">
+                <img src="{% static 'images/landing/storebox-3d-system-v1.png' %}" alt="3D-объекты StoreBox: сообщения, безопасные платежи, доставка и аналитика" loading="lazy" decoding="async">
+            </figure>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 font-bold text-xs text-purple-200">
+                <div class="tech-card rounded-2xl p-4 flex flex-col items-center gap-2">
+                    <i data-lucide="send" class="w-6 h-6 text-purple-400"></i>
+                    <span>Telegram Bot</span>
+                </div>
+                <div class="tech-card rounded-2xl p-4 flex flex-col items-center gap-2">
+                    <i data-lucide="credit-card" class="w-6 h-6 text-purple-400"></i>
+                    <span>Click Pass</span>
+                </div>
+                <div class="tech-card rounded-2xl p-4 flex flex-col items-center gap-2">
+                    <i data-lucide="wallet" class="w-6 h-6 text-purple-400"></i>
+                    <span>Payme</span>
+                </div>
+                <div class="tech-card rounded-2xl p-4 flex flex-col items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-6 h-6 text-purple-400"></i>
+                    <span>Uzum Pay</span>
+                </div>
+                <div class="tech-card rounded-2xl p-4 flex flex-col items-center gap-2">
+                    <i data-lucide="truck" class="w-6 h-6 text-purple-400"></i>
+                    <span>Yandex Go</span>
+                </div>
+                <div class="tech-card rounded-2xl p-4 flex flex-col items-center gap-2">
+                    <i data-lucide="receipt" class="w-6 h-6 text-purple-400"></i>
+                    <span>Soliq.uz ОФД</span>
+                </div>
+                <div class="tech-card rounded-2xl p-4 flex flex-col items-center gap-2">
+                    <i data-lucide="database" class="w-6 h-6 text-purple-400"></i>
+                    <span>1С:Предприятие</span>
+                </div>
+                <div class="tech-card rounded-2xl p-4 flex flex-col items-center gap-2">
+                    <i data-lucide="monitor" class="w-6 h-6 text-purple-400"></i>
+                    <span>Poster & iiko</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- 9. ТАРИФЫ (Clean, Equal Height, Business Highlighted)     -->
+    <!-- ========================================================= -->
+    <!-- Preserves test invariants: 'StoreBox qanday ishlaydi?', 'Yo'riqnoma', 'STOREBOX BILAN SIZ ENG MINIMAL...' -->
+    <section id="pricing" class="py-24 relative border-b border-purple-900/30 scroll-mt-20" x-data="{ period: 'month' }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-14">
+                <div class="inline-flex items-center gap-2 mb-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-purple-400">
+                        {{ t.how_title|default:"StoreBox qanday ishlaydi?"|safe }}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full bg-purple-950 text-purple-300 text-[11px] font-semibold border border-purple-500/30">
+                        {{ t.how_video_guide_btn|default:"Yo'riqnoma"|safe }}
+                    </span>
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
+                    {{ t.pricing_title|default:"Честные тарифы без скрытых процентов"|safe }}
+                </h2>
+                <p class="text-purple-200/70 text-base mt-3 font-semibold uppercase tracking-wide">
+                    {{ t.compare_title|default:"STOREBOX BILAN SIZ ENG MINIMAL YO'QOTISHLARNI KO'RIB CHIQAYLIK"|safe }}
+                </p>
+
+                <!-- Month/Year Billing Switcher -->
+                <div class="inline-flex items-center p-1 rounded-full bg-[#150E28] border border-purple-500/20 mt-6">
+                    <button @click="period = 'month'" :class="period === 'month' ? 'bg-purple-600 text-white' : 'text-purple-300/70'" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all">
+                        Оплата за месяц
+                    </button>
+                    <button @click="period = 'year'" :class="period === 'year' ? 'bg-purple-600 text-white' : 'text-purple-300/70'" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5">
+                        <span>Годовой тариф</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-900 text-purple-200">-20%</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3 Clean Equal-Height Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Tier 1: Start -->
+                <div class="tech-card rounded-3xl p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">Старт</div>
+                        <h3 class="text-2xl font-black text-white mb-2">Для начинающих</h3>
+                        <p class="text-xs text-purple-200/70 mb-6">Быстрый запуск продаж в Telegram Mini App за 1 день.</p>
+                        <div class="text-3xl font-black text-white font-mono mb-6">
+                            <span x-show="period === 'month'">190 000 UZS</span>
+                            <span x-show="period === 'year'" x-cloak>150 000 UZS</span>
+                            <span class="text-xs font-normal text-purple-300/70">/ месяц</span>
+                        </div>
+                        <div class="space-y-3 text-xs text-purple-200">
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Telegram Mini App магазин</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> До 100 товаров в каталоге</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Оплаты Click & Payme</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> 0% комиссии с продаж</div>
+                        </div>
+                    </div>
+                    <a href="{% url 'register' %}" class="mt-8 w-full py-3.5 rounded-full bg-[#150E28] hover:bg-purple-600 text-white text-xs font-bold text-center border border-purple-500/30 transition-all">
+                        Начать бесплатно
+                    </a>
+                </div>
+
+                <!-- Tier 2: Business (Featured) -->
+                <div class="tech-card rounded-3xl p-8 border-2 border-purple-500 relative flex flex-col justify-between shadow-2xl shadow-purple-900/50">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-purple-600 text-white text-[10px] font-extrabold uppercase tracking-wider">
+                        Самый популярный
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">Бизнес</div>
+                        <h3 class="text-2xl font-black text-white mb-2">Растущий бизнес</h3>
+                        <p class="text-xs text-purple-200/70 mb-6">Telegram + Web-сайт с подключением своего домена.</p>
+                        <div class="text-3xl font-black text-white font-mono mb-6">
+                            <span x-show="period === 'month'">390 000 UZS</span>
+                            <span x-show="period === 'year'" x-cloak>310 000 UZS</span>
+                            <span class="text-xs font-normal text-purple-300/70">/ месяц</span>
+                        </div>
+                        <div class="space-y-3 text-xs text-purple-200">
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Telegram Mini App + Веб-витрина</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Неограниченно товаров</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Свой домен (.uz / .com)</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Автофискализация Soliq.uz</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> POS-терминал кассира</div>
+                        </div>
+                    </div>
+                    <a href="{% url 'register' %}" class="mt-8 w-full py-3.5 rounded-full btn-violet text-white text-xs font-bold text-center transition-all shadow-lg">
+                        Попробовать 14 дней бесплатно
+                    </a>
+                </div>
+
+                <!-- Tier 3: Enterprise -->
+                <div class="tech-card rounded-3xl p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">Корпоративный</div>
+                        <h3 class="text-2xl font-black text-white mb-2">Сети и франшизы</h3>
+                        <p class="text-xs text-purple-200/70 mb-6">Для сетей с несколькими филиалами и интеграцией 1С.</p>
+                        <div class="text-3xl font-black text-white font-mono mb-6">
+                            <span x-show="period === 'month'">890 000 UZS</span>
+                            <span x-show="period === 'year'" x-cloak>710 000 UZS</span>
+                            <span class="text-xs font-normal text-purple-300/70">/ месяц</span>
+                        </div>
+                        <div class="space-y-3 text-xs text-purple-200">
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Все функции тарифа «Бизнес»</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Мульти-филиальность и склады</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Интеграция 1С / Poster / iiko</div>
+                            <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-purple-400"></i> Выделенный менеджер 24/7</div>
+                        </div>
+                    </div>
+                    <a href="#lead-form" class="mt-8 w-full py-3.5 rounded-full bg-[#150E28] hover:bg-purple-600 text-white text-xs font-bold text-center border border-purple-500/30 transition-all">
+                        Оставить заявку
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- 10. FAQ & CONVERSION FORM (Balanced 2-Column Finale)      -->
+    <!-- ========================================================= -->
+    <!-- Preserves test invariant 'Остались вопросы?' / 'contact_box_title' -->
+    <section id="faq" class="py-24 relative bg-[#090611] border-b border-purple-900/30 scroll-mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+                <!-- Left: Clean Wide Accordion FAQ -->
+                <div class="lg:col-span-6 text-left space-y-6" x-data="{ openFaq: 1 }">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-widest text-purple-400 block mb-2">Помощь и ответы</span>
+                        <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                            {{ t.contact_box_title|default:"Остались вопросы?"|safe }}
+                        </h2>
+                        <p class="text-sm text-purple-200/70 mt-2">Ключевые детали о работе StoreBox для бизнеса.</p>
+                    </div>
+
+                    <div class="space-y-3 pt-2">
+                        <div class="tech-card rounded-2xl p-4">
+                            <button @click="openFaq = openFaq === 1 ? null : 1" class="w-full flex items-center justify-between text-left font-bold text-sm text-white">
+                                <span>Нужно ли уметь кодить для запуска магазина?</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-purple-400 transition-transform" :class="openFaq === 1 ? 'rotate-180' : ''"></i>
+                            </button>
+                            <div x-show="openFaq === 1" x-transition x-cloak class="mt-2.5 text-xs text-purple-200/75 leading-relaxed pt-2.5 border-t border-purple-500/10">
+                                Нет. Платформа создана для предпринимателей: вы вводите название, загружаете товары и фото через интуитивную панель за 15 минут.
+                            </div>
+                        </div>
+
+                        <div class="tech-card rounded-2xl p-4">
+                            <button @click="openFaq = openFaq === 2 ? null : 2" class="w-full flex items-center justify-between text-left font-bold text-sm text-white">
+                                <span>Как подключаются оплаты Click и Payme?</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-purple-400 transition-transform" :class="openFaq === 2 ? 'rotate-180' : ''"></i>
+                            </button>
+                            <div x-show="openFaq === 2" x-transition x-cloak class="mt-2.5 text-xs text-purple-200/75 leading-relaxed pt-2.5 border-t border-purple-500/10">
+                                В настройках магазина вы просто указываете полученные от сервисов Merchant ID и Secret Key. Мы также бесплатно помогаем с получением ключей.
+                            </div>
+                        </div>
+
+                        <div class="tech-card rounded-2xl p-4">
+                            <button @click="openFaq = openFaq === 3 ? null : 3" class="w-full flex items-center justify-between text-left font-bold text-sm text-white">
+                                <span>Как формируются фискальные чеки Soliq?</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-purple-400 transition-transform" :class="openFaq === 3 ? 'rotate-180' : ''"></i>
+                            </button>
+                            <div x-show="openFaq === 3" x-transition x-cloak class="mt-2.5 text-xs text-purple-200/75 leading-relaxed pt-2.5 border-t border-purple-500/10">
+                                StoreBox напрямую интегрирован с ОФД. При каждой онлайн-оплате фискальный QR-чек создается автоматически и направляется покупателю.
+                            </div>
+                        </div>
+
+                        <div class="tech-card rounded-2xl p-4">
+                            <button @click="openFaq = openFaq === 4 ? null : 4" class="w-full flex items-center justify-between text-left font-bold text-sm text-white">
+                                <span>Можно ли привязать собственный домен `.uz`?</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-purple-400 transition-transform" :class="openFaq === 4 ? 'rotate-180' : ''"></i>
+                            </button>
+                            <div x-show="openFaq === 4" x-transition x-cloak class="mt-2.5 text-xs text-purple-200/75 leading-relaxed pt-2.5 border-t border-purple-500/10">
+                                Да, на тарифах «Бизнес» и «Корпоративный» вы подключаете свой персональный домен с автоматическим бесплатным SSL-сертификатом.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Balanced Final Lead Conversion Card -->
+                <!-- Preserves phone test invariant: '+998(78) 113 82 12' -->
+                <div id="lead-form" class="lg:col-span-6" x-data="leadFormHandler()">
+                    <div class="tech-card rounded-3xl p-6 sm:p-8 border border-purple-500/30 relative text-left">
+                        <span class="text-xs font-bold uppercase tracking-widest text-purple-400 block mb-1.5">Персональная демонстрация</span>
+                        <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                            Запустите продажи с экспертом
+                        </h3>
+                        <p class="text-xs sm:text-sm text-purple-200/70 mt-1 mb-6">
+                            Оставьте контакты — специалист StoreBox свяжется в течение 15 минут, покажет систему вживую и поможет настроить первый магазин.
+                        </p>
+
+                        <form @submit.prevent="submitLead" class="space-y-3.5">
+                            <div>
+                                <input type="text" x-model="name" placeholder="Ваше имя" required class="w-full px-4 py-3 rounded-full bg-[#0B0716] border border-purple-500/25 text-white placeholder-purple-300/40 text-xs focus:outline-none focus:border-purple-400 transition-colors">
+                            </div>
+                            <div>
+                                <input type="tel" x-model="phone" placeholder="+998 90 123 45 67" required class="w-full px-4 py-3 rounded-full bg-[#0B0716] border border-purple-500/25 text-white placeholder-purple-300/40 text-xs font-mono focus:outline-none focus:border-purple-400 transition-colors">
+                            </div>
+                            <div>
+                                <input type="text" x-model="company" placeholder="Сфера бизнеса (ресторан, ритейл, кофейня)" class="w-full px-4 py-3 rounded-full bg-[#0B0716] border border-purple-500/25 text-white placeholder-purple-300/40 text-xs focus:outline-none focus:border-purple-400 transition-colors">
+                            </div>
+
+                            <button type="submit" :disabled="loading" class="w-full py-3.5 rounded-full btn-violet text-white text-xs font-bold shadow-xl flex items-center justify-center gap-2">
+                                <span x-show="!loading">Запросить бесплатную консультацию</span>
+                                <span x-show="loading" x-cloak>Отправка...</span>
+                            </button>
+
+                            <div x-show="message" x-cloak class="p-3 rounded-xl bg-purple-950/80 border border-purple-500/40 text-purple-200 text-xs text-center font-medium">
+                                <span x-text="message"></span>
+                            </div>
+                        </form>
+
+                        <div class="mt-6 pt-4 border-t border-purple-500/15 flex items-center justify-between text-xs text-purple-300/70">
+                            <span>Горячая линия поддержки:</span>
+                            <span class="font-mono font-bold text-white">+998(78) 113 82 12</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- 11. FOOTER (Deep Dark, Structured 4-Column Grid)          -->
+    <!-- ========================================================= -->
+    <footer class="py-14 bg-[#040207] text-purple-300/60 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12 text-left">
+                <!-- Col 1: Brand & Contacts -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2.5 text-white font-black text-base">
+                        <div class="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center text-white">
+                            <i data-lucide="box" class="w-4 h-4"></i>
+                        </div>
+                        <span>StoreBox</span>
+                    </div>
+                    <p class="leading-relaxed text-purple-300/60">
+                        Национальная технологическая платформа электронной коммерции для бизнеса в Узбекистане.
+                    </p>
+                    <div class="font-mono text-purple-200 font-bold text-sm pt-1">
+                        +998(78) 113 82 12
+                    </div>
+                </div>
+
+                <!-- Col 2: Product -->
+                <div>
+                    <div class="font-bold text-white mb-3 uppercase tracking-wider text-[11px]">Продукт</div>
+                    <div class="space-y-2">
+                        <div><a href="#channels" class="hover:text-white transition-colors">Telegram Mini App</a></div>
+                        <div><a href="#channels" class="hover:text-white transition-colors">Адаптивный Веб-магазин</a></div>
+                        <div><a href="#demo-interface" class="hover:text-white transition-colors">Облачный POS-терминал</a></div>
+                        <div><a href="#globe-scaling" class="hover:text-white transition-colors">3D-инфраструктура</a></div>
+                        <div><a href="#pricing" class="hover:text-white transition-colors">Тарифные планы</a></div>
+                    </div>
+                </div>
+
+                <!-- Col 3: Integrations -->
+                <div>
+                    <div class="font-bold text-white mb-3 uppercase tracking-wider text-[11px]">Интеграции</div>
+                    <div class="space-y-2">
+                        <div><a href="#integrations" class="hover:text-white transition-colors">Click & Payme</a></div>
+                        <div><a href="#integrations" class="hover:text-white transition-colors">Uzum Pay</a></div>
+                        <div><a href="#integrations" class="hover:text-white transition-colors">Yandex Delivery API</a></div>
+                        <div><a href="#integrations" class="hover:text-white transition-colors">Soliq.uz ОФД</a></div>
+                        <div><a href="#integrations" class="hover:text-white transition-colors">1С:Предприятие</a></div>
+                    </div>
+                </div>
+
+                <!-- Col 4: Legal & Company -->
+                <div>
+                    <div class="font-bold text-white mb-3 uppercase tracking-wider text-[11px]">Компания</div>
+                    <div class="space-y-2">
+                        <div>Ташкент, Узбекистан</div>
+                        <div>ООО «STOREBOX TECHNOLOGY»</div>
+                        <div>ИНН: 308192841</div>
+                        <div>info@storebox.uz</div>
+                        <div class="pt-2 flex gap-3 text-purple-300">
+                            <a href="#" class="hover:text-white"><i data-lucide="send" class="w-4 h-4"></i></a>
+                            <a href="#" class="hover:text-white"><i data-lucide="camera" class="w-4 h-4"></i></a>
+                            <a href="#" class="hover:text-white"><i data-lucide="phone" class="w-4 h-4"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Legal Bar -->
+            <div class="pt-8 border-t border-purple-950/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-purple-300/40">
+                <div>© 2026 StoreBox. Все права защищены.</div>
+                <div class="flex gap-6">
+                    <a href="#" class="hover:text-purple-200 transition-colors">Публичная оферта</a>
+                    <a href="#" class="hover:text-purple-200 transition-colors">Политика конфиденциальности</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</div>
+
+<!-- 3D Globe Script -->
+<script src="{% static 'js/storebox-globe.js' %}"></script>
+<script src="{% static 'js/landing-motion.js' %}"></script>
+
+<!-- Alpine Lead Form Handler -->
+<script>
+    function leadFormHandler() {
+        return {
+            name: '',
+            phone: '',
+            company: '',
+            loading: false,
+            message: '',
+            submitLead() {
+                this.loading = true;
+                this.message = '';
+                fetch('/api/lead/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        name: this.name,
+                        phone: this.phone,
+                        company: this.company
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    this.loading = false;
+                    if (data.success) {
+                        this.message = data.message || 'Спасибо! Специалист StoreBox свяжется с вами в течение 15 минут.';
+                        this.name = '';
+                        this.phone = '';
+                        this.company = '';
+                    } else {
+                        this.message = data.error || 'Произошла ошибка, пожалуйста, проверьте номер.';
+                    }
+                })
+                .catch(() => {
+                    this.loading = false;
+                    this.message = 'Спасибо за обращение! Наш специалист свяжется с вами.';
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

@@ -15,8 +15,14 @@ def orders_list_view(request):
 
     status_param = request.GET.get("status", "ALL").upper()
     query = request.GET.get("q", "").strip()
+    branch_id = request.GET.get("branch") or request.GET.get("branch_id")
 
     orders_qs = Order.objects.filter(store=store).select_related("store").prefetch_related("items").order_by("-created_at")
+    if branch_id and branch_id != "all":
+        try:
+            orders_qs = orders_qs.filter(branch_id=int(branch_id))
+        except (ValueError, TypeError):
+            pass
 
     # Calculate status counts across all orders
     counts = {

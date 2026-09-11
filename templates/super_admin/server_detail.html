@@ -97,7 +97,9 @@
                 </div>
                 <button @click="renewModalOpen = true"
                         type="button"
-                        class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 transition">
+                        id="btnOpenRenewModal"
+                        onclick="if(window.SuperAdminDetail){window.SuperAdminDetail.openModal();} else { document.getElementById('renewDetailModal').classList.remove('hidden'); }"
+                        class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 transition cursor-pointer">
                     <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
                     <span>BUY / Продлить</span>
                 </button>
@@ -811,12 +813,9 @@
     </div>
 
     <!-- Modal: BUY / Renew License -->
-    <div x-show="renewModalOpen"
-         x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
-         @keydown.escape.window="renewModalOpen = false">
-        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden"
-             @click.away="renewModalOpen = false">
+    <div id="renewDetailModal"
+         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden">
             <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
                 <div class="flex items-center space-x-2">
                     <i data-lucide="shopping-cart" class="w-4 h-4 text-emerald-400"></i>
@@ -824,12 +823,16 @@
                         Продление лицензии: <span class="font-mono text-emerald-400">{{ store.subdomain }}</span>
                     </h3>
                 </div>
-                <button @click="renewModalOpen = false" class="text-slate-400 hover:text-white">
+                <button @click="renewModalOpen = false"
+                        id="btnCloseRenewDetailModalX"
+                        onclick="if(window.SuperAdminDetail){window.SuperAdminDetail.closeModal();} else { document.getElementById('renewDetailModal').classList.add('hidden'); }"
+                        type="button"
+                        class="text-slate-400 hover:text-white cursor-pointer">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <form action="{% url 'super_admin:server_renew_license' store.id %}" method="POST" class="p-4 space-y-3">
+            <form id="renewDetailForm" action="{% url 'super_admin:server_renew_license' store.id %}" method="POST" class="p-4 space-y-3">
                 {% csrf_token %}
                 <div>
                     <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Срок продления</label>
@@ -871,10 +874,14 @@
                 </div>
 
                 <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
-                    <button @click="renewModalOpen = false" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800">
+                    <button @click="renewModalOpen = false"
+                            id="btnCancelRenewDetailModal"
+                            onclick="if(window.SuperAdminDetail){window.SuperAdminDetail.closeModal();} else { document.getElementById('renewDetailModal').classList.add('hidden'); }"
+                            type="button"
+                            class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 cursor-pointer">
                         Отмена
                     </button>
-                    <button type="submit" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1">
+                    <button type="submit" id="btnSubmitRenewDetail" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1 cursor-pointer">
                         <i data-lucide="check" class="w-3.5 h-3.5"></i>
                         <span>Подтвердить продление</span>
                     </button>
@@ -887,6 +894,25 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script>
+    window.SuperAdminDetail = {
+        openModal: function() {
+            var modal = document.getElementById('renewDetailModal');
+            if (modal) {
+                modal.removeAttribute('x-cloak');
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+            }
+        },
+        closeModal: function() {
+            var modal = document.getElementById('renewDetailModal');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.add('hidden');
+            }
+        }
+    };
+</script>
 {% if active_tab == 'statistics' %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {

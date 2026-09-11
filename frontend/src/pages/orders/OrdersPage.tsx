@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Search,
@@ -21,14 +22,25 @@ import { Order } from "../../types";
 export const OrdersPage: React.FC = () => {
   const { t } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const branch = searchParams.get("branch") || "all";
+  const urlQ = searchParams.get("q") || "";
+
   const [status, setStatus] = useState("ALL");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(urlQ);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  useEffect(() => {
+    if (urlQ) {
+      setSearch(urlQ);
+    }
+  }, [urlQ]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["orders", status, search],
+    queryKey: ["orders", status, search, branch],
     queryFn: async () => {
-      const res = await api.get(`/orders/?status=${status}&q=${encodeURIComponent(search)}`);
+      const branchParam = branch !== "all" ? `&branch=${branch}` : "";
+      const res = await api.get(`/orders/?status=${status}&q=${encodeURIComponent(search)}${branchParam}`);
       return res.data as {
         counts: Record<string, number>;
         orders: Order[];

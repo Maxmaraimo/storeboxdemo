@@ -65,7 +65,7 @@ export const YesPosPage: React.FC = () => {
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Connection form state
-  const [apiKeyInput, setApiKeyInput] = useState("51831431-a0c91e12ebd08bd18fb7c679f1944beea5b69054331eec6b");
+  const [apiKeyInput, setApiKeyInput] = useState("");
   const [testingConnection, setTestingConnection] = useState(false);
   const [branches, setBranches] = useState<BranchItem[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState("");
@@ -287,6 +287,13 @@ export const YesPosPage: React.FC = () => {
 
   const isConnected = status?.is_connected;
 
+  // Auto-fetch catalog when connected if not yet loaded
+  useEffect(() => {
+    if (isConnected && catalog.length === 0 && !loadingCatalog) {
+      handleLoadCatalog();
+    }
+  }, [isConnected]);
+
   return (
     <div className="space-y-6 max-w-5xl">
       {/* HEADER */}
@@ -322,6 +329,43 @@ export const YesPosPage: React.FC = () => {
           </button>
         )}
       </div>
+
+      {/* EXPLICIT CONNECTION STATUS BANNER */}
+      {isConnected ? (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div>
+              <div className="text-sm font-black text-emerald-950 flex items-center gap-2">
+                <span>YES POS muvaffaqiyatli ulangan va faol ishlamoqda!</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
+              </div>
+              <div className="text-emerald-700 text-xs font-medium mt-0.5">
+                Filial: <b>{status?.branch_name || status?.branch_id}</b> • Ulangan tovarlar soni: <b>{status?.linked_products_count || 0} ta</b>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={syncing}
+            className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+            <span>{syncing ? "Yangilanmoqda..." : "Narxlarni yangilash"}</span>
+          </button>
+        </div>
+      ) : (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold flex items-center gap-3 shadow-2xs">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+          <div>
+            <div className="text-sm font-black text-amber-950">YES POS hali ulanmagan</div>
+            <div className="text-amber-800 text-xs font-medium mt-0.5">
+              Kassadagi tovarlarni do'konga yuklash uchun pastdagi maydonga API kalitingizni kiriting va <b>"Filiallarni olish"</b> tugmasini bosing.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ALERT MESSAGE */}
       {msg && (

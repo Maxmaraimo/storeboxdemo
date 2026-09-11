@@ -183,11 +183,17 @@ def dashboard_summary_view(request):
         return Response({"error": "Dokon topilmadi"}, status=404)
 
     period = request.GET.get("period", "today")
+    branch_id = request.GET.get("branch") or request.GET.get("branch_id")
     custom_start = request.GET.get("start_date", "").strip()
     custom_end = request.GET.get("end_date", "").strip()
     now = timezone.now()
 
     store_orders = Order.objects.filter(store=store)
+    if branch_id and branch_id != "all":
+        try:
+            store_orders = store_orders.filter(branch_id=int(branch_id))
+        except (ValueError, TypeError):
+            pass
 
     if custom_start and custom_end:
         try:

@@ -62,6 +62,7 @@ export const ProductsPage: React.FC = () => {
         unit: formUnit || "dona",
         barcode: formBarcode.trim(),
         ikpu_code: formIkpu.trim(),
+        image_url: formImage.trim() || "",
         primary_image_url: formImage.trim() || null,
         description_uz: formDescUz.trim(),
         category: formCategory ? Number(formCategory) : null,
@@ -154,6 +155,7 @@ export const ProductsPage: React.FC = () => {
         </div>
         <button
           type="button"
+          data-testid="create-product-btn"
           onClick={openCreateModal}
           className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
         >
@@ -342,6 +344,7 @@ export const ProductsPage: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                  data-testid="product-name-uz-input"
                   value={formNameUz}
                   onChange={(e) => setFormNameUz(e.target.value)}
                   placeholder="Masalan: Lavash klassik, iPhone 15 Pro"
@@ -392,6 +395,7 @@ export const ProductsPage: React.FC = () => {
                 </label>
                 <input
                   type="number"
+                  data-testid="product-price-input"
                   value={formPrice}
                   onChange={(e) => setFormPrice(e.target.value)}
                   placeholder="35000"
@@ -501,6 +505,7 @@ export const ProductsPage: React.FC = () => {
               </button>
               <button
                 type="button"
+                data-testid="save-product-btn"
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending}
                 className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50"
