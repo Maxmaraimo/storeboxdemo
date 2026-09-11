@@ -376,7 +376,12 @@ def dashboard_notifications_view(request):
         sender=ChatMessage.Senders.CUSTOMER,
         is_read=False
     ).order_by("-created_at")
-    unread_chats_count = unread_chats_qs.values("customer_phone").distinct().count()
+
+    unread_unique_phones = set(
+        "".join(c for c in p if c.isdigit()) or p
+        for p in unread_chats_qs.order_by().values_list("customer_phone", flat=True)
+    )
+    unread_chats_count = len(unread_unique_phones)
 
     total_unread = new_orders_count + unread_chats_count
 
@@ -393,9 +398,10 @@ def dashboard_notifications_view(request):
         })
 
     seen_phones = set()
-    for m in unread_chats_qs[:20]:
-        if m.customer_phone not in seen_phones:
-            seen_phones.add(m.customer_phone)
+    for m in unread_chats_qs[:30]:
+        clean_p = "".join(c for c in m.customer_phone if c.isdigit()) or m.customer_phone
+        if clean_p not in seen_phones:
+            seen_phones.add(clean_p)
             notifications.append({
                 "id": f"chat_{m.id}",
                 "type": "chat",

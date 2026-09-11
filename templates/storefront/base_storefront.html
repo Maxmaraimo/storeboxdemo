@@ -131,114 +131,146 @@
             <span>StoreBox platformasida ishlab chiqilgan</span>
         </div>
 
-        <!-- MAIN STOREFRONT HEADER (Pinterest Flawle Neo-Minimalist Style) -->
+        <!-- MAIN STOREFRONT HEADER (Robosell & AyazFramer Neo-Minimalist Style) -->
         <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-2xs">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 sm:py-0 sm:h-16 flex items-center justify-between gap-3 sm:gap-4">
-                
-                <!-- MOBILE HEADER: Welcome back, [User] + Menu Trigger (Matching Pinterest Header) -->
-                <div class="sm:hidden flex items-center gap-3">
-                    <button type="button" @click="sideDrawerOpen = true" class="w-9 h-9 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors">
-                        <i data-lucide="menu" class="w-4 h-4"></i>
-                    </button>
-                    <div>
-                        <div class="text-[11px] font-medium text-slate-400 leading-none mb-0.5">{{ t.welcome_back|default:"Welcome back," }}</div>
-                        <div class="text-base font-black text-slate-900 leading-tight tracking-tight">
-                            <span x-text="customerLoggedIn ? customerName : '{{ request.session.customer_name|default:store.name }}'">{{ request.session.customer_name|default:store.name }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- DESKTOP HEADER: Store Logo & Brand Name -->
-                <div class="hidden sm:flex items-center gap-3.5">
-                    <button type="button" @click="sideDrawerOpen = true" class="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors">
-                        <i data-lucide="menu" class="w-5 h-5"></i>
-                    </button>
-
-                    <a href="/store/{{ store.subdomain }}/" class="flex items-center gap-2.5">
-                        {% if store.logo %}
-                        <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="w-9 h-9 rounded-xl object-cover border border-slate-200">
-                        {% else %}
-                        <div class="w-9 h-9 rounded-xl bg-brand text-white flex items-center justify-center font-black text-sm">
-                            {{ store.name|slice:":1" }}
-                        </div>
-                        {% endif %}
-                        <div>
-                            <span class="font-black text-sm text-slate-900 tracking-tight block">{{ store.name }}</span>
-                            <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1.5 leading-none mt-0.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <span>{{ store.is_currently_open.1 }}</span>
-                            </span>
-                        </div>
-                    </a>
-                </div>
-
-                <!-- DESKTOP CENTER: Minimalist Search Capsule -->
-                <div class="flex-1 max-w-md hidden md:block">
-                    <form action="/store/{{ store.subdomain }}/" method="GET" class="relative">
-                        <input type="text" name="q" value="{{ query|default:'' }}" placeholder="{{ t.search_placeholder|default:'Mahsulotlar va toifalarni qidirish' }}"
-                               class="w-full pl-10 pr-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-slate-900 focus:bg-white transition-all">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
-                    </form>
-                </div>
-
-                <!-- RIGHT CONTROLS: Mobile Circular Search & Cart, Desktop Actions -->
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <!-- Mobile Minimalist Circular Search Button (Matching Pinterest 'Q' circle) -->
-                    <button type="button" @click="searchModalOpen = true"
-                            class="sm:hidden w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-800 transition-colors"
-                            aria-label="Qidiruv">
-                        <i data-lucide="search" class="w-4 h-4"></i>
-                    </button>
-
-                    <!-- Wishlist (Sevimmlar) -->
-                    <button type="button" @click="wishlistModalOpen = true" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 relative text-xs font-bold text-slate-700 transition-all">
-                        <i data-lucide="heart" class="w-4 h-4 text-slate-500"></i>
-                        <span>{{ t.favorites|default:'Sevimmlar' }}</span>
-                        <span x-show="wishlist.length > 0" class="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center" x-text="wishlist.length"></span>
-                    </button>
-
-                    <!-- Cart (Savat) -->
-                    <a href="/store/{{ store.subdomain }}/checkout/" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold shadow-xs hover:bg-black transition-all">
-                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">{{ t.cart|default:'Savat' }}</span>
-                        <span class="px-1.5 py-0.2 rounded-full bg-white text-slate-900 text-[10px] font-black flex items-center justify-center" x-text="cartCount">0</span>
-                    </a>
-
-                    <!-- User Profile Button (Desktop) -->
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}"
-                       class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 text-xs font-bold hover:bg-slate-50 transition-colors">
-                        <i data-lucide="user" class="w-4 h-4 text-slate-600"></i>
-                        <span x-text="customerLoggedIn ? customerName : '{{ t.login|default:'Kirish' }}'">{{ t.login|default:'Kirish' }}</span>
-                    </a>
-
-                    <!-- Language Switcher (Clean Badges, 0 emojis) -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" type="button" class="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                            <span class="px-1 py-0.2 text-[10px] font-black bg-slate-100 rounded text-slate-700 uppercase">
-                                {{ current_lang|default:'uz' }}
-                            </span>
-                            <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+            <div class="max-w-6xl mx-auto px-4 sm:px-6">
+                <!-- TOP ROW: Mobile Header & Desktop Main Bar -->
+                <div class="py-2.5 sm:py-0 sm:h-16 flex items-center justify-between gap-2.5 sm:gap-4">
+                    
+                    <!-- MOBILE HEADER: Store Logo + Delivery Address Picker (Clean, No Burger Icon) -->
+                    <div class="sm:hidden flex items-center gap-2 min-w-0 flex-1">
+                        <a href="/store/{{ store.subdomain }}/" class="flex items-center gap-2 shrink-0">
+                            {% if store.logo %}
+                            <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="w-8 h-8 rounded-xl object-cover border border-slate-200 shadow-2xs">
+                            {% else %}
+                            <div class="w-8 h-8 rounded-xl bg-brand text-white flex items-center justify-center font-black text-xs shadow-2xs">
+                                {{ store.name|slice:":1" }}
+                            </div>
+                            {% endif %}
+                            <span class="font-black text-xs text-slate-900 tracking-tight truncate max-w-[100px]">{{ store.name }}</span>
+                        </a>
+                        
+                        <!-- Mobile Delivery Address Selector Button -->
+                        <button type="button" @click="addressModalOpen = true" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-left min-w-0 flex-1 hover:bg-slate-100 transition-colors">
+                            <div class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                <i data-lucide="map-pin" class="w-2.5 h-2.5"></i>
+                            </div>
+                            <div class="min-w-0 leading-tight flex-1">
+                                <div class="text-[11px] font-bold text-slate-800 flex items-center gap-1 truncate">
+                                    <span class="truncate" x-text="deliveryAddress"></span>
+                                    <i data-lucide="chevron-down" class="w-2.5 h-2.5 text-slate-400 shrink-0"></i>
+                                </div>
+                            </div>
                         </button>
-                        <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-32 bg-white border border-slate-200 rounded-2xl shadow-xl py-1 z-50 text-xs font-semibold overflow-hidden">
-                            <a href="?lang=uz" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'uz' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
-                                <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">UZ</span> <span>O'zbek</span></span>
-                                {% if current_lang == 'uz' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
-                            </a>
-                            <a href="?lang=ru" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'ru' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
-                                <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">RU</span> <span>Русский</span></span>
-                                {% if current_lang == 'ru' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
-                            </a>
-                            <a href="?lang=en" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'en' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
-                                <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">EN</span> <span>English</span></span>
-                                {% if current_lang == 'en' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
-                            </a>
-                            <a href="?lang=tr" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'tr' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
-                                <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">TR</span> <span>Türkçe</span></span>
-                                {% if current_lang == 'tr' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
-                            </a>
+                    </div>
+
+                    <!-- DESKTOP HEADER: Store Logo & Brand Name (No Burger Icon) -->
+                    <div class="hidden sm:flex items-center gap-3 shrink-0">
+                        <a href="/store/{{ store.subdomain }}/" class="flex items-center gap-2.5 group">
+                            {% if store.logo %}
+                            <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-2xs group-hover:scale-105 transition-transform">
+                            {% else %}
+                            <div class="w-9 h-9 rounded-xl bg-brand text-white flex items-center justify-center font-black text-sm shadow-2xs group-hover:scale-105 transition-transform">
+                                {{ store.name|slice:":1" }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <span class="font-black text-sm text-slate-900 tracking-tight block">{{ store.name }}</span>
+                                <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1.5 leading-none mt-0.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span>{{ store.is_currently_open.1 }}</span>
+                                </span>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- DESKTOP CENTER-LEFT: Delivery Address Selector (Robosell Reference) -->
+                    <div class="hidden lg:block shrink-0">
+                        <button type="button" @click="addressModalOpen = true"
+                                class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-xs transition-all cursor-pointer group">
+                            <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                                <i data-lucide="map-pin" class="w-3 h-3"></i>
+                            </div>
+                            <div class="text-left leading-tight">
+                                <span class="text-[9px] block text-slate-400 font-medium">Yetkazib berish manzili</span>
+                                <span class="font-bold text-slate-800 group-hover:text-brand transition-colors truncate max-w-[150px] inline-block" x-text="deliveryAddress"></span>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors"></i>
+                        </button>
+                    </div>
+
+
+
+                    <!-- RIGHT CONTROLS: Mobile Chat & Cart, Desktop Action Buttons -->
+                    <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                        <!-- Mobile Seller Chat / Notifications Icon with Unread Badge (Robosell Mobile Reference) -->
+                        <button type="button" @click="startSellerChat()"
+                                class="sm:hidden relative w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors"
+                                title="Sotuvchi bilan bog'lanish">
+                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse"></span>
+                        </button>
+
+                        <!-- Mobile Wishlist Button -->
+                        <button type="button" @click="openWishlist()"
+                                class="sm:hidden relative w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors"
+                                title="Sevimlilar">
+                            <i data-lucide="heart" class="w-4 h-4" :class="wishlist.length > 0 ? 'text-rose-500 fill-rose-500' : 'text-slate-600'"></i>
+                            <span x-show="wishlist.length > 0" x-cloak class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs" x-text="wishlist.length"></span>
+                        </button>
+
+                        <!-- Wishlist (Sevimlilar - Desktop) -->
+                        <button type="button" @click="openWishlist()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 relative text-xs font-bold text-slate-700 transition-all">
+                            <i data-lucide="heart" class="w-4 h-4 text-slate-500" :class="wishlist.length > 0 ? 'text-rose-500 fill-rose-500' : ''"></i>
+                            <span>{{ t.favorites|default:'Sevimlilar' }}</span>
+                            <span x-show="wishlist.length > 0" x-cloak class="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center" x-text="wishlist.length"></span>
+                        </button>
+
+                        <!-- Cart (Savat) -->
+                        <a href="/store/{{ store.subdomain }}/checkout/" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold shadow-xs hover:bg-black transition-all">
+                            <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">{{ t.cart|default:'Savat' }}</span>
+                            <span class="px-1.5 py-0.2 rounded-full bg-white text-slate-900 text-[10px] font-black flex items-center justify-center" x-text="cartCount">0</span>
+                        </a>
+
+                        <!-- User Profile Button (Desktop) -->
+                        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}"
+                           class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 text-xs font-bold hover:bg-slate-50 transition-colors">
+                            <i data-lucide="user" class="w-4 h-4 text-slate-600"></i>
+                            <span x-text="customerLoggedIn ? customerName : '{{ t.login|default:'Kirish' }}'">{{ t.login|default:'Kirish' }}</span>
+                        </a>
+
+                        <!-- Language Switcher (Clean Badges, 0 emojis) -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" type="button" class="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                                <span class="px-1 py-0.2 text-[10px] font-black bg-slate-100 rounded text-slate-700 uppercase">
+                                    {{ current_lang|default:'uz' }}
+                                </span>
+                                <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-32 bg-white border border-slate-200 rounded-2xl shadow-xl py-1 z-50 text-xs font-semibold overflow-hidden">
+                                <a href="?lang=uz" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'uz' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
+                                    <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">UZ</span> <span>O'zbek</span></span>
+                                    {% if current_lang == 'uz' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                                </a>
+                                <a href="?lang=ru" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'ru' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
+                                    <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">RU</span> <span>Русский</span></span>
+                                    {% if current_lang == 'ru' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                                </a>
+                                <a href="?lang=en" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'en' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
+                                    <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">EN</span> <span>English</span></span>
+                                    {% if current_lang == 'en' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                                </a>
+                                <a href="?lang=tr" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 transition-colors {% if current_lang == 'tr' %}text-brand font-bold bg-brand/5{% else %}text-slate-700{% endif %}">
+                                    <span class="flex items-center gap-2"><span class="text-[10px] font-bold text-slate-400">TR</span> <span>Türkçe</span></span>
+                                    {% if current_lang == 'tr' %}<i data-lucide="check" class="w-3.5 h-3.5 text-brand"></i>{% endif %}
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+
             </div>
         </header>
 
@@ -678,8 +710,106 @@
     </div>
 
     <!-- ============================================================= -->
-    <!-- CUSTOMER ORDERS MODAL ("Mening buyurtmalarim" Video 00:37)    -->
+    <!-- DELIVERY ADDRESS SELECTION MODAL (Robosell Reference)        -->
     <!-- ============================================================= -->
+    <div x-show="addressModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="addressModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-base text-slate-900">Yetkazib berish manzili</h3>
+                        <p class="text-[11px] text-slate-400">Yetkazish manzilini yoki filialni tanlang</p>
+                    </div>
+                </div>
+                <button type="button" @click="addressModalOpen = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Current Selected Address Pill -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                    <div class="min-w-0">
+                        <div class="text-[10px] uppercase font-black tracking-wider text-emerald-700">Joriy manzil</div>
+                        <div class="text-xs font-black text-slate-900 truncate" x-text="deliveryAddress"></div>
+                    </div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold shrink-0">Faol</span>
+            </div>
+
+            <!-- Store Branches Section (if any) -->
+            <div class="space-y-2">
+                <div class="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                    Do'kon filiallari
+                </div>
+                <div class="space-y-2">
+                    {% for b in store.branches.all %}
+                    <button type="button" @click="setDeliveryAddress('{{ b.name }} ({{ b.address|escapejs }})')"
+                            class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-slate-900 bg-white hover:bg-slate-50 transition-all flex items-start justify-between gap-2 group">
+                        <div class="space-y-0.5">
+                            <div class="font-bold text-xs text-slate-900 group-hover:text-brand transition-colors flex items-center gap-1.5">
+                                <i data-lucide="store" class="w-3.5 h-3.5 text-brand"></i>
+                                <span>{{ b.name }}</span>
+                                {% if b.is_main %}
+                                <span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 text-[9px] font-bold">Asosiy</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-[11px] text-slate-500 line-clamp-1">{{ b.address }}</div>
+                        </div>
+                        <span class="text-[11px] font-bold text-brand group-hover:underline shrink-0 pt-0.5">Tanlash</span>
+                    </button>
+                    {% empty %}
+                    <button type="button" @click="setDeliveryAddress('{{ store.address|default:"Boburshoh dahasi, 111"|escapejs }}')"
+                            class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-slate-900 bg-white hover:bg-slate-50 transition-all flex items-start justify-between gap-2 group">
+                        <div class="space-y-0.5">
+                            <div class="font-bold text-xs text-slate-900 group-hover:text-brand transition-colors flex items-center gap-1.5">
+                                <i data-lucide="store" class="w-3.5 h-3.5 text-brand"></i>
+                                <span>{{ store.name }}</span>
+                            </div>
+                            <div class="text-[11px] text-slate-500 line-clamp-1">{{ store.address|default:"Boburshoh dahasi, 111" }}</div>
+                        </div>
+                        <span class="text-[11px] font-bold text-brand group-hover:underline shrink-0 pt-0.5">Tanlash</span>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Custom Delivery Address Input -->
+            <div class="space-y-2.5 pt-2 border-t border-slate-100">
+                <div class="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                    Boshqa manzil kiritish
+                </div>
+                <div class="relative">
+                    <input type="text" x-model="customAddressInput" @keydown.enter.prevent="saveCustomAddress()"
+                           placeholder="Masalan: Boburshoh dahasi, 111 yoki Amir Temur ko'chasi, 24"
+                           class="w-full pl-9 pr-20 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-slate-900 focus:bg-white transition-all">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                    <button type="button" @click="saveCustomAddress()"
+                            :disabled="!customAddressInput.trim()"
+                            class="absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-xl bg-slate-900 hover:bg-black disabled:opacity-40 disabled:hover:bg-slate-900 text-white text-[11px] font-bold transition-all shadow-xs">
+                        Saqlash
+                    </button>
+                </div>
+
+                <!-- Quick Location Suggestions (matching popular Uzbek cities/streets) -->
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                    <button type="button" @click="setDeliveryAddress('Boburshoh dahasi, 111')" class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-600 transition-colors">
+                        Boburshoh dahasi, 111
+                    </button>
+                    <button type="button" @click="setDeliveryAddress('Amir Temur shox ko\'chasi, 45')" class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-600 transition-colors">
+                        Amir Temur, 45
+                    </button>
+                    <button type="button" @click="setDeliveryAddress('Chilonzor 9-mavze, 12-uy')" class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-600 transition-colors">
+                        Chilonzor 9-mavze
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div x-show="myOrdersModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="myOrdersModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-4 max-h-[85vh] flex flex-col justify-between overflow-hidden">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1006,74 +1136,164 @@
     </div>
 
     <!-- ============================================================= -->
-    <!-- WISHLIST MODAL                                                -->
+    <!-- WISHLIST DRAWER / MODAL (Real Products, Cart & Remove Actions)-->
     <!-- ============================================================= -->
-    <div x-show="wishlistModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-        <div @click.away="wishlistModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 max-h-[80vh] flex flex-col justify-between">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2">
-                    <h3 class="font-black text-base text-slate-900">Sevimmlilar</h3>
-                    <span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs font-bold" x-text="wishlist.length + ' ta'"></span>
+    <div x-show="wishlistModalOpen" x-cloak class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity">
+        <div @click.away="wishlistModalOpen = false"
+             class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[80vh] overflow-hidden animate-in slide-in-from-bottom duration-200">
+            <!-- Header -->
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-2xs">
+                        <i data-lucide="heart" class="w-5 h-5 fill-rose-500 text-rose-500"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-base text-slate-900">Sevimlilar</h3>
+                        <p class="text-[11px] text-slate-400 font-medium" x-text="wishlist.length + ' ta mahsulot saqlangan'"></p>
+                    </div>
                 </div>
-                <button type="button" @click="wishlistModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+                <button type="button" @click="wishlistModalOpen = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-lg">×</button>
             </div>
 
-            <div class="flex-1 overflow-y-auto space-y-2">
-                <template x-if="wishlist.length === 0">
-                    <div class="py-12 text-center text-slate-400 text-xs">
-                        <div class="w-12 h-12 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400 mb-2">
-                            <i data-lucide="heart" class="w-5 h-5 text-slate-300"></i>
+            <!-- Body -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- Loading State -->
+                <template x-if="isLoadingWishlist">
+                    <div class="space-y-3 py-4">
+                        <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 animate-pulse">
+                            <div class="w-16 h-16 rounded-xl bg-slate-200 shrink-0"></div>
+                            <div class="flex-1 space-y-2">
+                                <div class="h-3.5 bg-slate-200 rounded-md w-3/4"></div>
+                                <div class="h-3 bg-slate-200 rounded-md w-1/3"></div>
+                            </div>
                         </div>
-                        Hozircha sevimli mahsulotlar yo'q
+                        <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 animate-pulse">
+                            <div class="w-16 h-16 rounded-xl bg-slate-200 shrink-0"></div>
+                            <div class="flex-1 space-y-2">
+                                <div class="h-3.5 bg-slate-200 rounded-md w-2/3"></div>
+                                <div class="h-3 bg-slate-200 rounded-md w-1/4"></div>
+                            </div>
+                        </div>
                     </div>
                 </template>
-                <template x-if="wishlist.length > 0">
-                    <div class="text-xs text-slate-500 py-4 text-center">
-                        Siz tanlagan <span class="font-bold text-slate-900" x-text="wishlist.length"></span> ta mahsulot saqlandi.
+
+                <!-- Empty State -->
+                <template x-if="!isLoadingWishlist && wishlist.length === 0">
+                    <div class="py-12 text-center space-y-3">
+                        <div class="w-16 h-16 rounded-full bg-rose-50 text-rose-400 mx-auto flex items-center justify-center">
+                            <i data-lucide="heart" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-sm text-slate-900">Sevimli mahsulotlar yo'q</h4>
+                            <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Yoqqan mahsulotlaringizdagi yurakchani (❤️) bosib, ularni bu yerda saqlab qo'yishingiz mumkin.</p>
+                        </div>
+                        <button type="button" @click="wishlistModalOpen = false" class="px-5 py-2.5 rounded-xl bg-brand text-white font-black text-xs shadow-md shadow-brand/20">
+                            Xaridlarni boshlash
+                        </button>
                     </div>
                 </template>
+
+                <!-- Products List -->
+                <template x-if="!isLoadingWishlist && wishlist.length > 0">
+                    <div class="space-y-2.5">
+                        <template x-for="p in wishlistProducts" :key="p.id">
+                            <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 transition-colors">
+                                <a :href="p.url" class="w-16 h-16 rounded-xl bg-white border border-slate-200/80 overflow-hidden shrink-0 block">
+                                    <template x-if="p.image">
+                                        <img :src="p.image" :alt="p.name" class="w-full h-full object-cover">
+                                    </template>
+                                    <template x-if="!p.image">
+                                        <div class="w-full h-full flex items-center justify-center text-slate-300 text-xs">🛍</div>
+                                    </template>
+                                </a>
+
+                                <div class="flex-1 min-w-0">
+                                    <a :href="p.url" class="font-bold text-xs text-slate-900 hover:text-brand truncate block" x-text="p.name"></a>
+                                    <div class="flex items-baseline gap-2 mt-1">
+                                        <span class="font-mono font-black text-xs text-slate-900" x-text="p.price.toLocaleString() + ' UZS'"></span>
+                                        <span x-show="p.old_price" class="line-through text-[10px] text-slate-400 font-mono" x-text="p.old_price ? p.old_price.toLocaleString() + ' UZS' : ''"></span>
+                                    </div>
+                                    <div class="mt-1">
+                                        <span x-show="p.in_stock" class="text-[10px] font-bold text-emerald-600">Sotuvda mavjud</span>
+                                        <span x-show="!p.in_stock" class="text-[10px] font-bold text-rose-500">Tugagan</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <button type="button" @click="addToCart(p.id)"
+                                            :disabled="!p.in_stock"
+                                            class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1 shadow-xs active:scale-95 transition-all disabled:opacity-50">
+                                        <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                                        <span class="hidden sm:inline">Savatga</span>
+                                    </button>
+                                    <button type="button" @click="removeFromWishlist(p.id)"
+                                            class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-600 flex items-center justify-center active:scale-95 transition-all">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between gap-3 shrink-0">
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/?tab=wishlist{% else %}/profile/?tab=wishlist{% endif %}"
+                   class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
+                    <span>Profil sahifasida to'liq ochish</span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </a>
+                <button type="button" @click="wishlistModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold">
+                    Yopish
+                </button>
             </div>
         </div>
     </div>
 
     <!-- ============================================================= -->
-    <!-- 5-TAB MOBILE BOTTOM BAR (Pinterest Flawle Minimalist Style)   -->
+    <!-- 5-TAB MOBILE BOTTOM BAR (Modern E-Commerce Tactile Navigation)  -->
     <!-- ============================================================= -->
-    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-5 py-2 flex items-center justify-around shadow-2xl">
-        <!-- 1. Bosh sahifa (Home with active line indicator) -->
-        <a href="/store/{{ store.subdomain }}/" class="flex flex-col items-center justify-center gap-1 text-slate-900 py-1 transition-colors group">
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200/80 px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-4px_25px_rgba(0,0,0,0.06)]">
+        <!-- 1. Bosh sahifa (Home) -->
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}"
+           class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-700 hover:text-brand active:scale-95 transition-all">
             <i data-lucide="home" class="w-5 h-5"></i>
-            <span class="w-4 h-0.5 bg-slate-900 rounded-full transition-all"></span>
+            <span class="text-[10px] font-bold tracking-tight">Asosiy</span>
         </a>
 
-        <!-- 2. Katalog (Grid / 4 squares) -->
-        <button type="button" @click="sideDrawerOpen = true" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-900 py-1 transition-colors">
+        <!-- 2. Katalog (Categories) -->
+        <button type="button" @click="sideDrawerOpen = true"
+                class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-slate-900 active:scale-95 transition-all">
             <i data-lucide="layout-grid" class="w-5 h-5"></i>
-            <span class="w-4 h-0.5 bg-transparent rounded-full"></span>
+            <span class="text-[10px] font-bold tracking-tight">Katalog</span>
         </button>
 
-        <!-- 3. AI Assistant (Speech bubble with AI tag) -->
-        <button type="button" @click="aiModalOpen = true" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-900 py-1 transition-colors relative">
-            <div class="relative flex items-center justify-center">
-                <i data-lucide="message-square" class="w-5 h-5"></i>
-                <span class="absolute text-[8px] font-black tracking-tighter text-slate-800">AI</span>
+        <!-- 3. Sevimlilar (Wishlist with live counter badge) -->
+        <button type="button" @click="openWishlist()"
+                class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-rose-600 active:scale-95 transition-all relative">
+            <div class="relative">
+                <i data-lucide="heart" class="w-5 h-5" :class="wishlist.length > 0 ? 'fill-rose-500 text-rose-500' : ''"></i>
+                <span x-show="wishlist.length > 0" x-cloak class="absolute -top-1.5 -right-2 px-1 min-w-[15px] h-3.5 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs" x-text="wishlist.length"></span>
             </div>
-            <span class="w-4 h-0.5 bg-transparent rounded-full"></span>
+            <span class="text-[10px] font-bold tracking-tight" :class="wishlist.length > 0 ? 'text-rose-600' : ''">Sevimlilar</span>
         </button>
 
-        <!-- 4. Savat (Shopping Bag with notification pill) -->
-        <button type="button" @click="cartDrawerOpen = true" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-900 py-1 transition-colors relative">
+        <!-- 4. Savat (Cart) -->
+        <button type="button" @click="cartDrawerOpen = true"
+                class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-slate-900 active:scale-95 transition-all relative">
             <div class="relative">
                 <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                <span class="absolute -top-1.5 -right-2 px-1 min-w-[15px] h-3.5 rounded-full bg-slate-900 text-white text-[9px] font-black flex items-center justify-center" x-text="cartCount">0</span>
+                <span x-show="cartCount > 0" x-cloak class="absolute -top-1.5 -right-2 px-1 min-w-[15px] h-3.5 rounded-full bg-slate-900 text-white text-[9px] font-black flex items-center justify-center shadow-xs" x-text="cartCount">0</span>
             </div>
-            <span class="w-4 h-0.5 bg-transparent rounded-full"></span>
+            <span class="text-[10px] font-bold tracking-tight">Savat</span>
         </button>
 
-        <!-- 5. Profil (User Avatar) -->
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-900 py-1 transition-colors">
+        <!-- 5. Profil (User Profile & Orders) -->
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}"
+           class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-brand active:scale-95 transition-all">
             <i data-lucide="user" class="w-5 h-5"></i>
-            <span class="w-4 h-0.5 bg-transparent rounded-full"></span>
+            <span class="text-[10px] font-bold tracking-tight">Profil</span>
         </a>
     </nav>
 
@@ -1105,66 +1325,103 @@
         </div>
     </div>
 
-    <!-- STOREBOX AI SHOPPING ASSISTANT MODAL -->
-    <div x-show="aiModalOpen" x-cloak class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white w-full sm:max-w-md rounded-t-[32px] sm:rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in slide-in-from-bottom-6 duration-200"
-             @click.away="aiModalOpen = false">
+    <!-- ============================================================= -->
+    <!-- STOREBOX LIVE STORE CHAT MODAL (Connected to /dashboard/chats/) -->
+    <!-- ============================================================= -->
+    <div x-show="chatModalOpen" x-cloak class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full sm:max-w-md rounded-t-[32px] sm:rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col h-[82vh] sm:h-[600px] animate-in fade-in slide-in-from-bottom-6 duration-200"
+             @click.away="closeChatModal()">
             <!-- Modal Header -->
-            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white shrink-0">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
-                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300 animate-pulse"></i>
+                    <div class="relative w-9 h-9 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20 overflow-hidden">
+                        {% if store.logo %}
+                            <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <i data-lucide="store" class="w-4 h-4 text-white"></i>
+                        {% endif %}
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
                     </div>
                     <div>
                         <h3 class="font-black text-sm tracking-tight flex items-center gap-1.5">
-                            <span>StoreBox AI Konsultant</span>
-                            <span class="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">Online</span>
+                            <span>{{ store.name }}</span>
+                            <span class="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">Onlayn</span>
                         </h3>
-                        <p class="text-[10px] text-slate-300">{{ store.name }} bo'yicha aqlli yordamchi</p>
+                        <p class="text-[10px] text-slate-300">Do'kon bilan to'g'ridan-to'g'ri aloqa</p>
                     </div>
                 </div>
-                <button type="button" @click="aiModalOpen = false" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs font-bold">
-                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                </button>
+                <div class="flex items-center gap-1.5">
+                    {% if store.phone %}
+                    <a href="tel:{{ store.phone }}" title="Qo'ng'iroq qilish" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs transition-colors">
+                        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                    </a>
+                    {% endif %}
+                    <button type="button" @click="closeChatModal()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs font-bold transition-colors">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Optional Phone Prompt (if customer not identified yet) -->
+            <div x-show="!customerPhone" class="px-4 py-2.5 bg-amber-50 border-b border-amber-100 flex items-center gap-2 text-xs shrink-0">
+                <i data-lucide="info" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
+                <div class="flex-1 text-[11px] text-amber-800">
+                    Sizga tezkor javob berishimiz uchun telefoningizni kiriting:
+                </div>
+                <input type="tel" x-model="customerPhoneInput" placeholder="+998 90 ..."
+                       class="w-32 px-2 py-1 rounded-lg bg-white border border-amber-200 text-[11px] font-bold text-slate-900 focus:outline-none focus:border-slate-800">
             </div>
 
             <!-- Messages Stream -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-3 min-h-[260px] bg-slate-50/50">
-                <template x-for="(m, idx) in aiMessages" :key="idx">
-                    <div class="flex gap-2.5" :class="m.sender === 'user' ? 'justify-end' : 'justify-start'">
-                        <div x-show="m.sender === 'ai'" class="w-7 h-7 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-black">
-                            AI
+            <div id="storefront-chat-stream" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+                <!-- Welcome greeting from store -->
+                <div class="flex gap-2.5 justify-start">
+                    <div class="w-7 h-7 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-black">
+                        {{ store.name|slice:":1"|upper|default:"S" }}
+                    </div>
+                    <div class="max-w-[80%] rounded-2xl rounded-tl-none px-3.5 py-2.5 text-xs font-medium leading-relaxed bg-white border border-slate-200/80 text-slate-800 shadow-2xs">
+                        Assalomu alaykum! «{{ store.name }}» do'konimizga xush kelibsiz. Qanday savolingiz yoki buyurtmangiz bor? Yozing, operatorlarimiz sizga tezda javob berishadi!
+                    </div>
+                </div>
+
+                <!-- Live messages from DB -->
+                <template x-for="m in chatMessages" :key="m.id">
+                    <div class="flex gap-2.5" :class="m.sender === 'CUSTOMER' ? 'justify-end' : 'justify-start'">
+                        <div x-show="m.sender !== 'CUSTOMER'" class="w-7 h-7 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-black">
+                            {{ store.name|slice:":1"|upper|default:"S" }}
                         </div>
                         <div class="max-w-[80%] rounded-2xl px-3.5 py-2.5 text-xs font-medium leading-relaxed"
-                             :class="m.sender === 'user' ? 'bg-slate-900 text-white rounded-br-none font-semibold' : 'bg-white border border-slate-200/80 text-slate-800 shadow-2xs rounded-tl-none'">
-                            <span x-text="m.text"></span>
+                             :class="m.sender === 'CUSTOMER' ? 'bg-slate-900 text-white rounded-br-none font-semibold' : 'bg-white border border-slate-200/80 text-slate-800 shadow-2xs rounded-tl-none'">
+                            <p x-text="m.message" class="whitespace-pre-line"></p>
+                            <span class="block text-[9px] mt-1 opacity-60 text-right" x-text="m.time"></span>
                         </div>
                     </div>
                 </template>
             </div>
 
             <!-- Quick Suggestions -->
-            <div class="px-4 py-2 border-t border-slate-100 bg-white flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                <button type="button" @click="askAiQuick('Eng ommabop mahsulotlarni ko\'rsat')"
+            <div class="px-4 py-2 border-t border-slate-100 bg-white flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                <button type="button" @click="askQuickChat('Yetkazib berish shartlari qanday?')"
                         class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 shrink-0 transition-colors">
-                    Top mahsulotlar
+                    Yetkazib berish shartlari
                 </button>
-                <button type="button" @click="askAiQuick('Aksiyadagi tovarlar bormi?')"
+                <button type="button" @click="askQuickChat('Assalomu alaykum, tovar bormi?')"
                         class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 shrink-0 transition-colors">
-                    Aksiyalar
+                    Tovar bormi?
                 </button>
-                <button type="button" @click="askAiQuick('Yetkazib berish qancha vaqt oladi?')"
+                <button type="button" @click="askQuickChat('Ish vaqtingiz qachongacha?')"
                         class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 shrink-0 transition-colors">
-                    Yetkazib berish
+                    Ish vaqti
                 </button>
             </div>
 
             <!-- Input Bar -->
-            <form @submit.prevent="sendAiMessage()" class="p-3 border-t border-slate-100 bg-white flex items-center gap-2">
-                <input type="text" x-model="aiInputText" placeholder="Mahsulot haqida so'rang..."
+            <form @submit.prevent="sendChatMessage()" class="p-3 border-t border-slate-100 bg-white flex items-center gap-2 shrink-0">
+                <input type="text" x-model="chatInputText" placeholder="Xabaringizni yozing..."
                        class="flex-1 bg-slate-100 border border-slate-200 rounded-full px-4 py-2 text-xs font-medium focus:outline-none focus:border-slate-900 focus:bg-white transition-all">
-                <button type="submit" class="w-8 h-8 rounded-full bg-slate-900 hover:bg-black text-white flex items-center justify-center shrink-0 shadow-sm active:scale-95 transition-all">
-                    <i data-lucide="arrow-up" class="w-4 h-4"></i>
+                <button type="submit" :disabled="isSendingChat || !chatInputText.trim()"
+                        class="w-8 h-8 rounded-full bg-slate-900 hover:bg-black disabled:opacity-40 text-white flex items-center justify-center shrink-0 shadow-sm active:scale-95 transition-all">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
                 </button>
             </form>
         </div>
@@ -1180,6 +1437,8 @@
                 subtotal: Number('{{ cart_subtotal|default:0 }}'),
                 cartItems: JSON.parse('{{ cart_json|escapejs }}' || '{}'),
                 wishlist: JSON.parse(localStorage.getItem('store_wishlist_{{ store.id }}') || '[]'),
+                wishlistProducts: [],
+                isLoadingWishlist: false,
                 
                 customerLoggedIn: Boolean(initialPhone),
                 customerName: initialName,
@@ -1198,47 +1457,173 @@
                 cartDrawerOpen: false,
                 wishlistModalOpen: false,
                 searchModalOpen: false,
-                aiModalOpen: false,
+                chatModalOpen: false,
+                chatMessages: [],
+                chatInputText: '',
+                chatPollTimer: null,
+                isSendingChat: false,
+                addressModalOpen: false,
                 infoModal: null,
 
-                aiMessages: [
-                    { sender: 'ai', text: "Salom! Men {{ store.name }} AI yordamchisiman. Sizga bugun qaysi mahsulotni tanlashda yordam beray?" }
-                ],
-                aiInputText: '',
+                deliveryAddress: localStorage.getItem('sb_delivery_address_{{ store.id }}') || '{{ store.address|default:"Boburshoh dahasi, 111"|escapejs }}',
+                customAddressInput: '',
 
-                sendAiMessage() {
-                    if (!this.aiInputText.trim()) return;
-                    const text = this.aiInputText.trim();
-                    this.aiMessages.push({ sender: 'user', text: text });
-                    this.aiInputText = '';
-                    setTimeout(() => {
-                        this.aiMessages.push({
-                            sender: 'ai',
-                            text: "Ajoyib tanlov! Siz uchun do'konimiz katalogidagi eng yangi va mashhur tovarlarni tavsiya qilaman. Savatga qo'shish uchun tovar ustidagi «+» tugmasini bosing."
-                        });
-                        this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
-                    }, 400);
+                setDeliveryAddress(addr) {
+                    if (!addr) return;
+                    this.deliveryAddress = addr;
+                    localStorage.setItem('sb_delivery_address_{{ store.id }}', addr);
+                    this.addressModalOpen = false;
                 },
 
-                askAiQuick(prompt) {
-                    this.aiInputText = prompt;
-                    this.sendAiMessage();
+                saveCustomAddress() {
+                    if (this.customAddressInput.trim()) {
+                        this.setDeliveryAddress(this.customAddressInput.trim());
+                        this.customAddressInput = '';
+                    }
                 },
 
-                init() {
-                    this.$watch('sideDrawerOpen', val => {
-                        if (val) {
-                            this.$nextTick(() => {
-                                if (window.lucide) window.lucide.createIcons();
-                            });
-                        }
+                openChatModal() {
+                    this.chatModalOpen = true;
+                    this.fetchChatMessages();
+                    if (!this.chatPollTimer) {
+                        this.chatPollTimer = setInterval(() => {
+                            if (this.chatModalOpen) {
+                                this.fetchChatMessages();
+                            }
+                        }, 2500);
+                    }
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                        this.scrollChatToBottom();
                     });
-                    this.$watch('aiModalOpen', val => {
-                        if (val) {
+                },
+
+                closeChatModal() {
+                    this.chatModalOpen = false;
+                    if (this.chatPollTimer) {
+                        clearInterval(this.chatPollTimer);
+                        this.chatPollTimer = null;
+                    }
+                },
+
+                scrollChatToBottom() {
+                    this.$nextTick(() => {
+                        const stream = document.getElementById('storefront-chat-stream');
+                        if (stream) stream.scrollTop = stream.scrollHeight;
+                    });
+                },
+
+                fetchChatMessages() {
+                    const phone = this.customerPhone || this.customerPhoneInput || localStorage.getItem('sb_cust_phone_{{ store.id }}') || '';
+                    if (!phone && !this.chatMessages.length) return;
+                    const url = `/store/{{ store.subdomain }}/api/chat/messages/?phone=${encodeURIComponent(phone)}`;
+                    fetch(url)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.messages && Array.isArray(data.messages)) {
+                                if (data.messages.length !== this.chatMessages.length) {
+                                    this.chatMessages = data.messages;
+                                    this.scrollChatToBottom();
+                                }
+                            }
+                        })
+                        .catch(() => {});
+                },
+
+                sendChatMessage() {
+                    if (!this.chatInputText.trim() || this.isSendingChat) return;
+                    const text = this.chatInputText.trim();
+                    const phone = this.customerPhone || this.customerPhoneInput || localStorage.getItem('sb_cust_phone_{{ store.id }}') || '';
+                    const name = this.customerName || this.customerNameInput || localStorage.getItem('sb_cust_name_{{ store.id }}') || 'Mijoz';
+
+                    this.isSendingChat = true;
+                    const now = new Date();
+                    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                    this.chatMessages.push({
+                        id: Date.now(),
+                        sender: 'CUSTOMER',
+                        message: text,
+                        time: timeStr
+                    });
+                    this.chatInputText = '';
+                    this.scrollChatToBottom();
+
+                    if (phone && phone.trim() !== '+998' && phone.trim() !== '+998 ') {
+                        this.customerPhone = phone;
+                        localStorage.setItem('sb_cust_phone_{{ store.id }}', phone);
+                    }
+                    if (name && name !== 'Mijoz') {
+                        this.customerName = name;
+                        localStorage.setItem('sb_cust_name_{{ store.id }}', name);
+                    }
+
+                    fetch('/store/{{ store.subdomain }}/api/chat/send/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            phone: phone,
+                            name: name,
+                            message: text
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        this.isSendingChat = false;
+                        this.fetchChatMessages();
+                    })
+                    .catch(err => {
+                        console.error("Send chat error:", err);
+                        this.isSendingChat = false;
+                    });
+                },
+
+                askQuickChat(prompt) {
+                    this.chatInputText = prompt;
+                    this.sendChatMessage();
+                },
+
+                startSellerChat() {
+                    this.openChatModal();
+                },
+
+
+
+                openWishlist() {
+                    this.wishlistModalOpen = true;
+                    this.fetchWishlistProducts();
+                },
+
+                fetchWishlistProducts() {
+                    if (!this.wishlist || this.wishlist.length === 0) {
+                        this.wishlistProducts = [];
+                        return;
+                    }
+                    this.isLoadingWishlist = true;
+                    const url = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/wishlist/{% else %}/api/wishlist/{% endif %}?ids=' + this.wishlist.join(',');
+                    fetch(url)
+                        .then(r => r.json())
+                        .then(data => {
+                            this.wishlistProducts = data.products || [];
+                            this.isLoadingWishlist = false;
                             this.$nextTick(() => {
                                 if (window.lucide) window.lucide.createIcons();
                             });
-                        }
+                        })
+                        .catch(() => {
+                            this.isLoadingWishlist = false;
+                        });
+                },
+
+                removeFromWishlist(productId) {
+                    this.wishlist = this.wishlist.filter(id => id !== productId);
+                    this.wishlistProducts = this.wishlistProducts.filter(p => p.id !== productId);
+                    localStorage.setItem('store_wishlist_{{ store.id }}', JSON.stringify(this.wishlist));
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
                     });
                 },
 
@@ -1246,10 +1631,14 @@
                     const idx = this.wishlist.indexOf(productId);
                     if (idx > -1) {
                         this.wishlist.splice(idx, 1);
+                        this.wishlistProducts = this.wishlistProducts.filter(p => p.id !== productId);
                     } else {
                         this.wishlist.push(productId);
                     }
                     localStorage.setItem('store_wishlist_{{ store.id }}', JSON.stringify(this.wishlist));
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                    });
                 },
 
                 isInWishlist(productId) {
@@ -1374,6 +1763,20 @@
                 },
 
                 init() {
+                    this.$watch('sideDrawerOpen', val => {
+                        if (val) this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                    });
+                    this.$watch('chatModalOpen', val => {
+                        if (val) this.$nextTick(() => {
+                            if (window.lucide) window.lucide.createIcons();
+                            this.scrollChatToBottom();
+                        });
+                    });
+                    this.$watch('addressModalOpen', val => {
+                        if (val) this.$nextTick(() => { if (window.lucide) window.lucide.createIcons(); });
+                    });
+                    window.addEventListener('open-store-chat', () => this.openChatModal());
+
                     if (window.Telegram && window.Telegram.WebApp) {
                         try {
                             window.Telegram.WebApp.ready();

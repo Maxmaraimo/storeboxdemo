@@ -24,6 +24,10 @@ urlpatterns = [
     path('product/<int:product_id>/', views.product_detail_page_view, name='product_detail'),
     path('store/<slug:subdomain>/product/<int:product_id>/', views.product_detail_page_view, name='store_product_detail'),
 
+    # Wishlist Products API
+    path('api/wishlist/', views.wishlist_products_api, name='wishlist_products_api'),
+    path('store/<slug:subdomain>/api/wishlist/', views.wishlist_products_api, name='store_wishlist_products_api'),
+
     # Dedicated Customer Profile & Orders Page
     path('profile/', views.customer_profile_page_view, name='customer_profile'),
     path('store/<slug:subdomain>/profile/', views.customer_profile_page_view, name='store_customer_profile'),
@@ -41,4 +45,10 @@ urlpatterns = [
     path('store/<slug:subdomain>/api/customer/orders/', views.customer_orders_api, name='store_customer_orders_api'),
     path('api/customer/logout/', views.customer_logout_api, name='customer_logout_api'),
     path('store/<slug:subdomain>/api/customer/logout/', views.customer_logout_api, name='store_customer_logout_api'),
+
+    # Storefront Live Chat API (Connected to /dashboard/chats/)
+    path('api/chat/send/', views.storefront_send_chat_api, name='storefront_send_chat_api'),
+    path('store/<slug:subdomain>/api/chat/send/', views.storefront_send_chat_api, name='store_send_chat_api'),
+    path('api/chat/messages/', views.storefront_get_chat_messages_api, name='storefront_get_chat_messages_api'),
+    path('store/<slug:subdomain>/api/chat/messages/', views.storefront_get_chat_messages_api, name='store_get_chat_messages_api'),
 ]

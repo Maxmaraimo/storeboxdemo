@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from apps.stores.models import Store, Branch
 from apps.catalog.models import Category, Product, ProductVariation
-from apps.orders.models import Order, OrderItem, PromoCode, Customer
+from apps.orders.models import Order, OrderItem, PromoCode, Customer, ChatMessage
 from apps.payments.models import StorePaymentSetting
 from apps.telegram_bot.services import send_telegram_notification, format_order_telegram_message
 
@@ -277,11 +277,38 @@ def storefront_home_view(request, subdomain=None):
         # Preview Niche Products & Categories with real photos
         preview_niche = request.GET.get('preview_niche', '').strip()
         if preview_niche:
+            NICHE_ALIASES = {
+                'clothes': 'fashion',
+                'cosmetics': 'beauty',
+                'electronics': 'tech',
+                'sweets': 'coffee',
+                'supermarket': 'grocery',
+                'fastfood': 'restaurant',
+                'cafe': 'coffee'
+            }
+            preview_niche = NICHE_ALIASES.get(preview_niche, preview_niche)
             from apps.stores.ai_designer import NICHE_PRESETS
             niche_data = NICHE_PRESETS.get(preview_niche)
             if niche_data:
-                # Mock Categories for preview niche
-                if niche_data.get('categories'):
+                # If banner not explicitly passed, auto-use the niche's promotional banner
+                if not (p_title or p_img) and niche_data.get('banner_images'):
+                    n_title = niche_data.get('titles', {}).get('uz', f"«{store.name}»").format(store_name=store.name)
+                    n_sub = niche_data.get('subtitles', {}).get('uz', '')
+                    n_img = niche_data.get('banner_images', [''])[0]
+                    class MockBanner:
+                        def __init__(self, title, subtitle, image_url):
+                            self.title = title
+                            self.subtitle = subtitle
+                            self.image_url = image_url
+                            self.image = None
+
+                        @property
+                        def display_image_url(self):
+                            return self.image_url
+                    banners = [MockBanner(n_title, n_sub, n_img)]
+
+                # Mock Categories for preview niche only if store has no active categories
+                if niche_data.get('categories') and not categories.exists():
                     class MockCategory:
                         def __init__(self, c_dict, idx):
                             self.id = 8000 + idx
@@ -310,10 +337,9 @@ def storefront_home_view(request, subdomain=None):
                     if cat_slug:
                         selected_category = next((c for c in categories if c.slug == cat_slug), None)
 
-                # Mock Products for preview niche
-                if niche_data.get('products'):
-                    has_any_photos = any(p.primary_image_url for p in products)
-                    if not has_any_photos or store.theme_business_niche != preview_niche or request.GET.get('force_preview') == '1':
+                # Mock Products for preview niche only if store has no active products
+                if niche_data.get('products') and (request.GET.get('force_preview') == '1' or not products.exists()):
+                    if not products.exists() or request.GET.get('force_preview') == '1':
                         class MockProduct:
                             def __init__(self, p_dict, idx):
                                 self.id = 9000 + idx
@@ -419,6 +445,47 @@ def product_detail_json_view(request, product_id):
         'variations': variations_data,
     }
     return JsonResponse(data)
+
+
+def wishlist_products_api(request, subdomain=None):
+    """API endpoint returning product cards for requested IDs in wishlist"""
+    store = get_current_store(request, subdomain)
+    if not store:
+        return JsonResponse({'error': "Do'kon topilmadi"}, status=404)
+
+    raw_ids = request.GET.get('ids', '')
+    if not raw_ids:
+        return JsonResponse({'products': []})
+
+    try:
+        id_list = [int(x.strip()) for x in raw_ids.split(',') if x.strip().isdigit()]
+    except Exception:
+        id_list = []
+
+    if not id_list:
+        return JsonResponse({'products': []})
+
+    lang = getattr(request, 'language', 'uz')
+    products = Product.objects.filter(store=store, id__in=id_list, is_active=True)
+    product_map = {p.id: p for p in products}
+
+    result = []
+    for pid in id_list:
+        p = product_map.get(pid)
+        if not p:
+            continue
+        result.append({
+            'id': p.id,
+            'name': p.get_name(lang),
+            'price': float(p.price),
+            'old_price': float(p.old_price) if p.old_price else None,
+            'discount_percent': p.discount_percent,
+            'image': p.primary_image_url or '',
+            'in_stock': p.is_in_stock,
+            'url': f"/store/{store.subdomain}/product/{p.id}/" if store.subdomain else f"/product/{p.id}/",
+        })
+
+    return JsonResponse({'products': result})
 
 
 # -----------------------------------------------------------------
@@ -1044,6 +1111,10 @@ def customer_profile_page_view(request, subdomain=None):
     cart_count = sum(item.get('quantity', 1) for item in cart.values())
     subtotal = sum(item.get('total_price', 0) for item in cart.values())
 
+    # Translations & Lang
+    current_lang = request.GET.get('lang') or request.session.get('customer_lang') or 'uz'
+    t = UI_TRANSLATIONS.get(current_lang, UI_TRANSLATIONS['uz'])
+
     context = {
         'store': store,
         'customer': customer,
@@ -1056,6 +1127,8 @@ def customer_profile_page_view(request, subdomain=None):
         'cart_subtotal': subtotal,
         'cart_json': json.dumps(cart),
         'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
+        'current_lang': current_lang,
+        't': t,
     }
     return render(request, 'storefront/customer_profile.html', context)
 
@@ -1097,4 +1170,105 @@ def reorder_api(request, order_number, subdomain=None):
         'cart_count': sum(i['quantity'] for i in cart.values()),
         'subtotal': sum(i['total_price'] for i in cart.values())
     })
+
+
+@csrf_exempt
+def storefront_send_chat_api(request, subdomain=None):
+    """Customer sends a live chat message directly to merchant dashboard /dashboard/chats/"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+
+    store = get_current_store(request, subdomain)
+    if not store:
+        return JsonResponse({'error': 'Do\'kon topilmadi'}, status=404)
+
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else request.POST
+    except Exception:
+        data = request.POST
+
+    phone = (data.get('phone') or request.session.get('customer_phone') or '').strip()
+    name = (data.get('name') or request.session.get('customer_name') or 'Mijoz').strip()
+    message_text = (data.get('message') or '').strip()
+
+    if not message_text:
+        return JsonResponse({'error': 'Xabar matni bo\'sh bo\'lishi mumkin emas'}, status=400)
+
+    if not phone or phone == '+998':
+        session_id = request.session.session_key
+        if not session_id:
+            request.session.save()
+            session_id = request.session.session_key
+        phone = f"+998 (Mehmon {session_id[-4:] if session_id else '0000'})"
+
+    request.session['customer_phone'] = phone
+    request.session['customer_name'] = name
+    request.session.modified = True
+
+    clean_phone = phone.replace(' ', '').replace('+', '').strip()
+    canonical_phone = f"+{clean_phone}" if (len(clean_phone) >= 7 and 'Mehmon' not in phone) else phone
+    cust = None
+    if len(clean_phone) >= 7 and 'Mehmon' not in phone:
+        cust = Customer.objects.filter(store=store).filter(
+            Q(phone__icontains=clean_phone) | Q(phone__icontains=phone)
+        ).first()
+        if not cust:
+            cust = Customer.objects.create(store=store, phone=canonical_phone, name=name)
+        elif name and name != 'Mijoz' and cust.name in ['Mijoz', 'Покупатель', '']:
+            cust.name = name
+            cust.save(update_fields=['name'])
+
+    tg_chat_id = cust.telegram_chat_id if cust and cust.telegram_chat_id else None
+
+    chat_msg = ChatMessage.objects.create(
+        store=store,
+        customer_phone=canonical_phone,
+        customer_name=name,
+        telegram_chat_id=tg_chat_id,
+        sender=ChatMessage.Senders.CUSTOMER,
+        message=message_text,
+        is_read=False
+    )
+
+    return JsonResponse({
+        'success': True,
+        'message': {
+            'id': chat_msg.id,
+            'sender': chat_msg.sender,
+            'message': chat_msg.message,
+            'time': chat_msg.created_at.strftime('%H:%M')
+        }
+    })
+
+
+def storefront_get_chat_messages_api(request, subdomain=None):
+    """Retrieve chat history between current customer and store merchant"""
+    store = get_current_store(request, subdomain)
+    if not store:
+        return JsonResponse({'error': 'Do\'kon topilmadi'}, status=404)
+
+    phone = (request.GET.get('phone') or request.session.get('customer_phone') or '').strip()
+    if not phone:
+        return JsonResponse({'messages': []})
+
+    clean_phone = phone.replace(' ', '').replace('+', '').strip()
+    if clean_phone and len(clean_phone) >= 7:
+        msg_filter = Q(customer_phone__icontains=clean_phone) | Q(customer_phone=phone)
+    else:
+        msg_filter = Q(customer_phone=phone)
+
+    messages = ChatMessage.objects.filter(store=store).filter(msg_filter).order_by('created_at')
+
+    data = [
+        {
+            'id': m.id,
+            'sender': m.sender,
+            'message': m.message,
+            'time': m.created_at.strftime('%H:%M')
+        }
+        for m in messages
+    ]
+
+    return JsonResponse({'messages': data})
+
 

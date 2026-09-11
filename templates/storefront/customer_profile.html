@@ -4,8 +4,57 @@
 {% block storefront_body %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6"
      x-data="{
+        activeTab: (new URLSearchParams(window.location.search).get('tab')) || 'orders',
         activeFilter: 'all',
         reorderingId: null,
+        profileWishlistProducts: [],
+        isLoadingProfileWishlist: false,
+
+        init() {
+            if (this.activeTab === 'wishlist') {
+                this.loadProfileWishlist();
+            }
+            this.$watch('activeTab', (val) => {
+                if (val === 'wishlist') {
+                    this.loadProfileWishlist();
+                }
+                const url = new URL(window.location);
+                url.searchParams.set('tab', val);
+                window.history.replaceState({}, '', url);
+            });
+            this.$watch('wishlist.length', () => {
+                if (this.activeTab === 'wishlist') {
+                    this.loadProfileWishlist();
+                }
+            });
+        },
+
+        loadProfileWishlist() {
+            if (!this.wishlist || this.wishlist.length === 0) {
+                this.profileWishlistProducts = [];
+                return;
+            }
+            this.isLoadingProfileWishlist = true;
+            const url = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/wishlist/{% else %}/api/wishlist/{% endif %}?ids=' + this.wishlist.join(',');
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    this.profileWishlistProducts = data.products || [];
+                    this.isLoadingProfileWishlist = false;
+                    this.$nextTick(() => {
+                        if (window.lucide) window.lucide.createIcons();
+                    });
+                })
+                .catch(() => {
+                    this.isLoadingProfileWishlist = false;
+                });
+        },
+
+        removeProfileWishlist(productId) {
+            this.removeFromWishlist(productId);
+            this.profileWishlistProducts = this.profileWishlistProducts.filter(p => p.id !== productId);
+        },
+
         reorder(orderNumber) {
             this.reorderingId = orderNumber;
             fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/api/order/' + orderNumber + '/reorder/{% else %}/api/order/' + orderNumber + '/reorder/{% endif %}', {
@@ -32,22 +81,22 @@
             <span>Bosh sahifa</span>
         </a>
         <span class="text-slate-300">/</span>
-        <span class="text-slate-700">Mijoz profili va buyurtmalar</span>
+        <span class="text-slate-700">Mijoz kabineti</span>
     </nav>
 
     <!-- CUSTOMER PROFILE HEADER CARD -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
+    <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-7 shadow-xs">
         {% if customer_phone %}
         <!-- LOGGED IN USER -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div class="flex items-center gap-4">
-                <div class="w-16 h-16 rounded-2xl bg-brand text-white flex items-center justify-center font-black text-2xl shadow-md shadow-brand/20">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-brand text-white flex items-center justify-center font-black text-xl sm:text-2xl shadow-md shadow-brand/20 shrink-0">
                     {{ customer_name|slice:":1"|upper }}
                 </div>
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{{ customer_name }}</h1>
+                    <h1 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight">{{ customer_name }}</h1>
                     <p class="text-xs font-mono font-bold text-slate-500 mt-0.5">{{ customer_phone }}</p>
-                    <div class="flex items-center gap-2 mt-2">
+                    <div class="flex flex-wrap items-center gap-2 mt-2">
                         <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-black">
                             Faol mijoz
                         </span>
@@ -62,66 +111,99 @@
             </div>
 
             <!-- Stats & Logout -->
-            <div class="flex items-center gap-3">
-                <div class="px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+            <div class="flex items-center gap-2.5 self-start sm:self-auto">
+                <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-center">
                     <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Buyurtmalar</div>
-                    <div class="text-lg font-black font-mono text-slate-900">{{ orders_count }} ta</div>
+                    <div class="text-base font-black font-mono text-slate-900">{{ orders_count }} ta</div>
                 </div>
 
                 <form method="POST">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="logout">
-                    <button type="submit" class="px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-rose-600 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs">
+                    <button type="submit" class="px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-rose-600 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span>Chiqish</span>
+                        <span class="hidden sm:inline">Chiqish</span>
                     </button>
                 </form>
             </div>
         </div>
         {% else %}
-        <!-- GUEST LOGIN CARD -->
-        <div class="max-w-md mx-auto py-4 space-y-4 text-center">
-            <div class="w-14 h-14 rounded-2xl bg-brand/10 text-brand mx-auto flex items-center justify-center font-bold">
-                <i data-lucide="user" class="w-7 h-7"></i>
-            </div>
-            <div>
-                <h2 class="text-xl font-black text-slate-900 tracking-tight">Shaxsiy kabinetga kirish</h2>
-                <p class="text-xs text-slate-500 mt-1">Buyurtmalaringiz holatini kuzatish va keshbek ballaringizni ko'rish uchun telefon raqamingizni kiriting.</p>
+        <!-- GUEST WELCOME CARD -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-5">
+            <div class="flex items-center gap-4 text-left">
+                <div class="w-14 h-14 rounded-2xl bg-brand/10 text-brand flex items-center justify-center font-bold shrink-0">
+                    <i data-lucide="user" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h2 class="text-base sm:text-lg font-black text-slate-900">Xush kelibsiz!</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Buyurtmalaringizni kuzatish va saqlangan sevimli mahsulotlaringizni boshqarish paneli.</p>
+                </div>
             </div>
 
-            <form method="POST" class="space-y-3 pt-2 text-left">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="login">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Telefon raqam *</label>
-                    <input type="tel" name="phone" required placeholder="+998 90 123 45 67" 
-                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Ismingiz</label>
-                    <input type="text" name="name" placeholder="Masalan: Jamshid" 
-                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
-                </div>
-                <button type="submit" class="w-full py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
-                    Kirish va buyurtmalarni ko'rish
-                </button>
-            </form>
+            <button type="button" @click="loginModalOpen = true"
+                    class="px-5 py-2.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all flex items-center gap-2 shrink-0">
+                <i data-lucide="log-in" class="w-4 h-4"></i>
+                <span>Kabinetga kirish</span>
+            </button>
         </div>
         {% endif %}
     </div>
 
-    <!-- ORDERS SECTION -->
-    {% if customer_phone %}
-    <div class="space-y-4">
-        
-        <!-- Header & Filters -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- MAIN SEGMENTED NAVIGATION TABS -->
+    <div class="bg-slate-100 p-1.5 rounded-2xl flex items-center gap-1 overflow-x-auto scrollbar-none shadow-2xs">
+        <!-- 1. Mening buyurtmalarim -->
+        <button type="button" @click="activeTab = 'orders'"
+                :class="activeTab === 'orders' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                class="flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
+            <i data-lucide="package" class="w-4 h-4"></i>
+            <span>Buyurtmalarim</span>
+            {% if orders_count > 0 %}
+            <span class="px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[10px] font-mono">{{ orders_count }}</span>
+            {% endif %}
+        </button>
+
+        <!-- 2. Sevimlilar (Wishlist) -->
+        <button type="button" @click="activeTab = 'wishlist'"
+                :class="activeTab === 'wishlist' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                class="flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
+            <i data-lucide="heart" class="w-4 h-4" :class="wishlist.length > 0 ? 'fill-rose-500 text-rose-500' : ''"></i>
+            <span>Sevimlilar</span>
+            <span x-show="wishlist.length > 0" x-cloak class="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-mono" x-text="wishlist.length"></span>
+        </button>
+
+        <!-- 3. Do'kon bilan chat -->
+        <button type="button" @click="activeTab = 'chat'"
+                :class="activeTab === 'chat' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                class="flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
+            <div class="relative">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            </div>
+            <span>Jonli chat</span>
+        </button>
+
+        <!-- 4. Sozlamalar & Yordam -->
+        <button type="button" @click="activeTab = 'info'"
+                :class="activeTab === 'info' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                class="flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
+            <i data-lucide="info" class="w-4 h-4"></i>
+            <span>Ma'lumotlar</span>
+        </button>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- TAB 1: MENING BUYURTMALARIM (ORDERS)                          -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'orders'" x-cloak class="space-y-4 animate-in fade-in duration-200">
+        {% if customer_phone %}
+        <!-- Header & Status Filter Pills -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-                <h2 class="text-xl font-black text-slate-900 tracking-tight">Mening buyurtmalarim</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Barcha joriy va yetkazilgan buyurtmalaringiz tarixi</p>
+                <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">Buyurtmalar tarixi</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Barcha buyurtmalaringiz holatini kuzatib boring</p>
             </div>
 
-            <!-- Tabs -->
+            <!-- Filters -->
             <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold self-start">
                 <button type="button" @click="activeFilter = 'all'" 
                         :class="activeFilter === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
@@ -157,21 +239,21 @@
                         <span class="text-xs text-slate-400">• {{ order.created_at|date:"d.m.Y, H:i" }}</span>
                     </div>
 
-                    <!-- Status Pill -->
+                    <!-- Status Pill with visual colors -->
                     <div>
                         {% if order.status == 'NEW' %}
                         <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-black flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                             <span>Yangi qabul qilindi</span>
                         </span>
                         {% elif order.status == 'ACCEPTED' or order.status == 'COOKING' or order.status == 'READY' %}
                         <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-black flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                             <span>Tayyorlanmoqda</span>
                         </span>
                         {% elif order.status == 'IN_DELIVERY' %}
                         <span class="px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-xs font-black flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                            <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
                             <span>Yo'lda (Kuryerda)</span>
                         </span>
                         {% elif order.status == 'DELIVERED' or order.status == 'COMPLETED' %}
@@ -191,16 +273,55 @@
                     </div>
                 </div>
 
+                <!-- Visual Status Progress Stepper -->
+                <div class="py-2 px-1">
+                    <div class="flex items-center justify-between relative text-[10px] font-bold">
+                        <div class="flex flex-col items-center gap-1 z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status != 'CANCELLED' %}bg-emerald-500 text-white{% else %}bg-slate-200 text-slate-400{% endif %}">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <span class="text-slate-700">Qabul</span>
+                        </div>
+
+                        <div class="flex-1 h-0.5 mx-1 {% if order.status in 'ACCEPTED,COOKING,READY,IN_DELIVERY,DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500{% else %}bg-slate-200{% endif %}"></div>
+
+                        <div class="flex flex-col items-center gap-1 z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status in 'ACCEPTED,COOKING,READY,IN_DELIVERY,DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500 text-white{% else %}bg-slate-200 text-slate-400{% endif %}">
+                                <i data-lucide="chef-hat" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <span class="text-slate-700">Tayyorlash</span>
+                        </div>
+
+                        <div class="flex-1 h-0.5 mx-1 {% if order.status in 'IN_DELIVERY,DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500{% else %}bg-slate-200{% endif %}"></div>
+
+                        <div class="flex flex-col items-center gap-1 z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status in 'IN_DELIVERY,DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500 text-white{% else %}bg-slate-200 text-slate-400{% endif %}">
+                                <i data-lucide="truck" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <span class="text-slate-700">Yo'lda</span>
+                        </div>
+
+                        <div class="flex-1 h-0.5 mx-1 {% if order.status in 'DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500{% else %}bg-slate-200{% endif %}"></div>
+
+                        <div class="flex flex-col items-center gap-1 z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status in 'DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500 text-white{% else %}bg-slate-200 text-slate-400{% endif %}">
+                                <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <span class="text-slate-700">Yetkazildi</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Order Delivery & Payment Info -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600">
-                    <div class="flex items-start gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
+                    <div class="flex items-start gap-2.5">
                         <i data-lucide="map-pin" class="w-4 h-4 text-brand shrink-0 mt-0.5"></i>
                         <div>
                             <span class="text-slate-400 block text-[11px]">Yetkazib berish manzili:</span>
                             <span class="font-bold text-slate-800">{{ order.delivery_city }}, {{ order.delivery_address|default:"Filialdan olib ketish" }}</span>
                         </div>
                     </div>
-                    <div class="flex items-start gap-2">
+                    <div class="flex items-start gap-2.5">
                         <i data-lucide="credit-card" class="w-4 h-4 text-brand shrink-0 mt-0.5"></i>
                         <div>
                             <span class="text-slate-400 block text-[11px]">To'lov usuli:</span>
@@ -210,11 +331,11 @@
                 </div>
 
                 <!-- Order Items Breakdown -->
-                <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="space-y-2 pt-1 border-t border-slate-100">
                     {% for item in order.items.all %}
                     <div class="flex items-center justify-between py-1.5 text-xs">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/80 overflow-hidden shrink-0">
+                            <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 overflow-hidden shrink-0">
                                 {% if item.product and item.product.primary_image_url %}
                                 <img src="{{ item.product.primary_image_url }}" alt="{{ item.product_name }}" class="w-full h-full object-cover">
                                 {% else %}
@@ -277,8 +398,212 @@
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <!-- GUEST LOGIN PROMPT FOR ORDERS -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-8 text-center space-y-4 shadow-xs max-w-md mx-auto">
+            <div class="w-14 h-14 rounded-2xl bg-brand/10 text-brand mx-auto flex items-center justify-center">
+                <i data-lucide="package-search" class="w-7 h-7"></i>
+            </div>
+            <div>
+                <h3 class="font-black text-base text-slate-900">Buyurtmalaringizni ko'rish</h3>
+                <p class="text-xs text-slate-500 mt-1">Buyurtmalar tarixi va yetkazib berish holatini ko'rish uchun telefon raqamingizni kiriting.</p>
+            </div>
+            <form method="POST" class="space-y-3 text-left">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="login">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Telefon raqam *</label>
+                    <input type="tel" name="phone" required placeholder="+998 90 123 45 67" 
+                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Ismingiz</label>
+                    <input type="text" name="name" placeholder="Masalan: Jamshid" 
+                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
+                    Kirish va buyurtmalarni ko'rish
+                </button>
+            </form>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
+
+    <!-- ============================================================= -->
+    <!-- TAB 2: SEVIMLILAR / ИЗБРАННЫЕ (WISHLIST)                      -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'wishlist'" x-cloak class="space-y-4 animate-in fade-in duration-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <span>Sevimlilar ro'yxati</span>
+                    <span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs font-mono font-bold" x-text="wishlist.length + ' ta'"></span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">Siz saqlab qo'ygan mahsulotlar to'plami</p>
+            </div>
+        </div>
+
+        <!-- Wishlist Loading -->
+        <template x-if="isLoadingProfileWishlist">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                <template x-for="i in 4" :key="i">
+                    <div class="bg-white rounded-3xl p-3 border border-slate-200/80 space-y-2.5 animate-pulse">
+                        <div class="aspect-square rounded-2xl bg-slate-100"></div>
+                        <div class="h-3.5 bg-slate-100 rounded-md w-3/4"></div>
+                        <div class="h-4 bg-slate-100 rounded-md w-1/2"></div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Wishlist Empty State -->
+        <template x-if="!isLoadingProfileWishlist && wishlist.length === 0">
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-12 text-center space-y-4 shadow-xs">
+                <div class="w-16 h-16 rounded-3xl bg-rose-50 text-rose-400 mx-auto flex items-center justify-center">
+                    <i data-lucide="heart" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-base text-slate-900">Hozircha sevimli mahsulotlar yo'q</h3>
+                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Yoqqan mahsulotlaringizdagi yurakchani (❤️) bosib, ularni bu yerda saqlab qo'yishingiz mumkin.</p>
+                </div>
+                <div>
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" 
+                       class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
+                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                        <span>Mahsulotlarni ko'rish</span>
+                    </a>
+                </div>
+            </div>
+        </template>
+
+        <!-- Wishlist Grid -->
+        <template x-if="!isLoadingProfileWishlist && wishlist.length > 0">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                <template x-for="p in profileWishlistProducts" :key="p.id">
+                    <div class="bg-white rounded-3xl border border-slate-200/80 p-3 shadow-xs flex flex-col justify-between group hover:border-slate-300 transition-all relative">
+                        <!-- Remove button -->
+                        <button type="button" @click="removeProfileWishlist(p.id)"
+                                class="absolute top-4 right-4 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md text-rose-500 shadow-xs flex items-center justify-center active:scale-90 transition-transform">
+                            <i data-lucide="heart" class="w-4 h-4 fill-rose-500 text-rose-500"></i>
+                        </button>
+
+                        <a :href="p.url" class="block">
+                            <!-- Image -->
+                            <div class="aspect-square rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden relative mb-2.5">
+                                <template x-if="p.image">
+                                    <img :src="p.image" :alt="p.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                </template>
+                                <template x-if="!p.image">
+                                    <div class="w-full h-full flex items-center justify-center text-slate-300 text-2xl">🛍</div>
+                                </template>
+                                <span x-show="p.discount_percent" class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[10px]" x-text="'-' + p.discount_percent + '%'"></span>
+                            </div>
+
+                            <!-- Details -->
+                            <h4 class="font-bold text-xs text-slate-900 group-hover:text-brand line-clamp-2" x-text="p.name"></h4>
+                            <div class="mt-1 flex items-baseline gap-1.5">
+                                <span class="font-mono font-black text-xs text-slate-900" x-text="p.price.toLocaleString() + ' UZS'"></span>
+                                <span x-show="p.old_price" class="line-through text-[10px] text-slate-400 font-mono" x-text="p.old_price ? p.old_price.toLocaleString() : ''"></span>
+                            </div>
+                        </a>
+
+                        <!-- Action button -->
+                        <div class="pt-3 mt-2 border-t border-slate-100">
+                            <button type="button" @click="addToCart(p.id)"
+                                    :disabled="!p.in_stock"
+                                    class="w-full py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all disabled:opacity-50">
+                                <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                                <span>Savatga</span>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- TAB 3: DO'KON BILAN CHAT (LIVE SELLER CHAT)                   -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'chat'" x-cloak class="space-y-4 animate-in fade-in duration-200">
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs text-center space-y-4 max-w-lg mx-auto">
+            <div class="relative w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center shadow-xs">
+                <i data-lucide="message-circle" class="w-8 h-8"></i>
+                <span class="absolute top-2 right-2 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white animate-ping"></span>
+                <span class="absolute top-2 right-2 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+            </div>
+
+            <div>
+                <h3 class="font-black text-lg text-slate-900">Do'kon sotuvchisi bilan jonli aloqa</h3>
+                <p class="text-xs text-slate-500 mt-1">Mahsulotlar mavjudligi, yetkazib berish muddati yoki o'lchamlar bo'yicha savollaringiz bormi? Bemalol yozing!</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-left text-xs space-y-2">
+                <div class="flex items-center gap-2 text-slate-700 font-bold">
+                    <i data-lucide="clock" class="w-4 h-4 text-emerald-600"></i>
+                    <span>Javob berish vaqti: 2-5 daqiqa</span>
+                </div>
+                <div class="flex items-center gap-2 text-slate-700 font-bold">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+                    <span>To'g'ridan-to'g'ri boshqaruv paneliga yetkaziladi</span>
+                </div>
+            </div>
+
+            <button type="button" @click="openChatModal()"
+                    class="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-2">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>Xabar yozish (Chatni ochish)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- TAB 4: MA'LUMOTLAR & YORDAM (INFO & SETTINGS)                 -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'info'" x-cloak class="space-y-4 animate-in fade-in duration-200">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Delivery Info -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-2">
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i data-lucide="truck" class="w-5 h-5"></i>
+                </div>
+                <h4 class="font-black text-sm text-slate-900">Yetkazib berish shartlari</h4>
+                <p class="text-xs text-slate-500">Shahar bo'ylab tezkor kuryerlik yetkazib berish xizmati mavjud. 100 000 so'mdan yuqori buyurtmalarga bepul yetkaziladi.</p>
+            </div>
+
+            <!-- Return Policy -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-2">
+                <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                </div>
+                <h4 class="font-black text-sm text-slate-900">Qaytarish va almashtirish</h4>
+                <p class="text-xs text-slate-500">Mahsulot sifatiga kafolat beriladi. Zarurat tug'ilganda 24 soat ichida almashtirib beriladi.</p>
+            </div>
+
+            <!-- Contacts -->
+            {% if store.phone %}
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-2">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <i data-lucide="phone" class="w-5 h-5"></i>
+                </div>
+                <h4 class="font-black text-sm text-slate-900">Aloqa markazi</h4>
+                <a href="tel:{{ store.phone }}" class="text-xs font-bold font-mono text-brand block hover:underline">{{ store.phone }}</a>
+            </div>
+            {% endif %}
+
+            <!-- Language -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-2">
+                <div class="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <i data-lucide="globe" class="w-5 h-5"></i>
+                </div>
+                <h4 class="font-black text-sm text-slate-900">Tilni tanlash</h4>
+                <div class="flex items-center gap-2 pt-1">
+                    <a href="?lang=uz" class="px-3 py-1.5 rounded-xl border text-xs font-bold {% if current_lang == 'uz' %}bg-brand text-white border-brand{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">O'zbekcha</a>
+                    <a href="?lang=ru" class="px-3 py-1.5 rounded-xl border text-xs font-bold {% if current_lang == 'ru' %}bg-brand text-white border-brand{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">Русский</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 {% endblock %}

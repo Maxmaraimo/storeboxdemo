@@ -816,6 +816,17 @@ def analyze_custom_niche(query_text, store_name="Do'kon"):
 
 
 def generate_ai_theme(store_name, niche_key, custom_prompt=None, lang='uz'):
+    NICHE_ALIASES = {
+        'clothes': 'fashion',
+        'cosmetics': 'beauty',
+        'electronics': 'tech',
+        'sweets': 'coffee',
+        'supermarket': 'grocery',
+        'fastfood': 'restaurant',
+        'cafe': 'coffee'
+    }
+    niche_key = NICHE_ALIASES.get(niche_key, niche_key)
+
     if niche_key == 'custom' or (custom_prompt and niche_key not in NICHE_PRESETS):
         return analyze_custom_niche(custom_prompt or niche_key, store_name)
 
@@ -827,9 +838,20 @@ def generate_ai_theme(store_name, niche_key, custom_prompt=None, lang='uz'):
 
     formatted_title = title_template.format(store_name=store_name or "StoreBox")
 
+    template = preset.get('template')
+    if not template:
+        if preset['id'] in ['restaurant', 'coffee']:
+            template = 'restaurant'
+        elif preset['id'] in ['fashion', 'beauty', 'flowers']:
+            template = 'boutique'
+        else:
+            template = 'universal'
+
     return {
         'niche_id': preset['id'],
         'niche_name': preset.get(f'name_{lang}', preset['name_uz']),
+        'template': template,
+        'theme_template': template,
         'primary_color': preset['primary_color'],
         'bg_color': preset['bg_color'],
         'card_style': preset['card_style'],

@@ -1,3 +1,31 @@
+# Update — 2026-09-11
+
+Deployed GitHub commit `0068946` in `/home/ubuntu/storebox-release-20260911`.
+StoreBox web and bot services now use this release. The virtualenv is shared
+with the previous release because requirements did not change. Nginx serves
+staticfiles from the new release. Secrets, SQLite and media were preserved.
+
+Both migrations (`core.0001_initial`, `stores.0009_store_theme_template`) passed
+on a database copy before applying to live data with StoreBox services stopped.
+All 44 application tests passed. Django check, public HTTPS landing/login,
+authenticated Django-client dashboard/auth-me API and public JS/CSS passed.
+The landing page was also verified in the browser. No live payments or Telegram
+message delivery were exercised.
+
+Fixed dashboard template JS/CSS references to match committed static/dist assets.
+This fix is applied locally and on VDS but has not been pushed to GitHub.
+Data after deployment: 18 stores, 140 products, 65 orders.
+
+Pre-update backup: `/home/ubuntu/storebox-backups/20260911-before-update`.
+Previous release: `/home/ubuntu/storebox-candidate-20260909` (retained).
+For code rollback restore `storebox.service`, `storebox-bot.service` and Nginx
+`storebox` from that backup, validate Nginx, daemon-reload, restart StoreBox and
+reload Nginx. Both added migrations are additive; retain the updated database
+on code rollback. Never overwrite newer orders with a backup automatically.
+Daily backup timer remains active and targets the unchanged shared database/media.
+
+The following section records the initial deployment and its limitations.
+
 # VDS deployment — 2026-09-09
 
 The Django release from public GitHub commit `1022972` is deployed on

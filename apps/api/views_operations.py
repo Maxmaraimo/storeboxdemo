@@ -266,27 +266,44 @@ def chats_list_view(request):
     if not store:
         return Response({"error": "Do'kon topilmadi"}, status=404)
 
-    phones = (
-        ChatMessage.objects.filter(store=store)
-        .values_list("customer_phone", flat=True)
-        .distinct()
-    )
+    all_msgs = ChatMessage.objects.filter(store=store).order_by("created_at")
+    threads = {}
+    display_phone_map = {}
+
+    for m in all_msgs:
+        raw_p = (m.customer_phone or "").strip()
+        digits = "".join(c for c in raw_p if c.isdigit())
+        key = digits if digits else raw_p
+        if not key:
+            continue
+
+        display_p = raw_p if raw_p.startswith("+") else (f"+{digits}" if digits else raw_p)
+        if key not in threads:
+            threads[key] = []
+            display_phone_map[key] = display_p
+        threads[key].append(m)
 
     conversations = []
-    for phone in phones:
-        last_msg = ChatMessage.objects.filter(store=store, customer_phone=phone).order_by("-created_at").first()
-        unread_count = ChatMessage.objects.filter(
-            store=store,
-            customer_phone=phone,
-            sender=ChatMessage.Senders.CUSTOMER,
-            is_read=False
-        ).count()
+    for key, msgs in threads.items():
+        last_msg = msgs[-1]
+        display_p = display_phone_map[key]
+        unread_count = sum(1 for m in msgs if m.sender == ChatMessage.Senders.CUSTOMER and not m.is_read)
 
-        customer = Customer.objects.filter(store=store, phone=phone).first()
-        customer_name = customer.name if customer else (last_msg.customer_name if last_msg else phone)
+        customer = Customer.objects.filter(store=store).filter(
+            Q(phone__icontains=key) | Q(phone__icontains=display_p)
+        ).first()
+
+        customer_name = customer.name if (customer and customer.name) else None
+        if not customer_name:
+            for m in reversed(msgs):
+                if m.customer_name and m.customer_name not in ["Mijoz", "Покупатель", ""]:
+                    customer_name = m.customer_name
+                    break
+        if not customer_name:
+            customer_name = last_msg.customer_name or display_p
 
         conversations.append({
-            "phone": phone,
+            "phone": display_p,
             "customer_name": customer_name,
             "last_message": last_msg.message if last_msg else "",
             "last_message_at": last_msg.created_at.isoformat() if last_msg else None,
@@ -304,14 +321,15 @@ def chat_messages_view(request, customer_phone):
     if not store:
         return Response({"error": "Do'kon topilmadi"}, status=404)
 
-    messages = ChatMessage.objects.filter(
-        store=store,
-        customer_phone=customer_phone
-    ).order_by("created_at")
+    digits = "".join(c for c in customer_phone if c.isdigit())
+    if digits:
+        msg_filter = Q(customer_phone__icontains=digits) | Q(customer_phone=customer_phone)
+    else:
+        msg_filter = Q(customer_phone=customer_phone)
 
-    ChatMessage.objects.filter(
-        store=store,
-        customer_phone=customer_phone,
+    messages = ChatMessage.objects.filter(store=store).filter(msg_filter).order_by("created_at")
+
+    ChatMessage.objects.filter(store=store).filter(msg_filter).filter(
         sender=ChatMessage.Senders.CUSTOMER,
         is_read=False
     ).update(is_read=True)
@@ -333,9 +351,25 @@ def chat_send_message_view(request, customer_phone):
     if not text:
         return Response({"error": "Xabar matni bo'sh bo'lishi mumkin emas"}, status=400)
 
-    customer = Customer.objects.filter(store=store, phone=customer_phone).first()
-    customer_name = customer.name if customer else "Mijoz"
+    digits = "".join(c for c in customer_phone if c.isdigit())
+    customer = None
+    if digits:
+        customer = Customer.objects.filter(store=store).filter(
+            Q(phone__icontains=digits) | Q(phone=customer_phone)
+        ).first()
+    else:
+        customer = Customer.objects.filter(store=store, phone=customer_phone).first()
 
+    customer_name = customer.name if (customer and customer.name) else "Mijoz"
+
+    # Also notify telegram if customer linked bot
+    try:
+        from apps.dashboard.views import send_telegram_chat_reply
+        send_telegram_chat_reply(store, customer_phone, text)
+    except Exception:
+        pass
+
+    # Save message with canonical customer_phone format
     msg = ChatMessage.objects.create(
         store=store,
         customer_phone=customer_phone,
