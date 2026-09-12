@@ -58,6 +58,7 @@ urlpatterns = [
 
     # Settings: Store, Delivery, Payments
     path("settings/store/", views_settings.store_settings_view, name="store_settings"),
+    path("settings/store/domain/", views_settings.store_domain_view, name="store_domain"),
     path("settings/delivery/", views_operations.store_delivery_settings_view, name="store_delivery_settings"),
     path("settings/payments/", views_operations.store_payments_view, name="store_payments"),
     path("translations/<str:lang_code>/", views_settings.translations_view, name="translations"),

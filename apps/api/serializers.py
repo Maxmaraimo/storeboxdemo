@@ -1,6 +1,7 @@
 import random
 from decimal import Decimal
 from rest_framework import serializers
+from django.conf import settings
 from django.utils.text import slugify
 
 from apps.orders.models import Order, OrderItem, Customer, PromoCode, ChatMessage, MarketingCampaign, StoreStaff
@@ -8,6 +9,12 @@ from apps.catalog.models import Product, Category
 from apps.stores.models import Store, Branch
 from apps.accounts.models import User
 from apps.payments.models import StorePaymentSetting
+
+
+RESERVED_STOREFRONT_SUBDOMAINS = {
+    "admin", "api", "app", "billing", "demo", "mail", "platform",
+    "store", "storebox", "super-admin", "www",
+}
 
 
 def normalize_unit(unit_str):
@@ -35,6 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class StoreSerializer(serializers.ModelSerializer):
+    subdomain = serializers.CharField(max_length=80, required=False)
     storefront_url = serializers.CharField(source="get_storefront_url", read_only=True)
 
     class Meta:
@@ -46,6 +54,28 @@ class StoreSerializer(serializers.ModelSerializer):
             "pickup_enabled", "courier_enabled", "address",
             "primary_color", "theme_bg_color", "theme_card_style"
         ]
+        read_only_fields = ["id", "storefront_url", "is_active"]
+
+    def validate_subdomain(self, value):
+        raw_value = (value or "").strip().lower()
+        domain_suffix = f".{settings.PLATFORM_DOMAIN.lower()}"
+        if raw_value.endswith(domain_suffix):
+            raw_value = raw_value[:-len(domain_suffix)]
+
+        normalized = slugify(raw_value)
+        if len(normalized) < 3:
+            raise serializers.ValidationError("Subdomen kamida 3 ta belgidan iborat bo'lishi kerak.")
+        if len(normalized) > 50:
+            raise serializers.ValidationError("Subdomen 50 ta belgidan oshmasligi kerak.")
+        if normalized in RESERVED_STOREFRONT_SUBDOMAINS:
+            raise serializers.ValidationError("Bu subdomen tizim tomonidan band qilingan.")
+
+        duplicate = Store.objects.filter(subdomain__iexact=normalized)
+        if self.instance:
+            duplicate = duplicate.exclude(pk=self.instance.pk)
+        if duplicate.exists():
+            raise serializers.ValidationError("Bu subdomen allaqachon band.")
+        return normalized
 
 
 class CategorySerializer(serializers.ModelSerializer):
