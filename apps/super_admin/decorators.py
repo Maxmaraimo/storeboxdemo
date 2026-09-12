@@ -1,4 +1,6 @@
 from functools import wraps
+from urllib.parse import urlencode
+
 from django.shortcuts import redirect
 from django.http import HttpResponseForbidden
 from django.conf import settings
@@ -12,7 +14,8 @@ def superadmin_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect(f"{settings.LOGIN_URL}?next={request.get_full_path()}")
+            query = urlencode({'next': request.build_absolute_uri()})
+            return redirect(f"{settings.APP_SITE_URL}/dashboard/login/?{query}")
         
         is_super = (
             request.user.is_superuser or
@@ -24,7 +27,7 @@ def superadmin_required(view_func):
             return HttpResponseForbidden(
                 "<h1>403 Доступ запрещен</h1>"
                 "<p>Данный раздел предназначен исключительно для супер-администраторов платформы StoreBox.</p>"
-                "<p><a href='/dashboard/'>Вернуться в панель управления магазином</a></p>"
+                f"<p><a href='{settings.APP_SITE_URL}/dashboard/'>Вернуться в панель управления магазином</a></p>"
             )
         return view_func(request, *args, **kwargs)
     return _wrapped_view

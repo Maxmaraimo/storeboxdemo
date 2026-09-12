@@ -89,7 +89,7 @@ class SubdomainTenantMiddleware:
                 if any(path.startswith(p) for p in store_specific_paths):
                     subdomain = request.session.get('current_store_subdomain')
 
-            if subdomain and subdomain not in ['www', 'api', 'app', 'admin', 'super-admin']:
+            if subdomain and subdomain not in ['www', 'api', 'app', 'admin', 'billing', 'super-admin']:
                 try:
                     store = Store.objects.filter(subdomain__iexact=subdomain, is_active=True).first()
                     if store:

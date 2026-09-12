@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from apps.core.translations import get_translations
 
 
@@ -36,4 +38,7 @@ def tenant_context(request):
         'unread_notifs_count': unread_notifs_count,
         'new_orders_count': new_orders_count,
         'unread_chats_count': unread_chats_count,
+        'platform_site_url': settings.PLATFORM_SITE_URL,
+        'app_site_url': settings.APP_SITE_URL,
+        'billing_site_url': settings.BILLING_SITE_URL,
     }

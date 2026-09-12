@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
+from django.conf import settings
 from django.middleware.csrf import get_token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -32,7 +33,14 @@ def get_merchant_store(request):
 def csrf_view(request):
     token = get_token(request)
     resp = Response({"csrfToken": token})
-    resp.set_cookie("csrftoken", token, httponly=False, samesite="Lax")
+    resp.set_cookie(
+        settings.CSRF_COOKIE_NAME,
+        token,
+        domain=settings.CSRF_COOKIE_DOMAIN,
+        secure=settings.CSRF_COOKIE_SECURE,
+        httponly=settings.CSRF_COOKIE_HTTPONLY,
+        samesite=settings.CSRF_COOKIE_SAMESITE,
+    )
     return resp
 
 @api_view(["POST"])

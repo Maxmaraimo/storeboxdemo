@@ -17,6 +17,7 @@ from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, HttpR
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from django.utils.text import slugify
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.accounts.models import User
 from apps.stores.models import Store, Branch, MerchantBalance, MerchantCard
@@ -604,10 +605,34 @@ def dev_login_view(request):
     return HttpResponseForbidden()
 
 
+def _safe_login_redirect(request):
+    next_url = request.GET.get('next') or request.POST.get('next')
+    if not next_url:
+        return None
+
+    allowed_hosts = {
+        request.get_host(),
+        request.get_host().split(':', 1)[0],
+        settings.APP_DOMAIN,
+        settings.BILLING_DOMAIN,
+    }
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts=allowed_hosts,
+        require_https=not settings.DEBUG,
+    ):
+        return None
+
+    next_path = urllib.parse.urlsplit(next_url).path.rstrip('/')
+    if next_path in {'/login', '/dashboard/login'}:
+        return None
+    return next_url
+
+
 def login_view(request):
     if request.user.is_authenticated:
-        next_url = request.GET.get('next') or request.POST.get('next')
-        if next_url and next_url.startswith('/') and not next_url.startswith('/login') and not next_url.startswith('/dashboard/login'):
+        next_url = _safe_login_redirect(request)
+        if next_url:
             return redirect(next_url)
         return redirect('dashboard:home')
 
@@ -643,8 +668,8 @@ def login_view(request):
 
         if user:
             login(request, user)
-            next_url = request.GET.get('next') or request.POST.get('next')
-            if next_url and next_url.startswith('/') and not next_url.startswith('/login') and not next_url.startswith('/dashboard/login'):
+            next_url = _safe_login_redirect(request)
+            if next_url:
                 return redirect(next_url)
             store = get_merchant_store(request)
             if not user.stores.exists() and not (user.is_superuser and store):
@@ -659,7 +684,7 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('/')
+    return redirect(settings.PLATFORM_SITE_URL)
 
 
 @login_required
@@ -872,7 +897,14 @@ def dashboard_spa_view(request, *args, **kwargs):
                 if '</head>' in content:
                     content = content.replace('</head>', f'{token_script}</head>', 1)
                 response = HttpResponse(content, content_type='text/html')
-                response.set_cookie('csrftoken', csrf_token, httponly=False, samesite='Lax')
+                response.set_cookie(
+                    settings.CSRF_COOKIE_NAME,
+                    csrf_token,
+                    domain=settings.CSRF_COOKIE_DOMAIN,
+                    secure=settings.CSRF_COOKIE_SECURE,
+                    httponly=settings.CSRF_COOKIE_HTTPONLY,
+                    samesite=settings.CSRF_COOKIE_SAMESITE,
+                )
                 return response
         except Exception:
             pass

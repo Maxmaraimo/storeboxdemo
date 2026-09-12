@@ -88,6 +88,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'apps.core.domain_middleware.PlatformDomainRoutingMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -175,7 +176,7 @@ CACHES = {
     }
 }
 
-LOGIN_URL = '/login/'
+LOGIN_URL = '/dashboard/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
@@ -215,6 +216,11 @@ REST_FRAMEWORK = {
 
 # Platform configuration
 PLATFORM_DOMAIN = os.environ.get('PLATFORM_DOMAIN', 'storebox.uz')
+APP_DOMAIN = os.environ.get('APP_DOMAIN', f'app.{PLATFORM_DOMAIN}')
+BILLING_DOMAIN = os.environ.get('BILLING_DOMAIN', f'billing.{PLATFORM_DOMAIN}')
+PLATFORM_SITE_URL = os.environ.get('PLATFORM_SITE_URL', f'https://{PLATFORM_DOMAIN}').rstrip('/')
+APP_SITE_URL = os.environ.get('APP_SITE_URL', f'https://{APP_DOMAIN}').rstrip('/')
+BILLING_SITE_URL = os.environ.get('BILLING_SITE_URL', f'https://{BILLING_DOMAIN}').rstrip('/')
 PLATFORM_NAME = 'StoreBox Uzbekistan'
 
 # Security & Session Hardening
