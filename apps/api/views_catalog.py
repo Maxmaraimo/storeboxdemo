@@ -1,12 +1,15 @@
+import os
+import uuid
 import random
 from decimal import Decimal
 from django.db.models import Q
 from django.utils.text import slugify
+from django.core.files.storage import default_storage
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.catalog.models import Product, Category
+from apps.catalog.models import Product, Category, ProductImage
 from .views_auth import get_merchant_store
 from .serializers import ProductSerializer, CategorySerializer, normalize_unit
 
@@ -53,6 +56,22 @@ def products_list_create_view(request):
         serializer = ProductSerializer(data=data)
         if serializer.is_valid():
             product = serializer.save(store=store)
+            
+            # Handle uploaded files in request.FILES if multipart was sent
+            photos = request.FILES.getlist("photos") or request.FILES.getlist("photo") or request.FILES.getlist("image")
+            if not photos and request.FILES.get("file"):
+                photos = [request.FILES.get("file")]
+            for i, p_file in enumerate(photos):
+                if p_file:
+                    ProductImage.objects.create(product=product, image=p_file, is_primary=(i == 0))
+
+            if not product.images.exists() and product.image_url and "/media/products/" in product.image_url:
+                rel_path = product.image_url.split("/media/")[-1]
+                try:
+                    ProductImage.objects.create(product=product, image=rel_path, is_primary=True)
+                except Exception:
+                    pass
+
             return Response(ProductSerializer(product).data, status=201)
         return Response(serializer.errors, status=400)
 
@@ -85,6 +104,47 @@ def product_create_view(request):
     return products_list_create_view(request)
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def product_image_upload_view(request):
+    """Uploads a product image directly from device."""
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Do'kon topilmadi"}, status=404)
+
+    image_file = request.FILES.get("photo") or request.FILES.get("image") or request.FILES.get("file")
+    if not image_file:
+        return Response({"error": "Rasm fayli tanlanmadi"}, status=400)
+
+    product_id = request.data.get("product_id")
+    if product_id:
+        try:
+            product = Product.objects.filter(id=product_id, store=store).first()
+            if product:
+                prod_img = ProductImage.objects.create(product=product, image=image_file, is_primary=True)
+                product.image_url = prod_img.image.url
+                product.save(update_fields=["image_url"])
+                return Response({
+                    "success": True,
+                    "image_url": prod_img.image.url,
+                    "image_id": prod_img.id,
+                    "message": "Rasm muvaffaqiyatli yuklandi!"
+                })
+        except Exception:
+            pass
+
+    ext = os.path.splitext(image_file.name)[1].lower() or ".jpg"
+    filename = f"products/{uuid.uuid4().hex[:12]}{ext}"
+    saved_path = default_storage.save(filename, image_file)
+    file_url = default_storage.url(saved_path)
+
+    return Response({
+        "success": True,
+        "image_url": file_url,
+        "message": "Rasm muvaffaqiyatli yuklandi!"
+    })
+
+
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def product_detail_update_delete_view(request, product_id):
@@ -115,6 +175,24 @@ def product_detail_update_delete_view(request, product_id):
         serializer = ProductSerializer(product, data=data, partial=True)
         if serializer.is_valid():
             updated = serializer.save()
+
+            if "image_url" in data and not data.get("image_url"):
+                updated.images.all().delete()
+
+            photos = request.FILES.getlist("photos") or request.FILES.getlist("photo") or request.FILES.getlist("image")
+            if not photos and request.FILES.get("file"):
+                photos = [request.FILES.get("file")]
+            for i, p_file in enumerate(photos):
+                if p_file:
+                    ProductImage.objects.create(product=updated, image=p_file, is_primary=(i == 0 and not updated.images.exists()))
+
+            if not updated.images.exists() and updated.image_url and "/media/products/" in updated.image_url:
+                rel_path = updated.image_url.split("/media/")[-1]
+                try:
+                    ProductImage.objects.create(product=updated, image=rel_path, is_primary=True)
+                except Exception:
+                    pass
+
             return Response(ProductSerializer(updated).data)
         return Response(serializer.errors, status=400)
 
@@ -158,6 +236,46 @@ def categories_list_create_view(request):
 @permission_classes([IsAuthenticated])
 def category_create_view(request):
     return categories_list_create_view(request)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def category_image_upload_view(request):
+    """Uploads category image directly from device."""
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Do'kon topilmadi"}, status=404)
+
+    image_file = request.FILES.get("photo") or request.FILES.get("image") or request.FILES.get("file")
+    if not image_file:
+        return Response({"error": "Rasm fayli tanlanmadi"}, status=400)
+
+    category_id = request.data.get("category_id")
+    if category_id:
+        try:
+            category = Category.objects.filter(id=category_id, store=store).first()
+            if category:
+                category.image = image_file
+                category.image_url = ""
+                category.save()
+                return Response({
+                    "success": True,
+                    "image_url": category.image.url,
+                    "message": "Kategoriya rasmi yuklandi!"
+                })
+        except Exception:
+            pass
+
+    ext = os.path.splitext(image_file.name)[1].lower() or ".jpg"
+    filename = f"categories/{uuid.uuid4().hex[:12]}{ext}"
+    saved_path = default_storage.save(filename, image_file)
+    file_url = default_storage.url(saved_path)
+
+    return Response({
+        "success": True,
+        "image_url": file_url,
+        "message": "Kategoriya rasmi yuklandi!"
+    })
 
 
 @api_view(["GET", "PUT", "PATCH", "DELETE"])

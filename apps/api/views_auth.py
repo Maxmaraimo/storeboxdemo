@@ -11,21 +11,29 @@ def get_merchant_store(request):
     if not user.is_authenticated:
         return None
     session = getattr(request, "session", {})
-    selected_store_id = session.get("selected_store_id") if hasattr(session, "get") else None
-    if selected_store_id:
-        store = Store.objects.filter(id=selected_store_id, owner=user).first()
+    store_id = None
+    if hasattr(session, "get"):
+        store_id = session.get("merchant_current_store_id") or session.get("selected_store_id")
+    if store_id:
+        store = Store.objects.filter(id=store_id, owner=user).first()
+        if not store and user.is_superuser:
+            store = Store.objects.filter(id=store_id).first()
         if store:
             return store
-    store = Store.objects.filter(owner=user).first()
-    if store:
-        return store
-    return Store.objects.filter(is_active=True).first()
+    store = Store.objects.filter(owner=user, is_active=True).first()
+    if not store:
+        store = Store.objects.filter(owner=user).first()
+    if not store and user.is_superuser:
+        store = Store.objects.filter(is_active=True).first()
+    return store
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def csrf_view(request):
     token = get_token(request)
-    return Response({"csrfToken": token})
+    resp = Response({"csrfToken": token})
+    resp.set_cookie("csrftoken", token, httponly=False, samesite="Lax")
+    return resp
 
 @api_view(["POST"])
 @permission_classes([AllowAny])

@@ -245,6 +245,7 @@ export const DesignStudioPage: React.FC = () => {
           primaryColor,
           bgColor: themeBgColor,
           cardStyle,
+          template: themeTemplate,
           bannerTitle: activePrimaryBanner?.title || "",
           bannerSubtitle: activePrimaryBanner?.subtitle || "",
           bannerImageUrl: activePrimaryBanner?.image_url || "",
@@ -257,7 +258,7 @@ export const DesignStudioPage: React.FC = () => {
 
   useEffect(() => {
     sendThemeMessage();
-  }, [primaryColor, themeBgColor, cardStyle, banners, logoUrl]);
+  }, [primaryColor, themeBgColor, cardStyle, themeTemplate, banners, logoUrl]);
 
   // Revert unsaved changes back to initial state
   const handleResetChanges = () => {
@@ -311,6 +312,16 @@ export const DesignStudioPage: React.FC = () => {
   // Template switch handler with clean iframe update
   const handleSelectTemplate = (tplId: string) => {
     setThemeTemplate(tplId);
+    if (tplId === "restaurant") {
+      setCardStyle("compact");
+      setImageAspect("square");
+    } else if (tplId === "boutique") {
+      setCardStyle("minimal");
+      setImageAspect("portrait");
+    } else {
+      setCardStyle("modern");
+      setImageAspect("square");
+    }
     setMsg(null);
   };
 
@@ -769,6 +780,31 @@ export const DesignStudioPage: React.FC = () => {
                             </span>
                           </div>
                           <p className="text-xs text-slate-500 leading-relaxed mt-1">{tpl.description}</p>
+
+                          {/* Section Feature Chips */}
+                          <div className="flex flex-wrap gap-1.5 mt-2.5">
+                            {tpl.id === "restaurant" && (
+                              <>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">🛵 Yetkazish &amp; Ish vaqti</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">🍽️ Taomlar Menyu kartasi</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">➕ Tezkor sanagich</span>
+                              </>
+                            )}
+                            {tpl.id === "boutique" && (
+                              <>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">👗 3:4 Portret Vitrina</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">💎 Ramsiz Minimalizm</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">❤️ Sevimlilar (Wishlist)</span>
+                              </>
+                            )}
+                            {tpl.id === "universal" && (
+                              <>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">🎁 Slayder Banner</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">📦 Toifalar Katagi</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">🛍️ 4 Ustunli E-Commerce</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -782,6 +818,80 @@ export const DesignStudioPage: React.FC = () => {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* ACTIVE SECTIONS SUMMARY FOR SELECTED TEMPLATE */}
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-brand" />
+                    <span>Faol Vitrina Bo'limlari (Shablon bo'yicha):</span>
+                  </h4>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Avtomatik faol
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {themeTemplate === "restaurant" ? (
+                    <>
+                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">🛵 Yetkazish &amp; Ish vaqti</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">🍽️ Taomlar Menyusi &amp; Sanagich</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">🍔 Toifalar Skrolleri</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">🛡️ 100% Halol &amp; Termoboks</span>
+                      </div>
+                    </>
+                  ) : themeTemplate === "boutique" ? (
+                    <>
+                      <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">👗 3:4 Portret Vitrina</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">💎 Ramsiz Toza Minimalizm</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">❤️ Sevimlilar (Wishlist)</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">🏷️ Toifalar Navigatsiyasi</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">🎁 Aksiya Promo Slayderi</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">📦 Kategoriya Katakchalari</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">🛍️ 4 Ustunli E-Commerce Vitrina</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                        <span className="font-bold text-slate-800">🚚 Tez yetkazish &amp; Kafolat</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           )}

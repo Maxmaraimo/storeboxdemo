@@ -9,6 +9,8 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.cache import cache
 from django.contrib.auth import login, logout, authenticate
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.middleware.csrf import get_token
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, HttpResponseNotFound, FileResponse
@@ -854,21 +856,30 @@ def onboarding_wizard_view(request):
 # -----------------------------------------------------------------
 
 @login_required
+@ensure_csrf_cookie
 def dashboard_spa_view(request, *args, **kwargs):
     """Serves the modern React 19 SPA dashboard directly within Django."""
     store = get_merchant_store(request)
     if not store:
         return redirect('dashboard:onboarding')
+    csrf_token = get_token(request)
     dist_index_path = os.path.join(settings.BASE_DIR, 'static', 'dist', 'index.html')
     if os.path.exists(dist_index_path):
         try:
             with open(dist_index_path, 'r', encoding='utf-8') as f:
-                return HttpResponse(f.read(), content_type='text/html')
+                content = f.read()
+                token_script = f'<script>window.__CSRF_TOKEN__ = "{csrf_token}";</script>'
+                if '</head>' in content:
+                    content = content.replace('</head>', f'{token_script}</head>', 1)
+                response = HttpResponse(content, content_type='text/html')
+                response.set_cookie('csrftoken', csrf_token, httponly=False, samesite='Lax')
+                return response
         except Exception:
             pass
     return render(request, 'dashboard/spa_index.html', {
         'store': store,
         'user': request.user,
+        'csrf_token': csrf_token,
     })
 
 

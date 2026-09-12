@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Trash2, Edit2, Package, X, Check } from "lucide-react";
+import { Search, Plus, Trash2, Edit2, Package, X, Check, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Product, Category } from "../../types";
@@ -27,6 +27,55 @@ export const ProductsPage: React.FC = () => {
   const [formImage, setFormImage] = useState("");
   const [formDescUz, setFormDescUz] = useState("");
   const [formError, setFormError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const uploadImageFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setFormError("Faqat rasm formatidagi fayllarni yuklash mumkin (JPG, PNG, WEBP)");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setFormImage(previewUrl);
+    setUploadingImage(true);
+    setFormError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      if (editingProduct) {
+        formData.append("product_id", String(editingProduct.id));
+      }
+      const res = await api.post("/products/upload-image/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (res.data?.success && res.data.image_url) {
+        setFormImage(res.data.image_url);
+      }
+    } catch (err: any) {
+      setFormError("Rasm yuklashda xatolik yuz berdi: " + (err.response?.data?.error || err.message));
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadImageFile(file);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      uploadImageFile(file);
+    }
+  };
 
   const { data: productsData, isLoading } = useQuery({
     queryKey: ["products", selectedCategory, search],
@@ -111,6 +160,9 @@ export const ProductsPage: React.FC = () => {
     setFormImage("");
     setFormDescUz("");
     setFormError("");
+    setUploadingImage(false);
+    setIsDragging(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setModalOpen(true);
   };
 
@@ -129,6 +181,9 @@ export const ProductsPage: React.FC = () => {
     setFormImage(p.primary_image_url || "");
     setFormDescUz(p.description_uz || "");
     setFormError("");
+    setUploadingImage(false);
+    setIsDragging(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setModalOpen(true);
   };
 
@@ -136,6 +191,9 @@ export const ProductsPage: React.FC = () => {
     setModalOpen(false);
     setEditingProduct(null);
     setFormError("");
+    setUploadingImage(false);
+    setIsDragging(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const products = productsData?.products || [];
@@ -469,16 +527,99 @@ export const ProductsPage: React.FC = () => {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Rasm havolasi (URL)
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-brand" />
+                    <span>Mahsulot rasmi</span>
+                    <span className="text-[10px] text-slate-400 font-normal">(3:4 yoki 1:1 proporsiya tavsiya etiladi)</span>
+                  </label>
+                  {formImage && (
+                    <button
+                      type="button"
+                      onClick={() => setFormImage("")}
+                      className="text-[11px] text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Rasmni o'chirish</span>
+                    </button>
+                  )}
+                </div>
+
                 <input
-                  type="url"
-                  value={formImage}
-                  onChange={(e) => setFormImage(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageFileChange}
+                  accept="image/*"
+                  className="hidden"
                 />
+
+                {formImage ? (
+                  <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                    <div className="relative w-20 h-24 rounded-xl overflow-hidden border border-slate-200 bg-white shrink-0 group">
+                      <img
+                        src={formImage}
+                        alt="Mahsulot rasmi"
+                        className="w-full h-full object-cover"
+                      />
+                      {uploadingImage && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Loader2 className="w-5 h-5 text-white animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-slate-800 truncate mb-1">
+                        {uploadingImage ? "Rasm yuklanmoqda..." : "Rasm tanlandi"}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mb-2.5">
+                        Boshqa rasm yuklash uchun tugmani bosing yoki yangisini tanlang
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImage}
+                        className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Rasmni almashtirish</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
+                      isDragging
+                        ? "border-brand bg-brand/5 scale-[0.99]"
+                        : "border-slate-200 hover:border-brand/60 hover:bg-slate-50/80 bg-white"
+                    }`}
+                  >
+                    {uploadingImage ? (
+                      <div className="py-2 flex flex-col items-center gap-2">
+                        <Loader2 className="w-6 h-6 text-brand animate-spin" />
+                        <span className="text-xs font-bold text-slate-600">Rasm yuklanmoqda...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5">
+                        <div className="w-10 h-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center mb-1">
+                          <Upload className="w-5 h-5" />
+                        </div>
+                        <div className="text-xs font-bold text-slate-800">
+                          Rasm yuklash uchun bosing yoki faylni bu yerga tashlang
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          PNG, JPG, WEBP formatlar (maks. 10MB)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="sm:col-span-2">

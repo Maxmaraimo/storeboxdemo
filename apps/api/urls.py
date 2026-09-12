@@ -31,11 +31,13 @@ urlpatterns = [
     # Catalog & Products CRUD
     path("products/", views_catalog.products_list_create_view, name="products_list_create"),
     path("products/create/", views_catalog.product_create_view, name="product_create"),
+    path("products/upload-image/", views_catalog.product_image_upload_view, name="product_image_upload"),
     path("products/<int:product_id>/", views_catalog.product_detail_update_delete_view, name="product_detail_update_delete"),
     
     # Categories CRUD
     path("categories/", views_catalog.categories_list_create_view, name="categories_list_create"),
     path("categories/create/", views_catalog.category_create_view, name="category_create"),
+    path("categories/upload-image/", views_catalog.category_image_upload_view, name="category_image_upload"),
     path("categories/<int:category_id>/", views_catalog.category_detail_update_delete_view, name="category_detail_update_delete"),
     path("categories/<int:category_id>/toggle-active/", views_catalog.category_toggle_active_view, name="category_toggle_active"),
 

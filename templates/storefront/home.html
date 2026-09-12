@@ -116,40 +116,61 @@
     </div>
     {% endif %}
 
-    <!-- RESTAURANT TEMPLATE SERVICE & SCHEDULE BAR -->
+    <!-- TEMPLATE SPECIFIC DISTINCT SECTIONS -->
     {% if store.theme_template == 'restaurant' %}
-    <div class="rounded-2xl p-4 bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
-                <i data-lucide="utensils" class="w-5 h-5"></i>
-            </div>
-            <div>
-                <div class="font-black text-slate-900 flex items-center gap-2">
-                    {% with status=store.is_currently_open %}
-                    {% if status.0 %}
-                    <span class="inline-flex items-center gap-1.5 text-emerald-600 font-black">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        {{ status.1 }}
-                    </span>
-                    {% else %}
-                    <span class="inline-flex items-center gap-1.5 text-rose-600 font-black">
-                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                        {{ status.1 }}
-                    </span>
-                    {% endif %}
-                    {% endwith %}
+    <!-- 1. RESTAURANT SERVICE & DELIVERY CONTROLS -->
+    <div class="rounded-3xl p-4 sm:p-5 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                    <i data-lucide="utensils" class="w-5 h-5"></i>
                 </div>
-                <div class="text-[11px] text-slate-400 font-medium mt-0.5">Yetkazib berish: {{ store.delivery_time_estimate|default:"30-45 daqiqa" }}</div>
+                <div>
+                    <div class="font-black text-slate-900 flex items-center gap-2">
+                        {% with status=store.is_currently_open %}
+                        {% if status.0 %}
+                        <span class="inline-flex items-center gap-1.5 text-emerald-600 font-black">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            {{ status.1 }}
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 text-rose-600 font-black">
+                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                            {{ status.1 }}
+                        </span>
+                        {% endif %}
+                        {% endwith %}
+                        <span class="text-slate-300">&bull;</span>
+                        <span class="text-slate-600 font-bold">09:00 &mdash; 23:00</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400 font-medium mt-0.5 flex items-center gap-1.5">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span>Yetkazib berish: {{ store.delivery_time_estimate|default:"30-45 daqiqa" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Mode: Delivery / Pickup selector -->
+            <div class="flex items-center p-1 rounded-2xl bg-slate-100 border border-slate-200/70 text-xs font-bold" x-data="{ orderMode: 'delivery' }">
+                <button type="button" @click="orderMode = 'delivery'" :class="orderMode === 'delivery' ? 'bg-white text-slate-950 shadow-2xs' : 'text-slate-500 hover:text-slate-800'" class="px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer">
+                    <i data-lucide="bike" class="w-3.5 h-3.5 text-amber-500"></i>
+                    <span>Yetkazib berish</span>
+                </button>
+                <button type="button" @click="orderMode = 'pickup'" :class="orderMode === 'pickup' ? 'bg-white text-slate-950 shadow-2xs' : 'text-slate-500 hover:text-slate-800'" class="px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer">
+                    <i data-lucide="store" class="w-3.5 h-3.5 text-amber-500"></i>
+                    <span>Olib ketish</span>
+                </button>
             </div>
         </div>
-        <div class="flex items-center gap-2 text-xs font-semibold text-slate-600">
-            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/60">
-                <i data-lucide="bike" class="w-4 h-4 text-brand"></i>
-                <span>{{ store.free_delivery_threshold|floatformat:0 }} UZS dan bepul</span>
+
+        <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-500 font-semibold">
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>{{ store.free_delivery_threshold|floatformat:0 }} UZS dan bepul yetkazish</span>
             </div>
-            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/60">
-                <i data-lucide="store" class="w-4 h-4 text-brand"></i>
-                <span>Olib ketish</span>
+            <div class="flex items-center gap-4 text-slate-600">
+                <span class="flex items-center gap-1"><i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i> Issiq qadoqlash</span>
+                <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> 100% Halol</span>
             </div>
         </div>
     </div>
@@ -177,7 +198,11 @@
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <h3 class="text-sm font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight">
-                    {{ t.categories|default:"Kategoriyalar" }}
+                    {% if store.theme_template == 'restaurant' %}
+                        🍽️ Taomlar Bo'limlari
+                    {% else %}
+                        {{ t.categories|default:"Kategoriyalar" }}
+                    {% endif %}
                 </h3>
                 <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">{{ categories|length }} ta</span>
             </div>
@@ -235,9 +260,21 @@
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h2 class="text-base sm:text-lg font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight">
-                    {% if current_category %}{{ current_category.display_name }}{% else %}{{ t.popular|default:"Ommabop mahsulotlar" }}{% endif %}
+                    {% if current_category %}
+                        {{ current_category.display_name }}
+                    {% elif store.theme_template == 'restaurant' %}
+                        🍽️ Taomlar Menyusi
+                    {% else %}
+                        {{ t.popular|default:"Ommabop mahsulotlar" }}
+                    {% endif %}
                 </h2>
-                <p class="text-[11px] text-slate-400 font-medium mt-0.5">Eng sara va ommabop mahsulotlar to'plami</p>
+                <p class="text-[11px] text-slate-400 font-medium mt-0.5">
+                    {% if store.theme_template == 'restaurant' %}
+                        Issiq va yangi tayyorlangan sara taomlar to'plami
+                    {% else %}
+                        Eng sara va ommabop mahsulotlar to'plami
+                    {% endif %}
+                </p>
             </div>
             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors">
                 <span>+{{ total_products_count|default:products.count }} ta ko'proq</span>

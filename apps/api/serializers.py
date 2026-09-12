@@ -50,6 +50,7 @@ class CategorySerializer(serializers.ModelSerializer):
     primary_image_url = serializers.ReadOnlyField()
     active_products_count = serializers.ReadOnlyField()
     slug = serializers.CharField(required=False, allow_blank=True)
+    image_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Category
@@ -70,6 +71,7 @@ class ProductSerializer(serializers.ModelSerializer):
     primary_image_url = serializers.ReadOnlyField()
     category_name = serializers.SerializerMethodField()
     slug = serializers.CharField(required=False, allow_blank=True)
+    image_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Product

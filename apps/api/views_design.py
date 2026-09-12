@@ -252,6 +252,8 @@ def design_banners_list_create_view(request):
         banner.image = banner_file
     elif image_url:
         banner.image_url = image_url
+    else:
+        banner.image_url = get_random_banner_image(store.theme_business_niche or "restaurant")
 
     banner.save()
     return Response({
@@ -268,7 +270,7 @@ def design_banners_list_create_view(request):
         "message": "Banner muvaffaqiyatli qo'shildi!"
     }, status=201)
 
-@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@api_view(["GET", "POST", "PUT", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def design_banner_detail_view(request, banner_id):
     """Retrieve, update or delete a single promotional banner."""
