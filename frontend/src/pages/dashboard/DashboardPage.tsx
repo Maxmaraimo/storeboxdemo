@@ -630,7 +630,7 @@ export const DashboardPage: React.FC = () => {
 
                 {store?.subdomain && (
                   <a
-                    href={`/store/${store.subdomain}/`}
+                    href={store.storefront_url || `/store/${store.subdomain}/`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 text-[11px] font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center gap-1 transition-colors"

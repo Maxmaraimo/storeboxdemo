@@ -33,6 +33,7 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
   const { store, t } = useAuth();
   const { newOrdersCount, unreadChatsCount } = useNotifications();
+  const storefrontUrl = store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#");
 
   // Expanded by default for clear readability, with toggle to collapse
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
@@ -192,7 +193,7 @@ export const Sidebar: React.FC = () => {
         {/* Live Store Subdomain Pill */}
         {isExpanded && store?.subdomain && (
           <a
-            href={`/store/${store.subdomain}/`}
+            href={storefrontUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="px-2.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/[0.04] dark:border-white/10 flex items-center justify-between text-[11px] font-mono font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors group"
@@ -282,7 +283,7 @@ export const Sidebar: React.FC = () => {
       {store?.subdomain && (
         <div className="pt-2 border-t border-black/[0.06] dark:border-white/10">
           <a
-            href={`/store/${store.subdomain}/`}
+            href={storefrontUrl}
             target="_blank"
             rel="noopener noreferrer"
             className={`flex items-center rounded-2xl bg-neutral-100/80 dark:bg-white/5 border border-black/[0.06] dark:border-white/10 hover:bg-neutral-200/60 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all ${

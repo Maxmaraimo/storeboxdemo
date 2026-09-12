@@ -58,7 +58,7 @@ def check_subdomain_api(request):
     subdomain_slug = slugify(subdomain)
     if not subdomain_slug or len(subdomain_slug) < 3:
         return JsonResponse({'available': False, 'message': "Kamida 3 ta belgi bo'lishi kerak"})
-    if subdomain_slug in ['admin', 'api', 'www', 'app', 'mail', 'store', 'robosite', 'storebox', 'storebox']:
+    if subdomain_slug in ['admin', 'api', 'www', 'app', 'billing', 'mail', 'store', 'robosite', 'storebox']:
         return JsonResponse({'available': False, 'message': 'Band qilingan nom'})
     exists = Store.objects.filter(subdomain=subdomain_slug).exists()
     return JsonResponse({
@@ -861,7 +861,7 @@ def onboarding_wizard_view(request):
                 ProductImage.objects.create(product=product, image=p, is_primary=(i == 0))
 
             if request.POST.get('action') == 'open_store':
-                return redirect(f'/store/{store.subdomain}/')
+                return redirect(store.get_storefront_url())
             return redirect('dashboard:home')
         except Exception as e:
             error = f"Xatolik yuz berdi: {str(e)}"
@@ -2030,7 +2030,7 @@ def platforms_view(request):
     from apps.stores.ai_designer import NICHE_PRESETS
     from apps.catalog.models import Product
     web_app_url = get_store_webapp_url(store)
-    storefront_url = f"http://127.0.0.1:8000/store/{store.subdomain}/"
+    storefront_url = store.get_storefront_url()
     bot_link = f"https://t.me/{store.telegram_bot_username}" if store.telegram_bot_username else f"https://t.me/storebox_{store.subdomain}_bot"
     primary_banner = MarketingBanner.objects.filter(store=store, is_active=True).first()
     sub_tab = request.GET.get('sub', 'design')

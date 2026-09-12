@@ -1,3 +1,5 @@
+import re
+
 from django.conf import settings
 from django.http import HttpResponseRedirect
 
@@ -41,6 +43,17 @@ class PlatformDomainRoutingMiddleware:
         app_domain = settings.APP_DOMAIN.lower()
         billing_domain = settings.BILLING_DOMAIN.lower()
         public_hosts = {platform_domain, f'www.{platform_domain}'}
+
+        legacy_store_path = re.match(r'^/store/([-a-z0-9]+)(/.*)?$', path, re.IGNORECASE)
+        is_storebox_host = host in public_hosts or host == app_domain or host.endswith(f'.{platform_domain}')
+        if settings.STOREFRONT_SUBDOMAIN_URLS and is_storebox_host and legacy_store_path:
+            store_subdomain = legacy_store_path.group(1).lower()
+            storefront_path = legacy_store_path.group(2) or '/'
+            return self._redirect(
+                request,
+                f'{store_subdomain}.{platform_domain}',
+                storefront_path,
+            )
 
         if host == billing_domain:
             if normalized_path in self.AUTH_ALIASES or normalized_path in {

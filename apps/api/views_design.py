@@ -101,7 +101,7 @@ def design_theme_get_view(request):
         "templates": templates,
         "store_name": store.name,
         "subdomain": store.subdomain,
-        "storefront_url": f"/store/{store.subdomain}/",
+        "storefront_url": store.get_storefront_url(),
         "niches": niches
     })
 
@@ -466,7 +466,7 @@ def qr_catalog_settings_view(request):
         })
 
     # GET
-    store_url = f"https://{store.subdomain}.storebox.uz"
+    store_url = store.get_storefront_url()
     logo_url = store.logo.url if store.logo else ""
 
     return Response({

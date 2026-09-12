@@ -265,6 +265,17 @@ class Store(models.Model):
         platform_domain = getattr(settings, 'PLATFORM_DOMAIN', 'storebox.uz')
         return f"{self.subdomain}.{platform_domain}"
 
+    def get_storefront_url(self):
+        custom_domain = (self.custom_domain or '').strip().rstrip('/')
+        if custom_domain:
+            if custom_domain.startswith(('http://', 'https://')):
+                return custom_domain
+            return f"https://{custom_domain}"
+
+        if getattr(settings, 'STOREFRONT_SUBDOMAIN_URLS', True):
+            return f"https://{self.get_full_domain()}"
+        return f"{settings.PLATFORM_SITE_URL}/store/{self.subdomain}"
+
     def is_currently_open(self, lang=None):
         l = lang or getattr(self, '_current_lang', 'uz')
         status_labels = {

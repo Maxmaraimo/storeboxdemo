@@ -200,7 +200,7 @@
                                     <div class="text-xxs text-slate-700 font-medium truncate max-w-[220px]" title="{{ store.name }}">
                                         {{ store.name }}
                                     </div>
-                                    <a href="/store/{{ store.subdomain }}/" target="_blank" class="text-xxs text-slate-400 hover:text-emerald-600 inline-flex items-center gap-0.5 mt-0.5">
+                                    <a href="{{ store.get_storefront_url }}/" target="_blank" class="text-xxs text-slate-400 hover:text-emerald-600 inline-flex items-center gap-0.5 mt-0.5">
                                         <i data-lucide="external-link" class="w-2.5 h-2.5"></i>
                                         <span>Открыть витрину</span>
                                     </a>
@@ -322,7 +322,7 @@
                                 </button>
 
                                 <!-- Direct View Store -->
-                                <a href="/store/{{ store.subdomain }}/"
+                                <a href="{{ store.get_storefront_url }}/"
                                    target="_blank"
                                    title="Витрина магазина"
                                    class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">

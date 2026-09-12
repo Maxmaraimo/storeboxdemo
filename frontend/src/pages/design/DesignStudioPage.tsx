@@ -518,6 +518,7 @@ export const DesignStudioPage: React.FC = () => {
 
   // Subdomain & Preview URL
   const subdomain = store?.subdomain || themeData?.subdomain || "shop-655";
+  const storefrontUrl = (themeData?.storefront_url || store?.storefront_url || `/store/${subdomain}`).replace(/\/$/, "");
   const activePrimaryBanner = banners.find(b => b.is_active) || banners[0];
   const previewParams = new URLSearchParams({
     preview: "1",
@@ -529,7 +530,7 @@ export const DesignStudioPage: React.FC = () => {
     preview_banner_subtitle: activePrimaryBanner?.subtitle || "",
     preview_banner_image: activePrimaryBanner?.image_url || "",
   });
-  const previewUrl = `/store/${subdomain}/?${previewParams.toString()}`;
+  const previewUrl = `${storefrontUrl}/?${previewParams.toString()}`;
 
   // Calculate realistic desktop scale
   const desktopCanvasWidth = 1200;
@@ -570,7 +571,7 @@ export const DesignStudioPage: React.FC = () => {
         {/* Action Buttons */}
         <div className="flex items-center gap-2.5">
           <a
-            href={`/store/${subdomain}/`}
+            href={`${storefrontUrl}/`}
             target="_blank"
             rel="noopener noreferrer"
             className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"

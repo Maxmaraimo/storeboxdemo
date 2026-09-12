@@ -130,7 +130,7 @@ export const Header: React.FC = () => {
         {/* Store Domain Badge */}
         {store?.subdomain && (
           <a
-            href={`/store/${store.subdomain}/`}
+            href={store.storefront_url || `/store/${store.subdomain}/`}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-neutral-100 dark:bg-white/5 border border-black/[0.06] dark:border-white/10 hover:border-neutral-400 transition-all text-xs font-mono font-bold text-neutral-700 dark:text-neutral-200 shadow-2xs group shrink-0"

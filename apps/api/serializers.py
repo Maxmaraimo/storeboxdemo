@@ -35,10 +35,12 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class StoreSerializer(serializers.ModelSerializer):
+    storefront_url = serializers.CharField(source="get_storefront_url", read_only=True)
+
     class Meta:
         model = Store
         fields = [
-            "id", "name", "subdomain", "business_category", "currency",
+            "id", "name", "subdomain", "storefront_url", "business_category", "currency",
             "phone", "telegram_bot_username", "is_active",
             "delivery_price", "free_delivery_threshold", "delivery_time_estimate",
             "pickup_enabled", "courier_enabled", "address",
@@ -194,4 +196,3 @@ class StorePaymentSettingSerializer(serializers.ModelSerializer):
             "click_enabled", "click_service_id", "click_merchant_id",
             "uzum_enabled"
         ]
-

@@ -125,8 +125,8 @@ def test_bot_connection(token, chat_id):
 
 def get_store_webapp_url(store):
     """Resolve active public HTTPS WebApp URL for Telegram"""
-    if store.custom_domain:
-        return f"https://{store.custom_domain}/store/{store.subdomain}/?tma=1"
+    if store.custom_domain or not settings.DEBUG:
+        return f"{store.get_storefront_url()}/?tma=1"
 
     from .tunnel import get_public_https_base_url
     base = get_public_https_base_url()
@@ -426,4 +426,3 @@ def send_telegram_welcome(token, chat_id, welcome_text, web_app_url):
         return res.json().get('ok', False)
     except Exception:
         return False
-

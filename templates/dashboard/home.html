@@ -145,7 +145,7 @@
                                 <div class="text-[10px] text-slate-400">{{ web_cnt }} {{ t.orders_unit }}</div>
                             </div>
                         </div>
-                        <a href="/store/{{ store.subdomain }}/" target="_blank" class="px-3 py-1 rounded-lg bg-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-300">
+                        <a href="{{ store.get_storefront_url }}/" target="_blank" class="px-3 py-1 rounded-lg bg-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-300">
                             {{ t.open_site }}
                         </a>
                     </div>

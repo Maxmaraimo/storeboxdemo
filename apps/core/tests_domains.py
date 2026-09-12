@@ -1,9 +1,21 @@
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 
 from apps.accounts.models import User
+from apps.stores.models import Store
 
 
 class PlatformDomainRoutingTests(TestCase):
+    def setUp(self):
+        owner = User.objects.create_user(
+            username='storefront-owner',
+            password='SafePassword123!',
+        )
+        self.store = Store.objects.create(
+            owner=owner,
+            name='Shop 655',
+            subdomain='shop-655',
+        )
+
     def test_public_site_keeps_landing_and_links_to_app_auth(self):
         response = self.client.get('/', HTTP_HOST='storebox.uz', secure=True)
 
@@ -97,4 +109,61 @@ class PlatformDomainRoutingTests(TestCase):
             response,
             'https://billing.storebox.uz/',
             fetch_redirect_response=False,
+        )
+
+    def test_legacy_store_url_moves_to_canonical_subdomain(self):
+        response = self.client.get(
+            '/store/shop-655/?cat=new',
+            HTTP_HOST='app.storebox.uz',
+            secure=True,
+        )
+
+        self.assertRedirects(
+            response,
+            'https://shop-655.storebox.uz/?cat=new',
+            fetch_redirect_response=False,
+        )
+
+    def test_legacy_store_post_preserves_method_on_redirect(self):
+        response = self.client.post(
+            '/store/shop-655/cart/add/',
+            {'product_id': 123, 'quantity': 1},
+            HTTP_HOST='app.storebox.uz',
+            secure=True,
+        )
+
+        self.assertEqual(response.status_code, 307)
+        self.assertEqual(
+            response['Location'],
+            'https://shop-655.storebox.uz/cart/add/',
+        )
+
+    def test_store_subdomain_serves_storefront_and_allows_app_preview(self):
+        response = self.client.get(
+            '/?preview=1',
+            HTTP_HOST='shop-655.storebox.uz',
+            secure=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Shop 655')
+        self.assertNotIn('X-Frame-Options', response)
+        self.assertEqual(
+            response['Content-Security-Policy'],
+            'frame-ancestors https://app.storebox.uz',
+        )
+
+    @override_settings(STOREFRONT_SUBDOMAIN_URLS=False)
+    def test_legacy_store_url_remains_available_during_dns_rollout(self):
+        response = self.client.get(
+            '/store/shop-655/',
+            HTTP_HOST='app.storebox.uz',
+            secure=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Shop 655')
+        self.assertEqual(
+            self.store.get_storefront_url(),
+            'https://storebox.uz/store/shop-655',
         )

@@ -1,5 +1,6 @@
 import time
 import logging
+from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse
 from django.utils.deprecation import MiddlewareMixin
@@ -136,6 +137,9 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
         # Strictly prohibit framing/embedding for admin and super-admin panels
         if path.startswith('/super-admin') or path.startswith('/admin') or path.startswith('/django-admin'):
             response['X-Frame-Options'] = 'DENY'
+        elif getattr(request, 'store', None) and request.GET.get('preview') == '1':
+            response.headers.pop('X-Frame-Options', None)
+            response['Content-Security-Policy'] = f"frame-ancestors {settings.APP_SITE_URL}"
         elif not response.has_header('X-Frame-Options'):
             response['X-Frame-Options'] = 'SAMEORIGIN'
 

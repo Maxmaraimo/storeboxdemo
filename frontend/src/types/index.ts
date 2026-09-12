@@ -10,6 +10,7 @@ export interface Store {
   id: number;
   name: string;
   subdomain: string;
+  storefront_url: string;
   business_category?: string;
   currency: string;
   phone?: string;

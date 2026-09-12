@@ -221,6 +221,7 @@ BILLING_DOMAIN = os.environ.get('BILLING_DOMAIN', f'billing.{PLATFORM_DOMAIN}')
 PLATFORM_SITE_URL = os.environ.get('PLATFORM_SITE_URL', f'https://{PLATFORM_DOMAIN}').rstrip('/')
 APP_SITE_URL = os.environ.get('APP_SITE_URL', f'https://{APP_DOMAIN}').rstrip('/')
 BILLING_SITE_URL = os.environ.get('BILLING_SITE_URL', f'https://{BILLING_DOMAIN}').rstrip('/')
+STOREFRONT_SUBDOMAIN_URLS = os.environ.get('STOREFRONT_SUBDOMAIN_URLS', 'True') == 'True'
 PLATFORM_NAME = 'StoreBox Uzbekistan'
 
 # Security & Session Hardening

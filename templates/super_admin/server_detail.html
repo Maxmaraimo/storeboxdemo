@@ -15,7 +15,7 @@
     </a>
 
     <!-- Storefront Link -->
-    <a href="/store/{{ store.subdomain }}/" target="_blank"
+    <a href="{{ store.get_storefront_url }}/" target="_blank"
        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition shadow-xs">
         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
         <span>Витрина</span>
