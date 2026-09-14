@@ -8,6 +8,7 @@ from apps.api import views_dashboard
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('django-admin/', admin.site.urls),
 
     # Language Switcher
     path('lang/<str:lang>/', core_views.switch_language_view, name='switch_language'),

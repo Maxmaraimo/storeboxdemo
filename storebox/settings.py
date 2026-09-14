@@ -11,11 +11,15 @@ CSRF_TRUSTED_ORIGINS = [
     'http://*.localhost:8000',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'http://*.localhost:8001',
+    'http://localhost:8001',
+    'http://127.0.0.1:8001',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://*.lvh.me:8000',
+    'http://*.lvh.me:8001',
     'http://176.96.243.203',
     'http://176.96.243.203:8000',
     'https://176.96.243.203',
@@ -218,9 +222,17 @@ REST_FRAMEWORK = {
 PLATFORM_DOMAIN = os.environ.get('PLATFORM_DOMAIN', 'storebox.uz')
 APP_DOMAIN = os.environ.get('APP_DOMAIN', f'app.{PLATFORM_DOMAIN}')
 BILLING_DOMAIN = os.environ.get('BILLING_DOMAIN', f'billing.{PLATFORM_DOMAIN}')
-PLATFORM_SITE_URL = os.environ.get('PLATFORM_SITE_URL', f'https://{PLATFORM_DOMAIN}').rstrip('/')
-APP_SITE_URL = os.environ.get('APP_SITE_URL', f'https://{APP_DOMAIN}').rstrip('/')
-BILLING_SITE_URL = os.environ.get('BILLING_SITE_URL', f'https://{BILLING_DOMAIN}').rstrip('/')
+
+if DEBUG:
+    _default_url = 'http://localhost:8000'
+    PLATFORM_SITE_URL = os.environ.get('PLATFORM_SITE_URL', _default_url).rstrip('/')
+    APP_SITE_URL = os.environ.get('APP_SITE_URL', _default_url).rstrip('/')
+    BILLING_SITE_URL = os.environ.get('BILLING_SITE_URL', _default_url).rstrip('/')
+else:
+    PLATFORM_SITE_URL = os.environ.get('PLATFORM_SITE_URL', f'https://{PLATFORM_DOMAIN}').rstrip('/')
+    APP_SITE_URL = os.environ.get('APP_SITE_URL', f'https://{APP_DOMAIN}').rstrip('/')
+    BILLING_SITE_URL = os.environ.get('BILLING_SITE_URL', f'https://{BILLING_DOMAIN}').rstrip('/')
+
 STOREFRONT_SUBDOMAIN_URLS = os.environ.get('STOREFRONT_SUBDOMAIN_URLS', 'True') == 'True'
 PLATFORM_NAME = 'StoreBox Uzbekistan'
 

@@ -1,0 +1,1685 @@
+Перейти к содержимому
+
+Новый чат
+Изображения
+
+Найти
+
+Недавние чаты
+
+История чата
+ChatGPT
+
+
+Новый чат
+⇧
+⌘
+O
+Изображения
+ОБНОВЛЕНО
+Библиотека
+Запланированное
+Плагины
+Проекты
+
+Больше
+
+Недавнее
+
+Выбор модели для соцсети
+
+
+Промпт для Antigravity
+
+
+Четкий промт для Antigravity
+
+
+Понимание демонстрации платформы
+
+
+Промпт для Django проекта
+
+
+Vendure xatolarini tuzatish
+
+
+План быстрого заработка
+
+
+Создание голосового Jarvis
+
+
+Клон ВКонтакте структура
+
+
+Промт для Zilo
+
+
+Промт для NFT коллекции
+
+
+Обход расширения Gemini
+
+
+Вышел ли Grass?
+
+
+Равновозможные вероятности
+
+
+Листинг токена GRASS
+
+
+Диалог в чате
+
+
+Промт для создания соцсети
+
+
+Решение задачи по прогрессии
+
+
+New chat
+
+
+Grass фильм 2018
+
+
+Клон ВК функционал
+
+
+List of Names
+
+
+Starting OnlyFans Agency
+
+
+Что приготовить на ужин
+
+
+Что приготовить?
+
+
+Платформа для мемкоинов
+
+
+Ник с 5 буквами
+
+
+Ник с X 5 букв
+
+
+
+Ozodbek Maxmaraimov
+Free
+
+Принять предложение
+Бесплатное предложение
+
+Поделиться
+
+
+ChatGPT сказал:
+Да, именно это я бы и добавил. Причём тогда проект уже получается не просто «Telegram + Instagram», а полноценная social + messenger + creator + Web3 платформа.
+И ты правильно подметил насчёт профиля: сейчас в Telegram профиль — это уже не просто аватар и bio. Там есть Stories, музыка, подарки/collectibles, emoji status и другие элементы персонализации; коллекционные подарки можно показывать в профиле, использовать как статус и продавать/передавать. 
+
+Telegram
++1
+
+Я бы заложил такую структуру
+🏠 Social
+Лента
+Stories
+Shorts/Reels
+рекомендации
+публикации
+фото/видео
+лайки
+комментарии
+репосты
+сохранённые
+опросы
+💬 Messenger
+личные чаты
+группы
+каналы
+голосовые
+файлы
+фото/видео
+реакции
+стикеры/GIF
+закрепы
+поиск
+редактирование/удаление
+исчезающие сообщения
+звонки
+видеозвонки
+screen sharing
+👤 Profile
+avatar
+username
+bio
+posts
+photos
+videos
+Stories
+music
+followers/following
+friends
+Gifts
+NFT
+emoji/status
+профильная тема/фон
+ссылки
+достижения
+Причём Gifts/NFT можно сделать реально интересной частью профиля: пользователь получает подарок → превращает его в collectible → выставляет в профиле → может продать/передать. У Telegram сейчас похожая механика уже существует, включая marketplace и сделки за Stars/TON.
+
+Telegram
++1
+💎 Web3-раздел
+Я бы сделал отдельную кнопку:
+💎 Wallet
+
+Внутри:
+
+
+┌───────────────────────┐
+│       MY WALLET       │
+│                       │
+│      1,245.80 TON     │
+│      $3,xxx.xx        │
+│                       │
+│ [Send] [Receive]      │
+│                       │
+│ Tokens                │
+│ NFTs                  │
+│ Transactions          │
+└───────────────────────┘
+И отдельно:
+🖼 NFT Market
+Explore
+Trending
+New
+Collections
+My NFTs
+My listings
+Auctions
+Offers
+Activity
+Можно будет:
+Create → Mint → List → Buy → Sell → Transfer
+
+Но здесь я бы сделал архитектуру так, чтобы криптовалюта не хранилась просто в нашей Django-базе. Балансы блокчейна должны подтверждаться блокчейном/кошельком, а наша БД хранит metadata, listings, orders, user mappings и т.п.
+
+Для TON можно предусмотреть wallet integration через TON Connect — это стандартный путь для взаимодействия приложения с TON-кошельком. 
+
+Telegram
+
+🚀 И ещё одна очень интересная вещь — Mini Apps
+Я бы обязательно заложил свою систему Mini Apps.
+То есть внутри нашей социальной сети пользователь открывает:
+
+Apps
+
+и там:
+
+игры;
+магазины;
+NFT;
+платежи;
+сервисы;
+AI;
+доставка;
+бронирование;
+подписки;
+различные приложения.
+Это очень сильная идея, потому что Telegram уже показывает, насколько мощной может быть модель Mini Apps: приложения запускаются прямо внутри Telegram, поддерживают платежи, подписки и могут работать практически как полноценные приложения. 
+
+Telegram
++1
+У нас можно сделать собственную систему:
+
+
+App Store
+│
+├── Games
+├── Finance
+├── Shopping
+├── NFT
+├── AI
+├── Services
+├── Entertainment
+└── Utilities
+📱 А мобильную версию я бы сделал приоритетом №1
+Вот тут я с тобой полностью согласен: она не должна лагать.
+Не надо сначала сделать desktop, а потом сказать Antigravity:
+
+«Теперь сделай mobile responsive».
+Это часто приводит к ужасному мобильному интерфейсу.
+Нужно проектировать сразу:
+
+Mobile-first + Desktop
+
+И отдельно оптимизировать:
+
+lazy loading;
+infinite scroll;
+виртуализацию длинных списков;
+оптимизацию изображений;
+adaptive video;
+thumbnail вместо оригинального видео;
+CDN;
+caching;
+WebSocket reconnect;
+offline cache;
+optimistic UI;
+background uploads;
+pagination;
+code splitting;
+service worker/PWA;
+push notifications.
+Например, Shorts не должны загружать сразу 100 видео.
+Загрузили:
+
+
+Video 1 → playing
+Video 2 → preload
+Video 3 → thumbnail
+остальные → не загружать
+Пользователь свайпнул:
+
+Video 2 → playing
+Video 3 → preload
+Video 1 → освобождаем
+Video 4 → thumbnail
+Вот тогда даже большая лента будет ощущаться быстро.
+И ещё важный момент
+Я бы не пытался сразу копировать абсолютно всё Telegram один в один.
+Наша концепция должна быть:
+
+Telegram Messenger + Instagram Social + TikTok Shorts + VK-style navigation + Web3 Wallet + NFT Marketplace + Mini Apps
+Но с единым аккаунтом и единым профилем.
+Например:
+
+
+                   ZILO
+                    │
+       ┌────────────┼────────────┐
+       │            │            │
+     SOCIAL       MESSENGER     WEB3
+       │            │            │
+     Feed          Chats       Wallet
+     Stories       Groups      NFTs
+     Shorts        Channels    Market
+     Posts         Calls       Gifts
+       │            │            │
+       └────────────┼────────────┘
+                    │
+                  PROFILE
+И вот такой проект уже имеет смысл строить.
+Причём я бы заранее заложил возможность, чтобы позже добавить AI-помощника, монетизацию авторов, платные каналы, Stars-подобную внутреннюю валюту, подписки, рекламу и Mini Apps. Telegram, например, уже использует Stars для цифровых товаров, подарков и поддержки авторов.
+
+Telegram
++1
+
+По технологии я всё ещё оставляю рекомендацию: Django + PostgreSQL + Redis + WebSockets + React/TypeScript + WebRTC + FFmpeg + S3, а мобильный клиент на первом этапе можно сделать очень качественным responsive/PWA, а затем при необходимости вынести в React Native.
+
+И самое главное: всё это нужно описать в одном архитектурном MASTER PROMPT для Antigravity, но заставить его реализовывать модули последовательно и проверять каждый реальный пользовательский сценарий, иначе он снова нарисует 100 красивых страниц с неработающими кнопками.
+
+
+
+
+
+
+Вы сказали:
+Так, хорошо, я тебя понял. Так и сделаем, как ты сказал. Тогда, как теперь нужно подумать логику, как всё должно работать и стиль и так далее. Во-первых, там регистрация и логин. Проходит регистрация, открывает там вещь. Переходит там на ленте там профиль, как будет. Короче, как редактировать профиль уже есть. Как у Телеграма хочу, чтобы было, да. Там как у Телеграма, там все настройки, конфиденциальность и так далее. Пару настроек можно сделать. И ещё дополнительно, типа пол, и всё, что. Оставь отношения, как у там ВК. Стилистика удобнее, да. Как лента, как у Instagram там. Ну, короче, надо подумать, как всё это работает, пусть, понимаешь. Потом эти надо добавить. Хороший промысел, стиль хороший, там удобный, глазам приятный, понимаешь? Вот.
+
+Развернуть
+
+
+
+
+ChatGPT сказал:
+Да. Теперь уже надо не писать Antigravity «сделай соцсеть», а сначала зафиксировать логику продукта. Я бы построил его как единый продукт, где пользователь вообще не чувствует, что внутри смешаны Telegram, Instagram и VK.
+1. Первый запуск
+Пользователь открывает приложение:
+Welcome → Регистрация / Войти
+
+Регистрация:
+
+Телефон или email.
+Код подтверждения.
+Пароль.
+Имя.
+Username @username.
+Avatar — можно пропустить.
+Дата рождения.
+Пол — необязательно.
+Статус/о себе — необязательно.
+Настройки конфиденциальности по умолчанию.
+Завершение регистрации.
+После этого не отправляем пользователя в настройки.
+Он попадает сразу в Главную ленту.
+
+2. Главный интерфейс
+Я бы сделал визуально что-то между современным VK и Instagram, но не копию.
+Desktop
+
+┌─────────────────────────────────────────────────────────────┐
+│ LOGO                 Search              🔔    💬    Avatar │
+├──────────────┬──────────────────────────────┬───────────────┤
+│              │                              │               │
+│ 🏠 Главная   │       STORIES                │               │
+│ 👥 Друзья    │    ○ ○ ○ ○ ○ ○ ○             │ Рекомендации  │
+│ 💬 Сообщения │                              │               │
+│ 🔔 Уведомл.  │       FEED                  │ Друзья        │
+│ 🎬 Shorts    │                              │               │
+│ 📷 Stories   │       POST                  │               │
+│ 👥 Группы    │                              │               │
+│ 📢 Каналы    │       POST                  │               │
+│ 💎 Wallet    │                              │               │
+│ 🖼 NFT       │                              │               │
+│ ⚙ Настройки │                              │               │
+│              │                              │               │
+└──────────────┴──────────────────────────────┴───────────────┘
+Но на мобильном sidebar исчезает.
+Внизу:
+
+
+🏠     🔍     ＋     💬     👤
+3. Лента
+Главная — это именно социальная лента, а не список чатов.
+Сверху:
+
+Stories
+Кружки:
+
++ Ваша история
+○ Alex
+○ Maria
+○ Timur
+○ Anna
+Нажимаешь → fullscreen Stories.
+После Stories:
+
+Feed
+Каждый пост:
+
+Avatar   Username
+         2 часа назад
+
+        [ PHOTO / VIDEO ]
+
+Текст публикации...
+
+♡ 1.2K    💬 124    ↗ 32    🔖
+
+Показать комментарии
+Пользователь может:
+лайкнуть;
+поставить реакцию;
+прокомментировать;
+ответить;
+поделиться;
+отправить в чат;
+сохранить;
+пожаловаться;
+скрыть;
+подписаться;
+открыть профиль автора.
+Создание публикации
+Кнопка +.
+
+Создать
+├── 📝 Пост
+├── 📷 Фото
+├── 🎬 Видео
+├── 🎥 Shorts
+├── 📊 Опрос
+└── 📖 Story
+4. Профиль
+Профиль я бы сделал в стиле Telegram + социальность VK/Instagram.
+
+             [Avatar]
+
+           Ozodbek
+           @username
+
+           Developer
+           Uzbekistan
+
+   245 Followers    180 Following
+        96 Friends
+
+[Подписаться] [Сообщение]
+
+Posts   Photos   Videos   Shorts
+--------------------------------
+
+              POST
+              POST
+              POST
+Но ниже можно добавить:
+Digital Identity
+
+🎁 Gifts
+💎 NFTs
+🏆 Achievements
+🎵 Music
+🔗 Links
+То есть профиль становится личной страницей человека, а не просто списком публикаций.
+5. Редактирование профиля
+
+Edit Profile
+
+[Avatar]
+
+Name
+Username
+Bio
+Birthday
+Gender
+Relationship
+Location
+Website
+
+Privacy
+Who can see my profile?
+Отношения
+Вот здесь можно сделать именно более социальную модель VK:
+Не указано
+Не женат/не замужем
+Встречаюсь
+Помолвлен(а)
+Женат/замужем
+Всё сложно
+При желании можно указать партнёра.
+Но обязательно сделать настройку видимости.
+
+6. Настройки
+Здесь я бы действительно ориентировался на удобство Telegram.
+⚙️ Settings
+Account
+имя;
+username;
+номер;
+email;
+дата рождения;
+пол;
+отношения;
+bio.
+Privacy
+номер телефона;
+кто может найти меня;
+кто может писать;
+кто может звонить;
+кто может добавлять в группы;
+кто видит Stories;
+кто видит мои посты;
+кто видит online;
+кто видит дату последнего посещения.
+Security
+пароль;
+2FA;
+активные сессии;
+устройства;
+история входов;
+подтверждение новых устройств.
+Notifications
+сообщения;
+звонки;
+лайки;
+комментарии;
+подписки;
+Stories;
+группы;
+каналы.
+Appearance
+Light;
+Dark;
+System;
+размер текста;
+анимации;
+язык.
+Data & Storage
+качество фотографий;
+качество видео;
+autoplay;
+cache;
+Wi-Fi/mobile data;
+очистить cache.
+Blocked Users
+Devices
+
+Language
+
+Help
+
+7. Messenger
+Нажал 💬:
+
+Messages
+
+Search
+
+Pinned
+
+Chats
+────────────────
+Alex       Привет!       12:41
+Maria      Фото           12:38
+Dev Group  New post       12:20
+Открываешь чат:
+
+← Alex                 📞 🎥 ⋮
+
+        Привет
+
+             Привет 👋
+
+        Как дела?
+
+             Нормально
+
+────────────────────
+📎   Message...   🎤
+И всё realtime.
+8. Shorts
+Отдельная вкладка 🎬.
+Полноэкранное вертикальное видео.
+
+Свайп вверх → следующее.
+
+Справа:
+
+
+♡
+💬
+↗
+🔖
+Снизу:
+
+@username
+
+Описание видео...
+
+🎵 Original sound
+И очень важно для производительности:
+не загружать сразу всю ленту видео.
+
+Загрузили текущее → предварительно следующее → остальные по мере необходимости.
+
+9. Telegram-подобные группы и каналы
+Groups
+участники;
+admins;
+permissions;
+messages;
+files;
+media;
+pinned;
+reactions;
+invite links.
+Channels
+подписчики;
+публикации;
+reactions;
+comments;
+statistics;
+admins;
+scheduled posts.
+10. Wallet
+В отдельном разделе:
+💎 Wallet
+
+
+Balance
+
+TON
+USDT
+...
+
+[Send] [Receive]
+
+Transactions
+
+NFT
+И отдельно:
+🖼 NFT Marketplace
+
+
+Trending
+New
+Collections
+My NFTs
+Sell
+Buy
+Activity
+NFT можно отображать прямо в профиле.
+11. Самая важная часть — дизайн
+Я бы не делал кислотный cyberpunk.
+Для такой социальной сети лучше:
+
+Modern / Premium / Clean
+
+много воздуха;
+аккуратные карточки;
+мягкие border-radius;
+тонкие границы;
+качественная типографика;
+плавные анимации;
+dark/light;
+нормальный контраст;
+никакого визуального мусора.
+Цвет
+Основной фон:
+
+Light:
+#F7F8FA
+
+Dark:
+#0E0F11
+Акцент можно сделать своим, чтобы бренд не выглядел копией VK.
+Например:
+
+
+Primary → #3478F6
+Но это потом можем отдельно подобрать.
+12. И главное — логика навигации
+Я бы зафиксировал её так:
+
+                    APP
+                     │
+        ┌────────────┼────────────┐
+        │            │            │
+       HOME        SEARCH       PROFILE
+        │
+   ┌────┼────┐
+   │    │    │
+ FEED STORIES SHORTS
+   │
+ POSTS
+А отдельно:
+
+MESSENGER
+│
+├── Private chats
+├── Groups
+├── Channels
+├── Saved
+└── Calls
+И:
+
+PROFILE
+│
+├── Posts
+├── Photos
+├── Videos
+├── Shorts
+├── Stories
+├── Friends
+├── Followers
+├── Gifts
+├── NFTs
+└── Settings
+И вот каким должно быть главное правило проекта
+Не существует «нарисованных» функций.
+Если на экране есть:
+
+📞 Call
+
+то звонок должен работать.
+
+Если есть:
+
+♡ Like
+
+лайк должен записаться в БД и появиться у автора в уведомлениях.
+
+Если есть:
+
+Send
+
+сообщение должно реально уйти через WebSocket.
+
+Если есть:
+
+NFT Buy
+
+должен существовать реальный transaction flow.
+
+Если есть:
+
+Edit Profile
+
+изменения должны сохраниться и отображаться в профиле.
+
+Я бы сейчас сделал следующий шаг именно так
+Перед тем как давать Antigravity огромный промпт, мы должны зафиксировать полную карту приложения:
+Auth → Onboarding → Home → Feed → Stories → Shorts → Messenger → Calls → Profile → Friends → Groups → Channels → Notifications → Search → Wallet → NFT Market → Settings → Security → Mobile UX → Admin.
+
+А уже после этого я могу составить тебе один очень большой MASTER PROMPT для Antigravity, где будет не только «сделай дизайн», а каждый экран + каждая кнопка + логика переходов + БД + API + realtime + mobile + безопасность + производительность + критерии проверки. Тогда Antigravity будет гораздо сложнее уйти в очередной красивый, но неработающий шаблон.
+
+
+
+
+
+
+Вы сказали:
+красавчик тогда давай приступим к работе с чего начнем я уже на Antigravity IDE новую папку проект открыл 
+
+
+
+
+ChatGPT сказал:
+Отлично. Тогда не будем сразу бросать в Antigravity огромный промпт на 50 функций. Начнём правильно: сначала заложим фундамент проекта и архитектуру, чтобы потом Gemini не превратил его в набор красивых, не связанных страниц.
+Раз папка уже пустая и открыта в Antigravity IDE, первый шаг — дать ему стартовый MASTER PROMPT. Он должен сначала создать архитектуру и базовую работающую оболочку, а не пытаться сразу делать NFT, звонки и всё остальное.
+
+Я бы начал с Django + PostgreSQL + Redis + React/TypeScript, с mobile-first интерфейсом.
+
+Первый промпт для Antigravity
+Social Platform — Antigravity Master Initialization Prompt
+
+
+
+Ты работаешь над созданием новой полноценной социальной платформы с нуля.
+Это НЕ статический шаблон, НЕ UI-макет и НЕ демонстрационная страница.
+
+Наша цель — создать реально работающий продукт, который объединяет социальную сеть, мессенджер и современную media/Web3-платформу.
+
+Ключевой принцип проекта:
+
+FUNCTION FIRST. UI SECOND.
+
+Никаких fake-кнопок, пустых страниц, имитации API, hardcoded-данных вместо реальной логики или надписей «Coming soon» для функций, которые должны работать.
+
+Если функция отображается в интерфейсе, она должна иметь реальную архитектурную основу и работать.
+
+==================================================
+
+ПРОДУКТ
+==================================================
+Рабочее название проекта:
+SOCIAL PLATFORM
+
+Платформа должна объединять:
+
+Instagram-подобную социальную ленту.
+Telegram-подобный Messenger.
+VK-подобную структуру социальной сети и навигации.
+Stories.
+Shorts / вертикальные видео.
+Profiles.
+Friends / Followers / Following.
+Groups.
+Channels.
+Notifications.
+Calls.
+Wallet.
+NFT Marketplace.
+Gifts / digital collectibles.
+Mini Apps — архитектурно предусмотреть возможность дальнейшего добавления.
+В дальнейшем проект должен быть способен расширяться без переписывания всей архитектуры.
+Backend:
+
+Python
+Django
+Django REST Framework
+
+Database:
+
+PostgreSQL
+
+Realtime:
+
+Django Channels
+WebSockets
+Redis
+
+Background tasks:
+
+Celery
+Redis
+
+Frontend:
+
+React
+TypeScript
+
+Стили:
+
+Tailwind CSS либо хорошо организованная CSS architecture.
+
+Video:
+
+FFmpeg.
+
+Calls:
+
+WebRTC.
+
+Storage:
+
+S3-compatible object storage.
+
+Authentication:
+
+Secure session/JWT architecture в зависимости от выбранной frontend/backend схемы.
+
+Проект должен быть разделён на frontend и backend логически.
+
+Создай модульную структуру.
+
+Примерно:
+
+backend/
+manage.py
+
+config/
+    settings/
+    urls.py
+    asgi.py
+    wsgi.py
+
+apps/
+    accounts/
+    profiles/
+    social/
+    posts/
+    comments/
+    reactions/
+    feed/
+    stories/
+    shorts/
+    messaging/
+    groups/
+    channels/
+    notifications/
+    media/
+    calls/
+    search/
+    wallet/
+    nft/
+    gifts/
+    settings/
+    moderation/
+Не обязательно копировать эту структуру буквально.
+Если существует архитектурно лучший вариант — используй его.
+
+Но НЕ создавай один огромный views.py или models.py для всего проекта.
+
+Каждый домен должен быть изолирован.
+
+Создай отдельное frontend-приложение.
+
+Пример:
+
+frontend/
+src/
+app/
+components/
+layouts/
+pages/
+features/
+hooks/
+services/
+stores/
+types/
+utils/
+
+Используй компонентную архитектуру.
+
+Не дублируй один и тот же UI-код.
+
+Создай общие компоненты:
+
+Button
+Input
+Avatar
+Modal
+Dropdown
+Toast
+Tabs
+Card
+Loader
+Skeleton
+EmptyState
+ErrorState
+PostCard
+UserCard
+StoryAvatar
+MessageBubble
+ChatList
+Navigation
+BottomNavigation
+Sidebar
+
+и другие необходимые компоненты.
+
+МОБИЛЬНАЯ ВЕРСИЯ — ОДИН ИЗ ГЛАВНЫХ ПРИОРИТЕТОВ.
+
+Не делай desktop-версию, которую просто уменьшают под телефон.
+
+Интерфейс должен проектироваться как:
+
+MOBILE FIRST + DESKTOP.
+
+На мобильном:
+
+нижняя навигация:
+
+Home
+Search
+Create
+Messages
+Profile
+
+На desktop:
+
+левая навигация
+центральный контент
+правая дополнительная колонка там, где это уместно.
+
+Никаких горизонтальных overflow.
+
+Никаких элементов, которые невозможно нормально нажать пальцем.
+
+Touch targets должны быть удобными.
+
+Поддержать:
+
+320px
+360px
+375px
+390px
+414px
+768px
+1024px
+1280px
+1440px+
+
+Проверить responsive поведение на всех ключевых размерах.
+
+Платформа должна быть быстрой.
+
+Сразу заложить:
+
+lazy loading
+pagination
+infinite scroll
+skeleton loading
+image optimization
+responsive images
+video thumbnails
+video lazy loading
+code splitting
+caching
+debounced search
+WebSocket reconnect
+optimistic UI там, где это безопасно
+background uploads
+
+НЕ загружать всю ленту сразу.
+
+НЕ загружать все Shorts сразу.
+
+Для Shorts:
+
+текущее видео — preload/play
+следующее — preload
+дальнейшие — lazy load.
+
+Изображения должны иметь thumbnails.
+
+Видео должны иметь preview/thumbnail.
+
+Первым реально работающим пользовательским flow сделать:
+
+Registration
+Login
+Logout
+Session management
+Password reset architecture
+
+Регистрация:
+
+username/name
+email или телефон
+пароль
+подтверждение
+создание аккаунта
+создание профиля
+onboarding
+переход в Home.
+После регистрации пользователь НЕ должен попадать на пустую страницу.
+Создать полноценную модель пользователя и профиль.
+
+Поля предусмотреть:
+
+username
+display_name
+avatar
+bio
+birthday
+gender
+relationship_status
+location
+website
+created_at
+updated_at
+
+Relationship:
+
+not_specified
+single
+dating
+engaged
+married
+complicated
+
+Все персональные поля должны иметь настройки видимости.
+
+Профиль должен содержать:
+
+Posts
+Photos
+Videos
+Shorts
+Stories
+Friends
+Followers
+Following
+Gifts
+NFTs
+
+Кнопки:
+
+Edit Profile
+Follow
+Add Friend
+Message
+More
+
+должны быть функциональными.
+
+Архитектурно предусмотреть:
+
+кто может видеть профиль
+кто может писать сообщения
+кто может звонить
+кто может видеть online
+кто может видеть last seen
+кто может добавлять в группы
+кто может видеть Stories
+кто может комментировать
+кто может отправлять friend request
+
+Также:
+
+Blocked users.
+
+Обязательно заложить:
+
+password hashing
+CSRF protection
+XSS protection
+SQL injection protection
+secure cookies
+authentication checks
+authorization checks
+rate limiting architecture
+session management
+device/session tracking
+2FA architecture
+login history
+permission validation
+file upload validation
+file type validation
+file size limits
+
+Никогда не доверять данным от frontend.
+
+Каждый критический action проверять на backend.
+
+Стиль:
+
+modern
+clean
+premium
+minimal
+comfortable
+fast
+social
+
+Не копировать напрямую Telegram, Instagram или VK.
+
+Можно использовать лучшие UX-паттерны этих продуктов, но визуальный язык должен быть собственным.
+
+Должны поддерживаться:
+
+Light mode
+Dark mode
+System mode
+
+Основной интерфейс должен быть спокойным для глаз.
+
+Не использовать чрезмерные градиенты.
+
+Не использовать чрезмерный glassmorphism.
+
+Не делать интерфейс перегруженным.
+
+Анимации:
+
+subtle
+fast
+smooth
+
+Все важные действия должны иметь loading/success/error state.
+
+Создать следующие основные разделы:
+
+HOME
+SEARCH
+CREATE
+MESSAGES
+SHORTS
+STORIES
+FRIENDS
+GROUPS
+CHANNELS
+NOTIFICATIONS
+PROFILE
+WALLET
+NFT MARKETPLACE
+SETTINGS
+
+На desktop можно показывать дополнительные пункты через sidebar.
+
+На mobile использовать компактную навигацию.
+
+Home должна быть настоящей социальной лентой.
+
+Сверху:
+
+Stories.
+
+Ниже:
+
+Feed.
+
+Post поддерживает архитектурно:
+
+text
+image
+images
+video
+GIF
+poll
+link
+
+Действия:
+
+Like
+Reaction
+Comment
+Reply
+Share
+Repost
+Save
+Send to chat
+Delete own post
+Edit own post
+Report
+Hide
+
+Все действия должны работать через backend.
+
+Создать архитектуру Stories.
+
+Пользователь может:
+
+создать Story
+загрузить image/video
+просматривать Stories
+переключать Stories
+видеть просмотр
+удалять свою Story
+
+Stories должны автоматически истекать после заданного срока.
+
+Создать вертикальную video feed architecture.
+
+Shorts:
+
+vertical
+fullscreen
+swipe/scroll
+autoplay
+pause
+mute
+like
+comment
+share
+save
+follow author
+
+Обязательно учитывать performance.
+
+Не загружать сотни видео одновременно.
+
+Архитектура полноценного realtime Messenger.
+
+Поддержать:
+
+private chats
+groups
+channels
+
+Messages:
+
+text
+emoji
+reactions
+reply
+forward
+edit
+delete
+images
+video
+files
+voice messages
+GIF
+stickers
+links
+
+Realtime:
+
+WebSocket.
+
+Также предусмотреть:
+
+typing indicator
+online status
+last seen
+read receipts
+message delivery state
+unread counter
+
+Предусмотреть WebRTC architecture.
+
+Audio call.
+Video call.
+
+Архитектура должна предусматривать:
+
+call signaling
+incoming call
+accept
+reject
+mute
+camera
+speaker
+screen sharing
+end call
+call history
+
+НЕ делать fake call UI.
+
+Если WebRTC пока не реализуется полностью на первом этапе, не создавать ложную кнопку, которая выглядит работающей.
+
+Вместо этого сначала правильно подготовить signaling architecture.
+
+Создать Groups:
+
+create
+join
+leave
+members
+admins
+roles
+permissions
+messages
+media
+files
+pinned messages
+invite links
+mute
+
+Создать Channels:
+
+create
+subscribe
+unsubscribe
+posts
+comments
+reactions
+admins
+permissions
+statistics architecture
+
+Создать realtime notification architecture.
+
+События:
+
+likes
+comments
+replies
+follows
+friend requests
+messages
+mentions
+group events
+channel events
+calls
+
+Unread counter.
+
+Единый поиск:
+
+users
+posts
+groups
+channels
+shorts
+hashtags
+
+Search должен быть backend-driven.
+
+Добавить debounce.
+
+Предусмотреть отдельный Web3 domain.
+
+Wallet:
+
+balance
+assets
+transactions
+NFTs
+send
+receive
+
+Не хранить blockchain balance как единственный источник истины в PostgreSQL.
+
+Предусмотреть wallet integration architecture.
+
+В дальнейшем:
+
+TON
+USDT
+другие поддерживаемые активы.
+
+Создать архитектуру:
+
+Collections
+NFTs
+Owners
+Listings
+Offers
+Sales
+Activity
+
+Действия:
+
+Create
+Mint
+List
+Buy
+Sell
+Transfer
+
+NFT можно отображать в профиле.
+
+Не делать fake blockchain transactions.
+
+Предусмотреть:
+
+gifts
+collectibles
+ownership
+profile display
+transfer
+marketplace integration
+
+Подарки должны отображаться в профиле пользователя.
+
+Создать полноценный Settings раздел:
+
+Account
+Privacy
+Security
+Notifications
+Appearance
+Data & Storage
+Devices
+Blocked Users
+Language
+Help
+
+Особенно хорошо проработать:
+
+Privacy
+Security
+Devices.
+
+Создать основу административной панели для:
+
+users
+posts
+comments
+reports
+groups
+channels
+media
+NFT
+transactions
+notifications
+bans
+
+Администратор должен иметь возможность модерировать платформу.
+
+Спроектировать нормальные relational models.
+
+Не использовать JSON field для хранения абсолютно всей информации.
+
+Добавить:
+
+indexes
+constraints
+foreign keys
+unique constraints
+timestamps
+
+Подготовить migrations.
+
+Все важные frontend действия должны идти через реальные API.
+
+Не использовать fake local arrays вместо backend.
+
+Не hardcode-ить пользователей, посты и сообщения.
+
+Для demo data создать отдельный seed mechanism.
+
+Каждый запрос должен иметь:
+
+loading
+success
+error
+
+Backend:
+
+правильные HTTP status codes
+валидация
+структурированные ошибки
+logging
+
+Frontend должен показывать понятные ошибки пользователю.
+
+ЗАПРЕЩЕНО:
+
+создавать fake buttons
+создавать fake chats
+создавать fake likes
+создавать fake notifications
+делать UI-only Messenger
+делать UI-only profile editing
+делать hardcoded feed
+делать fake wallet balance
+делать fake NFT purchase
+делать fake calls
+создавать десятки пустых страниц только ради количества.
+
+Не говорить:
+
+"implemented"
+
+если функция фактически не работает.
+
+РАБОТАЙ ПОЭТАПНО.
+
+Сейчас НЕ пытайся реализовать абсолютно все функции одновременно.
+
+ЭТАП 1:
+
+Проанализируй пустую директорию.
+Создай архитектуру.
+Создай backend.
+Создай frontend.
+Настрой PostgreSQL.
+Настрой Redis.
+Настрой базовые environment variables.
+Настрой CORS.
+Настрой authentication foundation.
+Создай User/Profile.
+Создай базовую navigation.
+Создай Home.
+Создай Profile.
+Создай Settings.
+Реализуй responsive mobile/desktop shell.
+Создай базовые API.
+Создай migrations.
+Создай seed/demo command.
+После этого:
+ЗАПУСТИ проект.
+
+ПРОВЕРЬ, что frontend запускается.
+
+ПРОВЕРЬ, что backend запускается.
+
+ПРОВЕРЬ database connection.
+
+ПРОВЕРЬ регистрацию.
+
+ПРОВЕРЬ login.
+
+ПРОВЕРЬ logout.
+
+ПРОВЕРЬ создание профиля.
+
+ПРОВЕРЬ Edit Profile.
+
+ПРОВЕРЬ navigation.
+
+ПРОВЕРЬ mobile layout.
+
+Исправь ВСЕ найденные ошибки.
+
+Создай:
+
+unit tests
+API tests
+authentication tests
+permission tests
+
+В дальнейшем подготовить E2E tests.
+
+Минимальный E2E flow:
+
+Register
+→ Login
+→ Home
+→ Profile
+→ Edit Profile
+→ Save
+→ Logout
+→ Login
+
+Этот flow должен реально проходить.
+
+НЕ ПЕРЕХОДИ К СЛЕДУЮЩЕМУ ЭТАПУ, ЕСЛИ ТЕКУЩИЙ ФУНДАМЕНТ НЕ РАБОТАЕТ.
+
+Если обнаружил ошибку:
+
+найти причину;
+исправить;
+снова запустить;
+снова проверить;
+только потом продолжить.
+Не маскируй ошибки frontend-кодом.
+Не удаляй рабочий код без причины.
+
+Не переписывай проект полностью только потому, что так проще.
+
+После завершения ЭТАПА 1 предоставь краткий технический отчёт:
+
+какие файлы созданы;
+какая архитектура создана;
+какие зависимости установлены;
+какие команды запуска;
+какие migrations созданы;
+какие тесты запущены;
+какие тесты прошли;
+какие проблемы найдены и исправлены.
+НО:
+Сначала реально выполни работу.
+
+Отчёт не заменяет реализацию.
+
+Главная цель:
+
+Создать фундамент настоящей социальной платформы, а не красивый прототип.
+
+Каждая следующая функция должна подключаться к существующей архитектуре.
+
+Система должна быть:
+
+functional
+responsive
+secure
+scalable
+maintainable
+fast
+
+Особый приоритет:
+
+Реальная функциональность.
+Mobile UX.
+Performance.
+Security.
+Чистая архитектура.
+Только после этого визуальная полировка.
+НАЧИНАЙ С ЭТАПА 1.
+Сначала проанализируй окружение и создай архитектуру.
+
+Не ограничивайся объяснением того, что собираешься сделать.
+
+ВЫПОЛНЯЙ РАБОТУ В ПРОЕКТЕ.
+Вот этот промпт я бы сейчас отправил первым.
+И важный момент: не позволяй Antigravity после этого сразу переходить к «я создал 150 страниц». Первый результат должен быть маленьким, но настоящим: проект запускается → регистрация → вход → профиль → редактирование → настройки → лента-заготовка → мобильная версия.
+
+После того как Antigravity выполнит этот этап, скинь мне его ответ/лог и, если он что-то создал, структуру проекта. Я тогда дам тебе Этап 2 — настоящую ленту + посты + лайки + комментарии + Stories, уже поверх созданного фундамента.
+
+
+
+
+
+ChatGPT может допускать ошибки. Рекомендуем проверять важную информацию.
+
+
+
+Размышление
+
+
+
+
