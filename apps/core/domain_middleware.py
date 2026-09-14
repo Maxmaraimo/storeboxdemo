@@ -1,4 +1,5 @@
 import re
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.http import HttpResponseRedirect
@@ -24,8 +25,9 @@ class PlatformDomainRoutingMiddleware:
         return path if path.endswith('/') else f'{path}/'
 
     @staticmethod
-    def _redirect(request, host, path):
-        query = request.META.get('QUERY_STRING', '')
+    def _redirect(request, host, path, query=None):
+        if query is None:
+            query = request.META.get('QUERY_STRING', '')
         target = f'https://{host}{path}'
         if query:
             target = f'{target}?{query}'
@@ -56,8 +58,21 @@ class PlatformDomainRoutingMiddleware:
             )
 
         if host == billing_domain:
-            if normalized_path in self.AUTH_ALIASES or normalized_path in {
+            if normalized_path in {
+                '/login/',
+                '/auth/login/',
+                '/accounts/login/',
                 '/dashboard/login/',
+            }:
+                login_query = urlencode({'next': f'https://{billing_domain}/'})
+                return self._redirect(
+                    request,
+                    app_domain,
+                    '/dashboard/login/',
+                    query=login_query,
+                )
+
+            if normalized_path in self.AUTH_ALIASES or normalized_path in {
                 '/dashboard/register/',
             }:
                 canonical_path = self.AUTH_ALIASES.get(normalized_path, normalized_path)

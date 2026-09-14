@@ -76,6 +76,29 @@ class PlatformDomainRoutingTests(TestCase):
             fetch_redirect_response=False,
         )
 
+    def test_old_billing_dashboard_urls_move_to_current_panel(self):
+        dashboard_response = self.client.get(
+            '/dashboard/',
+            HTTP_HOST='billing.storebox.uz',
+            secure=True,
+        )
+        login_response = self.client.get(
+            '/dashboard/login?redirect=%2Fstorebox%2Fbilling',
+            HTTP_HOST='billing.storebox.uz',
+            secure=True,
+        )
+
+        self.assertRedirects(
+            dashboard_response,
+            '/',
+            fetch_redirect_response=False,
+        )
+        self.assertRedirects(
+            login_response,
+            'https://app.storebox.uz/dashboard/login/?next=https%3A%2F%2Fbilling.storebox.uz%2F',
+            fetch_redirect_response=False,
+        )
+
     def test_superadmin_can_open_billing_root(self):
         user = User.objects.create_superuser(
             username='billing-admin',
