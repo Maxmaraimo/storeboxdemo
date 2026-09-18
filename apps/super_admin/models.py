@@ -238,3 +238,87 @@ class TenantSmsLog(models.Model):
 
     def __str__(self):
         return f"SMS to {self.recipient} [{self.status}]"
+
+
+class TariffRequest(models.Model):
+    class Plans(models.TextChoices):
+        START = 'START', 'Старт'
+        STANDARD = 'STANDARD', 'Стандарт'
+        PRO = 'PRO', 'Профессиональный'
+        ENTERPRISE = 'ENTERPRISE', 'Корпоративный'
+
+    class Statuses(models.TextChoices):
+        PENDING = 'PENDING', 'Ожидает рассмотрения'
+        APPROVED = 'APPROVED', 'Одобрена и активирована'
+        REJECTED = 'REJECTED', 'Отклонена'
+
+    class PaymentMethods(models.TextChoices):
+        BANK_TRANSFER = 'BANK_TRANSFER', 'Перечисление / Счет на юрлицо'
+        CASH = 'CASH', 'Наличные / Офис'
+        BALANCE = 'BALANCE', 'С баланса магазина'
+        CLICK = 'CLICK', 'Click'
+        PAYME = 'PAYME', 'Payme'
+        UZUM = 'UZUM', 'Uzum Pay'
+        OTHER = 'OTHER', 'Другое'
+
+    store = models.ForeignKey(
+        'stores.Store',
+        on_delete=models.CASCADE,
+        related_name='tariff_requests',
+        verbose_name='Магазин / Сервер'
+    )
+    merchant = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tariff_requests',
+        verbose_name='Мерчант'
+    )
+    requested_plan = models.CharField(
+        max_length=30,
+        choices=Plans.choices,
+        default=Plans.STANDARD,
+        verbose_name='Запрошенный тариф'
+    )
+    period_months = models.PositiveIntegerField(default=1, verbose_name='Срок (мес.)')
+    calculated_days = models.PositiveIntegerField(default=30, verbose_name='Рассчитано дней')
+    amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        verbose_name='Сумма заявки (UZS)'
+    )
+    payment_method = models.CharField(
+        max_length=30,
+        choices=PaymentMethods.choices,
+        default=PaymentMethods.BANK_TRANSFER,
+        verbose_name='Способ оплаты'
+    )
+    contact_phone = models.CharField(max_length=50, blank=True, verbose_name='Контактный телефон')
+    notes = models.TextField(blank=True, verbose_name='Комментарий / Реквизиты мерчанта')
+    admin_notes = models.TextField(blank=True, verbose_name='Ответ / Заметка администратора')
+    status = models.CharField(
+        max_length=20,
+        choices=Statuses.choices,
+        default=Statuses.PENDING,
+        verbose_name='Статус заявки'
+    )
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='processed_tariff_requests',
+        verbose_name='Обработал администратор'
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата подачи')
+    processed_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата обработки')
+
+    class Meta:
+        verbose_name = 'Заявка на тариф'
+        verbose_name_plural = 'Заявки на тарифы'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Заявка #{self.id} — {self.store.name} ({self.get_requested_plan_display()}, {self.amount:,.0f} UZS)"

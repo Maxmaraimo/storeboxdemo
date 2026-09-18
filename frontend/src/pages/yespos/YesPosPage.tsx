@@ -204,9 +204,10 @@ export const YesPosPage: React.FC = () => {
           });
         });
         setSelectedProductIds(unlinked);
+        const tpl = t("yespos_catalog_loaded") || "YES POS katalogidan {count} ta kategoriya yuklandi.";
         setMsg({
           type: "success",
-          text: `YES POS katalogidan ${res.data.categories.length} ta kategoriya yuklandi.`
+          text: tpl.replace("{count}", String(res.data.categories.length))
         });
       } else {
         setMsg({ type: "error", text: res.data?.error || "Katalog bo'sh yoki topilmadi." });
@@ -300,20 +301,20 @@ export const YesPosPage: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            <span>YES POS Integratsiyasi</span>
+            <span>{t("yespos_title") || "YES POS Integratsiyasi"}</span>
             {isConnected ? (
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
                 <Check className="w-3 h-3 text-emerald-600" />
-                ULANGAN
+                {t("status_connected") || "ULANGAN"}
               </span>
             ) : (
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-600 border border-slate-200">
-                ULANMAGAN
+                {t("status_not_connected") || "ULANMAGAN"}
               </span>
             )}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Kassangizdagi tovarlar, qoldiqlar va narxlarni bir zumda do`koningizga yuklang va avtomatik yangilab turing.
+            {t("yespos_subtitle") || "Kassangizdagi tovarlar, qoldiqlar va narxlarni bir zumda do`koningizga yuklang va avtomatik yangilab turing."}
           </p>
         </div>
 
@@ -325,7 +326,7 @@ export const YesPosPage: React.FC = () => {
             className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-            <span>{syncing ? "Sinxronlanmoqda..." : "Hozir sinxronlash"}</span>
+            <span>{syncing ? (t("yespos_syncing") || "Sinxronlanmoqda...") : (t("yespos_sync_now") || "Hozir sinxronlash")}</span>
           </button>
         )}
       </div>
@@ -337,11 +338,11 @@ export const YesPosPage: React.FC = () => {
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
               <div className="text-sm font-black text-emerald-950 flex items-center gap-2">
-                <span>YES POS muvaffaqiyatli ulangan va faol ishlamoqda!</span>
+                <span>{t("yespos_connected_active") || "YES POS muvaffaqiyatli ulangan va faol ishlamoqda!"}</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
               </div>
               <div className="text-emerald-700 text-xs font-medium mt-0.5">
-                Filial: <b>{status?.branch_name || status?.branch_id}</b> • Ulangan tovarlar soni: <b>{status?.linked_products_count || 0} ta</b>
+                {t("yespos_branch_label") || "Filial:"} <b>{status?.branch_name || status?.branch_id}</b> • {t("yespos_linked_products_qty") || "Ulangan tovarlar soni:"} <b>{status?.linked_products_count || 0} {t("yespos_items_unit") || "ta"}</b>
               </div>
             </div>
           </div>
@@ -352,16 +353,16 @@ export const YesPosPage: React.FC = () => {
             className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50 shrink-0"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-            <span>{syncing ? "Yangilanmoqda..." : "Narxlarni yangilash"}</span>
+            <span>{syncing ? (t("yespos_updating") || "Yangilanmoqda...") : (t("yespos_update_prices") || "Narxlarni yangilash")}</span>
           </button>
         </div>
       ) : (
         <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold flex items-center gap-3 shadow-2xs">
           <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
           <div>
-            <div className="text-sm font-black text-amber-950">YES POS hali ulanmagan</div>
+            <div className="text-sm font-black text-amber-950">{t("yespos_not_connected_title") || "YES POS hali ulanmagan"}</div>
             <div className="text-amber-800 text-xs font-medium mt-0.5">
-              Kassadagi tovarlarni do'konga yuklash uchun pastdagi maydonga API kalitingizni kiriting va <b>"Filiallarni olish"</b> tugmasini bosing.
+              {t("yespos_not_connected_desc") || "Kassadagi tovarlarni do'konga yuklash uchun pastdagi maydonga API kalitingizni kiriting va \"Filiallarni olish\" tugmasini bosing."}
             </div>
           </div>
         </div>
@@ -405,17 +406,17 @@ export const YesPosPage: React.FC = () => {
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 {isConnected
-                  ? `Oxirgi sinxronizatsiya: ${status?.last_sync_at ? new Date(status.last_sync_at).toLocaleString() : "Hozirgina"}`
-                  : "Filial hali ulanmagan. Quyidagi maydonga API kalitingizni kiriting."}
+                  ? `${t("yespos_last_sync") || "Oxirgi sinxronizatsiya:"} ${status?.last_sync_at ? new Date(status.last_sync_at).toLocaleString() : (t("yespos_just_now") || "Hozirgina")}`
+                  : (t("yespos_branch_not_connected_hint") || "Filial hali ulanmagan. Quyidagi maydonga API kalitingizni kiriting.")}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ulangan tovarlar</div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("yespos_linked_products_header") || "Ulangan tovarlar"}</div>
               <div className="text-xl font-black text-slate-900 font-mono">
-                {status?.linked_products_count || 0} <span className="text-xs text-slate-400 font-normal">ta</span>
+                {status?.linked_products_count || 0} <span className="text-xs text-slate-400 font-normal">{t("yespos_items_unit") || "ta"}</span>
               </div>
             </div>
 
@@ -425,10 +426,10 @@ export const YesPosPage: React.FC = () => {
                 onClick={handleDisconnect}
                 disabled={disconnecting}
                 className="p-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Ulanishni uzish"
+                title={t("yespos_disconnect_title") || "Ulanishni uzish"}
               >
                 <Unlink className="w-4 h-4" />
-                <span>Uzish</span>
+                <span>{t("yespos_disconnect") || "Uzish"}</span>
               </button>
             )}
           </div>
@@ -438,7 +439,7 @@ export const YesPosPage: React.FC = () => {
         <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 text-xs text-slate-600">
           <div className="flex items-center gap-2 font-semibold">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Avtomatik so'rov cheklovchisi va DNS xatoliklardan himoyalangan (Rate-limiting & Safe Fallback).</span>
+            <span>{t("yespos_safe_fallback") || "Avtomatik so'rov cheklovchisi va DNS xatoliklardan himoyalangan (Rate-limiting & Safe Fallback)."}</span>
           </div>
           <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">2.0 ENGINE</span>
         </div>
@@ -449,23 +450,23 @@ export const YesPosPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 font-black text-sm text-slate-900">
             <Link2 className="w-4 h-4 text-brand" />
-            <span>{isConnected ? "Ulanish sozlamalari" : "YES POS bilan ulanish"}</span>
+            <span>{isConnected ? (t("yespos_connection_settings") || "Ulanish sozlamalari") : (t("yespos_connect_title") || "YES POS bilan ulanish")}</span>
           </div>
           {status?.api_key_masked && (
-            <span className="text-xs font-mono text-slate-400">Kalit: {status.api_key_masked}</span>
+            <span className="text-xs font-mono text-slate-400">{t("yespos_key_label") || "Kalit:"} {status.api_key_masked}</span>
           )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
           <div className="md:col-span-6">
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              YES POS API Kaliti (API-Key):
+              {t("yespos_api_key_label") || "YES POS API Kaliti (API-Key):"}
             </label>
             <input
               type="text"
               value={apiKeyInput}
               onChange={(e) => setApiKeyInput(e.target.value)}
-              placeholder="Masalan: yp_live_xxxxxxxxxx yoki demo-yespos-key"
+              placeholder={t("yespos_api_key_placeholder") || "Masalan: yp_live_xxxxxxxxxx yoki demo-yespos-key"}
               className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:border-brand"
             />
           </div>
@@ -478,14 +479,14 @@ export const YesPosPage: React.FC = () => {
               className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${testingConnection ? "animate-spin" : ""}`} />
-              <span>{testingConnection ? "Tekshirilmoqda..." : "Filiallarni olish"}</span>
+              <span>{testingConnection ? (t("yespos_checking") || "Tekshirilmoqda...") : (t("yespos_get_branches") || "Filiallarni olish")}</span>
             </button>
           </div>
 
           {branches.length > 0 && (
             <div className="md:col-span-6">
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Filialni tanlang:
+                {t("yespos_select_branch") || "Filialni tanlang:"}
               </label>
               <select
                 value={selectedBranchId}
@@ -510,7 +511,7 @@ export const YesPosPage: React.FC = () => {
                 className="w-full py-2.5 px-4 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-brand/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 <Check className="w-4 h-4" />
-                <span>{connecting ? "Ulanmoqda..." : "Filialni saqlash"}</span>
+                <span>{connecting ? (t("yespos_connecting") || "Ulanmoqda...") : (t("yespos_save_branch") || "Filialni saqlash")}</span>
               </button>
             </div>
           )}
@@ -523,10 +524,10 @@ export const YesPosPage: React.FC = () => {
           <div>
             <h3 className="font-black text-sm text-slate-900 flex items-center gap-2">
               <Package className="w-4 h-4 text-amber-500" />
-              <span>YES POS Katalogi va 1-bosqichli Import</span>
+              <span>{t("yespos_catalog_title") || "YES POS Katalogi va 1-bosqichli Import"}</span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Kassadagi barcha kategoriyalar va tovarlarni ko'rish hamda do'konga nusxalash
+              {t("yespos_catalog_subtitle") || "Kassadagi barcha kategoriyalar va tovarlarni ko'rish hamda do'konga nusxalash"}
             </p>
           </div>
 
@@ -538,7 +539,7 @@ export const YesPosPage: React.FC = () => {
               className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
             >
               <DownloadCloud className={`w-4 h-4 ${loadingCatalog ? "animate-bounce" : ""}`} />
-              <span>{loadingCatalog ? "Yuklanmoqda..." : "Katalogni yuklash"}</span>
+              <span>{loadingCatalog ? (t("yespos_loading_catalog") || "Yuklanmoqda...") : (t("yespos_load_catalog") || "Katalogni yuklash")}</span>
             </button>
 
             {catalog.length > 0 && selectedProductIds.size > 0 && (
@@ -549,7 +550,7 @@ export const YesPosPage: React.FC = () => {
                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 <Check className="w-4 h-4" />
-                <span>{importing ? "Import qilinmoqda..." : `${selectedProductIds.size} ta tovarni yuklash`}</span>
+                <span>{importing ? (t("yespos_importing") || "Import qilinmoqda...") : `${selectedProductIds.size} ${t("yespos_items_unit") || "ta"} ${t("yespos_import_selected") || "tovarni yuklash"}`}</span>
               </button>
             )}
           </div>
@@ -563,7 +564,7 @@ export const YesPosPage: React.FC = () => {
               type="text"
               value={catalogSearch}
               onChange={(e) => setCatalogSearch(e.target.value)}
-              placeholder="Yuklangan tovarlar ichidan qidirish..."
+              placeholder={t("yespos_search_catalog_ph") || "Yuklangan tovarlar ichidan qidirish..."}
               className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
             />
           </div>
@@ -588,7 +589,7 @@ export const YesPosPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <Layers className="w-4 h-4 text-slate-400" />
                       <span className="font-black text-xs text-slate-800">{cat.name}</span>
-                      <span className="text-[10px] font-mono text-slate-400">({filteredProducts.length} tovar)</span>
+                      <span className="text-[10px] font-mono text-slate-400">({filteredProducts.length} {t("yespos_items_unit") || "tovar"})</span>
                     </div>
 
                     <button
@@ -604,7 +605,9 @@ export const YesPosPage: React.FC = () => {
                       }}
                       className="text-[11px] font-bold text-brand hover:underline cursor-pointer"
                     >
-                      Barchasini tanlash
+                      {filteredProducts.every((p) => selectedProductIds.has(p.id))
+                        ? (t("yespos_deselect_all") || "Tanlovni bekor qilish")
+                        : (t("yespos_select_all") || "Barchasini tanlash")}
                     </button>
                   </div>
 
@@ -645,11 +648,11 @@ export const YesPosPage: React.FC = () => {
                                 {prod.price?.toLocaleString()} UZS
                               </span>
                               <span className="text-slate-400">•</span>
-                              <span className="text-slate-500 font-medium">Qoldiq: {prod.stock}</span>
+                              <span className="text-slate-500 font-medium">{t("yespos_stock") || "Qoldiq:"} {prod.stock}</span>
                             </div>
                             {prod.is_linked && (
                               <span className="inline-block mt-1 text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded">
-                                Do'konga ulangan
+                                {t("yespos_connected_badge") || "Do'konga ulangan"}
                               </span>
                             )}
                           </div>
@@ -664,7 +667,7 @@ export const YesPosPage: React.FC = () => {
         ) : (
           <div className="text-center py-10 text-slate-400 space-y-2">
             <Package className="w-8 h-8 mx-auto text-slate-300" />
-            <p className="text-xs">Katalogni ko'rish uchun yuqoridagi "Katalogni yuklash" tugmasini bosing.</p>
+            <p className="text-xs">{t("yespos_load_catalog_hint") || "Katalogni ko'rish uchun yuqoridagi \"Katalogni yuklash\" tugmasini bosing."}</p>
           </div>
         )}
       </div>

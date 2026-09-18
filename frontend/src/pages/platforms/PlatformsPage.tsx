@@ -9,8 +9,8 @@ export const PlatformsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("platforms")}</h1>
-        <p className="text-xs text-slate-500 mt-1 font-medium">Sotuv kanallari va tashqi integratsiyalar</p>
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("platforms") || "Platformalar"}</h1>
+        <p className="text-xs text-slate-500 mt-1 font-medium">{t("platforms_subtitle") || "Sotuv kanallari va tashqi integratsiyalar"}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -20,12 +20,14 @@ export const PlatformsPage: React.FC = () => {
               <Bot className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-slate-900">Telegram Bot</h2>
-              <p className="text-[11px] text-slate-500">Telegram orqali to'g'ridan-to'g'ri buyurtma qabul qilish</p>
+              <h2 className="text-sm font-black text-slate-900">{t("telegram_bot")}</h2>
+              <p className="text-[11px] text-slate-500">{t("platforms_tg_desc")}</p>
             </div>
           </div>
           <div className="pt-2">
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Faol</span>
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              {t("status_active")}
+            </span>
           </div>
         </div>
 
@@ -36,10 +38,10 @@ export const PlatformsPage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-sm font-black text-slate-900">{t("qr_catalog")}</h2>
-              <p className="text-[11px] text-slate-500">Stol va peshtaxtalar uchun tayyor A5/A6 pechat format</p>
+              <p className="text-[11px] text-slate-500">{t("platforms_qr_desc")}</p>
             </div>
           </div>
-          <div className="pt-2 text-xs font-bold text-brand">Ochish →</div>
+          <div className="pt-2 text-xs font-bold text-brand">{t("open_btn")}</div>
         </Link>
 
         <Link to="/yespos" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 hover:border-brand transition-colors block">
@@ -48,11 +50,11 @@ export const PlatformsPage: React.FC = () => {
               <Database className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-slate-900">YES POS Integratsiyasi</h2>
-              <p className="text-[11px] text-slate-500">Tovarlar, narxlar va qoldiqlarni avtomatik sinxronlash</p>
+              <h2 className="text-sm font-black text-slate-900">{t("platforms_yespos_title")}</h2>
+              <p className="text-[11px] text-slate-500">{t("platforms_yespos_desc")}</p>
             </div>
           </div>
-          <div className="pt-2 text-xs font-bold text-brand">Ochish →</div>
+          <div className="pt-2 text-xs font-bold text-brand">{t("open_btn")}</div>
         </Link>
 
         <Link to="/design" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 hover:border-brand transition-colors block">
@@ -61,11 +63,11 @@ export const PlatformsPage: React.FC = () => {
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-slate-900">Dizayn & AI Studio</h2>
-              <p className="text-[11px] text-slate-500">Mavzular, ranglar va onlayn do'kon ko'rinishi</p>
+              <h2 className="text-sm font-black text-slate-900">{t("design_studio_title") || "Vitrina Dizayni"}</h2>
+              <p className="text-[11px] text-slate-500">{t("design_studio_subtitle") || "Mavzular, ranglar va onlayn do'kon ko'rinishi"}</p>
             </div>
           </div>
-          <div className="pt-2 text-xs font-bold text-brand">Ochish →</div>
+          <div className="pt-2 text-xs font-bold text-brand">{t("open_btn") || "Ochish →"}</div>
         </Link>
       </div>
     </div>

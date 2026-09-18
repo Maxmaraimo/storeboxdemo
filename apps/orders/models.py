@@ -1,5 +1,6 @@
 import random
 from decimal import Decimal
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from apps.stores.models import Store, Branch
@@ -141,6 +142,14 @@ class Order(models.Model):
         blank=True,
         related_name='orders',
         verbose_name='Клиент'
+    )
+    courier = models.ForeignKey(
+        'StoreStaff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_orders',
+        verbose_name='Курьер доставки'
     )
 
     delivery_method = models.CharField(
@@ -394,6 +403,76 @@ class MarketingBanner(models.Model):
         ordering = ['sort_order', 'id']
 
 
+class StoreRole(models.Model):
+    store = models.ForeignKey(
+        Store,
+        on_delete=models.CASCADE,
+        related_name='roles',
+        verbose_name='Магазин'
+    )
+    name = models.CharField(max_length=100, verbose_name='Название роли')
+    description = models.CharField(max_length=255, blank=True, default='', verbose_name='Описание роли')
+    is_system = models.BooleanField(default=False, verbose_name='Системная роль')
+    is_active = models.BooleanField(default=True, verbose_name='Активна')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Роль сотрудника'
+        verbose_name_plural = 'Роли сотрудников'
+        unique_together = ('store', 'name')
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.store.name})"
+
+
+MODULE_CHOICES = [
+    ('dashboard', 'Boshqaruv paneli'),
+    ('orders', 'Buyurtmalar'),
+    ('customers', 'Mijozlar'),
+    ('chats', 'Chat'),
+    ('categories', 'Kategoriyalar'),
+    ('products', 'Mahsulotlar'),
+    ('discounts', 'Chegirma'),
+    ('ikpu', 'IKPU'),
+    ('warehouse', 'Omborxona'),
+    ('broadcast', 'Rassilka'),
+    ('promocodes', 'Promokod'),
+    ('analytics', 'Manbalar'),
+    ('banners', 'Banner'),
+    ('telegram', 'Telegram bot'),
+    ('payments', "To'lov turi"),
+    ('delivery', 'Yetkazib berish'),
+    ('branches', 'Filiallar'),
+    ('staff', 'Xodimlar'),
+    ('roles', 'Rollar'),
+    ('settings', 'Sozlamalar'),
+    ('channels', "Kanal bo'yicha yuborish"),
+]
+
+
+class RolePermission(models.Model):
+    role = models.ForeignKey(
+        StoreRole,
+        on_delete=models.CASCADE,
+        related_name='permissions',
+        verbose_name='Роль'
+    )
+    module = models.CharField(max_length=50, choices=MODULE_CHOICES, verbose_name='Модуль')
+    can_view = models.BooleanField(default=False, verbose_name="Ko'rish (Просмотр)")
+    can_edit = models.BooleanField(default=False, verbose_name='Tahrirlash (Редактирование)')
+    can_delete = models.BooleanField(default=False, verbose_name="O'chirish (Удаление)")
+
+    class Meta:
+        verbose_name = 'Право доступа роли'
+        verbose_name_plural = 'Права доступа ролей'
+        unique_together = ('role', 'module')
+
+    def __str__(self):
+        return f"{self.role.name} - {self.module} [view:{self.can_view}, edit:{self.can_edit}, del:{self.can_delete}]"
+
+
 class StoreStaff(models.Model):
     class Roles(models.TextChoices):
         ADMIN = 'ADMIN', 'Администратор магазина'
@@ -407,13 +486,41 @@ class StoreStaff(models.Model):
         related_name='staff_members',
         verbose_name='Магазин'
     )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='staff_profiles',
+        verbose_name='Пользователь аккаунта'
+    )
     name = models.CharField(max_length=120, verbose_name='ФИО сотрудника')
     phone = models.CharField(max_length=30, verbose_name='Телефон (+998)')
-    role = models.CharField(max_length=20, choices=Roles.choices, default=Roles.MANAGER, verbose_name='Должность')
+    role = models.CharField(max_length=50, default='MANAGER', verbose_name='Должность')
+    store_role = models.ForeignKey(
+        StoreRole,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='staff_members',
+        verbose_name='Назначенная роль'
+    )
+    is_courier = models.BooleanField(default=False, verbose_name='Является курьером')
     is_active = models.BooleanField(default=True, verbose_name='Активен')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Сотрудник'
         verbose_name_plural = 'Сотрудники'
-        ordering = ['role', 'name']
+        ordering = ['-is_active', 'name']
+
+    def __str__(self):
+        role_title = self.store_role.name if self.store_role else self.role
+        return f"{self.name} ({role_title})"
+
+    @property
+    def orders_count(self):
+        if self.is_courier:
+            return self.assigned_orders.count()
+        return self.store.orders.count()

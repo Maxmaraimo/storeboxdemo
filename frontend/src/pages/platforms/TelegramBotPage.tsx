@@ -35,7 +35,7 @@ interface TelegramStatus {
 }
 
 export const TelegramBotPage: React.FC = () => {
-  const { store } = useAuth();
+  const { store, t, lang: language } = useAuth();
   const queryClient = useQueryClient();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -224,20 +224,20 @@ export const TelegramBotPage: React.FC = () => {
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
             <Bot className="w-6 h-6 text-sky-500" />
-            <span>Telegram Bot & Mini App (TMA)</span>
+            <span>{t("telegram_bot_title") || "Telegram Bot & Mini App (TMA)"}</span>
             {isConnected ? (
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Faol • Web App yoqilgan</span>
+                <span>{t("telegram_active_badge") || "Faol • Web App yoqilgan"}</span>
               </span>
             ) : (
               <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-black">
-                Ulanmagan
+                {t("telegram_not_connected") || "Ulanmagan"}
               </span>
             )}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Do'koningiz uchun Telegram bot va Mini App integratsiyasi orqali buyurtmalar qabul qiling.
+            {t("telegram_bot_subtitle") || "Do'koningiz uchun Telegram bot va Mini App integratsiyasi orqali buyurtmalar qabul qiling."}
           </p>
         </div>
       </div>
@@ -268,9 +268,9 @@ export const TelegramBotPage: React.FC = () => {
               <Bot className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">Telegram bot yaratish</h3>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">{t("telegram_create_guide_title")}</h3>
               <p className="text-xs text-slate-500 mt-1">
-                Telegram orqali buyurtma qabul qilish va Telegram Web App (TMA) do'koningiz avtomatik ishga tushishi uchun bot tokenini kiriting.
+                {t("telegram_create_guide_desc")}
               </p>
             </div>
           </div>
@@ -279,11 +279,11 @@ export const TelegramBotPage: React.FC = () => {
           <div className="p-5 rounded-2xl bg-sky-50/70 border border-sky-100 text-xs space-y-3">
             <div className="font-black text-slate-900 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-sky-600" />
-              <span>@BotFather orqali bot tokenini olish tartibi:</span>
+              <span>{t("telegram_guide_bf_heading")}</span>
             </div>
             <ol className="list-decimal pl-5 space-y-1.5 text-slate-600 font-medium leading-relaxed">
               <li>
-                Telegramda{" "}
+                {t("telegram_guide_step1_prefix")}
                 <a
                   href="https://t.me/BotFather"
                   target="_blank"
@@ -291,20 +291,24 @@ export const TelegramBotPage: React.FC = () => {
                   className="font-bold text-sky-600 hover:underline"
                 >
                   @BotFather
-                </a>{" "}
-                ga o'ting va <code className="bg-white px-1.5 py-0.5 rounded border border-sky-200 font-bold text-sky-700">/newbot</code> buyrug'ini yuboring.
+                </a>
+                {t("telegram_guide_step1_suffix")}
               </li>
               <li>
-                Botingiz nomini kiriting (masalan: <b>{store?.name || "Mening Do'konim"}</b>).
+                {t("telegram_guide_step2").replace("{name}", store?.name || (language === "ru" ? "Мой Магазин" : language === "en" ? "My Store" : "Mening Do'konim"))}
               </li>
               <li>
-                Botingiz uchun username kiriting (oxiri <code className="bg-white px-1.5 py-0.5 rounded border border-sky-200 font-bold text-sky-700">_bot</code> bilan tugashi shart, masalan: <code>{store?.subdomain || "magazin"}_bot</code>).
+                {t("telegram_guide_step3_prefix")}
+                <code className="bg-white px-1.5 py-0.5 rounded border border-sky-200 font-bold text-sky-700">_bot</code>
+                {language === "ru" ? ", например: " : language === "en" ? ", e.g.: " : ", masalan: "}
+                <code>{store?.subdomain || "magazin"}_bot</code>
+                {t("telegram_guide_step3_suffix")}
               </li>
               <li>
-                @BotFather sizga bergan uzun <b>HTTP API Token</b> nusxasini oling.
+                {t("telegram_guide_step4")}
               </li>
               <li>
-                Olingan tokenni quyidagi maydonga joylashtiring va <b>"Saqlash va Web App yaratish"</b> tugmasini bosing!
+                {t("telegram_guide_step5")}
               </li>
             </ol>
           </div>
@@ -312,17 +316,17 @@ export const TelegramBotPage: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Bot Token <span className="text-rose-500">*</span>
+                {t("telegram_token_input_label")} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
-                placeholder="Masalan: 8873156579:AAHl8Vrh7kuJbFhqjXBSZ4ZHImfizziBwm8"
+                placeholder={t("telegram_token_placeholder")}
                 className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand shadow-2xs"
               />
               <span className="text-[11px] text-slate-400 block mt-1.5">
-                Hech qanday chat ID yoki murakkab sozlama shart emas — tizim botni avtomatik aniqlaydi va Web App ni o'rnatadi.
+                {t("telegram_token_hint")}
               </span>
             </div>
 
@@ -334,7 +338,7 @@ export const TelegramBotPage: React.FC = () => {
                 className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
               >
                 <Zap className={`w-4 h-4 text-amber-400 ${saving ? "animate-spin" : ""}`} />
-                <span>{saving ? "Ulanmoqda..." : "Saqlash va Web App yaratish"}</span>
+                <span>{saving ? t("telegram_connecting") : t("telegram_save_and_create_btn")}</span>
               </button>
             </div>
           </div>
@@ -355,11 +359,11 @@ export const TelegramBotPage: React.FC = () => {
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Faol • Web App yoqilgan</span>
+                    <span>{t("telegram_active_badge")}</span>
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Yaratilgan: {status?.created_at ? new Date(status.created_at).toLocaleString() : "Hozirgina"}
+                  {t("telegram_created_label")} {status?.created_at ? new Date(status.created_at).toLocaleString() : t("telegram_just_now")}
                 </p>
               </div>
             </div>
@@ -372,7 +376,7 @@ export const TelegramBotPage: React.FC = () => {
                 className="px-4 py-2 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white flex items-center gap-1.5 shadow-xs transition-colors"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Botni ochish</span>
+                <span>{t("telegram_open_bot")}</span>
               </a>
 
               <button
@@ -381,7 +385,7 @@ export const TelegramBotPage: React.FC = () => {
                 className="px-3.5 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Boshqa bot ulash</span>
+                <span>{t("telegram_change_bot")}</span>
               </button>
 
               <button
@@ -391,7 +395,7 @@ export const TelegramBotPage: React.FC = () => {
                 className="px-3 py-2 rounded-2xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Unlink className="w-3.5 h-3.5" />
-                <span>{disconnecting ? "Uzilmoqda..." : "Uzish"}</span>
+                <span>{disconnecting ? t("telegram_disconnecting") : t("telegram_disconnect")}</span>
               </button>
             </div>
           </div>
@@ -402,7 +406,7 @@ export const TelegramBotPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-amber-900 font-black text-sm">
                   <AlertCircle className="w-4 h-4 text-amber-600" />
-                  <span>Yangi bot ulash yoki tokenni almashtirish</span>
+                  <span>{t("telegram_change_bot_title")}</span>
                 </div>
                 <button
                   type="button"
@@ -413,17 +417,17 @@ export const TelegramBotPage: React.FC = () => {
                 </button>
               </div>
               <p className="text-xs text-amber-800">
-                Yangi @BotFather tokenini kiritsangiz, platforma eski bot o'rniga yangi botni ulaydi va Web App ni unga sozlaydi.
+                {t("telegram_change_bot_desc")}
               </p>
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-amber-900 mb-1">Yangi Bot Token</label>
+                  <label className="block text-xs font-bold text-amber-900 mb-1">{t("telegram_change_bot_label")}</label>
                   <input
                     type="text"
                     value={changeTokenInput}
                     onChange={(e) => setChangeTokenInput(e.target.value)}
-                    placeholder="Yangi bot tokenini kiriting"
+                    placeholder={t("telegram_change_bot_placeholder")}
                     className="w-full px-4 py-2.5 rounded-xl bg-white border border-amber-300 text-xs font-mono font-bold focus:outline-none focus:border-brand"
                   />
                 </div>
@@ -433,7 +437,7 @@ export const TelegramBotPage: React.FC = () => {
                   disabled={saving}
                   className="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  {saving ? "Ulanmoqda..." : "Yangi botni ulash"}
+                  {saving ? t("telegram_connecting") : t("telegram_change_bot_btn")}
                 </button>
               </div>
             </div>
@@ -450,7 +454,7 @@ export const TelegramBotPage: React.FC = () => {
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              Bot sozlamalari
+              {t("telegram_subtab_settings")}
             </button>
             <button
               type="button"
@@ -461,7 +465,7 @@ export const TelegramBotPage: React.FC = () => {
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              Bot amallari & buyruqlari
+              {t("telegram_subtab_actions")}
             </button>
             <button
               type="button"
@@ -472,7 +476,7 @@ export const TelegramBotPage: React.FC = () => {
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              QR kod
+              {t("telegram_subtab_qr")}
             </button>
           </div>
 
@@ -497,7 +501,7 @@ export const TelegramBotPage: React.FC = () => {
                     className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-xs inline-flex items-center gap-1 shadow-2xs transition-colors"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Vebda ochish</span>
+                    <span>{t("telegram_open_in_web")}</span>
                   </a>
                   <button
                     type="button"
@@ -505,7 +509,7 @@ export const TelegramBotPage: React.FC = () => {
                     className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs inline-flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
                   >
                     {copiedUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedUrl ? "Nusxalandi!" : "Nusxa olish"}</span>
+                    <span>{copiedUrl ? t("telegram_copied") : t("telegram_copy")}</span>
                   </button>
                 </div>
               </div>
@@ -513,7 +517,7 @@ export const TelegramBotPage: React.FC = () => {
               {/* Bot Form */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Bot Token</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">{t("telegram_token_input_label")}</label>
                   <input
                     type="text"
                     value={tokenInput}
@@ -522,40 +526,39 @@ export const TelegramBotPage: React.FC = () => {
                     className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand"
                   />
                   <span className="text-[10px] text-slate-400 block mt-1">
-                    Bot tokeningiz faol va ulangan. O'zgartirish kerak bo'lsa, yangi tokenni kiritib saqlang.
+                    {t("telegram_token_active_hint")}
                   </span>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Tugma nomi (Menu Button)
+                    {t("telegram_menu_btn_field")}
                   </label>
                   <input
                     type="text"
                     value={buttonName}
                     onChange={(e) => setButtonName(e.target.value)}
-                    placeholder="Do'kon"
+                    placeholder={t("telegram_menu_btn_placeholder")}
                     className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand"
                   />
                   <span className="text-[10px] text-slate-400 block mt-1">
-                    Telegram chat oynasining pastki chap burchagidagi do'konni ochuvchi menyu tugmasi matni.
+                    {t("telegram_menu_btn_hint")}
                   </span>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Boshlang'ich matn (Welcome message)
+                    {t("telegram_welcome_msg_field")}
                   </label>
                   <textarea
                     value={welcomeMessage}
                     onChange={(e) => setWelcomeMessage(e.target.value)}
                     rows={3}
-                    placeholder="Assalomu alaykum {user}! {bot} do'konimizga xush kelibsiz!..."
+                    placeholder={t("telegram_welcome_msg_placeholder")}
                     className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand leading-relaxed"
                   />
                   <span className="text-[10px] text-slate-400 block mt-1">
-                    Qo'llab-quvvatlanadigan o'zgaruvchilar: <code>{"{user}"}</code> (foydalanuvchi ismi),{" "}
-                    <code>{"{bot}"}</code> (do'kon nomi)
+                    {t("telegram_welcome_msg_hint")}
                   </span>
                 </div>
 
@@ -566,7 +569,7 @@ export const TelegramBotPage: React.FC = () => {
                     disabled={saving}
                     className="w-full sm:w-auto px-8 py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    {saving ? "Saqlanmoqda..." : "O'zgarishlarni saqlash"}
+                    {saving ? t("telegram_saving") : t("telegram_save_changes_btn")}
                   </button>
                 </div>
               </div>
@@ -580,7 +583,7 @@ export const TelegramBotPage: React.FC = () => {
                   className="px-4 py-2.5 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <Smartphone className="w-4 h-4" />
-                  <span>{settingUpMenu ? "Sozlanmoqda..." : "TMA Menyu tugmasini sozlash"}</span>
+                  <span>{settingUpMenu ? t("telegram_setting_up") : t("telegram_setup_tma_menu")}</span>
                 </button>
 
                 <button
@@ -590,7 +593,7 @@ export const TelegramBotPage: React.FC = () => {
                   className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{testingConnection ? "Tekshirilmoqda..." : "Aloqani tekshirish"}</span>
+                  <span>{testingConnection ? t("telegram_testing") : t("telegram_test_connection")}</span>
                 </button>
               </div>
             </div>
@@ -599,77 +602,77 @@ export const TelegramBotPage: React.FC = () => {
           {/* SUB TAB 2: AMALLAR (COMMANDS) */}
           {activeTab === "actions" && (
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-4 max-w-3xl">
-              <h3 className="font-black text-base text-slate-900">Bot amallari va buyruqlari</h3>
+              <h3 className="font-black text-base text-slate-900">{t("telegram_actions_title")}</h3>
               <p className="text-xs text-slate-500">
-                Xaridorlar botga kirganda taqdim etiladigan asosiy buyruqlar va Web App interfeyslari:
+                {t("telegram_actions_desc")}
               </p>
               <div className="divide-y divide-slate-100 text-xs">
                 <div className="py-3 flex items-center justify-between">
                   <div>
                     <div className="font-bold text-slate-900">
-                      🛍 {status?.button_name || "Do'kon"} / Menyu (TMA)
+                      {t("telegram_cmd_menu_name").replace("{name}", status?.button_name || t("telegram_menu_btn_placeholder"))}
                     </div>
                     <div className="text-[11px] text-slate-400">
-                      Do'koningiz to'liq katalogini Telegram ichidagi oyna (TMA) orqali ochadi
+                      {t("telegram_cmd_menu_desc")}
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">
-                    Faol
+                    {t("telegram_badge_active")}
                   </span>
                 </div>
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-900">🌐 Tilni o'zgartirish</div>
+                    <div className="font-bold text-slate-900">{t("telegram_cmd_lang_name")}</div>
                     <div className="text-[11px] text-slate-400">
-                      Xaridorlar uchun O'zbek, Rus va Ingliz tillarini tanlash menyusi
+                      {t("telegram_cmd_lang_desc")}
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">
-                    Faol
+                    {t("telegram_badge_active")}
                   </span>
                 </div>
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-900">💬 Chat</div>
+                    <div className="font-bold text-slate-900">{t("telegram_cmd_chat_name")}</div>
                     <div className="text-[11px] text-slate-400">
-                      Xaridorlardan to'g'ridan-to'g'ri xabarlar va savollarni qabul qilish
+                      {t("telegram_cmd_chat_desc")}
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">
-                    Faol
+                    {t("telegram_badge_active")}
                   </span>
                 </div>
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-900">📦 Buyurtmalarim</div>
+                    <div className="font-bold text-slate-900">{t("telegram_cmd_orders_name")}</div>
                     <div className="text-[11px] text-slate-400">
-                      Xaridorning do'kondagi joriy va o'tgan buyurtmalari ro'yxati
+                      {t("telegram_cmd_orders_desc")}
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">
-                    Faol
+                    {t("telegram_badge_active")}
                   </span>
                 </div>
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-900">ℹ️ Biz haqimizda</div>
+                    <div className="font-bold text-slate-900">{t("telegram_cmd_about_name")}</div>
                     <div className="text-[11px] text-slate-400">
-                      Do'kon tavsifi, ish vaqti, telefon va manzili
+                      {t("telegram_cmd_about_desc")}
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
-                    Faol
+                    {t("telegram_badge_active")}
                   </span>
                 </div>
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-900">📞 Kontaktlar</div>
+                    <div className="font-bold text-slate-900">{t("telegram_cmd_contacts_name")}</div>
                     <div className="text-[11px] text-slate-400">
-                      Do'kon telefon raqami va manzili
+                      {t("telegram_cmd_contacts_desc")}
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
-                    Faol
+                    {t("telegram_badge_active")}
                   </span>
                 </div>
               </div>
@@ -681,9 +684,9 @@ export const TelegramBotPage: React.FC = () => {
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs max-w-3xl space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-black text-base text-slate-900">Telegram bot QR kodi</h3>
+                  <h3 className="font-black text-base text-slate-900">{t("telegram_qr_title")}</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Xaridorlar kamerani yo'naltirib to'g'ridan-to'g'ri botingizga o'tishadi
+                    {t("telegram_qr_desc")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -693,7 +696,7 @@ export const TelegramBotPage: React.FC = () => {
                     className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Yuklab olish</span>
+                    <span>{t("telegram_qr_download")}</span>
                   </button>
                   <button
                     type="button"
@@ -701,7 +704,7 @@ export const TelegramBotPage: React.FC = () => {
                     className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5" />
-                    <span>Chop etish</span>
+                    <span>{t("telegram_qr_print")}</span>
                   </button>
                 </div>
               </div>
@@ -723,7 +726,7 @@ export const TelegramBotPage: React.FC = () => {
                     rel="noreferrer"
                     className="text-sky-600 hover:text-sky-700 font-bold text-xs hover:underline mt-1.5 inline-flex items-center gap-1"
                   >
-                    <span>Telegramda ochish</span>
+                    <span>{t("telegram_qr_open_in_tg")}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>

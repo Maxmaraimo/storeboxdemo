@@ -167,17 +167,17 @@ export const DashboardPage: React.FC = () => {
     labels: charts?.labels || [],
     datasets: [
       {
-        label: `Tushum (${currency})`,
+        label: `${t("revenue") || "Tushum"} (${currency})`,
         data: (charts?.revenue || []).map((val) =>
           currency === "USD" ? Number((val / UZS_TO_USD_RATE).toFixed(2)) : val
         ),
-        backgroundColor: chartType === "bar" ? "rgba(16, 185, 129, 0.85)" : "rgba(16, 185, 129, 0.15)",
-        borderColor: "#10B981",
+        backgroundColor: chartType === "bar" ? "rgba(0, 214, 104, 0.85)" : "rgba(0, 214, 104, 0.15)",
+        borderColor: "#00d668",
         borderWidth: chartType === "line" ? 3 : 0,
         borderRadius: chartType === "bar" ? 8 : 0,
         fill: chartType === "line",
         tension: 0.35,
-        pointBackgroundColor: "#10B981",
+        pointBackgroundColor: "#00d668",
         pointBorderColor: "#FFFFFF",
         pointBorderWidth: 2,
         pointRadius: chartType === "line" ? 4 : 0,
@@ -239,7 +239,7 @@ export const DashboardPage: React.FC = () => {
     datasets: [
       {
         data: [charts?.traffic?.telegram || 0, charts?.traffic?.web || 0],
-        backgroundColor: ["#10B981", "#3B82F6"],
+        backgroundColor: ["#00d668", "#3B82F6"],
         borderWidth: 0,
         hoverOffset: 4,
       },
@@ -254,8 +254,8 @@ export const DashboardPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <span className="w-2 h-2 rounded-full bg-[#00d668] animate-pulse"></span>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#00d668]">
               {t("live_monitoring") || "Jonli monitoring tizimi"}
             </span>
           </div>
@@ -270,7 +270,7 @@ export const DashboardPage: React.FC = () => {
         {/* Action Controls: Periods, Currency, Refresh */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Working Period filter pills */}
-          <div className="flex items-center gap-1 bg-white/80 dark:bg-white/5 p-1 rounded-2xl border border-black/[0.06] dark:border-white/10 text-xs font-semibold shadow-2xs backdrop-blur-xl">
+          <div className="flex items-center gap-1 bg-white/70 dark:bg-[#141722] p-1 rounded-2xl border border-white/80 dark:border-white/10 text-xs font-semibold shadow-2xs backdrop-blur-xl">
             {periods.map((p) => (
               <button
                 key={p.id}
@@ -287,7 +287,7 @@ export const DashboardPage: React.FC = () => {
                 }}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   period === p.id
-                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xs font-bold"
+                    ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-xs font-bold"
                     : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
                 }`}
               >
@@ -297,13 +297,13 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Currency Switcher */}
-          <div className="flex items-center gap-1 bg-white/80 dark:bg-white/5 p-1 rounded-2xl border border-black/[0.06] dark:border-white/10 text-xs font-bold shadow-2xs backdrop-blur-xl">
+          <div className="flex items-center gap-1 bg-white/70 dark:bg-[#141722] p-1 rounded-2xl border border-white/80 dark:border-white/10 text-xs font-bold shadow-2xs backdrop-blur-xl">
             <button
               type="button"
               onClick={() => setCurrency("UZS")}
               className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
                 currency === "UZS"
-                  ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xs font-bold"
+                  ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-xs font-bold"
                   : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
               }`}
             >
@@ -314,7 +314,7 @@ export const DashboardPage: React.FC = () => {
               onClick={() => setCurrency("USD")}
               className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
                 currency === "USD"
-                  ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xs font-bold"
+                  ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-xs font-bold"
                   : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
               }`}
             >
@@ -326,26 +326,26 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => refetch()}
-            className="w-9 h-9 rounded-2xl bg-white/80 dark:bg-white/5 border border-black/[0.06] dark:border-white/10 flex items-center justify-center text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors shadow-2xs cursor-pointer"
+            className="w-9 h-9 rounded-2xl bg-white/70 dark:bg-white/5 border border-white/80 dark:border-white/10 flex items-center justify-center text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/10 transition-colors shadow-2xs cursor-pointer"
             title={t("refresh_data") || "Ma'lumotlarni yangilash"}
           >
-            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-emerald-500" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-[#00d668]" : ""}`} />
           </button>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 2. TOP 4 APPLE GLASSMORPHISM REAL KPI CARDS             */}
+      {/* 2. TOP 4 GLASSMORPHISM & NEUMORPHISM REAL KPI CARDS     */}
       {/* ======================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Jami tushum (Total Revenue) */}
-        <div className="bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl rounded-[28px] border border-white/85 dark:border-white/10 p-5 shadow-[0_16px_36px_-10px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] hover:shadow-lg transition-all flex flex-col justify-between group">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
                 {t("total_revenue") || "Jami tushum"}
               </span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-[#00d668] flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
@@ -360,7 +360,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+            <span className="text-[#00d668] font-bold flex items-center gap-1">
               <ArrowUpRight className="w-3.5 h-3.5" />
               {t("active_sales") || "Faol savdolar"}
             </span>
@@ -371,13 +371,13 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Card 2: Buyurtmalar soni (Total Orders) */}
-        <div className="bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl rounded-[28px] border border-white/85 dark:border-white/10 p-5 shadow-[0_16px_36px_-10px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] hover:shadow-lg transition-all flex flex-col justify-between group">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
                 {t("orders") || "Buyurtmalar"}
               </span>
-              <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <ShoppingCart className="w-4 h-4" />
               </div>
             </div>
@@ -386,7 +386,7 @@ export const DashboardPage: React.FC = () => {
                 {metrics?.orders_count || 0} <span className="text-base font-normal text-neutral-400">{t("pcs_unit") || "ta"}</span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-                <span className="text-emerald-600 font-bold">{metrics?.new_orders || 0} {t("new") || "yangi"}</span>
+                <span className="text-[#00d668] font-bold">{metrics?.new_orders || 0} {t("new") || "yangi"}</span>
                 <span>•</span>
                 <span>{metrics?.ready_orders || 0} {t("status_ready") || "tayyor"}</span>
                 {metrics?.cancelled_orders ? (
@@ -412,13 +412,13 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Card 3: Faol mijozlar (Active Customers) */}
-        <div className="bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl rounded-[28px] border border-white/85 dark:border-white/10 p-5 shadow-[0_16px_36px_-10px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] hover:shadow-lg transition-all flex flex-col justify-between group">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
                 {t("customer_base") || "Mijozlar bazasi"}
               </span>
-              <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <Users className="w-4 h-4" />
               </div>
             </div>
@@ -445,13 +445,13 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Card 4: O'rtacha chek (Average Check) */}
-        <div className="bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl rounded-[28px] border border-white/85 dark:border-white/10 p-5 shadow-[0_16px_36px_-10px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] hover:shadow-lg transition-all flex flex-col justify-between group">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
                 {t("avg_check_title") || "O'rtacha chek"}
               </span>
-              <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-amber-500 dark:text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <DollarSign className="w-4 h-4" />
               </div>
             </div>
@@ -466,7 +466,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+            <span className="text-[#00d668] font-bold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
               {t("stable_metric") || "Barqaror"}
             </span>
@@ -480,7 +480,7 @@ export const DashboardPage: React.FC = () => {
       {/* ======================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: Revenue Chart (8 cols) */}
-        <div className="lg:col-span-8 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl rounded-[28px] border border-white/85 dark:border-white/10 p-5 sm:p-6 shadow-[0_16px_36px_-10px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
@@ -492,13 +492,13 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Bar vs Line vs GitHub Heatmap Switcher */}
-            <div className="flex items-center gap-1 bg-neutral-100 dark:bg-white/5 p-1 rounded-xl border border-black/[0.04] dark:border-white/10">
+            <div className="flex items-center gap-1 bg-white/70 dark:bg-[#141722] p-1 rounded-xl border border-white/80 dark:border-white/10 shadow-2xs">
               <button
                 type="button"
                 onClick={() => setChartType("bar")}
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   chartType === "bar"
-                    ? "bg-white dark:bg-white/20 text-neutral-900 dark:text-white shadow-2xs"
+                    ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-2xs"
                     : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 }`}
                 title="Ustunli grafik"
@@ -510,7 +510,7 @@ export const DashboardPage: React.FC = () => {
                 onClick={() => setChartType("line")}
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   chartType === "line"
-                    ? "bg-white dark:bg-white/20 text-neutral-900 dark:text-white shadow-2xs"
+                    ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-2xs"
                     : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 }`}
                 title="Chiziqli grafik"
@@ -522,7 +522,7 @@ export const DashboardPage: React.FC = () => {
                 onClick={() => setChartType("heatmap")}
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   chartType === "heatmap"
-                    ? "bg-white dark:bg-white/20 text-emerald-600 dark:text-emerald-400 shadow-2xs"
+                    ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-2xs"
                     : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 }`}
                 title="GitHub uslubidagi faollik xaritasi (Heatmap)"
@@ -569,7 +569,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Right: Sales Channels & Traffic (4 cols) */}
-        <div className="lg:col-span-4 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl rounded-[28px] border border-white/85 dark:border-white/10 p-5 sm:p-6 shadow-[0_16px_36px_-10px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] flex flex-col justify-between">
           <div>
             <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
               {t("traffic_source") || "Savdo kanallari"}
@@ -581,15 +581,15 @@ export const DashboardPage: React.FC = () => {
             {/* Channels Cards */}
             <div className="space-y-3">
               {/* Telegram Bot */}
-              <div className="p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-white/5 border border-black/[0.04] dark:border-white/5 flex items-center justify-between">
+              <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/5 flex items-center justify-between shadow-2xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold">
+                  <div className="w-9 h-9 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold shadow-xs">
                     <Send className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="text-xs font-bold text-neutral-900 dark:text-white">Telegram Bot</div>
                     <div className="text-[10px] text-neutral-400">
-                      {metrics?.tma_cnt || 0} ta buyurtma ({tmaTrafficPct}%)
+                      {metrics?.tma_cnt || 0} {t("orders_count_format") || "ta buyurtma"} ({tmaTrafficPct}%)
                     </div>
                   </div>
                 </div>
@@ -601,7 +601,7 @@ export const DashboardPage: React.FC = () => {
                     rel="noopener noreferrer"
                     className="px-2.5 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-300 text-[11px] font-bold hover:bg-sky-100 dark:hover:bg-sky-900/60 flex items-center gap-1 transition-colors"
                   >
-                    <span>Ochish</span>
+                    <span>{t("open") || "Ochish"}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 ) : (
@@ -609,21 +609,21 @@ export const DashboardPage: React.FC = () => {
                     to="/platforms"
                     className="px-2.5 py-1.5 rounded-xl bg-neutral-200 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 text-[11px] font-bold hover:bg-neutral-300 transition-colors"
                   >
-                    Ulash
+                    {t("connect") || "Ulash"}
                   </Link>
                 )}
               </div>
 
               {/* Web Storefront */}
-              <div className="p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-white/5 border border-black/[0.04] dark:border-white/5 flex items-center justify-between">
+              <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/5 flex items-center justify-between shadow-2xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
+                  <div className="w-9 h-9 rounded-xl bg-[#00d668] text-white flex items-center justify-center font-bold shadow-xs">
                     <Globe className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-neutral-900 dark:text-white">Veb-sayt</div>
+                    <div className="text-xs font-bold text-neutral-900 dark:text-white">{t("website_channel") || "Veb-sayt"}</div>
                     <div className="text-[10px] text-neutral-400">
-                      {metrics?.web_cnt || 0} ta buyurtma ({webTrafficPct}%)
+                      {metrics?.web_cnt || 0} {t("orders_count_format") || "ta buyurtma"} ({webTrafficPct}%)
                     </div>
                   </div>
                 </div>
@@ -633,9 +633,9 @@ export const DashboardPage: React.FC = () => {
                     href={store.storefront_url || `/store/${store.subdomain}/`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 text-[11px] font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center gap-1 transition-colors"
+                    className="px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00d668] dark:text-[#00d668] text-[11px] font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center gap-1 transition-colors"
                   >
-                    <span>Sayt</span>
+                    <span>{t("website") || "Sayt"}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 )}
@@ -661,9 +661,9 @@ export const DashboardPage: React.FC = () => {
                 <span className="w-2 h-2 rounded-full bg-sky-500"></span>
                 <span>Telegram: {tmaTrafficPct}%</span>
               </div>
-              <div className="flex items-center justify-end gap-1.5 font-bold text-emerald-500">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span>Veb-sayt: {webTrafficPct}%</span>
+              <div className="flex items-center justify-end gap-1.5 font-bold text-[#00d668]">
+                <span className="w-2 h-2 rounded-full bg-[#00d668]"></span>
+                <span>{t("website_channel") || "Veb-sayt"}: {webTrafficPct}%</span>
               </div>
             </div>
           </div>
@@ -675,12 +675,12 @@ export const DashboardPage: React.FC = () => {
       {/* ======================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: Top Products List (6 cols) */}
-        <div className="lg:col-span-6 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-6 bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl rounded-[28px] border border-white/85 dark:border-white/10 p-5 sm:p-6 shadow-[0_16px_36px_-10px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-                  Sotuvlar yetakchilari
+                  {t("sales_leaders") || "Sotuvlar yetakchilari"}
                 </div>
                 <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
                   {t("top_products") || "Top mahsulotlar"}
@@ -688,7 +688,7 @@ export const DashboardPage: React.FC = () => {
               </div>
               <Link
                 to="/products"
-                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-[#00d668] hover:underline flex items-center gap-1"
               >
                 <span>{t("all_products") || "Barcha mahsulotlar"}</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -699,10 +699,10 @@ export const DashboardPage: React.FC = () => {
               {topProducts.map((p, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50/80 dark:bg-white/5 border border-black/[0.04] dark:border-white/5 hover:bg-neutral-100/80 dark:hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/5 hover:bg-white/90 dark:hover:bg-white/10 transition-colors shadow-2xs"
                 >
                   <div className="flex items-center gap-3 truncate">
-                    <span className="w-6 h-6 rounded-xl bg-neutral-200 dark:bg-white/10 text-neutral-800 dark:text-white font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                    <span className="w-7 h-7 rounded-xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/90 dark:border-white/10 text-neutral-800 dark:text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                       {idx + 1}
                     </span>
                     <div className="truncate">
@@ -729,7 +729,7 @@ export const DashboardPage: React.FC = () => {
                   </div>
                   <Link
                     to="/products"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs font-bold shadow-xs hover:bg-black transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] text-xs font-bold shadow-xs hover:bg-black transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>{t("products") || "Mahsulot qo'shish"}</span>
@@ -741,19 +741,19 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Right: Deliveries Map (6 cols) */}
-        <div className="lg:col-span-6 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl rounded-[28px] border border-black/[0.06] dark:border-white/10 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-6 bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl rounded-[28px] border border-white/85 dark:border-white/10 p-5 sm:p-6 shadow-[0_16px_36px_-10px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-                  Logistika & Manzillar
+                  {t("logistics_addresses") || "Logistika & Manzillar"}
                 </div>
                 <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
                   {t("orders_map") || "Jonli buyurtmalar xaritasi"}
                 </h2>
               </div>
-              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <span className="text-[11px] font-bold text-[#00d668] flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#00d668] animate-ping"></span>
                 <span>{t("live_gps") || "GPS faol"}</span>
               </span>
             </div>
@@ -774,7 +774,7 @@ export const DashboardPage: React.FC = () => {
                     <Popup>
                       <div className="text-xs space-y-1">
                         <div className="font-bold text-slate-900">#{o.num} — {o.client}</div>
-                        <div className="font-mono text-emerald-600 font-bold">{formatMoney(o.total)}</div>
+                        <div className="font-mono text-[#00d668] font-bold">{formatMoney(o.total)}</div>
                         <div className="text-[10px] text-slate-500">{o.status}</div>
                       </div>
                     </Popup>
@@ -799,61 +799,61 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Link
           to="/products"
-          className="p-3.5 rounded-2xl bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-all shadow-xs flex items-center gap-3 group"
+          className="p-3.5 rounded-2xl bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl border border-white/85 dark:border-white/10 hover:border-white dark:hover:border-white/30 transition-all shadow-[0_8px_20px_-6px_rgba(15,23,42,0.05),inset_0_1.5px_2px_rgba(255,255,255,0.95)] hover:shadow-md flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
             <Package className="w-4 h-4" />
           </div>
           <div className="truncate">
             <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
               {t("products") || "Mahsulotlar"}
             </div>
-            <div className="text-[10px] text-neutral-400">Katalog boshqaruvi</div>
+            <div className="text-[10px] text-neutral-400">{t("catalog_management") || "Katalog boshqaruvi"}</div>
           </div>
         </Link>
 
         <Link
           to="/orders"
-          className="p-3.5 rounded-2xl bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-all shadow-xs flex items-center gap-3 group"
+          className="p-3.5 rounded-2xl bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl border border-white/85 dark:border-white/10 hover:border-white dark:hover:border-white/30 transition-all shadow-[0_8px_20px_-6px_rgba(15,23,42,0.05),inset_0_1.5px_2px_rgba(255,255,255,0.95)] hover:shadow-md flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
             <ShoppingCart className="w-4 h-4" />
           </div>
           <div className="truncate">
             <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
               {t("orders") || "Buyurtmalar"}
             </div>
-            <div className="text-[10px] text-neutral-400">Holat va yetkazish</div>
+            <div className="text-[10px] text-neutral-400">{t("status_and_delivery") || "Holat va yetkazish"}</div>
           </div>
         </Link>
 
         <Link
           to="/chats"
-          className="p-3.5 rounded-2xl bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-all shadow-xs flex items-center gap-3 group"
+          className="p-3.5 rounded-2xl bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl border border-white/85 dark:border-white/10 hover:border-white dark:hover:border-white/30 transition-all shadow-[0_8px_20px_-6px_rgba(15,23,42,0.05),inset_0_1.5px_2px_rgba(255,255,255,0.95)] hover:shadow-md flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
             <MessageSquare className="w-4 h-4" />
           </div>
           <div className="truncate">
             <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
               {t("chat") || "Mijozlar chati"}
             </div>
-            <div className="text-[10px] text-neutral-400">Tezkor javoblar</div>
+            <div className="text-[10px] text-neutral-400">{t("quick_replies") || "Tezkor javoblar"}</div>
           </div>
         </Link>
 
         <Link
           to="/marketing"
-          className="p-3.5 rounded-2xl bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-all shadow-xs flex items-center gap-3 group"
+          className="p-3.5 rounded-2xl bg-white/75 dark:bg-[#161b26]/75 backdrop-blur-2xl border border-white/85 dark:border-white/10 hover:border-white dark:hover:border-white/30 transition-all shadow-[0_8px_20px_-6px_rgba(15,23,42,0.05),inset_0_1.5px_2px_rgba(255,255,255,0.95)] hover:shadow-md flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-neutral-800 dark:text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
             <Megaphone className="w-4 h-4" />
           </div>
           <div className="truncate">
             <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">
               {t("marketing") || "Marketing"}
             </div>
-            <div className="text-[10px] text-neutral-400">Aksiya va xabarnoma</div>
+            <div className="text-[10px] text-neutral-400">{t("promotions_and_alerts") || "Aksiya va xabarnoma"}</div>
           </div>
         </Link>
       </div>

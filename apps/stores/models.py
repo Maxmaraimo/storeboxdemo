@@ -232,21 +232,237 @@ class Store(models.Model):
     def __str__(self):
         return f"{self.name} ({self.subdomain})"
 
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.license_expires_at:
+            # 7 days free trial on store registration
+            self.license_expires_at = timezone.now() + datetime.timedelta(days=7)
+        super().save(*args, **kwargs)
+
+    TARIFF_RATES = {
+        'START': Decimal('99000.00'),        # ~3 300 UZS/день
+        'STANDARD': Decimal('199000.00'),    # ~6 633 UZS/день
+        'PRO': Decimal('399000.00'),         # ~13 300 UZS/день
+        'ENTERPRISE': Decimal('799000.00'),  # ~26 633 UZS/день
+    }
+
+    @classmethod
+    def get_plan_daily_rate(cls, plan):
+        monthly = cls.TARIFF_RATES.get(plan, Decimal('199000.00'))
+        return monthly / Decimal('30.00')
+
+    def calculate_extension(self, plan=None, amount=None, days=None, months=None, target_date=None):
+        """
+        Intelligent tariff calculator:
+        - By amount (e.g. 500 000 UZS) -> calculates days & new expiry
+        - By months (1, 3, 6 -10%, 12 -20%) -> calculates total amount & new expiry
+        - By days -> calculates amount & new expiry
+        - By target_date -> calculates required amount
+        """
+        now = timezone.now()
+        base_date = self.license_expires_at if (self.license_expires_at and self.license_expires_at > now) else now
+        plan = plan or self.license_plan or 'STANDARD'
+        monthly_rate = self.TARIFF_RATES.get(plan, Decimal('500000.00'))
+        daily_rate = monthly_rate / Decimal('30.00')
+
+        calc_days = 30
+        calc_amount = monthly_rate
+
+        if amount is not None and Decimal(str(amount)) > 0:
+            amt = Decimal(str(amount))
+            calc_days = max(1, int((amt * Decimal('30')) / monthly_rate))
+            calc_amount = amt
+        elif target_date is not None:
+            if isinstance(target_date, str):
+                target_dt = datetime.datetime.strptime(target_date, '%Y-%m-%d')
+                target_dt = timezone.make_aware(target_dt) if timezone.is_naive(target_dt) else target_dt
+            else:
+                target_dt = target_date
+            diff_days = (target_dt - base_date).days
+            calc_days = max(1, diff_days)
+            calc_amount = round(daily_rate * Decimal(calc_days), 2)
+        elif months is not None:
+            m = int(months)
+            calc_days = m * 30
+            raw_amt = monthly_rate * Decimal(m)
+            if m == 6:
+                raw_amt = raw_amt * Decimal('0.90')
+            elif m >= 12:
+                raw_amt = raw_amt * Decimal('0.80')
+            calc_amount = round(raw_amt, 2)
+        elif days is not None:
+            calc_days = int(days)
+            calc_amount = round(daily_rate * Decimal(calc_days), 2)
+
+        new_expiry = base_date + datetime.timedelta(days=calc_days)
+
+        plan_display = dict(self._meta.get_field('license_plan').choices).get(plan, plan)
+
+        return {
+            'plan': plan,
+            'plan_display': plan_display,
+            'days': calc_days,
+            'amount': float(calc_amount),
+            'daily_rate': float(daily_rate),
+            'monthly_rate': float(monthly_rate),
+            'current_expiry': self.license_expires_at.strftime('%d.%m.%Y %H:%M') if self.license_expires_at else 'Нет',
+            'new_expiry': new_expiry.strftime('%d.%m.%Y %H:%M'),
+            'new_expiry_iso': new_expiry.isoformat(),
+        }
+
+    def apply_tariff(self, plan, days=None, amount=None, months=None, payment_status='PAID', payment_method='Оплата онлайн', notes='', admin_user=None):
+        """
+        Applies extension, updates MerchantBalance, creates Invoice and ReconciliationEntry.
+        """
+        calc = self.calculate_extension(plan=plan, amount=amount, days=days, months=months)
+        new_expiry = datetime.datetime.fromisoformat(calc['new_expiry_iso'])
+        actual_amount = Decimal(str(calc['amount']))
+
+        self.license_plan = plan
+        self.license_expires_at = new_expiry
+        self.is_active = True
+        self.save(update_fields=['license_plan', 'license_expires_at', 'is_active', 'updated_at'])
+
+        # Update merchant balance & trial counter
+        now = timezone.now()
+        merch_bal, _ = MerchantBalance.objects.get_or_create(store=self)
+        merch_bal.trial_days_left = max(0, calc['days'])
+        # Credit balance by payment amount if paid via external method (Top-up)
+        if payment_method != 'BALANCE' and payment_status == 'PAID' and actual_amount > 0:
+            merch_bal.balance += actual_amount
+            merch_bal.save(update_fields=['balance', 'trial_days_left'])
+        else:
+            merch_bal.save(update_fields=['trial_days_left'])
+
+        # Create Invoice
+        from apps.super_admin.models import BillingDocument, ReconciliationEntry, TenantAuditLog
+        doc_count = BillingDocument.objects.count() + 1
+        doc_num = f"INV-{now.strftime('%Y%m')}-{self.id:04d}-{doc_count}"
+        doc = BillingDocument.objects.create(
+            doc_number=doc_num,
+            doc_type=BillingDocument.DocTypes.INVOICE,
+            store=self,
+            partner=self.partner,
+            amount=actual_amount,
+            status=payment_status,
+            issue_date=now.date(),
+            description=f"Продление тарифа {self.get_license_plan_display()} на {calc['days']} дн. ({payment_method}) {notes}".strip()
+        )
+
+        # Create Reconciliation Entry
+        if payment_method == 'BALANCE':
+            ReconciliationEntry.objects.create(
+                store=self,
+                operation_type=ReconciliationEntry.OperationTypes.LICENSE,
+                debit=actual_amount,
+                credit=0,
+                balance_after=merch_bal.balance,
+                description=f"Списание с баланса: тариф {self.get_license_plan_display()} (+{calc['days']} дн.)",
+                reference_doc=doc
+            )
+        else:
+            ReconciliationEntry.objects.create(
+                store=self,
+                operation_type=ReconciliationEntry.OperationTypes.TOPUP,
+                debit=0,
+                credit=actual_amount,
+                balance_after=merch_bal.balance,
+                description=f"Поступление оплаты ({payment_method}): тариф {self.get_license_plan_display()} (+{calc['days']} дн.)",
+                reference_doc=doc
+            )
+
+        # Audit log
+        TenantAuditLog.objects.create(
+            store=self,
+            actor=admin_user if admin_user and getattr(admin_user, 'is_authenticated', False) else None,
+            actor_name=str(admin_user) if admin_user else 'Система (Billing)',
+            action='Продление тарифа',
+            details=f"Тариф: {self.get_license_plan_display()}, Дней: +{calc['days']}, Сумма: {actual_amount:,.0f} UZS ({payment_method}), Окончание: {new_expiry:%d.%m.%Y %H:%M}"
+        )
+
+        return calc
+
+    def cancel_subscription(self, days_to_deduct=None, admin_user=None, reason=''):
+        """
+        Cancels or rolls back subscription days, marks status or adjustments in Reconciliation.
+        """
+        now = timezone.now()
+        from apps.super_admin.models import BillingDocument, ReconciliationEntry, TenantAuditLog
+        
+        merch_bal, _ = MerchantBalance.objects.get_or_create(store=self)
+        current_expiry = self.license_expires_at or now
+        
+        if days_to_deduct:
+            new_expiry = max(now - datetime.timedelta(days=1), current_expiry - datetime.timedelta(days=int(days_to_deduct)))
+        else:
+            # Expire immediately
+            new_expiry = now - datetime.timedelta(hours=1)
+            
+        self.license_expires_at = new_expiry
+        self.save(update_fields=['license_expires_at', 'updated_at'])
+        
+        # Calculate refund / adjustment amount based on daily rate
+        daily_rate = self.get_plan_daily_rate(self.license_plan)
+        revoked_days = int(days_to_deduct) if days_to_deduct else max(1, (current_expiry - now).days)
+        adj_amount = Decimal(str(revoked_days)) * daily_rate
+        
+        # Deduct / adjust balance
+        merch_bal.balance = max(Decimal('0.00'), merch_bal.balance - adj_amount)
+        merch_bal.trial_days_left = 0
+        merch_bal.save(update_fields=['balance', 'trial_days_left'])
+        
+        # Record cancellation in ReconciliationEntry
+        ReconciliationEntry.objects.create(
+            store=self,
+            operation_type=ReconciliationEntry.OperationTypes.ADJUSTMENT,
+            debit=adj_amount,
+            credit=0,
+            balance_after=merch_bal.balance,
+            description=f"Отмена / отзыв подписки ({reason or 'Решение администратора'})",
+        )
+        
+        # Cancel latest invoice if applicable
+        latest_inv = self.billing_documents.filter(doc_type=BillingDocument.DocTypes.INVOICE).first()
+        if latest_inv and latest_inv.status in ['PAID', 'PENDING']:
+            latest_inv.status = BillingDocument.Statuses.CANCELLED
+            latest_inv.description += f" [ОТМЕНЕН: {reason}]"
+            latest_inv.save(update_fields=['status', 'description'])
+            
+        TenantAuditLog.objects.create(
+            store=self,
+            actor=admin_user if admin_user and getattr(admin_user, 'is_authenticated', False) else None,
+            actor_name=str(admin_user) if admin_user else 'Администратор',
+            action='Отмена подписки',
+            details=f"Отозвано {revoked_days} дн. Тариф: {self.get_license_plan_display()}. Причина: {reason or 'Не указана'}. Баланс: {merch_bal.balance:,.0f} UZS"
+        )
+        return {
+            'new_expiry': new_expiry.strftime('%d.%m.%Y %H:%M'),
+            'revoked_days': revoked_days,
+            'balance': float(merch_bal.balance)
+        }
+
+    @property
+    def is_expired(self):
+        if not self.license_expires_at:
+            return False
+        return self.license_expires_at < timezone.now()
+
     @property
     def license_days_left(self):
         if not self.license_expires_at:
             return None
         diff = self.license_expires_at - timezone.now()
-        return diff.days
+        if diff.total_seconds() <= 0:
+            return 0
+        return diff.days + 1
 
     @property
     def license_status(self):
-        days = self.license_days_left
-        if days is None:
+        if not self.license_expires_at:
             return 'LIFETIME'
-        if days < 0:
+        if self.is_expired:
             return 'EXPIRED'
-        if days <= 7:
+        days = self.license_days_left
+        if days is not None and days <= 7:
             return 'EXPIRING'
         return 'ACTIVE'
 
@@ -260,6 +476,10 @@ class Store(models.Model):
     @property
     def contact_phone(self):
         return self.phone or (self.owner.phone if self.owner else '') or ''
+
+    @contact_phone.setter
+    def contact_phone(self, value):
+        self.phone = value or ''
 
     def get_full_domain(self):
         platform_domain = getattr(settings, 'PLATFORM_DOMAIN', 'storebox.uz')

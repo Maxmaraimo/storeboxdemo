@@ -45,7 +45,7 @@ export const CustomersPage: React.FC = () => {
             {t("customers_list_title") || "Mijozlar ro'yxati"}
           </h1>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            {customers.length} {t("customers_list_subtitle") || "ta faol mijozlar va sodiqlik dasturi"}
+            {(t("customers_list_subtitle_format") || "{count} ta faol mijozlar va sodiqlik dasturi").replace("{count}", String(customers.length))}
           </p>
         </div>
       </div>
@@ -63,7 +63,7 @@ export const CustomersPage: React.FC = () => {
           <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-2.5" />
         </div>
         <div className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
-          {t("total_label") || "Jami:"} <span className="text-neutral-900 dark:text-white font-black">{customers.length} ta</span>
+          {(t("total_customers_format") || "Jami: {count} ta").replace("{count}", String(customers.length))}
         </div>
       </div>
 
@@ -91,10 +91,10 @@ export const CustomersPage: React.FC = () => {
                     <div className="font-bold text-neutral-900 dark:text-white">{c.name}</div>
                   </td>
                   <td className="py-3.5 px-4 font-mono font-bold text-neutral-600 dark:text-neutral-300">{c.phone}</td>
-                  <td className="py-3.5 px-4 font-mono font-bold text-neutral-900 dark:text-white">{c.orders_count} ta</td>
+                  <td className="py-3.5 px-4 font-mono font-bold text-neutral-900 dark:text-white">{c.orders_count}</td>
                   <td className="py-3.5 px-4">
                     <span className="px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[11px] font-bold border border-amber-200 dark:border-amber-800/60 font-mono">
-                      {c.bonus_balance} ball
+                      {c.bonus_balance} {t("points_unit") || "ball"}
                     </span>
                   </td>
                   <td className="py-3.5 px-4 text-neutral-400 font-mono text-[11px]">
@@ -106,7 +106,7 @@ export const CustomersPage: React.FC = () => {
                       onClick={() => setBonusModalCustomer(c)}
                       className="px-3 py-1.5 rounded-xl border border-black/[0.08] dark:border-white/10 hover:bg-neutral-100 dark:hover:bg-white/10 text-[11px] font-bold text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
                     >
-                      {t("give_bonus") || "Ball berish"}
+                      {t("give_bonus_btn_short") || "Ball berish"}
                     </button>
                   </td>
                 </tr>
@@ -128,7 +128,9 @@ export const CustomersPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white dark:bg-[#18181b] border border-black/[0.06] dark:border-white/10 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-black text-base text-neutral-900 dark:text-white">Bonus ball berish</h3>
+              <h3 className="font-black text-base text-neutral-900 dark:text-white">
+                {t("bonus_modal_title") || "Bonus ball berish"}
+              </h3>
               <button
                 type="button"
                 onClick={() => setBonusModalCustomer(null)}
@@ -138,7 +140,7 @@ export const CustomersPage: React.FC = () => {
               </button>
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Mijoz: <b className="text-neutral-900 dark:text-white">{bonusModalCustomer.name}</b>
+              {t("customer_label") || "Mijoz:"} <b className="text-neutral-900 dark:text-white">{bonusModalCustomer.name}</b>
             </p>
             <input
               type="number"
@@ -152,14 +154,14 @@ export const CustomersPage: React.FC = () => {
                 onClick={() => setBonusModalCustomer(null)}
                 className="flex-1 py-2.5 rounded-xl bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 font-bold text-xs text-neutral-700 dark:text-neutral-300 transition-colors"
               >
-                Bekor qilish
+                {t("btn_cancel") || "Bekor qilish"}
               </button>
               <button
                 type="button"
                 onClick={() => bonusMutation.mutate()}
-                className="flex-1 py-2.5 rounded-xl bg-neutral-900 dark:bg-white hover:bg-black dark:hover:bg-neutral-100 text-white dark:text-neutral-900 font-bold text-xs transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-neutral-900 dark:bg-emerald-600 hover:bg-black dark:hover:bg-emerald-500 text-white font-bold text-xs transition-colors"
               >
-                Berish
+                {t("give_bonus_btn") || "Berish"}
               </button>
             </div>
           </div>

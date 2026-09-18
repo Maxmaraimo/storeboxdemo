@@ -30,14 +30,17 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-8 max-w-md w-full shadow-xl space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white/80 dark:bg-[#161b26]/80 backdrop-blur-2xl rounded-3xl border border-white/90 dark:border-white/10 p-8 max-w-md w-full shadow-[0_20px_50px_-15px_rgba(15,23,42,0.1),inset_0_1.5px_2px_rgba(255,255,255,0.95)] space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex w-12 h-12 rounded-2xl bg-brand text-white items-center justify-center font-black text-2xl shadow-md shadow-brand/20">
-            S
+          <div className="inline-flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2c243d] to-[#151020] border border-white/10 items-center justify-center shadow-lg mx-auto">
+            <svg viewBox="0 0 32 32" className="w-7 h-7 stroke-[#00d668] fill-none stroke-[1.8] stroke-linejoin-round">
+              <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
+              <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
+            </svg>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">StoreBox tizimiga kirish</h1>
-          <p className="text-xs text-slate-500 font-medium">Boshqaruv paneliga kirish uchun ma`lumotlaringizni kiriting</p>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Store<span className="text-[#00d668]">Box</span> tizimiga kirish</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Boshqaruv paneliga kirish uchun ma`lumotlaringizni kiriting</p>
         </div>
 
         {error && (

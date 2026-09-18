@@ -66,6 +66,7 @@ interface ThemeTemplateItem {
   name_en: string;
   description: string;
   description_ru: string;
+  description_en?: string;
   badge: string;
   icon: string;
 }
@@ -94,7 +95,7 @@ interface ThemeSettings {
 }
 
 export const DesignStudioPage: React.FC = () => {
-  const { store } = useAuth();
+  const { store, t, lang: language } = useAuth();
   const queryClient = useQueryClient();
 
   const logoInputRef = useRef<HTMLInputElement | null>(null);
@@ -129,7 +130,7 @@ export const DesignStudioPage: React.FC = () => {
   const [logoUrl, setLogoUrl] = useState("");
   const [themeTemplate, setThemeTemplate] = useState<string>("universal");
   const [selectedNiche, setSelectedNiche] = useState("flowers");
-  const [primaryColor, setPrimaryColor] = useState("#7C3AED");
+  const [primaryColor, setPrimaryColor] = useState("#00d668");
   const [themeBgColor, setThemeBgColor] = useState("#F8FAFC");
   const [cardStyle, setCardStyle] = useState("modern");
   const [cardRadius, setCardRadius] = useState("3xl");
@@ -159,24 +160,24 @@ export const DesignStudioPage: React.FC = () => {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Quick brand color palettes (StoreBox signature violet first)
+  // Quick brand color palettes (StoreBox signature deep ink charcoal first)
   const quickColors = [
-    { name: "StoreBox Fiolet", value: "#7C3AED" },
-    { name: "Qirollik Moviy", value: "#2563EB" },
-    { name: "Zumrad Yashil", value: "#10B981" },
-    { name: "Tengiz Moviy", value: "#0EA5E9" },
-    { name: "Qahrabo To'q sariq", value: "#F59E0B" },
-    { name: "Yoqut Qizil", value: "#EF4444" },
-    { name: "Pushti Nilufar", value: "#EC4899" },
-    { name: "To'q Qora (Noir)", value: "#0F172A" },
+    { name: language === "ru" ? "StoreBox Графит" : language === "en" ? "StoreBox Charcoal" : "StoreBox Charcoal", value: "#211B2E" },
+    { name: language === "ru" ? "StoreBox Зеленый" : language === "en" ? "StoreBox Green" : "StoreBox Yashil", value: "#00D668" },
+    { name: language === "ru" ? "Изумрудный" : language === "en" ? "Emerald Green" : "Zumrad Yashil", value: "#10B981" },
+    { name: language === "ru" ? "Королевский Синий" : language === "en" ? "Royal Blue" : "Qirollik Moviy", value: "#2563EB" },
+    { name: language === "ru" ? "Небесно-голубой" : language === "en" ? "Sky Blue" : "Tengiz Moviy", value: "#0EA5E9" },
+    { name: language === "ru" ? "Янтарно-желтый" : language === "en" ? "Amber Yellow" : "Qahrabo Sariq", value: "#F59E0B" },
+    { name: language === "ru" ? "Рубиново-красный" : language === "en" ? "Ruby Red" : "Yoqut Qizil", value: "#EF4444" },
+    { name: language === "ru" ? "Глубокий черный" : language === "en" ? "Deep Black" : "To'q Qora (Noir)", value: "#0F172A" },
   ];
 
   const bgColors = [
-    { name: "Klassik Slate", value: "#F8FAFC" },
-    { name: "Sof Oq", value: "#FFFFFF" },
-    { name: "Yumshoq Krem", value: "#FEF9C3" },
-    { name: "Pushti Pastel", value: "#FDF8F9" },
-    { name: "Premium Qorong'i", value: "#0F172A" },
+    { name: language === "ru" ? "Классический Slate" : language === "en" ? "Classic Slate" : "Klassik Slate", value: "#F8FAFC" },
+    { name: language === "ru" ? "Чистый Белый" : language === "en" ? "Pure White" : "Sof Oq", value: "#FFFFFF" },
+    { name: language === "ru" ? "Мягкий Крем" : language === "en" ? "Soft Cream" : "Yumshoq Krem", value: "#FEF9C3" },
+    { name: language === "ru" ? "Нежно-розовый" : language === "en" ? "Soft Pastel" : "Pushti Pastel", value: "#FDF8F9" },
+    { name: language === "ru" ? "Премиум Темный" : language === "en" ? "Premium Dark" : "Premium Qorong'i", value: "#0F172A" },
   ];
 
   // 1. Fetch current theme settings
@@ -194,7 +195,7 @@ export const DesignStudioPage: React.FC = () => {
       const initObj = {
         storeName: themeData.store_name || store?.name || "",
         logoUrl: themeData.logo_url || "",
-        primaryColor: themeData.primary_color || "#7C3AED",
+        primaryColor: themeData.primary_color || "#00d668",
         themeBgColor: themeData.theme_bg_color || "#F8FAFC",
         cardStyle: themeData.theme_card_style || "modern",
         cardRadius: themeData.theme_card_radius || "3xl",
@@ -284,6 +285,7 @@ export const DesignStudioPage: React.FC = () => {
       name_en: "Restaurant & Delivery",
       description: "Taomlar, issiq ovqatlar va kafe uchun maxsus menyu formati",
       description_ru: "Специальный формат меню для еды, кафе и быстрой доставки",
+      description_en: "Special menu format for food, cafes, and fast delivery",
       badge: "Food & Delivery",
       icon: "utensils"
     },
@@ -294,6 +296,7 @@ export const DesignStudioPage: React.FC = () => {
       name_en: "Universal Store",
       description: "Klassik e-commerce vitrina, promo-slayder, chegirmalar va qidiruv",
       description_ru: "Классическая витрина с промо-слайдером, категориями и фильтрами",
+      description_en: "Classic storefront with promo sliders, categories, and smart search",
       badge: "E-Commerce",
       icon: "shopping-bag"
     },
@@ -304,6 +307,7 @@ export const DesignStudioPage: React.FC = () => {
       name_en: "Visual Boutique & Fashion",
       description: "Kiyim-kechak, kosmetika va aksessuarlar uchun estetik lookbook",
       description_ru: "Эстетичный лукбук с портретными карточками 3:4 для моды и красоты",
+      description_en: "Aesthetic lookbook with 3:4 portrait cards for fashion and beauty",
       badge: "Fashion & Visual",
       icon: "sparkles"
     }
@@ -556,14 +560,14 @@ export const DesignStudioPage: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                Vitrina Dizayni
+                {t("design_studio_title")}
               </h1>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Jonli
+                {t("live_badge")}
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Shablon, brend ranglari va bannerlarni real vaqt rejimida sozlang.
+              {t("design_studio_subtitle")}
             </p>
           </div>
         </div>
@@ -576,7 +580,7 @@ export const DesignStudioPage: React.FC = () => {
             rel="noopener noreferrer"
             className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <span>Saytni ko'rish</span>
+            <span>{t("view_website")}</span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
           </a>
 
@@ -587,7 +591,7 @@ export const DesignStudioPage: React.FC = () => {
             className="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white text-xs font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50 active:scale-95"
           >
             <Save className="w-4 h-4" />
-            <span>{saving ? "Saqlanmoqda..." : "Saqlash va qo'llash"}</span>
+            <span>{saving ? t("saving") : t("save_and_apply")}</span>
           </button>
         </div>
       </div>
@@ -624,7 +628,7 @@ export const DesignStudioPage: React.FC = () => {
         <div className="bg-amber-500 text-white px-4 py-2.5 rounded-xl shadow-xs flex items-center justify-between gap-4 text-xs font-bold">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Saqlanmagan o'zgarishlar mavjud. O'zgarishlar saytga tushishi uchun saqlang.</span>
+            <span>{t("unsaved_changes_warning")}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -632,7 +636,7 @@ export const DesignStudioPage: React.FC = () => {
               onClick={handleResetChanges}
               className="px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold transition-all cursor-pointer"
             >
-              Bekor qilish
+              {t("cancel")}
             </button>
             <button
               type="button"
@@ -640,7 +644,7 @@ export const DesignStudioPage: React.FC = () => {
               disabled={saving}
               className="px-3 py-1 rounded-lg bg-white text-amber-900 hover:bg-slate-100 text-[11px] font-black shadow-2xs transition-all cursor-pointer"
             >
-              {saving ? "Saqlanmoqda..." : "Saqlash"}
+              {saving ? t("saving") : t("save")}
             </button>
           </div>
         </div>
@@ -656,7 +660,7 @@ export const DesignStudioPage: React.FC = () => {
           }`}
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
-          <span>Sozlamalar</span>
+          <span>{t("settings")}</span>
         </button>
         <button
           type="button"
@@ -666,7 +670,7 @@ export const DesignStudioPage: React.FC = () => {
           }`}
         >
           <Eye className="w-3.5 h-3.5" />
-          <span>Jonli vitrina</span>
+          <span>{t("live_showcase")}</span>
         </button>
       </div>
 
@@ -688,7 +692,7 @@ export const DesignStudioPage: React.FC = () => {
               }`}
             >
               <LayoutGrid className="w-4 h-4" />
-              <span>1. Shablon</span>
+              <span>1. {t("design_tab_templates")}</span>
             </button>
 
             <button
@@ -701,7 +705,7 @@ export const DesignStudioPage: React.FC = () => {
               }`}
             >
               <Palette className="w-4 h-4" />
-              <span>2. Ranglar</span>
+              <span>2. {t("design_tab_styles")}</span>
             </button>
 
             <button
@@ -714,7 +718,7 @@ export const DesignStudioPage: React.FC = () => {
               }`}
             >
               <ImageIcon className="w-4 h-4" />
-              <span>3. Bannerlar</span>
+              <span>3. {t("design_tab_banners")}</span>
             </button>
 
             <button
@@ -727,7 +731,7 @@ export const DesignStudioPage: React.FC = () => {
               }`}
             >
               <Store className="w-4 h-4" />
-              <span>4. Logo & Nom</span>
+              <span>4. {t("design_tab_store_info")}</span>
             </button>
           </div>
 
@@ -736,17 +740,19 @@ export const DesignStudioPage: React.FC = () => {
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4 animate-in fade-in duration-150">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <h3 className="font-black text-sm text-slate-900">Vitrina Shablonini Tanlang</h3>
-                  <p className="text-[11px] text-slate-500">Do'koningiz faoliyat turiga mos dizaynni tanlang</p>
+                  <h3 className="font-black text-sm text-slate-900">{t("choose_template_title")}</h3>
+                  <p className="text-[11px] text-slate-500">{t("choose_template_subtitle")}</p>
                 </div>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-600">
-                  {templatesList.length} ta shablon
+                  {t("templates_count").replace("{count}", String(templatesList.length))}
                 </span>
               </div>
 
               <div className="space-y-3">
                 {templatesList.map((tpl) => {
                   const isSelected = themeTemplate === tpl.id;
+                  const tplName = language === "ru" ? (tpl.name_ru || tpl.name) : language === "en" ? (tpl.name_en || tpl.name) : tpl.name;
+                  const tplDesc = language === "ru" ? (tpl.description_ru || tpl.description) : language === "en" ? (tpl.description_en || tpl.description_ru || tpl.description) : tpl.description;
                   return (
                     <button
                       key={tpl.id}
@@ -773,36 +779,54 @@ export const DesignStudioPage: React.FC = () => {
 
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-black text-xs sm:text-sm text-slate-900">{tpl.name}</h4>
+                            <h4 className="font-black text-xs sm:text-sm text-slate-900">{tplName}</h4>
                             <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
                               isSelected ? "bg-brand text-white" : "bg-slate-100 text-slate-500"
                             }`}>
                               {tpl.badge}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-500 leading-relaxed mt-1">{tpl.description}</p>
+                          <p className="text-xs text-slate-500 leading-relaxed mt-1">{tplDesc}</p>
 
                           {/* Section Feature Chips */}
                           <div className="flex flex-wrap gap-1.5 mt-2.5">
                             {tpl.id === "restaurant" && (
                               <>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">🛵 Yetkazish &amp; Ish vaqti</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">🍽️ Taomlar Menyu kartasi</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">➕ Tezkor sanagich</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">
+                                  {language === "ru" ? "🛵 Доставка и график" : language === "en" ? "🛵 Delivery & Hours" : "🛵 Yetkazish & Ish vaqti"}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">
+                                  {language === "ru" ? "🍽️ Меню блюд" : language === "en" ? "🍽️ Food Menu" : "🍽️ Taomlar Menyu kartasi"}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">
+                                  {language === "ru" ? "➕ Быстрый счетчик" : language === "en" ? "➕ Quick Counter" : "➕ Tezkor sanagich"}
+                                </span>
                               </>
                             )}
                             {tpl.id === "boutique" && (
                               <>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">👗 3:4 Portret Vitrina</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">💎 Ramsiz Minimalizm</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">❤️ Sevimlilar (Wishlist)</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">
+                                  {language === "ru" ? "👗 3:4 Портретная витрина" : language === "en" ? "👗 3:4 Portrait Grid" : "👗 3:4 Portret Vitrina"}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">
+                                  {language === "ru" ? "💎 Без рамок и лишнего" : language === "en" ? "💎 Frameless Clean" : "💎 Ramsiz Minimalizm"}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">
+                                  {language === "ru" ? "❤️ Избранное (Wishlist)" : language === "en" ? "❤️ Wishlist" : "❤️ Sevimlilar (Wishlist)"}
+                                </span>
                               </>
                             )}
                             {tpl.id === "universal" && (
                               <>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">🎁 Slayder Banner</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">📦 Toifalar Katagi</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">🛍️ 4 Ustunli E-Commerce</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">
+                                  {language === "ru" ? "🎁 Слайдер акций" : language === "en" ? "🎁 Promo Slider" : "🎁 Slayder Banner"}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">
+                                  {language === "ru" ? "📦 Сетка категорий" : language === "en" ? "📦 Categories Grid" : "📦 Toifalar Katagi"}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">
+                                  {language === "ru" ? "🛍️ 4-колоночный E-Commerce" : language === "en" ? "🛍️ 4-Column E-Commerce" : "🛍️ 4 Ustunli E-Commerce"}
+                                </span>
                               </>
                             )}
                           </div>
@@ -826,10 +850,10 @@ export const DesignStudioPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-black text-slate-800 flex items-center gap-1.5">
                     <Layers className="w-4 h-4 text-brand" />
-                    <span>Faol Vitrina Bo'limlari (Shablon bo'yicha):</span>
+                    <span>{t("active_sections_title")}</span>
                   </h4>
                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Avtomatik faol
+                    {t("auto_active_badge")}
                   </span>
                 </div>
 
@@ -838,57 +862,81 @@ export const DesignStudioPage: React.FC = () => {
                     <>
                       <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">🛵 Yetkazish &amp; Ish vaqti</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "🛵 Доставка и график работы" : language === "en" ? "🛵 Delivery & Working Hours" : "🛵 Yetkazish & Ish vaqti"}
+                        </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">🍽️ Taomlar Menyusi &amp; Sanagich</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "🍽️ Меню блюд и счетчик" : language === "en" ? "🍽️ Food Menu & Counter" : "🍽️ Taomlar Menyusi & Sanagich"}
+                        </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">🍔 Toifalar Skrolleri</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "🍔 Скроллер категорий" : language === "en" ? "🍔 Categories Scroller" : "🍔 Toifalar Skrolleri"}
+                        </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">🛡️ 100% Halol &amp; Termoboks</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "🛡️ 100% Халяль и термобоксы" : language === "en" ? "🛡️ 100% Halal & Insulated Bag" : "🛡️ 100% Halol & Termoboks"}
+                        </span>
                       </div>
                     </>
                   ) : themeTemplate === "boutique" ? (
                     <>
                       <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">👗 3:4 Portret Vitrina</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "👗 3:4 Портретная витрина" : language === "en" ? "👗 3:4 Portrait Grid" : "👗 3:4 Portret Vitrina"}
+                        </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">💎 Ramsiz Toza Minimalizm</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "💎 Чистый минимализм без рамок" : language === "en" ? "💎 Clean Frameless Minimal" : "💎 Ramsiz Toza Minimalizm"}
+                        </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">❤️ Sevimlilar (Wishlist)</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "❤️ Избранное (Wishlist)" : language === "en" ? "❤️ Wishlist" : "❤️ Sevimlilar (Wishlist)"}
+                        </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">🏷️ Toifalar Navigatsiyasi</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "🏷️ Навигация по категориям" : language === "en" ? "🏷️ Category Navigation" : "🏷️ Toifalar Navigatsiyasi"}
+                        </span>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">🎁 Aksiya Promo Slayderi</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "🎁 Промо-слайдер акций" : language === "en" ? "🎁 Promo Slider Banner" : "🎁 Aksiya Promo Slayderi"}
+                        </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">📦 Kategoriya Katakchalari</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "📦 Плитка категорий" : language === "en" ? "📦 Categories Grid" : "📦 Kategoriya Katakchalari"}
+                        </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">🛍️ 4 Ustunli E-Commerce Vitrina</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "🛍️ 4-колоночная витрина товаров" : language === "en" ? "🛍️ 4-Column Storefront" : "🛍️ 4 Ustunli E-Commerce Vitrina"}
+                        </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">🚚 Tez yetkazish &amp; Kafolat</span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ru" ? "🚚 Быстрая доставка и гарантия" : language === "en" ? "🚚 Fast Delivery & Guarantee" : "🚚 Tez yetkazish & Kafolat"}
+                        </span>
                       </div>
                     </>
                   )}
@@ -901,14 +949,14 @@ export const DesignStudioPage: React.FC = () => {
           {activeTab === "style" && (
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-5 animate-in fade-in duration-150">
               <div className="border-b border-slate-100 pb-3">
-                <h3 className="font-black text-sm text-slate-900">Brend Ranglari va Uslub</h3>
-                <p className="text-[11px] text-slate-500">Tugmalar, aksentlar va fon ranglarini moslashtiring</p>
+                <h3 className="font-black text-sm text-slate-900">{t("brand_colors_title")}</h3>
+                <p className="text-[11px] text-slate-500">{t("brand_colors_subtitle")}</p>
               </div>
 
               {/* Primary Color Palette */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-700">Asosiy brend rangi:</label>
+                  <label className="text-xs font-bold text-slate-700">{t("primary_color_label")}</label>
                   <div className="flex items-center gap-1.5">
                     <input
                       type="color"
@@ -941,7 +989,7 @@ export const DesignStudioPage: React.FC = () => {
               {/* Background Color */}
               <div className="pt-3 border-t border-slate-100">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-700">Sayt foni rangi:</label>
+                  <label className="text-xs font-bold text-slate-700">{t("bg_color_label")}</label>
                   <div className="flex items-center gap-1.5">
                     <input
                       type="color"
@@ -973,12 +1021,12 @@ export const DesignStudioPage: React.FC = () => {
 
               {/* Card Style */}
               <div className="pt-3 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-700 mb-2">Tovarlar kartochkasi uslubi:</label>
+                <label className="block text-xs font-bold text-slate-700 mb-2">{t("card_style_label")}</label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: "modern", title: "Zamonaviy", desc: "Rounded 3XL, soya", icon: LayoutGrid },
-                    { id: "compact", title: "Menyu", desc: "Gorizontal ixcham", icon: Menu },
-                    { id: "minimal", title: "Minimal", desc: "Ramsiz, toza", icon: Square },
+                    { id: "modern", title: t("card_style_modern"), desc: t("card_style_modern_desc"), icon: LayoutGrid },
+                    { id: "compact", title: t("card_style_compact"), desc: t("card_style_compact_desc"), icon: Menu },
+                    { id: "minimal", title: t("card_style_minimal"), desc: t("card_style_minimal_desc"), icon: Square },
                   ].map((s) => {
                     const active = cardStyle === s.id;
                     return (
@@ -1007,8 +1055,8 @@ export const DesignStudioPage: React.FC = () => {
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4 animate-in fade-in duration-150">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <h3 className="font-black text-sm text-slate-900">Reklama Bannerlari</h3>
-                  <p className="text-[11px] text-slate-500">Vitrina yuqorisidagi aksiyali slayder rasmlari</p>
+                  <h3 className="font-black text-sm text-slate-900">{t("banners_title")}</h3>
+                  <p className="text-[11px] text-slate-500">{t("banners_subtitle")}</p>
                 </div>
                 <button
                   type="button"
@@ -1016,20 +1064,20 @@ export const DesignStudioPage: React.FC = () => {
                   className="px-3 py-1.5 rounded-xl bg-brand hover:bg-brand-dark text-white text-xs font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Qo'shish</span>
+                  <span>{t("add")}</span>
                 </button>
               </div>
 
               {banners.length === 0 ? (
                 <div className="p-6 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-2">
                   <ImageIcon className="w-8 h-8 text-slate-300 mx-auto" />
-                  <p className="text-xs font-bold text-slate-700">Hozircha bannerlar yo'q</p>
+                  <p className="text-xs font-bold text-slate-700">{t("no_banners_yet")}</p>
                   <button
                     type="button"
                     onClick={handleOpenAddBanner}
                     className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all cursor-pointer"
                   >
-                    + Birinchi bannerni qo'shish
+                    {t("add_first_banner")}
                   </button>
                 </div>
               ) : (
@@ -1065,7 +1113,7 @@ export const DesignStudioPage: React.FC = () => {
                           className={`p-1.5 rounded-lg border text-xs transition-colors cursor-pointer ${
                             b.is_active ? "border-emerald-200 text-emerald-700 bg-emerald-50" : "border-slate-200 text-slate-400"
                           }`}
-                          title={b.is_active ? "O'chirish" : "Yoqish"}
+                          title={b.is_active ? (language === "ru" ? "Выключить" : language === "en" ? "Turn off" : "O'chirish") : (language === "ru" ? "Включить" : language === "en" ? "Turn on" : "Yoqish")}
                         >
                           {b.is_active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                         </button>
@@ -1073,7 +1121,7 @@ export const DesignStudioPage: React.FC = () => {
                           type="button"
                           onClick={() => handleOpenEditBanner(b)}
                           className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
-                          title="Tahrirlash"
+                          title={t("edit")}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -1081,7 +1129,7 @@ export const DesignStudioPage: React.FC = () => {
                           type="button"
                           onClick={() => handleDeleteBanner(b.id)}
                           className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
-                          title="O'chirish"
+                          title={t("delete")}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1097,8 +1145,8 @@ export const DesignStudioPage: React.FC = () => {
           {activeTab === "store" && (
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4 animate-in fade-in duration-150">
               <div className="border-b border-slate-100 pb-3">
-                <h3 className="font-black text-sm text-slate-900">Do'kon Nomi va Logotipi</h3>
-                <p className="text-[11px] text-slate-500">Brending va do'kon identifikatsiyasi</p>
+                <h3 className="font-black text-sm text-slate-900">{t("store_name_logo_title")}</h3>
+                <p className="text-[11px] text-slate-500">{t("store_branding_subtitle")}</p>
               </div>
 
               {/* Logo Uploader */}
@@ -1128,37 +1176,37 @@ export const DesignStudioPage: React.FC = () => {
                       className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Upload className="w-3.5 h-3.5" />
-                      <span>{uploadingLogo ? "Yuklanmoqda..." : "Logotip yuklash"}</span>
+                      <span>{uploadingLogo ? t("saving") : t("upload_logo_btn")}</span>
                     </button>
                     {logoUrl && (
                       <button
                         type="button"
                         onClick={handleLogoDelete}
                         className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                        title="Logotipni o'chirish"
+                        title={language === "ru" ? "Удалить логотип" : language === "en" ? "Delete logo" : "Logotipni o'chirish"}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-400">PNG, JPG yoki SVG. Tavsiya: 512x512 px.</p>
+                  <p className="text-[10px] text-slate-400">{t("logo_recommendation")}</p>
                 </div>
               </div>
 
               {/* Store Name */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Do'kon nomi:</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t("store_name_label")}</label>
                 <input
                   type="text"
                   value={storeName}
                   onChange={(e) => setStoreName(e.target.value)}
-                  placeholder="Masalan: StoreBox Burger & Restoran"
+                  placeholder={language === "ru" ? "Например: StoreBox Burger & Restoran" : language === "en" ? "e.g.: StoreBox Burger & Restaurant" : "Masalan: StoreBox Burger & Restoran"}
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand"
                 />
               </div>
 
               <div className="pt-2 text-[11px] text-slate-500 flex items-center gap-1.5">
-                <span className="text-slate-400 font-bold">Vitrina havolasi:</span>
+                <span className="text-slate-400 font-bold">{t("storefront_link_label")}</span>
                 <span className="font-mono text-slate-800 bg-slate-100 px-2 py-0.5 rounded">https://{subdomain}.storebox.uz</span>
               </div>
             </div>
@@ -1175,7 +1223,7 @@ export const DesignStudioPage: React.FC = () => {
           <div className="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-black text-xs text-slate-800">Jonli vitrina:</span>
+              <span className="font-black text-xs text-slate-800">{t("live_showcase")}:</span>
             </div>
 
             {/* Switcher Buttons */}
@@ -1190,7 +1238,7 @@ export const DesignStudioPage: React.FC = () => {
                 }`}
               >
                 <Monitor className="w-3.5 h-3.5" />
-                <span>Kompyuter (Desktop)</span>
+                <span>{t("preview_desktop")}</span>
               </button>
 
               <button
@@ -1203,7 +1251,7 @@ export const DesignStudioPage: React.FC = () => {
                 }`}
               >
                 <Smartphone className="w-3.5 h-3.5" />
-                <span>Telefon (Mobil)</span>
+                <span>{t("preview_mobile")}</span>
               </button>
             </div>
 
@@ -1211,7 +1259,7 @@ export const DesignStudioPage: React.FC = () => {
               type="button"
               onClick={() => setPreviewKey(k => k + 1)}
               className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 cursor-pointer transition-colors"
-              title="Yangilash"
+              title={language === "ru" ? "Обновить" : language === "en" ? "Refresh" : "Yangilash"}
             >
               <RotateCw className="w-3.5 h-3.5" />
             </button>
@@ -1292,7 +1340,7 @@ export const DesignStudioPage: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-black text-sm text-slate-900 flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 text-brand" />
-                <span>{editingBanner ? "Bannerni tahrirlash" : "Yangi banner qo'shish"}</span>
+                <span>{editingBanner ? t("edit_banner") : t("add_new_banner")}</span>
               </h3>
               <button
                 type="button"
@@ -1306,7 +1354,7 @@ export const DesignStudioPage: React.FC = () => {
             <form onSubmit={handleSaveBannerModal} className="space-y-3.5">
               {/* Image selector */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Banner rasmi:</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t("banner_image")}</label>
                 <div className="rounded-xl border-2 border-dashed border-slate-200 p-3 text-center bg-slate-50 space-y-2">
                   {bannerFile ? (
                     <div className="h-24 rounded-lg overflow-hidden border border-slate-200 relative">
@@ -1333,7 +1381,7 @@ export const DesignStudioPage: React.FC = () => {
                   ) : (
                     <div className="py-2 text-slate-400 text-xs">
                       <Upload className="w-5 h-5 mx-auto mb-1 text-slate-400" />
-                      <span>Rasm yuklang yoki havolasini kiriting</span>
+                      <span>{t("upload_or_enter_url")}</span>
                     </div>
                   )}
 
@@ -1352,14 +1400,16 @@ export const DesignStudioPage: React.FC = () => {
                     onClick={() => newBannerFileInputRef.current?.click()}
                     className="px-3 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-[11px] font-bold cursor-pointer"
                   >
-                    Fayl tanlash
+                    {language === "ru" ? "Выбрать файл" : language === "en" ? "Choose file" : "Fayl tanlash"}
                   </button>
                 </div>
               </div>
 
               {!bannerFile && (
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Yoki rasm URL havolasi:</label>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    {language === "ru" ? "Или URL изображения:" : language === "en" ? "Or image URL:" : "Yoki rasm URL havolasi:"}
+                  </label>
                   <input
                     type="url"
                     value={bannerForm.image_url}
@@ -1371,24 +1421,24 @@ export const DesignStudioPage: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Banner sarlavhasi:</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t("banner_title_label")}</label>
                 <input
                   type="text"
                   required
                   value={bannerForm.title}
                   onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
-                  placeholder="Masalan: Yozgi chegirmalar"
+                  placeholder={language === "ru" ? "Например: Летние скидки" : language === "en" ? "e.g.: Summer Sale" : "Masalan: Yozgi chegirmalar"}
                   className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Tavsif (Subtitle):</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t("banner_subtitle_label")}</label>
                 <input
                   type="text"
                   value={bannerForm.subtitle}
                   onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })}
-                  placeholder="Masalan: Barcha yangi mahsulotlarga 20% gacha aksiya"
+                  placeholder={language === "ru" ? "Например: Скидки до 20% на новинки" : language === "en" ? "e.g.: Up to 20% off new arrivals" : "Masalan: Barcha yangi mahsulotlarga 20% gacha aksiya"}
                   className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-brand"
                 />
               </div>
@@ -1402,7 +1452,7 @@ export const DesignStudioPage: React.FC = () => {
                   className="w-4 h-4 text-brand rounded border-slate-300 focus:ring-brand cursor-pointer"
                 />
                 <label htmlFor="bannerActiveCheckbox" className="text-xs font-bold text-slate-700 cursor-pointer">
-                  Faol banner (vitrinada ko'rsatilsin)
+                  {t("banner_active_checkbox")}
                 </label>
               </div>
 
@@ -1412,14 +1462,14 @@ export const DesignStudioPage: React.FC = () => {
                   onClick={() => setShowAddBannerModal(false)}
                   className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
                 >
-                  Bekor qilish
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={uploadingBanner}
                   className="px-4 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white text-xs font-black shadow-sm cursor-pointer disabled:opacity-50"
                 >
-                  {uploadingBanner ? "Saqlanmoqda..." : "Saqlash"}
+                  {uploadingBanner ? t("saving") : t("save")}
                 </button>
               </div>
             </form>

@@ -101,8 +101,8 @@ export const DiscountsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("discounts")} va Promokodlar</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Mijozlarni jalb qilish uchun chegirmalar va aksiyalar</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("discounts_title") || "Chegirmalar va Promokodlar"}</h1>
+          <p className="text-xs text-slate-500 mt-1 font-medium">{t("discounts_subtitle") || "Mijozlarni jalb qilish uchun chegirmalar va aksiyalar"}</p>
         </div>
         <button
           type="button"
@@ -110,7 +110,7 @@ export const DiscountsPage: React.FC = () => {
           className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
         >
           <Plus className="w-4 h-4" />
-          <span>Yangi promokod</span>
+          <span>{t("add_promocode") || "Yangi promokod"}</span>
         </button>
       </div>
 
@@ -130,12 +130,12 @@ export const DiscountsPage: React.FC = () => {
                     p.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'
                   }`}
                 >
-                  {p.is_active ? 'Faol' : 'O`chirilgan'}
+                  {p.is_active ? (t("status_active") || 'Faol') : (t("status_disabled") || 'O`chirilgan')}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    if (confirm(`'${p.code}' promokodini o'chirishni tasdiqlaysizmi?`)) {
+                    if (confirm(`${t("delete_promocode_confirm") || "Promokodni o'chirishni tasdiqlaysizmi?"} (${p.code})`)) {
                       deleteMutation.mutate(p.id);
                     }
                   }}
@@ -151,20 +151,20 @@ export const DiscountsPage: React.FC = () => {
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
-              <span>Minimal buyurtma:</span>
+              <span>{t("min_order") || "Minimal buyurtma:"}</span>
               <span className="font-bold text-slate-700">{Number(p.min_order_amount).toLocaleString()} UZS</span>
             </div>
 
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-              <span>Foydalanishlar:</span>
-              <span className="font-bold text-slate-700">{p.times_used} / {p.max_uses} marta</span>
+              <span>{t("uses") || "Foydalanishlar:"}</span>
+              <span className="font-bold text-slate-700">{p.times_used} / {p.max_uses} {t("times_used_format") || "marta"}</span>
             </div>
           </div>
         ))}
 
         {promos.length === 0 && !isLoading && (
           <div className="md:col-span-3 p-12 bg-white rounded-3xl border border-slate-200 text-center text-slate-400 text-xs">
-            Hozircha promokodlar yaratilmagan. Yuqoridagi "Yangi promokod" tugmasi orqali qo'shing.
+            {t("no_promocodes") || "Hozircha promokodlar yaratilmagan. Yuqoridagi \"Yangi promokod\" tugmasi orqali qo'shing."}
           </div>
         )}
       </div>
@@ -175,7 +175,7 @@ export const DiscountsPage: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-slate-900">
-                Yangi promokod qo'shish
+                {t("new_promocode_modal_title") || "Yangi promokod qo'shish"}
               </h3>
               <button
                 type="button"
@@ -195,7 +195,7 @@ export const DiscountsPage: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Promokod kodi *
+                  {t("promocode_code_label") || "Promokod kodi *"}
                 </label>
                 <input
                   type="text"
@@ -208,7 +208,7 @@ export const DiscountsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Chegirma turi *
+                  {t("discount_type_label") || "Chegirma turi *"}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -218,7 +218,7 @@ export const DiscountsPage: React.FC = () => {
                       formType === "PERCENT" ? "bg-brand text-white border-brand" : "bg-slate-50 text-slate-600 border-slate-200"
                     }`}
                   >
-                    Foiz (%)
+                    {t("discount_type_percent") || "Foiz (%)"}
                   </button>
                   <button
                     type="button"
@@ -227,14 +227,14 @@ export const DiscountsPage: React.FC = () => {
                       formType === "FIXED" ? "bg-brand text-white border-brand" : "bg-slate-50 text-slate-600 border-slate-200"
                     }`}
                   >
-                    Aniq summa (UZS)
+                    {t("discount_type_fixed") || "Aniq summa (UZS)"}
                   </button>
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Chegirma qiymati ({formType === "PERCENT" ? "%" : "UZS"}) *
+                  {t("discount_value_label") || "Chegirma qiymati"} ({formType === "PERCENT" ? "%" : "UZS"}) *
                 </label>
                 <input
                   type="number"
@@ -247,7 +247,7 @@ export const DiscountsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Minimal buyurtma summasi (UZS)
+                  {t("min_order_amount_label") || "Minimal buyurtma summasi (UZS)"}
                 </label>
                 <input
                   type="number"
@@ -260,7 +260,7 @@ export const DiscountsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Maksimal foydalanish soni
+                  {t("max_uses_label") || "Maksimal foydalanish soni"}
                 </label>
                 <input
                   type="number"
@@ -278,7 +278,7 @@ export const DiscountsPage: React.FC = () => {
                 onClick={closeModal}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
               >
-                Bekor qilish
+                {t("cancel") || "Bekor qilish"}
               </button>
               <button
                 type="button"
@@ -286,7 +286,7 @@ export const DiscountsPage: React.FC = () => {
                 disabled={createMutation.isPending}
                 className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50"
               >
-                {createMutation.isPending ? "Yaratilmoqda..." : "Yaratish"}
+                {createMutation.isPending ? (t("creating") || "Yaratilmoqda...") : (t("create") || "Yaratish")}
               </button>
             </div>
           </div>

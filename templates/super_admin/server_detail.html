@@ -32,6 +32,14 @@
             <span>{% if store.is_active %}Отключить{% else %}Включить{% endif %}</span>
         </button>
     </form>
+
+    <!-- Delete Server Button -->
+    <button type="button"
+            onclick="window.SuperAdmin.openDeleteModal({{ store.id }}, '{{ store.name|escapejs }}', '{{ store.subdomain|escapejs }}')"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 transition shadow-xs cursor-pointer">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        <span>Удалить магазин</span>
+    </button>
 </div>
 {% endblock %}
 
@@ -95,10 +103,11 @@
                         Тариф: <span class="font-bold text-blue-600">{{ store.get_license_plan_display }}</span>
                     </div>
                 </div>
-                <button @click="renewModalOpen = true"
+                <button @click="renewModalOpen = true; if(window.SuperAdminDetail){window.SuperAdminDetail.openModal();}"
                         type="button"
                         id="btnOpenRenewModal"
-                        onclick="if(window.SuperAdminDetail){window.SuperAdminDetail.openModal();} else { document.getElementById('renewDetailModal').classList.remove('hidden'); }"
+                        data-action="open-renew-modal"
+                        onclick="if(window.SuperAdminDetail){window.SuperAdminDetail.openModal();} else { var m = document.getElementById('renewDetailModal'); if(m){ m.classList.remove('hidden'); m.style.display='flex'; } }"
                         class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 transition cursor-pointer">
                     <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
                     <span>BUY / Продлить</span>
@@ -388,12 +397,23 @@
                                 {{ store.get_license_plan_display }}
                             </div>
                         </div>
-                        <button @click="renewModalOpen = true"
-                                type="button"
-                                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 transition">
-                            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-                            <span>Продлить лицензию (BUY)</span>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button @click="renewModalOpen = true; if(window.SuperAdminDetail){window.SuperAdminDetail.openModal();}"
+                                    type="button"
+                                    data-action="open-renew-modal"
+                                    onclick="if(window.SuperAdminDetail){window.SuperAdminDetail.openModal();} else { var m = document.getElementById('renewDetailModal'); if(m){ m.classList.remove('hidden'); m.style.display='flex'; } }"
+                                    class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 transition cursor-pointer">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span>Продлить лицензию (BUY)</span>
+                            </button>
+                            <button onclick="document.getElementById('cancelSubscriptionModal').classList.remove('hidden')"
+                                    type="button"
+                                    class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                                    title="Отозвать дни или отменить подписку">
+                                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                                <span>Отменить / Отозвать</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
@@ -499,21 +519,95 @@
             <!-- TAB 4: PAYMENTS (ПЛАТЕЖИ) -->
             {% if active_tab == 'payments' %}
             <div class="space-y-4">
-                <!-- Payments Overview -->
-                <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs flex items-center justify-between">
-                    <div>
-                        <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Общий объем успешных платежей</div>
-                        <div class="text-xl font-bold font-mono text-emerald-600 mt-0.5">
-                            {{ total_tx_amount|intcomma }} <span class="text-xs font-sans text-slate-500">UZS</span>
+                <!-- Payments Overview KPIs -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-slate-500">Всего оплат (Суммарно)</div>
+                        <div class="text-xl font-bold font-mono text-slate-900 mt-1">
+                            {{ total_all_payments|intcomma }} <span class="text-xs text-slate-500 font-sans">UZS</span>
                         </div>
+                        <div class="text-xxs text-slate-400 mt-0.5">Тарифы магазина + заказы покупателей</div>
                     </div>
-                    <div class="text-xs text-slate-500 text-right">
-                        Всего транзакций: <span class="font-mono font-bold text-slate-800">{{ transactions.count }}</span>
+
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-emerald-600">Оплачено за тарифы и лицензии</div>
+                        <div class="text-xl font-bold font-mono text-emerald-600 mt-1">
+                            {{ total_subscription_paid|intcomma }} <span class="text-xs text-emerald-400 font-sans">UZS</span>
+                        </div>
+                        <div class="text-xxs text-emerald-600 mt-0.5">{{ subscription_payments.count }} оплаченных инвойсов</div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+                        <div class="text-xxs font-semibold uppercase tracking-wider text-blue-600">Заказы через платежные шлюзы</div>
+                        <div class="text-xl font-bold font-mono text-blue-600 mt-1">
+                            {{ total_tx_amount|intcomma }} <span class="text-xs text-blue-400 font-sans">UZS</span>
+                        </div>
+                        <div class="text-xxs text-slate-400 mt-0.5">{{ transactions.count }} транзакций (Click, Payme, Uzum)</div>
                     </div>
                 </div>
 
-                <!-- Transactions Table -->
+                <!-- 1. Store Subscription & Tariff Payments Table -->
                 <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+                    <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <div class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i>
+                            <span>Платежи магазина за тарифы и подписку</span>
+                        </div>
+                        <span class="text-xxs font-mono font-bold text-slate-500">{{ subscription_payments.count }} платежей</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse dense-table">
+                            <thead>
+                                <tr>
+                                    <th class="w-32">Дата оплаты</th>
+                                    <th class="w-36">Инвойс / Документ</th>
+                                    <th>Назначение платежа</th>
+                                    <th class="w-32 text-right">Сумма (UZS)</th>
+                                    <th class="w-28 text-center">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inv in subscription_payments %}
+                                <tr>
+                                    <td class="font-mono text-xxs text-slate-500">
+                                        {{ inv.issue_date|date:"d.m.Y" }}
+                                    </td>
+                                    <td class="font-mono text-xs font-bold text-blue-600">
+                                        #{{ inv.doc_number }}
+                                    </td>
+                                    <td class="text-xs text-slate-700">
+                                        {{ inv.description }}
+                                    </td>
+                                    <td class="text-right font-mono font-bold text-emerald-600 text-xs">
+                                        +{{ inv.amount|intcomma }}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="inline-block px-2 py-0.5 rounded text-xxs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            {{ inv.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-6 text-slate-400 text-xs">
+                                        Оплаченных счетов за подписку еще нет
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Customer Transactions Table (Gateways) -->
+                <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+                    <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <div class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="shopping-bag" class="w-4 h-4 text-blue-600"></i>
+                            <span>Платежи покупателей за заказы (Шлюзы)</span>
+                        </div>
+                        <span class="text-xxs font-mono font-bold text-slate-500">{{ transactions.count }} транзакций</span>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse dense-table">
                             <thead>
@@ -812,15 +906,20 @@
         </div>
     </div>
 
-    <!-- Modal: BUY / Renew License -->
+    <!-- Modal: BUY / Renew License with Interactive Calculator -->
     <div id="renewDetailModal"
+         x-show="renewModalOpen"
+         x-cloak
+         :class="{ 'hidden': !renewModalOpen }"
+         @click.self="renewModalOpen = false; if(window.SuperAdminDetail){window.SuperAdminDetail.closeModal();}"
+         onclick="if(event.target === this){ if(window.SuperAdminDetail){window.SuperAdminDetail.closeModal();} else { this.classList.add('hidden'); this.style.display='none'; } }"
          class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden">
+        <div class="bg-white rounded-xl border border-slate-300 shadow-2xl max-w-lg w-full overflow-hidden">
             <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
                 <div class="flex items-center space-x-2">
-                    <i data-lucide="shopping-cart" class="w-4 h-4 text-emerald-400"></i>
+                    <i data-lucide="calculator" class="w-4 h-4 text-emerald-400"></i>
                     <h3 class="text-xs font-bold uppercase tracking-wider">
-                        Продление лицензии: <span class="font-mono text-emerald-400">{{ store.subdomain }}</span>
+                        Калькулятор тарифа & Продление: <span class="font-mono text-emerald-400">{{ store.subdomain }}</span>
                     </h3>
                 </div>
                 <button @click="renewModalOpen = false"
@@ -832,58 +931,149 @@
                 </button>
             </div>
 
-            <form id="renewDetailForm" action="{% url 'super_admin:server_renew_license' store.id %}" method="POST" class="p-4 space-y-3">
+            <form id="renewDetailForm" action="{% url 'super_admin:server_renew_license' store.id %}" method="POST" class="p-5 space-y-4">
                 {% csrf_token %}
+                <input type="hidden" name="calc_mode" id="detailCalcMode" value="period">
+
+                <!-- Mode Switcher -->
                 <div>
-                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Срок продления</label>
-                    <select name="months" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-semibold text-slate-800">
-                        <option value="1" selected>+ 1 месяц (30 дней)</option>
-                        <option value="3">+ 3 месяца (90 дней)</option>
-                        <option value="6">+ 6 месяцев (180 дней)</option>
-                        <option value="12">+ 12 месяцев (1 год)</option>
-                    </select>
+                    <label class="block text-xxs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Способ расчета</label>
+                    <div class="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+                        <button type="button" id="detailBtnModePeriod" onclick="window.SuperAdminDetail.setCalcMode('period')" class="py-1.5 px-2 rounded-md transition text-center bg-white shadow-xs text-slate-900 font-bold">По периоду</button>
+                        <button type="button" id="detailBtnModeAmount" onclick="window.SuperAdminDetail.setCalcMode('amount')" class="py-1.5 px-2 rounded-md transition text-center text-slate-600 hover:text-slate-900">По сумме (UZS)</button>
+                        <button type="button" id="detailBtnModeDays" onclick="window.SuperAdminDetail.setCalcMode('days')" class="py-1.5 px-2 rounded-md transition text-center text-slate-600 hover:text-slate-900">По дням</button>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Tariff Plan -->
                     <div>
-                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Тарифный план</label>
-                        <select name="plan" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium">
-                            <option value="START" {% if store.license_plan == 'START' %}selected{% endif %}>Старт</option>
-                            <option value="STANDARD" {% if store.license_plan == 'STANDARD' %}selected{% endif %}>Стандарт</option>
-                            <option value="PRO" {% if store.license_plan == 'PRO' %}selected{% endif %}>Профессиональный</option>
-                            <option value="ENTERPRISE" {% if store.license_plan == 'ENTERPRISE' %}selected{% endif %}>Корпоративный</option>
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Тарифный план</label>
+                        <select id="detailPlanSelect" name="plan" onchange="window.SuperAdminDetail.recalculateTariff()" class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 font-bold text-slate-900 bg-white">
+                            <option value="START" {% if store.license_plan == 'START' %}selected{% endif %}>Старт (99 000 / мес)</option>
+                            <option value="STANDARD" {% if store.license_plan == 'STANDARD' or not store.license_plan %}selected{% endif %}>Стандарт (199 000 / мес)</option>
+                            <option value="PRO" {% if store.license_plan == 'PRO' %}selected{% endif %}>Про (399 000 / мес)</option>
+                            <option value="ENTERPRISE" {% if store.license_plan == 'ENTERPRISE' %}selected{% endif %}>Корпоративный (799 000 / мес)</option>
+                        </select>
+                    </div>
+
+                    <!-- Mode-dependent Input -->
+                    <div id="detailPeriodWrapper">
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Срок (Период)</label>
+                        <select id="detailMonthsSelect" name="months" onchange="window.SuperAdminDetail.recalculateTariff()" class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 font-bold text-slate-900 bg-white">
+                            <option value="1" selected>1 месяц (30 дней)</option>
+                            <option value="3">3 месяца (90 дней)</option>
+                            <option value="6">6 месяцев (-10% скидка)</option>
+                            <option value="12">12 месяцев (-20% скидка)</option>
+                        </select>
+                    </div>
+
+                    <div id="detailAmountWrapper" class="hidden">
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Сумма пополнения (UZS)</label>
+                        <input type="number" id="detailAmountInput" name="amount" value="500000" step="10000" min="10000" oninput="window.SuperAdminDetail.recalculateTariff()"
+                               class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 font-mono font-bold text-slate-900 bg-white">
+                    </div>
+
+                    <div id="detailDaysWrapper" class="hidden">
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Количество дней</label>
+                        <input type="number" id="detailDaysInput" name="days" value="30" min="1" oninput="window.SuperAdminDetail.recalculateTariff()"
+                               class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 font-mono font-bold text-slate-900 bg-white">
+                    </div>
+                </div>
+
+                <!-- Quick Amount Shortcuts -->
+                <div id="detailQuickAmountButtons" class="hidden">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-xxs text-slate-400 font-semibold uppercase">Быстрый выбор:</span>
+                        <button type="button" onclick="window.SuperAdminDetail.setQuickAmount(100000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">100 000</button>
+                        <button type="button" onclick="window.SuperAdminDetail.setQuickAmount(200000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">200 000</button>
+                        <button type="button" onclick="window.SuperAdminDetail.setQuickAmount(400000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">400 000</button>
+                        <button type="button" onclick="window.SuperAdminDetail.setQuickAmount(800000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">800 000</button>
+                        <button type="button" onclick="window.SuperAdminDetail.setQuickAmount(1500000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">1 500 000</button>
+                    </div>
+                </div>
+
+                <!-- Live Dynamic Calculation Card -->
+                <div class="p-3.5 rounded-xl bg-slate-900 text-white space-y-2 border border-slate-800 shadow-inner">
+                    <div class="flex items-center justify-between text-slate-400 text-xxs uppercase tracking-wider font-mono">
+                        <span>Дневная ставка тарифа:</span>
+                        <span class="text-slate-200 font-bold" id="detailCalcDailyRateDisplay">6 633 UZS / день</span>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-800/80 pt-2">
+                        <span class="text-xs text-slate-300 font-medium">Будет добавлено дней:</span>
+                        <span class="text-base font-black font-mono text-emerald-400" id="detailCalcDaysDisplay">+30 дней</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-300 font-medium">Итоговая сумма:</span>
+                        <span class="text-sm font-black font-mono text-white" id="detailCalcTotalAmountDisplay">199 000 UZS</span>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-800/80 pt-2">
+                        <span class="text-xs text-slate-300 font-medium">Новая дата окончания:</span>
+                        <span class="text-xs font-black font-mono text-amber-300" id="detailCalcNewExpiryDisplay">Рассчитывается...</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Статус инвойса</label>
+                        <select name="payment_status" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 bg-white">
+                            <option value="PAID" selected>Оплачен (Списать сразу)</option>
+                            <option value="PENDING">Ожидание оплаты (Счет)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Сумма к списанию (UZS)</label>
-                        <input type="text" name="amount" value="199000" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-mono font-bold text-slate-800">
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Основание / Примечание</label>
+                        <input type="text" name="notes" placeholder="Продление через калькулятор" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 bg-white">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Статус инвойса</label>
-                    <select name="payment_status" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
-                        <option value="PAID" selected>Оплачен (Провести списание сразу)</option>
-                        <option value="PENDING">Выставить счет (Ожидание оплаты)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Основание / Примечание</label>
-                    <input type="text" name="notes" placeholder="Продление через SuperAdmin" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
-                </div>
-
-                <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2">
                     <button @click="renewModalOpen = false"
                             id="btnCancelRenewDetailModal"
                             onclick="if(window.SuperAdminDetail){window.SuperAdminDetail.closeModal();} else { document.getElementById('renewDetailModal').classList.add('hidden'); }"
                             type="button"
-                            class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 cursor-pointer">
+                            class="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 cursor-pointer">
                         Отмена
                     </button>
-                    <button type="submit" id="btnSubmitRenewDetail" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1 cursor-pointer">
-                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                        <span>Подтвердить продление</span>
+                    <button type="submit" id="btnSubmitRenewDetail" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Применить и продлить</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cancel / Revoke Subscription Modal -->
+    <div id="cancelSubscriptionModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div class="p-5 border-b border-slate-100 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                    <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">Отмена / Отзыв подписки</h3>
+                    <p class="text-xxs text-slate-500">Магазин: {{ store.subdomain }}.storebox.uz</p>
+                </div>
+            </div>
+            <form method="POST" action="{% url 'super_admin:server_cancel_subscription' store.id %}" class="p-5 space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xxs font-bold text-slate-700 uppercase mb-1">Количество дней для отзыва</label>
+                    <input type="number" name="days" placeholder="Оставьте пустым для полной блокировки/обнуления" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-rose-500">
+                    <p class="text-[11px] text-slate-400 mt-1">Если оставить пустым, подписка истечет немедленно.</p>
+                </div>
+                <div>
+                    <label class="block text-xxs font-bold text-slate-700 uppercase mb-1">Причина отмены / Заметка</label>
+                    <textarea name="reason" rows="2" placeholder="Например: возврат средств, отказ клиента..." class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-rose-500"></textarea>
+                </div>
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button type="button" onclick="document.getElementById('cancelSubscriptionModal').classList.add('hidden')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 cursor-pointer">
+                        Отмена
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5">
+                        <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+                        <span>Отозвать подписку</span>
                     </button>
                 </div>
             </form>
@@ -896,22 +1086,134 @@
 {% block extra_scripts %}
 <script>
     window.SuperAdminDetail = {
+        storeId: {{ store.id }},
+        calcMode: 'period',
+        TARIFF_RATES: {
+            START: 99000,
+            STANDARD: 199000,
+            PRO: 399000,
+            ENTERPRISE: 799000
+        },
         openModal: function() {
             var modal = document.getElementById('renewDetailModal');
             if (modal) {
                 modal.removeAttribute('x-cloak');
-                modal.style.display = 'flex';
                 modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+                this.setCalcMode('period');
+                this.recalculateTariff();
             }
         },
         closeModal: function() {
             var modal = document.getElementById('renewDetailModal');
             if (modal) {
-                modal.style.display = 'none';
                 modal.classList.add('hidden');
+                modal.style.display = 'none';
             }
+        },
+        setCalcMode: function(mode) {
+            this.calcMode = mode;
+            const hiddenMode = document.getElementById('detailCalcMode');
+            if (hiddenMode) hiddenMode.value = mode;
+
+            const btnPeriod = document.getElementById('detailBtnModePeriod');
+            const btnAmount = document.getElementById('detailBtnModeAmount');
+            const btnDays = document.getElementById('detailBtnModeDays');
+
+            const wrapPeriod = document.getElementById('detailPeriodWrapper');
+            const wrapAmount = document.getElementById('detailAmountWrapper');
+            const wrapDays = document.getElementById('detailDaysWrapper');
+            const quickBtns = document.getElementById('detailQuickAmountButtons');
+
+            if (btnPeriod) btnPeriod.className = 'py-1.5 px-2 rounded-md transition text-center ' + (mode === 'period' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-600 hover:text-slate-900');
+            if (btnAmount) btnAmount.className = 'py-1.5 px-2 rounded-md transition text-center ' + (mode === 'amount' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-600 hover:text-slate-900');
+            if (btnDays) btnDays.className = 'py-1.5 px-2 rounded-md transition text-center ' + (mode === 'days' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-600 hover:text-slate-900');
+
+            if (wrapPeriod) wrapPeriod.classList.toggle('hidden', mode !== 'period');
+            if (wrapAmount) wrapAmount.classList.toggle('hidden', mode !== 'amount');
+            if (wrapDays) wrapDays.classList.toggle('hidden', mode !== 'days');
+            if (quickBtns) quickBtns.classList.toggle('hidden', mode !== 'amount');
+
+            this.recalculateTariff();
+        },
+        setQuickAmount: function(amount) {
+            const input = document.getElementById('detailAmountInput');
+            if (input) {
+                input.value = amount;
+                this.recalculateTariff();
+            }
+        },
+        recalculateTariff: function() {
+            const planSelect = document.getElementById('detailPlanSelect');
+            const plan = planSelect ? planSelect.value : 'STANDARD';
+            const monthlyRate = this.TARIFF_RATES[plan] || 500000;
+            const dailyRate = monthlyRate / 30.0;
+
+            let calcDays = 30;
+            let calcAmount = monthlyRate;
+
+            if (this.calcMode === 'period') {
+                const monthsSelect = document.getElementById('detailMonthsSelect');
+                const m = monthsSelect ? parseInt(monthsSelect.value, 10) : 1;
+                calcDays = m * 30;
+                calcAmount = monthlyRate * m;
+                if (m === 6) calcAmount *= 0.90;
+                else if (m === 12) calcAmount *= 0.80;
+            } else if (this.calcMode === 'amount') {
+                const amtInput = document.getElementById('detailAmountInput');
+                const amt = amtInput ? parseFloat(amtInput.value) || 0 : 0;
+                calcDays = Math.max(1, Math.floor(amt / dailyRate));
+                calcAmount = amt;
+            } else if (this.calcMode === 'days') {
+                const daysInput = document.getElementById('detailDaysInput');
+                const d = daysInput ? parseInt(daysInput.value, 10) || 1 : 30;
+                calcDays = d;
+                calcAmount = Math.round(d * dailyRate);
+            }
+
+            const dailyRateEl = document.getElementById('detailCalcDailyRateDisplay');
+            if (dailyRateEl) dailyRateEl.textContent = Math.round(dailyRate).toLocaleString() + ' UZS / день';
+
+            const daysEl = document.getElementById('detailCalcDaysDisplay');
+            if (daysEl) daysEl.textContent = '+' + calcDays + ' дней';
+
+            const totalEl = document.getElementById('detailCalcTotalAmountDisplay');
+            if (totalEl) totalEl.textContent = Math.round(calcAmount).toLocaleString() + ' UZS';
+
+            const params = new URLSearchParams({
+                plan: plan,
+                amount: this.calcMode === 'amount' ? calcAmount : '',
+                months: this.calcMode === 'period' ? (document.getElementById('detailMonthsSelect')?.value || 1) : '',
+                days: this.calcMode === 'days' ? calcDays : ''
+            });
+
+            fetch('/super-admin/servers/' + this.storeId + '/calculate/?' + params.toString())
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'ok' && data.result) {
+                        const expiryEl = document.getElementById('detailCalcNewExpiryDisplay');
+                        if (expiryEl) expiryEl.textContent = data.result.new_expiry;
+                    }
+                })
+                .catch(() => {
+                    const now = new Date();
+                    now.setDate(now.getDate() + calcDays);
+                    const expiryEl = document.getElementById('detailCalcNewExpiryDisplay');
+                    if (expiryEl) expiryEl.textContent = now.toLocaleDateString('ru-RU');
+                });
         }
     };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[data-action="open-renew-modal"]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.SuperAdminDetail) {
+                    window.SuperAdminDetail.openModal();
+                }
+            });
+        });
+    });
 </script>
 {% if active_tab == 'statistics' %}
 <script>

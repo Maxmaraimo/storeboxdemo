@@ -142,7 +142,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 rounded-[28px] shadow-lg shadow-black/[0.03] dark:shadow-black/40 shrink-0 hidden lg:flex flex-col justify-between py-4 px-3 sticky top-4 h-[calc(100vh-32px)] transition-all duration-300 z-40 ${
+      className={`bg-white/75 dark:bg-[#12141a] backdrop-blur-2xl border border-white/85 dark:border-white/10 rounded-[28px] shadow-[0_20px_50px_-15px_rgba(15,23,42,0.07),inset_0_1.5px_2px_rgba(255,255,255,0.95)] shrink-0 hidden lg:flex flex-col justify-between py-4 px-3 sticky top-4 h-[calc(100vh-32px)] transition-all duration-300 z-40 ${
         isExpanded ? "w-64" : "w-[72px]"
       }`}
     >
@@ -154,23 +154,18 @@ export const Sidebar: React.FC = () => {
             className="flex items-center gap-2.5 group overflow-hidden"
             title="StoreBox Dashboard"
           >
-            {/* Apple 6-dot Cluster Icon */}
-            <div className="w-10 h-10 rounded-2xl bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-                <circle cx="12" cy="5" r="2.5" />
-                <circle cx="18" cy="8.5" r="2.5" />
-                <circle cx="18" cy="15.5" r="2.5" />
-                <circle cx="12" cy="19" r="2.5" />
-                <circle cx="6" cy="15.5" r="2.5" />
-                <circle cx="6" cy="8.5" r="2.5" />
-                <circle cx="12" cy="12" r="1.8" className="opacity-60" />
+            {/* StoreBox Official Brand Cube Logo */}
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#2c243d] to-[#151020] flex items-center justify-center shadow-md border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
+              <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#00d668] fill-none stroke-[1.8] stroke-linejoin-round">
+                <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
+                <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
               </svg>
             </div>
 
             {isExpanded && (
               <div className="text-left truncate">
                 <div className="text-sm font-black tracking-tight text-neutral-900 dark:text-white leading-none">
-                  Store<span className="text-neutral-500 dark:text-neutral-400">Box</span>
+                  Store<span className="text-[#00d668]">Box</span>
                 </div>
                 <div className="text-[9px] font-mono font-bold text-neutral-400 mt-0.5 tracking-wider">
                   STUDIO 2.0
@@ -184,7 +179,7 @@ export const Sidebar: React.FC = () => {
             type="button"
             onClick={toggleExpand}
             className="w-7 h-7 rounded-xl flex items-center justify-center text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
-            title={isExpanded ? "Kichraytirish" : "Kengaytirish"}
+            title={isExpanded ? (t("collapse") || "Kichraytirish") : (t("expand") || "Kengaytirish")}
           >
             {isExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
@@ -197,7 +192,7 @@ export const Sidebar: React.FC = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="px-2.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/[0.04] dark:border-white/10 flex items-center justify-between text-[11px] font-mono font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors group"
-            title="Do'kon vitrinasini ochish"
+            title={t("view_storefront_tooltip") || "Do'kon vitrinasini ochish"}
           >
             <div className="flex items-center gap-1.5 truncate">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -232,8 +227,8 @@ export const Sidebar: React.FC = () => {
                       : "w-11 h-11 mx-auto justify-center"
                   } ${
                     active
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-sm font-bold"
-                      : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 font-medium"
+                      ? "bg-neutral-900 dark:bg-emerald-500/15 text-white dark:text-[#00d668] border border-transparent dark:border-emerald-500/30 shadow-sm font-bold"
+                      : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 font-medium border border-transparent"
                   }`}
                   title={!isExpanded ? item.label : undefined}
                 >
@@ -254,7 +249,7 @@ export const Sidebar: React.FC = () => {
                         isExpanded ? "shrink-0 ml-auto" : "absolute -top-1 -right-1"
                       } ${
                         active
-                          ? "bg-white/20 dark:bg-black/20 text-white dark:text-neutral-900"
+                          ? "bg-white/20 dark:bg-emerald-500/20 text-white dark:text-[#00d668]"
                           : item.badge === "AI"
                           ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                           : item.badge === "POS"
@@ -268,7 +263,7 @@ export const Sidebar: React.FC = () => {
 
                   {/* Tooltip for collapsed view */}
                   {!isExpanded && (
-                    <div className="absolute left-full ml-3 px-2.5 py-1 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-[11px] font-semibold whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
+                    <div className="absolute left-full ml-3 px-2.5 py-1 rounded-xl bg-neutral-900 dark:bg-neutral-800 border border-transparent dark:border-white/10 text-white text-[11px] font-semibold whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
                       {item.label}
                     </div>
                   )}
@@ -289,12 +284,12 @@ export const Sidebar: React.FC = () => {
             className={`flex items-center rounded-2xl bg-neutral-100/80 dark:bg-white/5 border border-black/[0.06] dark:border-white/10 hover:bg-neutral-200/60 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all ${
               isExpanded ? "p-2.5 gap-2.5 justify-between" : "w-11 h-11 mx-auto justify-center"
             }`}
-            title="Do'kon saytini ko'rish"
+            title={t("view_storefront_tooltip") || "Do'kon saytini ko'rish"}
           >
             <div className="flex items-center gap-2 truncate">
               <StoreIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               {isExpanded && (
-                <span className="text-xs font-bold truncate">Veb-saytni ko'rish</span>
+                <span className="text-xs font-bold truncate">{t("view_website") || "Veb-saytni ko'rish"}</span>
               )}
             </div>
             {isExpanded && (

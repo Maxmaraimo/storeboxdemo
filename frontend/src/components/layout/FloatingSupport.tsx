@@ -5,9 +5,14 @@ import { useAuth } from "../../context/AuthContext";
 export const FloatingSupport: React.FC = () => {
   const { lang } = useAuth();
   const titles = {
-    uz: "To`g`ridan-to`g`ri aloqa",
+    uz: "To'g'ridan-to'g'ri aloqa",
     ru: "Прямая связь",
     en: "Direct Support"
+  };
+  const tooltips = {
+    uz: "Telegram orqali to'g'ridan-to'g'ri bog'lanish",
+    ru: "Прямая связь через Telegram",
+    en: "Direct contact via Telegram"
   };
 
   return (
@@ -16,7 +21,7 @@ export const FloatingSupport: React.FC = () => {
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-900 text-white shadow-xl hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 group border border-slate-700/60"
-      title="Telegram orqali to`g`ridan-to`g`ri bog`lanish"
+      title={tooltips[lang] || tooltips.uz}
     >
       <span className="relative flex h-2 w-2">
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

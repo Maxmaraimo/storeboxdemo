@@ -66,7 +66,7 @@ export const PaymentsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("payment_methods") || "To'lov usullari"}</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Onlayn to'lov tizimlari va naqd pul / terminal sozlamalari</p>
+          <p className="text-xs text-slate-500 mt-1 font-medium">{t("payments_subtitle") || "Onlayn to'lov tizimlari va naqd pul / terminal sozlamalari"}</p>
         </div>
         <button
           type="button"
@@ -75,7 +75,7 @@ export const PaymentsPage: React.FC = () => {
           className="px-5 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
-          <span>{saveMutation.isPending ? "Saqlanmoqda..." : "O'zgarishlarni saqlash"}</span>
+          <span>{saveMutation.isPending ? (t("saving") || "Saqlanmoqda...") : (t("save_changes") || "O'zgarishlarni saqlash")}</span>
         </button>
       </div>
 
@@ -94,8 +94,8 @@ export const PaymentsPage: React.FC = () => {
               <Banknote className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xs font-black text-slate-900">Naqd pul</h2>
-              <p className="text-[11px] text-slate-500">Kuryerga yetkazilganda to'lash</p>
+              <h2 className="text-xs font-black text-slate-900">{t("cash_label") || "Naqd pul"}</h2>
+              <p className="text-[11px] text-slate-500">{t("cash_desc") || "Kuryerga yetkazilganda to'lash"}</p>
             </div>
           </div>
           <button
@@ -105,7 +105,7 @@ export const PaymentsPage: React.FC = () => {
               cashEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
             }`}
           >
-            {cashEnabled ? "Ulangan" : "O'chirilgan"}
+            {cashEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
           </button>
         </div>
 
@@ -116,8 +116,8 @@ export const PaymentsPage: React.FC = () => {
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xs font-black text-slate-900">Karta orqali terminalda (Uzcard / Humo)</h2>
-              <p className="text-[11px] text-slate-500">Kuryer terminali orqali qabul qilish</p>
+              <h2 className="text-xs font-black text-slate-900">{t("terminal_label") || "Karta orqali terminalda"}</h2>
+              <p className="text-[11px] text-slate-500">{t("terminal_desc") || "Kuryer terminali orqali qabul qilish"}</p>
             </div>
           </div>
           <button
@@ -127,7 +127,7 @@ export const PaymentsPage: React.FC = () => {
               terminalEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
             }`}
           >
-            {terminalEnabled ? "Ulangan" : "O'chirilgan"}
+            {terminalEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
           </button>
         </div>
 
@@ -139,7 +139,7 @@ export const PaymentsPage: React.FC = () => {
                 Payme
               </div>
               <div>
-                <h2 className="text-xs font-black text-slate-900">Payme to'lov tizimi</h2>
+                <h2 className="text-xs font-black text-slate-900">Payme</h2>
                 <p className="text-[11px] text-slate-500">Payme ilovasi orqali onlayn to'lov</p>
               </div>
             </div>
@@ -150,7 +150,7 @@ export const PaymentsPage: React.FC = () => {
                 paymeEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
               }`}
             >
-              {paymeEnabled ? "Ulangan" : "O'chirilgan"}
+              {paymeEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
             </button>
           </div>
           {paymeEnabled && (
@@ -177,7 +177,7 @@ export const PaymentsPage: React.FC = () => {
                 Click
               </div>
               <div>
-                <h2 className="text-xs font-black text-slate-900">Click Up tizimi</h2>
+                <h2 className="text-xs font-black text-slate-900">Click Up</h2>
                 <p className="text-[11px] text-slate-500">Click ilovasi yoki USSD orqali to'lov</p>
               </div>
             </div>
@@ -188,7 +188,7 @@ export const PaymentsPage: React.FC = () => {
                 clickEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
               }`}
             >
-              {clickEnabled ? "Ulangan" : "O'chirilgan"}
+              {clickEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
             </button>
           </div>
           {clickEnabled && (
@@ -224,7 +224,7 @@ export const PaymentsPage: React.FC = () => {
               Uzum
             </div>
             <div>
-              <h2 className="text-xs font-black text-slate-900">Uzum Bank / Uzum Pay</h2>
+              <h2 className="text-xs font-black text-slate-900">Uzum Pay</h2>
               <p className="text-[11px] text-slate-500">Uzum ilovasi orqali QR-kod va tezkor to'lov</p>
             </div>
           </div>
@@ -235,7 +235,7 @@ export const PaymentsPage: React.FC = () => {
               uzumEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
             }`}
           >
-            {uzumEnabled ? "Ulangan" : "O'chirilgan"}
+            {uzumEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
           </button>
         </div>
       </div>

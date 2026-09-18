@@ -60,7 +60,7 @@ export const DeliveryPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("delivery") || "Yetkazib berish"}</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Yetkazib berish narxlari, shartlari va olib ketish zonalari</p>
+          <p className="text-xs text-slate-500 mt-1 font-medium">{t("delivery_subtitle") || "Yetkazib berish narxlari, shartlari va olib ketish zonalari"}</p>
         </div>
         <button
           type="button"
@@ -69,7 +69,7 @@ export const DeliveryPage: React.FC = () => {
           className="px-5 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
-          <span>{saveMutation.isPending ? "Saqlanmoqda..." : "O'zgarishlarni saqlash"}</span>
+          <span>{saveMutation.isPending ? (t("saving") || "Saqlanmoqda...") : (t("save_changes") || "O'zgarishlarni saqlash")}</span>
         </button>
       </div>
 
@@ -89,8 +89,8 @@ export const DeliveryPage: React.FC = () => {
                 <Truck className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-sm font-black text-slate-900">Kuryer orqali yetkazish</h2>
-                <p className="text-[11px] text-slate-400">Eshikkacha yetkazib berish xizmati</p>
+                <h2 className="text-sm font-black text-slate-900">{t("courier_service") || "Kuryer orqali yetkazish"}</h2>
+                <p className="text-[11px] text-slate-400">{t("courier_service_desc") || "Eshikkacha yetkazib berish xizmati"}</p>
               </div>
             </div>
             <button
@@ -100,14 +100,14 @@ export const DeliveryPage: React.FC = () => {
                 courierEnabled ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-400 border-slate-200"
               }`}
             >
-              {courierEnabled ? "Faol" : "O'chirilgan"}
+              {courierEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
             </button>
           </div>
 
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Yetkazib berish narxi (UZS)
+                {t("delivery_price_label") || "Yetkazib berish narxi (UZS)"}
               </label>
               <input
                 type="number"
@@ -120,7 +120,7 @@ export const DeliveryPage: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Shu summadan yuqoriga bepul (UZS)
+                {t("free_threshold_label") || "Bepul yetkazib berish chegarasi (UZS)"}
               </label>
               <input
                 type="number"
@@ -133,7 +133,7 @@ export const DeliveryPage: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Taxminiy yetkazish vaqti
+                {t("time_estimate_label") || "Taxminiy yetkazish vaqti"}
               </label>
               <input
                 type="text"
@@ -155,8 +155,8 @@ export const DeliveryPage: React.FC = () => {
                 <MapPin className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-sm font-black text-slate-900">Olib ketish (Samovivoz)</h2>
-                <p className="text-[11px] text-slate-400">Mijoz o'zi do'kondan olib ketadi</p>
+                <h2 className="text-sm font-black text-slate-900">{t("pickup_service") || "Olib ketish (Samovivoz)"}</h2>
+                <p className="text-[11px] text-slate-400">{t("pickup_service_desc") || "Mijoz o'zi do'kondan olib ketadi"}</p>
               </div>
             </div>
             <button
@@ -166,14 +166,14 @@ export const DeliveryPage: React.FC = () => {
                 pickupEnabled ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-400 border-slate-200"
               }`}
             >
-              {pickupEnabled ? "Faol" : "O'chirilgan"}
+              {pickupEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
             </button>
           </div>
 
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Do'kon / Filial manzili (Samovivoz uchun)
+                {t("pickup_address_label") || "Olib ketish manzili (Do'kon joylashuvi)"}
               </label>
               <textarea
                 rows={4}

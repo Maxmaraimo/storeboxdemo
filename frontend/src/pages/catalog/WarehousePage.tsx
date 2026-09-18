@@ -70,8 +70,8 @@ export const WarehousePage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("warehouse")}</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Mahsulot qoldiqlari, minimal zaxira va ombor harakati</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("warehouse_title") || t("warehouse") || "Omborxona"}</h1>
+          <p className="text-xs text-slate-500 mt-1 font-medium">{t("warehouse_subtitle") || "Mahsulot qoldiqlari, minimal zaxira va ombor harakati"}</p>
         </div>
         <button
           type="button"
@@ -79,7 +79,7 @@ export const WarehousePage: React.FC = () => {
           className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
         >
           <Plus className="w-4 h-4" />
-          <span>Kirim qilish</span>
+          <span>{t("stock_in") || "Kirim qilish"}</span>
         </button>
       </div>
 
@@ -91,7 +91,7 @@ export const WarehousePage: React.FC = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nomi yoki shtrix-kod bo'yicha qidiruv..."
+              placeholder={t("search_warehouse_ph") || "Nomi yoki shtrix-kod bo'yicha qidiruv..."}
               className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-brand"
             />
           </div>
@@ -101,13 +101,13 @@ export const WarehousePage: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                <th className="p-4">Mahsulot</th>
-                <th className="p-4">Shtrix-kod</th>
-                <th className="p-4 text-right">Qoldiq</th>
-                <th className="p-4 text-right">Tan narx</th>
-                <th className="p-4 text-right">Sotuv narxi</th>
-                <th className="p-4 text-center">Holat</th>
-                <th className="p-4 text-right">Amal</th>
+                <th className="p-4">{t("th_product") || "Mahsulot"}</th>
+                <th className="p-4">{t("th_barcode") || "Shtrix-kod"}</th>
+                <th className="p-4 text-right">{t("th_stock_qty") || "Qoldiq"}</th>
+                <th className="p-4 text-right">{t("th_cost_price") || "Tan narx"}</th>
+                <th className="p-4 text-right">{t("th_retail_price") || "Sotuv narxi"}</th>
+                <th className="p-4 text-center">{t("th_status") || "Holat"}</th>
+                <th className="p-4 text-right">{t("th_action") || "Amal"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
@@ -128,24 +128,30 @@ export const WarehousePage: React.FC = () => {
                       )}
                       <div>
                         <div>{p.name_uz || p.name_ru}</div>
-                        <div className="text-[10px] text-slate-400 font-normal">{p.category_name || "Kategoriyasiz"}</div>
+                        <div className="text-[10px] text-slate-400 font-normal">{p.category_name || "—"}</div>
                       </div>
                     </td>
                     <td className="p-4 font-mono text-slate-400">{p.barcode || "—"}</td>
-                    <td className="p-4 text-right font-bold text-slate-900">{stock} {p.unit || "dona"}</td>
+                    <td className="p-4 text-right font-bold text-slate-900">{stock} {t("unit_pcs") || p.unit || "dona"}</td>
                     <td className="p-4 text-right font-mono text-slate-500">
                       {costPrice ? `${costPrice.toLocaleString()} UZS` : "—"}
                     </td>
                     <td className="p-4 text-right font-mono font-bold text-brand">{price.toLocaleString()} UZS</td>
                     <td className="p-4 text-center">
                       {stock > 10 && (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Yetarli</span>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {t("stock_sufficient") || "Yetarli"}
+                        </span>
                       )}
                       {stock > 0 && stock <= 10 && (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Kam qoldi</span>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          {t("stock_low") || "Kam qoldi"}
+                        </span>
                       )}
                       {stock === 0 && (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Tugagan</span>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                          {t("stock_empty") || "Tugagan"}
+                        </span>
                       )}
                     </td>
                     <td className="p-4 text-right">
@@ -154,7 +160,7 @@ export const WarehousePage: React.FC = () => {
                         onClick={() => openModal(p.id)}
                         className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-brand hover:text-white transition-colors text-[11px] font-bold"
                       >
-                        + Kirim
+                        {t("btn_add_stock") || "+ Kirim"}
                       </button>
                     </td>
                   </tr>
@@ -163,7 +169,7 @@ export const WarehousePage: React.FC = () => {
               {products.length === 0 && !isLoading && (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-slate-400">
-                    Mahsulotlar topilmadi
+                    {t("products_not_found") || "Mahsulotlar topilmadi"}
                   </td>
                 </tr>
               )}
@@ -178,7 +184,7 @@ export const WarehousePage: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-slate-900">
-                Omborga tovar kirim qilish
+                {t("adjust_stock_title") || "Kirim qilish (Zaxirani oshirish)"}
               </h3>
               <button
                 type="button"
@@ -198,17 +204,17 @@ export const WarehousePage: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Mahsulot *
+                  {t("select_product") || "Mahsulot *"}
                 </label>
                 <select
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(Number(e.target.value))}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 >
-                  <option value="">Mahsulotni tanlang</option>
+                  <option value="">{t("select_product") || "Mahsulotni tanlang"}</option>
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name_uz || p.name_ru} (Hozirgi qoldiq: {p.stock ?? 0})
+                      {p.name_uz || p.name_ru} ({t("th_stock_qty") || "Qoldiq"}: {p.stock ?? 0})
                     </option>
                   ))}
                 </select>
@@ -216,26 +222,26 @@ export const WarehousePage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Qo'shiladigan miqdor (+dona) *
+                  {t("inflow_qty_label") || "Kirim miqdori (dona) *"}
                 </label>
                 <input
                   type="number"
                   value={deltaQty}
                   onChange={(e) => setDeltaQty(e.target.value)}
-                  placeholder="Masalan: 50"
+                  placeholder="50"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold font-mono focus:outline-none focus:border-brand"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Yangi tan narxi (UZS, ixtiyoriy)
+                  {t("new_cost_price_label") || "Yangi tan narxi (ixtiyoriy, UZS)"}
                 </label>
                 <input
                   type="number"
                   value={newCostPrice}
                   onChange={(e) => setNewCostPrice(e.target.value)}
-                  placeholder="Masalan: 25000"
+                  placeholder="25000"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold font-mono focus:outline-none focus:border-brand"
                 />
               </div>
@@ -247,7 +253,7 @@ export const WarehousePage: React.FC = () => {
                 onClick={closeModal}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
               >
-                Bekor qilish
+                {t("cancel") || "Bekor qilish"}
               </button>
               <button
                 type="button"
@@ -255,7 +261,7 @@ export const WarehousePage: React.FC = () => {
                 disabled={adjustMutation.isPending}
                 className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50"
               >
-                {adjustMutation.isPending ? "Kirim qilinmoqda..." : "Kirim qilish"}
+                {adjustMutation.isPending ? (t("saving") || "Saqlanmoqda...") : (t("save") || "Saqlash")}
               </button>
             </div>
           </div>

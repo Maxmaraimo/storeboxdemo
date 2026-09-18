@@ -56,11 +56,14 @@ urlpatterns = [
     path("staff/", views_operations.staff_list_create_view, name="staff_list_create"),
     path("staff/<int:pk>/", views_operations.staff_detail_update_delete_view, name="staff_detail_update_delete"),
 
-    # Settings: Store, Delivery, Payments
+    # Settings: Store, Delivery, Payments, Billing & Tariffs
     path("settings/store/", views_settings.store_settings_view, name="store_settings"),
     path("settings/store/domain/", views_settings.store_domain_view, name="store_domain"),
     path("settings/delivery/", views_operations.store_delivery_settings_view, name="store_delivery_settings"),
     path("settings/payments/", views_operations.store_payments_view, name="store_payments"),
+    path("billing/tariff-info/", views_settings.tariff_info_view, name="billing_tariff_info"),
+    path("billing/calculate/", views_settings.calculate_tariff_view, name="billing_calculate"),
+    path("billing/tariff-request/", views_settings.tariff_request_view, name="billing_tariff_request"),
     path("translations/<str:lang_code>/", views_settings.translations_view, name="translations"),
 
     # Chats & Messages

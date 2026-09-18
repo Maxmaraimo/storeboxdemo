@@ -16,8 +16,8 @@ export const IkpuPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("ikpu")} — Tasnif MXIK kodlari</h1>
-        <p className="text-xs text-slate-500 mt-1 font-medium">Fiskal cheklar va soliq integratsiyasi uchun MXIK kodlari</p>
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("ikpu_title") || "Tasnif MXIK / IKPU kodlari"}</h1>
+        <p className="text-xs text-slate-500 mt-1 font-medium">{t("ikpu_subtitle") || "Fiskal cheklar va soliq integratsiyasi uchun MXIK kodlari"}</p>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
@@ -28,7 +28,7 @@ export const IkpuPage: React.FC = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="MXIK kodi yoki tovar toifasi bo'yicha qidiruv..."
+              placeholder={t("search_ikpu_ph") || "MXIK kodi yoki tovar toifasi bo'yicha qidiruv..."}
               className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-brand"
             />
           </div>
@@ -38,10 +38,10 @@ export const IkpuPage: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                <th className="p-4">MXIK Kodi</th>
-                <th className="p-4">Paket kodi</th>
-                <th className="p-4">Nomi</th>
-                <th className="p-4 text-center">QQS stavkasi</th>
+                <th className="p-4">{t("th_ikpu_code") || "MXIK Kodi"}</th>
+                <th className="p-4">{t("th_package_code") || "Paket kodi"}</th>
+                <th className="p-4">{t("th_product") || "Nomi"}</th>
+                <th className="p-4 text-center">{t("th_vat_rate") || "QQS stavkasi"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">

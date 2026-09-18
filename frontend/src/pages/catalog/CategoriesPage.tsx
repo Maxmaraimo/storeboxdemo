@@ -175,7 +175,7 @@ export const CategoriesPage: React.FC = () => {
           className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
         >
           <Plus className="w-4 h-4" />
-          <span>Yangi kategoriya</span>
+          <span>{t("new_category") || "Yangi kategoriya"}</span>
         </button>
       </div>
 
@@ -211,7 +211,7 @@ export const CategoriesPage: React.FC = () => {
                 <th className="py-3.5 px-4">{t("th_cat_name") || "Kategoriya nomi"}</th>
                 <th className="py-3.5 px-4">{t("th_cat_products") || "Tovarlar"}</th>
                 <th className="py-3.5 px-4 text-center">{t("th_show_on_site") || "Saytda ko`rsatish"}</th>
-                <th className="py-3.5 px-4 text-right">Amallar</th>
+                <th className="py-3.5 px-4 text-right">{t("actions") || "Amallar"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -255,7 +255,7 @@ export const CategoriesPage: React.FC = () => {
                         type="button"
                         onClick={() => openEditModal(cat)}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                        title="Tahrirlash"
+                        title={t("edit") || "Tahrirlash"}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -267,7 +267,7 @@ export const CategoriesPage: React.FC = () => {
                           }
                         }}
                         className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
-                        title="O'chirish"
+                        title={t("delete") || "O'chirish"}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -278,7 +278,7 @@ export const CategoriesPage: React.FC = () => {
               {categories.length === 0 && !isLoading && (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-400">
-                    Kategoriyalar mavjud emas. Yuqoridagi "Yangi kategoriya" tugmasi orqali qo'shing.
+                    {t("categories_not_found") || "Kategoriyalar topilmadi"}
                   </td>
                 </tr>
               )}
@@ -293,7 +293,7 @@ export const CategoriesPage: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-slate-900">
-                {editingCategory ? "Kategoriyani tahrirlash" : "Yangi kategoriya qo'shish"}
+                {editingCategory ? (t("edit_category") || "Kategoriyani tahrirlash") : (t("new_category") || "Yangi kategoriya qo'shish")}
               </h3>
               <button
                 type="button"
@@ -313,26 +313,26 @@ export const CategoriesPage: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Kategoriya nomi (O'zbekcha) *
+                  {t("category_name_uz") || "Kategoriya nomi (O'zbekcha) *"}
                 </label>
                 <input
                   type="text"
                   value={formNameUz}
                   onChange={(e) => setFormNameUz(e.target.value)}
-                  placeholder="Masalan: Pitsalar, Ichimliklar, Kiyimlar"
+                  placeholder="Lavash, Burger, etc."
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Kategoriya nomi (Ruscha)
+                  {t("category_name_ru") || "Kategoriya nomi (Ruscha)"}
                 </label>
                 <input
                   type="text"
                   value={formNameRu}
                   onChange={(e) => setFormNameRu(e.target.value)}
-                  placeholder="Например: Пиццы, Напитки"
+                  placeholder="Пицца, Напитки..."
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 />
               </div>
@@ -341,8 +341,7 @@ export const CategoriesPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
                     <ImageIcon className="w-3.5 h-3.5 text-brand" />
-                    <span>Kategoriya rasmi</span>
-                    <span className="text-[10px] text-slate-400 font-normal">(1:1 yoki 4:3 proporsiya tavsiya etiladi)</span>
+                    <span>{t("category_image") || "Kategoriya rasmi"}</span>
                   </label>
                   {formImage && (
                     <button
@@ -351,7 +350,7 @@ export const CategoriesPage: React.FC = () => {
                       className="text-[11px] text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1 cursor-pointer"
                     >
                       <Trash2 className="w-3 h-3" />
-                      <span>Rasmni o'chirish</span>
+                      <span>{t("delete") || "Rasmni o'chirish"}</span>
                     </button>
                   )}
                 </div>
@@ -380,10 +379,10 @@ export const CategoriesPage: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold text-slate-800 truncate mb-1">
-                        {uploadingImage ? "Rasm yuklanmoqda..." : "Rasm tanlandi"}
+                        {uploadingImage ? (t("uploading") || "Rasm yuklanmoqda...") : (t("image_selected") || "Rasm tanlandi")}
                       </div>
                       <p className="text-[11px] text-slate-400 mb-2">
-                        Boshqa rasm yuklash uchun tugmani bosing
+                        {t("upload_another_hint") || "Boshqa rasm yuklash uchun tugmani bosing"}
                       </p>
                       <button
                         type="button"
@@ -392,7 +391,7 @@ export const CategoriesPage: React.FC = () => {
                         className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
                       >
                         <Upload className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Rasmni almashtirish</span>
+                        <span>{t("upload_image_hint") || "Rasmni almashtirish"}</span>
                       </button>
                     </div>
                   </div>
@@ -414,7 +413,7 @@ export const CategoriesPage: React.FC = () => {
                     {uploadingImage ? (
                       <div className="py-2 flex flex-col items-center gap-2">
                         <Loader2 className="w-6 h-6 text-brand animate-spin" />
-                        <span className="text-xs font-bold text-slate-600">Rasm yuklanmoqda...</span>
+                        <span className="text-xs font-bold text-slate-600">{t("uploading") || "Rasm yuklanmoqda..."}</span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-1.5">
@@ -422,10 +421,10 @@ export const CategoriesPage: React.FC = () => {
                           <Upload className="w-5 h-5" />
                         </div>
                         <div className="text-xs font-bold text-slate-800">
-                          Rasm yuklash uchun bosing yoki faylni bu yerga tashlang
+                          {t("upload_image_hint") || "Rasm yuklash uchun bosing yoki faylni bu yerga tashlang"}
                         </div>
                         <p className="text-[11px] text-slate-400">
-                          PNG, JPG, WEBP formatlar (maks. 10MB)
+                          {t("image_formats_hint") || "PNG, JPG, WEBP formatlar (maks. 10MB)"}
                         </p>
                       </div>
                     )}
@@ -440,7 +439,7 @@ export const CategoriesPage: React.FC = () => {
                 onClick={closeModal}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
               >
-                Bekor qilish
+                {t("cancel") || "Bekor qilish"}
               </button>
               <button
                 type="button"
@@ -448,7 +447,7 @@ export const CategoriesPage: React.FC = () => {
                 disabled={saveMutation.isPending}
                 className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50"
               >
-                {saveMutation.isPending ? "Saqlanmoqda..." : "Saqlash"}
+                {saveMutation.isPending ? (t("saving") || "Saqlanmoqda...") : (t("save") || "Saqlash")}
               </button>
             </div>
           </div>

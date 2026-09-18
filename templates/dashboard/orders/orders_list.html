@@ -240,6 +240,14 @@
                                 {{ order.delivery_address }}
                             </div>
                             {% endif %}
+                            <div id="order-courier-cell-{{ order.id }}">
+                                {% if order.courier %}
+                                <div class="mt-1 inline-flex items-center gap-1 text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60 max-w-[120px] truncate" title="Kuryer: {{ order.courier.name }}">
+                                    <i data-lucide="bike" class="w-2.5 h-2.5 shrink-0"></i>
+                                    <span class="truncate">{{ order.courier.name }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
                             {% else %}
                             <div class="inline-flex items-center gap-0.5 text-slate-600 font-bold text-[10px] leading-tight">
                                 <i data-lucide="store" class="w-2.5 h-2.5 shrink-0"></i>
@@ -488,6 +496,63 @@
                                     <span x-text="selectedOrder.notes"></span>
                                 </div>
                             </template>
+                    </div>
+
+                    <!-- 3.5 COURIER ASSIGNMENT CARD -->
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                            <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
+                                <i data-lucide="bike" class="w-4 h-4 text-purple-600"></i>
+                                <span>Kuryer biriktirish</span>
+                            </h4>
+                            <template x-if="selectedOrder && selectedOrder.courier_name">
+                                <span class="px-2 py-0.5 rounded-lg bg-purple-50 border border-purple-200 font-bold text-[10px] text-purple-700">Biriktirilgan</span>
+                            </template>
+                            <template x-if="selectedOrder && !selectedOrder.courier_name">
+                                <span class="px-2 py-0.5 rounded-lg bg-slate-100 font-bold text-[10px] text-slate-500">Biriktirilmagan</span>
+                            </template>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2">
+                                <div class="relative flex-1">
+                                    <select x-model="selectedCourierId" @change="assignCourier(selectedOrder.id, $event.target.value)"
+                                            class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-500 transition-colors">
+                                        <option value="">-- Kuryer tanlanmagan --</option>
+                                        {% for c in couriers %}
+                                        <option value="{{ c.id }}">{{ c.name }} ({{ c.phone }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <template x-if="selectedOrder && selectedOrder.courier_name">
+                                    <button type="button" @click="assignCourier(selectedOrder.id, '')"
+                                            class="p-2.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors shrink-0"
+                                            title="Kuryerni bekor qilish">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
+                                </template>
+                            </div>
+
+                            <template x-if="selectedOrder && selectedOrder.courier_name">
+                                <div class="p-3 rounded-xl bg-purple-50/50 border border-purple-100 flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center">
+                                            <i data-lucide="bike" class="w-4 h-4"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-bold text-slate-900 text-xs" x-text="selectedOrder.courier_name"></div>
+                                            <div class="font-mono text-[10px] text-slate-500" x-text="selectedOrder.courier_phone || 'Tel kiritilmagan'"></div>
+                                        </div>
+                                    </div>
+                                    <template x-if="selectedOrder.courier_phone">
+                                        <a :href="'tel:' + selectedOrder.courier_phone"
+                                           class="p-2 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 transition-colors"
+                                           title="Kuryerga qo'ng'iroq qilish">
+                                            <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
                         </div>
                     </div>
 
@@ -633,12 +698,14 @@
             autoReplyModal: false,
             orderDrawerOpen: false,
             selectedOrder: null,
+            selectedCourierId: '',
             isLoadingOrder: false,
 
             openOrderDrawer(orderId) {
                 this.isLoadingOrder = true;
                 this.orderDrawerOpen = true;
                 this.selectedOrder = null;
+                this.selectedCourierId = '';
 
                 fetch(`/dashboard/api/orders/${orderId}/`)
                     .then(r => r.json())
@@ -646,6 +713,7 @@
                         this.isLoadingOrder = false;
                         if (data.success) {
                             this.selectedOrder = data.order;
+                            this.selectedCourierId = data.order.courier_id ? String(data.order.courier_id) : '';
                             this.$nextTick(() => {
                                 if (window.lucide) lucide.createIcons();
                             });
@@ -790,6 +858,62 @@
                             cell.innerHTML = `<span class="px-2.5 py-1 rounded-full ${colorClasses} text-[10px] font-black border">${label}</span>`;
                         }
                     }
+                });
+            },
+
+            assignCourier(orderId, courierId) {
+                const fd = new FormData();
+                fd.append('order_id', orderId);
+                fd.append('courier_id', courierId || '');
+
+                fetch('/dashboard/api/order-assign-courier/', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(data.message || 'Kuryer biriktirildi');
+                        if (this.selectedOrder && this.selectedOrder.id == orderId) {
+                            if (data.courier) {
+                                this.selectedOrder.courier_id = data.courier.id;
+                                this.selectedOrder.courier_name = data.courier.name;
+                                this.selectedOrder.courier_phone = data.courier.phone;
+                                this.selectedCourierId = String(data.courier.id);
+                            } else {
+                                this.selectedOrder.courier_id = null;
+                                this.selectedOrder.courier_name = null;
+                                this.selectedOrder.courier_phone = null;
+                                this.selectedCourierId = '';
+                            }
+                        }
+
+                        // Update table row badge
+                        const courierCell = document.getElementById(`order-courier-cell-${orderId}`);
+                        if (courierCell) {
+                            if (data.courier_name) {
+                                courierCell.innerHTML = `
+                                    <div class="mt-1 inline-flex items-center gap-1 text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60 max-w-[120px] truncate" title="Kuryer: ${data.courier_name}">
+                                        <i data-lucide="bike" class="w-2.5 h-2.5 shrink-0"></i>
+                                        <span class="truncate">${data.courier_name}</span>
+                                    </div>
+                                `;
+                            } else {
+                                courierCell.innerHTML = '';
+                            }
+                        }
+
+                        this.$nextTick(() => {
+                            if (window.lucide) lucide.createIcons();
+                        });
+                    } else {
+                        showToast(data.error || data.message || 'Xatolik yuz berdi');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast('Xatolik yuz berdi');
                 });
             }
         }

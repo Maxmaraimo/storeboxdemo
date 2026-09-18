@@ -61,24 +61,24 @@
 
         .dense-table th {
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
             color: #475569;
             background-color: #f8fafc;
-            padding: 8px 12px;
+            padding: 12px 16px;
             border-bottom: 1px solid #e2e8f0;
             white-space: nowrap;
         }
         .dense-table td {
-            font-size: 12.5px;
-            padding: 7px 12px;
+            font-size: 13px;
+            padding: 10px 16px;
             border-bottom: 1px solid #f1f5f9;
             color: #1e293b;
             vertical-align: middle;
         }
         .dense-table tr:hover td {
-            background-color: #f8fafc;
+            background-color: rgba(239, 246, 255, 0.45);
         }
     </style>
     {% block extra_head %}{% endblock %}
@@ -150,6 +150,18 @@
                     </span>
                 </a>
 
+                <!-- Tariff Requests (New!) -->
+                <a href="{% url 'super_admin:tariff_requests_list' %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition group {% if 'tariff_request' in request.resolver_match.url_name %}bg-blue-600 text-white shadow-sm shadow-blue-600/30{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                    <i data-lucide="inbox" class="w-4 h-4 {% if 'tariff_request' in request.resolver_match.url_name %}text-white{% else %}text-slate-400 group-hover:text-amber-400{% endif %}"></i>
+                    <span>Заявки на тарифы</span>
+                    {% if pending_tariff_requests_count %}
+                    <span class="ml-auto text-xxs font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 animate-pulse">
+                        {{ pending_tariff_requests_count }}
+                    </span>
+                    {% endif %}
+                </a>
+
                 <!-- Partners -->
                 <a href="{% url 'super_admin:partners_list' %}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition group {% if request.resolver_match.url_name == 'partners_list' %}bg-blue-600 text-white shadow-sm shadow-blue-600/30{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
@@ -173,15 +185,6 @@
                    class="flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition group {% if request.resolver_match.url_name == 'reports' %}bg-blue-600 text-white shadow-sm shadow-blue-600/30{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     <i data-lucide="bar-chart-3" class="w-4 h-4 {% if request.resolver_match.url_name == 'reports' %}text-white{% else %}text-slate-400 group-hover:text-purple-400{% endif %}"></i>
                     <span>Отчеты SaaS & MRR</span>
-                </a>
-
-                <div class="pt-4 border-t border-slate-800/80 my-2"></div>
-
-                <!-- Fast return to StoreBox -->
-                <a href="/dashboard/"
-                   class="flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition">
-                    <i data-lucide="store" class="w-4 h-4 text-emerald-500"></i>
-                    <span>Вход в магазин</span>
                 </a>
             </nav>
 
@@ -251,6 +254,121 @@
         </div>
     </div>
 
+    <!-- Delete Server Confirmation Modal -->
+    <div id="deleteServerModal" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div class="p-5 border-b border-slate-100 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">Удаление магазина</h3>
+                    <p class="text-xxs text-slate-500">Это действие удалит магазин и все связанные данные</p>
+                </div>
+            </div>
+            <div class="p-5 space-y-3">
+                <p class="text-xs text-slate-700">
+                    Вы уверены, что хотите полностью удалить магазин:
+                </p>
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 font-mono text-xs font-bold text-slate-900" id="deleteStoreName">
+                    —
+                </div>
+                <p class="text-[11px] text-rose-600 font-medium">
+                    ⚠️ Будут удалены товары, категории, филиалы, витрина и настройки.
+                </p>
+            </div>
+            <form id="deleteServerForm" method="POST" class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+                {% csrf_token %}
+                <button type="button" onclick="window.SuperAdmin.closeDeleteModal()" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 cursor-pointer">
+                    Отмена
+                </button>
+                <button type="submit" class="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs flex items-center gap-1 cursor-pointer">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <span>Да, удалить магазин</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Server Modal -->
+    <div id="editServerModal" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div class="bg-slate-900 px-5 py-3.5 flex items-center justify-between text-white border-b border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="edit-3" class="w-4 h-4 text-blue-400"></i>
+                    <h3 class="text-xs font-bold uppercase tracking-wider">Редактировать параметры магазина</h3>
+                </div>
+                <button onclick="window.SuperAdmin.closeEditServerModal()" type="button" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form id="editServerForm" method="POST" action="" class="p-5 space-y-3.5">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Название магазина *</label>
+                        <input type="text" id="editServerName" name="name" required class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Поддомен *</label>
+                        <div class="flex items-center">
+                            <input type="text" id="editServerSubdomain" name="subdomain" required class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-l-lg focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono lowercase">
+                            <span class="px-2 py-1.5 text-xxs bg-slate-100 text-slate-500 border border-l-0 border-slate-300 rounded-r-lg font-mono">.storebox.uz</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Юр. лицо / Компания</label>
+                        <input type="text" id="editServerCompany" name="company_name" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Контактный телефон</label>
+                        <input type="text" id="editServerPhone" name="contact_phone" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Тарифный план</label>
+                        <select id="editServerPlan" name="license_plan" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:outline-none font-semibold">
+                            <option value="START">START (99,000 UZS/мес)</option>
+                            <option value="STANDARD">STANDARD (199,000 UZS/мес)</option>
+                            <option value="PRO">PRO (399,000 UZS/мес)</option>
+                            <option value="ENTERPRISE">ENTERPRISE (799,000 UZS/мес)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Срок действия лицензии</label>
+                        <input type="date" id="editServerExpires" name="license_expires_at" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Заметки администратора</label>
+                    <textarea id="editServerComment" name="admin_comment" rows="2" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:outline-none" placeholder="Комментарий..."></textarea>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="editServerIsActive" name="is_active" value="true" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <label for="editServerIsActive" class="text-xs font-semibold text-slate-700 cursor-pointer">Магазин активен (онлайн)</label>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button onclick="window.SuperAdmin.closeEditServerModal()" type="button" class="px-3.5 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer">
+                        Отмена
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        <span>Сохранить изменения</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Global SuperAdmin Core Controller -->
     <script>
         window.SuperAdmin = {
@@ -277,7 +395,187 @@
                     modal.style.display = 'none';
                 }
             },
+            TARIFF_RATES: {
+                START: 99000,
+                STANDARD: 199000,
+                PRO: 399000,
+                ENTERPRISE: 799000
+            },
+            currentStoreId: null,
+            calcMode: 'period',
+
+            toggleStatus: function(storeId, btnEl) {
+                if (!confirm('Вы уверены, что хотите изменить активность этого магазина?')) return;
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+                fetch('/super-admin/servers/' + storeId + '/toggle-status/', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        window.location.reload();
+                    }
+                })
+                .catch(() => window.location.reload());
+            },
+
+            openEditServerModal: function(data) {
+                this.currentStoreId = data.id;
+                const modal = document.getElementById('editServerModal');
+                const form = document.getElementById('editServerForm');
+                if (form) form.action = '/super-admin/servers/' + data.id + '/update/';
+                const setVal = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = val !== undefined && val !== null ? val : '';
+                };
+                setVal('editServerName', data.name);
+                setVal('editServerSubdomain', data.subdomain);
+                setVal('editServerCompany', data.company);
+                setVal('editServerPhone', data.phone);
+                setVal('editServerPlan', data.plan || 'STANDARD');
+                setVal('editServerExpires', data.expires || '');
+                setVal('editServerComment', data.comment || '');
+                const activeEl = document.getElementById('editServerIsActive');
+                if (activeEl) {
+                    activeEl.checked = data.active === true || data.active === 'true' || data.active === 'True';
+                }
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.style.setProperty('display', 'flex', 'important');
+                }
+            },
+            closeEditServerModal: function() {
+                const modal = document.getElementById('editServerModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.style.setProperty('display', 'none', 'important');
+                }
+            },
+
+            openDeleteModal: function(storeId, storeName, subdomain) {
+                this.currentStoreId = storeId;
+                const modal = document.getElementById('deleteServerModal');
+                const nameEl = document.getElementById('deleteStoreName');
+                const form = document.getElementById('deleteServerForm');
+                if (nameEl) nameEl.textContent = (storeName || 'Магазин') + ' (' + (subdomain || '') + '.storebox.uz)';
+                if (form) form.action = '/super-admin/servers/' + storeId + '/delete/';
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.style.setProperty('display', 'flex', 'important');
+                }
+            },
+            closeDeleteModal: function() {
+                const modal = document.getElementById('deleteServerModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.style.setProperty('display', 'none', 'important');
+                }
+            },
+
+            setCalcMode: function(mode) {
+                this.calcMode = mode;
+                const hiddenMode = document.getElementById('renewCalcMode');
+                if (hiddenMode) hiddenMode.value = mode;
+
+                const btnPeriod = document.getElementById('btnModePeriod');
+                const btnAmount = document.getElementById('btnModeAmount');
+                const btnDays = document.getElementById('btnModeDays');
+
+                const wrapPeriod = document.getElementById('renewPeriodWrapper');
+                const wrapAmount = document.getElementById('renewAmountWrapper');
+                const wrapDays = document.getElementById('renewDaysWrapper');
+                const quickBtns = document.getElementById('quickAmountButtons');
+
+                if (btnPeriod) btnPeriod.className = 'py-1.5 px-2 rounded-md transition text-center ' + (mode === 'period' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-600 hover:text-slate-900');
+                if (btnAmount) btnAmount.className = 'py-1.5 px-2 rounded-md transition text-center ' + (mode === 'amount' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-600 hover:text-slate-900');
+                if (btnDays) btnDays.className = 'py-1.5 px-2 rounded-md transition text-center ' + (mode === 'days' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-600 hover:text-slate-900');
+
+                if (wrapPeriod) wrapPeriod.classList.toggle('hidden', mode !== 'period');
+                if (wrapAmount) wrapAmount.classList.toggle('hidden', mode !== 'amount');
+                if (wrapDays) wrapDays.classList.toggle('hidden', mode !== 'days');
+                if (quickBtns) quickBtns.classList.toggle('hidden', mode !== 'amount');
+
+                this.recalculateTariff();
+            },
+
+            setQuickAmount: function(amount) {
+                const input = document.getElementById('renewAmountInput');
+                if (input) {
+                    input.value = amount;
+                    this.recalculateTariff();
+                }
+            },
+
+            recalculateTariff: function() {
+                const planSelect = document.getElementById('renewPlanSelect');
+                const plan = planSelect ? planSelect.value : 'STANDARD';
+                const monthlyRate = this.TARIFF_RATES[plan] || 500000;
+                const dailyRate = monthlyRate / 30.0;
+
+                let calcDays = 30;
+                let calcAmount = monthlyRate;
+
+                if (this.calcMode === 'period') {
+                    const monthsSelect = document.getElementById('renewMonthsSelect');
+                    const m = monthsSelect ? parseInt(monthsSelect.value, 10) : 1;
+                    calcDays = m * 30;
+                    calcAmount = monthlyRate * m;
+                    if (m === 6) calcAmount *= 0.90;
+                    else if (m === 12) calcAmount *= 0.80;
+                } else if (this.calcMode === 'amount') {
+                    const amtInput = document.getElementById('renewAmountInput');
+                    const amt = amtInput ? parseFloat(amtInput.value) || 0 : 0;
+                    calcDays = Math.max(1, Math.floor(amt / dailyRate));
+                    calcAmount = amt;
+                } else if (this.calcMode === 'days') {
+                    const daysInput = document.getElementById('renewDaysInput');
+                    const d = daysInput ? parseInt(daysInput.value, 10) || 1 : 30;
+                    calcDays = d;
+                    calcAmount = Math.round(d * dailyRate);
+                }
+
+                // Update UI numbers
+                const dailyRateEl = document.getElementById('calcDailyRateDisplay');
+                if (dailyRateEl) dailyRateEl.textContent = Math.round(dailyRate).toLocaleString() + ' UZS / день';
+
+                const daysEl = document.getElementById('calcDaysDisplay');
+                if (daysEl) daysEl.textContent = '+' + calcDays + ' дней';
+
+                const totalEl = document.getElementById('calcTotalAmountDisplay');
+                if (totalEl) totalEl.textContent = Math.round(calcAmount).toLocaleString() + ' UZS';
+
+                // Query backend for accurate date calculation from store's current expiry
+                if (this.currentStoreId) {
+                    const params = new URLSearchParams({
+                        plan: plan,
+                        amount: this.calcMode === 'amount' ? calcAmount : '',
+                        months: this.calcMode === 'period' ? (document.getElementById('renewMonthsSelect')?.value || 1) : '',
+                        days: this.calcMode === 'days' ? calcDays : ''
+                    });
+
+                    fetch('/super-admin/servers/' + this.currentStoreId + '/calculate/?' + params.toString())
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.status === 'ok' && data.result) {
+                                const expiryEl = document.getElementById('calcNewExpiryDisplay');
+                                if (expiryEl) expiryEl.textContent = data.result.new_expiry;
+                            }
+                        })
+                        .catch(() => {
+                            const now = new Date();
+                            now.setDate(now.getDate() + calcDays);
+                            const expiryEl = document.getElementById('calcNewExpiryDisplay');
+                            if (expiryEl) expiryEl.textContent = now.toLocaleDateString('ru-RU');
+                        });
+                }
+            },
+
             openRenewModal: function(storeId, subdomain, plan) {
+                this.currentStoreId = storeId;
                 const body = document.querySelector('body');
                 if (body && window.Alpine && window.Alpine.$data) {
                     try {
@@ -299,6 +597,8 @@
                     if (form) form.action = '/super-admin/servers/' + storeId + '/renew/';
                     const planSelect = document.getElementById('renewPlanSelect');
                     if (planSelect && plan) planSelect.value = plan;
+
+                    this.setCalcMode('period');
                 }
             },
             closeRenewModal: function() {
@@ -317,6 +617,46 @@
         document.addEventListener('DOMContentLoaded', function() {
             if (window.lucide && window.lucide.createIcons) {
                 window.lucide.createIcons();
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            const editBtn = e.target.closest('[data-action="edit-server"]');
+            if (editBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.SuperAdmin.openEditServerModal({
+                    id: editBtn.dataset.id,
+                    name: editBtn.dataset.name,
+                    subdomain: editBtn.dataset.subdomain,
+                    company: editBtn.dataset.company,
+                    phone: editBtn.dataset.phone,
+                    plan: editBtn.dataset.plan,
+                    expires: editBtn.dataset.expires,
+                    comment: editBtn.dataset.comment,
+                    active: editBtn.dataset.active
+                });
+                return;
+            }
+
+            const delBtn = e.target.closest('[data-action="delete-server"]');
+            if (delBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.SuperAdmin.openDeleteModal(
+                    delBtn.dataset.id,
+                    delBtn.dataset.name,
+                    delBtn.dataset.subdomain
+                );
+                return;
+            }
+
+            const toggleBtn = e.target.closest('[data-action="toggle-server"]');
+            if (toggleBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.SuperAdmin.toggleStatus(toggleBtn.dataset.id, toggleBtn);
+                return;
             }
         });
     </script>

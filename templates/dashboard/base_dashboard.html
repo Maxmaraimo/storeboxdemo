@@ -23,10 +23,20 @@
                     },
                     colors: {
                         brand: {
-                            DEFAULT: '#10B981',
-                            dark: '#059669',
-                            forest: '#0B3B2C',
-                            light: '#ECFDF5'
+                            DEFAULT: '#211B2E',
+                            dark: '#14101C',
+                            surface: '#2C243D',
+                            light: '#3A314E'
+                        },
+                        charcoal: {
+                            DEFAULT: '#211B2E',
+                            dark: '#14101C',
+                            surface: '#2C243D',
+                            deep: '#171321'
+                        },
+                        lime: {
+                            DEFAULT: '#00D668',
+                            dark: '#059669'
                         }
                     }
                 }
@@ -121,12 +131,15 @@
                        hx-push-url="true"
                        hx-indicator="#spa-progress-bar"
                        class="flex items-center gap-2.5 group spa-link">
-                        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-dark to-brand flex items-center justify-center text-white font-black text-base shadow-xs group-hover:scale-105 transition-transform">
-                            S
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2c243d] to-[#151020] flex items-center justify-center border border-white/10 shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                            <svg viewBox="0 0 32 32" class="w-5 h-5 stroke-[#00d668] fill-none stroke-[1.8] stroke-linejoin-round">
+                                <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
+                                <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
+                            </svg>
                         </div>
                         <div>
                             <div class="text-sm font-black tracking-tight text-slate-900 leading-none">
-                                Store<span class="text-brand">Box</span>
+                                Store<span class="text-[#00d668]">Box</span>
                             </div>
                             <div class="text-[9px] font-mono font-bold text-slate-400 mt-0.5">PLATFORM 2.0</div>
                         </div>
@@ -280,11 +293,21 @@
                         <span>{{ t.branches }}</span>
                     </a>
 
-                    <!-- 11. Xodimlar -->
-                    <a href="/dashboard/settings/staff/" data-path="/dashboard/settings/staff/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                        <i data-lucide="user-check" class="w-4 h-4"></i>
-                        <span>{{ t.staff }}</span>
-                    </a>
+                    <!-- 11. Xodimlar (Accordion from Robosell) -->
+                    <div x-data="{ open: window.location.pathname.includes('/settings/staff') }" class="space-y-1">
+                        <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="user-check" class="w-4 h-4"></i>
+                                <span>{{ t.staff|default:"Xodimlar" }}</span>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                            <a href="/dashboard/settings/staff/?tab=staff" data-path="/dashboard/settings/staff/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Xodimlar</a>
+                            <a href="/dashboard/settings/staff/?tab=roles" data-path="/dashboard/settings/staff/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Rollar</a>
+                            <a href="/dashboard/settings/staff/?tab=courier" data-path="/dashboard/settings/staff/" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Kuryer</a>
+                        </div>
+                    </div>
 
                     <!-- 12. Tarif rejasi -->
                     <a href="/dashboard/settings/tariffs/" data-path="/dashboard/settings/tariffs/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
@@ -447,11 +470,21 @@
                             <span>{{ t.branches }}</span>
                         </a>
 
-                        <!-- 11. Xodimlar -->
-                        <a href="/dashboard/settings/staff/" data-path="/dashboard/settings/staff/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">
-                            <i data-lucide="user-check" class="w-4 h-4"></i>
-                            <span>{{ t.staff }}</span>
-                        </a>
+                        <!-- 11. Xodimlar (Accordion) -->
+                        <div x-data="{ open: window.location.pathname.includes('/settings/staff') }" class="space-y-1">
+                            <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl hover:bg-slate-100 text-left transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                                    <span>{{ t.staff|default:"Xodimlar" }}</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                            </button>
+                            <div x-show="open" class="pl-7 space-y-1 text-[11px]">
+                                <a href="/dashboard/settings/staff/?tab=staff" data-path="/dashboard/settings/staff/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Xodimlar</a>
+                                <a href="/dashboard/settings/staff/?tab=roles" data-path="/dashboard/settings/staff/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Rollar</a>
+                                <a href="/dashboard/settings/staff/?tab=courier" data-path="/dashboard/settings/staff/" @click="mobileSidebarOpen = false" class="sidebar-subitem block py-1.5 px-3 rounded-xl hover:bg-slate-100 spa-link">Kuryer</a>
+                            </div>
+                        </div>
 
                         <!-- 12. Tarif rejasi -->
                         <a href="/dashboard/settings/tariffs/" data-path="/dashboard/settings/tariffs/" @click="mobileSidebarOpen = false" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all hover:bg-slate-100 hover:text-slate-900 spa-link">

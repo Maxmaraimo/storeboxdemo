@@ -91,8 +91,17 @@ class SubdomainTenantMiddleware:
 
             if subdomain and subdomain not in ['www', 'api', 'app', 'admin', 'billing', 'super-admin']:
                 try:
-                    store = Store.objects.filter(subdomain__iexact=subdomain, is_active=True).first()
+                    store = Store.objects.filter(subdomain__iexact=subdomain).first()
                     if store:
+                        # Check if store is suspended or license is expired on public storefront
+                        if not store.is_active or store.is_expired:
+                            safe_prefixes = (
+                                '/super-admin', '/dashboard', '/login', '/register', '/logout', '/accounts',
+                                '/api'
+                            )
+                            if not any(path.startswith(prefix) for prefix in safe_prefixes):
+                                return render(request, 'storefront/store_suspended.html', {'subdomain': subdomain, 'store': store}, status=403)
+
                         request.store = store
                         request.is_platform_root = False
                     else:

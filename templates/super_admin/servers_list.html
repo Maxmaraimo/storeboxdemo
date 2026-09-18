@@ -306,9 +306,9 @@
                             <div class="flex items-center justify-end space-x-1">
                                 <!-- Profile Hub -->
                                 <a href="{% url 'super_admin:server_detail' store.id %}"
-                                   title="Открыть глубокий профиль"
+                                   title="Открыть профиль и управление"
                                    class="p-1 rounded text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition">
-                                    <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                                    <i data-lucide="sliders" class="w-3.5 h-3.5 pointer-events-none"></i>
                                 </a>
 
                                 <!-- Fast Renew BUY Button -->
@@ -318,7 +318,46 @@
                                         data-testid="superadmin-renew-btn-{{ store.id }}"
                                         title="Продлить лицензию (BUY)"
                                         class="p-1 rounded text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition cursor-pointer">
-                                    <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+                                    <i data-lucide="shopping-cart" class="w-3.5 h-3.5 pointer-events-none"></i>
+                                </button>
+
+                                <!-- Edit Store Button -->
+                                <button data-action="edit-server"
+                                        data-id="{{ store.id }}"
+                                        data-name="{{ store.name|escape }}"
+                                        data-subdomain="{{ store.subdomain|escape }}"
+                                        data-company="{{ store.company_name|default:''|escape }}"
+                                        data-phone="{{ store.contact_phone|default:''|escape }}"
+                                        data-plan="{{ store.license_plan }}"
+                                        data-expires="{{ store.license_expires_at|date:'Y-m-d' }}"
+                                        data-comment="{{ store.admin_comment|default:''|escape }}"
+                                        data-active="{{ store.is_active|yesno:'true,false' }}"
+                                        type="button"
+                                        title="Редактировать параметры магазина"
+                                        class="p-1 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition cursor-pointer">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5 pointer-events-none"></i>
+                                </button>
+
+                                <!-- Block / Unblock Toggle -->
+                                <button data-action="toggle-server"
+                                        data-id="{{ store.id }}"
+                                        onclick="window.SuperAdmin.toggleStatus({{ store.id }}, this)"
+                                        type="button"
+                                        title="{% if store.is_active %}Заблокировать магазин{% else %}Активировать магазин{% endif %}"
+                                        class="p-1 rounded {% if store.is_active %}text-amber-500 hover:text-amber-700 hover:bg-amber-50 border border-transparent hover:border-amber-200{% else %}text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 border border-transparent hover:border-emerald-200{% endif %} transition cursor-pointer">
+                                    <i data-lucide="{% if store.is_active %}lock{% else %}unlock{% endif %}" class="w-3.5 h-3.5 pointer-events-none"></i>
+                                </button>
+
+                                <!-- Delete Store Button -->
+                                <button data-action="delete-server"
+                                        data-id="{{ store.id }}"
+                                        data-name="{{ store.name|escape }}"
+                                        data-subdomain="{{ store.subdomain|escape }}"
+                                        onclick="window.SuperAdmin.openDeleteModal({{ store.id }}, '{{ store.name|escapejs }}', '{{ store.subdomain|escapejs }}')"
+                                        type="button"
+                                        title="Удалить магазин"
+                                        class="p-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i>
                                 </button>
 
                                 <!-- Direct View Store -->
@@ -326,7 +365,7 @@
                                    target="_blank"
                                    title="Витрина магазина"
                                    class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
-                                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                    <i data-lucide="external-link" class="w-3.5 h-3.5 pointer-events-none"></i>
                                 </a>
                             </div>
                         </td>
@@ -459,15 +498,15 @@
         </div>
     </div>
 
-    <!-- 2. Modal: Quick BUY / Renew License -->
+    <!-- 2. Modal: Quick BUY / Renew License with Interactive Calculator -->
     <div id="renewLicenseModal"
          class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-        <div class="bg-white rounded-lg border border-slate-300 shadow-2xl max-w-md w-full overflow-hidden">
+        <div class="bg-white rounded-xl border border-slate-300 shadow-2xl max-w-lg w-full overflow-hidden">
             <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-slate-800">
                 <div class="flex items-center space-x-2">
-                    <i data-lucide="shopping-cart" class="w-4 h-4 text-emerald-400"></i>
+                    <i data-lucide="calculator" class="w-4 h-4 text-emerald-400"></i>
                     <h3 class="text-xs font-bold uppercase tracking-wider">
-                        Продлить лицензию (BUY): <span id="renewModalSubdomain" class="font-mono text-emerald-400"></span>
+                        Калькулятор тарифа & Продление: <span id="renewModalSubdomain" class="font-mono text-emerald-400"></span>
                     </h3>
                 </div>
                 <button onclick="window.SuperAdmin.closeRenewModal()" type="button" class="text-slate-400 hover:text-white cursor-pointer">
@@ -475,54 +514,109 @@
                 </button>
             </div>
 
-            <form id="renewLicenseForm" :action="'/super-admin/servers/' + activeStoreId + '/renew/'" method="POST" class="p-4 space-y-3">
+            <form id="renewLicenseForm" :action="'/super-admin/servers/' + activeStoreId + '/renew/'" method="POST" class="p-5 space-y-4">
                 {% csrf_token %}
+                <input type="hidden" name="calc_mode" id="renewCalcMode" value="period">
+
+                <!-- Mode Switcher -->
                 <div>
-                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Период продления</label>
-                    <select name="months" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-semibold text-slate-800">
-                        <option value="1" selected>+ 1 месяц (30 дней)</option>
-                        <option value="3">+ 3 месяца (90 дней)</option>
-                        <option value="6">+ 6 месяцев (180 дней)</option>
-                        <option value="12">+ 12 месяцев (1 год)</option>
-                    </select>
+                    <label class="block text-xxs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Способ расчета</label>
+                    <div class="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+                        <button type="button" id="btnModePeriod" onclick="window.SuperAdmin.setCalcMode('period')" class="py-1.5 px-2 rounded-md transition text-center bg-white shadow-xs text-slate-900 font-bold">По периоду</button>
+                        <button type="button" id="btnModeAmount" onclick="window.SuperAdmin.setCalcMode('amount')" class="py-1.5 px-2 rounded-md transition text-center text-slate-600 hover:text-slate-900">По сумме (UZS)</button>
+                        <button type="button" id="btnModeDays" onclick="window.SuperAdmin.setCalcMode('days')" class="py-1.5 px-2 rounded-md transition text-center text-slate-600 hover:text-slate-900">По дням</button>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Tariff Plan -->
                     <div>
-                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Тарифный план</label>
-                        <select id="renewPlanSelect" name="plan" x-model="activeStorePlan" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium">
-                            <option value="START">Старт</option>
-                            <option value="STANDARD">Стандарт</option>
-                            <option value="PRO">Профессиональный</option>
-                            <option value="ENTERPRISE">Корпоративный</option>
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Тарифный план</label>
+                        <select id="renewPlanSelect" name="plan" onchange="window.SuperAdmin.recalculateTariff()" class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 font-bold text-slate-900 bg-white">
+                            <option value="START">Старт (99 000 / мес)</option>
+                            <option value="STANDARD" selected>Стандарт (199 000 / мес)</option>
+                            <option value="PRO">Про (399 000 / мес)</option>
+                            <option value="ENTERPRISE">Корпоративный (799 000 / мес)</option>
+                        </select>
+                    </div>
+
+                    <!-- Mode-dependent Input -->
+                    <div id="renewPeriodWrapper">
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Срок (Период)</label>
+                        <select id="renewMonthsSelect" name="months" onchange="window.SuperAdmin.recalculateTariff()" class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 font-bold text-slate-900 bg-white">
+                            <option value="1" selected>1 месяц (30 дней)</option>
+                            <option value="3">3 месяца (90 дней)</option>
+                            <option value="6">6 месяцев (-10% скидка)</option>
+                            <option value="12">12 месяцев (-20% скидка)</option>
+                        </select>
+                    </div>
+
+                    <div id="renewAmountWrapper" class="hidden">
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Сумма пополнения (UZS)</label>
+                        <input type="number" id="renewAmountInput" name="amount" value="500000" step="10000" min="10000" oninput="window.SuperAdmin.recalculateTariff()"
+                               class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 font-mono font-bold text-slate-900 bg-white">
+                    </div>
+
+                    <div id="renewDaysWrapper" class="hidden">
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Количество дней</label>
+                        <input type="number" id="renewDaysInput" name="days" value="30" min="1" oninput="window.SuperAdmin.recalculateTariff()"
+                               class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 font-mono font-bold text-slate-900 bg-white">
+                    </div>
+                </div>
+
+                <!-- Quick Amount Shortcuts (when in amount mode) -->
+                <div id="quickAmountButtons" class="hidden">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-xxs text-slate-400 font-semibold uppercase">Быстрый выбор:</span>
+                        <button type="button" onclick="window.SuperAdmin.setQuickAmount(100000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">100 000</button>
+                        <button type="button" onclick="window.SuperAdmin.setQuickAmount(200000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">200 000</button>
+                        <button type="button" onclick="window.SuperAdmin.setQuickAmount(400000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">400 000</button>
+                        <button type="button" onclick="window.SuperAdmin.setQuickAmount(800000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">800 000</button>
+                        <button type="button" onclick="window.SuperAdmin.setQuickAmount(1500000)" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xxs font-mono font-bold cursor-pointer">1 500 000</button>
+                    </div>
+                </div>
+
+                <!-- Live Dynamic Calculation Card -->
+                <div class="p-3.5 rounded-xl bg-slate-900 text-white space-y-2 border border-slate-800 shadow-inner">
+                    <div class="flex items-center justify-between text-slate-400 text-xxs uppercase tracking-wider font-mono">
+                        <span>Дневная ставка тарифа:</span>
+                        <span class="text-slate-200 font-bold" id="calcDailyRateDisplay">16 667 UZS / день</span>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-800/80 pt-2">
+                        <span class="text-xs text-slate-300 font-medium">Будет добавлено дней:</span>
+                        <span class="text-base font-black font-mono text-emerald-400" id="calcDaysDisplay">+30 дней</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-300 font-medium">Итоговая сумма:</span>
+                        <span class="text-sm font-black font-mono text-white" id="calcTotalAmountDisplay">500 000 UZS</span>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-800/80 pt-2">
+                        <span class="text-xs text-slate-300 font-medium">Новая дата окончания:</span>
+                        <span class="text-xs font-black font-mono text-amber-300" id="calcNewExpiryDisplay">Рассчитывается...</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Статус инвойса</label>
+                        <select name="payment_status" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 bg-white">
+                            <option value="PAID" selected>Оплачен (Списать сразу)</option>
+                            <option value="PENDING">Ожидание оплаты (Счет)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Сумма к списанию (UZS)</label>
-                        <input type="text" name="amount" value="199000" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-mono font-bold text-slate-800">
+                        <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Основание / Примечание</label>
+                        <input type="text" name="notes" placeholder="Продление через калькулятор" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 bg-white">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Статус инвойса</label>
-                    <select name="payment_status" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
-                        <option value="PAID" selected>Оплачен (Провести списание сразу)</option>
-                        <option value="PENDING">Выставить счет (Ожидание оплаты)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xxs font-semibold text-slate-700 uppercase mb-1">Основание / Примечание</label>
-                    <input type="text" name="notes" placeholder="Продление через SuperAdmin" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
-                </div>
-
-                <div class="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
-                    <button onclick="window.SuperAdmin.closeRenewModal()" type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 cursor-pointer">
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2">
+                    <button onclick="window.SuperAdmin.closeRenewModal()" type="button" class="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 cursor-pointer">
                         Отмена
                     </button>
-                    <button id="btnSubmitRenew" type="submit" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1 cursor-pointer">
-                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                        <span>Подтвердить продление</span>
+                    <button id="btnSubmitRenew" type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Применить и продлить</span>
                     </button>
                 </div>
             </form>

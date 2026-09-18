@@ -166,7 +166,7 @@ export const SettingsPage: React.FC = () => {
           {t("settings") || "Sozlamalar"}
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">
-          Do`kon nomi, internet manzili va valyutasini boshqaring
+          {t("settings_subtitle") || "Do'kon nomi, internet manzili va valyutasini boshqaring"}
         </p>
       </div>
 
@@ -193,7 +193,7 @@ export const SettingsPage: React.FC = () => {
       >
         <div>
           <label className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-700">
-            <StoreIcon className="h-4 w-4 text-slate-400" /> Do`kon nomi
+            <StoreIcon className="h-4 w-4 text-slate-400" /> {t("store_name_label") || "Do'kon nomi"}
           </label>
           <input
             type="text"
@@ -206,7 +206,7 @@ export const SettingsPage: React.FC = () => {
 
         <div>
           <label className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-700">
-            <Globe2 className="h-4 w-4 text-slate-400" /> Subdomen
+            <Globe2 className="h-4 w-4 text-slate-400" /> {t("subdomain_label") || "Subdomen"}
           </label>
           <div className="flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50 transition focus-within:border-slate-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-slate-100">
             <input
@@ -277,20 +277,20 @@ export const SettingsPage: React.FC = () => {
             )}
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-            Domenni saqlaganingizdan keyin yangi manzil darhol ishlaydi. Eski havola ochilmaydi.
+            {t("settings_domain_note") || "Domenni saqlaganingizdan keyin yangi manzil darhol ishlaydi. Eski havola ochilmaydi."}
           </p>
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-2">Valyuta</label>
+          <label className="block text-xs font-bold text-slate-700 mb-2">{t("currency_label") || "Valyuta"}</label>
           <select
             value={currency}
             onChange={(event) => setCurrency(event.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-100"
           >
-            <option value="UZS">UZS — O`zbek so`mi</option>
-            <option value="USD">USD — AQSh dollari</option>
-            <option value="RUB">RUB — Rossiya rubli</option>
+            <option value="UZS">{t("currency_uzs") || "UZS — O'zbek so'mi"}</option>
+            <option value="USD">{t("currency_usd") || "USD — AQSh dollari"}</option>
+            <option value="RUB">{t("currency_rub") || "RUB — Rossiya rubli"}</option>
           </select>
         </div>
 
@@ -302,7 +302,7 @@ export const SettingsPage: React.FC = () => {
             className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-            Standart domenni tiklash
+            {t("reset_default_domain") || "Standart domenni tiklash"}
           </button>
           <button
             type="submit"
@@ -310,7 +310,7 @@ export const SettingsPage: React.FC = () => {
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3 text-xs font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Saqlash
+            {t("save") || "Saqlash"}
           </button>
         </div>
       </form>

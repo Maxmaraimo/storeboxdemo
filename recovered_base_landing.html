@@ -1,0 +1,2617 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f6fc">
+    <meta name="description" content="StoreBox — SaaS-конструктор интернет-магазинов: каталог, заказы, собственная витрина и управление продажами через Telegram.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="StoreBox">
+    <meta property="og:title" content="StoreBox — интернет-магазин для вашего бизнеса">
+    <meta property="og:description" content="Создайте онлайн-магазин, добавьте товары и принимайте заказы в одной панели.">
+    <meta property="og:url" content="https://storebox.uz/">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z' fill='%23211b2e'/%3E%3Cpath d='m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26' fill='none' stroke='%23c8ff6a' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
+    <title>StoreBox — конструктор интернет-магазинов</title>
+    <style>
+:root {
+    --ink: #171321;
+    --muted: #645f73;
+    --line: rgba(220, 226, 240, 0.7);
+    --surface: #f4f6fc;
+    --white: #ffffff;
+    --primary: #211b2e;
+    --primary-dark: #14101c;
+    --primary-gradient: linear-gradient(135deg, #2c243d 0%, #151020 100%);
+    --lime: #c8ff6a;
+    --lime-dark: #2c520c;
+    --cyan: #74e7ef;
+    
+    /* Neumorphic Shadows */
+    --neu-outer: 8px 10px 24px rgba(175, 185, 210, 0.26), -8px -8px 24px rgba(255, 255, 255, 0.95);
+    --neu-outer-lg: 16px 20px 48px rgba(175, 185, 210, 0.28), -12px -12px 36px rgba(255, 255, 255, 1);
+    --neu-inset: inset 2px 2px 5px rgba(165, 175, 200, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.95);
+    
+    /* Glassmorphism Styles */
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-bg-hover: rgba(255, 255, 255, 0.85);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.85);
+    --glass-blur: blur(24px) saturate(180%);
+    --glass-shadow: 0 16px 36px rgba(33, 27, 46, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--surface);
+    scroll-behavior: smooth;
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    min-width: 320px;
+    background-color: var(--surface);
+    color: var(--ink);
+    position: relative;
+    overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; }
+
+.skip-link {
+    position: fixed;
+    z-index: 200;
+    left: 16px;
+    top: -60px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    color: #fff;
+    background: var(--ink);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    transition: top .2s ease;
+}
+.skip-link:focus { top: 16px; }
+
+/* Ambient Volumetric Lighting for Glassmorphism */
+.ambient-glows {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+.glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.6;
+    animation: floatOrb 18s ease-in-out infinite alternate;
+}
+.glow-orb-1 {
+    width: 550px;
+    height: 550px;
+    top: -120px;
+    right: 5%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, rgba(168, 85, 247, 0.15) 60%, transparent 80%);
+}
+.glow-orb-2 {
+    width: 500px;
+    height: 500px;
+    top: 250px;
+    left: -100px;
+    background: radial-gradient(circle, rgba(200, 255, 106, 0.45) 0%, rgba(132, 204, 22, 0.15) 60%, transparent 80%);
+    animation-delay: -5s;
+}
+.glow-orb-3 {
+    width: 600px;
+    height: 600px;
+    top: 1300px;
+    right: -120px;
+    background: radial-gradient(circle, rgba(116, 231, 239, 0.35) 0%, rgba(59, 130, 246, 0.15) 60%, transparent 80%);
+    animation-delay: -9s;
+}
+.glow-orb-4 {
+    width: 550px;
+    height: 550px;
+    bottom: 200px;
+    left: 5%;
+    background: radial-gradient(circle, rgba(192, 132, 252, 0.3) 0%, rgba(99, 102, 241, 0.12) 60%, transparent 80%);
+    animation-delay: -14s;
+}
+
+@keyframes floatOrb {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(35px) scale(1.06); }
+    100% { transform: translateY(-30px) scale(0.95); }
+}
+
+.section-shell {
+    position: relative;
+    z-index: 1;
+    width: min(1180px, calc(100% - 40px));
+    margin-inline: auto;
+}
+
+/* Header - Floating Glassmorphic Pill */
+.site-header-wrapper {
+    position: sticky;
+    top: 14px;
+    z-index: 100;
+    width: min(1180px, calc(100% - 32px));
+    margin: 14px auto 0;
+}
+.site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 72px;
+    padding: 0 24px;
+    border-radius: 20px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow), 0 10px 30px rgba(175, 185, 210, 0.22);
+    transition: all 0.3s ease;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 22px;
+    font-weight: 850;
+    letter-spacing: -.6px;
+    color: var(--ink);
+}
+.brand-mark {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border-radius: 13px;
+    background: var(--primary-gradient);
+    box-shadow: 4px 5px 12px rgba(33, 27, 46, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+.brand-mark svg {
+    width: 26px;
+    fill: none;
+    stroke: var(--lime);
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    color: #4a4556;
+    font-size: 14px;
+    font-weight: 650;
+}
+.nav a {
+    position: relative;
+    padding-block: 6px;
+    transition: color 0.2s ease;
+}
+.nav a:hover {
+    color: var(--primary);
+}
+.nav a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--primary);
+    transition: width 0.2s ease, left 0.2s ease;
+}
+.nav a:hover::after {
+    width: 100%;
+    left: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Language selector - Inset Neumorphic Switch */
+.language {
+    display: flex;
+    padding: 3px;
+    border-radius: 12px;
+    background: rgba(235, 240, 250, 0.8);
+    box-shadow: var(--neu-inset);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+.lang-button {
+    min-width: 36px;
+    border: 0;
+    border-radius: 9px;
+    padding: 6px 8px;
+    color: #7b7588;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+.lang-button:hover {
+    color: var(--ink);
+}
+.lang-button.is-active {
+    color: #fff;
+    background: var(--primary-gradient);
+    box-shadow: 2px 3px 8px rgba(33, 27, 46, 0.3);
+}
+
+/* Neumorphic & Glassmorphic Buttons */
+.button {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 14px;
+    padding: 0 22px;
+    font-size: 14px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: all .2s cubic-bezier(0.2, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+}
+.button:hover {
+    transform: translateY(-2px);
+}
+.button:active {
+    transform: translateY(1px);
+}
+
+.button-small {
+    min-height: 38px;
+    padding-inline: 15px;
+    font-size: 13px;
+    border-radius: 11px;
+}
+
+/* Ghost / Neumorphic Surface Button */
+.button-ghost {
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    color: var(--ink);
+    box-shadow: 4px 5px 12px rgba(175, 185, 210, 0.24), -3px -3px 10px rgba(255, 255, 255, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.button-ghost:hover {
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 6px 8px 18px rgba(175, 185, 210, 0.32), -4px -4px 14px rgba(255, 255, 255, 1);
+    color: var(--primary-dark);
+}
+.button-ghost:active {
+    box-shadow: var(--neu-inset);
+}
+
+/* Primary Neumorphic Button */
+.button-primary {
+    color: #fff;
+    background: var(--primary-gradient);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 5px 7px 18px rgba(33, 27, 46, 0.32), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+.button-primary:hover {
+    background: linear-gradient(135deg, #372e4b 0%, #1c152a 100%);
+    box-shadow: 6px 9px 24px rgba(33, 27, 46, 0.42), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+.button-primary:active {
+    box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* Accent Lime Button (Dashboard / Cabinet) */
+.button-accent {
+    color: var(--ink);
+    background: linear-gradient(135deg, #d3ff82 0%, #b4f542 100%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow: 4px 6px 16px rgba(132, 204, 22, 0.36), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    font-weight: 800;
+}
+.button-accent:hover {
+    background: linear-gradient(135deg, #dbff92 0%, #beff4d 100%);
+    box-shadow: 6px 8px 22px rgba(132, 204, 22, 0.45);
+}
+.button-accent:active {
+    box-shadow: inset 2px 2px 5px rgba(50, 80, 10, 0.35);
+}
+
+/* Hero Section */
+.hero {
+    display: grid;
+    grid-template-columns: 1fr 1.08fr;
+    gap: 54px;
+    align-items: center;
+    min-height: 670px;
+    padding-block: 60px 70px;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+    padding: 6px 14px;
+    border-radius: 30px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: 3px 4px 12px rgba(175, 185, 210, 0.2), -3px -3px 10px rgba(255, 255, 255, 0.9);
+    color: var(--primary-dark);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.eyebrow-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--lime);
+    box-shadow: 0 0 0 4px rgba(200, 255, 106, 0.35);
+    animation: pulseGlow 2.5s infinite;
+}
+@keyframes pulseGlow {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+h1 {
+    max-width: 650px;
+    margin: 0;
+    font-size: clamp(42px, 5.2vw, 68px);
+    line-height: 1.04;
+    letter-spacing: -.045em;
+    font-weight: 900;
+    color: var(--ink);
+}
+h1 span {
+    background: linear-gradient(135deg, #211b2e 0%, #63508a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-lead {
+    max-width: 580px;
+    margin: 24px 0 0;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1.65;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 32px;
+}
+.hero-points {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 20px;
+    margin: 32px 0 0;
+    padding: 0;
+    list-style: none;
+    color: #534e60;
+    font-size: 13px;
+    font-weight: 650;
+}
+.hero-points li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 2px 3px 8px rgba(175, 185, 210, 0.15), -2px -2px 8px rgba(255, 255, 255, 0.85);
+}
+.hero-points li > span:first-child {
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    border-radius: 50%;
+    color: #2b500d;
+    background: var(--lime);
+    font-size: 11px;
+    font-weight: 900;
+    box-shadow: 0 2px 6px rgba(132, 204, 22, 0.35);
+}
+
+/* Hero Visual: Glassmorphic Dashboard Window */
+.hero-visual {
+    position: relative;
+    min-width: 0;
+    padding: 30px 0 40px;
+}
+.dashboard-window {
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.82);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: var(--neu-outer-lg), 0 24px 60px rgba(33, 27, 46, 0.12), inset 0 1px 2px rgba(255, 255, 255, 1);
+    transform: perspective(1000px) rotateY(-3deg) rotateX(2deg);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+.dashboard-window:hover {
+    transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+    box-shadow: 20px 26px 65px rgba(175, 185, 210, 0.34), -14px -14px 45px rgba(255, 255, 255, 1);
+}
+
+.window-top {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    color: #9f99ab;
+    background: linear-gradient(180deg, rgba(33, 27, 46, 0.96) 0%, rgba(26, 21, 37, 0.98) 100%);
+    font-size: 11px;
+    font-family: monospace;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.window-dots { display: flex; gap: 6px; }
+.window-dots i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ff5f56;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.25);
+}
+.window-dots i:nth-child(2) { background: #ffbd2e; }
+.window-dots i:nth-child(3) { background: #27c93f; }
+.live-pill {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #dcd7e4;
+    font-size: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.live-pill i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #27c93f;
+    box-shadow: 0 0 8px #27c93f;
+    animation: pulseGlow 1.8s infinite;
+}
+
+.dashboard-body {
+    display: grid;
+    grid-template-columns: 62px 1fr;
+    min-height: 385px;
+    background: rgba(255, 255, 255, 0.65);
+}
+.mock-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    padding-top: 20px;
+    border-right: 1px solid rgba(220, 226, 240, 0.8);
+    background: rgba(245, 247, 252, 0.7);
+}
+.mock-logo {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border-radius: 10px;
+    color: #fff;
+    background: var(--primary-gradient);
+    font-size: 12px;
+    font-weight: 850;
+    box-shadow: 2px 3px 8px rgba(33, 27, 46, 0.25);
+}
+.mock-sidebar > i {
+    width: 20px;
+    height: 6px;
+    border-radius: 6px;
+    background: #cfc9d9;
+    display: block;
+}
+.mock-sidebar > i.is-selected {
+    height: 20px;
+    background: rgba(33, 27, 46, 0.12);
+    box-shadow: inset 4px 0 var(--primary);
+    border-radius: 4px 8px 8px 4px;
+}
+
+.mock-content {
+    min-width: 0;
+    padding: 24px;
+}
+.mock-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+.mock-heading div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.mock-heading small {
+    color: #928b9d;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+.mock-heading strong {
+    font-size: 17px;
+    font-weight: 850;
+    color: var(--ink);
+}
+.mock-heading button {
+    border: 0;
+    border-radius: 9px;
+    padding: 8px 14px;
+    color: #fff;
+    background: var(--primary-gradient);
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+    box-shadow: 3px 4px 10px rgba(33, 27, 46, 0.25);
+    transition: transform .15s;
+}
+.mock-heading button:hover {
+    transform: translateY(-1px);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+}
+.stats-grid article {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 4px 5px 12px rgba(175, 185, 210, 0.2), -3px -3px 10px rgba(255, 255, 255, 0.95);
+}
+.stats-grid article > span {
+    grid-column: 1 / -1;
+    color: #888293;
+    font-size: 9px;
+    font-weight: 750;
+    text-transform: uppercase;
+}
+.stats-grid strong {
+    font-size: 17px;
+    font-weight: 900;
+    font-family: monospace;
+    color: var(--ink);
+}
+.stats-grid em {
+    align-self: center;
+    color: #279e5a;
+    font-size: 9px;
+    font-style: normal;
+    font-weight: 800;
+    padding: 2px 5px;
+    border-radius: 6px;
+    background: rgba(39, 158, 90, 0.12);
+}
+.stats-grid small {
+    align-self: center;
+    color: #888293;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.chart-card {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 4px 5px 12px rgba(175, 185, 210, 0.2), -3px -3px 10px rgba(255, 255, 255, 0.95);
+}
+.chart-title {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 800;
+}
+.chart-title span { color: #888293; }
+.chart-card svg {
+    width: 100%;
+    height: auto;
+    margin-top: 10px;
+    display: block;
+}
+.chart-grid {
+    fill: none;
+    stroke: #edeaf2;
+    stroke-width: 1;
+}
+.chart-fill { fill: url(#chartFill); }
+.chart-line {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 3.2;
+    stroke-linecap: round;
+}
+
+/* Floating Order Toast */
+.order-toast {
+    position: absolute;
+    z-index: 5;
+    right: -15px;
+    bottom: -8px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    min-width: 270px;
+    padding: 14px 18px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.88);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.98);
+    box-shadow: 10px 14px 35px rgba(33, 27, 46, 0.16), -5px -5px 15px rgba(255, 255, 255, 0.9);
+    animation: toastFloat 5s ease-in-out infinite alternate;
+}
+@keyframes toastFloat {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-8px); }
+}
+
+.toast-icon {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border-radius: 11px;
+    color: #fff;
+    background: var(--primary-gradient);
+    font-size: 15px;
+    font-weight: 900;
+    box-shadow: 2px 3px 8px rgba(33, 27, 46, 0.25);
+}
+.order-toast > span:nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.order-toast small {
+    color: #888293;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.order-toast strong {
+    font-size: 12px;
+    font-weight: 850;
+    font-family: monospace;
+    color: var(--ink);
+}
+.order-toast > i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #27c93f;
+    box-shadow: 0 0 10px #27c93f;
+}
+
+/* Trust Strip - Glassmorphic Neumorphic Bar */
+.trust-strip-wrapper {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+.trust-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-radius: 20px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: var(--neu-outer);
+}
+.trust-strip div {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px 16px;
+    border-right: 1px solid var(--line);
+}
+.trust-strip div:last-child { border-right: 0; }
+.trust-strip strong {
+    font-size: 22px;
+    font-weight: 900;
+    font-family: monospace;
+    color: var(--ink);
+}
+.trust-strip span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+/* =========================================================
+   NEW: 3D MULTI-DEVICE SHOWCASE SECTION (WOW EFFECT)
+   ========================================================= */
+.showcase-section {
+    padding-block: 85px 95px;
+    text-align: center;
+}
+.showcase-header {
+    max-width: 780px;
+    margin: 0 auto 40px;
+}
+.showcase-header h2 {
+    margin: 10px 0 16px;
+    font-size: clamp(32px, 4.2vw, 52px);
+    line-height: 1.1;
+    letter-spacing: -.04em;
+    font-weight: 900;
+    color: var(--ink);
+}
+.showcase-header p {
+    color: var(--muted);
+    font-size: 17px;
+    line-height: 1.65;
+    margin: 0 auto 32px;
+}
+
+/* Segmented Neumorphic Device Tabs */
+.device-switcher {
+    display: inline-flex;
+    padding: 5px;
+    border-radius: 16px;
+    background: rgba(235, 240, 252, 0.85);
+    box-shadow: var(--neu-inset);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    gap: 4px;
+}
+.device-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: #6a6476;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.2, 0, 0.2, 1);
+}
+.device-tab svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+.device-tab:hover {
+    color: var(--ink);
+}
+.device-tab.is-active {
+    color: #fff;
+    background: var(--primary-gradient);
+    box-shadow: 3px 4px 12px rgba(33, 27, 46, 0.32);
+}
+
+/* 3D Showcase Stage */
+.showcase-stage {
+    position: relative;
+    width: 100%;
+    min-height: 620px;
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 1400px;
+    perspective-origin: center center;
+    transition: transform 0.2s ease-out;
+}
+.stage-backdrop-glow {
+    position: absolute;
+    width: 65%;
+    height: 70%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200, 255, 106, 0.35) 0%, rgba(116, 231, 239, 0.25) 45%, transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: glowPulse 8s infinite alternate ease-in-out;
+}
+@keyframes glowPulse {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    100% { transform: scale(1.15); opacity: 1; }
+}
+
+/* Floating Wow Badges */
+.floating-badge {
+    position: absolute;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.88);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 16px 36px rgba(33, 27, 46, 0.12), -4px -4px 12px rgba(255, 255, 255, 0.9);
+    text-align: left;
+    transition: transform 0.3s ease;
+}
+.floating-badge:hover {
+    transform: translateY(-4px) scale(1.03);
+}
+.floating-badge strong {
+    display: block;
+    font-size: 12px;
+    font-weight: 850;
+    color: var(--ink);
+}
+.floating-badge small {
+    display: block;
+    font-size: 10px;
+    color: #7b7487;
+    font-weight: 600;
+}
+.badge-icon {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border-radius: 10px;
+    background: rgba(33, 27, 46, 0.08);
+    font-size: 15px;
+}
+
+.badge-speed {
+    top: 30px;
+    left: 2%;
+    animation: badgeFloat 6s ease-in-out infinite alternate;
+}
+.badge-order {
+    top: 50px;
+    right: 2%;
+    animation: badgeFloat 5.5s ease-in-out infinite alternate -2s;
+}
+.badge-order .live-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #27c93f;
+    box-shadow: 0 0 10px #27c93f;
+    animation: pulseGlow 1.5s infinite;
+}
+.badge-mobile {
+    bottom: 40px;
+    left: 4%;
+    animation: badgeFloat 7s ease-in-out infinite alternate -3.5s;
+}
+.badge-sync {
+    bottom: 60px;
+    right: 4%;
+    animation: badgeFloat 6.5s ease-in-out infinite alternate -1s;
+}
+@keyframes badgeFloat {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-12px); }
+}
+
+/* Base Device Wrapper */
+.device-wrapper {
+    position: absolute;
+    transition: all 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-style: preserve-3d;
+}
+
+/* Glass Screen Glare Sweep Animation */
+.glass-screen-glare {
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        105deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.28) 45%,
+        rgba(255, 255, 255, 0.45) 50%,
+        rgba(255, 255, 255, 0.15) 55%,
+        transparent 70%
+    );
+    transform: skewX(-20deg);
+    pointer-events: none;
+    animation: glareSweep 9s infinite ease-in-out;
+}
+@keyframes glareSweep {
+    0%, 70% { left: -150%; }
+    100% { left: 200%; }
+}
+
+/* Device 1: Desktop Monitor (iMac style) */
+.device-desktop {
+    width: 680px;
+    z-index: 2;
+}
+.monitor-frame {
+    position: relative;
+    border-radius: 20px 20px 6px 6px;
+    background: #1e1929;
+    padding: 10px 10px 0 10px;
+    box-shadow: 0 24px 65px rgba(18, 14, 26, 0.32), 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.monitor-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 28px;
+    padding: 0 10px;
+    background: #181422;
+    border-radius: 12px 12px 0 0;
+}
+.traffic-lights { display: flex; gap: 5px; }
+.traffic-lights i { width: 7px; height: 7px; border-radius: 50%; background: #ff5f56; }
+.traffic-lights i:nth-child(2) { background: #ffbd2e; }
+.traffic-lights i:nth-child(3) { background: #27c93f; }
+.browser-address {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cfcad8;
+    font-size: 10px;
+    font-family: monospace;
+}
+.browser-address svg { width: 10px; height: 10px; fill: var(--lime); }
+.browser-status {
+    color: var(--lime);
+    font-size: 9px;
+    font-weight: 750;
+}
+.monitor-frame .screen-surface {
+    position: relative;
+    overflow: hidden;
+    height: 380px;
+    background: #2b2538;
+}
+.monitor-frame .screen-surface img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+}
+.monitor-chin {
+    height: 20px;
+    background: linear-gradient(180deg, #2b2538 0%, #1c1825 100%);
+    border-radius: 0 0 16px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.monitor-stand {
+    width: 110px;
+    height: 60px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #a7a0b3 0%, #6f687a 100%);
+    clip-path: polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%);
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4);
+}
+.monitor-base {
+    width: 220px;
+    height: 10px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #d3cde0 0%, #9b94a8 100%);
+    border-radius: 6px;
+    box-shadow: 0 10px 25px rgba(33, 27, 46, 0.25);
+}
+
+/* Device 2: MacBook Laptop */
+.device-laptop {
+    width: 480px;
+    z-index: 3;
+}
+.laptop-screen-frame {
+    position: relative;
+    border-radius: 14px 14px 0 0;
+    background: #181422;
+    padding: 8px 8px 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 18px 45px rgba(18, 14, 26, 0.35);
+}
+.laptop-notch {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 7px;
+    background: #181422;
+    border-radius: 0 0 5px 5px;
+    z-index: 5;
+}
+.laptop-screen-frame .screen-surface {
+    position: relative;
+    overflow: hidden;
+    height: 290px;
+    border-radius: 6px 6px 0 0;
+    background: #2b2538;
+}
+.laptop-screen-frame .screen-surface img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+}
+.laptop-base {
+    position: relative;
+    height: 14px;
+    background: linear-gradient(180deg, #ded8ea 0%, #b2abbf 100%);
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 16px 35px rgba(33, 27, 46, 0.28);
+}
+.laptop-lip {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: #8e879b;
+    border-radius: 0 0 4px 4px;
+}
+
+/* Device 3: Smartphone (iPhone style) */
+.device-phone {
+    width: 215px;
+    z-index: 4;
+}
+.phone-frame {
+    position: relative;
+    border-radius: 38px;
+    background: #181422;
+    padding: 8px;
+    border: 2px solid #3c344d;
+    box-shadow: 0 24px 60px rgba(18, 14, 26, 0.38), 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+.dynamic-island {
+    position: absolute;
+    top: 13px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 68px;
+    height: 16px;
+    border-radius: 10px;
+    background: #000;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    gap: 5px;
+}
+.camera-lens { width: 6px; height: 6px; border-radius: 50%; background: #0c1c2e; }
+.sensor { width: 4px; height: 4px; border-radius: 50%; background: #13241b; }
+.phone-frame .screen-surface {
+    position: relative;
+    overflow: hidden;
+    height: 430px;
+    border-radius: 32px;
+    background: #2b2538;
+}
+.phone-frame .screen-surface img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+}
+.home-indicator {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 75px;
+    height: 3px;
+    border-radius: 3px;
+    background: #fff;
+    z-index: 6;
+    opacity: 0.8;
+}
+
+/* 3D Showcase Modes */
+/* Mode: ALL (Composite Stage) */
+.mode-all .device-desktop {
+    transform: translate3d(0, -25px, -60px) scale(0.92);
+    opacity: 1;
+    pointer-events: auto;
+}
+.mode-all .device-laptop {
+    transform: translate3d(-190px, 70px, 40px) rotateY(6deg) scale(0.92);
+    opacity: 1;
+    pointer-events: auto;
+}
+.mode-all .device-phone {
+    transform: translate3d(250px, 40px, 90px) rotateY(-8deg) scale(0.96);
+    opacity: 1;
+    pointer-events: auto;
+    animation: phoneFloat 5s ease-in-out infinite alternate;
+}
+@keyframes phoneFloat {
+    0% { transform: translate3d(250px, 40px, 90px) rotateY(-8deg) translateY(0); }
+    100% { transform: translate3d(250px, 40px, 90px) rotateY(-8deg) translateY(-10px); }
+}
+
+/* Mode: DESKTOP ONLY */
+.mode-desktop .device-desktop {
+    transform: translate3d(0, 0, 0) scale(1.08);
+    opacity: 1;
+    z-index: 10;
+}
+.mode-desktop .device-laptop {
+    transform: translate3d(-350px, 120px, -150px) scale(0.7);
+    opacity: 0.15;
+    pointer-events: none;
+}
+.mode-desktop .device-phone {
+    transform: translate3d(350px, 120px, -150px) scale(0.7);
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+/* Mode: LAPTOP ONLY */
+.mode-laptop .device-laptop {
+    transform: translate3d(0, 20px, 0) scale(1.25);
+    opacity: 1;
+    z-index: 10;
+}
+.mode-laptop .device-desktop {
+    transform: translate3d(0, -100px, -200px) scale(0.65);
+    opacity: 0.15;
+    pointer-events: none;
+}
+.mode-laptop .device-phone {
+    transform: translate3d(350px, 80px, -150px) scale(0.7);
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+/* Mode: MOBILE ONLY */
+.mode-mobile .device-phone {
+    transform: translate3d(0, -10px, 0) scale(1.3);
+    opacity: 1;
+    z-index: 10;
+}
+.mode-mobile .device-desktop {
+    transform: translate3d(-280px, -50px, -200px) scale(0.65);
+    opacity: 0.15;
+    pointer-events: none;
+}
+.mode-mobile .device-laptop {
+    transform: translate3d(280px, 50px, -200px) scale(0.65);
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+/* Features Section */
+.content-section { padding-block: 90px; }
+.section-heading { max-width: 720px; margin-bottom: 46px; }
+.section-kicker {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    color: var(--primary);
+    background: rgba(33, 27, 46, 0.08);
+    font-size: 12px;
+    font-weight: 850;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+.section-heading h2, .growth-copy h2, .final-cta h2 {
+    margin: 0;
+    font-size: clamp(32px, 4vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -.04em;
+    font-weight: 850;
+    color: var(--ink);
+}
+.section-heading p, .growth-copy > p {
+    margin: 16px 0 0;
+    color: var(--muted);
+    font-size: 17px;
+    line-height: 1.65;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+}
+.feature-card {
+    position: relative;
+    min-height: 310px;
+    overflow: hidden;
+    padding: 36px;
+    border-radius: 24px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: var(--neu-outer);
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--neu-outer-lg);
+}
+.feature-card-wide { grid-column: span 1; }
+
+.feature-violet {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(33, 27, 46, 0.95) 0%, rgba(20, 15, 30, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 50px rgba(33, 27, 46, 0.35);
+}
+.feature-violet h3 { color: #fff; }
+.feature-violet p { color: rgba(255, 255, 255, 0.75); }
+
+.feature-dark {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(33, 27, 46, 0.95) 0%, rgba(20, 15, 30, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 50px rgba(33, 27, 46, 0.35);
+}
+.feature-dark h3 { color: #fff; }
+.feature-dark p { color: rgba(255, 255, 255, 0.75); }
+
+.feature-icon {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: 14px;
+    color: #211b2e;
+    background: var(--lime);
+    font-size: 20px;
+    font-weight: 850;
+    box-shadow: 0 6px 16px rgba(132, 204, 22, 0.35);
+}
+.feature-violet .feature-icon, .feature-dark .feature-icon {
+    color: var(--lime);
+    border: 1px solid rgba(200, 255, 106, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.feature-card h3 {
+    margin: 24px 0 10px;
+    font-size: 24px;
+    letter-spacing: -.025em;
+    font-weight: 800;
+}
+.feature-card p {
+    max-width: 460px;
+    margin: 0;
+    color: #6a6476;
+    line-height: 1.65;
+    font-size: 15px;
+}
+
+.theme-preview {
+    position: absolute;
+    right: -20px;
+    bottom: -22px;
+    width: 46%;
+    height: 150px;
+    padding: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px 0 0 0;
+    background: rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+}
+.theme-preview i {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--lime);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+.theme-preview i:nth-child(2) { background: var(--cyan); }
+.theme-preview i:nth-child(3) { background: #fff; }
+.theme-preview span {
+    display: block;
+    width: 80%;
+    height: 42px;
+    margin-top: 18px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.feature-copy-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: center;
+    height: 100%;
+}
+.domain-preview {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    background: rgba(20, 16, 28, 0.85);
+    font-size: 14px;
+    font-family: monospace;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+}
+.domain-preview span { color: #fff; font-weight: 750; }
+.domain-preview b { color: #9f97ad; }
+.domain-preview i {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    margin-left: auto;
+    place-items: center;
+    border-radius: 50%;
+    color: #2b500d;
+    background: var(--lime);
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 900;
+}
+
+/* How It Works Section */
+.how-section {
+    position: relative;
+    padding-block: 85px;
+    border-radius: 32px;
+    color: #fff;
+    background: linear-gradient(145deg, rgba(33, 27, 46, 0.96) 0%, rgba(18, 14, 26, 0.98) 100%);
+    -webkit-backdrop-filter: blur(30px);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 70px rgba(18, 14, 26, 0.4);
+    overflow: hidden;
+}
+.how-section::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    top: -100px;
+    right: -100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200, 255, 106, 0.18) 0%, transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+}
+.section-heading-light h2 { color: #fff; }
+.section-heading-light .section-kicker {
+    color: var(--lime);
+    background: rgba(200, 255, 106, 0.15);
+}
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.steps li {
+    min-height: 260px;
+    padding: 28px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12), 0 10px 25px rgba(0, 0, 0, 0.2);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    transition: transform .25s ease, background .25s ease;
+}
+.steps li:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.08);
+}
+.steps li > span {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 8px;
+    color: var(--lime);
+    background: rgba(200, 255, 106, 0.12);
+    font-size: 12px;
+    font-weight: 850;
+    font-family: monospace;
+}
+.steps h3 {
+    margin: 60px 0 10px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+}
+.steps p {
+    margin: 0;
+    color: #aba4b7;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Growth & SEO Section */
+.growth-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+}
+.growth-copy ul {
+    display: grid;
+    gap: 18px;
+    margin: 32px 0 0;
+    padding: 0;
+    list-style: none;
+}
+.growth-copy li {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 16px;
+    align-items: center;
+    padding: 16px;
+    border-radius: 18px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: 4px 5px 14px rgba(175, 185, 210, 0.18), -3px -3px 10px rgba(255, 255, 255, 0.95);
+    transition: transform 0.2s ease;
+}
+.growth-copy li:hover {
+    transform: translateX(4px);
+}
+.growth-copy li > span {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--primary);
+    background: rgba(33, 27, 46, 0.08);
+    font-size: 13px;
+    font-weight: 900;
+    font-family: monospace;
+}
+.growth-copy li div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.growth-copy li strong {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--ink);
+}
+.growth-copy li small {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Search Preview Card (Neumorphic Inset Well + Glass snippet) */
+.search-preview {
+    position: relative;
+    min-height: 400px;
+    padding: 36px;
+    border-radius: 28px;
+    background: rgba(240, 243, 252, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: var(--neu-inset);
+}
+.search-bar {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 18px;
+    border-radius: 24px;
+    color: #7d7687;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 6px 20px rgba(35, 20, 78, 0.08);
+    font-size: 12px;
+    font-family: monospace;
+}
+.search-bar i {
+    width: 18px;
+    height: 18px;
+    margin-left: auto;
+    border: 2px solid #8e879b;
+    border-radius: 50%;
+}
+.search-card {
+    margin-top: 26px;
+    padding: 26px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 16px 45px rgba(40, 25, 83, 0.1);
+}
+.search-card small {
+    color: #26793e;
+    font-size: 11px;
+    font-weight: 750;
+}
+.search-card h3 {
+    margin: 8px 0;
+    color: #1a0dab;
+    font-size: 22px;
+    line-height: 1.25;
+    font-weight: 800;
+}
+.search-card p {
+    color: #5c5567;
+    font-size: 13px;
+    margin: 0;
+}
+.search-card div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 18px;
+    color: #1a0dab;
+    font-size: 12px;
+    font-weight: 750;
+}
+.keyword-chip {
+    position: absolute;
+    padding: 10px 16px;
+    border-radius: 24px;
+    color: #fff;
+    background: var(--primary-gradient);
+    box-shadow: 0 8px 22px rgba(33, 27, 46, 0.28);
+    font-size: 11px;
+    font-weight: 750;
+}
+.keyword-one { right: -15px; top: 105px; }
+.keyword-two {
+    left: 10px;
+    bottom: 25px;
+    color: var(--lime-dark);
+    background: var(--lime);
+    box-shadow: 0 8px 22px rgba(132, 204, 22, 0.35);
+}
+
+/* FAQ Accordion Section */
+.faq-section {
+    display: grid;
+    grid-template-columns: .65fr 1.35fr;
+    gap: 70px;
+}
+.faq-list {
+    display: grid;
+    gap: 14px;
+}
+.faq-list details {
+    border-radius: 18px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: 4px 5px 14px rgba(175, 185, 210, 0.18), -3px -3px 10px rgba(255, 255, 255, 0.95);
+    transition: background .2s ease, box-shadow .2s ease;
+}
+.faq-list details[open] {
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--neu-outer);
+}
+.faq-list summary {
+    position: relative;
+    padding: 22px 50px 22px 24px;
+    font-size: 17px;
+    font-weight: 750;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+.faq-list summary::-webkit-details-marker { display: none; }
+.faq-list summary::after {
+    content: "+";
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--primary);
+    background: rgba(33, 27, 46, 0.08);
+    font-weight: 750;
+    font-size: 18px;
+    transition: transform .2s ease;
+}
+.faq-list details[open] summary::after {
+    content: "−";
+    transform: translateY(-50%) rotate(180deg);
+    background: var(--primary-gradient);
+    color: #fff;
+}
+.faq-list p {
+    margin: 0 24px 22px 24px;
+    color: var(--muted);
+    line-height: 1.65;
+    font-size: 15px;
+}
+
+/* Final CTA Section */
+.final-cta {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: center;
+    margin-bottom: 80px;
+    padding: 56px;
+    border-radius: 30px;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(33, 27, 46, 0.95) 0%, rgba(18, 14, 26, 0.98) 100%);
+    -webkit-backdrop-filter: blur(28px);
+    backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 25px 70px rgba(33, 27, 46, 0.35);
+    position: relative;
+    overflow: hidden;
+}
+.final-cta::after {
+    content: '';
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    bottom: -80px;
+    right: 10%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(116, 231, 239, 0.22) 0%, transparent 70%);
+    filter: blur(70px);
+    pointer-events: none;
+}
+.final-cta h2 { max-width: 670px; color: #fff; }
+.final-cta p {
+    margin: 14px 0 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 17px;
+}
+.section-kicker-light {
+    color: var(--lime);
+    background: rgba(200, 255, 106, 0.15);
+}
+.final-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 220px;
+    position: relative;
+    z-index: 2;
+}
+.button-white {
+    color: var(--primary-dark);
+    background: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+.button-white:hover {
+    background: #f4f3f7;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32);
+}
+.button-outline-light {
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+.button-outline-light:hover {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/* Footer */
+.site-footer {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 30px;
+    align-items: center;
+    padding-block: 36px 48px;
+    border-top: 1px solid var(--line);
+    background: transparent;
+    position: relative;
+    z-index: 1;
+}
+.site-footer .brand { font-size: 20px; }
+.site-footer .brand-mark { width: 34px; height: 34px; }
+.site-footer p { margin: 0; color: var(--muted); font-size: 13px; }
+.footer-links {
+    display: flex;
+    gap: 18px;
+    color: #554f62;
+    font-size: 13px;
+    font-weight: 650;
+}
+.footer-links a:hover { color: var(--primary); }
+.site-footer small { color: #928b9d; font-size: 12px; }
+
+/* Responsive Media Queries */
+@media (max-width: 980px) {
+    .site-header-wrapper { width: calc(100% - 24px); }
+    .nav { display: none; }
+    .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        gap: 40px;
+        padding-top: 40px;
+    }
+    .hero-copy { text-align: center; }
+    .hero-copy > * { margin-inline: auto; }
+    .hero-actions, .hero-points { justify-content: center; }
+    .hero-visual {
+        width: min(700px, 100%);
+        margin-inline: auto;
+    }
+
+    /* Showcase Responsive for Tablet */
+    .showcase-stage {
+        min-height: 520px;
+    }
+    .device-desktop { width: 560px; }
+    .device-laptop { width: 400px; }
+    .device-phone { width: 180px; }
+    .monitor-frame .screen-surface { height: 310px; }
+    .laptop-screen-frame .screen-surface { height: 240px; }
+    .phone-frame .screen-surface { height: 360px; }
+
+    .steps { grid-template-columns: repeat(2, 1fr); }
+    .steps li { min-height: 220px; }
+    .steps h3 { margin-top: 50px; }
+    .growth-section {
+        grid-template-columns: 1fr;
+        gap: 50px;
+    }
+    .search-preview {
+        width: min(650px, 100%);
+        margin-inline: auto;
+    }
+    .faq-section {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .final-cta { grid-template-columns: 1fr; }
+    .final-actions { flex-direction: row; }
+    .site-footer { grid-template-columns: auto 1fr auto; }
+    .footer-links { grid-column: 1 / -1; order: 5; }
+}
+
+@media (max-width: 680px) {
+    .section-shell { width: min(100% - 20px, 1180px); }
+    .site-header-wrapper { width: calc(100% - 16px); top: 8px; margin-top: 8px; }
+    .site-header {
+        min-height: 56px;
+        padding-inline: 10px;
+        border-radius: 16px;
+        gap: 6px;
+    }
+    .brand { font-size: 16px; gap: 7px; flex-shrink: 0; }
+    .brand-mark { width: 30px; height: 30px; border-radius: 9px; }
+    .brand-mark svg { width: 18px; }
+    .header-actions { gap: 4px; flex-shrink: 0; }
+    .language { padding: 2px; border-radius: 9px; }
+    .lang-button {
+        min-width: 26px;
+        padding: 4px 5px;
+        font-size: 10.5px;
+        border-radius: 7px;
+    }
+    .button-small {
+        min-height: 32px;
+        padding-inline: 8px;
+        font-size: 11px;
+        border-radius: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand > span:not(.brand-mark) { display: none; }
+}
+
+@media (max-width: 680px) {
+    .hero { padding-block: 30px 40px; }
+    .hero-lead { font-size: 15px; }
+    .hero-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    .hero-actions .button { width: 100%; }
+    .hero-points {
+        display: grid;
+        justify-content: start;
+        width: fit-content;
+        text-align: left;
+    }
+    .dashboard-window {
+        border-radius: 18px;
+        transform: none;
+    }
+    .dashboard-body {
+        grid-template-columns: 42px 1fr;
+        min-height: 300px;
+    }
+    .mock-sidebar { gap: 18px; }
+    .mock-content { padding: 14px; }
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    .stats-grid article:nth-child(3) { display: none; }
+    .order-toast {
+        right: -5px;
+        bottom: -25px;
+        min-width: 220px;
+        padding: 10px 14px;
+    }
+    .trust-strip { grid-template-columns: repeat(2, 1fr); }
+    .trust-strip div:nth-child(2) { border-right: 0; }
+    .trust-strip div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+    .trust-strip div {
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 16px 10px;
+    }
+
+    /* Mobile Showcase Adjustments */
+    .showcase-section { padding-block: 50px; }
+    .device-switcher { width: 100%; overflow-x: auto; justify-content: space-between; }
+    .device-tab { padding: 8px 10px; font-size: 11.5px; }
+    .showcase-stage { min-height: 440px; }
+    .device-desktop { width: 90%; }
+    .monitor-frame .screen-surface { height: 210px; }
+    .monitor-chin { height: 14px; }
+    .monitor-stand { width: 70px; height: 35px; }
+    .monitor-base { width: 140px; height: 7px; }
+    .device-laptop { width: 85%; }
+    .laptop-screen-frame .screen-surface { height: 180px; }
+    .device-phone { width: 160px; }
+    .phone-frame .screen-surface { height: 320px; }
+    
+    .floating-badge {
+        padding: 8px 12px;
+        border-radius: 12px;
+    }
+    .badge-icon { width: 24px; height: 24px; font-size: 12px; }
+    .floating-badge strong { font-size: 10.5px; }
+    .floating-badge small { font-size: 9px; }
+    .badge-speed { top: 10px; left: 0; }
+    .badge-order { top: 10px; right: 0; }
+    .badge-mobile { bottom: 10px; left: 0; }
+    .badge-sync { bottom: 10px; right: 0; }
+
+    .content-section { padding-block: 55px; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .feature-card { min-height: 260px; padding: 24px; }
+    .theme-preview { width: 55%; }
+    .feature-copy-row { grid-template-columns: 1fr; }
+    .domain-preview { margin-top: 14px; }
+    .steps { grid-template-columns: 1fr; }
+    .steps li {
+        display: grid;
+        grid-template-columns: 45px 1fr;
+        min-height: auto;
+        gap: 6px;
+        padding: 20px;
+    }
+    .steps h3 { margin: 0 0 8px; }
+    .growth-section { gap: 35px; }
+    .search-preview { min-height: 320px; padding: 18px; }
+    .keyword-one { right: -5px; }
+    .search-card { padding: 16px; }
+    .search-card h3 { font-size: 18px; }
+    .faq-list summary { font-size: 15px; padding-block: 16px; }
+    .final-cta {
+        width: calc(100% - 20px);
+        margin-bottom: 40px;
+        padding: 28px 18px;
+    }
+    .final-actions { flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root { scroll-behavior: auto; }
+    .button, .glow-orb, .order-toast, .floating-badge, .glass-screen-glare { animation: none !important; transition: none !important; }
+}
+    </style>
+</head>
+<body>
+    <!-- Ambient Volumetric Lighting for Glassmorphism Reflections -->
+    <div class="ambient-glows" aria-hidden="true">
+        <div class="glow-orb glow-orb-1"></div>
+        <div class="glow-orb glow-orb-2"></div>
+        <div class="glow-orb glow-orb-3"></div>
+        <div class="glow-orb glow-orb-4"></div>
+    </div>
+
+    <a class="skip-link" href="#content">К содержанию</a>
+    
+    <!-- Header: Floating Glassmorphic Pill -->
+    <div class="site-header-wrapper">
+        <header class="site-header">
+            <a class="brand" href="/" aria-label="StoreBox — главная">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" role="img"><path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/><path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/></svg>
+                </span>
+                <span>StoreBox</span>
+            </a>
+            
+            <nav class="nav" aria-label="Основная навигация">
+                <a href="#features" data-i18n="navFeatures">Возможности</a>
+                <a href="#showcase" data-i18n="navShowcase">Витрина</a>
+                <a href="#how" data-i18n="navHow">Как работает</a>
+                <a href="#growth" data-i18n="navGrowth">Продвижение</a>
+                <a href="#faq" data-i18n="navFaq">FAQ</a>
+            </nav>
+            
+            <div class="header-actions">
+                <!-- Language Selector -->
+                <div class="language" aria-label="Выбор языка">
+                    <button class="lang-button is-active" type="button" data-lang="ru" aria-pressed="true">RU</button>
+                    <button class="lang-button" type="button" data-lang="uz" aria-pressed="false">UZ</button>
+                </div>
+                
+                <!-- Auth Actions: Always visible Login and Registration -->
+                <a class="button button-small button-ghost" href="/login/" data-i18n="signIn" title="Вход в учетную запись">Войти</a>
+                <a class="button button-small button-primary" href="/register/" data-i18n="signUp" title="Регистрация нового магазина">Регистрация</a>
+                
+                {% if request.user.is_authenticated %}
+                <!-- If user is authenticated, also show Dashboard button -->
+                <a class="button button-small button-accent" href="/dashboard/" data-i18n="navDashboard" title="Перейти в личный кабинет">Кабинет ↗</a>
+                {% endif %}
+            </div>
+        </header>
+    </div>
+
+    <main id="content">
+        <!-- Hero Section -->
+        <section class="hero section-shell">
+            <div class="hero-copy">
+                <div class="eyebrow">
+                    <span class="eyebrow-dot"></span>
+                    <span data-i18n="heroEyebrow">SaaS для онлайн-продаж</span>
+                </div>
+                <h1 data-i18n="heroTitle">Ваш интернет-магазин.<br><span>Готов к продажам.</span></h1>
+                <p class="hero-lead" data-i18n="heroLead">Создайте витрину под своим брендом, добавьте товары и принимайте заказы в одной панели — без разработки с нуля.</p>
+                <div class="hero-actions">
+                    <a class="button button-primary" href="/register/" data-i18n="heroPrimary">Создать магазин</a>
+                    <a class="button button-ghost" href="/login/" data-i18n="heroSecondary">Войти в кабинет</a>
+                </div>
+                <ul class="hero-points" aria-label="Ключевые преимущества">
+                    <li><span>✓</span><span data-i18n="pointOne">Собственный адрес магазина</span></li>
+                    <li><span>✓</span><span data-i18n="pointTwo">Русский и узбекский языки</span></li>
+                    <li><span>✓</span><span data-i18n="pointThree">Готовность к SEO и рекламе</span></li>
+                </ul>
+            </div>
+            
+            <div class="hero-visual" aria-label="Пример панели StoreBox">
+                <div class="dashboard-window">
+                    <div class="window-top">
+                        <div class="window-dots"><i></i><i></i><i></i></div>
+                        <span>app.storebox.uz</span>
+                        <span class="live-pill"><i></i> Live</span>
+                    </div>
+                    <div class="dashboard-body">
+                        <aside class="mock-sidebar">
+                            <div class="mock-logo"><b>S</b></div>
+                            <i class="is-selected"></i><i></i><i></i><i></i><i></i>
+                        </aside>
+                        <div class="mock-content">
+                            <div class="mock-heading">
+                                <div>
+                                    <small data-i18n="mockToday">Сегодня</small>
+                                    <strong data-i18n="mockOverview">Обзор магазина</strong>
+                                </div>
+                                <button data-i18n="mockAdd">+ Товар</button>
+                            </div>
+                            <div class="stats-grid">
+                                <article><span data-i18n="mockOrders">Заказы</span><strong>24</strong><em>+18%</em></article>
+                                <article><span data-i18n="mockRevenue">Продажи</span><strong>8.4 млн</strong><small>UZS</small></article>
+                                <article><span data-i18n="mockClients">Клиенты</span><strong>156</strong><em>+12</em></article>
+                            </div>
+                            <div class="chart-card">
+                                <div class="chart-title"><b data-i18n="mockDynamics">Динамика заказов</b><span data-i18n="mockWeek">7 дней</span></div>
+                                <svg viewBox="0 0 560 170" aria-hidden="true">
+                                    <defs>
+                                        <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0" stop-color="#211b2e" stop-opacity=".25"/>
+                                            <stop offset="1" stop-color="#211b2e" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path class="chart-grid" d="M12 28H548M12 78H548M12 128H548"/>
+                                    <path class="chart-fill" d="M12 136C78 132 88 96 142 102S224 122 278 74s85-18 124-40 73 15 146-7V160H12Z"/>
+                                    <path class="chart-line" d="M12 136C78 132 88 96 142 102S224 122 278 74s85-18 124-40 73 15 146-7"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="order-toast">
+                    <span class="toast-icon">↗</span>
+                    <span><small data-i18n="toastLabel">Новый заказ</small><strong>#SB-1048 · 486 000 UZS</strong></span>
+                    <i></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trust Strip -->
+        <div class="trust-strip-wrapper section-shell">
+            <section class="trust-strip" aria-label="StoreBox в цифрах">
+                <div><strong>01</strong><span data-i18n="trustOne">панель управления</span></div>
+                <div><strong>24/7</strong><span data-i18n="trustTwo">онлайн-витрина</span></div>
+                <div><strong>RU / UZ</strong><span data-i18n="trustThree">локализация</span></div>
+                <div><strong>SEO</strong><span data-i18n="trustFour">основа для роста</span></div>
+            </section>
+        </div>
+
+        <!-- =========================================================
+             NEW: MULTI-DEVICE 3D INTERACTIVE SHOWCASE (WOW-EFFECT)
+             ========================================================= -->
+        <section class="showcase-section section-shell" id="showcase">
+            <div class="showcase-header">
+                <span class="section-kicker" data-i18n="showcaseKicker">Реальные витрины</span>
+                <h2 data-i18n="showcaseTitle">Ваш магазин на десктопе, ноутбуке и телефоне</h2>
+                <p data-i18n="showcaseLead">StoreBox автоматически оптимизирует витрину под каждый экран. Быстрый отклик, адаптивная сетка и удобная корзина гарантируют высокие продажи.</p>
+                
+                <!-- Segmented Device Switcher -->
+                <div class="device-switcher" role="tablist">
+                    <button class="device-tab is-active" data-device="all" role="tab" aria-selected="true" data-i18n="tabAll">
+                        <svg viewBox="0 0 24 24"><path d="M4 6h16v10H4zM2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7v2h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2H4a2 2 0 0 1-2-2V4z"/></svg>
+                        <span>Все устройства</span>
+                    </button>
+                    <button class="device-tab" data-device="desktop" role="tab" aria-selected="false" data-i18n="tabDesktop">
+                        <svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/></svg>
+                        <span>Десктоп 27"</span>
+                    </button>
+                    <button class="device-tab" data-device="laptop" role="tab" aria-selected="false" data-i18n="tabLaptop">
+                        <svg viewBox="0 0 24 24"><path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
+                        <span>Ноутбук</span>
+                    </button>
+                    <button class="device-tab" data-device="mobile" role="tab" aria-selected="false" data-i18n="tabMobile">
+                        <svg viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+                        <span>Телефон</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3D Showcase Stage -->
+            <div class="showcase-stage mode-all" id="showcaseStage">
+                <!-- Ambient Backlight -->
+                <div class="stage-backdrop-glow"></div>
+
+                <!-- Floating Wow Badges -->
+                <div class="floating-badge badge-speed">
+                    <span class="badge-icon">⚡</span>
+                    <div>
+                        <strong data-i18n="badgeSpeedTitle">Скорость 0.3 сек</strong>
+                        <small data-i18n="badgeSpeedSub">100/100 Core Web Vitals</small>
+                    </div>
+                </div>
+
+                <div class="floating-badge badge-order">
+                    <span class="live-dot"></span>
+                    <div>
+                        <strong data-i18n="badgeOrderTitle">Новый заказ #SB-1049</strong>
+                        <small data-i18n="badgeOrderSub">210 000 UZS · Оплачено</small>
+                    </div>
+                </div>
+
+                <div class="floating-badge badge-mobile">
+                    <span class="badge-icon">📱</span>
+                    <div>
+                        <strong data-i18n="badgeMobileTitle">100% адаптивность</strong>
+                        <small data-i18n="badgeMobileSub">Удобный заказ в 1 клик</small>
+                    </div>
+                </div>
+
+                <div class="floating-badge badge-sync">
+                    <span class="badge-icon">💬</span>
+                    <div>
+                        <strong data-i18n="badgeSyncTitle">Telegram синхронизация</strong>
+                        <small data-i18n="badgeSyncSub">Мгновенные оповещения</small>
+                    </div>
+                </div>
+
+                <!-- Device 1: Desktop iMac Monitor -->
+                <div class="device-wrapper device-desktop" id="deviceDesktop">
+                    <div class="monitor-frame">
+                        <div class="monitor-top-bar">
+                            <div class="traffic-lights"><i></i><i></i><i></i></div>
+                            <div class="browser-address">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7c0-2.757-2.243-5-5-5zM9 7c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7z"/></svg>
+                                <span>goldlavash.storebox.uz</span>
+                            </div>
+                            <div class="browser-status">Онлайн 24/7</div>
+                        </div>
+                        <div class="screen-surface">
+                            <img src="/static/images/showcase/showcase_desktop.png" alt="Витрина магазина на мониторе Десктопа" loading="lazy">
+                            <div class="glass-screen-glare"></div>
+                        </div>
+                    </div>
+                    <div class="monitor-chin"></div>
+                    <div class="monitor-stand"></div>
+                    <div class="monitor-base"></div>
+                </div>
+
+                <!-- Device 2: Laptop MacBook -->
+                <div class="device-wrapper device-laptop" id="deviceLaptop">
+                    <div class="laptop-screen-frame">
+                        <div class="laptop-notch"></div>
+                        <div class="screen-surface">
+                            <img src="/static/images/showcase/showcase_laptop.png" alt="Витрина магазина на экране ноутбука" loading="lazy">
+                            <div class="glass-screen-glare"></div>
+                        </div>
+                    </div>
+                    <div class="laptop-base">
+                        <div class="laptop-lip"></div>
+                    </div>
+                </div>
+
+                <!-- Device 3: Smartphone iPhone -->
+                <div class="device-wrapper device-phone" id="devicePhone">
+                    <div class="phone-frame">
+                        <div class="dynamic-island">
+                            <span class="camera-lens"></span>
+                            <span class="sensor"></span>
+                        </div>
+                        <div class="screen-surface">
+                            <img src="/static/images/showcase/showcase_mobile.png" alt="Витрина магазина на смартфоне" loading="lazy">
+                            <div class="glass-screen-glare"></div>
+                        </div>
+                        <div class="home-indicator"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="content-section section-shell" id="features">
+            <div class="section-heading">
+                <span class="section-kicker" data-i18n="featuresKicker">Всё необходимое</span>
+                <h2 data-i18n="featuresTitle">Один сервис для запуска и управления магазином</h2>
+                <p data-i18n="featuresLead">StoreBox соединяет витрину, каталог и ежедневную работу с заказами в понятном кабинете.</p>
+            </div>
+            <div class="feature-grid">
+                <article class="feature-card feature-card-wide feature-violet">
+                    <div class="feature-icon">⌘</div>
+                    <h3 data-i18n="featureConstructorTitle">Конструктор витрины</h3>
+                    <p data-i18n="featureConstructorText">Выберите стиль, настройте цвета, логотип и главный экран без правки кода.</p>
+                    <div class="theme-preview"><i></i><i></i><i></i><span></span></div>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">▦</div>
+                    <h3 data-i18n="featureCatalogTitle">Каталог и остатки</h3>
+                    <p data-i18n="featureCatalogText">Товары, варианты, цены, фотографии и категории — в единой структуре.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">↗</div>
+                    <h3 data-i18n="featureTelegramTitle">Заказы в Telegram</h3>
+                    <p data-i18n="featureTelegramText">Команда получает новые заказы в рабочей группе и меняет их статусы.</p>
+                </article>
+                <article class="feature-card feature-card-wide feature-dark">
+                    <div class="feature-copy-row">
+                        <div>
+                            <div class="feature-icon">◎</div>
+                            <h3 data-i18n="featureDomainTitle">Адрес под ваш бренд</h3>
+                            <p data-i18n="featureDomainText">Получите субдомен StoreBox, а позже подключите собственный домен магазина.</p>
+                        </div>
+                        <div class="domain-preview"><span>ваш-магазин</span><b>.storebox.uz</b><i>✓</i></div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="content-section section-shell" id="how">
+            <div class="how-section">
+                <div style="padding: 0 36px 36px;">
+                    <div class="section-heading section-heading-light">
+                        <span class="section-kicker" data-i18n="howKicker">Простой запуск</span>
+                        <h2 data-i18n="howTitle">От регистрации до первого заказа</h2>
+                    </div>
+                    <ol class="steps">
+                        <li><span>01</span><div><h3 data-i18n="stepOneTitle">Создайте аккаунт</h3><p data-i18n="stepOneText">Укажите данные бизнеса и выберите адрес будущего магазина.</p></div></li>
+                        <li><span>02</span><div><h3 data-i18n="stepTwoTitle">Оформите витрину</h3><p data-i18n="stepTwoText">Добавьте название, описание, логотип, цвета и товары.</p></div></li>
+                        <li><span>03</span><div><h3 data-i18n="stepThreeTitle">Подключите Telegram</h3><p data-i18n="stepThreeText">Привяжите бота и рабочую группу одноразовым кодом.</p></div></li>
+                        <li><span>04</span><div><h3 data-i18n="stepFourTitle">Начните продажи</h3><p data-i18n="stepFourText">Публикуйте магазин и обрабатывайте заказы вместе с командой.</p></div></li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- Growth Section -->
+        <section class="content-section section-shell growth-section" id="growth">
+            <div class="growth-copy">
+                <span class="section-kicker" data-i18n="growthKicker">Основа для роста</span>
+                <h2 data-i18n="growthTitle">Магазин, который можно продвигать</h2>
+                <p data-i18n="growthLead">Архитектура StoreBox учитывает SEO, аналитику и рекламные кампании, чтобы магазин не пришлось переделывать, когда продажи вырастут.</p>
+                <ul>
+                    <li><span>01</span><div><strong data-i18n="growthSeoTitle">SEO-страницы</strong><small data-i18n="growthSeoText">Читаемые адреса, метаданные и индексируемый каталог.</small></div></li>
+                    <li><span>02</span><div><strong data-i18n="growthAnalyticsTitle">Аналитика</strong><small data-i18n="growthAnalyticsText">Основа для подключения событий и рекламных пикселей.</small></div></li>
+                    <li><span>03</span><div><strong data-i18n="growthContentTitle">Контент под бренд</strong><small data-i18n="growthContentText">Управляемые тексты и изображения для посадочных страниц.</small></div></li>
+                </ul>
+            </div>
+            <div class="search-preview">
+                <div class="search-bar"><span>storebox.uz</span><i></i></div>
+                <div class="search-card">
+                    <small data-i18n="searchAd">Ваш магазин</small>
+                    <h3 data-i18n="searchTitle">Новая коллекция уже в каталоге</h3>
+                    <p data-i18n="searchText">Быстрая доставка по городу · Удобная оплата · Заказ онлайн</p>
+                    <div><span data-i18n="searchLinkOne">Каталог</span><span data-i18n="searchLinkTwo">Новинки</span><span data-i18n="searchLinkThree">Доставка</span></div>
+                </div>
+                <div class="keyword-chip keyword-one">онлайн магазин</div>
+                <div class="keyword-chip keyword-two">SEO</div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="content-section faq-section section-shell" id="faq">
+            <div class="section-heading">
+                <span class="section-kicker">FAQ</span>
+                <h2 data-i18n="faqTitle">Частые вопросы</h2>
+            </div>
+            <div class="faq-list">
+                <details><summary data-i18n="faqOneQ">StoreBox — это один общий магазин?</summary><p data-i18n="faqOneA">Нет. StoreBox — SaaS-платформа: каждый клиент получает свой магазин, каталог, настройки и доступ для команды.</p></details>
+                <details><summary data-i18n="faqTwoQ">Где клиент управляет магазином?</summary><p data-i18n="faqTwoA">В личном кабинете на app.storebox.uz. Публичный сайт storebox.uz рассказывает о продукте, а магазины работают на отдельных адресах.</p></details>
+                <details><summary data-i18n="faqThreeQ">Можно ли подключить Telegram?</summary><p data-i18n="faqThreeA">Да. Бот и рабочая группа связываются с магазином, после чего команда может получать заказы и работать со статусами.</p></details>
+                <details><summary data-i18n="faqFourQ">Подойдёт ли магазин для рекламы и SEO?</summary><p data-i18n="faqFourA">StoreBox проектируется с индексируемым каталогом, управляемыми метаданными и основой для аналитики и рекламных интеграций.</p></details>
+            </div>
+        </section>
+
+        <!-- Final CTA Section -->
+        <section class="final-cta section-shell">
+            <div>
+                <span class="section-kicker section-kicker-light" data-i18n="ctaKicker">StoreBox для вашего бизнеса</span>
+                <h2 data-i18n="ctaTitle">Запустите магазин под своим брендом</h2>
+                <p data-i18n="ctaText">Каталог, витрина и заказы — в одном рабочем пространстве.</p>
+            </div>
+            <div class="final-actions">
+                <a class="button button-white" href="/register/" data-i18n="ctaPrimary">Создать магазин</a>
+                <a class="button button-outline-light" href="/login/" data-i18n="ctaSignIn">Войти в кабинет</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer section-shell">
+        <a class="brand" href="/" aria-label="StoreBox">
+            <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/><path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/></svg></span>
+            <span>StoreBox</span>
+        </a>
+        <p data-i18n="footerText">Платформа для создания и управления онлайн-магазинами.</p>
+        <div class="footer-links">
+            <a href="/login/" data-i18n="signIn">Войти</a>
+            <a href="/register/" data-i18n="signUp">Регистрация</a>
+            <a href="mailto:info@storebox.uz">info@storebox.uz</a>
+        </div>
+        <small>© <span id="year">2026</span> StoreBox</small>
+    </footer>
+
+    <!-- Interactive Logic & RU / UZ Translations -->
+    <script>
+    const translations = {
+        ru: {
+            navFeatures: "Возможности",
+            navShowcase: "Витрина",
+            navHow: "Как работает",
+            navGrowth: "Продвижение",
+            navFaq: "FAQ",
+            signIn: "Войти",
+            signUp: "Регистрация",
+            navDashboard: "Кабинет ↗",
+            heroEyebrow: "SaaS для онлайн-продаж",
+            heroTitle: "Ваш интернет-магазин.<br><span>Готов к продажам.</span>",
+            heroLead: "Создайте витрину под своим брендом, добавьте товары и принимайте заказы в одной панели — без разработки с нуля.",
+            heroPrimary: "Создать магазин",
+            heroSecondary: "Войти в кабинет",
+            pointOne: "Собственный адрес магазина",
+            pointTwo: "Русский и узбекский языки",
+            pointThree: "Готовность к SEO и рекламе",
+            mockToday: "Сегодня",
+            mockOverview: "Обзор магазина",
+            mockAdd: "+ Товар",
+            mockOrders: "Заказы",
+            mockRevenue: "Продажи",
+            mockClients: "Клиенты",
+            mockDynamics: "Динамика заказов",
+            mockWeek: "7 дней",
+            toastLabel: "Новый заказ",
+            trustOne: "панель управления",
+            trustTwo: "онлайн-витрина",
+            trustThree: "локализация",
+            trustFour: "основа для роста",
+            showcaseKicker: "Реальные витрины",
+            showcaseTitle: "Ваш магазин на десктопе, ноутбуке и телефоне",
+            showcaseLead: "StoreBox автоматически оптимизирует витрину под каждый экран. Быстрый отклик, адаптивная сетка и удобная корзина гарантируют высокие продажи.",
+            tabAll: "Все устройства",
+            tabDesktop: "Десктоп 27\"",
+            tabLaptop: "Ноутбук",
+            tabMobile: "Телефон",
+            badgeSpeedTitle: "Скорость 0.3 сек",
+            badgeSpeedSub: "100/100 Core Web Vitals",
+            badgeOrderTitle: "Новый заказ #SB-1049",
+            badgeOrderSub: "210 000 UZS · Оплачено",
+            badgeMobileTitle: "100% адаптивность",
+            badgeMobileSub: "Удобный заказ в 1 клик",
+            badgeSyncTitle: "Telegram синхронизация",
+            badgeSyncSub: "Мгновенные оповещения",
+            featuresKicker: "Всё необходимое",
+            featuresTitle: "Один сервис для запуска и управления магазином",
+            featuresLead: "StoreBox соединяет витрину, каталог и ежедневную работу с заказами в понятном кабинете.",
+            featureConstructorTitle: "Конструктор витрины",
+            featureConstructorText: "Выберите стиль, настройте цвета, логотип и главный экран без правки кода.",
+            featureCatalogTitle: "Каталог и остатки",
+            featureCatalogText: "Товары, варианты, цены, фотографии и категории — в единой структуре.",
+            featureTelegramTitle: "Заказы в Telegram",
+            featureTelegramText: "Команда получает новые заказы в рабочей группе и меняет их статусы.",
+            featureDomainTitle: "Адрес под ваш бренд",
+            featureDomainText: "Получите субдомен StoreBox, а позже подключите собственный домен магазина.",
+            howKicker: "Простой запуск",
+            howTitle: "От регистрации до первого заказа",
+            stepOneTitle: "Создайте аккаунт",
+            stepOneText: "Укажите данные бизнеса и выберите адрес будущего магазина.",
+            stepTwoTitle: "Оформите витрину",
+            stepTwoText: "Добавьте название, описание, логотип, цвета и товары.",
+            stepThreeTitle: "Подключите Telegram",
+            stepThreeText: "Привяжите бота и рабочую группу одноразовым кодом.",
+            stepFourTitle: "Начните продажи",
+            stepFourText: "Публикуйте магазин и обрабатывайте заказы вместе с командой.",
+            growthKicker: "Основа для роста",
+            growthTitle: "Магазин, который можно продвигать",
+            growthLead: "Архитектура StoreBox учитывает SEO, аналитику и рекламные кампании, чтобы магазин не пришлось переделывать, когда продажи вырастут.",
+            growthSeoTitle: "SEO-страницы",
+            growthSeoText: "Читаемые адреса, метаданные и индексируемый каталог.",
+            growthAnalyticsTitle: "Аналитика",
+            growthAnalyticsText: "Основа для подключения событий и рекламных пикселей.",
+            growthContentTitle: "Контент под бренд",
+            growthContentText: "Управляемые тексты и изображения для посадочных страниц.",
+            searchAd: "Ваш магазин",
+            searchTitle: "Новая коллекция уже в каталоге",
+            searchText: "Быстрая доставка по городу · Удобная оплата · Заказ онлайн",
+            searchLinkOne: "Каталог",
+            searchLinkTwo: "Новинки",
+            searchLinkThree: "Доставка",
+            faqTitle: "Частые вопросы",
+            faqOneQ: "StoreBox — это один общий магазин?",
+            faqOneA: "Нет. StoreBox — SaaS-платформа: каждый клиент получает свой магазин, каталог, настройки и доступ для команды.",
+            faqTwoQ: "Где клиент управляет магазином?",
+            faqTwoA: "В личном кабинете на app.storebox.uz. Публичный сайт storebox.uz рассказывает о продукте, а магазины работают на отдельных адресах.",
+            faqThreeQ: "Можно ли подключить Telegram?",
+            faqThreeA: "Да. Бот и рабочая группа связываются с магазином, после чего команда может получать заказы и работать со статусами.",
+            faqFourQ: "Подойдёт ли магазин для рекламы и SEO?",
+            faqFourA: "StoreBox проектируется с индексируемым каталогом, управляемыми метаданными и основой для аналитики и рекламных интеграций.",
+            ctaKicker: "StoreBox для вашего бизнеса",
+            ctaTitle: "Запустите магазин под своим брендом",
+            ctaText: "Каталог, витрина и заказы — в одном рабочем пространстве.",
+            ctaPrimary: "Создать магазин",
+            ctaSignIn: "Войти в кабинет",
+            ctaContact: "Связаться с нами",
+            footerText: "Платформа для создания и управления онлайн-магазинами.",
+            footerApp: "Кабинет",
+            footerDemo: "Демо-магазин"
+        },
+        uz: {
+            navFeatures: "Imkoniyatlar",
+            navShowcase: "Vitrina",
+            navHow: "Qanday ishlaydi",
+            navGrowth: "Rivojlantirish",
+            navFaq: "Savollar",
+            signIn: "Kirish",
+            signUp: "Ro'yxatdan o'tish",
+            navDashboard: "Kabinet ↗",
+            heroEyebrow: "Onlayn savdo uchun SaaS",
+            heroTitle: "Sizning internet-do‘koningiz.<br><span>Sotuvga tayyor.</span>",
+            heroLead: "O‘z brendingiz bilan vitrina yarating, mahsulotlarni qo‘shing va buyurtmalarni bitta panelda qabul qiling — noldan dasturlashsiz.",
+            heroPrimary: "Do'kon yaratish",
+            heroSecondary: "Kabinetga kirish",
+            pointOne: "Do‘kon uchun alohida manzil",
+            pointTwo: "O‘zbek va rus tillari",
+            pointThree: "SEO va reklama uchun tayyor",
+            mockToday: "Bugun",
+            mockOverview: "Do‘kon sharhi",
+            mockAdd: "+ Mahsulot",
+            mockOrders: "Buyurtmalar",
+            mockRevenue: "Savdo",
+            mockClients: "Mijozlar",
+            mockDynamics: "Buyurtmalar dinamikasi",
+            mockWeek: "7 kun",
+            toastLabel: "Yangi buyurtma",
+            trustOne: "boshqaruv paneli",
+            trustTwo: "onlayn vitrina",
+            trustThree: "lokalizatsiya",
+            trustFour: "o‘sish uchun asos",
+            showcaseKicker: "Haqiqiy vitrinalar",
+            showcaseTitle: "Sizning do'koningiz kompyuter, noutbuk va telefonda",
+            showcaseLead: "Mijozlar istalgan qurilmadan xarid qilishadi. StoreBox vitrinani avtomatik moslashtiradi: tezkor yuklanish, qulay savat va bir zumda buyurtma.",
+            tabAll: "Barcha qurilmalar",
+            tabDesktop: "Desktop 27\"",
+            tabLaptop: "Noutbuk",
+            tabMobile: "Telefon",
+            badgeSpeedTitle: "Tezlik 0.3 soniya",
+            badgeSpeedSub: "100/100 Google Speed",
+            badgeOrderTitle: "Yangi buyurtma #SB-1049",
+            badgeOrderSub: "210 000 UZS · To'landi",
+            badgeMobileTitle: "100% moslashuvchan",
+            badgeMobileSub: "1 bosishda qulay buyurtma",
+            badgeSyncTitle: "Telegram sinxronizatsiya",
+            badgeSyncSub: "Tezkor bildirishnomalar",
+            featuresKicker: "Barcha kerakli vositalar",
+            featuresTitle: "Do‘konni ishga tushirish va boshqarish uchun bitta servis",
+            featuresLead: "StoreBox vitrina, katalog va buyurtmalar bilan kundalik ishni tushunarli kabinetda birlashtiradi.",
+            featureConstructorTitle: "Vitrina konstruktori",
+            featureConstructorText: "Uslubni tanlang, ranglar, logotip va bosh ekranni kodsiz sozlang.",
+            featureCatalogTitle: "Katalog va qoldiqlar",
+            featureCatalogText: "Mahsulotlar, variantlar, narxlar, rasmlar va toifalar — yagona tuzilmada.",
+            featureTelegramTitle: "Telegram’da buyurtmalar",
+            featureTelegramText: "Jamoa yangi buyurtmalarni ishchi guruhda oladi va holatlarini o‘zgartiradi.",
+            featureDomainTitle: "Brendingiz uchun manzil",
+            featureDomainText: "StoreBox subdomenini oling, keyinchalik esa o‘z domeningizni ulang.",
+            howKicker: "Oson boshlash",
+            howTitle: "Ro‘yxatdan birinchi buyurtmagacha",
+            stepOneTitle: "Hisob yarating",
+            stepOneText: "Biznes ma’lumotlarini kiriting va kelajakdagi do‘kon manzilini tanlang.",
+            stepTwoTitle: "Vitrinani bezating",
+            stepTwoText: "Nomi, tavsifi, logotipi, ranglari va mahsulotlarini qo‘shing.",
+            stepThreeTitle: "Telegram’ni ulang",
+            stepThreeText: "Bot va ishchi guruhni bir martalik kod bilan bog‘lang.",
+            stepFourTitle: "Savdoni boshlang",
+            stepFourText: "Do‘konni nashr eting va jamoa bilan buyurtmalarni boshqaring.",
+            growthKicker: "O‘sish uchun asos",
+            growthTitle: "Rivojlantirish mumkin bo‘lgan do‘kon",
+            growthLead: "StoreBox arxitekturasi SEO, analitika va reklama kampaniyalarini hisobga oladi — savdo o‘sganda do‘konni qayta qurish shart emas.",
+            growthSeoTitle: "SEO sahifalar",
+            growthSeoText: "Tushunarli manzillar, meta-ma’lumotlar va indekslanadigan katalog.",
+            growthAnalyticsTitle: "Analitika",
+            growthAnalyticsText: "Hodisalar va reklama piksellarini ulash uchun asos.",
+            growthContentTitle: "Brend kontenti",
+            growthContentText: "Landing sahifalari uchun boshqariladigan matn va rasmlar.",
+            searchAd: "Sizning do‘koningiz",
+            searchTitle: "Yangi kolleksiya katalogda",
+            searchText: "Shahar bo‘ylab tez yetkazish · Qulay to‘lov · Onlayn buyurtma",
+            searchLinkOne: "Katalog",
+            searchLinkTwo: "Yangiliklar",
+            searchLinkThree: "Yetkazish",
+            faqTitle: "Ko‘p so‘raladigan savollar",
+            faqOneQ: "StoreBox bitta umumiy do‘konmi?",
+            faqOneA: "Yo‘q. StoreBox — SaaS platforma: har bir mijoz o‘z do‘koni, katalogi, sozlamalari va jamoa ruxsatlarini oladi.",
+            faqTwoQ: "Mijoz do‘konni qayerda boshqaradi?",
+            faqTwoA: "app.storebox.uz shaxsiy kabinetida. storebox.uz mahsulot haqida ma’lumot beradi, do‘konlar esa alohida manzillarda ishlaydi.",
+            faqThreeQ: "Telegram’ni ulash mumkinmi?",
+            faqThreeA: "Ha. Bot va ishchi guruh do‘kon bilan bog‘lanadi, so‘ng jamoa buyurtmalarni qabul qiladi va holatlarini boshqaradi.",
+            faqFourQ: "Reklama va SEO uchun mosmi?",
+            faqFourA: "StoreBox indekslanadigan katalog, boshqariladigan meta-ma’lumotlar, analitika va reklama integratsiyalari uchun asos bilan loyihalanadi.",
+            ctaKicker: "Biznesingiz uchun StoreBox",
+            ctaTitle: "O‘z brendingiz ostida do‘kon oching",
+            ctaText: "Katalog, vitrina va buyurtmalar — bitta ish maydonida.",
+            ctaPrimary: "Do'kon yaratish",
+            ctaSignIn: "Kabinetga kirish",
+            ctaContact: "Biz bilan bog‘lanish",
+            footerText: "Onlayn do‘kon yaratish va boshqarish platformasi.",
+            footerApp: "Kabinet",
+            footerDemo: "Demo do‘kon"
+        }
+    };
+
+    // Language Switcher Logic
+    const buttons = document.querySelectorAll("[data-lang]");
+    const nodes = document.querySelectorAll("[data-i18n]");
+
+    function setLanguage(language) {
+        const dictionary = translations[language] || translations.ru;
+        document.documentElement.lang = language;
+        nodes.forEach((node) => {
+            const value = dictionary[node.dataset.i18n];
+            if (value) node.innerHTML = value;
+        });
+        buttons.forEach((button) => {
+            const active = button.dataset.lang === language;
+            button.classList.toggle("is-active", active);
+            button.setAttribute("aria-pressed", String(active));
+        });
+        try { localStorage.setItem("storebox-language", language); } catch (_) {}
+    }
+
+    buttons.forEach((button) => button.addEventListener("click", () => setLanguage(button.dataset.lang)));
+    const yr = document.getElementById("year");
+    if (yr) yr.textContent = String(new Date().getFullYear());
+
+    let initialLanguage = "ru";
+    try {
+        initialLanguage = localStorage.getItem("storebox-language") || (navigator.language.toLowerCase().startsWith("uz") ? "uz" : "ru");
+    } catch (_) {}
+    setLanguage(initialLanguage);
+
+    // =========================================================
+    // INTERACTIVE 3D MULTI-DEVICE SWITCHER & TILT
+    // =========================================================
+    const stage = document.getElementById("showcaseStage");
+    const deviceTabs = document.querySelectorAll(".device-tab");
+
+    deviceTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+            deviceTabs.forEach((t) => {
+                t.classList.remove("is-active");
+                t.setAttribute("aria-selected", "false");
+            });
+            tab.classList.add("is-active");
+            tab.setAttribute("aria-selected", "true");
+
+            const device = tab.dataset.device;
+            stage.className = "showcase-stage mode-" + device;
+        });
+    });
+
+    // Interactive 3D Tilt on Mouse Move
+    if (stage && window.matchMedia("(min-width: 980px)").matches) {
+        stage.addEventListener("mousemove", (e) => {
+            const rect = stage.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width - 0.5;
+            const y = (e.clientY - rect.top) / rect.height - 0.5;
+            
+            const rotateX = -y * 12; // tilt degrees
+            const rotateY = x * 14;
+
+            stage.style.transform = `perspective(1400px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+
+        stage.addEventListener("mouseleave", () => {
+            stage.style.transform = "perspective(1400px) rotateX(0deg) rotateY(0deg)";
+        });
+    }
+    </script>
+</body>
+</html>

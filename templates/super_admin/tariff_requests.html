@@ -1,0 +1,558 @@
+{% extends "super_admin/base_super_admin.html" %}
+{% load humanize %}
+
+{% block title %}Заявки на тарифы — StoreBox Billing{% endblock %}
+{% block header_title %}Заявки мерчантов на тарифные планы{% endblock %}
+{% block header_subtitle %}Обработка входящих запросов на подключение, продление и смену тарифных планов{% endblock %}
+
+{% block content %}
+<div x-data="{ 
+    detailModalOpen: false,
+    approveModalOpen: false, 
+    rejectModalOpen: false, 
+    activeRequestId: null, 
+    activeStoreName: '', 
+    activeStoreSubdomain: '',
+    activeStoreId: null,
+    activeMerchantName: '',
+    activeMerchantPhone: '',
+    activeMerchantEmail: '',
+    activeCurrentPlan: '',
+    activeCurrentDays: '',
+    activeCurrentBalance: '',
+    activePlan: '', 
+    activeAmount: '', 
+    activeDays: '', 
+    activeMethod: '',
+    activeCreatedAt: '',
+    activeStatus: '',
+    activeNotes: '',
+    activeAdminNotes: '',
+
+    openDetails: function(req) {
+        this.activeRequestId = req.id;
+        this.activeStoreName = req.storeName;
+        this.activeStoreSubdomain = req.storeSubdomain;
+        this.activeStoreId = req.storeId;
+        this.activeMerchantName = req.merchantName;
+        this.activeMerchantPhone = req.merchantPhone;
+        this.activeMerchantEmail = req.merchantEmail;
+        this.activeCurrentPlan = req.currentPlan;
+        this.activeCurrentDays = req.currentDays;
+        this.activeCurrentBalance = req.currentBalance;
+        this.activePlan = req.plan;
+        this.activeAmount = req.amount;
+        this.activeDays = req.days;
+        this.activeMethod = req.method;
+        this.activeCreatedAt = req.createdAt;
+        this.activeStatus = req.status;
+        this.activeNotes = req.notes;
+        this.activeAdminNotes = req.adminNotes;
+        this.detailModalOpen = true;
+    }
+}">
+
+    <!-- Top KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div class="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+            <div class="text-xxs font-bold uppercase tracking-wider text-slate-500">Всего заявок</div>
+            <div class="text-xl font-bold font-mono text-slate-900 mt-1">{{ counts.total }}</div>
+            <div class="text-xxs text-slate-400 mt-0.5">за все время работы</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+            <div class="text-xxs font-bold uppercase tracking-wider text-amber-600">Ожидают решения</div>
+            <div class="text-xl font-bold font-mono text-amber-600 mt-1">{{ counts.pending }}</div>
+            <div class="text-xxs text-slate-400 mt-0.5">требуют подтверждения</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+            <div class="text-xxs font-bold uppercase tracking-wider text-emerald-600">Одобрено и продлено</div>
+            <div class="text-xl font-bold font-mono text-emerald-600 mt-1">{{ counts.approved }}</div>
+            <div class="text-xxs text-slate-400 mt-0.5">успешно активированы</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+            <div class="text-xxs font-bold uppercase tracking-wider text-rose-600">Отклонено</div>
+            <div class="text-xl font-bold font-mono text-rose-600 mt-1">{{ counts.rejected }}</div>
+            <div class="text-xxs text-slate-400 mt-0.5">не оплачены / отменены</div>
+        </div>
+    </div>
+
+    <!-- Filters and Search Bar -->
+    <div class="bg-white border border-slate-200 rounded-lg p-3 mb-4 shadow-xs">
+        <form method="GET" class="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <!-- Status Buttons -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <a href="?status=PENDING{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="px-2.5 py-1 text-xs font-semibold rounded transition {% if current_status == 'PENDING' %}bg-amber-500 text-white shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    Ожидают ({{ counts.pending }})
+                </a>
+                <a href="?status=APPROVED{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="px-2.5 py-1 text-xs font-semibold rounded transition {% if current_status == 'APPROVED' %}bg-emerald-600 text-white shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    Одобрены ({{ counts.approved }})
+                </a>
+                <a href="?status=REJECTED{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="px-2.5 py-1 text-xs font-semibold rounded transition {% if current_status == 'REJECTED' %}bg-rose-600 text-white shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    Отклонены ({{ counts.rejected }})
+                </a>
+                <a href="?status=ALL{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="px-2.5 py-1 text-xs font-semibold rounded transition {% if current_status == 'ALL' %}bg-blue-600 text-white shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    Все заявки ({{ counts.total }})
+                </a>
+            </div>
+
+            <!-- Search Input -->
+            <div class="relative min-w-[260px] flex-1 max-w-sm">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text"
+                       name="q"
+                       value="{{ search_query }}"
+                       placeholder="Поиск по магазину, телефону, заметке..."
+                       class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+                <input type="hidden" name="status" value="{{ current_status }}">
+            </div>
+        </form>
+    </div>
+
+    <!-- Table of Requests -->
+    <div class="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full dense-table text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xxs uppercase font-bold tracking-wider">
+                        <th class="w-12 text-center py-2.5 px-3">ID</th>
+                        <th class="min-w-[180px] py-2.5 px-3">Магазин / Сервер</th>
+                        <th class="min-w-[150px] py-2.5 px-3">Мерчант & Телефон</th>
+                        <th class="min-w-[130px] py-2.5 px-3">Запрошенный тариф</th>
+                        <th class="min-w-[100px] py-2.5 px-3">Срок / Дней</th>
+                        <th class="min-w-[120px] text-right py-2.5 px-3">Сумма (UZS)</th>
+                        <th class="min-w-[120px] py-2.5 px-3">Способ оплаты</th>
+                        <th class="min-w-[120px] py-2.5 px-3">Дата подачи</th>
+                        <th class="min-w-[110px] text-center py-2.5 px-3">Статус</th>
+                        <th class="w-32 text-right py-2.5 pr-4">Действия</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs">
+                    {% for req in tariff_requests %}
+                    <tr class="hover:bg-blue-50/40 transition cursor-pointer group"
+                        @click="openDetails({
+                            id: {{ req.id }},
+                            storeName: '{{ req.store.name|escapejs }}',
+                            storeSubdomain: '{{ req.store.subdomain|escapejs }}',
+                            storeId: {{ req.store.id }},
+                            merchantName: '{{ req.merchant.get_full_name|default:req.merchant.username|escapejs }}',
+                            merchantPhone: '{{ req.contact_phone|default:req.store.phone|escapejs }}',
+                            merchantEmail: '{{ req.merchant.email|default:''|escapejs }}',
+                            currentPlan: '{{ req.store.get_license_plan_display|escapejs }}',
+                            currentDays: '{{ req.store.license_days_left|default:0 }}',
+                            currentBalance: '{{ req.store.merchant_balance.balance|intcomma }}',
+                            plan: '{{ req.get_requested_plan_display|escapejs }}',
+                            days: '{{ req.calculated_days }}',
+                            amount: '{{ req.amount|intcomma }}',
+                            method: '{{ req.get_payment_method_display|escapejs }}',
+                            createdAt: '{{ req.created_at|date:'d.m.Y H:i' }}',
+                            status: '{{ req.status }}',
+                            notes: '{{ req.notes|escapejs }}',
+                            adminNotes: '{{ req.admin_notes|escapejs }}'
+                        })">
+                        <!-- ID -->
+                        <td class="text-center font-mono text-slate-400 font-bold px-3 py-2">
+                            #{{ req.id }}
+                        </td>
+
+                        <!-- Store / Subdomain -->
+                        <td class="px-3 py-2">
+                            <div>
+                                <span class="font-bold text-slate-900 group-hover:text-blue-600 transition">
+                                    {{ req.store.name }}
+                                </span>
+                                <div class="flex items-center gap-1 mt-0.5">
+                                    <span class="font-mono text-xxs text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 font-semibold">
+                                        {{ req.store.subdomain }}.storebox.uz
+                                    </span>
+                                </div>
+                            </div>
+                            {% if req.notes %}
+                            <div class="text-[11px] text-slate-500 mt-1 max-w-xs truncate" title="{{ req.notes }}">
+                                💬 {{ req.notes }}
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Merchant & Phone -->
+                        <td class="px-3 py-2">
+                            <div class="font-medium text-slate-800">{{ req.merchant.get_full_name|default:req.merchant.username }}</div>
+                            <div class="font-mono text-xxs text-slate-500 flex items-center gap-1 mt-0.5">
+                                <i data-lucide="phone" class="w-3 h-3 text-slate-400"></i>
+                                <span>{{ req.contact_phone|default:req.store.phone|default:"—" }}</span>
+                            </div>
+                        </td>
+
+                        <!-- Requested Plan -->
+                        <td class="px-3 py-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold font-mono
+                                {% if req.requested_plan == 'PRO' %}bg-purple-100 text-purple-800 border border-purple-200
+                                {% elif req.requested_plan == 'ENTERPRISE' %}bg-amber-100 text-amber-900 border border-amber-300
+                                {% elif req.requested_plan == 'STANDARD' %}bg-blue-100 text-blue-800 border border-blue-200
+                                {% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+                                {{ req.get_requested_plan_display }}
+                            </span>
+                        </td>
+
+                        <!-- Duration / Days -->
+                        <td class="font-mono text-xs px-3 py-2">
+                            <span class="font-bold text-slate-900">+{{ req.calculated_days }} дн.</span>
+                            {% if req.period_months %}
+                            <span class="text-xxs text-slate-400">({{ req.period_months }} мес.)</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Amount -->
+                        <td class="text-right font-mono font-bold text-xs text-slate-900 px-3 py-2">
+                            {{ req.amount|intcomma }} UZS
+                        </td>
+
+                        <!-- Payment Method -->
+                        <td class="px-3 py-2">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xxs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                <i data-lucide="credit-card" class="w-3 h-3 text-slate-500"></i>
+                                <span>{{ req.get_payment_method_display }}</span>
+                            </span>
+                        </td>
+
+                        <!-- Date -->
+                        <td class="font-mono text-xxs text-slate-500 whitespace-nowrap px-3 py-2">
+                            {{ req.created_at|date:"d.m.Y H:i" }}
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td class="text-center px-3 py-2">
+                            {% if req.status == 'PENDING' %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xxs font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                На рассмотрении
+                            </span>
+                            {% elif req.status == 'APPROVED' %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xxs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <i data-lucide="check-circle" class="w-3 h-3 text-emerald-600"></i>
+                                Одобрена
+                            </span>
+                            {% if req.processed_at %}
+                            <div class="text-[10px] text-slate-400 font-mono mt-0.5">{{ req.processed_at|date:"d.m H:i" }}</div>
+                            {% endif %}
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xxs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                <i data-lucide="x-circle" class="w-3 h-3 text-rose-600"></i>
+                                Отклонена
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="text-right pr-4 py-2 whitespace-nowrap" @click.stop>
+                            <div class="flex items-center justify-end gap-1">
+                                <!-- Eye View Details Button -->
+                                <button type="button"
+                                        @click="openDetails({
+                                            id: {{ req.id }},
+                                            storeName: '{{ req.store.name|escapejs }}',
+                                            storeSubdomain: '{{ req.store.subdomain|escapejs }}',
+                                            storeId: {{ req.store.id }},
+                                            merchantName: '{{ req.merchant.get_full_name|default:req.merchant.username|escapejs }}',
+                                            merchantPhone: '{{ req.contact_phone|default:req.store.phone|escapejs }}',
+                                            merchantEmail: '{{ req.merchant.email|default:''|escapejs }}',
+                                            currentPlan: '{{ req.store.get_license_plan_display|escapejs }}',
+                                            currentDays: '{{ req.store.license_days_left|default:0 }}',
+                                            currentBalance: '{{ req.store.merchant_balance.balance|intcomma }}',
+                                            plan: '{{ req.get_requested_plan_display|escapejs }}',
+                                            days: '{{ req.calculated_days }}',
+                                            amount: '{{ req.amount|intcomma }}',
+                                            method: '{{ req.get_payment_method_display|escapejs }}',
+                                            createdAt: '{{ req.created_at|date:'d.m.Y H:i' }}',
+                                            status: '{{ req.status }}',
+                                            notes: '{{ req.notes|escapejs }}',
+                                            adminNotes: '{{ req.admin_notes|escapejs }}'
+                                        })"
+                                        title="Подробнее о заявке"
+                                        class="p-1 rounded text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition cursor-pointer">
+                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                </button>
+
+                                {% if req.status == 'PENDING' %}
+                                <button type="button"
+                                        @click="activeRequestId = {{ req.id }}; activeStoreName = '{{ req.store.name|escapejs }}'; activePlan = '{{ req.get_requested_plan_display|escapejs }}'; activeAmount = '{{ req.amount|intcomma }}'; activeDays = '{{ req.calculated_days }}'; approveModalOpen = true"
+                                        class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition cursor-pointer">
+                                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                    <span>Одобрить</span>
+                                </button>
+                                <button type="button"
+                                        @click="activeRequestId = {{ req.id }}; activeStoreName = '{{ req.store.name|escapejs }}'; rejectModalOpen = true"
+                                        class="p-1 rounded border border-rose-200 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                        title="Отклонить заявку">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                </button>
+                                {% else %}
+                                <a href="{% url 'super_admin:server_detail' req.store.id %}"
+                                   class="text-xxs font-semibold text-slate-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-slate-100 transition">
+                                    Сервер →
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-12 text-slate-400">
+                            <div class="max-w-xs mx-auto text-center space-y-2">
+                                <i data-lucide="inbox" class="w-8 h-8 text-slate-300 mx-auto"></i>
+                                <div class="text-xs font-semibold text-slate-700">Заявок в этой категории нет</div>
+                                <div class="text-xxs text-slate-400">Новые заявки мерчантов из личного кабинета появятся здесь автоматически</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="p-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
+            <div>
+                Страница <span class="font-bold">{{ page_obj.number }}</span> из <span class="font-bold">{{ page_obj.paginator.num_pages }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&status={{ current_status }}&q={{ search_query }}" class="px-2 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100">Назад</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&status={{ current_status }}&q={{ search_query }}" class="px-2 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100">Вперед</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- DETAIL MODAL (SLIDE-OVER / CARD) -->
+    <div x-show="detailModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div @click.away="detailModalOpen = false" class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-bold text-slate-900">Заявка на тариф #<span x-text="activeRequestId"></span></h3>
+                            <span class="text-xxs font-mono font-bold px-2 py-0.5 rounded"
+                                  :class="activeStatus === 'PENDING' ? 'bg-amber-100 text-amber-800' : (activeStatus === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800')"
+                                  x-text="activeStatus === 'PENDING' ? 'На рассмотрении' : (activeStatus === 'APPROVED' ? 'Одобрена' : 'Отклонена')"></span>
+                        </div>
+                        <p class="text-xxs text-slate-500 font-mono mt-0.5">Подана: <span x-text="activeCreatedAt"></span></p>
+                    </div>
+                </div>
+                <button type="button" @click="detailModalOpen = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold cursor-pointer p-1">✕</button>
+            </div>
+
+            <!-- Store & Merchant Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <!-- Store Info -->
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div class="font-bold text-slate-800 flex items-center gap-1.5 text-xxs uppercase tracking-wider text-slate-500">
+                        <i data-lucide="store" class="w-3.5 h-3.5 text-blue-500"></i>
+                        <span>Данные магазина</span>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-900 text-sm" x-text="activeStoreName"></div>
+                        <a :href="'/super-admin/servers/' + activeStoreId + '/'" target="_blank" class="font-mono text-xxs text-blue-600 hover:underline flex items-center gap-0.5 mt-0.5">
+                            <span x-text="activeStoreSubdomain + '.storebox.uz'"></span>
+                            <i data-lucide="external-link" class="w-3 h-3"></i>
+                        </a>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200/60 flex justify-between text-xxs">
+                        <span class="text-slate-500">Текущий тариф:</span>
+                        <span class="font-bold text-slate-800" x-text="activeCurrentPlan"></span>
+                    </div>
+                    <div class="flex justify-between text-xxs">
+                        <span class="text-slate-500">Осталось дней:</span>
+                        <span class="font-bold text-slate-800" x-text="activeCurrentDays + ' дн.'"></span>
+                    </div>
+                    <div class="flex justify-between text-xxs">
+                        <span class="text-slate-500">Баланс магазина:</span>
+                        <span class="font-bold font-mono text-slate-800" x-text="activeCurrentBalance + ' UZS'"></span>
+                    </div>
+                </div>
+
+                <!-- Merchant Contact -->
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div class="font-bold text-slate-800 flex items-center gap-1.5 text-xxs uppercase tracking-wider text-slate-500">
+                        <i data-lucide="user" class="w-3.5 h-3.5 text-blue-500"></i>
+                        <span>Контакты владельца</span>
+                    </div>
+                    <div class="font-bold text-slate-900 text-sm" x-text="activeMerchantName"></div>
+                    <div class="space-y-1 text-xxs">
+                        <div class="flex items-center gap-1 text-slate-700">
+                            <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400"></i>
+                            <a :href="'tel:' + activeMerchantPhone" class="font-mono font-bold text-blue-600 hover:underline" x-text="activeMerchantPhone || 'Не указан'"></a>
+                        </div>
+                        <div class="flex items-center gap-1 text-slate-700" x-show="activeMerchantEmail">
+                            <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400"></i>
+                            <span class="font-mono" x-text="activeMerchantEmail"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Request Details Box -->
+            <div class="p-4 rounded-xl bg-blue-50/50 border border-blue-200 space-y-3">
+                <div class="font-bold text-blue-900 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="zap" class="w-4 h-4 text-blue-600"></i>
+                        <span>Параметры продления тарифа</span>
+                    </div>
+                    <span class="font-mono text-sm font-black text-blue-700" x-text="activeAmount + ' UZS'"></span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-xs pt-1">
+                    <div class="bg-white p-2.5 rounded-lg border border-blue-100">
+                        <span class="text-slate-400 text-xxs uppercase block">Тариф</span>
+                        <span class="font-bold text-slate-900 font-mono text-xs mt-0.5 block" x-text="activePlan"></span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-lg border border-blue-100">
+                        <span class="text-slate-400 text-xxs uppercase block">Срок</span>
+                        <span class="font-bold text-emerald-600 font-mono text-xs mt-0.5 block" x-text="'+' + activeDays + ' дней'"></span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-lg border border-blue-100">
+                        <span class="text-slate-400 text-xxs uppercase block">Способ оплаты</span>
+                        <span class="font-bold text-slate-900 font-mono text-xs mt-0.5 block" x-text="activeMethod"></span>
+                    </div>
+                </div>
+                <div x-show="activeNotes" class="bg-white p-2.5 rounded-lg border border-blue-100 text-xs">
+                    <span class="text-slate-400 text-xxs uppercase block font-semibold mb-0.5">Комментарий мерчанта</span>
+                    <p class="text-slate-700 italic" x-text="activeNotes"></p>
+                </div>
+                <div x-show="activeAdminNotes" class="bg-slate-100 p-2.5 rounded-lg border border-slate-200 text-xs">
+                    <span class="text-slate-500 text-xxs uppercase block font-semibold mb-0.5">Заметка администратора</span>
+                    <p class="text-slate-800" x-text="activeAdminNotes"></p>
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                <a :href="'/super-admin/servers/' + activeStoreId + '/'" target="_blank"
+                   class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-500"></i>
+                    <span>Открыть карточку сервера</span>
+                </a>
+
+                <div class="flex items-center gap-2" x-show="activeStatus === 'PENDING'">
+                    <button type="button"
+                            @click="detailModalOpen = false; rejectModalOpen = true"
+                            class="px-3.5 py-2 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition cursor-pointer">
+                        Отклонить
+                    </button>
+                    <button type="button"
+                            @click="detailModalOpen = false; approveModalOpen = true"
+                            class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition cursor-pointer">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Одобрить и активировать</span>
+                    </button>
+                </div>
+
+                <div x-show="activeStatus !== 'PENDING'">
+                    <button type="button" @click="detailModalOpen = false" class="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPROVE MODAL -->
+    <div x-show="approveModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="approveModalOpen = false" class="bg-white rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4 border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2 text-emerald-600 font-bold text-sm">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    <span>Одобрить заявку мерчанта</span>
+                </div>
+                <button type="button" @click="approveModalOpen = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold cursor-pointer">✕</button>
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Вы подтверждаете оплату и продление тарифа для магазина <b class="text-slate-900" x-text="activeStoreName"></b>:
+            </p>
+
+            <div class="p-3 rounded-lg bg-emerald-50/60 border border-emerald-200 space-y-1.5 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Тариф:</span>
+                    <span class="font-bold text-slate-900 font-mono" x-text="activePlan"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Срок продления:</span>
+                    <span class="font-bold text-emerald-700 font-mono" x-text="'+' + activeDays + ' дней'"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Сумма:</span>
+                    <span class="font-bold text-slate-900 font-mono" x-text="activeAmount + ' UZS'"></span>
+                </div>
+            </div>
+
+            <form :action="'/super-admin/tariff-requests/' + activeRequestId + '/approve/'" method="POST" class="space-y-3">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Служебная заметка (опционально)</label>
+                    <input type="text" name="admin_notes" placeholder="Оплата поступила на р/с, чек сверен..."
+                           class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" @click="approveModalOpen = false" class="px-3 py-1.5 rounded border border-slate-300 text-slate-600 text-xs font-semibold hover:bg-slate-50 cursor-pointer">
+                        Отмена
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer">
+                        Подтвердить и активировать
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- REJECT MODAL -->
+    <div x-show="rejectModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="rejectModalOpen = false" class="bg-white rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4 border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2 text-rose-600 font-bold text-sm">
+                    <i data-lucide="x-circle" class="w-5 h-5"></i>
+                    <span>Отклонить заявку</span>
+                </div>
+                <button type="button" @click="rejectModalOpen = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold cursor-pointer">✕</button>
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Вы собираетесь отклонить заявку для магазина <b class="text-slate-900" x-text="activeStoreName"></b>. Укажите причину для мерчанта:
+            </p>
+
+            <form :action="'/super-admin/tariff-requests/' + activeRequestId + '/reject/'" method="POST" class="space-y-3">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xxs font-bold text-slate-600 uppercase mb-1">Причина отклонения</label>
+                    <textarea name="admin_notes" rows="3" required placeholder="Оплата не поступила в течение 3-х банковских дней / Ошибочные реквизиты..."
+                              class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" @click="rejectModalOpen = false" class="px-3 py-1.5 rounded border border-slate-300 text-slate-600 text-xs font-semibold hover:bg-slate-50 cursor-pointer">
+                        Отмена
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer">
+                        Отклонить заявку
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -5,17 +5,25 @@ import fcntl
 import logging
 import threading
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from django.conf import settings
 from django.db import close_old_connections
 
 logger = logging.getLogger(__name__)
 
-# Global flag to manage the polling worker
-_POLLING_ACTIVE = True
-_POLLING_THREAD = None
+# Control flags and tracking
+_SUPERVISOR_ACTIVE = True
+_SUPERVISOR_THREAD = None
+_SUPERVISOR_WAKEUP = threading.Event()
 _LOCK_FILE = None
 
-# In-memory caches with persistent backing
+# Active workers: {token: {'thread': Thread, 'stop_event': Event, 'store_id': int}}
+_ACTIVE_WORKERS = {}
+_WORKERS_LOCK = threading.Lock()
+_INVALID_TOKENS = set()  # Tokens that returned 401/404
+
+# Persistence paths
 OFFSET_FILE = os.path.join(settings.BASE_DIR, '.bot_offsets.json')
 PROCESSED_UPDATES_FILE = os.path.join(settings.BASE_DIR, '.processed_updates.json')
 LOCK_FILE_PATH = os.path.join(settings.BASE_DIR, '.telegram_polling.lock')
@@ -23,7 +31,7 @@ LOCK_FILE_PATH = os.path.join(settings.BASE_DIR, '.telegram_polling.lock')
 _OFFSET_CACHE = {}
 _PROCESSED_UPDATES = set()
 _LAST_START_TIMES = {}  # chat_id -> timestamp
-_CHECKED_WEBHOOKS = set()
+_STATE_LOCK = threading.Lock()
 
 
 def _load_persisted_state():
@@ -47,59 +55,98 @@ def _load_persisted_state():
 
 
 def _save_persisted_state():
-    """Save offsets and processed update IDs to disk"""
-    try:
-        with open(OFFSET_FILE, 'w') as f:
-            json.dump(_OFFSET_CACHE, f)
-    except Exception as e:
-        logger.debug(f"Could not save bot offsets: {e}")
+    """Save offsets and processed update IDs to disk safely"""
+    with _STATE_LOCK:
+        try:
+            with open(OFFSET_FILE, 'w') as f:
+                json.dump(_OFFSET_CACHE, f)
+        except Exception as e:
+            logger.debug(f"Could not save bot offsets: {e}")
 
-    try:
-        with open(PROCESSED_UPDATES_FILE, 'w') as f:
-            json.dump(list(_PROCESSED_UPDATES)[-5000:], f)
-    except Exception as e:
-        logger.debug(f"Could not save processed updates: {e}")
+        try:
+            with open(PROCESSED_UPDATES_FILE, 'w') as f:
+                json.dump(list(_PROCESSED_UPDATES)[-5000:], f)
+        except Exception as e:
+            logger.debug(f"Could not save processed updates: {e}")
 
 
-# Initialize state on module load
 _load_persisted_state()
 
 
-def ensure_clean_webhook(token):
-    """Delete any pending webhook so long-polling receives all updates cleanly"""
-    if token in _CHECKED_WEBHOOKS:
-        return
+def ensure_clean_webhook(session, token):
+    """Delete any existing webhook so long-polling receives updates immediately"""
     try:
-        res = requests.post(f"https://api.telegram.org/bot{token}/deleteWebhook", json={'drop_pending_updates': False}, timeout=5)
-        if res.status_code == 200:
-            _CHECKED_WEBHOOKS.add(token)
-            logger.info(f"Verified clean webhook status for bot token ...{token[-6:]}")
+        res = session.post(
+            f"https://api.telegram.org/bot{token}/deleteWebhook",
+            json={'drop_pending_updates': False},
+            timeout=5
+        )
+        return res.status_code == 200
     except Exception as e:
-        logger.debug(f"deleteWebhook check: {e}")
+        logger.debug(f"deleteWebhook check error: {e}")
+        return False
 
 
-def poll_store_bot(store):
-    """Poll updates for a single store bot with strict deduplication and persistent offset"""
-    token = (store.telegram_bot_token or '').strip()
-    if not token:
-        return
+def bot_polling_worker(token, store_id, stop_event):
+    """Dedicated long-polling thread for a single bot token.
+    Uses Telegram long-polling (timeout=20) with HTTP Keep-Alive.
+    Yields updates in under 20ms the moment a user sends any message.
+    """
+    token_suffix = token[-6:] if len(token) >= 6 else token
+    logger.info(f"[BotWorker ...{token_suffix}] Started polling for store ID {store_id}")
 
-    ensure_clean_webhook(token)
+    session = requests.Session()
+    adapter = HTTPAdapter(pool_connections=5, pool_maxsize=10, max_retries=Retry(total=2, backoff_factor=0.2))
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
 
-    offset = _OFFSET_CACHE.get(token, None)
-    url = f"https://api.telegram.org/bot{token}/getUpdates"
-    params = {'timeout': 3, 'limit': 25}
-    if offset:
-        params['offset'] = offset
+    # Make sure webhook is removed so getUpdates works cleanly
+    ensure_clean_webhook(session, token)
 
-    try:
-        res = requests.get(url, params=params, timeout=7)
-        if res.status_code == 200:
-            data = res.json()
-            if data.get('ok'):
+    consecutive_errors = 0
+
+    while not stop_event.is_set():
+        try:
+            offset = _OFFSET_CACHE.get(token, None)
+            url = f"https://api.telegram.org/bot{token}/getUpdates"
+            params = {
+                'timeout': 20,    # Telegram long-poll wait time on server
+                'limit': 30,
+            }
+            if offset:
+                params['offset'] = offset
+
+            # HTTP timeout is slightly larger than Telegram long-poll timeout
+            res = session.get(url, params=params, timeout=25)
+
+            if res.status_code == 200:
+                consecutive_errors = 0
+                try:
+                    data = res.json()
+                except Exception:
+                    continue
+
+                if not data.get('ok'):
+                    continue
+
                 updates = data.get('result', [])
                 if not updates:
-                    return
+                    continue
+
+                # Fetch fresh store instance from DB
+                close_old_connections()
+                from apps.stores.models import Store
+                try:
+                    store = Store.objects.filter(id=store_id, is_active=True).first()
+                    if not store:
+                        store = Store.objects.filter(telegram_bot_token=token, is_active=True).first()
+                        if not store:
+                            logger.info(f"[BotWorker ...{token_suffix}] Store not found or inactive. Exiting worker.")
+                            break
+                except Exception as e:
+                    logger.error(f"[BotWorker ...{token_suffix}] DB error: {e}")
+                    time.sleep(0.5)
+                    continue
 
                 from apps.telegram_bot.services import process_telegram_update
 
@@ -114,12 +161,11 @@ def poll_store_bot(store):
                     if update_id >= highest_update_id:
                         highest_update_id = update_id + 1
 
-                    # 1. Deduplication check: ignore if already processed
+                    # 1. Deduplication
                     if update_id in _PROCESSED_UPDATES:
-                        logger.debug(f"Skipping duplicate update {update_id} for store {store.name}")
                         continue
 
-                    # 2. Debounce repeated /start commands from same user within 2 seconds
+                    # 2. Debounce duplicate /start spam within 1 second
                     message = update.get('message') or {}
                     chat_id = message.get('chat', {}).get('id')
                     msg_text = (message.get('text') or '').strip().lower()
@@ -127,23 +173,24 @@ def poll_store_bot(store):
                     if chat_id and (msg_text.startswith('/start') or msg_text.startswith('/menu')):
                         now = time.time()
                         last_time = _LAST_START_TIMES.get(chat_id, 0)
-                        if (now - last_time) < 2.0:
-                            logger.info(f"Debounced duplicate /start from chat {chat_id} within {now - last_time:.2f}s")
+                        if (now - last_time) < 1.0:
                             _PROCESSED_UPDATES.add(update_id)
                             state_changed = True
                             continue
                         _LAST_START_TIMES[chat_id] = now
 
-                    # 3. Mark update as processed
                     _PROCESSED_UPDATES.add(update_id)
                     state_changed = True
 
+                    # 3. Process update immediately!
+                    t_proc = time.time()
                     try:
                         process_telegram_update(store, update)
+                        proc_ms = (time.time() - t_proc) * 1000
+                        logger.info(f"[BotWorker ...{token_suffix}] ⚡ Update {update_id} processed in {proc_ms:.1f}ms")
                     except Exception as e:
-                        logger.error(f"Error processing update {update_id} for store {store.name}: {e}", exc_info=True)
+                        logger.error(f"[BotWorker ...{token_suffix}] Error in process_telegram_update: {e}", exc_info=True)
 
-                # Update and persist offset
                 if highest_update_id > (offset or 0):
                     _OFFSET_CACHE[token] = highest_update_id
                     state_changed = True
@@ -151,17 +198,37 @@ def poll_store_bot(store):
                 if state_changed:
                     _save_persisted_state()
 
-        elif res.status_code == 409:
-            logger.warning(f"Telegram 409 Conflict for store {store.name}. Another process might be polling.")
-            time.sleep(1)
-    except requests.exceptions.Timeout:
-        pass
-    except Exception as e:
-        logger.debug(f"Polling error for store {store.name}: {e}")
+            elif res.status_code == 409:
+                consecutive_errors += 1
+                wait_time = min(15.0, 1.5 * consecutive_errors)
+                logger.warning(f"[BotWorker ...{token_suffix}] 409 Conflict from Telegram. Waiting {wait_time:.1f}s...")
+                stop_event.wait(wait_time)
+            elif res.status_code in (401, 404):
+                logger.error(f"[BotWorker ...{token_suffix}] Invalid token (HTTP {res.status_code}). Terminating worker.")
+                _INVALID_TOKENS.add(token)
+                break
+            else:
+                logger.warning(f"[BotWorker ...{token_suffix}] Unexpected HTTP {res.status_code}")
+                stop_event.wait(1.0)
+
+        except requests.exceptions.Timeout:
+            # Standard long-polling cycle completed without new updates; loop immediately
+            consecutive_errors = 0
+            continue
+        except requests.exceptions.ConnectionError:
+            consecutive_errors += 1
+            delay = min(5.0, 0.5 * consecutive_errors)
+            stop_event.wait(delay)
+        except Exception as e:
+            logger.debug(f"[BotWorker ...{token_suffix}] Exception: {e}")
+            stop_event.wait(1.0)
+
+    session.close()
+    logger.info(f"[BotWorker ...{token_suffix}] Stopped.")
 
 
 def acquire_polling_lock():
-    """Acquire a non-blocking inter-process file lock so only ONE worker polls Telegram"""
+    """Acquire a non-blocking inter-process file lock so only ONE supervisor runs"""
     global _LOCK_FILE
     try:
         _LOCK_FILE = open(LOCK_FILE_PATH, 'w')
@@ -179,7 +246,7 @@ def acquire_polling_lock():
 
 
 def release_polling_lock():
-    """Release file lock when polling worker terminates"""
+    """Release file lock when supervisor terminates"""
     global _LOCK_FILE
     if _LOCK_FILE:
         try:
@@ -190,51 +257,99 @@ def release_polling_lock():
         _LOCK_FILE = None
 
 
-def telegram_polling_loop():
-    """Main polling loop running over all active store bots"""
-    global _POLLING_ACTIVE
-    
+def supervisor_loop():
+    """Supervisor thread: manages dedicated worker threads per unique bot token"""
+    global _SUPERVISOR_ACTIVE
+
     if not acquire_polling_lock():
         return
 
-    logger.info("StoreBox Telegram Polling Worker started successfully.")
+    logger.info("StoreBox Telegram Supervisor started.")
 
     try:
-        while _POLLING_ACTIVE:
+        while _SUPERVISOR_ACTIVE:
             try:
                 close_old_connections()
                 from apps.stores.models import Store
-                stores_with_bots = Store.objects.filter(is_active=True).exclude(telegram_bot_token='')
 
-                for store in stores_with_bots:
-                    poll_store_bot(store)
-                    time.sleep(0.05)
+                # Group active stores by unique token
+                stores = list(Store.objects.filter(is_active=True).exclude(telegram_bot_token='').order_by('-updated_at'))
+                active_tokens_map = {}
+                for s in stores:
+                    tok = (s.telegram_bot_token or '').strip()
+                    if tok and tok not in active_tokens_map and tok not in _INVALID_TOKENS:
+                        active_tokens_map[tok] = s.id
 
-                time.sleep(0.5)
+                with _WORKERS_LOCK:
+                    # 1. Stop workers for removed tokens
+                    for tok in list(_ACTIVE_WORKERS.keys()):
+                        if tok not in active_tokens_map:
+                            info = _ACTIVE_WORKERS.pop(tok)
+                            info['stop_event'].set()
+
+                    # 2. Clean up terminated worker threads
+                    for tok in list(_ACTIVE_WORKERS.keys()):
+                        t = _ACTIVE_WORKERS[tok]['thread']
+                        if not t.is_alive():
+                            _ACTIVE_WORKERS.pop(tok, None)
+
+                    # 3. Start workers for new tokens
+                    for tok, store_id in active_tokens_map.items():
+                        if tok not in _ACTIVE_WORKERS:
+                            stop_ev = threading.Event()
+                            worker_t = threading.Thread(
+                                target=bot_polling_worker,
+                                args=(tok, store_id, stop_ev),
+                                daemon=True,
+                                name=f"BotWorker-{tok[-6:]}"
+                            )
+                            _ACTIVE_WORKERS[tok] = {
+                                'thread': worker_t,
+                                'stop_event': stop_ev,
+                                'store_id': store_id
+                            }
+                            worker_t.start()
+
+                # Sleep until woken up or 5 seconds pass
+                _SUPERVISOR_WAKEUP.wait(5.0)
+                _SUPERVISOR_WAKEUP.clear()
+
             except Exception as e:
-                logger.error(f"Error in telegram_polling_loop: {e}")
-                time.sleep(2)
+                logger.error(f"Error in supervisor_loop: {e}")
+                time.sleep(2.0)
+
     finally:
+        with _WORKERS_LOCK:
+            for tok, info in _ACTIVE_WORKERS.items():
+                info['stop_event'].set()
+            _ACTIVE_WORKERS.clear()
         release_polling_lock()
-        logger.info("StoreBox Telegram Polling Worker terminated and released lock.")
+        logger.info("StoreBox Telegram Supervisor released lock and stopped.")
+
+
+def notify_polling_changed():
+    """Wake up supervisor immediately (e.g. after a bot token is saved)"""
+    _SUPERVISOR_WAKEUP.set()
 
 
 def start_polling_thread():
-    """Start polling loop in a background daemon thread if not already running"""
-    global _POLLING_THREAD, _POLLING_ACTIVE
-    if _POLLING_THREAD and _POLLING_THREAD.is_alive():
-        return _POLLING_THREAD
+    """Start supervisor loop in a background daemon thread if not already running"""
+    global _SUPERVISOR_THREAD, _SUPERVISOR_ACTIVE
+    if _SUPERVISOR_THREAD and _SUPERVISOR_THREAD.is_alive():
+        notify_polling_changed()
+        return _SUPERVISOR_THREAD
 
-    _POLLING_ACTIVE = True
-    _POLLING_THREAD = threading.Thread(target=telegram_polling_loop, daemon=True, name="TelegramPollingWorker")
-    _POLLING_THREAD.start()
-    logger.info("Telegram Polling Worker thread spawned.")
-    return _POLLING_THREAD
+    _SUPERVISOR_ACTIVE = True
+    _SUPERVISOR_THREAD = threading.Thread(target=supervisor_loop, daemon=True, name="TelegramSupervisor")
+    _SUPERVISOR_THREAD.start()
+    logger.info("Telegram Polling Supervisor thread spawned.")
+    return _SUPERVISOR_THREAD
 
 
 def stop_polling_thread():
-    """Stop the background polling worker"""
-    global _POLLING_ACTIVE
-    _POLLING_ACTIVE = False
+    """Stop the supervisor and all active bot workers"""
+    global _SUPERVISOR_ACTIVE
+    _SUPERVISOR_ACTIVE = False
+    _SUPERVISOR_WAKEUP.set()
     release_polling_lock()
 

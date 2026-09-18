@@ -82,14 +82,27 @@ def update_order_status_view(request, order_id):
     if not order:
         return Response({"error": "Buyurtma topilmadi"}, status=404)
 
+    update_fields = ["updated_at"]
     new_status = request.data.get("status", "").upper()
+    new_payment_status = request.data.get("payment_status", "").upper()
+
     valid_statuses = [s[0] for s in Order.OrderStatuses.choices]
-    if new_status not in valid_statuses:
-        return Response({"error": f"Noto`g`ri holat: {new_status}"}, status=400)
+    valid_payment_statuses = [p[0] for p in Order.PaymentStatuses.choices]
 
     old_status = order.status
-    order.status = new_status
-    order.save(update_fields=["status", "updated_at"])
+    if new_status:
+        if new_status not in valid_statuses:
+            return Response({"error": f"Noto`g`ri holat: {new_status}"}, status=400)
+        order.status = new_status
+        update_fields.append("status")
+
+    if new_payment_status:
+        if new_payment_status not in valid_payment_statuses:
+            return Response({"error": f"Noto`g`ri to`lov holati: {new_payment_status}"}, status=400)
+        order.payment_status = new_payment_status
+        update_fields.append("payment_status")
+
+    order.save(update_fields=update_fields)
 
     if new_status == Order.OrderStatuses.CANCELLED and old_status != Order.OrderStatuses.CANCELLED:
         for item in order.items.all():
@@ -98,7 +111,7 @@ def update_order_status_view(request, order_id):
                 item.product.save(update_fields=["stock", "updated_at"])
 
     return Response({
-        "message": f"Buyurtma holati {order.get_status_display()} ga o`zgartirildi",
+        "message": f"Buyurtma ma`lumotlari muvaffaqiyatli saqlandi",
         "order": OrderSerializer(order).data
     })
 

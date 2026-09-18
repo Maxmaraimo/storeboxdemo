@@ -14,8 +14,8 @@ export const RoboMarketPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("storebox_market")}</h1>
-        <p className="text-xs text-slate-500 mt-1 font-medium">Do'koningiz imkoniyatlarini kengaytiruvchi tayyor modullar</p>
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("storebox_market") || "StoreBox Market"}</h1>
+        <p className="text-xs text-slate-500 mt-1 font-medium">{t("robomarket_subtitle") || "Do'koningiz imkoniyatlarini kengaytiruvchi tayyor modullar"}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -32,7 +32,7 @@ export const RoboMarketPage: React.FC = () => {
             </div>
             <button
               type="button"
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
                 a.installed
                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                   : "bg-brand text-white hover:bg-brand-dark"
@@ -41,12 +41,12 @@ export const RoboMarketPage: React.FC = () => {
               {a.installed ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>O'rnatilgan</span>
+                  <span>{t("installed") || "O'rnatilgan"}</span>
                 </>
               ) : (
                 <>
                   <Download className="w-3.5 h-3.5" />
-                  <span>O'rnatish</span>
+                  <span>{t("install") || "O'rnatish"}</span>
                 </>
               )}
             </button>

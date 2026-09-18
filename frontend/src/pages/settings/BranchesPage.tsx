@@ -88,15 +88,15 @@ export const BranchesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("branches") || "Filiallar"}</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Do'koningiz filiallari va qabul punktlari</p>
+          <p className="text-xs text-slate-500 mt-1 font-medium">{t("branches_subtitle") || "Do'koningiz filiallari va qabul punktlari"}</p>
         </div>
         <button
           type="button"
           onClick={openModal}
-          className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
+          className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Filial qo'shish</span>
+          <span>{t("add_branch_btn") || "Filial qo'shish"}</span>
         </button>
       </div>
 
@@ -107,7 +107,9 @@ export const BranchesPage: React.FC = () => {
               <h2 className="text-sm font-black text-slate-900">{b.name}</h2>
               <div className="flex items-center gap-2">
                 {b.is_main && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Asosiy</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {t("is_main_branch") || "Asosiy"}
+                  </span>
                 )}
                 <button
                   type="button"
@@ -116,7 +118,7 @@ export const BranchesPage: React.FC = () => {
                       deleteMutation.mutate(b.id);
                     }
                   }}
-                  className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                  className="p-1 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -137,7 +139,7 @@ export const BranchesPage: React.FC = () => {
 
         {branches.length === 0 && !isLoading && (
           <div className="md:col-span-2 p-12 bg-white rounded-3xl border border-slate-200 text-center text-slate-400 text-xs">
-            Hozircha filiallar qo'shilmagan. Yuqoridagi "Filial qo'shish" tugmasi orqali qo'shing.
+            {t("no_items") || "Hozircha filiallar qo'shilmagan."}
           </div>
         )}
       </div>
@@ -148,12 +150,12 @@ export const BranchesPage: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-slate-900">
-                Yangi filial qo'shish
+                {t("add_branch_btn") || "Yangi filial qo'shish"}
               </h3>
               <button
                 type="button"
                 onClick={closeModal}
-                className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -168,33 +170,33 @@ export const BranchesPage: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Filial nomi *
+                  {t("branch_name_label") || "Filial nomi"} *
                 </label>
                 <input
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="Masalan: Chilonzor filiali"
+                  placeholder="Chilonzor"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  To'liq manzil *
+                  {t("branch_address_label") || "Manzil"} *
                 </label>
                 <input
                   type="text"
                   value={formAddress}
                   onChange={(e) => setFormAddress(e.target.value)}
-                  placeholder="Masalan: Toshkent sh., Chilonzor 9-mavze, 21-uy"
+                  placeholder="Toshkent sh."
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Aloqa telefoni
+                  {t("branch_phone_label") || "Telefon raqami"}
                 </label>
                 <input
                   type="text"
@@ -214,7 +216,7 @@ export const BranchesPage: React.FC = () => {
                   className="w-4 h-4 rounded-md text-brand focus:ring-brand"
                 />
                 <label htmlFor="is_main_branch" className="text-xs font-bold text-slate-700 cursor-pointer">
-                  Asosiy filial sifatida belgilash
+                  {t("is_main_branch") || "Asosiy filial sifatida belgilash"}
                 </label>
               </div>
             </div>
@@ -223,17 +225,17 @@ export const BranchesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
-                Bekor qilish
+                {t("btn_cancel") || "Bekor qilish"}
               </button>
               <button
                 type="button"
                 onClick={() => createMutation.mutate()}
                 disabled={createMutation.isPending}
-                className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50"
+                className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {createMutation.isPending ? "Qo'shilmoqda..." : "Qo'shish"}
+                {createMutation.isPending ? (t("saving") || "Qo'shilmoqda...") : (t("create") || "Qo'shish")}
               </button>
             </div>
           </div>

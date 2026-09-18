@@ -1,166 +1,855 @@
 {% extends 'dashboard/base_dashboard.html' %}
 
-{% block title %}Xodimlar — StoreBox{% endblock %}
+{% block title %}Xodimlar va Rollar — StoreBox{% endblock %}
 
 {% block dashboard_content %}
-<div class="space-y-6" x-data="staffApp()">
+<div class="space-y-6" x-data="staffManagementApp()">
 
-    <!-- Header & Action -->
+    <!-- Header & Title -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Xodimlar</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Xodimlarni boshqarish va kirish huquqlarini taqsimlash</p>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight" x-text="tabTitles[activeTab]">Xodimlar</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Xodimlar huquqlari va kirish nazorati (Robosell RBAC tizimi)</p>
         </div>
 
-        <button type="button" @click="addModalOpen = true" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            <span>Xodim qo'shish</span>
+        <div class="flex items-center gap-2">
+            <!-- Action button changes depending on active tab -->
+            <button type="button" x-show="activeTab === 'staff'" @click="openAddStaffModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-2 shadow-xs transition-all">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span>+ Xodimni qo'shish</span>
+            </button>
+
+            <button type="button" x-show="activeTab === 'roles'" @click="openAddRoleModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-2 shadow-xs transition-all" x-cloak>
+                <i data-lucide="shield-plus" class="w-4 h-4"></i>
+                <span>+ Rol qo'shish</span>
+            </button>
+
+            <button type="button" x-show="activeTab === 'courier'" @click="openAddCourierModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-2 shadow-xs transition-all" x-cloak>
+                <i data-lucide="bike" class="w-4 h-4"></i>
+                <span>+ Kuryer qo'shish</span>
+            </button>
+
+            <a href="/courier/" target="_blank" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors" title="Kuryer panelini yangi oynada ochish">
+                <i data-lucide="external-link" class="w-4 h-4 text-slate-500"></i>
+                <span class="hidden sm:inline">Kuryer paneli</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- TABS BAR (from Video: Xodimlar, Rollar, Kuryer) -->
+    <div class="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl w-fit text-xs font-bold border border-slate-200/60 shadow-2xs">
+        <button type="button" @click="switchTab('staff')" :class="activeTab === 'staff' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'" class="px-5 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            <span>Xodimlar</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-100 text-slate-700" x-text="staffList.length"></span>
+        </button>
+
+        <button type="button" @click="switchTab('roles')" :class="activeTab === 'roles' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'" class="px-5 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+            <span>Rollar</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-100 text-slate-700" x-text="rolesList.length"></span>
+        </button>
+
+        <button type="button" @click="switchTab('courier')" :class="activeTab === 'courier' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'" class="px-5 py-2 rounded-xl transition-all flex items-center gap-2">
+            <i data-lucide="bike" class="w-3.5 h-3.5"></i>
+            <span>Kuryer</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-100 text-slate-700" x-text="couriersList.length"></span>
         </button>
     </div>
 
-    <!-- Tabs (Video 09:51) -->
-    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl w-fit text-xs font-bold">
-        <button type="button" @click="activeTab = 'staff'" :class="activeTab === 'staff' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl">Xodimlar</button>
-        <button type="button" @click="activeTab = 'roles'" :class="activeTab === 'roles' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl">Rollar</button>
-        <button type="button" @click="activeTab = 'courier'" :class="activeTab === 'courier' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="px-4 py-2 rounded-xl">Kuryer</button>
-    </div>
+    <!-- TAB 1: XODIMLAR (STAFF) -->
+    <div x-show="activeTab === 'staff'" class="space-y-4" x-cloak>
+        <!-- Search bar -->
+        <div class="relative max-w-md">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" x-model="staffSearch" placeholder="Xodimning ismi bo'yicha qidiruv" class="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-slate-200 text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 shadow-2xs">
+        </div>
 
-    <!-- Staff Table (Video 09:52) -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
-                    <tr>
-                        <th class="py-3.5 px-4">Foydalanuvchi</th>
-                        <th class="py-3.5 px-4">Telefon raqami</th>
-                        <th class="py-3.5 px-4">Roli</th>
-                        <th class="py-3.5 px-4">Holati</th>
-                        <th class="py-3.5 px-4 text-right">Harakat</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
-                    {% for s in staff_list %}
-                    <tr id="staff-row-{{ s.id }}" class="hover:bg-slate-50/60 transition-colors">
-                        <td class="py-3.5 px-4 flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">
-                                {{ s.name|slice:":1"|upper }}
-                            </div>
-                            <span class="font-bold text-slate-900">{{ s.name }}</span>
-                        </td>
-                        <td class="py-3.5 px-4 font-mono text-slate-600">{{ s.phone }}</td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-bold text-[11px]">
-                                {{ s.get_role_display }}
-                            </span>
-                        </td>
-                        <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">Faol</span>
-                        </td>
-                        <td class="py-3.5 px-4 text-right">
-                            <button type="button" @click="deleteStaff('{{ s.id }}')" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="py-12 text-center text-slate-400">
-                            Qo'shimcha xodimlar biriktirilmagan
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Table -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50/80 text-slate-400 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
+                        <tr>
+                            <th class="py-3.5 px-5">To'liq ism</th>
+                            <th class="py-3.5 px-5">Telefon raqami</th>
+                            <th class="py-3.5 px-5">Rol</th>
+                            <th class="py-3.5 px-5 text-center">Buyurtmalar</th>
+                            <th class="py-3.5 px-5">Qo'shilgan sana vaqti</th>
+                            <th class="py-3.5 px-5">Holat</th>
+                            <th class="py-3.5 px-5 text-right">Harakat</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <template x-for="staff in filteredStaff" :key="staff.id">
+                            <tr class="hover:bg-slate-50/70 transition-colors">
+                                <td class="py-3.5 px-5 flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold flex items-center justify-center text-xs" x-text="staff.name.slice(0, 1).toUpperCase()"></div>
+                                    <div>
+                                        <span class="font-bold text-slate-900 block" x-text="staff.name"></span>
+                                        <span class="text-[10px] text-slate-400" x-text="staff.username ? '@' + staff.username : ''"></span>
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-5 font-mono text-slate-600" x-text="staff.phone"></td>
+                                <td class="py-3.5 px-5">
+                                    <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 font-bold text-[11px]" x-text="staff.role_name"></span>
+                                </td>
+                                <td class="py-3.5 px-5 text-center font-bold text-slate-600" x-text="staff.orders_count || 0"></td>
+                                <td class="py-3.5 px-5 text-slate-400" x-text="staff.created_at"></td>
+                                <td class="py-3.5 px-5">
+                                    <button type="button" @click="toggleStaffActive(staff)" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" :class="staff.is_active ? 'bg-emerald-500' : 'bg-slate-200'">
+                                        <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out" :class="staff.is_active ? 'translate-x-4' : 'translate-x-0'"></span>
+                                    </button>
+                                </td>
+                                <td class="py-3.5 px-5 text-right space-x-1">
+                                    <button type="button" @click="openEditStaffModal(staff)" class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Tahrirlash">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </button>
+                                    <button type="button" @click="confirmDeleteStaff(staff)" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors" title="O'chirish">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+
+                        <tr x-show="filteredStaff.length === 0">
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <i data-lucide="users" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                                <p class="font-bold">Xodimlar topilmadi</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Yangi xodim qo'shish uchun yuqoridagi tugmani bosing</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- ADD STAFF MODAL -->
-    <div x-show="addModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-        <div @click.away="addModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
+    <!-- TAB 2: ROLLAR (ROLES & PERMISSION MATRIX) -->
+    <div x-show="activeTab === 'roles'" class="space-y-4" x-cloak>
+        <!-- Search bar -->
+        <div class="relative max-w-md">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" x-model="roleSearch" placeholder="Rol nomi bo'yicha qidiruv" class="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-slate-200 text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 shadow-2xs">
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50/80 text-slate-400 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
+                        <tr>
+                            <th class="py-3.5 px-5">Rol</th>
+                            <th class="py-3.5 px-5">Qo'shilgan sana vaqti</th>
+                            <th class="py-3.5 px-5">Oxirgi yangilanish</th>
+                            <th class="py-3.5 px-5">Holat</th>
+                            <th class="py-3.5 px-5 text-right">Harakat</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <template x-for="role in filteredRoles" :key="role.id">
+                            <tr class="hover:bg-slate-50/70 transition-colors">
+                                <td class="py-3.5 px-5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-900" x-text="role.name"></span>
+                                        <template x-if="role.is_system || role.name === 'Admin'">
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">Asosiy</span>
+                                        </template>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mt-0.5" x-text="role.description || 'Qo\'shimcha ta\'rif yo\'q'"></p>
+                                </td>
+                                <td class="py-3.5 px-5 text-slate-500 font-mono text-[11px]" x-text="role.created_at"></td>
+                                <td class="py-3.5 px-5 text-slate-500 font-mono text-[11px]" x-text="role.updated_at"></td>
+                                <td class="py-3.5 px-5">
+                                    <button type="button" @click="toggleRoleActive(role)" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" :class="role.is_active ? 'bg-emerald-500' : 'bg-slate-200'">
+                                        <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out" :class="role.is_active ? 'translate-x-4' : 'translate-x-0'"></span>
+                                    </button>
+                                </td>
+                                <td class="py-3.5 px-5 text-right space-x-1">
+                                    <button type="button" @click="openEditRoleModal(role)" class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Huquqlarni tahrirlash">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </button>
+                                    <button type="button" x-show="!role.is_system && role.name !== 'Admin'" @click="confirmDeleteRole(role)" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors" title="O'chirish">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+
+                        <tr x-show="filteredRoles.length === 0">
+                            <td colspan="5" class="py-12 text-center text-slate-400">
+                                <i data-lucide="shield" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                                <p class="font-bold">Rollar topilmadi</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: KURYER (COURIERS) -->
+    <div x-show="activeTab === 'courier'" class="space-y-4" x-cloak>
+        <!-- Table -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50/80 text-slate-400 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
+                        <tr>
+                            <th class="py-3.5 px-5">To'liq ism</th>
+                            <th class="py-3.5 px-5">Telefon raqami</th>
+                            <th class="py-3.5 px-5">Qo'shilgan sana vaqti</th>
+                            <th class="py-3.5 px-5">Holat</th>
+                            <th class="py-3.5 px-5 text-right">Harakat</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <template x-for="courier in couriersList" :key="courier.id">
+                            <tr class="hover:bg-slate-50/70 transition-colors">
+                                <td class="py-3.5 px-5 flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-bold flex items-center justify-center text-xs">
+                                        <i data-lucide="bike" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <span class="font-bold text-slate-900 block" x-text="courier.name"></span>
+                                        <span class="text-[10px] text-slate-400">Kuryer</span>
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-5 font-mono text-slate-600" x-text="courier.phone"></td>
+                                <td class="py-3.5 px-5 text-slate-400" x-text="courier.created_at"></td>
+                                <td class="py-3.5 px-5">
+                                    <button type="button" @click="toggleCourierActive(courier)" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" :class="courier.is_active ? 'bg-emerald-500' : 'bg-slate-200'">
+                                        <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out" :class="courier.is_active ? 'translate-x-4' : 'translate-x-0'"></span>
+                                    </button>
+                                </td>
+                                <td class="py-3.5 px-5 text-right space-x-1">
+                                    <button type="button" @click="openEditCourierModal(courier)" class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Tahrirlash">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </button>
+                                    <button type="button" @click="confirmDeleteCourier(courier)" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors" title="O'chirish">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+
+                        <tr x-show="couriersList.length === 0">
+                            <td colspan="5" class="py-12 text-center text-slate-400">
+                                <i data-lucide="bike" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                                <p class="font-bold">Kuryerlar mavjud emas</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5">+ Kuryer qo'shish tugmasi orqali yangi kuryer biriktiring</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 1: XODIM QO'SHISH / TAHRIRLASH ==================== -->
+    <div x-show="staffModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="staffModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 border border-slate-100">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-black text-base text-slate-900">Yangi xodim qo'shish</h3>
-                <button type="button" @click="addModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+                <h3 class="font-black text-base text-slate-900" x-text="isEditStaff ? 'Xodimni tahrirlash' : 'Xodimni qo\'shish'"></h3>
+                <button type="button" @click="staffModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
 
             <div class="space-y-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Xodim ismi va familiyasi *</label>
-                    <input type="text" x-model="staffName" placeholder="Alisher Qodirov" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
+                    <label class="block font-bold text-slate-700 mb-1">Ism *</label>
+                    <input type="text" x-model="staffForm.name" placeholder="Ismingizni kiriting" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-emerald-500">
                 </div>
 
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">Telefon raqami *</label>
-                    <input type="text" x-model="staffPhone" placeholder="+998 90 123 45 67" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+                    <div class="relative">
+                        <input type="text" x-model="staffForm.phone" placeholder="+998 90 123 45 67" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono font-bold focus:outline-none focus:border-emerald-500">
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Roli</label>
-                    <select x-model="staffRole" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold">
-                        <option value="MANAGER">Menejer</option>
-                        <option value="CASHIER">Kassir</option>
-                        <option value="COURIER">Kuryer</option>
-                        <option value="ADMIN">Admin</option>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-slate-700">Yangi parolni kiriting <span x-show="!isEditStaff">*</span></label>
+                        <button type="button" @click="generatePassword('staff')" class="text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1">
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                            <span>Generatsiya</span>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <input :type="showPassword ? 'text' : 'password'" x-model="staffForm.password" placeholder="Parol kamida 6 ta belgi bo'lishi kerak" class="w-full p-3 pr-10 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:outline-none focus:border-emerald-500">
+                        <button type="button" @click="showPassword = !showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <i :data-lucide="showPassword ? 'eye-off' : 'eye'" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1" x-show="isEditStaff">Bo'sh qoldirilsa, eski parol o'zgarmaydi</p>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Yangi parolni qayta kiriting <span x-show="!isEditStaff">*</span></label>
+                    <input :type="showPassword ? 'text' : 'password'" x-model="staffForm.password_repeat" placeholder="Parolni tasdiqlang" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Rolni tanlang *</label>
+                    <select x-model="staffForm.role_id" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-emerald-500">
+                        <option value="">-- Rolni tanlang --</option>
+                        <template x-for="r in rolesList" :key="r.id">
+                            <option :value="r.id" x-text="r.name"></option>
+                        </template>
                     </select>
                 </div>
             </div>
 
-            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button type="button" @click="addModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
-                <button type="button" @click="saveStaff()" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Saqlash</button>
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button type="button" @click="staffModalOpen = false" class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">Bekor qilish</button>
+                <button type="button" @click="submitStaffForm()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs">
+                    <span x-text="isEditStaff ? 'Saqlash' : 'Qo\'shish'"></span>
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- ==================== MODAL 2: ROL QO'SHISH / TAHRIRLASH (PERMISSION MATRIX) ==================== -->
+    <div x-show="roleModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="roleModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-4 border border-slate-100 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+                <div>
+                    <h3 class="font-black text-base text-slate-900" x-text="isEditRole ? 'Rolni tahrirlash' : 'Rol qo\'shish'"></h3>
+                    <p class="text-xs text-slate-400">Har bir bo'lim bo'yicha ko'rish, tahrirlash va o'chirish huquqlari</p>
+                </div>
+                <button type="button" @click="roleModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <!-- Role Name & Description -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 shrink-0 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Ism (Rol nomi) *</label>
+                    <input type="text" x-model="roleForm.name" placeholder="Masalan: test2, Menejer, Kassir..." class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Ta'rif (ixtiyoriy)</label>
+                    <input type="text" x-model="roleForm.description" placeholder="Vazifalar tavsifi" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-medium focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <!-- Quick Select All Bar -->
+            <div class="flex items-center justify-between py-1 px-1 bg-slate-50 rounded-xl text-xs shrink-0">
+                <span class="font-bold text-slate-600 text-[11px] px-2">Barcha huquqlarni boshqarish:</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="toggleAllPermissions(true)" class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-black hover:bg-emerald-200">
+                        Barchasini yoqish
+                    </button>
+                    <button type="button" @click="toggleAllPermissions(false)" class="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-700 text-[10px] font-bold hover:bg-slate-300">
+                        Tozalash
+                    </button>
+                </div>
+            </div>
+
+            <!-- Matrix Table with scrolling -->
+            <div class="flex-1 overflow-y-auto border border-slate-200/80 rounded-2xl">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-100/90 text-slate-600 font-bold sticky top-0 z-10 text-[11px]">
+                        <tr>
+                            <th class="py-2.5 px-4">Menyu</th>
+                            <th class="py-2.5 px-3 text-center">
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                    <input type="checkbox" @change="toggleColumn('view', $event.target.checked)" class="rounded text-emerald-600 focus:ring-0 w-3.5 h-3.5">
+                                    <span>Ko'rish</span>
+                                </label>
+                            </th>
+                            <th class="py-2.5 px-3 text-center">
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                    <input type="checkbox" @change="toggleColumn('edit', $event.target.checked)" class="rounded text-emerald-600 focus:ring-0 w-3.5 h-3.5">
+                                    <span>Tahrirlash</span>
+                                </label>
+                            </th>
+                            <th class="py-2.5 px-3 text-center">
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                    <input type="checkbox" @change="toggleColumn('delete', $event.target.checked)" class="rounded text-emerald-600 focus:ring-0 w-3.5 h-3.5">
+                                    <span>O'chirish</span>
+                                </label>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <template x-for="mod in moduleChoices" :key="mod.id">
+                            <tr class="hover:bg-slate-50/70 transition-colors">
+                                <td class="py-2.5 px-4 font-bold text-slate-800" x-text="mod.name"></td>
+                                <td class="py-2.5 px-3 text-center">
+                                    <input type="checkbox" x-model="rolePermissions[mod.id].view" class="rounded text-emerald-600 focus:ring-0 w-4 h-4 cursor-pointer">
+                                </td>
+                                <td class="py-2.5 px-3 text-center">
+                                    <input type="checkbox" x-model="rolePermissions[mod.id].edit" class="rounded text-emerald-600 focus:ring-0 w-4 h-4 cursor-pointer">
+                                </td>
+                                <td class="py-2.5 px-3 text-center">
+                                    <input type="checkbox" x-model="rolePermissions[mod.id].delete" class="rounded text-emerald-600 focus:ring-0 w-4 h-4 cursor-pointer">
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 shrink-0">
+                <button type="button" @click="roleModalOpen = false" class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">Bekor qilish</button>
+                <button type="button" @click="submitRoleForm()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs">
+                    <span x-text="isEditRole ? 'Saqlash' : 'Qo\'shish'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 3: KURYER QO'SHISH / TAHRIRLASH ==================== -->
+    <div x-show="courierModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="courierModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 border border-slate-100">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-base text-slate-900" x-text="isEditCourier ? 'Kuryerni tahrirlash' : 'Kuryer qo\'shish'"></h3>
+                <button type="button" @click="courierModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Ism *</label>
+                    <input type="text" x-model="courierForm.name" placeholder="Ismingizni kiriting" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Telefon raqami *</label>
+                    <input type="text" x-model="courierForm.phone" placeholder="+998 91 900 10 12" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono font-bold focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-slate-700">Parol <span x-show="!isEditCourier">*</span></label>
+                        <button type="button" @click="generatePassword('courier')" class="text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1">
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                            <span>Generatsiya</span>
+                        </button>
+                    </div>
+                    <input :type="showPassword ? 'text' : 'password'" x-model="courierForm.password" placeholder="Parol kamida 6 ta belgi" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button type="button" @click="courierModalOpen = false" class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">Bekor qilish</button>
+                <button type="button" @click="submitCourierForm()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs">
+                    <span x-text="isEditCourier ? 'Saqlash' : 'Qo\'shish'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== CONFIRM DELETE MODAL (from Video) ==================== -->
+    <div x-show="deleteModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="deleteModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl text-center space-y-4 border border-slate-100">
+            <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="font-black text-sm text-slate-900" x-text="deleteModalTitle">Bu xodimni o'chirib tashlaysizmi?</h3>
+                <p class="text-xs text-slate-500 mt-1" x-text="deleteModalMessage">Ushbu amalni ortga qaytarib bo'lmaydi.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button type="button" @click="deleteModalOpen = false" class="py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">
+                    Yo'q, Bekor qilish
+                </button>
+                <button type="button" @click="executeDelete()" class="py-2.5 rounded-xl bg-rose-600 text-white text-xs font-black hover:bg-rose-700 shadow-xs">
+                    Ha, o'chirish
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    function staffApp() {
-        return {
-            activeTab: 'staff',
-            addModalOpen: false,
-            staffName: '',
-            staffPhone: '+998 ',
-            staffRole: 'MANAGER',
+function staffManagementApp() {
+    return {
+        activeTab: '{{ active_tab|default:"staff" }}',
+        tabTitles: {
+            'staff': 'Xodimlar',
+            'roles': 'Rollar',
+            'courier': 'Kuryer'
+        },
 
-            saveStaff() {
-                if (!this.staffName.trim()) { alert('Xodim ismini kiriting'); return; }
-                const fd = new FormData();
-                fd.append('action', 'create');
-                fd.append('name', this.staffName);
-                fd.append('phone', this.staffPhone);
-                fd.append('role', this.staffRole);
-
-                fetch('/dashboard/api/staff-action/', {
-                    method: 'POST',
-                    body: fd,
-                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    this.addModalOpen = false;
-                    showToast("Xodim muvaffaqiyatli qo'shildi!");
-                    spaNavigate('/dashboard/settings/staff/', false);
-                });
+        // Data lists
+        staffList: [
+            {% for s in staff_members %}
+            {
+                id: '{{ s.id }}',
+                name: '{{ s.name|escapejs }}',
+                phone: '{{ s.phone|escapejs }}',
+                role_id: '{{ s.store_role_id|default:"" }}',
+                role_name: '{{ s.store_role.name|default:s.role|escapejs }}',
+                username: '{{ s.user.username|default:""|escapejs }}',
+                orders_count: {{ s.orders_count|default:0 }},
+                created_at: '{{ s.created_at|date:"d.m.Y, H:i" }}',
+                is_active: {{ s.is_active|yesno:"true,false" }}
             },
+            {% endfor %}
+        ],
 
-            deleteStaff(id) {
-                if (!confirm("Ushbu xodimni o'chirmoqchimisiz?")) return;
-                const fd = new FormData();
-                fd.append('action', 'delete');
-                fd.append('staff_id', id);
+        rolesList: {{ roles_json|safe|default:"[]" }},
 
-                fetch('/dashboard/api/staff-action/', {
+        couriersList: [
+            {% for c in couriers %}
+            {
+                id: '{{ c.id }}',
+                name: '{{ c.name|escapejs }}',
+                phone: '{{ c.phone|escapejs }}',
+                created_at: '{{ c.created_at|date:"d.m.Y, H:i" }}',
+                is_active: {{ c.is_active|yesno:"true,false" }}
+            },
+            {% endfor %}
+        ],
+
+        moduleChoices: {{ module_choices_json|safe|default:"[]" }},
+
+        // Search inputs
+        staffSearch: '',
+        roleSearch: '',
+
+        // Modals
+        staffModalOpen: false,
+        isEditStaff: false,
+        staffForm: { id: null, name: '', phone: '', password: '', password_repeat: '', role_id: '' },
+
+        roleModalOpen: false,
+        isEditRole: false,
+        roleForm: { id: null, name: '', description: '' },
+        rolePermissions: {},
+
+        courierModalOpen: false,
+        isEditCourier: false,
+        courierForm: { id: null, name: '', phone: '', password: '' },
+
+        deleteModalOpen: false,
+        deleteType: '',
+        deleteId: null,
+        deleteModalTitle: '',
+        deleteModalMessage: '',
+
+        showPassword: false,
+
+        init() {
+            this.initDefaultPermissions();
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        initDefaultPermissions() {
+            this.rolePermissions = {};
+            this.moduleChoices.forEach(m => {
+                this.rolePermissions[m.id] = { view: false, edit: false, delete: false };
+            });
+        },
+
+        switchTab(tab) {
+            this.activeTab = tab;
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tab);
+            window.history.replaceState({}, '', url);
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        get filteredStaff() {
+            if (!this.staffSearch.trim()) return this.staffList;
+            const q = this.staffSearch.toLowerCase();
+            return this.staffList.filter(s => s.name.toLowerCase().includes(q) || s.phone.includes(q) || s.role_name.toLowerCase().includes(q));
+        },
+
+        get filteredRoles() {
+            if (!this.roleSearch.trim()) return this.rolesList;
+            const q = this.roleSearch.toLowerCase();
+            return this.rolesList.filter(r => r.name.toLowerCase().includes(q));
+        },
+
+        generatePassword(target) {
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            let pass = "";
+            for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+            if (target === 'staff') {
+                this.staffForm.password = pass;
+                this.staffForm.password_repeat = pass;
+            } else {
+                this.courierForm.password = pass;
+            }
+            this.showPassword = true;
+        },
+
+        // --- STAFF ACTIONS ---
+        openAddStaffModal() {
+            this.isEditStaff = false;
+            this.staffForm = { id: null, name: '', phone: '+998 ', password: '', password_repeat: '', role_id: '' };
+            this.staffModalOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        openEditStaffModal(staff) {
+            this.isEditStaff = true;
+            this.staffForm = {
+                id: staff.id,
+                name: staff.name,
+                phone: staff.phone,
+                password: '',
+                password_repeat: '',
+                role_id: staff.role_id || ''
+            };
+            this.staffModalOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        async submitStaffForm() {
+            if (!this.staffForm.name.trim()) return alert("Iltimos, ismni kiriting");
+            if (!this.staffForm.phone.trim()) return alert("Iltimos, telefon raqamini kiriting");
+            if (!this.isEditStaff && (!this.staffForm.password || this.staffForm.password.length < 6)) {
+                return alert("Parol kamida 6 ta belgidan iborat bo'lishi kerak");
+            }
+            if (this.staffForm.password && this.staffForm.password !== this.staffForm.password_repeat) {
+                return alert("Kiritilgan parollar bir-biriga mos kelmadi");
+            }
+            if (!this.staffForm.role_id) return alert("Iltimos, rolni tanlang");
+
+            const fd = new FormData();
+            fd.append('action', this.isEditStaff ? 'update' : 'create');
+            if (this.isEditStaff) fd.append('staff_id', this.staffForm.id);
+            fd.append('name', this.staffForm.name);
+            fd.append('phone', this.staffForm.phone);
+            fd.append('password', this.staffForm.password);
+            fd.append('role_id', this.staffForm.role_id);
+
+            try {
+                const res = await fetch('/dashboard/api/staff-action/', {
                     method: 'POST',
-                    body: fd,
-                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    const row = document.getElementById(`staff-row-${id}`);
-                    if (row) row.remove();
-                    showToast("Xodim o'chirildi!");
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: fd
                 });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || "Xatolik yuz berdi");
+                }
+            } catch (e) {
+                alert("Tarmoq xatosi!");
+            }
+        },
+
+        async toggleStaffActive(staff) {
+            const fd = new FormData();
+            fd.append('action', 'toggle_active');
+            fd.append('staff_id', staff.id);
+            try {
+                const res = await fetch('/dashboard/api/staff-action/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: fd
+                });
+                const data = await res.json();
+                if (data.success) {
+                    staff.is_active = data.is_active;
+                }
+            } catch (e) {}
+        },
+
+        confirmDeleteStaff(staff) {
+            this.deleteType = 'staff';
+            this.deleteId = staff.id;
+            this.deleteModalTitle = "Bu xodimni o'chirib tashlaysizmi?";
+            this.deleteModalMessage = `"${staff.name}" xodimining tizimga kirish huquqlari bekor qilinadi.`;
+            this.deleteModalOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        // --- ROLE ACTIONS ---
+        openAddRoleModal() {
+            this.isEditRole = false;
+            this.roleForm = { id: null, name: '', description: '' };
+            this.initDefaultPermissions();
+            this.roleModalOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        openEditRoleModal(role) {
+            this.isEditRole = true;
+            this.roleForm = { id: role.id, name: role.name, description: role.description || '' };
+            this.initDefaultPermissions();
+            if (role.permissions) {
+                Object.keys(role.permissions).forEach(k => {
+                    if (this.rolePermissions[k]) {
+                        this.rolePermissions[k] = { ...role.permissions[k] };
+                    }
+                });
+            }
+            this.roleModalOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        toggleAllPermissions(val) {
+            this.moduleChoices.forEach(m => {
+                this.rolePermissions[m.id] = { view: val, edit: val, delete: val };
+            });
+        },
+
+        toggleColumn(col, val) {
+            this.moduleChoices.forEach(m => {
+                this.rolePermissions[m.id][col] = val;
+            });
+        },
+
+        async submitRoleForm() {
+            if (!this.roleForm.name.trim()) return alert("Iltimos, rol nomini kiriting");
+
+            const fd = new FormData();
+            fd.append('action', this.isEditRole ? 'update' : 'create');
+            if (this.isEditRole) fd.append('role_id', this.roleForm.id);
+            fd.append('name', this.roleForm.name);
+            fd.append('description', this.roleForm.description);
+            fd.append('permissions', JSON.stringify(this.rolePermissions));
+
+            try {
+                const res = await fetch('/dashboard/api/role-action/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: fd
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || "Xatolik yuz berdi");
+                }
+            } catch (e) {
+                alert("Tarmoq xatosi!");
+            }
+        },
+
+        async toggleRoleActive(role) {
+            const fd = new FormData();
+            fd.append('action', 'toggle_active');
+            fd.append('role_id', role.id);
+            try {
+                const res = await fetch('/dashboard/api/role-action/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: fd
+                });
+                const data = await res.json();
+                if (data.success) {
+                    role.is_active = data.is_active;
+                }
+            } catch (e) {}
+        },
+
+        confirmDeleteRole(role) {
+            this.deleteType = 'role';
+            this.deleteId = role.id;
+            this.deleteModalTitle = "Bu rolni o'chirib tashlaysizmi?";
+            this.deleteModalMessage = `"${role.name}" roli o'chiriladi.`;
+            this.deleteModalOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        // --- COURIER ACTIONS ---
+        openAddCourierModal() {
+            this.isEditCourier = false;
+            this.courierForm = { id: null, name: '', phone: '+998 ', password: '' };
+            this.courierModalOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        openEditCourierModal(courier) {
+            this.isEditCourier = true;
+            this.courierForm = { id: courier.id, name: courier.name, phone: courier.phone, password: '' };
+            this.courierModalOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        async submitCourierForm() {
+            if (!this.courierForm.name.trim()) return alert("Iltimos, kuryer ismini kiriting");
+            if (!this.courierForm.phone.trim()) return alert("Iltimos, telefon raqamini kiriting");
+            if (!this.isEditCourier && (!this.courierForm.password || this.courierForm.password.length < 6)) {
+                return alert("Parol kamida 6 ta belgi bo'lishi kerak");
+            }
+
+            const fd = new FormData();
+            fd.append('action', this.isEditCourier ? 'update' : 'create');
+            if (this.isEditCourier) fd.append('courier_id', this.courierForm.id);
+            fd.append('name', this.courierForm.name);
+            fd.append('phone', this.courierForm.phone);
+            fd.append('password', this.courierForm.password);
+
+            try {
+                const res = await fetch('/dashboard/api/courier-action/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: fd
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || "Xatolik yuz berdi");
+                }
+            } catch (e) {
+                alert("Tarmoq xatosi!");
+            }
+        },
+
+        async toggleCourierActive(courier) {
+            const fd = new FormData();
+            fd.append('action', 'toggle_active');
+            fd.append('courier_id', courier.id);
+            try {
+                const res = await fetch('/dashboard/api/courier-action/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: fd
+                });
+                const data = await res.json();
+                if (data.success) {
+                    courier.is_active = data.is_active;
+                }
+            } catch (e) {}
+        },
+
+        confirmDeleteCourier(courier) {
+            this.deleteType = 'courier';
+            this.deleteId = courier.id;
+            this.deleteModalTitle = "Bu kuryerni o'chirib tashlaysizmi?";
+            this.deleteModalMessage = `"${courier.name}" kuryerining hisobi o'chiriladi.`;
+            this.deleteModalOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        // --- EXECUTE DELETE ---
+        async executeDelete() {
+            const endpoint = this.deleteType === 'staff' 
+                ? '/dashboard/api/staff-action/' 
+                : (this.deleteType === 'role' ? '/dashboard/api/role-action/' : '/dashboard/api/courier-action/');
+            
+            const fd = new FormData();
+            fd.append('action', 'delete');
+            if (this.deleteType === 'staff') fd.append('staff_id', this.deleteId);
+            else if (this.deleteType === 'role') fd.append('role_id', this.deleteId);
+            else fd.append('courier_id', this.deleteId);
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: fd
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || "O'chirishda xatolik yuz berdi");
+                }
+            } catch (e) {
+                alert("Tarmoq xatosi!");
             }
         }
     }
+}
 </script>
 {% endblock %}

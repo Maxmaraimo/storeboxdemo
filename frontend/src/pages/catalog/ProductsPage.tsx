@@ -218,7 +218,7 @@ export const ProductsPage: React.FC = () => {
           className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
         >
           <Plus className="w-4 h-4" />
-          <span>Yangi mahsulot</span>
+          <span>{t("new_product") || "Yangi mahsulot"}</span>
         </button>
       </div>
 
@@ -270,7 +270,7 @@ export const ProductsPage: React.FC = () => {
                 <th className="py-3.5 px-4">{t("th_stock") || "Qoldiq"}</th>
                 <th className="py-3.5 px-4">{t("th_unit") || "Birligi"}</th>
                 <th className="py-3.5 px-4">{t("th_status_col") || "Holat"}</th>
-                <th className="py-3.5 px-4 text-right">Amallar</th>
+                <th className="py-3.5 px-4 text-right">{t("actions") || "Amallar"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -316,7 +316,7 @@ export const ProductsPage: React.FC = () => {
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-4 text-slate-500">{p.unit || "dona"}</td>
+                  <td className="py-3.5 px-4 text-slate-500">{t("unit_pcs") || p.unit || "dona"}</td>
 
                   <td className="py-3.5 px-4">
                     {p.stock === 0 ? (
@@ -340,19 +340,19 @@ export const ProductsPage: React.FC = () => {
                         type="button"
                         onClick={() => openEditModal(p)}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                        title="Tahrirlash"
+                        title={t("edit") || "Tahrirlash"}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => {
-                          if (confirm(`'${p.name_uz}' mahsulotini o'chirishni tasdiqlaysizmi?`)) {
+                          if (confirm(`'${p.name_uz || p.name_ru}' mahsulotini o'chirishni tasdiqlaysizmi?`)) {
                             deleteMutation.mutate(p.id);
                           }
                         }}
                         className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
-                        title="O'chirish"
+                        title={t("delete") || "O'chirish"}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -378,7 +378,7 @@ export const ProductsPage: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 my-8 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-slate-900">
-                {editingProduct ? "Mahsulotni tahrirlash" : "Yangi mahsulot qo'shish"}
+                {editingProduct ? (t("edit_product") || "Mahsulotni tahrirlash") : (t("new_product") || "Yangi mahsulot qo'shish")}
               </h3>
               <button
                 type="button"
@@ -398,28 +398,28 @@ export const ProductsPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto pr-1">
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Mahsulot nomi (O'zbekcha) *
+                  {t("product_name_uz") || "Mahsulot nomi (O'zbekcha) *"}
                 </label>
                 <input
                   type="text"
                   data-testid="product-name-uz-input"
                   value={formNameUz}
                   onChange={(e) => setFormNameUz(e.target.value)}
-                  placeholder="Masalan: Lavash klassik, iPhone 15 Pro"
+                  placeholder="Lavash, Burger, etc."
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Kategoriya
+                  {t("th_category") || "Kategoriya"}
                 </label>
                 <select
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value ? Number(e.target.value) : "")}
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 >
-                  <option value="">Tanlanmagan</option>
+                  <option value="">{t("not_selected") || "Tanlanmagan"}</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name_uz || c.name_ru}
@@ -430,26 +430,26 @@ export const ProductsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  O'lchov birligi
+                  {t("unit_label") || "O'lchov birligi"}
                 </label>
                 <select
                   value={formUnit}
                   onChange={(e) => setFormUnit(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 >
-                  <option value="dona">Dona (dona)</option>
-                  <option value="kg">Kilogramm (kg)</option>
-                  <option value="metr">Metr (m)</option>
-                  <option value="litr">Litr (l)</option>
-                  <option value="portsiya">Portsiya</option>
-                  <option value="pachka">Pachka</option>
-                  <option value="korobka">Korobka</option>
+                  <option value="dona">{t("unit_pcs") || "dona"}</option>
+                  <option value="kg">kg</option>
+                  <option value="metr">m</option>
+                  <option value="litr">l</option>
+                  <option value="portsiya">portion</option>
+                  <option value="pachka">pack</option>
+                  <option value="korobka">box</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Sotuv narxi (UZS) *
+                  {t("retail_price_label") || "Sotuv narxi (UZS) *"}
                 </label>
                 <input
                   type="number"
@@ -463,7 +463,7 @@ export const ProductsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Eski narxi (Chegirma uchun)
+                  {t("old_price_label") || "Eski narxi (Chegirma uchun)"}
                 </label>
                 <input
                   type="number"
@@ -476,7 +476,7 @@ export const ProductsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Tan narxi (Ombor hisobi uchun)
+                  {t("cost_price_label") || "Tan narxi (Ombor hisobi uchun)"}
                 </label>
                 <input
                   type="number"
@@ -489,7 +489,7 @@ export const ProductsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Mavjud qoldiq
+                  {t("stock_label") || "Mavjud qoldiq"}
                 </label>
                 <input
                   type="number"
@@ -502,7 +502,7 @@ export const ProductsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Shtrix-kod (Barcode)
+                  {t("barcode_label") || "Shtrix-kod (Barcode)"}
                 </label>
                 <input
                   type="text"
@@ -515,7 +515,7 @@ export const ProductsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  MXIK (IKPU) kodi
+                  {t("ikpu_label") || "MXIK (IKPU) kodi"}
                 </label>
                 <input
                   type="text"
@@ -530,8 +530,7 @@ export const ProductsPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
                     <ImageIcon className="w-3.5 h-3.5 text-brand" />
-                    <span>Mahsulot rasmi</span>
-                    <span className="text-[10px] text-slate-400 font-normal">(3:4 yoki 1:1 proporsiya tavsiya etiladi)</span>
+                    <span>{t("product_image_label") || "Mahsulot rasmi"}</span>
                   </label>
                   {formImage && (
                     <button
@@ -540,7 +539,7 @@ export const ProductsPage: React.FC = () => {
                       className="text-[11px] text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1 cursor-pointer"
                     >
                       <Trash2 className="w-3 h-3" />
-                      <span>Rasmni o'chirish</span>
+                      <span>{t("delete") || "Rasmni o'chirish"}</span>
                     </button>
                   )}
                 </div>
@@ -568,12 +567,6 @@ export const ProductsPage: React.FC = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-slate-800 truncate mb-1">
-                        {uploadingImage ? "Rasm yuklanmoqda..." : "Rasm tanlandi"}
-                      </div>
-                      <p className="text-[11px] text-slate-400 mb-2.5">
-                        Boshqa rasm yuklash uchun tugmani bosing yoki yangisini tanlang
-                      </p>
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
@@ -581,7 +574,7 @@ export const ProductsPage: React.FC = () => {
                         className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
                       >
                         <Upload className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Rasmni almashtirish</span>
+                        <span>{t("upload_image_hint") || "Rasmni almashtirish"}</span>
                       </button>
                     </div>
                   </div>
@@ -603,7 +596,7 @@ export const ProductsPage: React.FC = () => {
                     {uploadingImage ? (
                       <div className="py-2 flex flex-col items-center gap-2">
                         <Loader2 className="w-6 h-6 text-brand animate-spin" />
-                        <span className="text-xs font-bold text-slate-600">Rasm yuklanmoqda...</span>
+                        <span className="text-xs font-bold text-slate-600">{t("uploading") || "Rasm yuklanmoqda..."}</span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-1.5">
@@ -611,11 +604,8 @@ export const ProductsPage: React.FC = () => {
                           <Upload className="w-5 h-5" />
                         </div>
                         <div className="text-xs font-bold text-slate-800">
-                          Rasm yuklash uchun bosing yoki faylni bu yerga tashlang
+                          {t("upload_image_hint") || "Rasm yuklash uchun bosing yoki faylni bu yerga tashlang"}
                         </div>
-                        <p className="text-[11px] text-slate-400">
-                          PNG, JPG, WEBP formatlar (maks. 10MB)
-                        </p>
                       </div>
                     )}
                   </div>
@@ -624,13 +614,12 @@ export const ProductsPage: React.FC = () => {
 
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Mahsulot ta'rifi
+                  {t("description_label") || "Mahsulot ta'rifi"}
                 </label>
                 <textarea
                   rows={2}
                   value={formDescUz}
                   onChange={(e) => setFormDescUz(e.target.value)}
-                  placeholder="Tarkibi, xususiyatlari..."
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 />
               </div>
@@ -642,7 +631,7 @@ export const ProductsPage: React.FC = () => {
                 onClick={closeModal}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
               >
-                Bekor qilish
+                {t("cancel") || "Bekor qilish"}
               </button>
               <button
                 type="button"
@@ -651,7 +640,7 @@ export const ProductsPage: React.FC = () => {
                 disabled={saveMutation.isPending}
                 className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50"
               >
-                {saveMutation.isPending ? "Saqlanmoqda..." : "Saqlash"}
+                {saveMutation.isPending ? (t("saving") || "Saqlanmoqda...") : (t("save") || "Saqlash")}
               </button>
             </div>
           </div>

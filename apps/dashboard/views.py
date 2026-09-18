@@ -28,9 +28,14 @@ from apps.catalog.models import (
 from apps.catalog.yespos_client import YesPosClient
 from apps.orders.models import (
     Order, OrderItem, PromoCode, Customer, ChatMessage,
-    MarketingCampaign, MarketingBanner, StoreStaff
+    MarketingCampaign, MarketingBanner, StoreStaff, StoreRole,
+    RolePermission, MODULE_CHOICES
+)
+from apps.orders.permissions import (
+    ensure_default_roles_for_store, get_user_permissions, has_staff_permission
 )
 from apps.payments.models import StorePaymentSetting
+from apps.super_admin.models import TariffRequest
 from apps.telegram_bot.services import send_telegram_notification, test_bot_connection
 
 
@@ -43,13 +48,26 @@ def get_merchant_store(request):
         store = request.user.stores.filter(id=curr_id, is_active=True).first()
         if not store and request.user.is_superuser:
             store = Store.objects.filter(id=curr_id, is_active=True).first()
+        if not store:
+            staff = StoreStaff.objects.filter(user=request.user, store_id=curr_id, is_active=True).first()
+            if staff and staff.store.is_active:
+                store = staff.store
     if not store:
         store = request.user.stores.filter(is_active=True).first()
+    if not store:
+        staff = StoreStaff.objects.filter(user=request.user, is_active=True).select_related('store').first()
+        if staff and staff.store and staff.store.is_active:
+            store = staff.store
     if not store and request.user.is_superuser:
         store = Store.objects.filter(is_active=True).first()
     if store:
         request.session['merchant_current_store_id'] = store.id
         request.session['current_store_subdomain'] = store.subdomain
+        if not store.roles.exists():
+            try:
+                ensure_default_roles_for_store(store)
+            except Exception:
+                pass
     return store
 
 
@@ -464,7 +482,7 @@ def geo_reverse_api(request):
 # -----------------------------------------------------------------
 
 def register_view(request):
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and not request.GET.get('switch'):
         return redirect('dashboard:home')
 
     plan = request.GET.get('plan', '').strip().lower() or request.POST.get('plan', '').strip().lower()
@@ -630,7 +648,10 @@ def _safe_login_redirect(request):
 
 
 def login_view(request):
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and not request.GET.get('switch'):
+        courier_staff = StoreStaff.objects.filter(user=request.user, is_courier=True, is_active=True).first()
+        if courier_staff:
+            return redirect('dashboard:courier_panel')
         next_url = _safe_login_redirect(request)
         if next_url:
             return redirect(next_url)
@@ -668,11 +689,16 @@ def login_view(request):
 
         if user:
             login(request, user)
+            courier_staff = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).first()
+            if courier_staff:
+                return redirect('dashboard:courier_panel')
+
             next_url = _safe_login_redirect(request)
             if next_url:
                 return redirect(next_url)
             store = get_merchant_store(request)
-            if not user.stores.exists() and not (user.is_superuser and store):
+            staff = StoreStaff.objects.filter(user=user, is_active=True).first()
+            if not user.stores.exists() and not (user.is_superuser and store) and not staff:
                 return redirect('dashboard:onboarding')
             return redirect('dashboard:home')
         else:
@@ -1588,7 +1614,7 @@ def orders_list_view(request):
     if not store:
         return redirect('dashboard:onboarding')
 
-    orders = Order.objects.filter(store=store).prefetch_related('items', 'items__product', 'branch').order_by('-created_at')
+    orders = Order.objects.filter(store=store).select_related('courier', 'courier__user', 'branch').prefetch_related('items', 'items__product').order_by('-created_at')
     status_filter = request.GET.get('status', 'ALL')
 
     if status_filter == 'NEW':
@@ -1628,12 +1654,14 @@ def orders_list_view(request):
         'total_revenue': total_revenue,
     }
 
+    couriers = StoreStaff.objects.filter(store=store, is_courier=True, is_active=True)
     return render(request, 'dashboard/orders/orders_list.html', {
         'store': store,
         'orders': orders,
         'counts': counts,
         'current_status': status_filter,
-        'query': query
+        'query': query,
+        'couriers': couriers,
     })
 
 
@@ -1645,16 +1673,26 @@ def order_detail_view(request, order_id):
     if request.method == 'POST':
         new_status = request.POST.get('status')
         new_pay_status = request.POST.get('payment_status')
+        courier_id = request.POST.get('courier_id')
         if new_status in Order.OrderStatuses.values:
             order.status = new_status
         if new_pay_status in Order.PaymentStatuses.values:
             order.payment_status = new_pay_status
+        if courier_id is not None:
+            if courier_id == '' or courier_id == 'none':
+                order.courier = None
+            else:
+                courier = StoreStaff.objects.filter(id=courier_id, store=store, is_courier=True).first()
+                if courier:
+                    order.courier = courier
         order.save()
-        return redirect('dashboard:order_detail', order_id=order.id)
+        return redirect('dashboard:legacy_order_detail', order_id=order.id)
 
+    couriers = StoreStaff.objects.filter(store=store, is_courier=True, is_active=True)
     return render(request, 'dashboard/orders/order_detail.html', {
         'store': store,
         'order': order,
+        'couriers': couriers,
         'order_statuses': Order.OrderStatuses.choices,
         'payment_statuses': Order.PaymentStatuses.choices,
     })
@@ -1896,6 +1934,7 @@ def platforms_view(request):
                 ok, bot_res = get_bot_info(token)
                 if ok and isinstance(bot_res, dict):
                     detected_username = bot_res.get('username', '').lstrip('@')
+                    Store.objects.filter(telegram_bot_token=token).exclude(id=store.id).update(telegram_bot_token='')
                     store.telegram_bot_username = detected_username
                     store.telegram_bot_token = token
                     store.telegram_button_name = button_name or "Do'kon"
@@ -2108,50 +2147,120 @@ def settings_branches_view(request):
 @login_required
 def settings_staff_view(request):
     store = get_merchant_store(request)
-    staff_members = StoreStaff.objects.filter(store=store)
+    if not store:
+        return redirect('dashboard:home')
+
+    ensure_default_roles_for_store(store)
+
+    tab = request.GET.get('tab', 'staff')
+    if tab not in ['staff', 'roles', 'courier']:
+        tab = 'staff'
+
+    # Staff list (excluding couriers)
+    staff_members = StoreStaff.objects.filter(store=store, is_courier=False).select_related('store_role', 'user').order_by('-is_active', 'name')
+
+    # Roles list with preloaded permissions
+    roles = StoreRole.objects.filter(store=store).prefetch_related('permissions').order_by('name')
+    roles_data = []
+    for r in roles:
+        perms_dict = {p.module: {'view': p.can_view, 'edit': p.can_edit, 'delete': p.can_delete} for p in r.permissions.all()}
+        roles_data.append({
+            'id': r.id,
+            'name': r.name,
+            'description': r.description,
+            'is_system': r.is_system,
+            'is_active': r.is_active,
+            'created_at': r.created_at.strftime('%d.%m.%Y, %H:%M') if r.created_at else '',
+            'updated_at': r.updated_at.strftime('%d.%m.%Y, %H:%M') if r.updated_at else '',
+            'permissions': perms_dict,
+        })
+
+    # Couriers list
+    couriers = StoreStaff.objects.filter(store=store, is_courier=True).select_related('user').order_by('-is_active', 'name')
+
     return render(request, 'dashboard/settings/staff.html', {
         'store': store,
+        'active_tab': tab,
         'staff_members': staff_members,
-        'roles': StoreStaff.Roles.choices
+        'roles': roles,
+        'roles_json': json.dumps(roles_data),
+        'couriers': couriers,
+        'module_choices': MODULE_CHOICES,
+        'module_choices_json': json.dumps([{'id': m[0], 'name': m[1]} for m in MODULE_CHOICES]),
     })
 
 
 @login_required
 def settings_tariffs_view(request):
     store = get_merchant_store(request)
+    if not store:
+        return redirect('dashboard:home')
     msg = None
+    msg_type = 'success'
     if request.method == 'POST':
-        plan = request.POST.get('plan', 'basic')
+        plan = request.POST.get('plan', 'STANDARD').upper()
+        if plan == 'BASIC':
+            plan = 'STANDARD'
         months = int(request.POST.get('months', 1))
-        payment_method = request.POST.get('payment_method', 'balance')
+        payment_method = request.POST.get('payment_method', 'BALANCE').upper()
 
-        rates = {'start': 300000, 'basic': 500000, 'pro': 900000}
-        base_rate = rates.get(plan, 500000)
-        total = base_rate * months
-        if months == 6:
-            total = int(total * 0.90)
-        elif months == 12:
-            total = int(total * 0.80)
+        calc = store.calculate_extension(plan=plan, months=months)
+        total = Decimal(str(calc['amount']))
 
         mb, _ = MerchantBalance.objects.get_or_create(store=store)
-        if payment_method == 'balance':
+        if payment_method == 'BALANCE':
             if mb.balance >= total:
                 mb.balance -= total
-                mb.trial_days_left += months * 30
-                mb.save()
-                msg = f"{plan.capitalize()} tarifi {months} oyga muvaffaqiyatli faollashtirildi!"
+                mb.save(update_fields=['balance', 'updated_at'])
+                applied = store.apply_tariff(
+                    plan=plan,
+                    months=months,
+                    amount=total,
+                    payment_status='PAID',
+                    notes=f"To'lov do'kon balansidan amalga oshirildi ({total:,.0f} UZS)",
+                    admin_user=request.user
+                )
+                TariffRequest.objects.create(
+                    store=store,
+                    merchant=request.user,
+                    requested_plan=plan,
+                    period_months=months,
+                    calculated_days=applied['days'],
+                    amount=total,
+                    payment_method=TariffRequest.PaymentMethods.BALANCE,
+                    notes="To'lov balansdan yechildi",
+                    admin_notes="Avtomatik tasdiqlandi (Balans)",
+                    status=TariffRequest.Statuses.APPROVED,
+                    processed_by=request.user,
+                    processed_at=timezone.now()
+                )
+                msg = f"{applied['plan_display']} tarifi {months} oyga muvaffaqiyatli faollashtirildi! Yangi muddat: {applied['new_expiry']}"
             else:
-                msg = f"Balansda mablag' yetarli emas (kerak: {total:,} UZS, balans: {mb.balance:,} UZS)"
+                msg = f"Balansda mablag' yetarli emas (kerak: {total:,.0f} UZS, sizda: {mb.balance:,.0f} UZS)"
+                msg_type = 'error'
         else:
-            mb.trial_days_left += months * 30
-            mb.save()
-            msg = f"{payment_method.capitalize()} orqali {plan.capitalize()} tarifi {months} oyga to'landi va faollashtirildi!"
+            pm_choice = getattr(TariffRequest.PaymentMethods, payment_method, TariffRequest.PaymentMethods.BANK_TRANSFER)
+            TariffRequest.objects.create(
+                store=store,
+                merchant=request.user,
+                requested_plan=plan,
+                period_months=months,
+                calculated_days=calc['days'],
+                amount=total,
+                payment_method=pm_choice,
+                notes=request.POST.get('notes', ''),
+                status=TariffRequest.Statuses.PENDING
+            )
+            msg = f"{payment_method.capitalize()} orqali {calc['plan_display']} tarifi uchun ariza yuborildi! Tez orada faollashtiriladi."
 
     merchant_balance, _ = MerchantBalance.objects.get_or_create(store=store)
+    pending_req = store.tariff_requests.filter(status=TariffRequest.Statuses.PENDING).order_by('-created_at').first()
     return render(request, 'dashboard/settings/tariffs.html', {
         'store': store,
         'msg': msg,
-        'merchant_balance': merchant_balance
+        'msg_type': msg_type,
+        'merchant_balance': merchant_balance,
+        'pending_request': pending_req
     })
 
 
@@ -2313,6 +2422,9 @@ def order_detail_api(request, order_id):
         'source': order.source,
         'source_display': order.get_source_display(),
         'branch_name': order.branch.name if order.branch else None,
+        'courier_id': order.courier.id if order.courier else None,
+        'courier_name': order.courier.name if order.courier else None,
+        'courier_phone': order.courier.phone if order.courier else None,
         'items': items_data,
         'items_count': len(items_data),
         'full_detail_url': f"/dashboard/orders/{order.id}/",
@@ -2384,18 +2496,505 @@ def staff_action_api(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=400)
     store = get_merchant_store(request)
+    if not store:
+        return JsonResponse({'error': 'Store not found'}, status=404)
+
     action = request.POST.get('action')
+
     if action == 'create':
         name = request.POST.get('name', '').strip()
         phone = request.POST.get('phone', '').strip()
-        role = request.POST.get('role', StoreStaff.Roles.MANAGER)
-        s = StoreStaff.objects.create(store=store, name=name, phone=phone, role=role)
-        return JsonResponse({'success': True, 'staff_id': s.id, 'name': s.name})
+        password = request.POST.get('password', '').strip()
+        role_id = request.POST.get('role_id')
+
+        if not name or len(name) < 2:
+            return JsonResponse({'error': "Xodim ismini to'liq kiriting"}, status=400)
+
+        clean_digits = ''.join(c for c in phone if c.isdigit())
+        if len(clean_digits) < 9:
+            return JsonResponse({'error': "Telefon raqami noto'g'ri"}, status=400)
+        formatted_phone = f"+{clean_digits}" if not phone.startswith('+') else phone
+
+        if not password or len(password) < 6:
+            return JsonResponse({'error': "Parol kamida 6 ta belgidan iborat bo'lishi kerak"}, status=400)
+
+        # Create or update user
+        username = clean_digits
+        user = User.objects.filter(username=username).first() or User.objects.filter(phone=formatted_phone).first()
+        if not user:
+            user = User.objects.create_user(
+                username=username,
+                phone=formatted_phone,
+                password=password,
+                first_name=name,
+                role=User.Roles.MERCHANT
+            )
+        else:
+            user.set_password(password)
+            user.first_name = name
+            user.save()
+
+        store_role = None
+        if role_id:
+            store_role = StoreRole.objects.filter(store=store, id=role_id).first()
+
+        staff = StoreStaff.objects.create(
+            store=store,
+            user=user,
+            name=name,
+            phone=formatted_phone,
+            store_role=store_role,
+            role=store_role.name if store_role else 'MANAGER',
+            is_courier=False,
+            is_active=True
+        )
+        return JsonResponse({
+            'success': True,
+            'staff': {
+                'id': staff.id,
+                'name': staff.name,
+                'phone': staff.phone,
+                'role_id': staff.store_role_id,
+                'role_name': staff.store_role.name if staff.store_role else staff.role,
+                'is_active': staff.is_active,
+                'created_at': staff.created_at.strftime('%d.%m.%Y, %H:%M')
+            }
+        })
+
+    elif action == 'update':
+        staff_id = request.POST.get('staff_id')
+        staff = get_object_or_404(StoreStaff, id=staff_id, store=store)
+        name = request.POST.get('name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '').strip()
+        role_id = request.POST.get('role_id')
+
+        if name:
+            staff.name = name
+        if phone:
+            clean_digits = ''.join(c for c in phone if c.isdigit())
+            staff.phone = f"+{clean_digits}" if not phone.startswith('+') else phone
+        if role_id:
+            store_role = StoreRole.objects.filter(store=store, id=role_id).first()
+            if store_role:
+                staff.store_role = store_role
+                staff.role = store_role.name
+        staff.save()
+
+        if staff.user:
+            if name:
+                staff.user.first_name = name
+            if phone:
+                staff.user.phone = staff.phone
+            if password and len(password) >= 6:
+                staff.user.set_password(password)
+            staff.user.save()
+
+        return JsonResponse({
+            'success': True,
+            'staff': {
+                'id': staff.id,
+                'name': staff.name,
+                'phone': staff.phone,
+                'role_id': staff.store_role_id,
+                'role_name': staff.store_role.name if staff.store_role else staff.role,
+                'is_active': staff.is_active,
+            }
+        })
+
+    elif action == 'toggle_active':
+        staff_id = request.POST.get('staff_id')
+        staff = get_object_or_404(StoreStaff, id=staff_id, store=store)
+        staff.is_active = not staff.is_active
+        staff.save()
+        if staff.user:
+            staff.user.is_active = staff.is_active
+            staff.user.save()
+        return JsonResponse({'success': True, 'is_active': staff.is_active})
+
     elif action == 'delete':
-        s_id = request.POST.get('staff_id')
-        StoreStaff.objects.filter(id=s_id, store=store).delete()
+        staff_id = request.POST.get('staff_id')
+        StoreStaff.objects.filter(id=staff_id, store=store).delete()
         return JsonResponse({'success': True})
+
     return JsonResponse({'error': 'Unknown action'}, status=400)
+
+
+@login_required
+def role_action_api(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    store = get_merchant_store(request)
+    if not store:
+        return JsonResponse({'error': 'Store not found'}, status=404)
+
+    action = request.POST.get('action')
+
+    if action == 'create':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        if not name:
+            return JsonResponse({'error': "Rol nomi kiritilishi shart"}, status=400)
+
+        if StoreRole.objects.filter(store=store, name__iexact=name).exists():
+            return JsonResponse({'error': f"'{name}' nomli rol allaqachon mavjud"}, status=400)
+
+        role = StoreRole.objects.create(
+            store=store,
+            name=name,
+            description=description,
+            is_system=False,
+            is_active=True
+        )
+
+        raw_perms = request.POST.get('permissions')
+        perms_map = {}
+        if raw_perms:
+            try:
+                perms_map = json.loads(raw_perms)
+            except Exception:
+                pass
+
+        for mod_key, _ in MODULE_CHOICES:
+            mod_perm = perms_map.get(mod_key, {})
+            RolePermission.objects.create(
+                role=role,
+                module=mod_key,
+                can_view=bool(mod_perm.get('view', mod_perm.get('can_view', False))),
+                can_edit=bool(mod_perm.get('edit', mod_perm.get('can_edit', False))),
+                can_delete=bool(mod_perm.get('delete', mod_perm.get('can_delete', False)))
+            )
+
+        perms_dict = {p.module: {'view': p.can_view, 'edit': p.can_edit, 'delete': p.can_delete} for p in role.permissions.all()}
+        return JsonResponse({
+            'success': True,
+            'role': {
+                'id': role.id,
+                'name': role.name,
+                'description': role.description,
+                'is_system': role.is_system,
+                'is_active': role.is_active,
+                'created_at': role.created_at.strftime('%d.%m.%Y, %H:%M'),
+                'permissions': perms_dict
+            }
+        })
+
+    elif action == 'update':
+        role_id = request.POST.get('role_id')
+        role = get_object_or_404(StoreRole, id=role_id, store=store)
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        if name:
+            role.name = name
+        role.description = description
+        role.save()
+
+        raw_perms = request.POST.get('permissions')
+        if raw_perms:
+            try:
+                perms_map = json.loads(raw_perms)
+                for mod_key, _ in MODULE_CHOICES:
+                    mod_perm = perms_map.get(mod_key, {})
+                    RolePermission.objects.update_or_create(
+                        role=role,
+                        module=mod_key,
+                        defaults={
+                            'can_view': bool(mod_perm.get('view', mod_perm.get('can_view', False))),
+                            'can_edit': bool(mod_perm.get('edit', mod_perm.get('can_edit', False))),
+                            'can_delete': bool(mod_perm.get('delete', mod_perm.get('can_delete', False)))
+                        }
+                    )
+            except Exception:
+                pass
+
+        perms_dict = {p.module: {'view': p.can_view, 'edit': p.can_edit, 'delete': p.can_delete} for p in role.permissions.all()}
+        return JsonResponse({
+            'success': True,
+            'role': {
+                'id': role.id,
+                'name': role.name,
+                'description': role.description,
+                'is_system': role.is_system,
+                'is_active': role.is_active,
+                'created_at': role.created_at.strftime('%d.%m.%Y, %H:%M'),
+                'updated_at': role.updated_at.strftime('%d.%m.%Y, %H:%M'),
+                'permissions': perms_dict,
+            }
+        })
+
+    elif action == 'toggle_active':
+        role_id = request.POST.get('role_id')
+        role = get_object_or_404(StoreRole, id=role_id, store=store)
+        role.is_active = not role.is_active
+        role.save()
+        return JsonResponse({'success': True, 'is_active': role.is_active})
+
+    elif action == 'delete':
+        role_id = request.POST.get('role_id')
+        role = get_object_or_404(StoreRole, id=role_id, store=store)
+        if role.is_system or role.name == 'Admin':
+            return JsonResponse({'error': "Tizim asosiy rolini o'chirib bo'lmaydi"}, status=400)
+        role.delete()
+        return JsonResponse({'success': True})
+
+    elif action == 'get':
+        role_id = request.POST.get('role_id') or request.GET.get('role_id')
+        role = get_object_or_404(StoreRole, id=role_id, store=store)
+        perms_dict = {p.module: {'view': p.can_view, 'edit': p.can_edit, 'delete': p.can_delete} for p in role.permissions.all()}
+        return JsonResponse({
+            'success': True,
+            'role': {
+                'id': role.id,
+                'name': role.name,
+                'description': role.description,
+                'is_system': role.is_system,
+                'is_active': role.is_active,
+                'permissions': perms_dict,
+            }
+        })
+
+    return JsonResponse({'error': 'Unknown action'}, status=400)
+
+
+@login_required
+def courier_action_api(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    store = get_merchant_store(request)
+    if not store:
+        return JsonResponse({'error': 'Store not found'}, status=404)
+
+    action = request.POST.get('action')
+
+    if action == 'create':
+        name = request.POST.get('name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '').strip()
+
+        if not name or len(name) < 2:
+            return JsonResponse({'error': "Kuryer ismini to'liq kiriting"}, status=400)
+
+        clean_digits = ''.join(c for c in phone if c.isdigit())
+        if len(clean_digits) < 9:
+            return JsonResponse({'error': "Telefon raqami noto'g'ri"}, status=400)
+        formatted_phone = f"+{clean_digits}" if not phone.startswith('+') else phone
+
+        if not password or len(password) < 6:
+            return JsonResponse({'error': "Parol kamida 6 ta belgidan iborat bo'lishi kerak"}, status=400)
+
+        username = clean_digits
+        user = User.objects.filter(username=username).first() or User.objects.filter(phone=formatted_phone).first()
+        if not user:
+            user = User.objects.create_user(
+                username=username,
+                phone=formatted_phone,
+                password=password,
+                first_name=name,
+                role=User.Roles.MERCHANT
+            )
+        else:
+            user.set_password(password)
+            user.first_name = name
+            user.save()
+
+        courier = StoreStaff.objects.create(
+            store=store,
+            user=user,
+            name=name,
+            phone=formatted_phone,
+            role='COURIER',
+            is_courier=True,
+            is_active=True
+        )
+        return JsonResponse({
+            'success': True,
+            'courier': {
+                'id': courier.id,
+                'name': courier.name,
+                'phone': courier.phone,
+                'is_active': courier.is_active,
+                'created_at': courier.created_at.strftime('%d.%m.%Y, %H:%M')
+            }
+        })
+
+    elif action == 'update':
+        courier_id = request.POST.get('courier_id')
+        courier = get_object_or_404(StoreStaff, id=courier_id, store=store, is_courier=True)
+        name = request.POST.get('name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '').strip()
+
+        if name:
+            courier.name = name
+        if phone:
+            clean_digits = ''.join(c for c in phone if c.isdigit())
+            courier.phone = f"+{clean_digits}" if not phone.startswith('+') else phone
+        courier.save()
+
+        if courier.user:
+            if name:
+                courier.user.first_name = name
+            if phone:
+                courier.user.phone = courier.phone
+            if password and len(password) >= 6:
+                courier.user.set_password(password)
+            courier.user.save()
+
+        return JsonResponse({
+            'success': True,
+            'courier': {
+                'id': courier.id,
+                'name': courier.name,
+                'phone': courier.phone,
+                'is_active': courier.is_active,
+            }
+        })
+
+    elif action == 'toggle_active':
+        courier_id = request.POST.get('courier_id')
+        courier = get_object_or_404(StoreStaff, id=courier_id, store=store, is_courier=True)
+        courier.is_active = not courier.is_active
+        courier.save()
+        if courier.user:
+            courier.user.is_active = courier.is_active
+            courier.user.save()
+        return JsonResponse({'success': True, 'is_active': courier.is_active})
+
+    elif action == 'delete':
+        courier_id = request.POST.get('courier_id')
+        StoreStaff.objects.filter(id=courier_id, store=store, is_courier=True).delete()
+        return JsonResponse({'success': True})
+
+    return JsonResponse({'error': 'Unknown action'}, status=400)
+
+
+@login_required
+def order_assign_courier_api(request):
+    """
+    Merchant assigns or unassigns an order to a courier.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    store = get_merchant_store(request)
+    if not store:
+        return JsonResponse({'error': 'Store not found'}, status=404)
+
+    order_id = request.POST.get('order_id')
+    courier_id = request.POST.get('courier_id')
+
+    order = get_object_or_404(Order, id=order_id, store=store)
+    if courier_id:
+        courier = get_object_or_404(StoreStaff, id=courier_id, store=store, is_courier=True)
+        order.courier = courier
+        if order.status == Order.OrderStatuses.NEW:
+            order.status = Order.OrderStatuses.PROCESSING
+        order.save(update_fields=['courier', 'status', 'updated_at'])
+        return JsonResponse({
+            'success': True,
+            'order_id': order.id,
+            'courier': {
+                'id': courier.id,
+                'name': courier.name,
+                'phone': courier.phone,
+            },
+            'courier_name': courier.name,
+            'courier_phone': courier.phone,
+            'status': order.status,
+            'message': f"Kuryer ({courier.name}) biriktirildi"
+        })
+    else:
+        order.courier = None
+        order.save(update_fields=['courier', 'updated_at'])
+        return JsonResponse({
+            'success': True,
+            'order_id': order.id,
+            'courier': None,
+            'courier_name': None,
+            'message': "Kuryer biriktiruvi bekor qilindi"
+        })
+
+
+@login_required
+def courier_panel_view(request):
+    """
+    Dedicated Mobile-First Courier Portal.
+    """
+    courier = StoreStaff.objects.filter(user=request.user, is_courier=True, is_active=True).first()
+    store = None
+    if courier:
+        store = courier.store
+    else:
+        store = get_merchant_store(request)
+        if store:
+            courier = StoreStaff.objects.filter(store=store, is_courier=True).first()
+
+    if not store:
+        return redirect('dashboard:home')
+
+    active_tab = request.GET.get('tab', 'active')
+
+    orders_qs = Order.objects.filter(store=store).select_related('customer', 'courier').prefetch_related('items')
+    if courier:
+        orders_qs = orders_qs.filter(courier=courier)
+
+    pending_orders = orders_qs.filter(status__in=[Order.OrderStatuses.NEW, Order.OrderStatuses.PROCESSING, Order.OrderStatuses.READY]).order_by('-created_at')
+    delivering_orders = orders_qs.filter(status=Order.OrderStatuses.IN_DELIVERY).order_by('-updated_at')
+    completed_orders = orders_qs.filter(status__in=[Order.OrderStatuses.COMPLETED, Order.OrderStatuses.CANCELLED]).order_by('-updated_at')[:50]
+
+    return render(request, 'courier/dashboard.html', {
+        'store': store,
+        'courier': courier,
+        'active_tab': active_tab,
+        'pending_orders': pending_orders,
+        'delivering_orders': delivering_orders,
+        'completed_orders': completed_orders,
+        'pending_count': pending_orders.count(),
+        'delivering_count': delivering_orders.count(),
+        'completed_count': completed_orders.count(),
+    })
+
+
+@login_required
+def courier_update_order_api(request):
+    """
+    Courier updates status of their assigned order.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+
+    order_id = request.POST.get('order_id')
+    new_status = request.POST.get('status')
+    reason = request.POST.get('reason', '')
+
+    courier = StoreStaff.objects.filter(user=request.user, is_courier=True, is_active=True).first()
+    if courier:
+        order = get_object_or_404(Order, id=order_id, courier=courier)
+    else:
+        store = get_merchant_store(request)
+        order = get_object_or_404(Order, id=order_id, store=store)
+
+    if new_status == 'IN_DELIVERY':
+        order.status = Order.OrderStatuses.IN_DELIVERY
+        order.save(update_fields=['status', 'updated_at'])
+    elif new_status == 'COMPLETED':
+        order.status = Order.OrderStatuses.COMPLETED
+        if order.payment_status != Order.PaymentStatuses.PAID:
+            order.payment_status = Order.PaymentStatuses.PAID
+        order.save(update_fields=['status', 'payment_status', 'updated_at'])
+    elif new_status == 'CANCELLED':
+        order.status = Order.OrderStatuses.CANCELLED
+        if reason:
+            order.notes = f"{order.notes}\n[Kuryer bekor qildi: {reason}]".strip()
+        order.save(update_fields=['status', 'notes', 'updated_at'])
+    else:
+        return JsonResponse({'error': 'Invalid status'}, status=400)
+
+    return JsonResponse({
+        'success': True,
+        'order_id': order.id,
+        'status': order.status,
+        'payment_status': order.payment_status
+    })
 
 
 @login_required

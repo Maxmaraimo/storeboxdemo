@@ -39,11 +39,14 @@ interface QrSettings {
 }
 
 export const QrCatalogPage: React.FC = () => {
-  const { store } = useAuth();
+  const { store, t, lang: language } = useAuth();
   const queryClient = useQueryClient();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const defaultMain = language === "ru" ? "Онлайн заказ" : language === "en" ? "Online Order" : "Online buyurtma";
+  const defaultSub = language === "ru" ? "Отсканируйте QR-код, чтобы посмотреть меню" : language === "en" ? "Scan QR code to view menu" : "Menyuni ko'rish uchun QR kodni skanerlang";
 
   // Settings State
   const [paperSize, setPaperSize] = useState("A5");
@@ -52,11 +55,11 @@ export const QrCatalogPage: React.FC = () => {
   const [isCustomBg, setIsCustomBg] = useState(false);
   const [isCustomQr, setIsCustomQr] = useState(false);
 
-  const [mainText, setMainText] = useState("Online buyurtma");
+  const [mainText, setMainText] = useState(defaultMain);
   const [mainTextSize, setMainTextSize] = useState(24);
   const [mainTextColor, setMainTextColor] = useState("#0F172A");
 
-  const [subText, setSubText] = useState("Menyuni ko'rish uchun QR kodni skanerlang");
+  const [subText, setSubText] = useState(defaultSub);
   const [subTextSize, setSubTextSize] = useState(13);
   const [subTextColor, setSubTextColor] = useState("#64748B");
 
@@ -96,7 +99,7 @@ export const QrCatalogPage: React.FC = () => {
   const { data: qrData, isLoading } = useQuery<QrSettings>({
     queryKey: ["qr-catalog-settings"],
     queryFn: async () => {
-      const res = await api.get("/platforms/qr/");
+      const res = await api.get("/design/qr-stand/");
       return res.data;
     },
   });
@@ -106,17 +109,19 @@ export const QrCatalogPage: React.FC = () => {
       setPaperSize(qrData.qr_paper_size || "A5");
       setBgColor(qrData.qr_bg_color || "#FFFFFF");
       setQrColor(qrData.qr_code_color || "#0F172A");
-      setMainText(qrData.qr_main_text || "Online buyurtma");
+      const isDefMain = !qrData.qr_main_text || qrData.qr_main_text === "Online buyurtma" || qrData.qr_main_text === "Онлайн заказ" || qrData.qr_main_text === "Online Order";
+      setMainText(isDefMain ? defaultMain : qrData.qr_main_text);
       setMainTextSize(qrData.qr_main_text_size || 24);
       setMainTextColor(qrData.qr_main_text_color || "#0F172A");
-      setSubText(qrData.qr_sub_text || "Menyuni ko'rish uchun QR kodni skanerlang");
+      const isDefSub = !qrData.qr_sub_text || qrData.qr_sub_text.includes("QR kod") || qrData.qr_sub_text.includes("QR-код") || qrData.qr_sub_text.includes("QR code");
+      setSubText(isDefSub ? defaultSub : qrData.qr_sub_text);
       setSubTextSize(qrData.qr_sub_text_size || 13);
       setSubTextColor(qrData.qr_sub_text_color || "#64748B");
       if (qrData.logo_url) {
         setLogoUrl(qrData.logo_url);
       }
     }
-  }, [qrData]);
+  }, [qrData, language]);
 
   // 2. Load QRious library from CDN dynamically
   useEffect(() => {
@@ -251,10 +256,10 @@ export const QrCatalogPage: React.FC = () => {
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
             <QrCode className="w-6 h-6 text-brand" />
-            <span>Stollar uchun QR Katalog Generator</span>
+            <span>{t("qr_generator_title") || "Stollar uchun QR Katalog Generator"}</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Restoran, kafe yoki do'kon stollari uchun bosma dizaynerlik QR-teykertlari (A5 / A6) yarating va chop eting.
+            {t("qr_generator_subtitle") || "Restoran, kafe yoki do'kon stollari uchun bosma dizaynerlik QR-teykertlari (A5 / A6) yarating va chop eting."}
           </p>
         </div>
 
@@ -265,7 +270,7 @@ export const QrCatalogPage: React.FC = () => {
             className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Download className="w-4 h-4" />
-            <span>PNG yuklash</span>
+            <span>{t("qr_download_png")}</span>
           </button>
           <button
             type="button"
@@ -273,7 +278,7 @@ export const QrCatalogPage: React.FC = () => {
             className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
           >
             <Printer className="w-4 h-4" />
-            <span>Chop etish (Print)</span>
+            <span>{t("qr_print")}</span>
           </button>
         </div>
       </div>
@@ -303,7 +308,7 @@ export const QrCatalogPage: React.FC = () => {
           <form onSubmit={handleSave} className="space-y-6">
             {/* 1. Paper Size */}
             <div>
-              <label className="block text-xs font-black text-slate-800 mb-2">Banner hajmi:</label>
+              <label className="block text-xs font-black text-slate-800 mb-2">{t("qr_banner_size")}</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -315,7 +320,7 @@ export const QrCatalogPage: React.FC = () => {
                   }`}
                 >
                   <FileText className="w-4 h-4" />
-                  <span>A5 qog'oz (148 × 210 mm)</span>
+                  <span>{t("qr_paper_a5")}</span>
                 </button>
                 <button
                   type="button"
@@ -327,7 +332,7 @@ export const QrCatalogPage: React.FC = () => {
                   }`}
                 >
                   <File className="w-4 h-4" />
-                  <span>A6 qog'oz (105 × 148 mm)</span>
+                  <span>{t("qr_paper_a6")}</span>
                 </button>
               </div>
             </div>
@@ -335,7 +340,7 @@ export const QrCatalogPage: React.FC = () => {
             {/* 2. Background Color (matching robosell.uz) */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-black text-slate-800">Fon rangi:</label>
+                <label className="block text-xs font-black text-slate-800">{t("qr_bg_color")}</label>
                 <div className="flex items-center gap-2">
                   <label className="flex items-center gap-1.5 text-xs text-slate-600 font-bold cursor-pointer">
                     <input
@@ -344,7 +349,7 @@ export const QrCatalogPage: React.FC = () => {
                       onChange={(e) => setIsCustomBg(e.target.checked)}
                       className="rounded border-slate-300 text-brand focus:ring-brand"
                     />
-                    <span>Maxsus</span>
+                    <span>{t("qr_custom")}</span>
                   </label>
                   {isCustomBg && (
                     <div className="flex items-center gap-1.5">
@@ -382,7 +387,7 @@ export const QrCatalogPage: React.FC = () => {
             {/* 3. QR Code Color (matching robosell.uz) */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-black text-slate-800">QR kod rangi:</label>
+                <label className="block text-xs font-black text-slate-800">{t("qr_code_color")}</label>
                 <div className="flex items-center gap-2">
                   <label className="flex items-center gap-1.5 text-xs text-slate-600 font-bold cursor-pointer">
                     <input
@@ -391,7 +396,7 @@ export const QrCatalogPage: React.FC = () => {
                       onChange={(e) => setIsCustomQr(e.target.checked)}
                       className="rounded border-slate-300 text-brand focus:ring-brand"
                     />
-                    <span>Maxsus</span>
+                    <span>{t("qr_custom")}</span>
                   </label>
                   {isCustomQr && (
                     <div className="flex items-center gap-1.5">
@@ -429,17 +434,17 @@ export const QrCatalogPage: React.FC = () => {
             {/* 4. Main Text & Size */}
             <div className="grid grid-cols-12 gap-3 items-end">
               <div className="col-span-8">
-                <label className="block text-xs font-black text-slate-800 mb-1">Asosiy matn:</label>
+                <label className="block text-xs font-black text-slate-800 mb-1">{t("qr_main_text_label")}</label>
                 <input
                   type="text"
                   value={mainText}
                   onChange={(e) => setMainText(e.target.value)}
-                  placeholder="Masalan: Online buyurtma"
+                  placeholder={defaultMain}
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand"
                 />
               </div>
               <div className="col-span-4">
-                <label className="block text-xs font-black text-slate-800 mb-1">Matn hajmi:</label>
+                <label className="block text-xs font-black text-slate-800 mb-1">{t("qr_font_size_label")}</label>
                 <input
                   type="number"
                   value={mainTextSize}
@@ -452,17 +457,17 @@ export const QrCatalogPage: React.FC = () => {
             {/* 5. Sub Text & Size */}
             <div className="grid grid-cols-12 gap-3 items-end">
               <div className="col-span-8">
-                <label className="block text-xs font-black text-slate-800 mb-1">Qo'shimcha tavsif:</label>
+                <label className="block text-xs font-black text-slate-800 mb-1">{t("qr_sub_text_label")}</label>
                 <input
                   type="text"
                   value={subText}
                   onChange={(e) => setSubText(e.target.value)}
-                  placeholder="Masalan: Menyuni ko'rish uchun QR kodni skanerlang"
+                  placeholder={defaultSub}
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-brand"
                 />
               </div>
               <div className="col-span-4">
-                <label className="block text-xs font-black text-slate-800 mb-1">Matn hajmi:</label>
+                <label className="block text-xs font-black text-slate-800 mb-1">{t("qr_font_size_label")}</label>
                 <input
                   type="number"
                   value={subTextSize}
@@ -475,7 +480,7 @@ export const QrCatalogPage: React.FC = () => {
             {/* 6. Logo Section (matching robosell.uz) */}
             <div className="border-t border-slate-100 pt-4 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-black text-slate-800">Logotip:</label>
+                <label className="block text-xs font-black text-slate-800">{t("qr_logo_label")}</label>
                 <label className="flex items-center gap-1.5 text-xs text-slate-600 font-bold cursor-pointer">
                   <input
                     type="checkbox"
@@ -483,7 +488,7 @@ export const QrCatalogPage: React.FC = () => {
                     onChange={(e) => setShowLogo(e.target.checked)}
                     className="rounded border-slate-300 text-brand focus:ring-brand"
                   />
-                  <span>Teykertda ko'rsatish</span>
+                  <span>{t("qr_show_on_stand")}</span>
                 </label>
               </div>
 
@@ -499,10 +504,10 @@ export const QrCatalogPage: React.FC = () => {
                     </div>
                     <div>
                       <div className="text-xs font-bold text-slate-900">
-                        {logoUrl ? "Logotip yuklangan" : "Logotip yuklanmagan"}
+                        {logoUrl ? t("qr_logo_uploaded") : t("qr_logo_not_uploaded")}
                       </div>
                       <div className="text-[10px] text-slate-400">
-                        JPEG, PNG yoki WEBP formatidagi rasmni yuklang. Maks: 10 MB
+                        {t("qr_logo_upload_hint")}
                       </div>
                     </div>
                   </div>
@@ -514,7 +519,7 @@ export const QrCatalogPage: React.FC = () => {
                     className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors shrink-0 cursor-pointer"
                   >
                     <Upload className="w-3.5 h-3.5 text-brand" />
-                    <span>{uploadingLogo ? "Yuklanmoqda..." : "Rasm yuklash"}</span>
+                    <span>{uploadingLogo ? t("qr_uploading") : t("qr_upload_image")}</span>
                   </button>
                 </div>
               )}
@@ -528,7 +533,7 @@ export const QrCatalogPage: React.FC = () => {
                 className="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
-                <span>{saving ? "Saqlanmoqda..." : "Saqlash"}</span>
+                <span>{saving ? t("qr_saving") : t("telegram_save_btn")}</span>
               </button>
             </div>
           </form>
@@ -539,10 +544,10 @@ export const QrCatalogPage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200/80 p-3 flex items-center justify-between shadow-xs">
             <span className="font-extrabold text-xs text-slate-900 flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Jonli ko'rish (Table Tent Mockup):</span>
+              <span>{t("qr_live_mockup_title")}</span>
             </span>
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase">
-              {paperSize} format
+              {paperSize} {language === "ru" ? "формат" : language === "en" ? "format" : "format"}
             </span>
           </div>
 
@@ -607,7 +612,7 @@ export const QrCatalogPage: React.FC = () => {
                   {storeUrl}
                 </div>
                 <div className="text-[9px] font-black uppercase tracking-widest opacity-60">
-                  STOREBOX BILAN JIXOZLANGAN
+                  {t("qr_powered_by")}
                 </div>
               </div>
             </div>
@@ -621,7 +626,7 @@ export const QrCatalogPage: React.FC = () => {
               className="py-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
             >
               <FileText className="w-4 h-4 text-rose-500" />
-              <span>PDF yuklab olish</span>
+              <span>{t("qr_download_pdf")}</span>
             </button>
             <button
               type="button"
@@ -629,7 +634,7 @@ export const QrCatalogPage: React.FC = () => {
               className="py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4" />
-              <span>Chop etish</span>
+              <span>{t("telegram_qr_print")}</span>
             </button>
           </div>
         </div>

@@ -46,15 +46,26 @@ def set_stored_tunnel_url(url):
     return _current_tunnel_url
 
 
+_last_health_check = 0
+_last_health_result = False
+
 def check_tunnel_healthy(url):
-    """Check if the tunnel URL is currently reachable"""
+    """Check if the tunnel URL is currently reachable (cached for 60s)"""
+    global _last_health_check, _last_health_result
     if not url or not url.startswith('https://'):
         return False
+    now = time.time()
+    if (now - _last_health_check) < 60.0 and _last_health_result:
+        return True
     try:
-        import requests
-        res = requests.get(f"{url}/", timeout=4)
-        return res.status_code in (200, 301, 302, 404)
+        res = requests.get(f"{url}/", timeout=3)
+        ok = res.status_code in (200, 301, 302, 404)
+        if ok:
+            _last_health_check = now
+            _last_health_result = True
+        return ok
     except Exception:
+        _last_health_result = False
         return False
 
 
@@ -97,29 +108,8 @@ def get_public_https_base_url():
 
     # 2. Check stored tunnel in file
     stored = get_stored_tunnel_url()
-    if stored and check_tunnel_healthy(stored):
+    if stored:
         return stored
 
-    # 3. Check cloudflared task logs or running brain logs for active trycloudflare URL
-    try:
-        log_dir = os.path.join(os.path.expanduser('~'), '.gemini/antigravity/brain')
-        for root, dirs, files in os.walk(log_dir):
-            for file in files:
-                if file.endswith('.log'):
-                    log_path = os.path.join(root, file)
-                    if os.path.exists(log_path) and os.path.getsize(log_path) < 200000:
-                        try:
-                            with open(log_path, 'r', errors='ignore') as f:
-                                content = f.read()
-                                matches = re.findall(r'(https://[a-zA-Z0-9-]+\.(?:trycloudflare\.com|lhr\.life))', content)
-                                for t_url in reversed(matches):
-                                    if check_tunnel_healthy(t_url):
-                                        set_stored_tunnel_url(t_url)
-                                        return t_url
-                        except Exception:
-                            continue
-    except Exception:
-        pass
-
-    return stored or "https://urban-directors-python-magnetic.trycloudflare.com"
+    return "https://situations-coupon-cork-celebrate.trycloudflare.com"
 

@@ -94,7 +94,7 @@ export const ChatsPage: React.FC = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Mijozni qidirish..."
+              placeholder={t("search_client_ph") || "Mijozni qidirish..."}
               className="w-full pl-9 pr-3 py-2 bg-neutral-100 dark:bg-white/5 border border-transparent dark:border-white/10 rounded-xl text-xs font-medium text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-neutral-400"
             />
           </div>
@@ -135,7 +135,7 @@ export const ChatsPage: React.FC = () => {
 
           {conversations.length === 0 && !chatsLoading && (
             <div className="p-8 text-center text-neutral-400 text-xs">
-              Hozircha xabarlar yo'q
+              {t("no_chats") || "Hozircha xabarlar yo'q"}
             </div>
           )}
         </div>
@@ -151,7 +151,7 @@ export const ChatsPage: React.FC = () => {
                   {activeConv?.customer_name ? activeConv.customer_name.charAt(0).toUpperCase() : "M"}
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-neutral-900 dark:text-white">{activeConv?.customer_name || "Mijoz"}</div>
+                  <div className="text-xs font-bold text-neutral-900 dark:text-white">{activeConv?.customer_name || (t("customer_caps") || "Mijoz")}</div>
                   <div className="text-[10px] font-mono text-neutral-400">{currentPhone}</div>
                 </div>
               </div>
@@ -171,18 +171,18 @@ export const ChatsPage: React.FC = () => {
                     <div
                       className={`max-w-md rounded-2xl px-4 py-2.5 text-xs font-medium shadow-2xs ${
                         isMerchant
-                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-tr-xs"
-                          : "bg-white dark:bg-[#27272a] text-neutral-900 dark:text-white border border-black/[0.06] dark:border-white/10 rounded-tl-xs"
+                          ? "bg-neutral-900 dark:bg-emerald-600 text-white rounded-tr-xs"
+                          : "bg-white dark:bg-[#1e2330] text-neutral-900 dark:text-white border border-black/[0.06] dark:border-white/10 rounded-tl-xs"
                       }`}
                     >
                       <p className="leading-relaxed">{m.message}</p>
                       <div
                         className={`text-[9px] mt-1 flex items-center justify-end gap-1 ${
-                          isMerchant ? "text-neutral-400 dark:text-neutral-500" : "text-neutral-400"
+                          isMerchant ? "text-neutral-400 dark:text-emerald-100/80" : "text-neutral-400"
                         }`}
                       >
                         <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                        {isMerchant && <CheckCheck className="w-3 h-3 text-emerald-400 dark:text-emerald-600" />}
+                        {isMerchant && <CheckCheck className="w-3 h-3 text-emerald-400 dark:text-emerald-200" />}
                       </div>
                     </div>
                   </div>
@@ -190,7 +190,7 @@ export const ChatsPage: React.FC = () => {
               })}
               {messages.length === 0 && (
                 <div className="text-center py-12 text-neutral-400 text-xs">
-                  Suhbat hali boshlanmagan. Birinchi xabarni yuboring!
+                  {t("chat_not_started") || "Suhbat hali boshlanmagan. Birinchi xabarni yuboring!"}
                 </div>
               )}
             </div>
@@ -200,13 +200,13 @@ export const ChatsPage: React.FC = () => {
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Xabaringizni yozing..."
+                placeholder={t("type_message_ph") || "Xabaringizni yozing..."}
                 className="flex-1 px-4 py-2.5 bg-neutral-100 dark:bg-white/5 border border-transparent dark:border-white/10 rounded-xl text-xs font-medium text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-neutral-400"
               />
               <button
                 type="submit"
                 disabled={!inputText.trim() || sendMessageMutation.isPending}
-                className="p-2.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-xl hover:bg-black dark:hover:bg-neutral-100 transition-colors disabled:opacity-50 cursor-pointer"
+                className="p-2.5 bg-neutral-900 dark:bg-emerald-600 text-white rounded-xl hover:bg-black dark:hover:bg-emerald-500 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -214,7 +214,7 @@ export const ChatsPage: React.FC = () => {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-neutral-400 text-xs">
-            Suhbatni boshlash uchun chap tarafdan mijozni tanlang
+            {t("select_chat_hint") || "Suhbatni boshlash uchun chap tarafdan mijozni tanlang"}
           </div>
         )}
       </div>

@@ -28,6 +28,22 @@ def tenant_context(request):
         except Exception:
             pass
 
+    pending_tariff_requests_count = 0
+    if hasattr(request, 'user') and request.user.is_authenticated and request.user.is_superuser:
+        try:
+            from apps.super_admin.models import TariffRequest
+            pending_tariff_requests_count = TariffRequest.objects.filter(status=TariffRequest.Statuses.PENDING).count()
+        except Exception:
+            pass
+
+    staff_perms = None
+    if store and hasattr(request, 'user') and request.user.is_authenticated:
+        try:
+            from apps.orders.permissions import get_user_permissions
+            staff_perms = get_user_permissions(request.user, store)
+        except Exception:
+            pass
+
     return {
         'tenant_store': store,
         'is_platform_root': is_platform_root,
@@ -38,6 +54,8 @@ def tenant_context(request):
         'unread_notifs_count': unread_notifs_count,
         'new_orders_count': new_orders_count,
         'unread_chats_count': unread_chats_count,
+        'pending_tariff_requests_count': pending_tariff_requests_count,
+        'staff_perms': staff_perms,
         'platform_site_url': settings.PLATFORM_SITE_URL,
         'app_site_url': settings.APP_SITE_URL,
         'billing_site_url': settings.BILLING_SITE_URL,

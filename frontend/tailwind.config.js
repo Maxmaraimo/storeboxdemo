@@ -9,17 +9,30 @@ export default {
     extend: {
       colors: {
         brand: {
-          DEFAULT: "#7C3AED",
-          dark: "#6D28D9",
-          light: "#A78BFA",
-          50: "#F5F3FF",
-          100: "#EDE9FE",
-          200: "#DDD6FE",
-          500: "#8B5CF6",
-          600: "#7C3AED",
-          700: "#6D28D9",
-          800: "#5B21B6",
-          900: "#4C1D95",
+          DEFAULT: "#211B2E",
+          dark: "#14101C",
+          surface: "#2C243D",
+          light: "#3A314E",
+          50: "#F7F6F9",
+          100: "#EFEBF5",
+          200: "#DDD4EA",
+          500: "#3A314E",
+          600: "#2C243D",
+          700: "#211B2E",
+          800: "#171321",
+          900: "#100D17",
+        },
+        charcoal: {
+          DEFAULT: "#211B2E",
+          dark: "#14101C",
+          surface: "#2C243D",
+          deep: "#171321",
+        },
+        lime: {
+          DEFAULT: "#00D668",
+          dark: "#059669",
+          glow: "rgba(0, 214, 104, 0.4)",
+          soft: "rgba(0, 214, 104, 0.12)",
         }
       },
       fontFamily: {

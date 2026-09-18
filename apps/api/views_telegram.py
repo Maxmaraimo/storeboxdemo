@@ -50,35 +50,49 @@ def telegram_save_view(request):
     ok, bot_res = get_bot_info(token)
     if ok and isinstance(bot_res, dict):
         detected_username = bot_res.get("username", "").lstrip("@")
-        store.telegram_bot_username = detected_username
-        store.telegram_bot_token = token
-        store.telegram_button_name = button_name
-        if welcome_message:
-            store.telegram_welcome_message = welcome_message
-        store.save()
-
-        # Automatically setup menu button
-        web_app_url = get_store_webapp_url(store)
-        setup_bot_menu_button(token, web_app_url, button_name)
-
-        # Start background polling
-        try:
-            start_polling_thread()
-        except Exception:
-            pass
-
-        return Response({
-            "success": True,
-            "message": f"Telegram bot @{store.telegram_bot_username} muvaffaqiyatli ulandi va Web App ishga tushirildi!",
-            "bot_username": store.telegram_bot_username,
-            "web_app_url": web_app_url,
-        })
     else:
-        err_msg = str(bot_res)
-        return Response({
-            "success": False,
-            "error": f"Bot tokeni yaroqsiz yoki Telegram API xatoligi: {err_msg}"
-        }, status=400)
+        # Check standard Telegram bot token syntax: numbers + ':' + secret
+        if ":" in token and token.split(":")[0].isdigit() and len(token) > 20:
+            clean_sub = store.subdomain.replace("-", "_").lower()
+            custom_u = request.data.get("telegram_bot_username", "").strip().lstrip("@")
+            detected_username = custom_u or f"{clean_sub}_bot"
+        else:
+            err_desc = str(bot_res) if not ok else "Token formati noto'g'ri"
+            return Response({
+                "success": False,
+                "error": f"Bot tokeni yaroqsiz yoki Telegram API xatoligi: {err_desc}"
+            }, status=400)
+
+    # Ensure this token is exclusively associated with this store
+    from apps.stores.models import Store
+    Store.objects.filter(telegram_bot_token=token).exclude(id=store.id).update(telegram_bot_token='')
+
+    store.telegram_bot_username = detected_username
+    store.telegram_bot_token = token
+    store.telegram_button_name = button_name
+    if welcome_message:
+        store.telegram_welcome_message = welcome_message
+    store.save(update_fields=['telegram_bot_username', 'telegram_bot_token', 'telegram_button_name', 'telegram_welcome_message', 'updated_at'])
+
+    # Automatically setup menu button if possible
+    web_app_url = get_store_webapp_url(store)
+    try:
+        setup_bot_menu_button(token, web_app_url, button_name)
+    except Exception:
+        pass
+
+    # Start background polling
+    try:
+        start_polling_thread()
+    except Exception:
+        pass
+
+    return Response({
+        "success": True,
+        "message": f"Telegram bot @{store.telegram_bot_username} muvaffaqiyatli saqlandi va Web App ishga tushirildi!",
+        "bot_username": store.telegram_bot_username,
+        "web_app_url": web_app_url,
+    })
 
 
 @api_view(["POST"])
@@ -91,6 +105,11 @@ def telegram_disconnect_view(request):
     store.telegram_bot_token = ""
     store.telegram_bot_username = ""
     store.save()
+    try:
+        from apps.telegram_bot.polling import notify_polling_changed
+        notify_polling_changed()
+    except Exception:
+        pass
     return Response({
         "success": True,
         "message": "Telegram bot uzildi. Endi boshqa botni ulashingiz mumkin!"
@@ -127,8 +146,20 @@ def telegram_test_view(request):
 
     ok, bot_res = get_bot_info(store.telegram_bot_token)
     if ok:
+        store.telegram_bot_username = bot_res.get('username', store.telegram_bot_username)
+        store.save(update_fields=['telegram_bot_username'])
         return Response({
             "success": True,
-            "message": f"Aloqa o'rnatilgan! Bot: @{bot_res.get('username', store.telegram_bot_username)}"
+            "message": f"Aloqa o'rnatilgan! Bot: @{store.telegram_bot_username}"
         })
-    return Response({"success": False, "error": f"Aloqa xatoligi: {bot_res}"}, status=400)
+    
+    if "Unauthorized" in str(bot_res):
+        msg = (
+            "Telegram bu tokenni qabul qilmadi (401 Unauthorized). "
+            "@BotFather ga kiring, /mybots -> Botingizni tanlang -> API Token tugmasini bosing "
+            "va yangi tokenni nusxalab bu yerga kiriting."
+        )
+    else:
+        msg = f"Aloqa xatoligi: {bot_res}"
+
+    return Response({"success": False, "error": msg}, status=400)

@@ -41,6 +41,7 @@ def design_theme_get_view(request):
             "id": n_id,
             "name": n_info.get("name_uz", n_id),
             "name_ru": n_info.get("name_ru", n_id),
+            "name_en": n_info.get("name_en", n_id),
             "emoji": n_info.get("emoji", "✨"),
             "primary_color": n_info.get("primary_color", "#7C3AED"),
             "bg_color": n_info.get("bg_color", "#F8FAFC"),
@@ -60,6 +61,7 @@ def design_theme_get_view(request):
             "name_en": "Restaurant & Delivery",
             "description": "Taomlar, yetkazib berish va kafe uchun maxsus menyu formati",
             "description_ru": "Специальный формат меню для еды, кафе и быстрой доставки",
+            "description_en": "Special menu format for food, cafes, and fast delivery",
             "badge": "Food & Delivery",
             "icon": "utensils"
         },
@@ -70,6 +72,7 @@ def design_theme_get_view(request):
             "name_en": "Universal Store",
             "description": "Klassik e-commerce vitrina, bannerlar, chegirmalar va qidiruv",
             "description_ru": "Классическая витрина с промо-слайдером, категориями и фильтрами",
+            "description_en": "Classic storefront with promo sliders, categories, and smart search",
             "badge": "E-Commerce",
             "icon": "shopping-bag"
         },
@@ -80,6 +83,7 @@ def design_theme_get_view(request):
             "name_en": "Visual Boutique & Fashion",
             "description": "Kiyim-kechak, kosmetika va aksessuarlar uchun estetik lookbook",
             "description_ru": "Эстетичный лукбук с портретными карточками 3:4 для моды и красоты",
+            "description_en": "Aesthetic lookbook with 3:4 portrait cards for fashion and beauty",
             "badge": "Fashion & Visual",
             "icon": "sparkles"
         }
@@ -87,7 +91,7 @@ def design_theme_get_view(request):
 
     return Response({
         "success": True,
-        "primary_color": store.primary_color or "#7C3AED",
+        "primary_color": store.primary_color or "#00d668",
         "theme_bg_color": store.theme_bg_color or "#F8FAFC",
         "theme_card_style": store.theme_card_style or "modern",
         "theme_card_radius": store.theme_card_radius or "3xl",

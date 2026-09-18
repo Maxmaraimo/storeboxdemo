@@ -1,21 +1,35 @@
 import logging
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+# Persistent session with HTTP keep-alive connection pooling
+_HTTP_SESSION = requests.Session()
+_adapter = HTTPAdapter(pool_connections=20, pool_maxsize=50, max_retries=Retry(total=2, backoff_factor=0.2))
+_HTTP_SESSION.mount("https://", _adapter)
+_HTTP_SESSION.mount("http://", _adapter)
 
 
 def get_bot_info(token):
     """Fetch bot details from Telegram getMe"""
     if not token:
         return False, 'Bot tokeni kiritilmagan'
-    url = f'https://api.telegram.org/bot{token.strip()}/getMe'
+    token = token.strip()
+    url = f'https://api.telegram.org/bot{token}/getMe'
     try:
-        res = requests.get(url, timeout=7)
-        data = res.json()
+        res = _HTTP_SESSION.get(url, timeout=7)
+        try:
+            data = res.json()
+        except Exception:
+            return False, f"Telegram serveri javob bermadi (HTTP {res.status_code})"
+
         if data.get('ok'):
             return True, data.get('result', {})
-        return False, data.get('description', 'Telegram API xatoligi')
+        err_desc = data.get('description', 'Telegram API xatoligi')
+        return False, err_desc
     except Exception as e:
         logger.error(f"Error fetching getMe for bot: {e}")
         return False, str(e)
@@ -44,12 +58,15 @@ def send_telegram_notification(store, text, reply_markup=None, chat_id=None):
         payload['reply_markup'] = reply_markup
 
     try:
-        response = requests.post(url, json=payload, timeout=7)
-        res_data = response.json()
-        if res_data.get('ok'):
+        response = _HTTP_SESSION.post(url, json=payload, timeout=7)
+        try:
+            res_data = response.json()
+        except Exception:
+            return False, f"Telegram serveri javob bermadi (HTTP {response.status_code})"
+        if res_data and res_data.get('ok'):
             return True, 'Уведомление успешно отправлено'
         else:
-            err_desc = res_data.get('description', 'Ошибка Telegram API')
+            err_desc = (res_data or {}).get('description', 'Ошибка Telegram API')
             logger.warning(f'Telegram error for store {store.name}: {err_desc}')
             return False, err_desc
     except Exception as e:
@@ -115,10 +132,13 @@ def test_bot_connection(token, chat_id):
     }
     try:
         res = requests.post(url, json=payload, timeout=7)
-        data = res.json()
-        if data.get('ok'):
+        try:
+            data = res.json()
+        except Exception:
+            return False, f"Telegram serveri javob bermadi (HTTP {res.status_code})"
+        if data and data.get('ok'):
             return True, 'Sinov xabari Telegramga muvaffaqiyatli yetkazildi!'
-        return False, data.get('description', 'Telegram API xatoligi')
+        return False, (data or {}).get('description', 'Telegram API xatoligi')
     except Exception as e:
         return False, str(e)
 
@@ -158,10 +178,13 @@ def setup_bot_menu_button(token, web_app_url=None, button_text="Do'kon"):
 
     try:
         res = requests.post(url, json=payload, timeout=7)
-        data = res.json()
-        if data.get('ok'):
+        try:
+            data = res.json()
+        except Exception:
+            return False, f"Telegram serveri javob bermadi (HTTP {res.status_code})"
+        if data and data.get('ok'):
             return True, "Telegram WebApp menyu tugmasi muvaffaqiyatli sozlandi!"
-        return False, data.get('description', 'Telegram API xatoligi')
+        return False, (data or {}).get('description', 'Telegram API xatoligi')
     except Exception as e:
         return False, str(e)
 

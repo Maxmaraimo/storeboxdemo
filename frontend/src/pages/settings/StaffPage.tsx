@@ -81,10 +81,10 @@ export const StaffPage: React.FC = () => {
   const staff = data?.staff || [];
 
   const roleLabels: Record<string, string> = {
-    ADMIN: "Administrator",
-    MANAGER: "Menejer",
-    COURIER: "Kuryer",
-    CASHIER: "Kassir / Operator",
+    ADMIN: t("role_admin") || "Administrator",
+    MANAGER: t("role_manager") || "Menejer",
+    COURIER: t("role_courier") || "Kuryer",
+    CASHIER: t("role_cashier") || "Kassir / Operator",
   };
 
   return (
@@ -92,15 +92,15 @@ export const StaffPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("staff") || "Xodimlar"}</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Xodimlar huquqlari va kirish nazorati</p>
+          <p className="text-xs text-slate-500 mt-1 font-medium">{t("staff_subtitle") || "Xodimlar huquqlari va kirish nazorati"}</p>
         </div>
         <button
           type="button"
           onClick={openModal}
-          className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
+          className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Xodim qo'shish</span>
+          <span>{t("add_staff_btn") || "Xodim qo'shish"}</span>
         </button>
       </div>
 
@@ -109,11 +109,11 @@ export const StaffPage: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                <th className="p-4">Xodim</th>
-                <th className="p-4">Lavozim</th>
-                <th className="p-4">Telefon</th>
-                <th className="p-4 text-center">Holat</th>
-                <th className="p-4 text-right">Amal</th>
+                <th className="p-4">{t("staff") || "Xodim"}</th>
+                <th className="p-4">{t("staff_role_label") || "Lavozim"}</th>
+                <th className="p-4">{t("th_phone") || "Telefon"}</th>
+                <th className="p-4 text-center">{t("th_status") || "Holat"}</th>
+                <th className="p-4 text-right">{t("th_action") || "Amal"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
@@ -124,7 +124,7 @@ export const StaffPage: React.FC = () => {
                   <td className="p-4 font-mono text-slate-500">{s.phone}</td>
                   <td className="p-4 text-center">
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Faol
+                      {t("status_active") || "Faol"}
                     </span>
                   </td>
                   <td className="p-4 text-right">
@@ -135,7 +135,7 @@ export const StaffPage: React.FC = () => {
                           deleteMutation.mutate(s.id);
                         }
                       }}
-                      className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                      className="p-1 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -145,7 +145,7 @@ export const StaffPage: React.FC = () => {
               {staff.length === 0 && !isLoading && (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-400 text-xs">
-                    Hozircha xodimlar qo'shilmagan. Yuqoridagi "Xodim qo'shish" tugmasi orqali qo'shing.
+                    {t("no_items") || "Hozircha xodimlar qo'shilmagan."}
                   </td>
                 </tr>
               )}
@@ -160,12 +160,12 @@ export const StaffPage: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-slate-900">
-                Yangi xodim qo'shish
+                {t("add_staff_btn") || "Yangi xodim qo'shish"}
               </h3>
               <button
                 type="button"
                 onClick={closeModal}
-                className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -180,20 +180,20 @@ export const StaffPage: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Xodimning to'liq ismi (F.I.O) *
+                  {t("staff_name_label") || "Xodim ismi"} *
                 </label>
                 <input
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="Masalan: Sardor Aliyev"
+                  placeholder="Sardor Aliyev"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Telefon raqami *
+                  {t("staff_phone_label") || "Telefon raqami"} *
                 </label>
                 <input
                   type="text"
@@ -206,17 +206,17 @@ export const StaffPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Lavozimi / Vazifasi *
+                  {t("staff_role_label") || "Lavozimi / Vazifasi"} *
                 </label>
                 <select
                   value={formRole}
                   onChange={(e) => setFormRole(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
                 >
-                  <option value="MANAGER">Menejer (Buyurtmalarni boshqarish)</option>
-                  <option value="CASHIER">Kassir / Operator</option>
-                  <option value="COURIER">Kuryer (Yetkazib berish)</option>
-                  <option value="ADMIN">Administrator</option>
+                  <option value="MANAGER">{t("role_manager") || "Menejer"}</option>
+                  <option value="CASHIER">{t("role_cashier") || "Kassir / Operator"}</option>
+                  <option value="COURIER">{t("role_courier") || "Kuryer"}</option>
+                  <option value="ADMIN">{t("role_admin") || "Administrator"}</option>
                 </select>
               </div>
             </div>
@@ -225,17 +225,17 @@ export const StaffPage: React.FC = () => {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
-                Bekor qilish
+                {t("btn_cancel") || "Bekor qilish"}
               </button>
               <button
                 type="button"
                 onClick={() => createMutation.mutate()}
                 disabled={createMutation.isPending}
-                className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50"
+                className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-black hover:bg-brand-dark transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {createMutation.isPending ? "Qo'shilmoqda..." : "Qo'shish"}
+                {createMutation.isPending ? (t("saving") || "Qo'shilmoqda...") : (t("create") || "Qo'shish")}
               </button>
             </div>
           </div>

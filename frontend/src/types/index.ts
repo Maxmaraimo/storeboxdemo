@@ -33,6 +33,7 @@ export interface Order {
   customer_name: string;
   customer_phone: string;
   delivery_address: string;
+  delivery_type?: string;
   delivery_lat?: number | null;
   delivery_lng?: number | null;
   delivery_fee: string;
