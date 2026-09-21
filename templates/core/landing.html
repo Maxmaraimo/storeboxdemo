@@ -3208,25 +3208,37 @@ h1 span {
 
 .platform-floating-infocard {
     position: absolute;
-    bottom: 28px;
-    right: 28px;
-    width: 360px;
-    max-width: calc(100% - 56px);
-    background: rgba(24, 20, 34, 0.88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1.5px solid rgba(200, 255, 106, 0.35);
-    border-radius: 20px;
+    bottom: 26px;
+    right: 26px;
+    width: 370px;
+    max-width: calc(100% - 52px);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.35) 100%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    backdrop-filter: blur(24px) saturate(200%);
+    border: 1.5px solid rgba(255, 255, 255, 0.88);
+    border-radius: 22px;
     padding: 22px 24px;
-    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55), 0 0 25px rgba(200, 255, 106, 0.12);
+    box-shadow: 
+        0 24px 50px rgba(15, 23, 42, 0.12),
+        0 6px 18px rgba(15, 23, 42, 0.05),
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.98),
+        inset 0 -1px 2px rgba(15, 23, 42, 0.03);
     z-index: 10;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, box-shadow 0.3s ease;
     will-change: transform, opacity;
+}
+
+.platform-floating-infocard:hover {
+    transform: translateY(-4px);
+    box-shadow: 
+        0 30px 60px rgba(15, 23, 42, 0.16),
+        0 8px 22px rgba(15, 23, 42, 0.07),
+        inset 0 1.5px 2px rgba(255, 255, 255, 1);
 }
 
 .platform-floating-infocard.is-hidden {
     opacity: 0;
-    transform: translateY(20px) scale(0.96);
+    transform: translateY(16px) scale(0.97);
     pointer-events: none;
 }
 
@@ -3239,36 +3251,51 @@ h1 span {
 }
 
 .platform-floating-infocard .pfc-badge {
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #c8ff6a;
+    color: #059669;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.platform-floating-infocard .pfc-badge::before {
+    content: "";
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
 }
 
 .platform-floating-infocard .pfc-metric-pill {
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 800;
-    padding: 3px 9px;
+    padding: 3px 10px;
     border-radius: 8px;
-    background: rgba(200, 255, 106, 0.14);
-    border: 1px solid rgba(200, 255, 106, 0.3);
-    color: #c8ff6a;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    color: #047857;
+    letter-spacing: 0.02em;
 }
 
 .platform-floating-infocard .pfc-title {
-    font-size: 18px;
+    font-size: 18.5px;
     font-weight: 850;
-    color: #ffffff;
+    color: #0f172a;
     margin-bottom: 6px;
     line-height: 1.25;
+    letter-spacing: -0.015em;
 }
 
 .platform-floating-infocard .pfc-description {
     font-size: 13px;
-    color: #94a3b8;
+    color: #334155;
     line-height: 1.5;
     margin-bottom: 14px;
+    font-weight: 500;
 }
 
 .platform-floating-infocard .pfc-features-list {
@@ -3277,7 +3304,7 @@ h1 span {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 8.5px;
 }
 
 .platform-floating-infocard .pfc-features-list li {
@@ -3285,13 +3312,120 @@ h1 span {
     align-items: center;
     gap: 9px;
     font-size: 12.5px;
-    font-weight: 600;
-    color: #e2e8f0;
+    font-weight: 650;
+    color: #0f172a;
     line-height: 1.35;
 }
 
 .platform-floating-infocard .pfc-features-list li svg {
     flex-shrink: 0;
+    stroke: #10b981;
+}
+
+/* Dark mode glassmorphism override */
+.theme-dark .platform-floating-infocard {
+    background: linear-gradient(135deg, rgba(26, 20, 38, 0.64) 0%, rgba(16, 12, 24, 0.46) 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+}
+.theme-dark .platform-floating-infocard .pfc-title {
+    color: #f8fafc;
+}
+.theme-dark .platform-floating-infocard .pfc-description {
+    color: #cbd5e1;
+}
+.theme-dark .platform-floating-infocard .pfc-features-list li {
+    color: #f1f5f9;
+}
+.theme-dark .platform-floating-infocard .pfc-badge {
+    color: #c8ff6a;
+}
+.theme-dark .platform-floating-infocard .pfc-badge::before {
+    background: #c8ff6a;
+    box-shadow: 0 0 8px rgba(200, 255, 106, 0.6);
+}
+.theme-dark .platform-floating-infocard .pfc-metric-pill {
+    background: rgba(200, 255, 106, 0.15);
+    border: 1px solid rgba(200, 255, 106, 0.32);
+    color: #c8ff6a;
+}
+
+/* Navigation arrows on the showcase stage */
+.platform-nav-arrow {
+    position: absolute;
+    top: 36%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1.5px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12), inset 0 1.5px 2px rgba(255, 255, 255, 1);
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 15;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.platform-nav-prev {
+    left: 20px;
+}
+
+.platform-nav-next {
+    right: 20px;
+}
+
+.platform-nav-arrow:hover {
+    background: #ffffff;
+    transform: translateY(-50%) scale(1.08);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.2);
+    color: #059669;
+}
+
+.platform-nav-arrow:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.theme-dark .platform-nav-arrow {
+    background: rgba(28, 22, 42, 0.75);
+    border: 1.5px solid rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.theme-dark .platform-nav-arrow:hover {
+    background: rgba(42, 34, 62, 0.9);
+    color: #c8ff6a;
+}
+
+/* Sticky scroll container on desktop */
+@media (min-width: 992px) {
+    .platform-sticky-container {
+        position: relative;
+        min-height: 280vh;
+    }
+    .platform-sticky-shell {
+        position: sticky;
+        top: 86px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+    .platform-screen-viewport {
+        height: clamp(480px, 58vh, 640px);
+    }
+    #platformMainImg {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+    }
 }
 
 @media (max-width: 900px) {
@@ -3318,6 +3452,12 @@ h1 span {
     .platform-status-badge {
         display: none;
     }
+    .platform-nav-arrow {
+        width: 38px;
+        height: 38px;
+    }
+    .platform-nav-prev { left: 8px; }
+    .platform-nav-next { right: 8px; }
     .platform-floating-infocard {
         position: relative;
         bottom: auto;
@@ -4713,118 +4853,130 @@ h1 span {
              STOREBOX 2.0 AUTHENTIC PLATFORM SHOWCASE
              ========================================================= -->
         <section class="platform-showcase-section section-shell wow-reveal" id="dashboard">
-            <div class="section-heading text-center" style="max-width: 860px; margin-inline: auto; text-align: center;">
-                <span class="section-kicker" data-i18n="platformKicker">StoreBox 2.0 Boshqaruv Markazi</span>
-                <h2 data-i18n="platformTitle">Bitta ekranda butun biznes nazorati</h2>
-                <p data-i18n="platformLead">Kassa, buyurtmalar, kuryerlar, xodimlar va tovarlar katalogi — barchasi real vaqtda sinxronlashgan yagona boshqaruv tizimi.</p>
-            </div>
+            <div class="platform-sticky-container" id="platformStickyContainer">
+                <div class="platform-sticky-shell" id="platformStickyShell">
+                    <div class="section-heading text-center" style="max-width: 860px; margin-inline: auto; text-align: center;">
+                        <span class="section-kicker" data-i18n="platformKicker">StoreBox 2.0 Boshqaruv Markazi</span>
+                        <h2 data-i18n="platformTitle">Bitta ekranda butun biznes nazorati</h2>
+                        <p data-i18n="platformLead">Kassa, buyurtmalar, kuryerlar, xodimlar va tovarlar katalogi — barchasi real vaqtda sinxronlashgan yagona boshqaruv tizimi.</p>
+                    </div>
 
-            <!-- Interactive Module Tabs (8 Authentic Modules) -->
-            <div class="platform-tabs-wrapper">
-                <div class="platform-tabs-scroll" id="platformTabsList" role="tablist" aria-label="StoreBox 2.0 Modullari">
-                    <button class="platform-tab-btn is-active" data-module="dashboard" role="tab" aria-selected="true" type="button">
-                        <span class="tab-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-                        </span>
-                        <span class="tab-label" data-i18n="tabModDashboard">Boshqaruv paneli</span>
-                        <span class="tab-badge">Live</span>
-                    </button>
-                    <button class="platform-tab-btn" data-module="yespos" role="tab" aria-selected="false" type="button">
-                        <span class="tab-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><line x1="3" x2="21" y1="10" y2="10"/><circle cx="7" cy="15" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="17" cy="15" r="1"/></svg>
-                        </span>
-                        <span class="tab-label" data-i18n="tabModYespos">YES POS kassa</span>
-                    </button>
-                    <button class="platform-tab-btn" data-module="courier" role="tab" aria-selected="false" type="button">
-                        <span class="tab-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="13" x="1" y="6" rx="2"/><circle cx="18.5" cy="15.5" r="2.5"/><circle cx="5.5" cy="15.5" r="2.5"/><path d="M17 6h3l3 4v5h-2"/></svg>
-                        </span>
-                        <span class="tab-label" data-i18n="tabModCourier">Kuryerlar &amp; Logistika</span>
-                    </button>
-                    <button class="platform-tab-btn" data-module="staff" role="tab" aria-selected="false" type="button">
-                        <span class="tab-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        </span>
-                        <span class="tab-label" data-i18n="tabModStaff">Xodimlar &amp; Rollar</span>
-                    </button>
-                    <button class="platform-tab-btn" data-module="design" role="tab" aria-selected="false" type="button">
-                        <span class="tab-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2Z"/></svg>
-                        </span>
-                        <span class="tab-label" data-i18n="tabModDesign">Vitrina konstruktori</span>
-                    </button>
-                    <button class="platform-tab-btn" data-module="qr" role="tab" aria-selected="false" type="button">
-                        <span class="tab-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
-                        </span>
-                        <span class="tab-label" data-i18n="tabModQr">QR Menyu &amp; Zallar</span>
-                    </button>
-                    <button class="platform-tab-btn" data-module="products" role="tab" aria-selected="false" type="button">
-                        <span class="tab-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-                        </span>
-                        <span class="tab-label" data-i18n="tabModProducts">Mahsulotlar katalogi</span>
-                    </button>
-                    <button class="platform-tab-btn" data-module="telegram" role="tab" aria-selected="false" type="button">
-                        <span class="tab-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                        </span>
-                        <span class="tab-label" data-i18n="tabModTelegram">Telegram WebApp</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Interactive Platform Studio Screen -->
-            <div class="platform-stage-card" id="platformStageCard">
-                <!-- Ambient Stage Glow -->
-                <div class="platform-stage-glow"></div>
-
-                <!-- Browser Window Shell -->
-                <div class="platform-browser-frame">
-                    <div class="platform-browser-header">
-                        <div class="platform-traffic-lights">
-                            <span class="pt-dot pt-red"></span>
-                            <span class="pt-dot pt-yellow"></span>
-                            <span class="pt-dot pt-green"></span>
-                        </div>
-                        <div class="platform-address-bar">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            <span class="platform-url" id="platformUrlDisplay">app.storebox.uz/dashboard/</span>
-                        </div>
-                        <div class="platform-status-badge">
-                            <span class="live-dot"></span>
-                            <span id="platformSyncStatus" data-i18n="platformLiveBadge">Sinxronlangan · Real vaqt</span>
+                    <!-- Interactive Module Tabs (8 Authentic Modules) -->
+                    <div class="platform-tabs-wrapper">
+                        <div class="platform-tabs-scroll" id="platformTabsList" role="tablist" aria-label="StoreBox 2.0 Modullari">
+                            <button class="platform-tab-btn is-active" data-module="dashboard" role="tab" aria-selected="true" type="button">
+                                <span class="tab-icon">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                                </span>
+                                <span class="tab-label" data-i18n="tabModDashboard">Boshqaruv paneli</span>
+                                <span class="tab-badge">Live</span>
+                            </button>
+                            <button class="platform-tab-btn" data-module="yespos" role="tab" aria-selected="false" type="button">
+                                <span class="tab-icon">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><line x1="3" x2="21" y1="10" y2="10"/><circle cx="7" cy="15" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="17" cy="15" r="1"/></svg>
+                                </span>
+                                <span class="tab-label" data-i18n="tabModYespos">YES POS kassa</span>
+                            </button>
+                            <button class="platform-tab-btn" data-module="courier" role="tab" aria-selected="false" type="button">
+                                <span class="tab-icon">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="13" x="1" y="6" rx="2"/><circle cx="18.5" cy="15.5" r="2.5"/><circle cx="5.5" cy="15.5" r="2.5"/><path d="M17 6h3l3 4v5h-2"/></svg>
+                                </span>
+                                <span class="tab-label" data-i18n="tabModCourier">Kuryerlar &amp; Logistika</span>
+                            </button>
+                            <button class="platform-tab-btn" data-module="staff" role="tab" aria-selected="false" type="button">
+                                <span class="tab-icon">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                </span>
+                                <span class="tab-label" data-i18n="tabModStaff">Xodimlar &amp; Rollar</span>
+                            </button>
+                            <button class="platform-tab-btn" data-module="design" role="tab" aria-selected="false" type="button">
+                                <span class="tab-icon">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2Z"/></svg>
+                                </span>
+                                <span class="tab-label" data-i18n="tabModDesign">Vitrina konstruktori</span>
+                            </button>
+                            <button class="platform-tab-btn" data-module="qr" role="tab" aria-selected="false" type="button">
+                                <span class="tab-icon">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+                                </span>
+                                <span class="tab-label" data-i18n="tabModQr">QR Menyu &amp; Zallar</span>
+                            </button>
+                            <button class="platform-tab-btn" data-module="products" role="tab" aria-selected="false" type="button">
+                                <span class="tab-icon">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                                </span>
+                                <span class="tab-label" data-i18n="tabModProducts">Mahsulotlar katalogi</span>
+                            </button>
+                            <button class="platform-tab-btn" data-module="telegram" role="tab" aria-selected="false" type="button">
+                                <span class="tab-icon">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                                </span>
+                                <span class="tab-label" data-i18n="tabModTelegram">Telegram WebApp</span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Screen Viewport with Image Crossfade -->
-                    <div class="platform-screen-viewport">
-                        <div class="platform-image-wrapper">
-                            <img id="platformMainImg" src="/static/images/landing/platform/dashboard.png" alt="StoreBox 2.0 Boshqaruv Paneli" loading="lazy">
-                        </div>
+                    <!-- Interactive Platform Studio Screen -->
+                    <div class="platform-stage-card" id="platformStageCard">
+                        <!-- Ambient Stage Glow -->
+                        <div class="platform-stage-glow"></div>
 
-                        <!-- Floating Glassmorphic Info Card (Animated on Tab Switch) -->
-                        <div class="platform-floating-infocard" id="platformFloatingCard">
-                            <div class="pfc-header">
-                                <span class="pfc-badge" id="pfcBadge">Savdo statistikasi</span>
-                                <span class="pfc-metric-pill" id="pfcMetric">3 319 400 UZS</span>
+                        <!-- Browser Window Shell -->
+                        <div class="platform-browser-frame">
+                            <div class="platform-browser-header">
+                                <div class="platform-traffic-lights">
+                                    <span class="pt-dot pt-red"></span>
+                                    <span class="pt-dot pt-yellow"></span>
+                                    <span class="pt-dot pt-green"></span>
+                                </div>
+                                <div class="platform-address-bar">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    <span class="platform-url" id="platformUrlDisplay">app.storebox.uz/dashboard/</span>
+                                </div>
+                                <div class="platform-status-badge">
+                                    <span class="live-dot"></span>
+                                    <span id="platformSyncStatus" data-i18n="platformLiveBadge">Sinxronlangan · Real vaqt</span>
+                                </div>
                             </div>
-                            <h4 class="pfc-title" id="pfcTitle">Boshqaruv paneli</h4>
-                            <p class="pfc-description" id="pfcDesc">Kunlik savdo, buyurtmalar soni va o‘rtacha chek dinamikasini jonli kuzating.</p>
-                            <ul class="pfc-features-list" id="pfcList">
-                                <li>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                    <span>Haqiqiy vaqt hisoboti va savdo grafigi</span>
-                                </li>
-                                <li>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                    <span>O‘rtacha chek va tushum ko‘rsatkichlari</span>
-                                </li>
-                                <li>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                    <span>Yangi va doimiy xaridorlar oqimi</span>
-                                </li>
-                            </ul>
+
+                            <!-- Screen Viewport with Image Crossfade -->
+                            <div class="platform-screen-viewport">
+                                <div class="platform-image-wrapper">
+                                    <img id="platformMainImg" src="/static/images/landing/platform/dashboard.png" alt="StoreBox 2.0 Boshqaruv Paneli" loading="lazy">
+                                </div>
+
+                                <!-- Navigation Arrows -->
+                                <button class="platform-nav-arrow platform-nav-prev" id="platformPrevBtn" aria-label="Oldingi modul" title="Oldingi modul / Предыдущий" type="button">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                                </button>
+                                <button class="platform-nav-arrow platform-nav-next" id="platformNextBtn" aria-label="Keyingi modul" title="Keyingi modul / Следующий" type="button">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                </button>
+
+                                <!-- Floating Glassmorphic Info Card (Animated on Tab Switch) -->
+                                <div class="platform-floating-infocard" id="platformFloatingCard">
+                                    <div class="pfc-header">
+                                        <span class="pfc-badge" id="pfcBadge">Savdo statistikasi</span>
+                                        <span class="pfc-metric-pill" id="pfcMetric">3 319 400 UZS</span>
+                                    </div>
+                                    <h4 class="pfc-title" id="pfcTitle">Boshqaruv paneli</h4>
+                                    <p class="pfc-description" id="pfcDesc">Kunlik savdo, buyurtmalar soni va o‘rtacha chek dinamikasini jonli kuzating.</p>
+                                    <ul class="pfc-features-list" id="pfcList">
+                                        <li>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            <span>Haqiqiy vaqt hisoboti va savdo grafigi</span>
+                                        </li>
+                                        <li>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            <span>O‘rtacha chek va tushum ko‘rsatkichlari</span>
+                                        </li>
+                                        <li>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            <span>Yangi va doimiy xaridorlar oqimi</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -6871,8 +7023,17 @@ h1 span {
     window.platformModuleKeys = ["dashboard", "yespos", "courier", "staff", "design", "qr", "products", "telegram"];
     window.currentPlatformModIdx = 0;
     let isPlatformHovered = false;
+    let isProgrammaticModSwitch = false;
 
-    window.renderPlatformModule = function(modKey) {
+    // Preload all 8 platform screenshots immediately
+    window.platformModuleKeys.forEach((key) => {
+        if (platformModulesData[key] && platformModulesData[key].img) {
+            const preload = new Image();
+            preload.src = platformModulesData[key].img;
+        }
+    });
+
+    window.renderPlatformModule = function(modKey, animateCard = true) {
         const data = platformModulesData[modKey];
         if (!data) return;
 
@@ -6889,24 +7050,23 @@ h1 span {
 
         // Crossfade Main Image
         const imgEl = document.getElementById("platformMainImg");
-        if (imgEl) {
-            imgEl.style.opacity = "0.35";
-            imgEl.style.transform = "scale(0.985)";
+        if (imgEl && imgEl.getAttribute("src") !== data.img) {
+            imgEl.style.opacity = "0.4";
+            imgEl.style.transform = "scale(0.99)";
             setTimeout(() => {
                 imgEl.src = data.img;
                 imgEl.style.opacity = "1";
                 imgEl.style.transform = "scale(1)";
-            }, 140);
+            }, 100);
         }
 
-        // Animate Floating Info Card
+        // Update Floating Info Card
         const card = document.getElementById("platformFloatingCard");
         const currentLanguage = document.documentElement.lang || "ru";
         const isRu = currentLanguage.startsWith("ru");
 
         if (card) {
-            card.classList.add("is-hidden");
-            setTimeout(() => {
+            const updateCardText = () => {
                 const badgeEl = document.getElementById("pfcBadge");
                 const metricEl = document.getElementById("pfcMetric");
                 const titleEl = document.getElementById("pfcTitle");
@@ -6922,44 +7082,180 @@ h1 span {
                 if (listEl && items) {
                     listEl.innerHTML = items.map((txt) => `
                         <li>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                             <span>${txt}</span>
                         </li>
                     `).join("");
                 }
+            };
 
+            if (animateCard) {
+                card.classList.add("is-hidden");
+                setTimeout(() => {
+                    updateCardText();
+                    card.classList.remove("is-hidden");
+                }, 130);
+            } else {
+                updateCardText();
                 card.classList.remove("is-hidden");
-            }, 200);
+            }
         }
     };
+
+    function getPlatformPinMetrics() {
+        const container = document.getElementById("platformStickyContainer");
+        const shell = document.getElementById("platformStickyShell");
+        if (!container || !shell) return null;
+
+        const containerRect = container.getBoundingClientRect();
+        const containerTop = window.scrollY + containerRect.top;
+        const pinStart = containerTop - 86;
+        const pinDistance = container.offsetHeight - shell.offsetHeight;
+        const pinEnd = pinStart + pinDistance;
+
+        return { container, shell, pinStart, pinEnd, pinDistance };
+    }
+
+    window.goToPlatformModule = function(idx, syncScroll = true) {
+        if (idx < 0 || idx >= window.platformModuleKeys.length) return;
+        window.currentPlatformModIdx = idx;
+        const modKey = window.platformModuleKeys[idx];
+        window.renderPlatformModule(modKey, true);
+
+        // Auto-scroll active tab into view in tabs bar
+        const activeBtn = document.querySelector(`.platform-tab-btn[data-module="${modKey}"]`);
+        if (activeBtn) {
+            activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+
+        if (syncScroll && window.innerWidth >= 992) {
+            const metrics = getPlatformPinMetrics();
+            if (metrics && metrics.pinDistance > 0) {
+                const segment = metrics.pinDistance / window.platformModuleKeys.length;
+                const targetScrollY = metrics.pinStart + (idx * segment) + (segment * 0.5);
+                isProgrammaticModSwitch = true;
+                window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+                setTimeout(() => { isProgrammaticModSwitch = false; }, 600);
+            }
+        }
+    };
+
+    // Scroll-driven sticky progression on desktop
+    function handlePlatformScroll() {
+        if (window.innerWidth < 992 || isProgrammaticModSwitch) return;
+        const metrics = getPlatformPinMetrics();
+        if (!metrics || metrics.pinDistance <= 0) return;
+
+        const currentY = window.scrollY;
+        if (currentY < metrics.pinStart || currentY > metrics.pinEnd) return;
+
+        const progress = Math.min(Math.max((currentY - metrics.pinStart) / metrics.pinDistance, 0), 0.999);
+        const modCount = window.platformModuleKeys.length;
+        const targetIdx = Math.floor(progress * modCount);
+
+        if (targetIdx !== window.currentPlatformModIdx) {
+            window.currentPlatformModIdx = targetIdx;
+            const modKey = window.platformModuleKeys[targetIdx];
+            window.renderPlatformModule(modKey, false);
+
+            const activeBtn = document.querySelector(`.platform-tab-btn[data-module="${modKey}"]`);
+            if (activeBtn) {
+                activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        }
+    }
+    window.addEventListener("scroll", handlePlatformScroll, { passive: true });
+
+    // Mousewheel listener over platform stage card
+    let wheelCooldown = false;
+    const stageCardEl = document.getElementById("platformStageCard");
+    if (stageCardEl) {
+        stageCardEl.addEventListener("wheel", (e) => {
+            if (Math.abs(e.deltaY) < 25) return;
+            if (wheelCooldown) return;
+
+            if (e.deltaY > 0) {
+                if (window.currentPlatformModIdx < window.platformModuleKeys.length - 1) {
+                    e.preventDefault();
+                    wheelCooldown = true;
+                    window.goToPlatformModule(window.currentPlatformModIdx + 1, true);
+                    setTimeout(() => { wheelCooldown = false; }, 350);
+                }
+            } else {
+                if (window.currentPlatformModIdx > 0) {
+                    e.preventDefault();
+                    wheelCooldown = true;
+                    window.goToPlatformModule(window.currentPlatformModIdx - 1, true);
+                    setTimeout(() => { wheelCooldown = false; }, 350);
+                }
+            }
+        }, { passive: false });
+
+        // Touch Swipe gestures for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+        stageCardEl.addEventListener("touchstart", (e) => {
+            if (e.changedTouches && e.changedTouches[0]) {
+                touchStartX = e.changedTouches[0].clientX;
+                touchStartY = e.changedTouches[0].clientY;
+            }
+        }, { passive: true });
+
+        stageCardEl.addEventListener("touchend", (e) => {
+            if (e.changedTouches && e.changedTouches[0]) {
+                const diffX = e.changedTouches[0].clientX - touchStartX;
+                const diffY = e.changedTouches[0].clientY - touchStartY;
+                if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+                    if (diffX < 0) {
+                        window.goToPlatformModule((window.currentPlatformModIdx + 1) % window.platformModuleKeys.length, false);
+                    } else {
+                        window.goToPlatformModule((window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length, false);
+                    }
+                }
+            }
+        }, { passive: true });
+
+        stageCardEl.addEventListener("mouseenter", () => { isPlatformHovered = true; });
+        stageCardEl.addEventListener("mouseleave", () => { isPlatformHovered = false; });
+    }
+
+    // Prev / Next button click events
+    const prevBtn = document.getElementById("platformPrevBtn");
+    const nextBtn = document.getElementById("platformNextBtn");
+    if (prevBtn) {
+        prevBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const prevIdx = (window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length;
+            window.goToPlatformModule(prevIdx, true);
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const nextIdx = (window.currentPlatformModIdx + 1) % window.platformModuleKeys.length;
+            window.goToPlatformModule(nextIdx, true);
+        });
+    }
 
     // Tab button click events
     document.querySelectorAll(".platform-tab-btn").forEach((btn, idx) => {
         btn.addEventListener("click", () => {
-            const modKey = btn.getAttribute("data-module");
-            window.currentPlatformModIdx = idx;
-            window.renderPlatformModule(modKey);
+            window.goToPlatformModule(idx, true);
         });
     });
 
-    // Auto-cycle platform tabs every 5.5s
-    const stageCardEl = document.getElementById("platformStageCard");
     const tabsListEl = document.getElementById("platformTabsList");
-
-    if (stageCardEl) {
-        stageCardEl.addEventListener("mouseenter", () => { isPlatformHovered = true; });
-        stageCardEl.addEventListener("mouseleave", () => { isPlatformHovered = false; });
-    }
     if (tabsListEl) {
         tabsListEl.addEventListener("mouseenter", () => { isPlatformHovered = true; });
         tabsListEl.addEventListener("mouseleave", () => { isPlatformHovered = false; });
     }
 
+    // Auto-cycle platform tabs every 6s when not hovering or scrolling
     setInterval(() => {
-        if (isPlatformHovered || document.hidden) return;
-        window.currentPlatformModIdx = ((window.currentPlatformModIdx || 0) + 1) % window.platformModuleKeys.length;
-        window.renderPlatformModule(window.platformModuleKeys[window.currentPlatformModIdx]);
-    }, 5500);
+        if (isPlatformHovered || document.hidden || isProgrammaticModSwitch) return;
+        const nextIdx = ((window.currentPlatformModIdx || 0) + 1) % window.platformModuleKeys.length;
+        window.goToPlatformModule(nextIdx, false);
+    }, 6000);
 
     // Initial render
     window.renderPlatformModule("dashboard");
