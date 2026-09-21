@@ -167,32 +167,34 @@ export const TariffsPage: React.FC = () => {
       {/* Header & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            <BadgePercent className="w-6 h-6 text-brand" />
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center shadow-xs">
+              <BadgePercent className="w-4 h-4" />
+            </span>
             <span>{t("tariffs") || "Tarif rejalari va obuna"}</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             {t("tariffs_subtitle") || "Do'koningiz obuna muddati, to'lovlar balansi va tarif rejalarini boshqarish"}
           </p>
         </div>
 
         {storeInfo && (
           <div className="flex items-center gap-3">
-            <div className="bg-white rounded-2xl border border-slate-200/80 px-4 py-2.5 shadow-xs flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <div className="bg-white dark:bg-[#161b26] rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2.5 shadow-xs flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center font-bold shadow-xs">
                 <Wallet className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">{t("store_balance_label") || "Do'kon balansi"}</div>
-                <div className="text-sm font-black font-mono text-slate-900">
-                  {storeInfo.balance.toLocaleString()} <span className="text-[11px] font-sans font-medium text-slate-500">UZS</span>
+                <div className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400">{t("store_balance_label") || "Do'kon balansi"}</div>
+                <div className="text-sm font-bold text-slate-900 dark:text-white">
+                  {storeInfo.balance.toLocaleString()} <span className="text-[11px] font-medium text-slate-500">UZS</span>
                 </div>
               </div>
             </div>
             <button
               onClick={fetchTariffInfo}
               title={t("refresh_btn") || "Yangilash"}
-              className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition shadow-xs cursor-pointer"
+              className="p-2.5 rounded-2xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-[#211b2e] dark:hover:text-[#c8ff6a] hover:bg-slate-50 dark:hover:bg-white/5 transition shadow-xs cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
@@ -230,7 +232,7 @@ export const TariffsPage: React.FC = () => {
               )}
             </div>
             <div>
-              <div className="text-xs font-black tracking-tight">
+              <div className="text-xs font-bold tracking-tight">
                 {isExpired
                   ? "Do'koningiz obuna muddati tugagan!"
                   : isExpiringSoon
@@ -239,14 +241,14 @@ export const TariffsPage: React.FC = () => {
               </div>
               <div className="text-[11px] mt-0.5 opacity-90">
                 Amaldagi tarif: <b className="font-bold">{storeInfo.plan_display}</b> • Tugash sanasi:{" "}
-                <b className="font-mono">{storeInfo.expires_at || "Cheksiz"}</b>{" "}
-                {!isExpired && <span className="text-[10px] font-mono">({daysLeft} kun qoldi)</span>}
+                <b className="font-bold">{storeInfo.expires_at || "Cheksiz"}</b>{" "}
+                {!isExpired && <span className="text-[10px] font-semibold">({daysLeft} kun qoldi)</span>}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
-            <span className="text-xs font-mono font-bold px-3 py-1 rounded-xl bg-white/10 text-white border border-white/10 shadow-2xs">
+            <span className="text-xs font-bold px-3 py-1 rounded-xl bg-white/10 text-white border border-white/10 shadow-2xs">
               {storeInfo.subdomain}.storebox.uz
             </span>
           </div>
@@ -306,7 +308,7 @@ export const TariffsPage: React.FC = () => {
             }`}
           >
             <span>{t("month_6") || "6 oy"}</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-black font-mono">
+            <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-bold">
               -10%
             </span>
           </button>
@@ -318,7 +320,7 @@ export const TariffsPage: React.FC = () => {
             }`}
           >
             <span>{t("month_12") || "12 oy"}</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-black font-mono">
+            <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-bold">
               -20%
             </span>
           </button>
@@ -344,16 +346,16 @@ export const TariffsPage: React.FC = () => {
               }`}
             >
               {p.recommended && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-brand text-white font-black text-[10px] uppercase tracking-wider shadow-sm">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-brand text-white font-bold text-[10px] uppercase tracking-wider shadow-sm">
                   {t("recommended_badge") || "Tavsiya etiladi"}
                 </div>
               )}
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base font-black text-slate-900">{p.name}</h2>
+                  <h2 className="text-base font-bold text-slate-900">{p.name}</h2>
                   {isCurrentPlan && (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
                       {t("current_plan_badge") || "Joriy tarif"}
                     </span>
                   )}
@@ -362,7 +364,7 @@ export const TariffsPage: React.FC = () => {
                 {/* Price Display */}
                 <div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black font-mono text-slate-900">
+                    <span className="text-2xl font-bold text-slate-900">
                       {(totalPrice / duration).toLocaleString()}
                     </span>
                     <span className="text-xs text-slate-400 font-bold">{t("per_month") || "UZS / oy"}</span>
@@ -370,7 +372,7 @@ export const TariffsPage: React.FC = () => {
 
                   <div className="mt-2 text-[11px] font-bold text-slate-500 bg-slate-50 rounded-xl p-2 border border-slate-100 flex items-center justify-between">
                     <span>{t("total_for_months").replace("{duration}", String(duration))}</span>
-                    <span className="font-mono font-black text-slate-900">{totalPrice.toLocaleString()} UZS</span>
+                    <span className="font-bold text-slate-900">{totalPrice.toLocaleString()} UZS</span>
                   </div>
                 </div>
 
@@ -434,20 +436,20 @@ export const TariffsPage: React.FC = () => {
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Tanlangan reja:</span>
-                <span className="font-black text-sm text-slate-900">{selectedPlan.name}</span>
+                <span className="font-bold text-sm text-slate-900">{selectedPlan.name}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Amal qilish davri:</span>
-                <span className="font-bold text-slate-800 font-mono">
+                <span className="font-bold text-slate-800">
                   {duration} oy ({duration * 30} kun)
                   {calculateDiscountPercent(duration) > 0 && (
                     <span className="ml-1 text-emerald-600">(-{calculateDiscountPercent(duration)}% chegirma)</span>
                   )}
                 </span>
               </div>
-              <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-sm font-black">
+              <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-sm font-bold">
                 <span className="text-slate-800">Jami to'lov:</span>
-                <span className="text-brand font-mono text-base">
+                <span className="text-[#211b2e] dark:text-[#c8ff6a] font-bold text-base">
                   {calculateDiscountedPrice(selectedPlan.monthly_price, duration).toLocaleString()} UZS
                 </span>
               </div>
@@ -481,26 +483,29 @@ export const TariffsPage: React.FC = () => {
                   <label
                     className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                       paymentMethod === "BALANCE"
-                        ? "border-brand bg-brand/5 ring-1 ring-brand"
-                        : "border-slate-200 hover:bg-slate-50"
+                        ? "border-[#211b2e] dark:border-[#c8ff6a] bg-[#211b2e]/5 dark:bg-[#c8ff6a]/5 ring-1 ring-[#211b2e] dark:ring-[#c8ff6a]"
+                        : "border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <input
                         type="radio"
                         name="payment_method"
                         value="BALANCE"
                         checked={paymentMethod === "BALANCE"}
                         onChange={() => setPaymentMethod("BALANCE")}
-                        className="text-brand focus:ring-brand"
+                        className="text-[#211b2e] focus:ring-[#211b2e]"
                       />
+                      <div className="w-8 h-8 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center shrink-0 shadow-xs">
+                        <Wallet className="w-4 h-4" />
+                      </div>
                       <div>
-                        <div className="font-bold text-slate-900">Do'kon balansi</div>
-                        <div className="text-[10px] text-slate-500">Mablag' balansdan bir zumda yechiladi</div>
+                        <div className="font-bold text-slate-900 dark:text-white">Do'kon balansi</div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400">Mablag' balansdan bir zumda yechiladi</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="font-mono font-bold text-slate-800">
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
                         {storeInfo?.balance.toLocaleString()} UZS
                       </span>
                       {storeInfo && storeInfo.balance < calculateDiscountedPrice(selectedPlan.monthly_price, duration) && (
