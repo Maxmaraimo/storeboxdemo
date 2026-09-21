@@ -1577,9 +1577,10 @@
                     }
 
                     this.mapObj = L.map('onboardingMap').setView([this.branchLat, this.branchLng], 14);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19,
-                        attribution: '© OpenStreetMap'
+                    L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ request.language|default:"ru" }}&x={x}&y={y}&z={z}', {
+                        maxZoom: 20,
+                        subdomains: ['0', '1', '2', '3'],
+                        attribution: '© Google Maps'
                     }).addTo(this.mapObj);
 
                     this.mapMarker = L.marker([this.branchLat, this.branchLng], { draggable: true }).addTo(this.mapObj);

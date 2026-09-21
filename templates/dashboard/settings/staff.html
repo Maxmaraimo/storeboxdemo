@@ -198,7 +198,8 @@
                         <tr>
                             <th class="py-3.5 px-5">To'liq ism</th>
                             <th class="py-3.5 px-5">Telefon raqami</th>
-                            <th class="py-3.5 px-5">Qo'shilgan sana vaqti</th>
+                            <th class="py-3.5 px-5 text-center">Jonli holat & Buyurtma</th>
+                            <th class="py-3.5 px-5 text-center">Yetkazilgan</th>
                             <th class="py-3.5 px-5">Holat</th>
                             <th class="py-3.5 px-5 text-right">Harakat</th>
                         </tr>
@@ -207,22 +208,50 @@
                         <template x-for="courier in couriersList" :key="courier.id">
                             <tr class="hover:bg-slate-50/70 transition-colors">
                                 <td class="py-3.5 px-5 flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-bold flex items-center justify-center text-xs">
-                                        <i data-lucide="bike" class="w-4 h-4"></i>
+                                    <div class="relative cursor-pointer" @click="openCourierProfileModal(courier)">
+                                        <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-bold flex items-center justify-center text-xs">
+                                            <i data-lucide="bike" class="w-4 h-4"></i>
+                                        </div>
+                                        <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white"
+                                              :class="(courier.last_seen_seconds_ago !== null && courier.last_seen_seconds_ago !== undefined && courier.last_seen_seconds_ago < 180) ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'"></span>
                                     </div>
-                                    <div>
-                                        <span class="font-bold text-slate-900 block" x-text="courier.name"></span>
-                                        <span class="text-[10px] text-slate-400">Kuryer</span>
+                                    <div class="cursor-pointer" @click="openCourierProfileModal(courier)">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-bold text-slate-900 block hover:text-blue-600 transition-colors" x-text="courier.name"></span>
+                                            <template x-if="courier.active_order">
+                                                <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-blue-50 text-blue-700 border border-blue-200">Yetkazmoqda</span>
+                                            </template>
+                                        </div>
+                                        <p class="text-[10px] text-slate-400" x-text="(courier.last_seen_seconds_ago !== null && courier.last_seen_seconds_ago !== undefined && courier.last_seen_seconds_ago < 180) ? ('Online • ' + courier.last_seen_seconds_ago + 's oldin') : (courier.last_seen_seconds_ago ? ('Oxirgi signal: ' + Math.round(courier.last_seen_seconds_ago / 60) + ' daq oldin') : 'GPS signali kutilmoqda')"></p>
                                     </div>
                                 </td>
                                 <td class="py-3.5 px-5 font-mono text-slate-600" x-text="courier.phone"></td>
-                                <td class="py-3.5 px-5 text-slate-400" x-text="courier.created_at"></td>
+                                <td class="py-3.5 px-5 text-center">
+                                    <template x-if="courier.active_order">
+                                        <div class="inline-flex flex-col items-center">
+                                            <span class="font-mono font-bold text-slate-900 text-xs" x-text="'#' + courier.active_order.order_number"></span>
+                                            <span class="text-[10px] text-blue-600 truncate max-w-[150px]" x-text="courier.active_order.delivery_address || courier.active_order.customer_name"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="!courier.active_order">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Bo'sh (Kutmoqda)</span>
+                                    </template>
+                                </td>
+                                <td class="py-3.5 px-5 text-center font-bold text-slate-900" x-text="courier.orders_count || 0"></td>
                                 <td class="py-3.5 px-5">
                                     <button type="button" @click="toggleCourierActive(courier)" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" :class="courier.is_active ? 'bg-emerald-500' : 'bg-slate-200'">
                                         <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out" :class="courier.is_active ? 'translate-x-4' : 'translate-x-0'"></span>
                                     </button>
                                 </td>
-                                <td class="py-3.5 px-5 text-right space-x-1">
+                                 <td class="py-3.5 px-5 text-right space-x-1 whitespace-nowrap">
+                                    <button type="button" @click="openCourierProfileModal(courier)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold inline-flex items-center gap-1 border border-slate-200" title="{{ t.view_profile_btn|default:'Profil' }}">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-600"></i>
+                                        <span>{{ t.view_profile_btn|default:'Profil' }}</span>
+                                    </button>
+                                    <button type="button" @click="openCourierMonitorModal(courier)" class="px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-bold inline-flex items-center gap-1 border border-blue-200/60" title="{{ t.courier_map_title|default:'Jonli xarita' }}">
+                                        <i data-lucide="navigation" class="w-3.5 h-3.5 text-blue-600"></i>
+                                        <span>Xarita</span>
+                                    </button>
                                     <button type="button" @click="openEditCourierModal(courier)" class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Tahrirlash">
                                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                                     </button>
@@ -439,28 +468,307 @@
         </div>
     </div>
 
-    <!-- ==================== CONFIRM DELETE MODAL (from Video) ==================== -->
-    <div x-show="deleteModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-        <div @click.away="deleteModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl text-center space-y-4 border border-slate-100">
-            <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
-                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+    <!-- ==================== MODAL: COURIER PROFILE & STATISTICS ==================== -->
+    <div x-show="courierProfileModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/70 backdrop-blur-xs">
+        <div @click.away="courierProfileModalOpen = false" class="bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]">
+            <!-- Header -->
+            <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="w-12 h-12 rounded-2xl bg-[#c8ff6a] text-[#120d1d] flex items-center justify-center font-black text-xl shadow-lg shrink-0"
+                         x-text="(courierAnalyticsData?.courier?.name || selectedProfileCourier?.name || 'K').slice(0, 1).toUpperCase()">
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="text-base sm:text-lg font-black tracking-tight truncate"
+                                x-text="courierAnalyticsData?.courier?.name || selectedProfileCourier?.name || 'Kuryer profili'"></h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                                  :class="(courierAnalyticsData?.courier?.is_online || (selectedProfileCourier?.last_seen_seconds_ago !== null && selectedProfileCourier?.last_seen_seconds_ago < 180)) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-700 text-slate-300'"
+                                  x-text="(courierAnalyticsData?.courier?.is_online || (selectedProfileCourier?.last_seen_seconds_ago !== null && selectedProfileCourier?.last_seen_seconds_ago < 180)) ? 'Online' : 'Offline'"></span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-slate-200 border border-white/10"
+                                  x-text="(courierAnalyticsData?.courier?.is_active ?? selectedProfileCourier?.is_active) ? 'Faol kuryer' : 'Nofaol'"></span>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs text-slate-300 mt-1 flex-wrap">
+                            <span class="flex items-center gap-1 font-mono">
+                                <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span x-text="courierAnalyticsData?.courier?.phone || selectedProfileCourier?.phone"></span>
+                            </span>
+                            <template x-if="courierAnalyticsData?.courier?.created_at">
+                                <span class="text-slate-400 text-[11px] flex items-center gap-1">
+                                    <span>•</span>
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                                    <span x-text="courierAnalyticsData.courier.created_at + ' dan beri (' + courierAnalyticsData.courier.working_days + ' kun xizmatda)'"></span>
+                                </span>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" @click="openCourierProfileModal(selectedProfileCourier)" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors" title="Yangilash">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" @click="courierProfileModalOpen = false" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
-            <div>
-                <h3 class="font-black text-sm text-slate-900" x-text="deleteModalTitle">Bu xodimni o'chirib tashlaysizmi?</h3>
-                <p class="text-xs text-slate-500 mt-1" x-text="deleteModalMessage">Ushbu amalni ortga qaytarib bo'lmaydi.</p>
+
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+                <!-- Loading State -->
+                <template x-if="courierAnalyticsLoading && !courierAnalyticsData">
+                    <div class="py-16 text-center text-sm font-bold text-slate-400 flex flex-col items-center gap-3">
+                        <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span>Kuryer statistikasi yuklanmoqda...</span>
+                    </div>
+                </template>
+
+                <!-- Data Content -->
+                <template x-if="courierAnalyticsData">
+                    <div class="space-y-6">
+                        <!-- 6 KPI Cards -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+                            <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                                <div class="flex items-center justify-between text-slate-400 mb-1.5">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Jami buyurtmalar</span>
+                                    <i data-lucide="package" class="w-4 h-4 text-blue-500"></i>
+                                </div>
+                                <p class="text-xl font-black text-slate-900 font-mono" x-text="courierAnalyticsData.stats.total_orders"></p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">biriktirilgan</p>
+                            </div>
+
+                            <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200">
+                                <div class="flex items-center justify-between text-emerald-700 mb-1.5">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Yetkazilgan</span>
+                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                                </div>
+                                <p class="text-xl font-black text-emerald-700 font-mono" x-text="courierAnalyticsData.stats.completed_orders"></p>
+                                <p class="text-[10px] text-emerald-600 font-semibold mt-0.5">muvaffaqiyatli</p>
+                            </div>
+
+                            <div class="p-3.5 bg-indigo-50 rounded-2xl border border-indigo-200">
+                                <div class="flex items-center justify-between text-indigo-700 mb-1.5">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Muvaffaqiyat %</span>
+                                    <i data-lucide="award" class="w-4 h-4 text-indigo-600"></i>
+                                </div>
+                                <p class="text-xl font-black text-indigo-700 font-mono" x-text="courierAnalyticsData.stats.completion_rate + '%'"></p>
+                                <p class="text-[10px] text-indigo-600 font-semibold mt-0.5">samaradorlik</p>
+                            </div>
+
+                            <div class="p-3.5 bg-cyan-50 rounded-2xl border border-cyan-200">
+                                <div class="flex items-center justify-between text-cyan-700 mb-1.5">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Bugun yetkazilgan</span>
+                                    <i data-lucide="clock" class="w-4 h-4 text-cyan-600"></i>
+                                </div>
+                                <p class="text-xl font-black text-cyan-700 font-mono" x-text="courierAnalyticsData.stats.today_completed"></p>
+                                <p class="text-[10px] text-cyan-600 font-semibold mt-0.5">bugungi reja</p>
+                            </div>
+
+                            <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200">
+                                <div class="flex items-center justify-between text-amber-700 mb-1.5">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">O'rtacha vaqt</span>
+                                    <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i>
+                                </div>
+                                <p class="text-xl font-black text-amber-700 font-mono" x-text="courierAnalyticsData.stats.avg_delivery_time_minutes + ' daq'"></p>
+                                <p class="text-[10px] text-amber-600 font-semibold mt-0.5">har bir buyurtmaga</p>
+                            </div>
+
+                            <div class="p-3.5 bg-purple-50 rounded-2xl border border-purple-200">
+                                <div class="flex items-center justify-between text-purple-700 mb-1.5">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Jami masofa</span>
+                                    <i data-lucide="route" class="w-4 h-4 text-purple-600"></i>
+                                </div>
+                                <p class="text-xl font-black text-purple-700 font-mono" x-text="courierAnalyticsData.stats.total_distance_km + ' km'"></p>
+                                <p class="text-[10px] text-purple-600 font-semibold mt-0.5">bosib o'tilgan</p>
+                            </div>
+                        </div>
+
+                        <!-- Active Delivery Spotlight -->
+                        <template x-if="courierAnalyticsData.active_order">
+                            <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent border-2 border-blue-500/30 relative overflow-hidden">
+                                <div class="flex items-center justify-between gap-3 mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping"></span>
+                                        <span class="text-xs font-black uppercase tracking-wider text-blue-600">Hozir yetkazilmoqda (Faol marshrut)</span>
+                                    </div>
+                                    <button type="button" @click="courierProfileModalOpen = false; openCourierMonitorModal(selectedProfileCourier)" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                                        <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                                        <span>Xaritada jonli ko'rish</span>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3.5 rounded-xl border border-blue-200/60">
+                                    <div>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Buyurtma</p>
+                                        <p class="font-mono font-black text-slate-900 text-sm mt-0.5" x-text="'#' + courierAnalyticsData.active_order.order_number"></p>
+                                        <p class="text-xs font-bold text-emerald-600 mt-0.5" x-text="(courierAnalyticsData.active_order.total_amount || 0).toLocaleString() + ' UZS'"></p>
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Manzil & Mijoz</p>
+                                        <p class="text-xs font-bold text-slate-800 mt-0.5 truncate" x-text="courierAnalyticsData.active_order.delivery_address || 'Manzil ko\'rsatilmagan'"></p>
+                                        <p class="text-xs text-slate-500 mt-0.5 font-mono" x-text="(courierAnalyticsData.active_order.customer_name || 'Mijoz') + ' • ' + (courierAnalyticsData.active_order.customer_phone || '')"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Delivery History -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <div>
+                                    <h4 class="text-sm font-black text-slate-900 tracking-tight">Yetkazib berish tarixi</h4>
+                                    <p class="text-xs text-slate-500">Kuryer tomonidan bajarilgan va jarayondagi barcha buyurtmalar</p>
+                                </div>
+                                <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-xl">
+                                    <button type="button" @click="courierHistoryTab = 'all'" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all" :class="courierHistoryTab === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'">
+                                        Barchasi (<span x-text="courierAnalyticsData.orders_history.length"></span>)
+                                    </button>
+                                    <button type="button" @click="courierHistoryTab = 'delivering'" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all" :class="courierHistoryTab === 'delivering' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'">
+                                        Yetkazilmoqda
+                                    </button>
+                                    <button type="button" @click="courierHistoryTab = 'delivered'" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all" :class="courierHistoryTab === 'delivered' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'">
+                                        Yetkazilgan
+                                    </button>
+                                    <button type="button" @click="courierHistoryTab = 'cancelled'" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all" :class="courierHistoryTab === 'cancelled' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'">
+                                        Bekor
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden">
+                                <template x-for="order in courierAnalyticsData.orders_history.filter(o => {
+                                    if (courierHistoryTab === 'delivering') return ['in_delivery', 'picked_up'].includes(o.status);
+                                    if (courierHistoryTab === 'delivered') return o.status === 'delivered';
+                                    if (courierHistoryTab === 'cancelled') return o.status === 'cancelled';
+                                    return true;
+                                })" :key="order.id">
+                                    <div class="p-3.5 bg-white hover:bg-slate-50/70 transition-colors flex items-center justify-between gap-3 text-xs">
+                                        <div class="min-w-0 space-y-0.5">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-mono font-black text-slate-900 text-xs" x-text="'#' + order.order_number"></span>
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase"
+                                                      :class="order.status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : (order.status === 'cancelled' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-blue-50 text-blue-700 border border-blue-200')"
+                                                      x-text="order.status_display"></span>
+                                                <span class="text-slate-400 text-[11px]" x-text="order.created_at"></span>
+                                            </div>
+                                            <p class="text-slate-600 truncate" x-text="order.delivery_address || 'Manzil ko\'rsatilmagan'"></p>
+                                            <p class="text-slate-400 text-[11px]" x-text="order.customer_name + (order.customer_phone ? (' (' + order.customer_phone + ')') : '')"></p>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            <p class="font-mono font-bold text-slate-900" x-text="(order.total_amount || 0).toLocaleString() + ' UZS'"></p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
-            <div class="grid grid-cols-2 gap-2 pt-2">
-                <button type="button" @click="deleteModalOpen = false" class="py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">
-                    Yo'q, Bekor qilish
-                </button>
-                <button type="button" @click="executeDelete()" class="py-2.5 rounded-xl bg-rose-600 text-white text-xs font-black hover:bg-rose-700 shadow-xs">
-                    Ha, o'chirish
+
+            <!-- Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <template x-if="courierAnalyticsData?.courier?.phone || selectedProfileCourier?.phone">
+                        <a :href="'tel:' + (courierAnalyticsData?.courier?.phone || selectedProfileCourier?.phone)"
+                           class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 font-bold text-xs hover:bg-slate-50 flex items-center gap-1.5 transition-colors">
+                            <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            <span>Qo'ng'iroq</span>
+                        </a>
+                    </template>
+                    <button type="button" @click="courierProfileModalOpen = false; openCourierMonitorModal(selectedProfileCourier)"
+                            class="px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 font-bold text-xs hover:bg-blue-100 flex items-center gap-1.5 transition-colors cursor-pointer">
+                        <i data-lucide="radio" class="w-3.5 h-3.5 text-blue-500"></i>
+                        <span>Jonli xarita</span>
+                    </button>
+                </div>
+                <button type="button" @click="courierProfileModalOpen = false" class="px-5 py-2 rounded-xl bg-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-300 transition-colors cursor-pointer">
+                    Yopish
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- ==================== MODAL: LIVE COURIER MONITORING (EXPANDED MAP VIEW) ==================== -->
+    <div x-show="monitorCourierModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="closeCourierMonitorModal()" class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[95vh]">
+            <!-- Header -->
+            <div class="p-4 sm:p-5 bg-white border-b border-slate-200 text-slate-900 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-xs border border-blue-200">
+                        <i data-lucide="navigation" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm sm:text-base font-black tracking-tight text-slate-900" x-text="activeMonitoredCourier?.name"></h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                                  :class="(activeMonitoredCourier?.last_seen_seconds_ago !== null && activeMonitoredCourier?.last_seen_seconds_ago !== undefined && activeMonitoredCourier?.last_seen_seconds_ago < 180) ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'"
+                                  x-text="(activeMonitoredCourier?.last_seen_seconds_ago !== null && activeMonitoredCourier?.last_seen_seconds_ago !== undefined && activeMonitoredCourier?.last_seen_seconds_ago < 180) ? 'Online' : 'Offline'"></span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 font-mono mt-0.5"
+                           x-text="(activeMonitoredCourier?.phone || '') + ' • ' + (activeMonitoredCourier?.last_seen_seconds_ago !== null && activeMonitoredCourier?.last_seen_seconds_ago !== undefined ? ('Signal: ' + activeMonitoredCourier?.last_seen_seconds_ago + 's oldin') : 'GPS signali kutilmoqda')"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="fetchActiveCourierLiveInfo()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors" title="Yangilash">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" @click="closeCourierMonitorModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Order Details -->
+            <template x-if="activeMonitoredCourier?.active_order">
+                <div class="p-3.5 bg-blue-50/90 border-b border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div class="space-y-0.5 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-black text-slate-900 font-mono text-sm" x-text="'#' + activeMonitoredCourier.active_order.order_number"></span>
+                            <span class="px-2 py-0.5 rounded-md font-bold text-[10px] bg-blue-100 text-blue-700" x-text="activeMonitoredCourier.active_order.status_display"></span>
+                        </div>
+                        <p class="text-slate-700 font-semibold truncate flex items-center gap-1.5">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500 shrink-0"></i>
+                            <span x-text="activeMonitoredCourier.active_order.delivery_address || 'Manzil ko\'rsatilmagan'"></span>
+                        </p>
+                        <p class="text-slate-500 text-[11px]">
+                            Mijoz: <strong class="text-slate-800" x-text="activeMonitoredCourier.active_order.customer_name"></strong> (<span x-text="activeMonitoredCourier.active_order.customer_phone"></span>)
+                        </p>
+                    </div>
+                    <div class="flex sm:flex-col items-center sm:items-end justify-between shrink-0">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Buyurtma summasi</span>
+                        <span class="font-mono font-black text-slate-900 text-sm sm:text-base" x-text="(activeMonitoredCourier.active_order.total_amount || 0).toLocaleString() + ' UZS'"></span>
+                    </div>
+                </div>
+            </template>
+            <template x-if="!activeMonitoredCourier?.active_order">
+                <div class="p-3 bg-slate-50 border-b border-slate-100 text-center text-xs font-semibold text-slate-500">
+                    {{ t.courier_idle_status|default:"Kuryer hozirda yangi buyurtma olmagan (bo'sh holatda)." }}
+                </div>
+            </template>
+
+            <!-- Leaflet Map Container - Large screen view -->
+            <div class="flex-1 w-full min-h-[460px] sm:min-h-[500px] relative bg-slate-100">
+                <div id="staffCourierLiveMap" class="w-full h-full" style="height: 480px; width: 100%;"></div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 bg-white border-t border-slate-200 flex items-center justify-between gap-3">
+                <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Har 5 soniyada avtomatik yangilanadi</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="closeCourierMonitorModal()" class="px-5 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 border border-slate-200 transition-colors cursor-pointer">
+                        {{ t.close_modal_btn|default:"Yopish" }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<!-- Leaflet Library for Staff Live Monitor -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <script>
 function staffManagementApp() {
@@ -491,17 +799,22 @@ function staffManagementApp() {
 
         rolesList: {{ roles_json|safe|default:"[]" }},
 
-        couriersList: [
-            {% for c in couriers %}
-            {
-                id: '{{ c.id }}',
-                name: '{{ c.name|escapejs }}',
-                phone: '{{ c.phone|escapejs }}',
-                created_at: '{{ c.created_at|date:"d.m.Y, H:i" }}',
-                is_active: {{ c.is_active|yesno:"true,false" }}
-            },
-            {% endfor %}
-        ],
+        couriersList: {{ couriers_json|safe|default:"[]" }},
+
+        // Live Courier Monitoring State
+        courierProfileModalOpen: false,
+        selectedProfileCourier: null,
+        courierAnalyticsData: null,
+        courierAnalyticsLoading: false,
+        courierHistoryTab: 'all',
+        monitorCourierModalOpen: false,
+        activeMonitoredCourier: null,
+        courierLiveMap: null,
+        courierMarker: null,
+        destinationMarker: null,
+        routePolyline: null,
+        routePolylineBg: null,
+        monitorInterval: null,
 
         moduleChoices: {{ module_choices_json|safe|default:"[]" }},
 
@@ -819,6 +1132,232 @@ function staffManagementApp() {
             this.deleteModalMessage = `"${courier.name}" kuryerining hisobi o'chiriladi.`;
             this.deleteModalOpen = true;
             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        // --- COURIER PROFILE MODAL ---
+        async openCourierProfileModal(courier) {
+            this.selectedProfileCourier = courier;
+            this.courierProfileModalOpen = true;
+            this.courierAnalyticsLoading = true;
+            this.courierAnalyticsData = null;
+            this.courierHistoryTab = 'all';
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            try {
+                const res = await fetch(`/dashboard/api/courier-action/?action=analytics&staff_id=${courier.id}`);
+                const data = await res.json();
+                if (data.success) {
+                    this.courierAnalyticsData = data;
+                }
+            } catch (e) {
+                console.error("Failed to fetch courier analytics:", e);
+            } finally {
+                this.courierAnalyticsLoading = false;
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            }
+        },
+
+        // --- LIVE COURIER MONITORING METHODS ---
+        openCourierMonitorModal(courier) {
+            this.activeMonitoredCourier = courier;
+            this.monitorCourierModalOpen = true;
+
+            setTimeout(() => {
+                if (window.lucide) lucide.createIcons();
+                this.initStaffCourierMap();
+            }, 150);
+
+            if (this.monitorInterval) clearInterval(this.monitorInterval);
+            this.monitorInterval = setInterval(() => {
+                this.fetchActiveCourierLiveInfo();
+            }, 5000);
+        },
+
+        closeCourierMonitorModal() {
+            this.monitorCourierModalOpen = false;
+            if (this.monitorInterval) {
+                clearInterval(this.monitorInterval);
+                this.monitorInterval = null;
+            }
+            if (this.courierLiveMap) {
+                this.courierLiveMap.remove();
+                this.courierLiveMap = null;
+                this.courierMarker = null;
+                this.destinationMarker = null;
+                this.routePolyline = null;
+                this.routePolylineBg = null;
+            }
+        },
+
+        async fetchActiveCourierLiveInfo() {
+            if (!this.activeMonitoredCourier) return;
+            try {
+                const res = await fetch(`/dashboard/api/courier-action/?action=get_live_info&courier_id=${this.activeMonitoredCourier.id}`);
+                const data = await res.json();
+                if (data.success && data.courier) {
+                    this.activeMonitoredCourier = data.courier;
+                    // Update in list as well
+                    const idx = this.couriersList.findIndex(c => String(c.id) === String(data.courier.id));
+                    if (idx !== -1) {
+                        this.couriersList[idx] = data.courier;
+                    }
+                    this.updateStaffCourierMap();
+                }
+            } catch (e) {}
+        },
+
+        initStaffCourierMap() {
+            const mapContainer = document.getElementById('staffCourierLiveMap');
+            if (!mapContainer) return;
+
+            if (this.courierLiveMap) {
+                this.courierLiveMap.remove();
+                this.courierLiveMap = null;
+            }
+
+            const cLat = parseFloat(this.activeMonitoredCourier?.current_lat) || 41.2995;
+            const cLng = parseFloat(this.activeMonitoredCourier?.current_lng) || 69.2401;
+
+            this.courierLiveMap = L.map('staffCourierLiveMap', {
+                zoomControl: true
+            }).setView([cLat, cLng], 14);
+
+            L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ request.language|default:"ru" }}&x={x}&y={y}&z={z}', {
+                subdomains: ['0', '1', '2', '3'],
+                maxZoom: 20,
+                attribution: '&copy; Google Maps'
+            }).addTo(this.courierLiveMap);
+
+            this.updateStaffCourierMap();
+
+            setTimeout(() => {
+                if (this.courierLiveMap) this.courierLiveMap.invalidateSize();
+            }, 300);
+        },
+
+        async updateStaffCourierMap() {
+            if (!this.courierLiveMap || !this.activeMonitoredCourier) return;
+
+            const c = this.activeMonitoredCourier;
+            const cLat = parseFloat(c.current_lat) || (c.active_order?.delivery_lat ? parseFloat(c.active_order.delivery_lat) - 0.012 : 41.311087);
+            const cLng = parseFloat(c.current_lng) || (c.active_order?.delivery_lng ? parseFloat(c.active_order.delivery_lng) - 0.012 : 69.240562);
+            const hasDestPos = c.active_order?.delivery_lat && c.active_order?.delivery_lng;
+
+            // Courier Marker with 3D Navigation Arrow (Yandex Pro style)
+            const carIcon = L.divIcon({
+                className: 'courier-map-car-wrap',
+                html: `<div class="relative flex items-center justify-center">
+                    <div style="position: absolute; inset: -8px; border-radius: 50%; background: rgba(245,158,11,0.35); animation: pulse-ring 2s infinite;"></div>
+                    <div style="width: 44px; height: 44px; filter: drop-shadow(0 6px 12px rgba(217, 119, 6, 0.55));">
+                        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
+                            <path d="M24 4 L42 42 L24 33 L6 42 Z" fill="rgba(0,0,0,0.22)" transform="translate(0, 3)"/>
+                            <path d="M24 4 L6 42 L24 33 Z" fill="url(#staffNavFacetLeft)" stroke="#d97706" stroke-width="1.2" stroke-linejoin="round"/>
+                            <path d="M24 4 L42 42 L24 33 Z" fill="url(#staffNavFacetRight)" stroke="#b45309" stroke-width="1.2" stroke-linejoin="round"/>
+                            <line x1="24" y1="4" x2="24" y2="33" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.95"/>
+                            <defs>
+                                <linearGradient id="staffNavFacetLeft" x1="6" y1="4" x2="24" y2="33" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#fef08a"/>
+                                    <stop offset="0.5" stop-color="#facc15"/>
+                                    <stop offset="1" stop-color="#eab308"/>
+                                </linearGradient>
+                                <linearGradient id="staffNavFacetRight" x1="42" y1="4" x2="24" y2="33" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#f59e0b"/>
+                                    <stop offset="0.7" stop-color="#d97706"/>
+                                    <stop offset="1" stop-color="#b45309"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>`,
+                iconSize: [44, 44],
+                iconAnchor: [22, 22]
+            });
+
+            if (!this.courierMarker) {
+                this.courierMarker = L.marker([cLat, cLng], { icon: carIcon }).addTo(this.courierLiveMap)
+                    .bindPopup(`<b>${c.name} (Kuryer)</b><br>${c.last_seen_seconds_ago !== null && c.last_seen_seconds_ago !== undefined ? ('Signal: ' + c.last_seen_seconds_ago + 's oldin') : 'GPS kutilmoqda'}`);
+            } else {
+                this.courierMarker.setLatLng([cLat, cLng]);
+            }
+
+            if (hasDestPos) {
+                const dLat = parseFloat(c.active_order.delivery_lat);
+                const dLng = parseFloat(c.active_order.delivery_lng);
+
+                // Destination Marker - Yandex Pro Checkered Finish Flag (Vector SVG)
+                const destIcon = L.divIcon({
+                    className: 'order-dest-marker-wrap',
+                    html: `<div class="relative flex items-center justify-center">
+                        <div style="position: absolute; inset: -6px; border-radius: 50%; background: rgba(15,23,42,0.25); animation: pulse-ring 2.2s infinite;"></div>
+                        <div class="w-10 h-10 rounded-2xl bg-white text-slate-900 flex items-center justify-center shadow-xl border-2 border-slate-900">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                                <path d="M4 2v20" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/>
+                                <rect x="6" y="3" width="7" height="6" fill="#0f172a"/>
+                                <rect x="13" y="3" width="7" height="6" fill="#ffffff" stroke="#0f172a" stroke-width="0.5"/>
+                                <rect x="6" y="9" width="7" height="6" fill="#ffffff" stroke="#0f172a" stroke-width="0.5"/>
+                                <rect x="13" y="9" width="7" height="6" fill="#0f172a"/>
+                            </svg>
+                        </div>
+                    </div>`,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 36]
+                });
+
+                if (!this.destinationMarker) {
+                    this.destinationMarker = L.marker([dLat, dLng], { icon: destIcon }).addTo(this.courierLiveMap)
+                        .bindPopup(`<b>#${c.active_order.order_number} Manzili</b><br>${c.active_order.delivery_address}`);
+                } else {
+                    this.destinationMarker.setLatLng([dLat, dLng]);
+                }
+
+                // Fetch real road route (OSRM + openstreetmap.de mirror fallback)
+                let routeCoords = null;
+                try {
+                    const url = `https://router.project-osrm.org/route/v1/driving/${cLng},${cLat};${dLng},${dLat}?overview=full&geometries=geojson`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                        routeCoords = data.routes[0].geometry.coordinates.map(pt => [pt[1], pt[0]]);
+                    }
+                } catch (e) {}
+
+                if (!routeCoords) {
+                    try {
+                        const mirrorUrl = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${cLng},${cLat};${dLng},${dLat}?overview=full&geometries=geojson`;
+                        const res2 = await fetch(mirrorUrl);
+                        const data2 = await res2.json();
+                        if (data2.code === 'Ok' && data2.routes && data2.routes.length > 0) {
+                            routeCoords = data2.routes[0].geometry.coordinates.map(pt => [pt[1], pt[0]]);
+                        }
+                    } catch (e2) {}
+                }
+
+                if (!routeCoords) {
+                    routeCoords = [[cLat, cLng], [(cLat + dLat)/2 + 0.002, (cLng + dLng)/2], [dLat, dLng]];
+                }
+
+                if (!this.routePolylineBg) {
+                    this.routePolylineBg = L.polyline(routeCoords, { color: '#0f172a', weight: 8, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }).addTo(this.courierLiveMap);
+                } else {
+                    this.routePolylineBg.setLatLngs(routeCoords);
+                }
+                const totalP = routeCoords.length;
+                const segA = routeCoords.slice(0, Math.ceil(totalP * 0.55));
+                const segB = routeCoords.slice(Math.max(0, Math.floor(totalP * 0.50)), Math.ceil(totalP * 0.85));
+                const segC = routeCoords.slice(Math.max(0, Math.floor(totalP * 0.80)));
+
+                if (this.staffRoutePolylines && this.staffRoutePolylines.length > 0) {
+                    this.staffRoutePolylines.forEach(l => l.remove());
+                }
+                this.staffRoutePolylines = [];
+                const lG = L.polyline(segA, { color: '#22c55e', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.courierLiveMap);
+                const lO = L.polyline(segB, { color: '#f59e0b', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.courierLiveMap);
+                const lR = L.polyline(segC, { color: '#ef4444', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.courierLiveMap);
+                this.staffRoutePolylines.push(lG, lO, lR);
+                const bounds = L.latLngBounds(routeCoords);
+                this.courierLiveMap.fitBounds(bounds, { padding: [60, 60] });
+            } else {
+                this.courierLiveMap.setView([cLat, cLng], 15);
+            }
         },
 
         // --- EXECUTE DELETE ---

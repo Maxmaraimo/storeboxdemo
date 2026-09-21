@@ -6,12 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}{{ store.name }} — StoreBox{% endblock %}</title>
 
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- High-Speed Local Assets for Instant Load -->
     <script src="{% static 'vendor/tailwindcss.js' %}"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', '"Segoe UI"', 'Arial', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
                     colors: {
                         brand: '{{ store.primary_color|default:"#10B981" }}',
                         'brand-dark': '#059669',
@@ -33,6 +42,11 @@
 
     <style>
         [x-cloak] { display: none !important; }
+        html, body {
+            font-family: 'Inter', "Segoe UI", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
         :root {
             --brand-color: {{ store.primary_color|default:"#10B981" }};
             --bg-color: {{ store.theme_bg_color|default:"#F8FAFC" }};
@@ -157,7 +171,8 @@
 </head>
 <body class="min-h-full font-sans text-slate-800 antialiased flex flex-col justify-between selection:bg-slate-900 selection:text-white" 
       style="background: radial-gradient(110% 60% at 50% -10%, {% if store.primary_color %}{{ store.primary_color }}12{% else %}rgba(15,23,42,0.05){% endif %} 0%, rgba(248, 250, 252, 0.4) 60%, transparent 100%), {{ store.theme_bg_color|default:'#F8FAFC' }};" 
-      x-data="storefrontApp()">
+      x-data="storefrontApp()"
+      @cart-updated.window="if ($event.detail) { cartCount = $event.detail.cart_count ?? cartCount; subtotal = $event.detail.subtotal ?? subtotal; if ($event.detail.cart) cartItems = $event.detail.cart; if ($event.detail.openDrawer !== false) cartDrawerOpen = true; }">
 
     <div>
         <!-- TOP STOREBOX BADGE STRIP (Video 05:27) -->
@@ -261,12 +276,12 @@
                             <span x-show="wishlist.length > 0" x-cloak class="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center" x-text="wishlist.length"></span>
                         </button>
 
-                        <!-- Cart (Savat) -->
-                        <a href="/store/{{ store.subdomain }}/checkout/" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full btn-brand text-white text-xs font-bold shadow-xs transition-all">
+                        <!-- Cart (Savat) - Opens Cart Drawer smoothly -->
+                        <button type="button" @click="cartDrawerOpen = true" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full btn-brand text-white text-xs font-bold shadow-xs transition-all cursor-pointer">
                             <i data-lucide="shopping-bag" class="w-4 h-4"></i>
                             <span class="hidden sm:inline">{{ t.cart|default:'Savat' }}</span>
                             <span class="px-1.5 py-0.2 rounded-full bg-white text-slate-900 text-[10px] font-black flex items-center justify-center" x-text="cartCount">0</span>
-                        </a>
+                        </button>
 
                         <!-- User Profile Button (Desktop) -->
                         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}"
@@ -1127,10 +1142,10 @@
                 <template x-for="(item, key) in cartItems" :key="key">
                     <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 bg-slate-50/50">
                         <div class="w-14 h-14 rounded-xl bg-slate-200 overflow-hidden shrink-0">
-                            <template x-if="item.image">
-                                <img :src="item.image" class="w-full h-full object-cover">
+                            <template x-if="item.image || item.image_url">
+                                <img :src="item.image || item.image_url" class="w-full h-full object-cover">
                             </template>
-                            <template x-if="!item.image">
+                            <template x-if="!item.image && !item.image_url">
                                 <div class="w-full h-full flex items-center justify-center text-slate-400 text-xs">
                                     <i data-lucide="package" class="w-5 h-5"></i>
                                 </div>

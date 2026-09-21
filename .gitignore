@@ -7,4 +7,7 @@ staticfiles/
 .env
 .DS_Store
 .cache/
-
+*.mov
+*.mp4
+*.bak*
+scratch_*

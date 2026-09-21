@@ -49,57 +49,82 @@ export const Sidebar: React.FC = () => {
     });
   };
 
+  // Accordion open/close state for nested menu items (e.g. staff)
+  const [staffAccordionOpen, setStaffAccordionOpen] = useState<boolean>(() => {
+    return location.pathname.startsWith("/settings/staff") || location.pathname.startsWith("/settings/roles") || location.pathname.startsWith("/settings/couriers");
+  });
+
+  useEffect(() => {
+    if (location.pathname.startsWith("/settings/staff") || location.pathname.startsWith("/settings/roles") || location.pathname.startsWith("/settings/couriers")) {
+      setStaffAccordionOpen(true);
+    }
+  }, [location.pathname]);
+
   const navSections = useMemo(
     () => [
       {
         title: t("main_section") || "Asosiy",
         items: [
-          { path: "/", icon: LayoutDashboard, label: t("dashboard") || "Boshqaruv paneli", badge: null },
+          { path: "/", icon: LayoutDashboard, label: t("dashboard") || "Boshqaruv paneli", badge: null, permissionModule: "dashboard" },
           {
             path: "/orders",
             icon: ShoppingCart,
             label: t("orders") || "Buyurtmalar",
             badge: newOrdersCount > 0 ? String(newOrdersCount) : null,
+            permissionModule: "orders",
           },
-          { path: "/customers", icon: Users, label: t("customers") || "Mijozlar", badge: null },
+          { path: "/customers", icon: Users, label: t("customers") || "Mijozlar", badge: null, permissionModule: "customers" },
           {
             path: "/chats",
             icon: MessageSquare,
             label: t("chat") || "Xabarlar & Chat",
             badge: unreadChatsCount > 0 ? String(unreadChatsCount) : null,
+            permissionModule: "chats",
           },
         ],
       },
       {
         title: t("catalog_section") || "Mahsulotlar & Ombor",
         items: [
-          { path: "/products", icon: Package, label: t("all_products") || "Barcha mahsulotlar", badge: null },
-          { path: "/categories", icon: FolderTree, label: t("categories") || "Kategoriyalar", badge: null },
-          { path: "/discounts", icon: Tag, label: t("discounts") || "Chegirmalar", badge: null },
-          { path: "/ikpu", icon: Barcode, label: t("ikpu") || "IKPU kodlari", badge: null },
-          { path: "/warehouse", icon: Boxes, label: t("warehouse") || "Omborxona", badge: null },
+          { path: "/products", icon: Package, label: t("all_products") || "Barcha mahsulotlar", badge: null, permissionModule: "products" },
+          { path: "/categories", icon: FolderTree, label: t("categories") || "Kategoriyalar", badge: null, permissionModule: "categories" },
+          { path: "/discounts", icon: Tag, label: t("discounts") || "Chegirmalar", badge: null, permissionModule: "discounts" },
+          { path: "/ikpu", icon: Barcode, label: t("ikpu") || "IKPU kodlari", badge: null, permissionModule: "ikpu" },
+          { path: "/warehouse", icon: Boxes, label: t("warehouse") || "Omborxona", badge: null, permissionModule: "warehouse" },
         ],
       },
       {
         title: t("marketing_section") || "Marketing & Integratsiyalar",
         items: [
-          { path: "/marketing", icon: Megaphone, label: t("marketing") || "Marketing & Aksiya", badge: null },
-          { path: "/platforms", icon: Bot, label: t("telegram_bot") || "Telegram Bot", badge: null },
-          { path: "/design", icon: Sparkles, label: t("design_ai") || "Dizayn & AI vitrina", badge: "AI" },
-          { path: "/platforms/qr", icon: QrCode, label: t("qr_catalog") || "QR Menyu & Katalog", badge: null },
-          { path: "/yespos", icon: Monitor, label: t("yespos_import") || "YesPOS integratsiya", badge: "POS" },
-          { path: "/robo-market", icon: StoreIcon, label: t("storebox_market") || "StoreBox Market", badge: null },
+          { path: "/marketing", icon: Megaphone, label: t("marketing") || "Marketing & Aksiya", badge: null, permissionModule: "broadcast" },
+          { path: "/platforms", icon: Bot, label: t("telegram_bot") || "Telegram Bot", badge: null, permissionModule: "telegram" },
+          { path: "/design", icon: Sparkles, label: t("design_ai") || "Dizayn & AI vitrina", badge: "AI", permissionModule: "banners" },
+          { path: "/platforms/qr", icon: QrCode, label: t("qr_catalog") || "QR Menyu & Katalog", badge: null, permissionModule: "analytics" },
+          { path: "/yespos", icon: Monitor, label: t("yespos_import") || "YesPOS integratsiya", badge: "POS", permissionModule: "dashboard" },
+          { path: "/robo-market", icon: StoreIcon, label: t("storebox_market") || "StoreBox Market", badge: null, permissionModule: "channels" },
         ],
       },
       {
         title: t("settings_section") || "Sozlamalar",
         items: [
-          { path: "/settings/payments", icon: CreditCard, label: t("payment_methods") || "To'lov tizimlari", badge: null },
-          { path: "/settings/delivery", icon: Truck, label: t("delivery") || "Yetkazib berish", badge: null },
-          { path: "/settings/branches", icon: MapPin, label: t("branches") || "Filiallar", badge: null },
-          { path: "/settings/staff", icon: UserCheck, label: t("staff") || "Xodimlar & Rollar", badge: null },
-          { path: "/settings/tariffs", icon: BadgePercent, label: t("tariffs") || "Tarif rejalari", badge: null },
-          { path: "/settings", icon: Settings, label: t("settings") || "Asosiy sozlamalar", badge: null },
+          { path: "/settings/payments", icon: CreditCard, label: t("payment_methods") || "To'lov tizimlari", badge: null, permissionModule: "payments" },
+          { path: "/settings/delivery", icon: Truck, label: t("delivery") || "Yetkazib berish", badge: null, permissionModule: "delivery" },
+          { path: "/settings/branches", icon: MapPin, label: t("branches") || "Filiallar", badge: null, permissionModule: "branches" },
+          {
+            path: "/settings/staff",
+            icon: UserCheck,
+            label: t("staff") || "Xodimlar",
+            badge: null,
+            permissionModule: "staff",
+            isAccordion: true,
+            subItems: [
+              { path: "/settings/staff", label: "Xodimlar", permissionModule: "staff" },
+              { path: "/settings/staff/roles", label: "Rollar", permissionModule: "roles" },
+              { path: "/settings/staff/couriers", label: "Kuryer", permissionModule: "delivery" },
+            ],
+          },
+          { path: "/settings/tariffs", icon: BadgePercent, label: t("tariffs") || "Tarif rejalari", badge: null, permissionModule: "settings" },
+          { path: "/settings", icon: Settings, label: t("settings") || "Asosiy sozlamalar", badge: null, permissionModule: "settings" },
         ],
       },
     ],
@@ -107,11 +132,16 @@ export const Sidebar: React.FC = () => {
   );
 
   const allNavPaths = useMemo(
-    () => navSections.flatMap((section) => section.items.map((item) => item.path)),
+    () =>
+      navSections.flatMap((section) =>
+        section.items.flatMap((item) =>
+          item.subItems ? item.subItems.map((s) => s.path) : [item.path]
+        )
+      ),
     [navSections]
   );
 
-  const isActive = (path: string) => {
+  const isActive = (path: string, exact: boolean = false) => {
     const current = location.pathname.replace(/\/+$/, "") || "/";
     const target = path.replace(/\/+$/, "") || "/";
 
@@ -123,8 +153,10 @@ export const Sidebar: React.FC = () => {
       return true;
     }
 
-    // Prefix match for nested sub-routes (e.g., /orders/123 -> /orders),
-    // but only if there is NO more specific route defined in the sidebar menu (e.g. /platforms vs /platforms/qr)
+    if (exact) {
+      return false;
+    }
+
     if (current.startsWith(target + "/")) {
       const hasMoreSpecific = allNavPaths.some((otherPath) => {
         const other = otherPath.replace(/\/+$/, "") || "/";
@@ -155,8 +187,8 @@ export const Sidebar: React.FC = () => {
             title="StoreBox Dashboard"
           >
             {/* StoreBox Official Brand Cube Logo */}
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#2c243d] to-[#151020] flex items-center justify-center shadow-md border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
-              <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#00d668] fill-none stroke-[1.8] stroke-linejoin-round">
+            <div className="w-10 h-10 rounded-2xl bg-[#211b2e] flex items-center justify-center shadow-lg shadow-[#211b2e]/25 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
+              <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
                 <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
                 <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
               </svg>
@@ -164,10 +196,10 @@ export const Sidebar: React.FC = () => {
 
             {isExpanded && (
               <div className="text-left truncate">
-                <div className="text-sm font-black tracking-tight text-neutral-900 dark:text-white leading-none">
-                  Store<span className="text-[#00d668]">Box</span>
+                <div className="text-[17px] font-[850] tracking-[-0.6px] text-neutral-900 dark:text-white leading-none">
+                  StoreBox
                 </div>
-                <div className="text-[9px] font-mono font-bold text-neutral-400 mt-0.5 tracking-wider">
+                <div className="text-[9px] font-mono font-bold text-neutral-400 mt-1 tracking-wider">
                   STUDIO 2.0
                 </div>
               </div>
@@ -195,7 +227,7 @@ export const Sidebar: React.FC = () => {
             title={t("view_storefront_tooltip") || "Do'kon vitrinasini ochish"}
           >
             <div className="flex items-center gap-1.5 truncate">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c8ff6a] animate-pulse"></span>
               <span className="truncate">{store.subdomain}.storebox.uz</span>
             </div>
             <ExternalLink className="w-3 h-3 text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white shrink-0" />
@@ -214,8 +246,89 @@ export const Sidebar: React.FC = () => {
             )}
 
             {section.items.map((item) => {
-              const active = isActive(item.path);
+              const isItemActive = item.isAccordion
+                ? location.pathname.startsWith("/settings/staff") ||
+                  location.pathname.startsWith("/settings/roles") ||
+                  location.pathname.startsWith("/settings/couriers")
+                : isActive(item.path);
               const Icon = item.icon;
+
+              if (item.isAccordion && item.subItems) {
+                return (
+                  <div key={item.path} className="space-y-1">
+                    {/* Accordion parent trigger */}
+                    <div
+                      onClick={() => {
+                        if (!isExpanded) {
+                          setIsExpanded(true);
+                          setStaffAccordionOpen(true);
+                        } else {
+                          setStaffAccordionOpen((prev) => !prev);
+                        }
+                      }}
+                      className={`relative flex items-center rounded-2xl transition-all duration-150 cursor-pointer group select-none ${
+                        isExpanded
+                          ? "px-3 py-2 gap-2.5 w-full text-xs"
+                          : "w-11 h-11 mx-auto justify-center"
+                      } ${
+                        isItemActive
+                          ? "bg-[#211b2e] dark:bg-[#c8ff6a] text-white dark:text-[#211b2e] font-bold shadow-md shadow-[#211b2e]/20"
+                          : "text-neutral-600 dark:text-neutral-400 hover:text-white dark:hover:text-[#211b2e] hover:bg-[#211b2e] dark:hover:bg-[#c8ff6a] font-medium"
+                      }`}
+                      title={!isExpanded ? item.label : undefined}
+                    >
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-transform ${
+                          isItemActive
+                            ? "scale-105 text-[#c8ff6a] dark:text-[#211b2e]"
+                            : "group-hover:scale-105 group-hover:text-[#c8ff6a] dark:group-hover:text-[#211b2e]"
+                        }`}
+                      />
+
+                      {isExpanded && (
+                        <>
+                          <span className="truncate flex-1">{item.label}</span>
+                          <ChevronRight
+                            className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                              staffAccordionOpen
+                                ? "rotate-90 text-[#c8ff6a] dark:text-[#211b2e]"
+                                : "text-neutral-400 group-hover:text-white dark:group-hover:text-[#211b2e]"
+                            }`}
+                          />
+                        </>
+                      )}
+
+                      {!isExpanded && (
+                        <div className="absolute left-full ml-3 px-2.5 py-1 rounded-xl bg-neutral-900 dark:bg-neutral-800 border border-transparent dark:border-white/10 text-white text-[11px] font-semibold whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
+                          {item.label}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Accordion Subitems */}
+                    {isExpanded && staffAccordionOpen && (
+                      <div className="pl-6 pr-1 space-y-1 border-l-2 border-slate-100 dark:border-neutral-800 ml-4 my-1">
+                        {item.subItems.map((sub) => {
+                          const subActive = location.pathname.replace(/\/+$/, "") === sub.path.replace(/\/+$/, "");
+                          return (
+                            <Link
+                              key={sub.path}
+                              to={sub.path}
+                              className={`flex items-center px-3 py-1.5 rounded-xl text-xs transition-colors ${
+                                subActive
+                                  ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] font-bold"
+                                  : "text-neutral-500 dark:text-neutral-400 hover:text-[#211b2e] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 font-medium"
+                              }`}
+                            >
+                              <span className="truncate">{sub.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
 
               return (
                 <Link
@@ -226,15 +339,17 @@ export const Sidebar: React.FC = () => {
                       ? "px-3 py-2 gap-2.5 w-full text-xs"
                       : "w-11 h-11 mx-auto justify-center"
                   } ${
-                    active
-                      ? "bg-neutral-900 dark:bg-emerald-500/15 text-white dark:text-[#00d668] border border-transparent dark:border-emerald-500/30 shadow-sm font-bold"
-                      : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 font-medium border border-transparent"
+                    isItemActive
+                      ? "bg-[#211b2e] dark:bg-[#c8ff6a] text-white dark:text-[#211b2e] shadow-md shadow-[#211b2e]/20 font-bold"
+                      : "text-neutral-600 dark:text-neutral-400 hover:text-white dark:hover:text-[#211b2e] hover:bg-[#211b2e] dark:hover:bg-[#c8ff6a] font-medium"
                   }`}
                   title={!isExpanded ? item.label : undefined}
                 >
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-transform ${
-                      active ? "scale-105" : "group-hover:scale-105"
+                      isItemActive
+                        ? "scale-105 text-[#c8ff6a] dark:text-[#211b2e]"
+                        : "group-hover:scale-105 group-hover:text-[#c8ff6a] dark:group-hover:text-[#211b2e]"
                     }`}
                   />
 
@@ -248,13 +363,9 @@ export const Sidebar: React.FC = () => {
                       className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
                         isExpanded ? "shrink-0 ml-auto" : "absolute -top-1 -right-1"
                       } ${
-                        active
-                          ? "bg-white/20 dark:bg-emerald-500/20 text-white dark:text-[#00d668]"
-                          : item.badge === "AI"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                          : item.badge === "POS"
-                          ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                          : "bg-rose-500 text-white"
+                        isItemActive
+                          ? "bg-white/20 text-[#c8ff6a] dark:bg-[#211b2e]/20 dark:text-[#211b2e]"
+                          : "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 group-hover:bg-white/20 group-hover:text-[#c8ff6a]"
                       }`}
                     >
                       {item.badge}
@@ -287,7 +398,7 @@ export const Sidebar: React.FC = () => {
             title={t("view_storefront_tooltip") || "Do'kon saytini ko'rish"}
           >
             <div className="flex items-center gap-2 truncate">
-              <StoreIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <StoreIcon className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" />
               {isExpanded && (
                 <span className="text-xs font-bold truncate">{t("view_website") || "Veb-saytni ko'rish"}</span>
               )}

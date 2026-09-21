@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { AppLayout } from "./components/layout/AppLayout";
 import { LoginPage } from "./pages/auth/LoginPage";
@@ -30,6 +30,8 @@ import { DeliveryPage } from "./pages/settings/DeliveryPage";
 import { PaymentsPage } from "./pages/settings/PaymentsPage";
 import { RoboMarketPage } from "./pages/settings/RoboMarketPage";
 
+import { ShieldAlert } from "lucide-react";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -38,6 +40,31 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const PermissionGuard: React.FC<{ module: string; children: React.ReactNode }> = ({
+  module,
+  children,
+}) => {
+  const { hasPermission } = useAuth();
+  if (!hasPermission(module, "view")) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center p-6">
+        <div className="bg-white dark:bg-neutral-850 border border-slate-200 dark:border-neutral-800 rounded-3xl p-8 max-w-md w-full text-center shadow-xs space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-500 mx-auto flex items-center justify-center">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <div className="space-y-1.5">
+            <h3 className="text-base font-black text-slate-900 dark:text-white">Kirish cheklangan</h3>
+            <p className="text-xs text-slate-500 dark:text-neutral-400 font-medium leading-relaxed">
+              Sizda bu bo'limga kirish huquqi mavjud emas. Agar bu xatolik deb hisoblasangiz, do'kon ma'muriga murojaat qiling.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return <>{children}</>;
+};
 
 export const App: React.FC = () => {
   const basename = window.location.pathname.startsWith("/dashboard") ? "/dashboard" : "";
@@ -51,30 +78,215 @@ export const App: React.FC = () => {
               <Route path="/login" element={<LoginPage />} />
 
               <Route path="/" element={<AppLayout />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="orders" element={<OrdersPage />} />
-                <Route path="orders/:id" element={<OrderDetailPage />} />
-                <Route path="products" element={<ProductsPage />} />
-                <Route path="categories" element={<CategoriesPage />} />
-                <Route path="discounts" element={<DiscountsPage />} />
-                <Route path="ikpu" element={<IkpuPage />} />
-                <Route path="warehouse" element={<WarehousePage />} />
-                <Route path="customers" element={<CustomersPage />} />
-                <Route path="chats" element={<ChatsPage />} />
-                <Route path="marketing" element={<MarketingPage />} />
-                <Route path="platforms" element={<TelegramBotPage />} />
-                <Route path="telegram" element={<TelegramBotPage />} />
-                <Route path="platforms/qr" element={<QrCatalogPage />} />
-                <Route path="qr" element={<QrCatalogPage />} />
-                <Route path="design" element={<DesignStudioPage />} />
-                <Route path="yespos" element={<YesPosPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="settings/branches" element={<BranchesPage />} />
-                <Route path="settings/staff" element={<StaffPage />} />
-                <Route path="settings/tariffs" element={<TariffsPage />} />
-                <Route path="settings/delivery" element={<DeliveryPage />} />
-                <Route path="settings/payments" element={<PaymentsPage />} />
-                <Route path="robo-market" element={<RoboMarketPage />} />
+                <Route
+                  index
+                  element={
+                    <PermissionGuard module="dashboard">
+                      <DashboardPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="orders"
+                  element={
+                    <PermissionGuard module="orders">
+                      <OrdersPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="orders/:id"
+                  element={
+                    <PermissionGuard module="orders">
+                      <OrderDetailPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="products"
+                  element={
+                    <PermissionGuard module="products">
+                      <ProductsPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="categories"
+                  element={
+                    <PermissionGuard module="categories">
+                      <CategoriesPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="discounts"
+                  element={
+                    <PermissionGuard module="discounts">
+                      <DiscountsPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="ikpu"
+                  element={
+                    <PermissionGuard module="ikpu">
+                      <IkpuPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="warehouse"
+                  element={
+                    <PermissionGuard module="warehouse">
+                      <WarehousePage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="customers"
+                  element={
+                    <PermissionGuard module="customers">
+                      <CustomersPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="chats"
+                  element={
+                    <PermissionGuard module="chats">
+                      <ChatsPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="marketing"
+                  element={
+                    <PermissionGuard module="broadcast">
+                      <MarketingPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="platforms"
+                  element={
+                    <PermissionGuard module="telegram">
+                      <TelegramBotPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="telegram"
+                  element={
+                    <PermissionGuard module="telegram">
+                      <TelegramBotPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="platforms/qr"
+                  element={
+                    <PermissionGuard module="analytics">
+                      <QrCatalogPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="qr"
+                  element={
+                    <PermissionGuard module="analytics">
+                      <QrCatalogPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="design"
+                  element={
+                    <PermissionGuard module="banners">
+                      <DesignStudioPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="yespos"
+                  element={
+                    <PermissionGuard module="dashboard">
+                      <YesPosPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings"
+                  element={
+                    <PermissionGuard module="settings">
+                      <SettingsPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/branches"
+                  element={
+                    <PermissionGuard module="branches">
+                      <BranchesPage />
+                    </PermissionGuard>
+                  }
+                />
+                {/* Staff & Roles & Couriers */}
+                <Route
+                  path="settings/staff"
+                  element={
+                    <PermissionGuard module="staff">
+                      <StaffPage initialTab="staff" />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/staff/roles"
+                  element={
+                    <PermissionGuard module="roles">
+                      <StaffPage initialTab="roles" />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/staff/couriers"
+                  element={
+                    <PermissionGuard module="delivery">
+                      <StaffPage initialTab="couriers" />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/tariffs"
+                  element={
+                    <PermissionGuard module="settings">
+                      <TariffsPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/delivery"
+                  element={
+                    <PermissionGuard module="delivery">
+                      <DeliveryPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/payments"
+                  element={
+                    <PermissionGuard module="payments">
+                      <PaymentsPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="robo-market"
+                  element={
+                    <PermissionGuard module="channels">
+                      <RoboMarketPage />
+                    </PermissionGuard>
+                  }
+                />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>

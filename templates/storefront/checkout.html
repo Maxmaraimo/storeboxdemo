@@ -33,6 +33,82 @@
         <input type="hidden" name="delivery_lat" x-model="deliveryLat">
         <input type="hidden" name="delivery_lng" x-model="deliveryLng">
 
+        <!-- 0. Ordered Products Overview -->
+        <div class="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3.5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
+                    <i data-lucide="shopping-bag" class="w-4 h-4 text-brand"></i>
+                    <h3>{% if lang == 'uz' %}Buyurtma qilinayotgan tovarlar{% else %}Заказываемые товары{% endif %}</h3>
+                </div>
+                <button type="button" @click="cartDrawerOpen = true" class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
+                    <span>{% if lang == 'uz' %}O'zgartirish{% else %}Изменить{% endif %}</span>
+                </button>
+            </div>
+
+            <div class="divide-y divide-slate-100">
+                {% if cart %}
+                    {% for key, item in cart.items %}
+                    <div class="py-2.5 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200/60">
+                                {% if item.image or item.image_url %}
+                                <img src="{{ item.image|default:item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-slate-400">
+                                    <i data-lucide="package" class="w-5 h-5"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-xs text-slate-900 truncate">{{ item.name }}</h4>
+                                {% if item.variation_name %}
+                                <p class="text-[11px] text-slate-400">{{ item.variation_name }}</p>
+                                {% endif %}
+                                <p class="text-[11px] text-slate-500 font-mono mt-0.5">
+                                    {{ item.quantity }} x {{ item.unit_price|floatformat:0 }} UZS
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-xs font-mono font-black text-slate-900 shrink-0">
+                            {{ item.total_price|floatformat:0 }} UZS
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Dynamic Alpine Render if loaded via client localStorage -->
+                    <template x-for="(item, key) in cartItems" :key="key">
+                        <div class="py-2.5 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200/60">
+                                    <template x-if="item.image || item.image_url">
+                                        <img :src="item.image || item.image_url" class="w-full h-full object-cover">
+                                    </template>
+                                    <template x-if="!item.image && !item.image_url">
+                                        <div class="w-full h-full flex items-center justify-center text-slate-400">
+                                            <i data-lucide="package" class="w-5 h-5"></i>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-xs text-slate-900 truncate" x-text="item.name"></h4>
+                                    <p class="text-[11px] text-slate-500 font-mono mt-0.5">
+                                        <span x-text="item.quantity"></span> x <span x-text="item.unit_price.toLocaleString() + ' UZS'"></span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-xs font-mono font-black text-slate-900 shrink-0" x-text="item.total_price.toLocaleString() + ' UZS'">
+                            </div>
+                        </div>
+                    </template>
+                {% endif %}
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600">
+                <span>{% if lang == 'uz' %}Tovarlar soni va jami:{% else %}Кол-во товаров и сумма:{% endif %}</span>
+                <span class="font-black text-slate-900 font-mono">{{ subtotal|floatformat:0 }} UZS</span>
+            </div>
+        </div>
+
         <!-- 1. Contact Information -->
         <div class="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
             <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
@@ -814,9 +890,10 @@
                 const lng = this.deliveryLng || 66.9597;
 
                 this.deliveryMap = L.map('checkoutDeliveryMap').setView([lat, lng], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap'
+                L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ lang|default:"ru" }}&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    subdomains: ['0', '1', '2', '3'],
+                    attribution: '© Google Maps'
                 }).addTo(this.deliveryMap);
 
                 this.deliveryMarker = L.marker([lat, lng], { draggable: true }).addTo(this.deliveryMap);
@@ -902,7 +979,7 @@
                 this.deliveryLng = parseFloat(res.lng);
                 this.deliveryStreet = res.display_name;
                 this.mapSearch = res.name || res.display_name;
-                if (res.city) this.deliveryCity = res.city;
+                this.detectAndSetCity(this.deliveryLat, this.deliveryLng, (res.city || '') + ' ' + res.display_name);
                 this.searchResults = [];
 
                 if (this.deliveryMap && this.deliveryMarker) {
@@ -911,6 +988,57 @@
                     this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${res.name || 'Yetkazish manzili'}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${res.display_name}</div>`).openPopup();
                 }
                 this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            },
+
+            detectAndSetCity(lat, lng, addressText = '') {
+                // 1. Check distance to known Uzbek city centers
+                let closestCityKey = null;
+                let minDistance = Infinity;
+                const searchStr = (addressText || '').toLowerCase();
+
+                // Keyword match first
+                const cityKeywords = {
+                    tashkent: ['toshkent', 'tashkent', 'ташкент'],
+                    samarkand: ['samarqand', 'samarkand', 'самарканд'],
+                    bukhara: ['buxoro', 'bukhara', 'бухара'],
+                    andijan: ['andijon', 'andijan', 'андижан'],
+                    namangan: ['namangan', 'наманган'],
+                    fergana: ['farg', 'fergana', 'фергана'],
+                    kokand: ['qoqon', "qo'qon", 'kokand', 'коканд'],
+                    qarshi: ['qarshi', 'karshi', 'карши'],
+                    urgench: ['urganch', 'urgench', 'ургенч'],
+                    khiva: ['xiva', 'khiva', 'хива'],
+                    nukus: ['nukus', 'нукус'],
+                    navoiy: ['navoiy', 'navoi', 'навои'],
+                    jizzakh: ['jizzax', 'jizzakh', 'джизак'],
+                    termez: ['termiz', 'termez', 'термез'],
+                    gulistan: ['guliston', 'gulistan', 'гулистан']
+                };
+
+                for (const [key, aliases] of Object.entries(cityKeywords)) {
+                    if (aliases.some(alias => searchStr.includes(alias))) {
+                        closestCityKey = key;
+                        break;
+                    }
+                }
+
+                // If not found by keyword, find closest city by geo-distance
+                if (!closestCityKey && lat && lng) {
+                    for (const [key, cfg] of Object.entries(this.citiesConfig)) {
+                        const dLat = (lat - cfg.lat);
+                        const dLng = (lng - cfg.lng);
+                        const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            closestCityKey = key;
+                        }
+                    }
+                }
+
+                if (closestCityKey && this.citiesConfig[closestCityKey]) {
+                    this.activeCity = closestCityKey;
+                    this.deliveryCity = this.citiesConfig[closestCityKey].name;
+                }
             },
 
             updateCoordinatesAndReverse(lat, lng) {
@@ -931,7 +1059,7 @@
                             const uniqueParts = [];
                             parts.forEach(pt => { if (!uniqueParts.includes(pt)) uniqueParts.push(pt); });
                             const address = uniqueParts.join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                            if (p.city) this.deliveryCity = p.city;
+                            this.detectAndSetCity(lat, lng, address + ' ' + (p.city || '') + ' ' + (p.state || ''));
                             this.applyReverseResult(address, p.name || address);
                         } else {
                             this.fallbackReverse(lat, lng);
@@ -947,13 +1075,15 @@
                     .then(r => r.json())
                     .then(data => {
                         if (data && data.address) {
-                            if (data.city) this.deliveryCity = data.city;
+                            this.detectAndSetCity(lat, lng, data.address + ' ' + (data.city || ''));
                             this.applyReverseResult(data.address, data.display_name || data.address);
                         } else {
+                            this.detectAndSetCity(lat, lng, '');
                             this.isReverseGeocoding = false;
                         }
                     })
                     .catch(() => {
+                        this.detectAndSetCity(lat, lng, '');
                         this.isReverseGeocoding = false;
                     });
             },
@@ -1032,7 +1162,11 @@
                                 const bLng = 66.9597;
                                 {% endif %}
                                 this.branchMap = L.map('checkoutBranchMap').setView([bLat, bLng], 14);
-                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(this.branchMap);
+                                L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ lang|default:"ru" }}&x={x}&y={y}&z={z}', {
+                                    maxZoom: 20,
+                                    subdomains: ['0', '1', '2', '3'],
+                                    attribution: '© Google Maps'
+                                }).addTo(this.branchMap);
                                 const m = L.marker([bLat, bLng]).addTo(this.branchMap);
                                 m.bindPopup("<div style='font-size:12px;font-weight:bold;'>🏪 {{ branches.first.name|default:store.name|escapejs }}</div><div style='font-size:11px;color:#666;'>{{ branches.first.address|default:store.address|escapejs }}</div>");
                             } else if (this.branchMap) {

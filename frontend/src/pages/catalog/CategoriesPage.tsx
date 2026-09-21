@@ -6,7 +6,9 @@ import { useAuth } from "../../context/AuthContext";
 import { Category } from "../../types";
 
 export const CategoriesPage: React.FC = () => {
-  const { t } = useAuth();
+  const { t, hasPermission } = useAuth();
+  const canEditCategory = hasPermission("categories", "edit");
+  const canDeleteCategory = hasPermission("categories", "delete");
   const queryClient = useQueryClient();
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -110,6 +112,9 @@ export const CategoriesPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
+    onError: (err: any) => {
+      alert(err.response?.data?.error || "Kategoriyani o'chirish huquqingiz yo'q");
+    },
   });
 
   const toggleActiveMutation = useMutation({
@@ -169,34 +174,36 @@ export const CategoriesPage: React.FC = () => {
             {t("categories_list_subtitle") || "Katalog mahsulotlarini bo`limlar bo`yicha ajratish"}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{t("new_category") || "Yangi kategoriya"}</span>
-        </button>
+        {canEditCategory && (
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{t("new_category") || "Yangi kategoriya"}</span>
+          </button>
+        )}
       </div>
 
       {/* BANNER */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+      <div className="p-4 rounded-2xl bg-[#211b2e] text-white border border-[#211b2e]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-[#c8ff6a] text-[#211b2e] flex items-center justify-center shrink-0 shadow-xs">
             <Store className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-xs font-black text-emerald-950">
+            <h4 className="text-xs font-black text-white">
               {t("category_visibility_banner") || "Saytda qaysi kategoriyalar ko`rinishini boshqaring"}
             </h4>
-            <p className="text-[11px] text-emerald-800 mt-0.5">
+            <p className="text-[11px] text-slate-300 mt-0.5">
               {t("category_visibility_desc") || "«Saytda ko`rsatish» tugmasi orqali kategoriyani bir zumda saytga qo`shishingiz mumkin"}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-bold text-emerald-900 bg-white px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
-            {t("total_categories") || "Jami:"} <b className="font-mono text-emerald-600">{categories.length}</b> {t("categories_unit") || "ta kategoriya"}
+          <span className="text-xs font-bold text-white bg-white/10 px-3 py-1.5 rounded-xl border border-white/20 shadow-2xs">
+            {t("total_categories") || "Jami:"} <b className="font-mono text-[#c8ff6a]">{categories.length}</b> {t("categories_unit") || "ta kategoriya"}
           </span>
         </div>
       </div>
@@ -239,10 +246,13 @@ export const CategoriesPage: React.FC = () => {
                   <td className="py-3 px-4 text-center">
                     <button
                       type="button"
+                      disabled={!canEditCategory}
                       onClick={() => toggleActiveMutation.mutate(cat.id)}
                       className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors ${
+                        !canEditCategory ? "cursor-not-allowed opacity-80 " : ""
+                      }${
                         cat.is_active
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]"
                           : "bg-slate-100 text-slate-500 border border-slate-200"
                       }`}
                     >
@@ -251,26 +261,30 @@ export const CategoriesPage: React.FC = () => {
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(cat)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                        title={t("edit") || "Tahrirlash"}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (confirm(`'${cat.name_uz}' kategoriyasini o'chirishni tasdiqlaysizmi?`)) {
-                            deleteMutation.mutate(cat.id);
-                          }
-                        }}
-                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
-                        title={t("delete") || "O'chirish"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canEditCategory && (
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(cat)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                          title={t("edit") || "Tahrirlash"}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDeleteCategory && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`'${cat.name_uz}' kategoriyasini o'chirishni tasdiqlaysizmi?`)) {
+                              deleteMutation.mutate(cat.id);
+                            }
+                          }}
+                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
+                          title={t("delete") || "O'chirish"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

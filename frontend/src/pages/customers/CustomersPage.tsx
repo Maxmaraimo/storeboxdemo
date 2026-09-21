@@ -93,7 +93,7 @@ export const CustomersPage: React.FC = () => {
                   <td className="py-3.5 px-4 font-mono font-bold text-neutral-600 dark:text-neutral-300">{c.phone}</td>
                   <td className="py-3.5 px-4 font-mono font-bold text-neutral-900 dark:text-white">{c.orders_count}</td>
                   <td className="py-3.5 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[11px] font-bold border border-amber-200 dark:border-amber-800/60 font-mono">
+                    <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-bold border border-slate-200 dark:border-white/10 font-mono">
                       {c.bonus_balance} {t("points_unit") || "ball"}
                     </span>
                   </td>
@@ -104,7 +104,7 @@ export const CustomersPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setBonusModalCustomer(c)}
-                      className="px-3 py-1.5 rounded-xl border border-black/[0.08] dark:border-white/10 hover:bg-neutral-100 dark:hover:bg-white/10 text-[11px] font-bold text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl border border-black/[0.08] dark:border-white/10 hover:bg-[#211b2e] hover:text-[#c8ff6a] dark:hover:bg-[#c8ff6a] dark:hover:text-[#211b2e] text-[11px] font-bold text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
                     >
                       {t("give_bonus_btn_short") || "Ball berish"}
                     </button>
@@ -159,7 +159,7 @@ export const CustomersPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => bonusMutation.mutate()}
-                className="flex-1 py-2.5 rounded-xl bg-neutral-900 dark:bg-emerald-600 hover:bg-black dark:hover:bg-emerald-500 text-white font-bold text-xs transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] hover:opacity-90 font-bold text-xs transition-colors"
               >
                 {t("give_bonus_btn") || "Berish"}
               </button>

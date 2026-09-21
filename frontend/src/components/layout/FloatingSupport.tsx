@@ -24,8 +24,8 @@ export const FloatingSupport: React.FC = () => {
       title={tooltips[lang] || tooltips.uz}
     >
       <span className="relative flex h-2 w-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c8ff6a] opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c8ff6a]"></span>
       </span>
       <Send className="w-3.5 h-3.5 text-sky-400 group-hover:translate-x-0.5 transition-transform" />
       <span className="text-xs font-bold tracking-tight">{titles[lang] || titles.uz}</span>

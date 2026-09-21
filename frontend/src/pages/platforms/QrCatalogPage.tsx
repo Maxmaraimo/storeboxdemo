@@ -89,7 +89,7 @@ export const QrCatalogPage: React.FC = () => {
     "#0F172A", // Black/Dark
     "#EA580C", // Orange
     "#06B6D4", // Cyan
-    "#16A34A", // Green
+    "#10b981", // StoreBox Lime
     "#9333EA", // Purple
     "#D97706", // Amber
     "#DC2626", // Red
@@ -288,12 +288,12 @@ export const QrCatalogPage: React.FC = () => {
         <div
           className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-2xs ${
             msg.type === "success"
-              ? "bg-emerald-50 border border-emerald-200 text-emerald-900"
+              ? "bg-[#211b2e] border border-[#211b2e]/30 text-[#c8ff6a]"
               : "bg-rose-50 border border-rose-200 text-rose-900"
           }`}
         >
           {msg.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#c8ff6a] shrink-0" />
           ) : (
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
           )}
@@ -315,7 +315,7 @@ export const QrCatalogPage: React.FC = () => {
                   onClick={() => setPaperSize("A5")}
                   className={`p-3 rounded-2xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                     paperSize === "A5"
-                      ? "border-brand bg-emerald-50 text-brand font-black ring-2 ring-brand/30 shadow-xs"
+                      ? "border-brand bg-slate-100 text-brand font-black ring-2 ring-brand/20 shadow-xs"
                       : "border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -327,7 +327,7 @@ export const QrCatalogPage: React.FC = () => {
                   onClick={() => setPaperSize("A6")}
                   className={`p-3 rounded-2xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                     paperSize === "A6"
-                      ? "border-brand bg-emerald-50 text-brand font-black ring-2 ring-brand/30 shadow-xs"
+                      ? "border-brand bg-slate-100 text-brand font-black ring-2 ring-brand/20 shadow-xs"
                       : "border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -530,9 +530,9 @@ export const QrCatalogPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-white hover:text-[#10b981] font-black text-xs shadow-lg shadow-[#211b2e]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 border border-white/10"
               >
-                <Save className="w-4 h-4" />
+                <Save className="w-4 h-4 text-[#10b981]" />
                 <span>{saving ? t("qr_saving") : t("telegram_save_btn")}</span>
               </button>
             </div>
@@ -543,7 +543,7 @@ export const QrCatalogPage: React.FC = () => {
         <div className="lg:col-span-6 space-y-4 sticky top-6">
           <div className="bg-white rounded-2xl border border-slate-200/80 p-3 flex items-center justify-between shadow-xs">
             <span className="font-extrabold text-xs text-slate-900 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
               <span>{t("qr_live_mockup_title")}</span>
             </span>
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase">
@@ -631,9 +631,9 @@ export const QrCatalogPage: React.FC = () => {
             <button
               type="button"
               onClick={handlePrint}
-              className="py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
+              className="py-3 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-[#211b2e]/25 transition-colors cursor-pointer border border-white/10"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-4 h-4 text-[#10b981]" />
               <span>{t("telegram_qr_print")}</span>
             </button>
           </div>

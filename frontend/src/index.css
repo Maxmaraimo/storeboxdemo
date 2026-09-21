@@ -3,8 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    font-family: 'Inter', "Segoe UI", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
   body {
     background: #F8FAFC fixed;
+    font-family: 'Inter', "Segoe UI", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     @apply text-neutral-900 font-sans antialiased transition-colors duration-300;
     min-height: 100vh;
   }

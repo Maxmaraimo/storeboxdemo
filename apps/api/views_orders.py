@@ -102,6 +102,18 @@ def update_order_status_view(request, order_id):
         order.payment_status = new_payment_status
         update_fields.append("payment_status")
 
+    if "courier_id" in request.data:
+        courier_id = request.data.get("courier_id")
+        if courier_id in [None, "", "null", 0, "0"]:
+            order.courier = None
+            update_fields.append("courier")
+        else:
+            courier = StoreStaff.objects.filter(id=courier_id, store=store, is_courier=True).first()
+            if not courier:
+                return Response({"error": "Kuryer topilmadi"}, status=404)
+            order.courier = courier
+            update_fields.append("courier")
+
     order.save(update_fields=update_fields)
 
     if new_status == Order.OrderStatuses.CANCELLED and old_status != Order.OrderStatuses.CANCELLED:

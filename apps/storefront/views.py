@@ -550,6 +550,7 @@ def cart_add_view(request, subdomain=None):
             'unit_price': unit_price,
             'quantity': quantity,
             'total_price': quantity * unit_price,
+            'image': product.primary_image_url or '',
             'image_url': product.primary_image_url or '',
         }
 
@@ -858,6 +859,47 @@ def order_success_view(request, order_number, subdomain=None):
         'store': store,
         'pay_settings': pay_settings,
         'is_just_paid': request.GET.get('paid') == '1'
+    })
+
+
+@csrf_exempt
+def order_live_tracking_api(request, order_number, subdomain=None):
+    """
+    Public live tracking API for customer storefront.
+    Returns:
+    - Real-time courier position (lat, lng)
+    - Customer destination coordinates (dest_lat, dest_lng)
+    - Order status, courier phone and name
+    """
+    order = get_object_or_404(Order, order_number=order_number)
+    courier_data = None
+    if order.courier and order.courier.is_courier:
+        last_seen = None
+        if order.courier.last_location_update:
+            last_seen = int((timezone.now() - order.courier.last_location_update).total_seconds())
+        courier_data = {
+            'id': order.courier.id,
+            'name': order.courier.name,
+            'phone': order.courier.phone,
+            'lat': float(order.courier.current_lat) if order.courier.current_lat else None,
+            'lng': float(order.courier.current_lng) if order.courier.current_lng else None,
+            'last_seen_seconds_ago': last_seen,
+            'is_online': last_seen is not None and last_seen < 300,
+        }
+
+    dest_lat = float(order.delivery_lat) if order.delivery_lat else 41.311081
+    dest_lng = float(order.delivery_lng) if order.delivery_lng else 69.240562
+
+    return JsonResponse({
+        'success': True,
+        'order_number': order.order_number,
+        'status': order.status,
+        'status_display': order.get_status_display(),
+        'customer_name': order.customer_name,
+        'delivery_address': order.delivery_address or 'Toshkent shahri',
+        'dest_lat': dest_lat,
+        'dest_lng': dest_lng,
+        'courier': courier_data
     })
 
 

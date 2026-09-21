@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.catalog.models import Product, Category, ProductImage
+from apps.orders.permissions import has_staff_permission
 from .views_auth import get_merchant_store
 from .serializers import ProductSerializer, CategorySerializer, normalize_unit
 
@@ -39,6 +40,8 @@ def products_list_create_view(request):
         return Response({"error": "Do'kon topilmadi"}, status=404)
 
     if request.method == "POST":
+        if not has_staff_permission(request.user, store, "products", "edit"):
+            return Response({"error": "Sizda mahsulot yaratish huquqi yo'q"}, status=403)
         data = request.data.copy()
         data["store"] = store.id
         name = data.get("name_uz") or data.get("name_ru") or "Yangi mahsulot"
@@ -160,6 +163,8 @@ def product_detail_update_delete_view(request, product_id):
         return Response(ProductSerializer(product).data)
 
     if request.method in ["PUT", "PATCH"]:
+        if not has_staff_permission(request.user, store, "products", "edit"):
+            return Response({"error": "Sizda mahsulotni tahrirlash huquqi yo'q"}, status=403)
         data = request.data.copy()
         if "category" in data and data.get("category") in ["", "null", "undefined", None]:
             data["category"] = None
@@ -197,6 +202,8 @@ def product_detail_update_delete_view(request, product_id):
         return Response(serializer.errors, status=400)
 
     if request.method == "DELETE":
+        if not has_staff_permission(request.user, store, "products", "delete"):
+            return Response({"error": "Sizda mahsulotni o'chirish huquqi yo'q"}, status=403)
         product.delete()
         return Response({"message": "Mahsulot muvaffaqiyatli o'chirildi"})
 
@@ -213,6 +220,8 @@ def categories_list_create_view(request):
         return Response({"error": "Do'kon topilmadi"}, status=404)
 
     if request.method == "POST":
+        if not has_staff_permission(request.user, store, "categories", "edit"):
+            return Response({"error": "Sizda kategoriya yaratish huquqi yo'q"}, status=403)
         data = request.data.copy()
         data["store"] = store.id
         name = data.get("name_uz") or data.get("name_ru") or "Kategoriya"
@@ -293,6 +302,8 @@ def category_detail_update_delete_view(request, category_id):
         return Response(CategorySerializer(category).data)
 
     if request.method in ["PUT", "PATCH"]:
+        if not has_staff_permission(request.user, store, "categories", "edit"):
+            return Response({"error": "Sizda kategoriyani tahrirlash huquqi yo'q"}, status=403)
         data = request.data.copy()
         if "name_uz" in data and not data.get("slug"):
             data["slug"] = _get_unique_slug(Category, store, data.get("name_uz"), exclude_id=category.id)
@@ -303,6 +314,8 @@ def category_detail_update_delete_view(request, category_id):
         return Response(serializer.errors, status=400)
 
     if request.method == "DELETE":
+        if not has_staff_permission(request.user, store, "categories", "delete"):
+            return Response({"error": "Sizda kategoriyani o'chirish huquqi yo'q"}, status=403)
         category.delete()
         return Response({"message": "Kategoriya o'chirildi"})
 

@@ -13,6 +13,7 @@ urlpatterns = [
     # Language Switcher
     path('lang/<str:lang>/', core_views.switch_language_view, name='switch_language'),
     path('set-lang/<str:lang>/', core_views.switch_language_view, name='set_language_alias'),
+    path('change-language/<str:lang>/', core_views.switch_language_view, name='change_language'),
 
     # Auth & Onboarding
     path('dev-login/', dashboard_views.dev_login_view, name='dev_login'),
@@ -33,6 +34,7 @@ urlpatterns = [
 
     # REST API v1 for React / Next.js SPA
     path('api/v1/', include('apps.api.urls')),
+    path('api/', include(('apps.api.urls', 'api_legacy'), namespace='api_legacy')),
 
     # Merchant Dashboard
     path('dashboard/', include('apps.dashboard.urls')),

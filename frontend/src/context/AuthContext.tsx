@@ -1,19 +1,22 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { api, initCsrf } from "../api/client";
-import { User, Store } from "../types";
+import { User, Store, UserPermissions } from "../types";
 import { Language, getTranslation } from "../i18n/translations";
 
 interface AuthContextType {
   user: User | null;
   store: Store | null;
   stores: Store[];
+  permissions: UserPermissions | null;
+  hasPermission: (module: string, action?: "view" | "edit" | "delete") => boolean;
   lang: Language;
   setLang: (l: Language) => void;
   t: (key: string) => string;
   loading: boolean;
-  login: (data: any) => Promise<void>;
+  login: (data: any) => Promise<any>;
   logout: () => Promise<void>;
   switchStore: (id: number) => Promise<void>;
+  createStore: (data: { name: string; subdomain?: string; business_type?: string }) => Promise<any>;
   refreshMe: () => Promise<void>;
 }
 
@@ -23,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [store, setStore] = useState<Store | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
+  const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
   const [lang, setLangState] = useState<Language>(() => {
     return (localStorage.getItem("storebox_lang") as Language) || "uz";
@@ -36,15 +40,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const t = (key: string) => getTranslation(lang, key);
 
+  const hasPermission = (module: string, action: "view" | "edit" | "delete" = "view"): boolean => {
+    if (!user) return false;
+    if (!permissions) return true; // Default allow for owners
+    if (permissions.is_owner) return true;
+    if (permissions.is_courier) return false;
+    const mod = permissions.modules?.[module];
+    if (!mod) return false;
+    return Boolean(mod[action]);
+  };
+
   const refreshMe = async () => {
     try {
       const res = await api.get("/auth/me/");
       setUser(res.data.user);
       setStore(res.data.store);
       setStores(res.data.stores || []);
+      setPermissions(res.data.permissions || null);
     } catch {
       setUser(null);
       setStore(null);
+      setPermissions(null);
     } finally {
       setLoading(false);
     }
@@ -58,7 +74,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res = await api.post("/auth/login/", credentials);
     setUser(res.data.user);
     setStore(res.data.store);
+    if (res.data.permissions) {
+      setPermissions(res.data.permissions);
+    }
     await refreshMe();
+    return res.data;
   };
 
   const logout = async () => {
@@ -67,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setUser(null);
       setStore(null);
+      setPermissions(null);
     }
   };
 
@@ -76,12 +97,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await refreshMe();
   };
 
+  const createStore = async (data: { name: string; subdomain?: string; business_type?: string }) => {
+    const res = await api.post("/auth/create-store/", data);
+    setStore(res.data.store);
+    if (res.data.stores) {
+      setStores(res.data.stores);
+    }
+    await refreshMe();
+    return res.data;
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         store,
         stores,
+        permissions,
+        hasPermission,
         lang,
         setLang,
         t,
@@ -89,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         switchStore,
+        createStore,
         refreshMe,
       }}
     >

@@ -74,7 +74,7 @@ export const DeliveryPage: React.FC = () => {
       </div>
 
       {successMsg && (
-        <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-2">
+        <div className="p-3 rounded-2xl bg-[#211b2e] text-[#c8ff6a] text-xs font-bold border border-[#211b2e]/30 flex items-center gap-2">
           <Check className="w-4 h-4" />
           <span>{successMsg}</span>
         </div>
@@ -85,7 +85,7 @@ export const DeliveryPage: React.FC = () => {
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-brand flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-bold shadow-xs">
                 <Truck className="w-5 h-5" />
               </div>
               <div>
@@ -97,7 +97,7 @@ export const DeliveryPage: React.FC = () => {
               type="button"
               onClick={() => setCourierEnabled(!courierEnabled)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
-                courierEnabled ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-400 border-slate-200"
+                courierEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border-slate-200"
               }`}
             >
               {courierEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -151,7 +151,7 @@ export const DeliveryPage: React.FC = () => {
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-bold shadow-xs">
                 <MapPin className="w-5 h-5" />
               </div>
               <div>
@@ -163,7 +163,7 @@ export const DeliveryPage: React.FC = () => {
               type="button"
               onClick={() => setPickupEnabled(!pickupEnabled)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
-                pickupEnabled ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-400 border-slate-200"
+                pickupEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border-slate-200"
               }`}
             >
               {pickupEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}

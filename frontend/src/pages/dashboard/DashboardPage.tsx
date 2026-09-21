@@ -21,6 +21,7 @@ import {
   Clock,
   Send,
   Globe,
+  Bot,
   BarChart3,
   LineChart as LineChartIcon
 } from "lucide-react";
@@ -171,14 +172,14 @@ export const DashboardPage: React.FC = () => {
         data: (charts?.revenue || []).map((val) =>
           currency === "USD" ? Number((val / UZS_TO_USD_RATE).toFixed(2)) : val
         ),
-        backgroundColor: chartType === "bar" ? "rgba(0, 214, 104, 0.85)" : "rgba(0, 214, 104, 0.15)",
-        borderColor: "#00d668",
+        backgroundColor: chartType === "bar" ? "#c8ff6a" : "rgba(200, 255, 106, 0.25)",
+        borderColor: "#c8ff6a",
         borderWidth: chartType === "line" ? 3 : 0,
         borderRadius: chartType === "bar" ? 8 : 0,
         fill: chartType === "line",
         tension: 0.35,
-        pointBackgroundColor: "#00d668",
-        pointBorderColor: "#FFFFFF",
+        pointBackgroundColor: "#211b2e",
+        pointBorderColor: "#c8ff6a",
         pointBorderWidth: 2,
         pointRadius: chartType === "line" ? 4 : 0,
         pointHoverRadius: 6,
@@ -239,7 +240,7 @@ export const DashboardPage: React.FC = () => {
     datasets: [
       {
         data: [charts?.traffic?.telegram || 0, charts?.traffic?.web || 0],
-        backgroundColor: ["#00d668", "#3B82F6"],
+        backgroundColor: ["#211b2e", "#c8ff6a"],
         borderWidth: 0,
         hoverOffset: 4,
       },
@@ -254,8 +255,8 @@ export const DashboardPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-[#00d668] animate-pulse"></span>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#00d668]">
+            <span className="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {t("live_monitoring") || "Jonli monitoring tizimi"}
             </span>
           </div>
@@ -287,7 +288,7 @@ export const DashboardPage: React.FC = () => {
                 }}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   period === p.id
-                    ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-xs font-bold"
+                    ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-xs font-bold"
                     : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
                 }`}
               >
@@ -303,7 +304,7 @@ export const DashboardPage: React.FC = () => {
               onClick={() => setCurrency("UZS")}
               className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
                 currency === "UZS"
-                  ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-xs font-bold"
+                  ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-xs font-bold"
                   : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
               }`}
             >
@@ -314,7 +315,7 @@ export const DashboardPage: React.FC = () => {
               onClick={() => setCurrency("USD")}
               className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
                 currency === "USD"
-                  ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-xs font-bold"
+                  ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-xs font-bold"
                   : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
               }`}
             >
@@ -329,7 +330,7 @@ export const DashboardPage: React.FC = () => {
             className="w-9 h-9 rounded-2xl bg-white/70 dark:bg-white/5 border border-white/80 dark:border-white/10 flex items-center justify-center text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/10 transition-colors shadow-2xs cursor-pointer"
             title={t("refresh_data") || "Ma'lumotlarni yangilash"}
           >
-            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-[#00d668]" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-slate-600 dark:text-slate-400" : ""}`} />
           </button>
         </div>
       </div>
@@ -345,7 +346,7 @@ export const DashboardPage: React.FC = () => {
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
                 {t("total_revenue") || "Jami tushum"}
               </span>
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-[#00d668] flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 shadow-md flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
@@ -360,7 +361,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
-            <span className="text-[#00d668] font-bold flex items-center gap-1">
+            <span className="text-slate-500 dark:text-slate-400 font-bold flex items-center gap-1">
               <ArrowUpRight className="w-3.5 h-3.5" />
               {t("active_sales") || "Faol savdolar"}
             </span>
@@ -377,7 +378,7 @@ export const DashboardPage: React.FC = () => {
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
                 {t("orders") || "Buyurtmalar"}
               </span>
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 shadow-md flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <ShoppingCart className="w-4 h-4" />
               </div>
             </div>
@@ -386,7 +387,7 @@ export const DashboardPage: React.FC = () => {
                 {metrics?.orders_count || 0} <span className="text-base font-normal text-neutral-400">{t("pcs_unit") || "ta"}</span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-                <span className="text-[#00d668] font-bold">{metrics?.new_orders || 0} {t("new") || "yangi"}</span>
+                <span className="text-slate-600 dark:text-slate-400 font-bold">{metrics?.new_orders || 0} {t("new") || "yangi"}</span>
                 <span>•</span>
                 <span>{metrics?.ready_orders || 0} {t("status_ready") || "tayyor"}</span>
                 {metrics?.cancelled_orders ? (
@@ -418,7 +419,7 @@ export const DashboardPage: React.FC = () => {
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
                 {t("customer_base") || "Mijozlar bazasi"}
               </span>
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 shadow-md flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <Users className="w-4 h-4" />
               </div>
             </div>
@@ -451,7 +452,7 @@ export const DashboardPage: React.FC = () => {
               <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
                 {t("avg_check_title") || "O'rtacha chek"}
               </span>
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/95 dark:border-white/10 shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),inset_0_2px_3px_#fff,inset_0_-2px_3px_rgba(148,163,184,0.18)] text-amber-500 dark:text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 shadow-md flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <DollarSign className="w-4 h-4" />
               </div>
             </div>
@@ -466,7 +467,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <div className="pt-4 mt-3 border-t border-black/[0.04] dark:border-white/5 flex items-center justify-between text-xs">
-            <span className="text-[#00d668] font-bold flex items-center gap-1">
+            <span className="text-slate-500 dark:text-slate-400 font-bold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
               {t("stable_metric") || "Barqaror"}
             </span>
@@ -498,7 +499,7 @@ export const DashboardPage: React.FC = () => {
                 onClick={() => setChartType("bar")}
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   chartType === "bar"
-                    ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-2xs"
+                    ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-2xs font-bold"
                     : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 }`}
                 title="Ustunli grafik"
@@ -510,7 +511,7 @@ export const DashboardPage: React.FC = () => {
                 onClick={() => setChartType("line")}
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   chartType === "line"
-                    ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-2xs"
+                    ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-2xs font-bold"
                     : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 }`}
                 title="Chiziqli grafik"
@@ -522,7 +523,7 @@ export const DashboardPage: React.FC = () => {
                 onClick={() => setChartType("heatmap")}
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   chartType === "heatmap"
-                    ? "bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] shadow-2xs"
+                    ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-2xs font-bold"
                     : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 }`}
                 title="GitHub uslubidagi faollik xaritasi (Heatmap)"
@@ -583,8 +584,8 @@ export const DashboardPage: React.FC = () => {
               {/* Telegram Bot */}
               <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/5 flex items-center justify-between shadow-2xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold shadow-xs">
-                    <Send className="w-4 h-4" />
+                  <div className="w-9 h-9 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center font-bold shadow-xs">
+                    <Bot className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="text-xs font-bold text-neutral-900 dark:text-white">Telegram Bot</div>
@@ -599,7 +600,7 @@ export const DashboardPage: React.FC = () => {
                     href={`https://t.me/${store.telegram_bot_username}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-2.5 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-300 text-[11px] font-bold hover:bg-sky-100 dark:hover:bg-sky-900/60 flex items-center gap-1 transition-colors"
+                    className="px-2.5 py-1.5 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[11px] font-bold hover:opacity-90 flex items-center gap-1 transition-opacity"
                   >
                     <span>{t("open") || "Ochish"}</span>
                     <ExternalLink className="w-3 h-3" />
@@ -617,7 +618,7 @@ export const DashboardPage: React.FC = () => {
               {/* Web Storefront */}
               <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/5 flex items-center justify-between shadow-2xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#00d668] text-white flex items-center justify-center font-bold shadow-xs">
+                  <div className="w-9 h-9 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center font-bold shadow-xs">
                     <Globe className="w-4 h-4" />
                   </div>
                   <div>
@@ -633,7 +634,7 @@ export const DashboardPage: React.FC = () => {
                     href={store.storefront_url || `/store/${store.subdomain}/`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00d668] dark:text-[#00d668] text-[11px] font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center gap-1 transition-colors"
+                    className="px-2.5 py-1.5 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[11px] font-bold hover:opacity-90 flex items-center gap-1 transition-opacity"
                   >
                     <span>{t("website") || "Sayt"}</span>
                     <ExternalLink className="w-3 h-3" />
@@ -657,12 +658,12 @@ export const DashboardPage: React.FC = () => {
               />
             </div>
             <div className="space-y-1 text-right text-xs">
-              <div className="flex items-center justify-end gap-1.5 font-bold text-sky-500">
-                <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+              <div className="flex items-center justify-end gap-1.5 font-bold text-neutral-600 dark:text-neutral-400">
+                <span className="w-2 h-2 rounded-full bg-[#211b2e] dark:bg-white/40"></span>
                 <span>Telegram: {tmaTrafficPct}%</span>
               </div>
-              <div className="flex items-center justify-end gap-1.5 font-bold text-[#00d668]">
-                <span className="w-2 h-2 rounded-full bg-[#00d668]"></span>
+              <div className="flex items-center justify-end gap-1.5 font-bold text-[#211b2e] dark:text-[#c8ff6a]">
+                <span className="w-2 h-2 rounded-full bg-[#c8ff6a]"></span>
                 <span>{t("website_channel") || "Veb-sayt"}: {webTrafficPct}%</span>
               </div>
             </div>
@@ -688,7 +689,7 @@ export const DashboardPage: React.FC = () => {
               </div>
               <Link
                 to="/products"
-                className="text-xs font-bold text-[#00d668] hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white flex items-center gap-1 transition-colors"
               >
                 <span>{t("all_products") || "Barcha mahsulotlar"}</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -729,7 +730,7 @@ export const DashboardPage: React.FC = () => {
                   </div>
                   <Link
                     to="/products"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 dark:bg-neutral-800 dark:border dark:border-white/10 text-white dark:text-[#00d668] text-xs font-bold shadow-xs hover:bg-black transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-xs font-bold shadow-xs hover:opacity-90 transition-opacity"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>{t("products") || "Mahsulot qo'shish"}</span>
@@ -752,8 +753,8 @@ export const DashboardPage: React.FC = () => {
                   {t("orders_map") || "Jonli buyurtmalar xaritasi"}
                 </h2>
               </div>
-              <span className="text-[11px] font-bold text-[#00d668] flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#00d668] animate-ping"></span>
+              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-slate-400 animate-ping"></span>
                 <span>{t("live_gps") || "GPS faol"}</span>
               </span>
             </div>
@@ -766,15 +767,17 @@ export const DashboardPage: React.FC = () => {
                 style={{ height: "100%", width: "100%" }}
               >
                 <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; Google Maps'
+                  url="https://mt{s}.google.com/vt/lyrs=m&hl=ru&x={x}&y={y}&z={z}"
+                  subdomains={["0", "1", "2", "3"]}
+                  maxZoom={20}
                 />
                 {mapOrders.map((o, idx) => (
                   <Marker key={idx} position={[o.lat, o.lng]} icon={defaultPinIcon}>
                     <Popup>
                       <div className="text-xs space-y-1">
                         <div className="font-bold text-slate-900">#{o.num} — {o.client}</div>
-                        <div className="font-mono text-[#00d668] font-bold">{formatMoney(o.total)}</div>
+                        <div className="font-mono text-neutral-900 dark:text-white font-bold">{formatMoney(o.total)}</div>
                         <div className="text-[10px] text-slate-500">{o.status}</div>
                       </div>
                     </Popup>

@@ -132,7 +132,11 @@
                 setTimeout(() => {
                     if (!this.mapInstance) {
                         this.mapInstance = L.map('branchModalMap').setView([this.branchLat, this.branchLng], 13);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.mapInstance);
+                        L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ request.language|default:"ru" }}&x={x}&y={y}&z={z}', {
+                            maxZoom: 20,
+                            subdomains: ['0', '1', '2', '3'],
+                            attribution: '© Google Maps'
+                        }).addTo(this.mapInstance);
                         this.markerInstance = L.marker([this.branchLat, this.branchLng], { draggable: true }).addTo(this.mapInstance);
                         this.markerInstance.on('dragend', (e) => {
                             const pos = e.target.getLatLng();

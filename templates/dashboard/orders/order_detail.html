@@ -158,9 +158,10 @@
                                 const lat = {{ order.delivery_lat|unlocalize }};
                                 const lng = {{ order.delivery_lng|unlocalize }};
                                 const map = L.map('orderDeliveryMap').setView([lat, lng], 16);
-                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                    maxZoom: 19,
-                                    attribution: '© OpenStreetMap'
+                                L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ request.language|default:"ru" }}&x={x}&y={y}&z={z}', {
+                                    maxZoom: 20,
+                                    subdomains: ['0', '1', '2', '3'],
+                                    attribution: '© Google Maps'
                                 }).addTo(map);
                                 const marker = L.marker([lat, lng]).addTo(map);
                                 marker.bindPopup("<div style='font-size:12px;font-weight:bold;margin-bottom:2px;'>📍 {{ order.customer_name|escapejs }}</div><div style='font-size:11px;color:#555;'>{{ order.delivery_address|escapejs }}</div>").openPopup();

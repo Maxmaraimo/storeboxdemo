@@ -113,13 +113,13 @@ export const ContributionHeatmap: React.FC<Props> = ({
     }
     switch (day.level) {
       case 1:
-        return "bg-[#9be9a8] dark:bg-[#0e4429] border border-[#9be9a8]/80 dark:border-[#006d32]/60";
+        return "bg-[#c8ff6a]/30 dark:bg-[#c8ff6a]/20 border border-[#c8ff6a]/40 dark:border-[#c8ff6a]/30";
       case 2:
-        return "bg-[#40c463] dark:bg-[#006d32] border border-[#40c463]/80 dark:border-[#26a641]/60";
+        return "bg-[#c8ff6a]/55 dark:bg-[#c8ff6a]/45 border border-[#c8ff6a]/60 dark:border-[#c8ff6a]/50";
       case 3:
-        return "bg-[#30a14e] dark:bg-[#26a641] border border-[#30a14e]/80 dark:border-[#39d353]/60";
+        return "bg-[#c8ff6a]/80 dark:bg-[#c8ff6a]/70 border border-[#c8ff6a]/85 dark:border-[#c8ff6a]/75";
       case 4:
-        return "bg-[#216e39] dark:bg-[#39d353] border border-[#216e39]/80 dark:border-[#39d353]/80";
+        return "bg-[#c8ff6a] dark:bg-[#c8ff6a] border border-[#a8f03b] shadow-2xs shadow-[#c8ff6a]/25";
       default:
         // Level 0: empty
         return "bg-neutral-100 dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04]";
@@ -141,7 +141,7 @@ export const ContributionHeatmap: React.FC<Props> = ({
 
         <div className="flex items-center gap-3 text-[11px]">
           {active_days > 0 && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 font-medium">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 font-bold">
               <span>Faol kunlar: {active_days} kun</span>
             </div>
           )}
@@ -152,7 +152,7 @@ export const ContributionHeatmap: React.FC<Props> = ({
           )}
           {current_streak > 0 && (
             <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400">
-              <span>Streak: <strong className="text-emerald-600 dark:text-emerald-400">{current_streak} kun</strong></span>
+              <span>Streak: <strong className="text-slate-700 dark:text-slate-300 font-bold">{current_streak} kun</strong></span>
             </div>
           )}
         </div>
@@ -204,9 +204,9 @@ export const ContributionHeatmap: React.FC<Props> = ({
                           day
                         )} ${
                           !day.is_future
-                            ? "cursor-pointer hover:scale-135 hover:z-30 hover:ring-2 hover:ring-emerald-400 dark:hover:ring-emerald-400"
+                            ? "cursor-pointer hover:scale-135 hover:z-30 hover:ring-2 hover:ring-[#c8ff6a] dark:hover:ring-[#c8ff6a]"
                             : ""
-                        } ${isHovered ? "scale-135 ring-2 ring-emerald-400 z-30 shadow-md" : ""}`}
+                        } ${isHovered ? "scale-135 ring-2 ring-[#c8ff6a] z-30 shadow-md" : ""}`}
                         onMouseEnter={(e) => {
                           if (!day.is_future && containerRef.current) {
                             const containerRect = containerRef.current.getBoundingClientRect();
@@ -232,7 +232,7 @@ export const ContributionHeatmap: React.FC<Props> = ({
       {/* 3. Bottom Legend & Real-time Indicator */}
       <div className="flex items-center justify-between pt-3 mt-1 border-t border-black/[0.04] dark:border-white/5 text-[11px] text-neutral-400 dark:text-neutral-500">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
           <span className="font-medium text-neutral-600 dark:text-neutral-400">
             Real vaqtdagi buyurtmalar faolligi
           </span>
@@ -242,10 +242,10 @@ export const ContributionHeatmap: React.FC<Props> = ({
         <div className="flex items-center gap-1.5">
           <span className="text-[10px]">Kamroq</span>
           <div className="w-2.5 h-2.5 rounded-[2px] bg-neutral-100 dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04]" title="0 buyurtma" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#9be9a8] dark:bg-[#0e4429] border border-[#9be9a8]/80 dark:border-[#006d32]/60" title="1-2 buyurtma" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#40c463] dark:bg-[#006d32] border border-[#40c463]/80 dark:border-[#26a641]/60" title="3-5 buyurtma" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#30a14e] dark:bg-[#26a641] border border-[#30a14e]/80 dark:border-[#39d353]/60" title="6-9 buyurtma" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#216e39] dark:bg-[#39d353] border border-[#216e39]/80" title="10+ buyurtma" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/30 dark:bg-[#c8ff6a]/20 border border-[#c8ff6a]/40" title="1-2 buyurtma" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/55 dark:bg-[#c8ff6a]/45 border border-[#c8ff6a]/60" title="3-5 buyurtma" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/80 dark:bg-[#c8ff6a]/70 border border-[#c8ff6a]/85" title="6-9 buyurtma" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a] dark:bg-[#c8ff6a] border border-[#a8f03b]" title="10+ buyurtma" />
           <span className="text-[10px]">Ko'proq</span>
         </div>
       </div>
@@ -272,7 +272,7 @@ export const ContributionHeatmap: React.FC<Props> = ({
           >
             {hoveredCell.day.count > 0 ? (
               <div>
-                <div className="font-black text-emerald-400 flex items-center gap-1.5">
+                <div className="font-black text-[#c8ff6a] flex items-center gap-1.5">
                   <span>
                     {hoveredCell.day.count} ta buyurtma
                   </span>

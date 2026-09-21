@@ -32,6 +32,7 @@ export const OrderDetailPage: React.FC = () => {
 
   const [statusVal, setStatusVal] = useState<string>("");
   const [paymentStatusVal, setPaymentStatusVal] = useState<string>("");
+  const [courierVal, setCourierVal] = useState<string>("");
   const [notifyTelegram, setNotifyTelegram] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -44,15 +45,26 @@ export const OrderDetailPage: React.FC = () => {
     enabled: !!id,
   });
 
+  const { data: couriersData } = useQuery<{ couriers: any[] }>({
+    queryKey: ["couriers"],
+    queryFn: async () => {
+      const res = await api.get("/couriers/");
+      return res.data;
+    },
+  });
+
+  const couriersList = couriersData?.couriers || [];
+
   useEffect(() => {
     if (order) {
       setStatusVal(order.status);
       setPaymentStatusVal(order.payment_status || "PENDING");
+      setCourierVal(order.courier ? String(order.courier.id) : "");
     }
   }, [order]);
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: { status: string; payment_status: string }) => {
+    mutationFn: async (payload: { status: string; payment_status: string; courier_id?: number | null }) => {
       const res = await api.patch(`/orders/${id}/status/`, payload);
       return res.data;
     },
@@ -73,6 +85,7 @@ export const OrderDetailPage: React.FC = () => {
     saveMutation.mutate({
       status: statusVal,
       payment_status: paymentStatusVal,
+      courier_id: courierVal ? Number(courierVal) : null,
     });
   };
 
@@ -141,7 +154,7 @@ export const OrderDetailPage: React.FC = () => {
           <span
             className={`ml-2 px-2.5 py-0.5 rounded-full text-xs font-black border ${
               order.status === "COMPLETED"
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
+                ? "bg-[#211b2e] text-[#c8ff6a] border-[#211b2e] dark:bg-[#c8ff6a] dark:text-[#211b2e]"
                 : order.status === "CANCELLED"
                 ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800"
                 : order.status === "IN_DELIVERY"
@@ -158,7 +171,7 @@ export const OrderDetailPage: React.FC = () => {
               <Send className="w-3 h-3" /> TG Bot
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#211b2e] text-[#c8ff6a] border border-[#211b2e] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
               <Globe className="w-3 h-3" /> Sayt
             </span>
           )}
@@ -193,7 +206,7 @@ export const OrderDetailPage: React.FC = () => {
           <div className="bg-white dark:bg-[#18181b] border border-black/[0.06] dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
             <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/10 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center">
                   <ShoppingBag className="w-4 h-4" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -224,7 +237,7 @@ export const OrderDetailPage: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        "🛍️"
+                        <ShoppingBag className="w-5 h-5 text-slate-400" />
                       )}
                     </div>
                     <div>
@@ -248,33 +261,33 @@ export const OrderDetailPage: React.FC = () => {
               )}
             </div>
 
-            {/* Financial Summary Box */}
-            <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-white/5 space-y-2.5 font-mono text-xs">
-              <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>{t("subtotal") || "Mahsulotlar summasi:"}</span>
-                <span className="font-bold text-slate-900 dark:text-slate-200">
+            {/* Total Summary */}
+            <div className="pt-4 border-t border-black/[0.06] dark:border-white/10 space-y-2">
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>{t("subtotal") || "Mahsulotlar jami:"}</span>
+                <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
                   {Number(subtotal).toLocaleString()} UZS
                 </span>
               </div>
-              <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>{t("delivery_price") || "Yetkazib berish narxi:"}</span>
-                <span className="font-bold text-slate-900 dark:text-slate-200">
-                  {Number(order.delivery_fee) > 0
-                    ? `${Number(order.delivery_fee).toLocaleString()} UZS`
-                    : (t("delivery_free") || "Bepul")}
-                </span>
-              </div>
-              {Number(order.discount_amount) > 0 && (
-                <div className="flex justify-between text-rose-600 dark:text-rose-400">
-                  <span>{t("discount_label") || "Chegirma:"}</span>
-                  <span className="font-bold">
+              {order.delivery_fee && Number(order.delivery_fee) > 0 && (
+                <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>{t("delivery_fee") || "Yetkazib berish:"}</span>
+                  <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                    +{Number(order.delivery_fee).toLocaleString()} UZS
+                  </span>
+                </div>
+              )}
+              {order.discount_amount && Number(order.discount_amount) > 0 && (
+                <div className="flex justify-between text-xs text-rose-500">
+                  <span>{t("discount") || "Chegirma:"}</span>
+                  <span className="font-mono font-bold">
                     -{Number(order.discount_amount).toLocaleString()} UZS
                   </span>
                 </div>
               )}
               <div className="flex justify-between items-center text-base sm:text-lg font-black pt-3 border-t border-slate-200 dark:border-white/10 text-slate-900 dark:text-white font-sans">
                 <span className="uppercase tracking-wider">{t("total_payable_caps") || "JAMI TO'LOV:"}</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-mono text-xl">
+                <span className="text-[#211b2e] dark:text-[#c8ff6a] font-mono text-xl">
                   {Number(order.total_amount).toLocaleString()} UZS
                 </span>
               </div>
@@ -351,14 +364,15 @@ export const OrderDetailPage: React.FC = () => {
               </div>
 
               {order.delivery_lat && order.delivery_lng && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <a
-                    href={`https://yandex.uz/maps/?pt=${order.delivery_lng},${order.delivery_lat}&z=16&l=map`}
+                    href={`https://yandex.uz/maps/?rtext=~${order.delivery_lat},${order.delivery_lng}&rtt=auto`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-200 transition"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#211b2e] hover:bg-[#2c243d] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-xs font-bold transition shadow-2xs"
                   >
-                    <ExternalLink className="w-3.5 h-3.5 text-amber-600" /> {t("yandex_map") || "Yandex Xarita"}
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>{t("yandex_navigator") || "Yandex Navigator"}</span>
                   </a>
                   <a
                     href={`https://www.google.com/maps?q=${order.delivery_lat},${order.delivery_lng}`}
@@ -380,7 +394,7 @@ export const OrderDetailPage: React.FC = () => {
                   height="100%"
                   style={{ border: 0 }}
                   loading="lazy"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(order.delivery_lng) - 0.006}%2C${Number(order.delivery_lat) - 0.006}%2C${Number(order.delivery_lng) + 0.006}%2C${Number(order.delivery_lat) + 0.006}&layer=mapnik&marker=${order.delivery_lat}%2C${order.delivery_lng}`}
+                  src={`https://maps.google.com/maps?q=${order.delivery_lat},${order.delivery_lng}&hl=ru&z=15&output=embed`}
                 />
               </div>
             ) : (
@@ -441,6 +455,48 @@ export const OrderDetailPage: React.FC = () => {
                 </select>
               </div>
 
+              {/* Kuryer biriktirish */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Truck className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Yetkazib beruvchi kuryer</span>
+                  </span>
+                  {order?.courier && (
+                    <span className="text-[10px] font-mono text-slate-700 dark:text-slate-300 font-bold bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
+                      {order.courier.name}
+                    </span>
+                  )}
+                </label>
+                <select
+                  value={courierVal}
+                  onChange={(e) => setCourierVal(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/30"
+                >
+                  <option value="">-- Kuryer biriktirilmagan --</option>
+                  {couriersList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.phone})
+                    </option>
+                  ))}
+                </select>
+                {order?.courier && (
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-white/10 flex items-center justify-between text-xs">
+                    <div>
+                      <div className="font-bold text-slate-800 dark:text-slate-200">{order.courier.name}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">{order.courier.phone}</div>
+                    </div>
+                    <a
+                      href={`tel:${order.courier.phone}`}
+                      className="px-2.5 py-1 rounded-lg bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] font-bold text-[11px] flex items-center gap-1 hover:opacity-90 transition-colors shadow-2xs"
+                    >
+                      <Phone className="w-3 h-3" />
+                      <span>Qo'ng'iroq</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+
               {/* Telegram Notification Checkbox */}
               <div className="flex items-center gap-2.5 pt-1">
                 <input
@@ -462,7 +518,7 @@ export const OrderDetailPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={saveMutation.isPending}
-                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className="w-full py-3 px-4 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] dark:bg-[#c8ff6a] dark:hover:bg-[#b8f550] text-[#c8ff6a] dark:text-[#211b2e] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 {saveMutation.isPending ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -510,7 +566,7 @@ export const OrderDetailPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleQuickStatus("COMPLETED")}
-                  className="py-2 px-3 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-[11px] transition flex items-center justify-center gap-1"
+                  className="py-2 px-3 rounded-lg bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] hover:opacity-90 font-bold text-[11px] transition flex items-center justify-center gap-1"
                 >
                   <CheckCircle className="w-3 h-3" /> {t("delivered") || "Yetkazildi"}
                 </button>

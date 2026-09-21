@@ -32,6 +32,8 @@ export interface Order {
   order_number: string;
   customer_name: string;
   customer_phone: string;
+  courier?: StaffItem | null;
+  courier_id?: number | null;
   delivery_address: string;
   delivery_type?: string;
   delivery_lat?: number | null;
@@ -132,4 +134,70 @@ export interface MapOrder {
   lng: number;
   total: number;
   status: string;
+}
+
+export interface ModulePermission {
+  view: boolean;
+  edit: boolean;
+  delete: boolean;
+}
+
+export type RolePermissionMap = Record<string, ModulePermission>;
+
+export interface UserPermissions {
+  is_owner: boolean;
+  is_courier: boolean;
+  role_name: string;
+  modules: RolePermissionMap;
+}
+
+export interface StaffItem {
+  id: number;
+  name: string;
+  phone: string;
+  role: string;
+  role_id?: number | null;
+  role_name?: string;
+  is_courier: boolean;
+  is_active: boolean;
+  orders_count: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface StoreRoleItem {
+  id: number;
+  name: string;
+  description: string;
+  is_system: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  permissions: RolePermissionMap;
+  staff_count: number;
+}
+
+export interface CourierItem {
+  id: number;
+  name: string;
+  phone: string;
+  is_active: boolean;
+  orders_count: number;
+  current_lat?: number | null;
+  current_lng?: number | null;
+  last_location_update?: string | null;
+  last_seen_seconds_ago?: number | null;
+  active_order?: {
+    id: number;
+    order_number: string;
+    status: string;
+    status_display: string;
+    customer_name: string;
+    customer_phone: string;
+    delivery_address: string;
+    delivery_lat?: number | null;
+    delivery_lng?: number | null;
+    total_amount: number;
+  } | null;
+  created_at: string;
 }

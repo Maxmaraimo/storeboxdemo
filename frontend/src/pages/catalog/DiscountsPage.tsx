@@ -107,7 +107,7 @@ export const DiscountsPage: React.FC = () => {
         <button
           type="button"
           onClick={openModal}
-          className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
+          className="px-4 py-2.5 bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 rounded-2xl text-xs font-black hover:opacity-90 transition-opacity flex items-center gap-2 shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>{t("add_promocode") || "Yangi promokod"}</span>
@@ -119,7 +119,7 @@ export const DiscountsPage: React.FC = () => {
           <div key={p.id} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4 text-brand" />
+                <Tag className="w-4 h-4 text-[#211b2e] dark:text-[#c8ff6a]" />
                 <span className="font-mono font-black text-base text-slate-900">{p.code}</span>
               </div>
               <div className="flex items-center gap-2">
@@ -127,7 +127,7 @@ export const DiscountsPage: React.FC = () => {
                   type="button"
                   onClick={() => toggleMutation.mutate({ id: p.id, is_active: p.is_active })}
                   className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
-                    p.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'
+                    p.is_active ? 'bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border-[#211b2e]/30 dark:border-[#c8ff6a]/30' : 'bg-slate-50 text-slate-400 border-slate-200'
                   }`}
                 >
                   {p.is_active ? (t("status_active") || 'Faol') : (t("status_disabled") || 'O`chirilgan')}

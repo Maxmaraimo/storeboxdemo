@@ -12,6 +12,7 @@ urlpatterns = [
     path("auth/me/", views_auth.me_view, name="auth_me"),
     path("auth/logout/", views_auth.logout_view, name="auth_logout"),
     path("auth/switch-store/<int:store_id>/", views_auth.switch_store_view, name="auth_switch_store"),
+    path("auth/create-store/", views_auth.create_store_view, name="auth_create_store"),
 
     # Dashboard Summary & Charts & Notifications
     path("dashboard/summary/", views_dashboard.dashboard_summary_view, name="dashboard_summary"),
@@ -52,9 +53,19 @@ urlpatterns = [
     path("branches/", views_operations.branches_list_create_view, name="branches_list_create"),
     path("branches/<int:pk>/", views_operations.branch_detail_update_delete_view, name="branch_detail_update_delete"),
 
-    # Staff CRUD
+    # Staff, Roles & Couriers CRUD
     path("staff/", views_operations.staff_list_create_view, name="staff_list_create"),
     path("staff/<int:pk>/", views_operations.staff_detail_update_delete_view, name="staff_detail_update_delete"),
+    path("staff/<int:pk>/toggle/", views_operations.staff_toggle_active_view, name="staff_toggle_active"),
+
+    path("roles/", views_operations.roles_list_create_view, name="roles_list_create"),
+    path("roles/<int:pk>/", views_operations.role_detail_update_delete_view, name="role_detail_update_delete"),
+    path("roles/<int:pk>/toggle/", views_operations.role_toggle_active_view, name="role_toggle_active"),
+
+    path("couriers/", views_operations.couriers_list_create_view, name="couriers_list_create"),
+    path("couriers/<int:pk>/", views_operations.courier_detail_update_delete_view, name="courier_detail_update_delete"),
+    path("couriers/<int:pk>/toggle/", views_operations.courier_toggle_active_view, name="courier_toggle_active"),
+    path("couriers/<int:pk>/analytics/", views_operations.courier_analytics_view, name="courier_analytics"),
 
     # Settings: Store, Delivery, Payments, Billing & Tariffs
     path("settings/store/", views_settings.store_settings_view, name="store_settings"),

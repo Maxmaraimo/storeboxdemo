@@ -29,14 +29,15 @@ export default {
           deep: "#171321",
         },
         lime: {
-          DEFAULT: "#00D668",
-          dark: "#059669",
-          glow: "rgba(0, 214, 104, 0.4)",
-          soft: "rgba(0, 214, 104, 0.12)",
+          DEFAULT: "#c8ff6a",
+          dark: "#a3e635",
+          light: "#d9ff85",
+          glow: "rgba(200, 255, 106, 0.4)",
+          soft: "rgba(200, 255, 106, 0.15)",
         }
       },
       fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        sans: ["Inter", '"Segoe UI"', "Arial", "sans-serif"],
         mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       boxShadow: {

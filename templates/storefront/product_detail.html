@@ -22,6 +22,11 @@
             this.selectedVariationName = name;
         },
         addToCart() {
+            if (this.addedSuccess) {
+                // If user clicked again while checkmark is visible, immediately open the cart drawer!
+                $dispatch('cart-updated', { openDrawer: true });
+                return;
+            }
             this.adding = true;
             fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}', {
                 method: 'POST',
@@ -40,12 +45,13 @@
                 this.adding = false;
                 if (data.success) {
                     this.addedSuccess = true;
-                    setTimeout(() => { this.addedSuccess = false; }, 2200);
+                    setTimeout(() => { this.addedSuccess = false; }, 3000);
                     if (window.storeCart) {
                         window.storeCart.cartCount = data.cart_count;
                         window.storeCart.cartSubtotal = data.subtotal;
                         window.storeCart.cart = data.cart;
                     }
+                    data.openDrawer = true;
                     $dispatch('cart-updated', data);
                 }
             })

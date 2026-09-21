@@ -171,18 +171,18 @@ export const ChatsPage: React.FC = () => {
                     <div
                       className={`max-w-md rounded-2xl px-4 py-2.5 text-xs font-medium shadow-2xs ${
                         isMerchant
-                          ? "bg-neutral-900 dark:bg-emerald-600 text-white rounded-tr-xs"
+                          ? "bg-[#211b2e] text-white dark:bg-[#c8ff6a] dark:text-[#211b2e] rounded-tr-xs"
                           : "bg-white dark:bg-[#1e2330] text-neutral-900 dark:text-white border border-black/[0.06] dark:border-white/10 rounded-tl-xs"
                       }`}
                     >
                       <p className="leading-relaxed">{m.message}</p>
                       <div
                         className={`text-[9px] mt-1 flex items-center justify-end gap-1 ${
-                          isMerchant ? "text-neutral-400 dark:text-emerald-100/80" : "text-neutral-400"
+                          isMerchant ? "text-slate-300 dark:text-[#211b2e]/70" : "text-neutral-400"
                         }`}
                       >
                         <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                        {isMerchant && <CheckCheck className="w-3 h-3 text-emerald-400 dark:text-emerald-200" />}
+                        {isMerchant && <CheckCheck className="w-3 h-3 text-[#c8ff6a] dark:text-[#211b2e]" />}
                       </div>
                     </div>
                   </div>
@@ -206,7 +206,7 @@ export const ChatsPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={!inputText.trim() || sendMessageMutation.isPending}
-                className="p-2.5 bg-neutral-900 dark:bg-emerald-600 text-white rounded-xl hover:bg-black dark:hover:bg-emerald-500 transition-colors disabled:opacity-50 cursor-pointer"
+                className="p-2.5 bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <Send className="w-4 h-4" />
               </button>

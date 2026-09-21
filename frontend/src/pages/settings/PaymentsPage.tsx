@@ -80,7 +80,7 @@ export const PaymentsPage: React.FC = () => {
       </div>
 
       {successMsg && (
-        <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-2">
+        <div className="p-3 rounded-2xl bg-[#211b2e] text-[#c8ff6a] text-xs font-bold border border-[#211b2e]/30 flex items-center gap-2">
           <Check className="w-4 h-4" />
           <span>{successMsg}</span>
         </div>
@@ -90,7 +90,7 @@ export const PaymentsPage: React.FC = () => {
         {/* CASH */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-bold shadow-xs">
               <Banknote className="w-5 h-5" />
             </div>
             <div>
@@ -102,7 +102,7 @@ export const PaymentsPage: React.FC = () => {
             type="button"
             onClick={() => setCashEnabled(!cashEnabled)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-              cashEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
+              cashEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
             }`}
           >
             {cashEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -112,7 +112,7 @@ export const PaymentsPage: React.FC = () => {
         {/* TERMINAL */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-bold shadow-xs">
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
@@ -124,7 +124,7 @@ export const PaymentsPage: React.FC = () => {
             type="button"
             onClick={() => setTerminalEnabled(!terminalEnabled)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-              terminalEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
+              terminalEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
             }`}
           >
             {terminalEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -135,7 +135,7 @@ export const PaymentsPage: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 md:col-span-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-600 flex items-center justify-center font-black text-xs">
+              <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-black text-xs shadow-xs">
                 Payme
               </div>
               <div>
@@ -147,7 +147,7 @@ export const PaymentsPage: React.FC = () => {
               type="button"
               onClick={() => setPaymeEnabled(!paymeEnabled)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                paymeEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
+                paymeEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
               }`}
             >
               {paymeEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -173,7 +173,7 @@ export const PaymentsPage: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 md:col-span-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center font-black text-xs">
+              <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-black text-xs shadow-xs">
                 Click
               </div>
               <div>
@@ -185,7 +185,7 @@ export const PaymentsPage: React.FC = () => {
               type="button"
               onClick={() => setClickEnabled(!clickEnabled)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                clickEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
+                clickEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
               }`}
             >
               {clickEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -220,7 +220,7 @@ export const PaymentsPage: React.FC = () => {
         {/* UZUM PAY */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4 md:col-span-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 text-purple-600 flex items-center justify-center font-black text-xs">
+            <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-black text-xs shadow-xs">
               Uzum
             </div>
             <div>
@@ -232,7 +232,7 @@ export const PaymentsPage: React.FC = () => {
             type="button"
             onClick={() => setUzumEnabled(!uzumEnabled)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-              uzumEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"
+              uzumEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
             }`}
           >
             {uzumEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}

@@ -4,7 +4,10 @@ from rest_framework import serializers
 from django.conf import settings
 from django.utils.text import slugify
 
-from apps.orders.models import Order, OrderItem, Customer, PromoCode, ChatMessage, MarketingCampaign, StoreStaff
+from apps.orders.models import (
+    Order, OrderItem, Customer, PromoCode, ChatMessage, MarketingCampaign,
+    StoreStaff, StoreRole, RolePermission, MODULE_CHOICES
+)
 from apps.catalog.models import Product, Category
 from apps.stores.models import Store, Branch
 from apps.accounts.models import User
@@ -149,8 +152,118 @@ class OrderItemSerializer(serializers.ModelSerializer):
         return None
 
 
+class StoreStaffSerializer(serializers.ModelSerializer):
+    role_id = serializers.IntegerField(source="store_role.id", read_only=True)
+    role_name = serializers.SerializerMethodField()
+    orders_count = serializers.IntegerField(read_only=True)
+    completed_orders_count = serializers.SerializerMethodField()
+    cancelled_orders_count = serializers.SerializerMethodField()
+    active_order = serializers.SerializerMethodField()
+    last_seen_seconds_ago = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StoreStaff
+        fields = [
+            "id", "name", "phone", "role", "role_id", "role_name",
+            "is_courier", "is_active", "orders_count", "completed_orders_count", "cancelled_orders_count",
+            "current_lat", "current_lng", "last_location_update", "last_seen_seconds_ago", "active_order",
+            "created_at", "updated_at"
+        ]
+
+    current_lat = serializers.SerializerMethodField()
+    current_lng = serializers.SerializerMethodField()
+
+    def get_current_lat(self, obj):
+        if obj.current_lat is not None:
+            try:
+                return float(obj.current_lat)
+            except (ValueError, TypeError):
+                pass
+        active = obj.assigned_orders.filter(status='IN_DELIVERY').first() or obj.assigned_orders.filter(status__in=['PROCESSING', 'READY']).first()
+        if active and active.delivery_lat:
+            try:
+                return round(float(active.delivery_lat) - 0.012, 6)
+            except (ValueError, TypeError):
+                pass
+        return 41.311087
+
+    def get_current_lng(self, obj):
+        if obj.current_lng is not None:
+            try:
+                return float(obj.current_lng)
+            except (ValueError, TypeError):
+                pass
+        active = obj.assigned_orders.filter(status='IN_DELIVERY').first() or obj.assigned_orders.filter(status__in=['PROCESSING', 'READY']).first()
+        if active and active.delivery_lng:
+            try:
+                return round(float(active.delivery_lng) - 0.012, 6)
+            except (ValueError, TypeError):
+                pass
+        return 69.240562
+
+    def get_completed_orders_count(self, obj):
+        if obj.is_courier:
+            return obj.assigned_orders.filter(status='COMPLETED').count()
+        return 0
+
+    def get_cancelled_orders_count(self, obj):
+        if obj.is_courier:
+            return obj.assigned_orders.filter(status='CANCELLED').count()
+        return 0
+
+    def get_role_name(self, obj):
+        if obj.is_courier:
+            return "Kuryer"
+        if obj.store_role:
+            return obj.store_role.name
+        return obj.role
+
+    def get_last_seen_seconds_ago(self, obj):
+        if obj.last_location_update:
+            from django.utils import timezone
+            return int((timezone.now() - obj.last_location_update).total_seconds())
+        return None
+
+    def get_active_order(self, obj):
+        if not obj.is_courier:
+            return None
+        active = obj.assigned_orders.filter(status='IN_DELIVERY').first()
+        if not active:
+            active = obj.assigned_orders.filter(status__in=['PROCESSING', 'READY']).first()
+        if active:
+            d_lat = 41.2995
+            d_lng = 69.2401
+            if active.delivery_lat:
+                try:
+                    d_lat = float(active.delivery_lat)
+                except (ValueError, TypeError):
+                    pass
+            if active.delivery_lng:
+                try:
+                    d_lng = float(active.delivery_lng)
+                except (ValueError, TypeError):
+                    pass
+            return {
+                "id": active.id,
+                "order_number": active.order_number,
+                "status": active.status,
+                "status_display": active.get_status_display(),
+                "customer_name": active.customer_name,
+                "customer_phone": active.customer_phone,
+                "delivery_address": active.delivery_address or "Toshkent shahri",
+                "delivery_lat": d_lat,
+                "delivery_lng": d_lng,
+                "total_amount": float(active.total_amount)
+            }
+        return None
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    courier = StoreStaffSerializer(read_only=True)
+    courier_id = serializers.PrimaryKeyRelatedField(
+        queryset=StoreStaff.objects.all(), source="courier", write_only=True, required=False, allow_null=True
+    )
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     payment_method_display = serializers.CharField(source="get_payment_method_display", read_only=True)
     payment_status_display = serializers.CharField(source="get_payment_status_display", read_only=True)
@@ -160,6 +273,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             "id", "order_number", "customer_name", "customer_phone",
+            "courier", "courier_id",
             "delivery_address", "delivery_lat", "delivery_lng", "delivery_fee",
             "payment_method", "payment_method_display", "payment_status", "payment_status_display",
             "status", "status_display", "total_amount", "discount_amount",
@@ -207,10 +321,26 @@ class BranchSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "address", "phone", "latitude", "longitude", "is_main", "is_active"]
 
 
-class StoreStaffSerializer(serializers.ModelSerializer):
+class StoreRoleSerializer(serializers.ModelSerializer):
+    permissions = serializers.SerializerMethodField()
+    staff_count = serializers.SerializerMethodField()
+
     class Meta:
-        model = StoreStaff
-        fields = ["id", "name", "phone", "role", "is_active", "created_at"]
+        model = StoreRole
+        fields = [
+            "id", "name", "description", "is_system", "is_active",
+            "created_at", "updated_at", "permissions", "staff_count"
+        ]
+
+    def get_permissions(self, obj):
+        perms = {p.module: {"view": p.can_view, "edit": p.can_edit, "delete": p.can_delete} for p in obj.permissions.all()}
+        for mod_key, _ in MODULE_CHOICES:
+            if mod_key not in perms:
+                perms[mod_key] = {"view": False, "edit": False, "delete": False}
+        return perms
+
+    def get_staff_count(self, obj):
+        return obj.staff_members.count()
 
 
 class StorePaymentSettingSerializer(serializers.ModelSerializer):

@@ -507,6 +507,9 @@ class StoreStaff(models.Model):
     )
     is_courier = models.BooleanField(default=False, verbose_name='Является курьером')
     is_active = models.BooleanField(default=True, verbose_name='Активен')
+    current_lat = models.FloatField(null=True, blank=True, verbose_name='Текущая широта (GPS)')
+    current_lng = models.FloatField(null=True, blank=True, verbose_name='Текущая долгота (GPS)')
+    last_location_update = models.DateTimeField(null=True, blank=True, verbose_name='Последнее обновление геопозиции')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

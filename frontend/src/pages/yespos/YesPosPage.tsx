@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import yesposLogo from "../../assets/yespos_logo.png";
 
 interface YesPosStatus {
   is_connected: boolean;
@@ -300,11 +301,11 @@ export const YesPosPage: React.FC = () => {
       {/* HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
             <span>{t("yespos_title") || "YES POS Integratsiyasi"}</span>
             {isConnected ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-600" />
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 flex items-center gap-1">
+                <Check className="w-3 h-3 text-[#c8ff6a] dark:text-[#211b2e]" />
                 {t("status_connected") || "ULANGAN"}
               </span>
             ) : (
@@ -314,7 +315,7 @@ export const YesPosPage: React.FC = () => {
             )}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            {t("yespos_subtitle") || "Kassangizdagi tovarlar, qoldiqlar va narxlarni bir zumda do`koningizga yuklang va avtomatik yangilab turing."}
+            {t("yespos_subtitle") || "Kassangizdagi tovarlar, qoldiqlar va narxlarni bir zumda do'konga yuklang va avtomatik yangilab turing."}
           </p>
         </div>
 
@@ -323,26 +324,26 @@ export const YesPosPage: React.FC = () => {
             type="button"
             onClick={handleSync}
             disabled={syncing}
-            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] font-black text-xs flex items-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer border border-[#211b2e]/20"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-            <span>{syncing ? (t("yespos_syncing") || "Sinxronlanmoqda...") : (t("yespos_sync_now") || "Hozir sinxronlash")}</span>
+            <span>{syncing ? (t("yespos_syncing") || "Sinxronlanmoqda...") : (t("yespos_sync_now") || "Qoldiqlarni sinxronlash")}</span>
           </button>
         )}
       </div>
 
       {/* EXPLICIT CONNECTION STATUS BANNER */}
       {isConnected ? (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="p-4 rounded-2xl bg-[#211b2e] text-white border border-[#211b2e]/20 text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-[#c8ff6a] shrink-0" />
             <div>
-              <div className="text-sm font-black text-emerald-950 flex items-center gap-2">
+              <div className="text-sm font-black text-white flex items-center gap-2">
                 <span>{t("yespos_connected_active") || "YES POS muvaffaqiyatli ulangan va faol ishlamoqda!"}</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
+                <span className="w-2 h-2 rounded-full bg-[#c8ff6a] animate-pulse inline-block"></span>
               </div>
-              <div className="text-emerald-700 text-xs font-medium mt-0.5">
-                {t("yespos_branch_label") || "Filial:"} <b>{status?.branch_name || status?.branch_id}</b> • {t("yespos_linked_products_qty") || "Ulangan tovarlar soni:"} <b>{status?.linked_products_count || 0} {t("yespos_items_unit") || "ta"}</b>
+              <div className="text-slate-300 text-xs font-medium mt-0.5">
+                {t("yespos_branch_label") || "Filial:"} <b className="text-white">{status?.branch_name || status?.branch_id}</b> • {t("yespos_linked_products_qty") || "Ulangan tovarlar soni:"} <b className="text-[#c8ff6a]">{status?.linked_products_count || 0} {t("yespos_items_unit") || "ta"}</b>
               </div>
             </div>
           </div>
@@ -350,7 +351,7 @@ export const YesPosPage: React.FC = () => {
             type="button"
             onClick={handleSync}
             disabled={syncing}
-            className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+            className="px-4 py-2.5 rounded-xl bg-[#c8ff6a] hover:bg-[#bbf555] text-[#211b2e] font-black text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
             <span>{syncing ? (t("yespos_updating") || "Yangilanmoqda...") : (t("yespos_update_prices") || "Narxlarni yangilash")}</span>
@@ -373,12 +374,12 @@ export const YesPosPage: React.FC = () => {
         <div
           className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-2xs ${
             msg.type === "success"
-              ? "bg-emerald-50 border border-emerald-200 text-emerald-900"
+              ? "bg-[#211b2e] border border-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:border-[#c8ff6a] dark:text-[#211b2e]"
               : "bg-rose-50 border border-rose-200 text-rose-900"
           }`}
         >
           {msg.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#c8ff6a] dark:text-[#211b2e] shrink-0" />
           ) : (
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
           )}
@@ -390,8 +391,8 @@ export const YesPosPage: React.FC = () => {
       <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-7 shadow-xs space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center font-black text-xl shrink-0">
-              YES
+            <div className="h-14 px-3.5 py-1.5 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+              <img src={yesposLogo} alt="YesPOS" className="h-7 w-auto max-w-[130px] object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -438,7 +439,7 @@ export const YesPosPage: React.FC = () => {
         {/* Protection badge */}
         <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 text-xs text-slate-600">
           <div className="flex items-center gap-2 font-semibold">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-slate-600 shrink-0" />
             <span>{t("yespos_safe_fallback") || "Avtomatik so'rov cheklovchisi va DNS xatoliklardan himoyalangan (Rate-limiting & Safe Fallback)."}</span>
           </div>
           <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">2.0 ENGINE</span>
@@ -547,7 +548,7 @@ export const YesPosPage: React.FC = () => {
                 type="button"
                 onClick={handleImportSelected}
                 disabled={importing}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer disabled:opacity-50"
               >
                 <Check className="w-4 h-4" />
                 <span>{importing ? (t("yespos_importing") || "Import qilinmoqda...") : `${selectedProductIds.size} ${t("yespos_items_unit") || "ta"} ${t("yespos_import_selected") || "tovarni yuklash"}`}</span>
@@ -620,7 +621,7 @@ export const YesPosPage: React.FC = () => {
                           onClick={() => toggleSelect(prod.id)}
                           className={`p-3 rounded-xl border text-xs transition-all cursor-pointer flex items-start gap-2.5 ${
                             isSelected
-                              ? "border-brand bg-emerald-50/40 ring-1 ring-brand"
+                              ? "border-[#211b2e] bg-[#211b2e]/5 ring-1 ring-[#211b2e]"
                               : "border-slate-200 hover:border-slate-300 bg-white"
                           }`}
                         >
@@ -628,7 +629,7 @@ export const YesPosPage: React.FC = () => {
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleSelect(prod.id)}
-                            className="mt-1 rounded text-brand focus:ring-brand"
+                            className="mt-1 rounded text-[#211b2e] focus:ring-[#211b2e]"
                           />
                           {prod.image ? (
                             <img
@@ -651,7 +652,7 @@ export const YesPosPage: React.FC = () => {
                               <span className="text-slate-500 font-medium">{t("yespos_stock") || "Qoldiq:"} {prod.stock}</span>
                             </div>
                             {prod.is_linked && (
-                              <span className="inline-block mt-1 text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded">
+                              <span className="inline-block mt-1 text-[9px] font-bold text-[#c8ff6a] bg-[#211b2e] px-1.5 py-0.5 rounded">
                                 {t("yespos_connected_badge") || "Do'konga ulangan"}
                               </span>
                             )}

@@ -93,7 +93,7 @@ export const BranchesPage: React.FC = () => {
         <button
           type="button"
           onClick={openModal}
-          className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs cursor-pointer"
+          className="px-4 py-2.5 bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 rounded-2xl text-xs font-black hover:opacity-90 transition-opacity flex items-center gap-2 shadow-xs cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>{t("add_branch_btn") || "Filial qo'shish"}</span>
@@ -107,7 +107,7 @@ export const BranchesPage: React.FC = () => {
               <h2 className="text-sm font-black text-slate-900">{b.name}</h2>
               <div className="flex items-center gap-2">
                 {b.is_main && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30">
                     {t("is_main_branch") || "Asosiy"}
                   </span>
                 )}

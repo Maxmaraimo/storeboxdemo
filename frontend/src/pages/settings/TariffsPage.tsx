@@ -208,7 +208,7 @@ export const TariffsPage: React.FC = () => {
               ? "bg-rose-50 border-rose-200 text-rose-900"
               : isExpiringSoon
               ? "bg-amber-50 border-amber-200 text-amber-900"
-              : "bg-emerald-50/60 border-emerald-200 text-emerald-900"
+              : "bg-[#211b2e] border-[#211b2e]/20 text-white"
           }`}
         >
           <div className="flex items-start sm:items-center gap-3">
@@ -218,7 +218,7 @@ export const TariffsPage: React.FC = () => {
                   ? "bg-rose-100 text-rose-600"
                   : isExpiringSoon
                   ? "bg-amber-100 text-amber-600 animate-bounce"
-                  : "bg-emerald-100 text-emerald-600"
+                  : "bg-[#c8ff6a] text-[#211b2e]"
               }`}
             >
               {isExpired ? (
@@ -232,10 +232,10 @@ export const TariffsPage: React.FC = () => {
             <div>
               <div className="text-xs font-black tracking-tight">
                 {isExpired
-                  ? "⛔ Do'koningiz obuna muddati tugagan!"
+                  ? "Do'koningiz obuna muddati tugagan!"
                   : isExpiringSoon
-                  ? `⚠️ Obuna muddati tez orada tugaydi (${daysLeft} kun qoldi)!`
-                  : "✅ Faol obuna rejasi amal qilmoqda"}
+                  ? `Obuna muddati tez orada tugaydi (${daysLeft} kun qoldi)!`
+                  : "Faol obuna rejasi amal qilmoqda"}
               </div>
               <div className="text-[11px] mt-0.5 opacity-90">
                 Amaldagi tarif: <b className="font-bold">{storeInfo.plan_display}</b> • Tugash sanasi:{" "}
@@ -246,7 +246,7 @@ export const TariffsPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
-            <span className="text-xs font-mono font-bold px-3 py-1 rounded-xl bg-white/80 border border-black/5 shadow-2xs">
+            <span className="text-xs font-mono font-bold px-3 py-1 rounded-xl bg-white/10 text-white border border-white/10 shadow-2xs">
               {storeInfo.subdomain}.storebox.uz
             </span>
           </div>
@@ -306,7 +306,7 @@ export const TariffsPage: React.FC = () => {
             }`}
           >
             <span>{t("month_6") || "6 oy"}</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black font-mono">
+            <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-black font-mono">
               -10%
             </span>
           </button>
@@ -318,7 +318,7 @@ export const TariffsPage: React.FC = () => {
             }`}
           >
             <span>{t("month_12") || "12 oy"}</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-black font-mono">
+            <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-black font-mono">
               -20%
             </span>
           </button>
@@ -339,7 +339,7 @@ export const TariffsPage: React.FC = () => {
                 p.recommended
                   ? "border-2 border-brand shadow-xl ring-2 ring-brand/10 scale-[1.02]"
                   : isCurrentPlan
-                  ? "border-emerald-500/80 shadow-md ring-1 ring-emerald-500/20"
+                  ? "border-[#211b2e] shadow-md ring-1 ring-[#211b2e]/20"
                   : "border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
               }`}
             >
@@ -353,7 +353,7 @@ export const TariffsPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-black text-slate-900">{p.name}</h2>
                   {isCurrentPlan && (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
                       {t("current_plan_badge") || "Joriy tarif"}
                     </span>
                   )}
@@ -368,15 +368,9 @@ export const TariffsPage: React.FC = () => {
                     <span className="text-xs text-slate-400 font-bold">{t("per_month") || "UZS / oy"}</span>
                   </div>
 
-                  {discountPct > 0 && (
-                    <div className="text-[11px] font-mono text-slate-400 line-through mt-0.5">
-                      {p.monthly_price.toLocaleString()} UZS
-                    </div>
-                  )}
-
                   <div className="mt-2 text-[11px] font-bold text-slate-500 bg-slate-50 rounded-xl p-2 border border-slate-100 flex items-center justify-between">
-                    <span>{(t("total_for_months") || "Jami ({duration} oyga):").replace("{duration}", String(duration))}</span>
-                    <span className="font-mono font-black text-brand">{totalPrice.toLocaleString()} UZS</span>
+                    <span>{t("total_for_months").replace("{duration}", String(duration))}</span>
+                    <span className="font-mono font-black text-slate-900">{totalPrice.toLocaleString()} UZS</span>
                   </div>
                 </div>
 
@@ -386,7 +380,7 @@ export const TariffsPage: React.FC = () => {
                   <ul className="space-y-2.5">
                     {p.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-slate-600 font-medium">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <Check className="w-4 h-4 text-[#211b2e] dark:text-[#c8ff6a] shrink-0 mt-0.5" />
                         <span>{f}</span>
                       </li>
                     ))}

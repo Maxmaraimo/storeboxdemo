@@ -380,7 +380,7 @@
                     <!-- 1. STATUS BAR & QUICK STATUS BUTTONS -->
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Buyurtma holati:</span>
+                            <span class="text-slate-500 font-bold uppercase tracking-wider text-[10px]">{{ t.order_status_label|default:"Buyurtma holati:" }}</span>
                             <span class="px-3 py-1 rounded-full text-xs font-black border"
                                   :class="{
                                       'bg-amber-50 text-amber-700 border-amber-200': selectedOrder && selectedOrder.status === 'NEW',
@@ -398,23 +398,23 @@
                         <div class="pt-2 border-t border-slate-200/60 flex flex-wrap gap-1.5">
                             <button type="button" @click="changeStatus(selectedOrder.id, 'PROCESSING')"
                                     class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200 text-blue-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                ⚡️ Jarayonga olish
+                                {{ t.action_processing|default:"⚡️ Jarayonga olish" }}
                             </button>
                             <button type="button" @click="changeStatus(selectedOrder.id, 'READY')"
                                     class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-indigo-50 border border-slate-200 text-indigo-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                👨‍🍳 Tayyor
+                                {{ t.action_ready|default:"👨‍🍳 Tayyor" }}
                             </button>
                             <button type="button" @click="changeStatus(selectedOrder.id, 'IN_DELIVERY')"
                                     class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-purple-50 border border-slate-200 text-purple-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                🛵 Yo'lga chiqarish
+                                {{ t.action_in_delivery|default:"🛵 Yo'lga chiqarish" }}
                             </button>
                             <button type="button" @click="changeStatus(selectedOrder.id, 'COMPLETED')"
                                     class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200 text-emerald-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                ✅ Yetkazildi
+                                {{ t.action_completed|default:"✅ Yetkazildi" }}
                             </button>
                             <button type="button" @click="changeStatus(selectedOrder.id, 'CANCELLED')"
                                     class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 text-rose-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                ❌ Bekor qilish
+                                {{ t.action_cancelled|default:"❌ Bekor qilish" }}
                             </button>
                         </div>
                     </div>
@@ -424,9 +424,9 @@
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
                                 <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
-                                <span>Mijoz ma'lumotlari</span>
+                                <span>{{ t.customer_info_title|default:"Mijoz ma'lumotlari" }}</span>
                             </h4>
-                            <span class="text-[10px] font-bold text-slate-400" x-text="selectedOrder ? selectedOrder.customer_orders_count + '-marta buyurtma bergan' : ''"></span>
+                            <span class="text-[10px] font-bold text-slate-400" x-text="selectedOrder ? selectedOrder.customer_orders_count + ' {{ t.orders_count_suffix|default:"-marta buyurtma bergan" }}' : ''"></span>
                         </div>
 
                         <div class="flex items-center justify-between">
@@ -461,7 +461,7 @@
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
                                 <i data-lucide="truck" class="w-4 h-4 text-emerald-600"></i>
-                                <span>Yetkazib berish va Manzil</span>
+                                <span>{{ t.delivery_and_address|default:"Yetkazib berish va Manzil" }}</span>
                             </h4>
                             <span class="px-2 py-0.5 rounded-lg bg-slate-100 font-bold text-[10px] text-slate-700"
                                   x-text="selectedOrder ? selectedOrder.delivery_method_display : ''"></span>
@@ -469,33 +469,51 @@
 
                         <div class="space-y-2">
                             <div>
-                                <span class="text-slate-400 text-[10px] uppercase font-bold block">Shahar / Hudud:</span>
+                                <span class="text-slate-400 text-[10px] uppercase font-bold block">{{ t.city_region_label|default:"Shahar / Hudud:" }}</span>
                                 <span class="font-bold text-slate-800" x-text="selectedOrder ? selectedOrder.delivery_city : ''"></span>
                             </div>
 
                             <div>
-                                <span class="text-slate-400 text-[10px] uppercase font-bold block">Aniq manzil:</span>
-                                <span class="font-medium text-slate-700" x-text="selectedOrder && selectedOrder.delivery_address ? selectedOrder.delivery_address : 'Do\'kondan olib ketish'"></span>
+                                <span class="text-slate-400 text-[10px] uppercase font-bold block">{{ t.exact_address_label|default:"Aniq manzil:" }}</span>
+                                <span class="font-medium text-slate-700" x-text="selectedOrder && selectedOrder.delivery_address ? selectedOrder.delivery_address : '{{ t.pickup_from_store|default:"Do\'kondan olib ketish" }}'"></span>
                             </div>
 
-                            <!-- Map Pin Button (if lat/lng available) -->
+                            <!-- Live Map & Yandex Navigator Action Buttons -->
                             <template x-if="selectedOrder && selectedOrder.delivery_lat && selectedOrder.delivery_lng">
-                                <div class="pt-1">
-                                    <a :href="'https://yandex.ru/maps/?pt=' + selectedOrder.delivery_lng + ',' + selectedOrder.delivery_lat + '&z=16&l=map'" target="_blank"
-                                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold text-xs transition-colors">
-                                        <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
-                                        <span>Xaritada nuqtani ochish</span>
-                                    </a>
+                                <div class="pt-2 space-y-2">
+                                    <!-- Live Courier Tracking for Merchant -->
+                                    <button type="button" @click="openLiveTrackingModal(selectedOrder.id)"
+                                            class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-xs flex items-center justify-between shadow-xs transition-all">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                                            <span>Kuryerni jonli kuzatish (Jonli xarita & ETA)</span>
+                                        </div>
+                                        <i data-lucide="compass" class="w-4 h-4"></i>
+                                    </button>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <a :href="'https://yandex.uz/maps/?rtext=~' + selectedOrder.delivery_lat + ',' + selectedOrder.delivery_lng + '&rtt=auto'" target="_blank"
+                                           class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-2xs transition-colors">
+                                            <span>🚕</span>
+                                            <span>{{ t.yandex_navigator_route|default:"Yandex Navigator (Marshrut)" }}</span>
+                                        </a>
+                                        <a :href="'https://maps.google.com/?q=' + selectedOrder.delivery_lat + ',' + selectedOrder.delivery_lng" target="_blank"
+                                           class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 text-blue-700 hover:bg-blue-50 font-bold text-xs transition-colors">
+                                            <i data-lucide="navigation-2" class="w-3.5 h-3.5"></i>
+                                            <span>Google Maps</span>
+                                        </a>
+                                    </div>
                                 </div>
                             </template>
 
                             <!-- Notes / Izoh -->
                             <template x-if="selectedOrder && selectedOrder.notes">
                                 <div class="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-amber-900 text-xs">
-                                    <span class="font-bold block text-[10px] uppercase text-amber-700">Mijoz izohi:</span>
+                                    <span class="font-bold block text-[10px] uppercase text-amber-700">{{ t.customer_notes_title|default:"Mijoz izohi:" }}</span>
                                     <span x-text="selectedOrder.notes"></span>
                                 </div>
                             </template>
+                        </div>
                     </div>
 
                     <!-- 3.5 COURIER ASSIGNMENT CARD -->
@@ -503,13 +521,13 @@
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
                                 <i data-lucide="bike" class="w-4 h-4 text-purple-600"></i>
-                                <span>Kuryer biriktirish</span>
+                                <span>{{ t.courier_assign_title|default:"Kuryer biriktirish" }}</span>
                             </h4>
                             <template x-if="selectedOrder && selectedOrder.courier_name">
-                                <span class="px-2 py-0.5 rounded-lg bg-purple-50 border border-purple-200 font-bold text-[10px] text-purple-700">Biriktirilgan</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-purple-50 border border-purple-200 font-bold text-[10px] text-purple-700">{{ t.courier_assigned|default:"Biriktirilgan" }}</span>
                             </template>
                             <template x-if="selectedOrder && !selectedOrder.courier_name">
-                                <span class="px-2 py-0.5 rounded-lg bg-slate-100 font-bold text-[10px] text-slate-500">Biriktirilmagan</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-slate-100 font-bold text-[10px] text-slate-500">{{ t.courier_not_assigned|default:"Biriktirilmagan" }}</span>
                             </template>
                         </div>
 
@@ -518,7 +536,7 @@
                                 <div class="relative flex-1">
                                     <select x-model="selectedCourierId" @change="assignCourier(selectedOrder.id, $event.target.value)"
                                             class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-500 transition-colors">
-                                        <option value="">-- Kuryer tanlanmagan --</option>
+                                        <option value="">{{ t.select_courier_placeholder|default:"-- Kuryer tanlanmagan --" }}</option>
                                         {% for c in couriers %}
                                         <option value="{{ c.id }}">{{ c.name }} ({{ c.phone }})</option>
                                         {% endfor %}
@@ -527,7 +545,7 @@
                                 <template x-if="selectedOrder && selectedOrder.courier_name">
                                     <button type="button" @click="assignCourier(selectedOrder.id, '')"
                                             class="p-2.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors shrink-0"
-                                            title="Kuryerni bekor qilish">
+                                            title="{{ t.cancel_courier_btn|default:'Kuryerni bekor qilish' }}">
                                         <i data-lucide="x" class="w-4 h-4"></i>
                                     </button>
                                 </template>
@@ -541,7 +559,7 @@
                                         </div>
                                         <div>
                                             <div class="font-bold text-slate-900 text-xs" x-text="selectedOrder.courier_name"></div>
-                                            <div class="font-mono text-[10px] text-slate-500" x-text="selectedOrder.courier_phone || 'Tel kiritilmagan'"></div>
+                                            <div class="font-mono text-[10px] text-slate-500" x-text="selectedOrder.courier_phone || '{{ t.phone_not_provided|default:"Tel kiritilmagan" }}'"></div>
                                         </div>
                                     </div>
                                     <template x-if="selectedOrder.courier_phone">
@@ -561,9 +579,9 @@
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
                                 <i data-lucide="package" class="w-4 h-4 text-emerald-600"></i>
-                                <span>Buyurtma tarkibi</span>
+                                <span>{{ t.order_items_title|default:"Buyurtma tarkibi" }}</span>
                             </h4>
-                            <span class="text-slate-400 font-bold text-[10px]" x-text="selectedOrder ? selectedOrder.items_count + ' xil' : ''"></span>
+                            <span class="text-slate-400 font-bold text-[10px]" x-text="selectedOrder ? selectedOrder.items_count + ' {{ t.items_variety_suffix|default:"xil" }}' : ''"></span>
                         </div>
 
                         <div class="divide-y divide-slate-100">
@@ -596,30 +614,30 @@
                     <!-- 5. FINANCIAL SUMMARY & PAYMENT -->
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
                         <div class="flex justify-between text-slate-600 font-medium">
-                            <span>Mahsulotlar summasi:</span>
+                            <span>{{ t.products_subtotal|default:"Mahsulotlar summasi:" }}</span>
                             <span class="font-mono text-slate-900 font-bold" x-text="selectedOrder ? selectedOrder.subtotal.toLocaleString() + ' UZS' : '0 UZS'"></span>
                         </div>
 
                         <template x-if="selectedOrder && selectedOrder.discount_amount > 0">
                             <div class="flex justify-between text-rose-600 font-bold">
-                                <span x-text="'Chegirma' + (selectedOrder.promo_code ? ' (' + selectedOrder.promo_code + ')' : '') + ':'"></span>
+                                <span x-text="'{{ t.discount_label|default:"Chegirma" }}' + (selectedOrder.promo_code ? ' (' + selectedOrder.promo_code + ')' : '') + ':'"></span>
                                 <span class="font-mono" x-text="'-' + selectedOrder.discount_amount.toLocaleString() + ' UZS'"></span>
                             </div>
                         </template>
 
                         <div class="flex justify-between text-slate-600 font-medium">
-                            <span>Yetkazib berish:</span>
-                            <span class="font-mono text-slate-900 font-bold" x-text="selectedOrder && selectedOrder.delivery_fee > 0 ? selectedOrder.delivery_fee.toLocaleString() + ' UZS' : 'Bepul'"></span>
+                            <span>{{ t.delivery_fee_label|default:"Yetkazib berish:" }}</span>
+                            <span class="font-mono text-slate-900 font-bold" x-text="selectedOrder && selectedOrder.delivery_fee > 0 ? selectedOrder.delivery_fee.toLocaleString() + ' UZS' : '{{ t.free_delivery|default:"Bepul" }}'"></span>
                         </div>
 
                         <div class="pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-black">
-                            <span class="text-slate-900">JAMI TO'LOV:</span>
+                            <span class="text-slate-900">{{ t.total_due_label|default:"JAMI TO'LOV:" }}</span>
                             <span class="text-emerald-600 font-mono text-base" x-text="selectedOrder ? selectedOrder.total_amount.toLocaleString() + ' UZS' : '0 UZS'"></span>
                         </div>
 
                         <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
                             <div class="flex items-center gap-1.5">
-                                <span class="text-slate-400">To'lov turi:</span>
+                                <span class="text-slate-400">{{ t.payment_type_label|default:"To'lov turi:" }}</span>
                                 <span class="font-bold text-slate-800" x-text="selectedOrder ? selectedOrder.payment_method_display : ''"></span>
                             </div>
                             <span class="px-2 py-0.5 rounded-full font-bold text-[10px]"
@@ -636,12 +654,12 @@
                     <button type="button" @click="printReceipt(selectedOrder)"
                             class="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors">
                         <i data-lucide="printer" class="w-4 h-4"></i>
-                        <span>Chekni chop etish</span>
+                        <span>{{ t.print_receipt_btn|default:"Chekni chop etish" }}</span>
                     </button>
 
                     <a :href="selectedOrder ? selectedOrder.full_detail_url : '#'"
                        class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
-                        <span>To'liq sahifa</span>
+                        <span>{{ t.view_btn|default:"To'liq sahifa" }}</span>
                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                     </a>
                 </div>
@@ -689,6 +707,59 @@
             </div>
         </div>
     </div>
+
+    <!-- LIVE COURIER TRACKING MODAL (FOR FOUNDER / MERCHANT) -->
+    <div x-show="liveTrackingModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md">
+        <div @click.away="closeLiveTrackingModal()" class="bg-slate-900 text-white rounded-3xl max-w-2xl w-full h-[90vh] max-h-[700px] flex flex-col shadow-2xl border border-slate-700 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-600/30 text-blue-400 flex items-center justify-center">
+                        <i data-lucide="navigation" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-black text-sm text-white">Jonli kuryer harakati (Real-Time GPS)</h3>
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 font-mono" x-text="trackingData ? '#' + trackingData.order.order_number + ' • ' + trackingData.order.customer_name : 'Yuklanmoqda...'"></p>
+                    </div>
+                </div>
+                <button type="button" @click="closeLiveTrackingModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- ETA HUD Banner -->
+            <div class="px-4 py-3 bg-slate-950/90 border-b border-slate-800/80 flex items-center justify-between text-xs">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kuryer holati</span>
+                    <span class="font-black text-emerald-400" x-text="trackingData?.courier ? (trackingData.courier.name + (trackingData.courier.is_online ? ' (Online)' : '')) : 'Kuryer biriktirilmagan'"></span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mijozgacha masofa / ETA</span>
+                    <span class="font-black text-amber-400 text-sm" x-text="trackingEtaText || 'Hisoblanmoqda...'"></span>
+                </div>
+            </div>
+
+            <!-- Map View Container -->
+            <div id="merchantTrackingMap" class="flex-1 w-full bg-slate-950"></div>
+
+            <!-- Modal Footer -->
+            <div class="p-3.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2 text-slate-400">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-rose-500 shrink-0"></i>
+                    <span class="truncate max-w-xs" x-text="trackingData?.order?.delivery_address || 'Manzil ko\'rsatilmagan'"></span>
+                </div>
+                <template x-if="trackingData?.courier?.phone">
+                    <a :href="'tel:' + trackingData.courier.phone" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm">
+                        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                        <span>Kuryerga qo'ng'iroq</span>
+                    </a>
+                </template>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -700,6 +771,17 @@
             selectedOrder: null,
             selectedCourierId: '',
             isLoadingOrder: false,
+
+            // Live Tracking State for Merchant
+            liveTrackingModalOpen: false,
+            trackingOrderId: null,
+            trackingData: null,
+            trackingMap: null,
+            trackingCourierMarker: null,
+            trackingDestMarker: null,
+            trackingRouteLine: null,
+            trackingInterval: null,
+            trackingEtaText: '',
 
             openOrderDrawer(orderId) {
                 this.isLoadingOrder = true;
@@ -754,7 +836,7 @@
                     <head>
                         <title>Chek #${order.order_number}</title>
                         <style>
-                            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; padding: 15px; color: #111; line-height: 1.4; }
+                            body { font-family: 'Inter', "Segoe UI", Arial, sans-serif; font-size: 12px; padding: 15px; color: #111; line-height: 1.4; }
                             .center { text-align: center; }
                             .line { border-top: 1px dashed #000; margin: 10px 0; }
                             table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -830,6 +912,9 @@
                     if (data.success) {
                         showToast(`Holat yangilandi: ${data.status_display}`);
                         
+                        // Close drawer immediately as requested
+                        this.orderDrawerOpen = false;
+
                         // Update selected order in drawer if open
                         if (this.selectedOrder && this.selectedOrder.id == orderId) {
                             this.selectedOrder.status = data.status;
@@ -915,6 +1000,151 @@
                     console.error(err);
                     showToast('Xatolik yuz berdi');
                 });
+            },
+
+            openLiveTrackingModal(orderId) {
+                this.trackingOrderId = orderId;
+                this.liveTrackingModalOpen = true;
+                this.trackingEtaText = 'Hisoblanmoqda...';
+                this.trackingData = null;
+
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                    this.fetchTrackingData();
+                    if (this.trackingInterval) clearInterval(this.trackingInterval);
+                    this.trackingInterval = setInterval(() => {
+                        this.fetchTrackingData();
+                    }, 8000);
+                });
+            },
+
+            closeLiveTrackingModal() {
+                this.liveTrackingModalOpen = false;
+                if (this.trackingInterval) {
+                    clearInterval(this.trackingInterval);
+                    this.trackingInterval = null;
+                }
+            },
+
+            async fetchTrackingData() {
+                if (!this.trackingOrderId) return;
+                try {
+                    const res = await fetch(`/dashboard/api/order/${this.trackingOrderId}/tracking/`);
+                    const data = await res.json();
+                    if (data.success) {
+                        this.trackingData = data;
+                        this.renderMerchantTrackingMap();
+                    }
+                } catch (e) {
+                    console.error("Error fetching tracking data:", e);
+                }
+            },
+
+            renderMerchantTrackingMap() {
+                if (!this.trackingData || !this.trackingData.order) return;
+                const dLat = parseFloat(this.trackingData.order.delivery_lat);
+                const dLng = parseFloat(this.trackingData.order.delivery_lng);
+                if (!dLat || !dLng) return;
+
+                if (!this.trackingMap) {
+                    this.trackingMap = L.map('merchantTrackingMap', {
+                        zoomControl: false,
+                        attributionControl: false
+                    }).setView([dLat, dLng], 14);
+
+                    L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ request.language|default:"ru" }}&x={x}&y={y}&z={z}', {
+                        maxZoom: 20,
+                        subdomains: ['0', '1', '2', '3'],
+                        attribution: '© Google Maps'
+                    }).addTo(this.trackingMap);
+
+                    L.control.zoom({ position: 'bottomright' }).addTo(this.trackingMap);
+                }
+
+                // Destination Pin
+                const destIcon = L.divIcon({
+                    className: 'dest-pin-marker',
+                    html: `<div class="relative flex items-center justify-center">
+                        <div style="position: absolute; inset: -6px; border-radius: 50%; background: rgba(225,29,72,0.3); animation: pulse-ring 2.2s infinite;"></div>
+                        <div class="w-9 h-9 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-xl border-2 border-white">
+                            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                        </div>
+                    </div>`,
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 36]
+                });
+
+                if (!this.trackingDestMarker) {
+                    this.trackingDestMarker = L.marker([dLat, dLng], { icon: destIcon }).addTo(this.trackingMap)
+                        .bindPopup(`<b>${this.trackingData.order.customer_name}</b><br>${this.trackingData.order.delivery_address}`);
+                } else {
+                    this.trackingDestMarker.setLatLng([dLat, dLng]);
+                }
+
+                // Courier Pin & Route
+                const courier = this.trackingData.courier;
+                if (courier && courier.lat && courier.lng) {
+                    const cLat = parseFloat(courier.lat);
+                    const cLng = parseFloat(courier.lng);
+
+                    const courierIcon = L.divIcon({
+                        className: 'courier-pulse-container',
+                        html: `<div class="relative flex items-center justify-center">
+                            <div style="position: absolute; inset: -8px; border-radius: 50%; background: rgba(37,99,235,0.35); animation: pulse-ring 2s infinite;"></div>
+                            <div class="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-xl border-2 border-white">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 10.9 2 11.2 2 11.5V16c0 .6.4 1 1 1h2"/>
+                                    <circle cx="7" cy="17" r="2"/>
+                                    <path d="M9 17h6"/>
+                                    <circle cx="17" cy="17" r="2"/>
+                                </svg>
+                            </div>
+                        </div>`,
+                        iconSize: [36, 36],
+                        iconAnchor: [18, 18]
+                    });
+
+                    if (!this.trackingCourierMarker) {
+                        this.trackingCourierMarker = L.marker([cLat, cLng], { icon: courierIcon }).addTo(this.trackingMap)
+                            .bindPopup(`<b>Kuryer: ${courier.name}</b><br>Tel: ${courier.phone}`);
+                    } else {
+                        this.trackingCourierMarker.setLatLng([cLat, cLng]);
+                    }
+
+                    // Calculate live route polyline via OSRM
+                    fetch(`https://router.project-osrm.org/route/v1/driving/${cLng},${cLat};${dLng},${dLat}?overview=full&geometries=geojson`)
+                        .then(r => r.json())
+                        .then(rData => {
+                            if (rData.code === 'Ok' && rData.routes && rData.routes.length > 0) {
+                                const route = rData.routes[0];
+                                const coords = route.geometry.coordinates.map(p => [p[1], p[0]]);
+                                const distKm = (route.distance / 1000).toFixed(1);
+                                const durationMin = Math.round(route.duration / 60);
+
+                                this.trackingEtaText = `~${Math.max(1, durationMin)} daqiqa (${distKm} km)`;
+
+                                if (this.trackingRouteLine) {
+                                    this.trackingRouteLine.setLatLngs(coords);
+                                } else {
+                                    this.trackingRouteLine = L.polyline(coords, {
+                                        color: '#3b82f6',
+                                        weight: 6,
+                                        opacity: 0.85
+                                    }).addTo(this.trackingMap);
+                                }
+
+                                const bounds = L.latLngBounds([cLat, cLng], [dLat, dLng]);
+                                this.trackingMap.fitBounds(bounds, { padding: [60, 40] });
+                            }
+                        })
+                        .catch(e => console.warn("OSRM error:", e));
+                } else {
+                    this.trackingEtaText = 'Kuryer GPS ma\'lumoti kutilmoqda';
+                    this.trackingMap.setView([dLat, dLng], 15);
+                }
             }
         }
     }

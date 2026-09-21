@@ -130,7 +130,7 @@ export const DesignStudioPage: React.FC = () => {
   const [logoUrl, setLogoUrl] = useState("");
   const [themeTemplate, setThemeTemplate] = useState<string>("universal");
   const [selectedNiche, setSelectedNiche] = useState("flowers");
-  const [primaryColor, setPrimaryColor] = useState("#00d668");
+  const [primaryColor, setPrimaryColor] = useState("#10b981");
   const [themeBgColor, setThemeBgColor] = useState("#F8FAFC");
   const [cardStyle, setCardStyle] = useState("modern");
   const [cardRadius, setCardRadius] = useState("3xl");
@@ -160,10 +160,10 @@ export const DesignStudioPage: React.FC = () => {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Quick brand color palettes (StoreBox signature deep ink charcoal first)
+  // Quick brand color palettes (StoreBox signature deep ink charcoal first, then signature lime)
   const quickColors = [
     { name: language === "ru" ? "StoreBox Графит" : language === "en" ? "StoreBox Charcoal" : "StoreBox Charcoal", value: "#211B2E" },
-    { name: language === "ru" ? "StoreBox Зеленый" : language === "en" ? "StoreBox Green" : "StoreBox Yashil", value: "#00D668" },
+    { name: language === "ru" ? "StoreBox Салатовый" : language === "en" ? "StoreBox Lime" : "StoreBox Salat rangi", value: "#10b981" },
     { name: language === "ru" ? "Изумрудный" : language === "en" ? "Emerald Green" : "Zumrad Yashil", value: "#10B981" },
     { name: language === "ru" ? "Королевский Синий" : language === "en" ? "Royal Blue" : "Qirollik Moviy", value: "#2563EB" },
     { name: language === "ru" ? "Небесно-голубой" : language === "en" ? "Sky Blue" : "Tengiz Moviy", value: "#0EA5E9" },
@@ -195,7 +195,7 @@ export const DesignStudioPage: React.FC = () => {
       const initObj = {
         storeName: themeData.store_name || store?.name || "",
         logoUrl: themeData.logo_url || "",
-        primaryColor: themeData.primary_color || "#00d668",
+        primaryColor: themeData.primary_color || "#10b981",
         themeBgColor: themeData.theme_bg_color || "#F8FAFC",
         cardStyle: themeData.theme_card_style || "modern",
         cardRadius: themeData.theme_card_radius || "3xl",
@@ -522,7 +522,8 @@ export const DesignStudioPage: React.FC = () => {
 
   // Subdomain & Preview URL
   const subdomain = store?.subdomain || themeData?.subdomain || "shop-655";
-  const storefrontUrl = (themeData?.storefront_url || store?.storefront_url || `/store/${subdomain}`).replace(/\/$/, "");
+  const isLocalHost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "0.0.0.0");
+  const storefrontUrl = isLocalHost ? `/store/${subdomain}` : (themeData?.storefront_url || store?.storefront_url || `/store/${subdomain}`).replace(/\/$/, "");
   const activePrimaryBanner = banners.find(b => b.is_active) || banners[0];
   const previewParams = new URLSearchParams({
     preview: "1",
@@ -552,21 +553,22 @@ export const DesignStudioPage: React.FC = () => {
       />
 
       {/* TOP HEADER BAR: Intuitive, Clean & Pro */}
-      <div className="bg-white px-5 py-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#141722] px-5 py-4 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-2xs flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] border border-white/10 flex items-center justify-center font-bold shadow-md shadow-[#211b2e]/20">
             <Palette className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+              <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
                 {t("design_studio_title")}
               </h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                 {t("live_badge")}
               </span>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {t("design_studio_subtitle")}
             </p>
           </div>
@@ -578,7 +580,7 @@ export const DesignStudioPage: React.FC = () => {
             href={`${storefrontUrl}/`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-neutral-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-transparent dark:border-white/10"
           >
             <span>{t("view_website")}</span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
@@ -588,9 +590,9 @@ export const DesignStudioPage: React.FC = () => {
             type="button"
             onClick={handleSaveTheme}
             disabled={saving}
-            className="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white text-xs font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50 active:scale-95"
+            className="px-5 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] text-white font-black text-xs flex items-center gap-2 shadow-lg shadow-[#211b2e]/20 transition-all cursor-pointer disabled:opacity-50 active:scale-95 border border-white/10"
           >
-            <Save className="w-4 h-4" />
+            <Save className="w-4 h-4 text-[#c8ff6a]" />
             <span>{saving ? t("saving") : t("save_and_apply")}</span>
           </button>
         </div>
@@ -601,13 +603,13 @@ export const DesignStudioPage: React.FC = () => {
         <div
           className={`p-3.5 rounded-xl text-xs font-bold flex items-center justify-between gap-2.5 shadow-2xs animate-in fade-in duration-200 ${
             msg.type === "success"
-              ? "bg-emerald-50 border border-emerald-200 text-emerald-900"
+              ? "bg-[#211b2e] border border-[#211b2e]/30 text-[#c8ff6a]"
               : "bg-rose-50 border border-rose-200 text-rose-900"
           }`}
         >
           <div className="flex items-center gap-2">
             {msg.type === "success" ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-[#c8ff6a] shrink-0" />
             ) : (
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
             )}
@@ -792,40 +794,40 @@ export const DesignStudioPage: React.FC = () => {
                           <div className="flex flex-wrap gap-1.5 mt-2.5">
                             {tpl.id === "restaurant" && (
                               <>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">
-                                  {language === "ru" ? "🛵 Доставка и график" : language === "en" ? "🛵 Delivery & Hours" : "🛵 Yetkazish & Ish vaqti"}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                  {language === "ru" ? "Доставка и график" : language === "en" ? "Delivery & Hours" : "Yetkazish & Ish vaqti"}
                                 </span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">
-                                  {language === "ru" ? "🍽️ Меню блюд" : language === "en" ? "🍽️ Food Menu" : "🍽️ Taomlar Menyu kartasi"}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                  {language === "ru" ? "Меню блюд" : language === "en" ? "Food Menu" : "Taomlar Menyu kartasi"}
                                 </span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60">
-                                  {language === "ru" ? "➕ Быстрый счетчик" : language === "en" ? "➕ Quick Counter" : "➕ Tezkor sanagich"}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                  {language === "ru" ? "Быстрый счетчик" : language === "en" ? "Quick Counter" : "Tezkor sanagich"}
                                 </span>
                               </>
                             )}
                             {tpl.id === "boutique" && (
                               <>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">
-                                  {language === "ru" ? "👗 3:4 Портретная витрина" : language === "en" ? "👗 3:4 Portrait Grid" : "👗 3:4 Portret Vitrina"}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                  {language === "ru" ? "3:4 Портретная витрина" : language === "en" ? "3:4 Portrait Grid" : "3:4 Portret Vitrina"}
                                 </span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">
-                                  {language === "ru" ? "💎 Без рамок и лишнего" : language === "en" ? "💎 Frameless Clean" : "💎 Ramsiz Minimalizm"}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                  {language === "ru" ? "Без рамок и лишнего" : language === "en" ? "Frameless Clean" : "Ramsiz Minimalizm"}
                                 </span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200/60">
-                                  {language === "ru" ? "❤️ Избранное (Wishlist)" : language === "en" ? "❤️ Wishlist" : "❤️ Sevimlilar (Wishlist)"}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                  {language === "ru" ? "Избранное (Wishlist)" : language === "en" ? "Wishlist" : "Sevimlilar (Wishlist)"}
                                 </span>
                               </>
                             )}
                             {tpl.id === "universal" && (
                               <>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">
-                                  {language === "ru" ? "🎁 Слайдер акций" : language === "en" ? "🎁 Promo Slider" : "🎁 Slayder Banner"}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                  {language === "ru" ? "Слайдер акций" : language === "en" ? "Promo Slider" : "Slayder Banner"}
                                 </span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">
-                                  {language === "ru" ? "📦 Сетка категорий" : language === "en" ? "📦 Categories Grid" : "📦 Toifalar Katagi"}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                  {language === "ru" ? "Сетка категорий" : language === "en" ? "Categories Grid" : "Toifalar Katagi"}
                                 </span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/60">
-                                  {language === "ru" ? "🛍️ 4-колоночный E-Commerce" : language === "en" ? "🛍️ 4-Column E-Commerce" : "🛍️ 4 Ustunli E-Commerce"}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                  {language === "ru" ? "4-колоночный E-Commerce" : language === "en" ? "4-Column E-Commerce" : "4 Ustunli E-Commerce"}
                                 </span>
                               </>
                             )}
@@ -852,7 +854,7 @@ export const DesignStudioPage: React.FC = () => {
                     <Layers className="w-4 h-4 text-brand" />
                     <span>{t("active_sections_title")}</span>
                   </h4>
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-full border border-slate-200 dark:border-white/10">
                     {t("auto_active_badge")}
                   </span>
                 </div>
@@ -860,82 +862,82 @@ export const DesignStudioPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {themeTemplate === "restaurant" ? (
                     <>
-                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "🛵 Доставка и график работы" : language === "en" ? "🛵 Delivery & Working Hours" : "🛵 Yetkazish & Ish vaqti"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Доставка и график работы" : language === "en" ? "Delivery & Working Hours" : "Yetkazish & Ish vaqti"}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "🍽️ Меню блюд и счетчик" : language === "en" ? "🍽️ Food Menu & Counter" : "🍽️ Taomlar Menyusi & Sanagich"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Меню блюд и счетчик" : language === "en" ? "Food Menu & Counter" : "Taomlar Menyusi & Sanagich"}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "🍔 Скроллер категорий" : language === "en" ? "🍔 Categories Scroller" : "🍔 Toifalar Skrolleri"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Скроллер категорий" : language === "en" ? "Categories Scroller" : "Toifalar Skrolleri"}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "🛡️ 100% Халяль и термобоксы" : language === "en" ? "🛡️ 100% Halal & Insulated Bag" : "🛡️ 100% Halol & Termoboks"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Халяль и термобоксы" : language === "en" ? "Halal & Insulated Bag" : "Halol & Termoboks"}
                         </span>
                       </div>
                     </>
                   ) : themeTemplate === "boutique" ? (
                     <>
-                      <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "👗 3:4 Портретная витрина" : language === "en" ? "👗 3:4 Portrait Grid" : "👗 3:4 Portret Vitrina"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "3:4 Портретная витрина" : language === "en" ? "3:4 Portrait Grid" : "3:4 Portret Vitrina"}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "💎 Чистый минимализм без рамок" : language === "en" ? "💎 Clean Frameless Minimal" : "💎 Ramsiz Toza Minimalizm"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Чистый минимализм без рамок" : language === "en" ? "Clean Frameless Minimal" : "Ramsiz Toza Minimalizm"}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "❤️ Избранное (Wishlist)" : language === "en" ? "❤️ Wishlist" : "❤️ Sevimlilar (Wishlist)"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Избранное (Wishlist)" : language === "en" ? "Wishlist" : "Sevimlilar (Wishlist)"}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "🏷️ Навигация по категориям" : language === "en" ? "🏷️ Category Navigation" : "🏷️ Toifalar Navigatsiyasi"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Навигация по категориям" : language === "en" ? "Category Navigation" : "Toifalar Navigatsiyasi"}
                         </span>
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "🎁 Промо-слайдер акций" : language === "en" ? "🎁 Promo Slider Banner" : "🎁 Aksiya Promo Slayderi"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Промо-слайдер акций" : language === "en" ? "Promo Slider Banner" : "Aksiya Promo Slayderi"}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "📦 Плитка категорий" : language === "en" ? "📦 Categories Grid" : "📦 Kategoriya Katakchalari"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Плитка категорий" : language === "en" ? "Categories Grid" : "Kategoriya Katakchalari"}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "🛍️ 4-колоночная витрина товаров" : language === "en" ? "🛍️ 4-Column Storefront" : "🛍️ 4 Ustunli E-Commerce Vitrina"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "4-колоночная витрина товаров" : language === "en" ? "4-Column Storefront" : "4 Ustunli E-Commerce Vitrina"}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200/70 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span className="font-bold text-slate-800">
-                          {language === "ru" ? "🚚 Быстрая доставка и гарантия" : language === "en" ? "🚚 Fast Delivery & Guarantee" : "🚚 Tez yetkazish & Kafolat"}
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {language === "ru" ? "Быстрая доставка и гарантия" : language === "en" ? "Fast Delivery & Guarantee" : "Tez yetkazish & Kafolat"}
                         </span>
                       </div>
                     </>
@@ -1222,7 +1224,7 @@ export const DesignStudioPage: React.FC = () => {
           {/* DEVICE SWITCHER & CONTROLS */}
           <div className="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-slate-400"></span>
               <span className="font-black text-xs text-slate-800">{t("live_showcase")}:</span>
             </div>
 

@@ -694,6 +694,8 @@
                         this.cartCount = data.cart_count;
                         this.cartItems = data.cart;
                         this.subtotal = data.subtotal;
+                        data.openDrawer = true;
+                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: data }));
                     }
                 });
             },
@@ -715,6 +717,8 @@
                         this.cartItems = data.cart;
                         this.subtotal = data.subtotal;
                         this.selectedProduct = null;
+                        data.openDrawer = true;
+                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: data }));
                     }
                 });
             },

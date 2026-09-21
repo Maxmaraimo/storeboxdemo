@@ -22,7 +22,7 @@ export const RoboMarketPage: React.FC = () => {
         {apps.map((a) => (
           <div key={a.id} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-brand flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-bold shadow-xs">
                 <StoreIcon className="w-5 h-5" />
               </div>
               <div>
@@ -34,8 +34,8 @@ export const RoboMarketPage: React.FC = () => {
               type="button"
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
                 a.installed
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  : "bg-brand text-white hover:bg-brand-dark"
+                  ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30"
+                  : "bg-slate-900 text-white hover:bg-slate-800"
               }`}
             >
               {a.installed ? (

@@ -9,7 +9,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,7 +18,7 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        sans: ['Inter', '"Segoe UI"', 'Arial', 'sans-serif'],
                         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
                     },
                     colors: {
@@ -59,6 +59,11 @@
 
     <style>
         [x-cloak] { display: none !important; }
+        html, body {
+            font-family: 'Inter', "Segoe UI", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
         #spa-progress-bar {
             position: fixed;
             top: 0;
@@ -354,11 +359,14 @@
                  hx-indicator="#spa-progress-bar">
                 <div class="space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-dark to-brand text-white flex items-center justify-center font-black text-sm">
-                                S
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-[#211b2e] flex items-center justify-center border border-white/10 shadow-md">
+                                <svg viewBox="0 0 32 32" class="w-5 h-5 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
+                                    <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
+                                    <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
+                                </svg>
                             </div>
-                            <span class="text-lg font-black text-slate-900">store<span class="text-brand">box</span></span>
+                            <span class="text-lg font-[850] text-slate-900 tracking-tight">StoreBox</span>
                         </div>
                         <button type="button" @click="mobileSidebarOpen = false" class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 text-base font-black">
                             ✕
@@ -769,18 +777,6 @@
         <i data-lucide="check-circle-2" class="w-4 h-4 text-brand"></i>
         <span id="spa-toast-text">Sozlama saqlandi!</span>
     </div>
-
-    <!-- FLOATING LIVE TELEGRAM SUPPORT ("Прямая связь") -->
-    <a href="https://t.me/storebox_support" target="_blank"
-       class="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-slate-900 text-white shadow-xl hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 group border border-slate-700/60"
-       title="{% if current_lang == 'ru' %}Прямая связь через Telegram{% elif current_lang == 'en' %}Direct Telegram Support{% else %}Telegram orqali to'g'ridan-to'g'ri bog'lanish{% endif %}">
-        <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <i data-lucide="send" class="w-3.5 h-3.5 text-sky-400 group-hover:translate-x-0.5 transition-transform"></i>
-        <span class="text-xs font-bold tracking-tight">{% if current_lang == 'ru' %}Прямая связь{% elif current_lang == 'en' %}Direct Support{% else %}To'g'ridan-to'g'ri aloqa{% endif %}</span>
-    </a>
 
     <!-- ============================================================= -->
     <!-- SEAMLESS SPA ROUTING SCRIPT (Zero Full-Page Reload)           -->

@@ -11,10 +11,10 @@
         window.__currentTheme = 'light';
     }
 </script>
-<!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+<!-- Google Fonts: Inter & JetBrains Mono -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- Three.js for 3D WebGL Earth Globe -->
 <script src="{% static 'js/three.min.js' %}"></script>
@@ -31,7 +31,9 @@
     html, body {
         background-color: #06040A !important;
         color: #F8FAFC !important;
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: 'Inter', "Segoe UI", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
         overflow-x: hidden;
         height: auto !important;
         min-height: 100% !important;

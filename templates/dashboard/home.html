@@ -319,7 +319,11 @@
             const defaultLng = mapOrders.length > 0 ? mapOrders[0].lng : 69.2401;
 
             const map = L.map('analyticsMap').setView([defaultLat, defaultLng], 12);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+            L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ request.language|default:"ru" }}&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['0', '1', '2', '3'],
+                attribution: '© Google Maps'
+            }).addTo(map);
 
             mapOrders.forEach(o => {
                 L.marker([o.lat, o.lng]).addTo(map).bindPopup(

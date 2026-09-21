@@ -6,7 +6,9 @@ import { useAuth } from "../../context/AuthContext";
 import { Product, Category } from "../../types";
 
 export const ProductsPage: React.FC = () => {
-  const { t } = useAuth();
+  const { t, hasPermission } = useAuth();
+  const canEditProduct = hasPermission("products", "edit");
+  const canDeleteProduct = hasPermission("products", "delete");
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [search, setSearch] = useState("");
@@ -143,6 +145,9 @@ export const ProductsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
+    onError: (err: any) => {
+      alert(err.response?.data?.error || "Mahsulotni o'chirish huquqingiz yo'q");
+    },
   });
 
   const openCreateModal = () => {
@@ -211,15 +216,17 @@ export const ProductsPage: React.FC = () => {
             {t("products_list_subtitle") || "Katalogdagi tovarlar, narxlar va qoldiqlar"}
           </p>
         </div>
-        <button
-          type="button"
-          data-testid="create-product-btn"
-          onClick={openCreateModal}
-          className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{t("new_product") || "Yangi mahsulot"}</span>
-        </button>
+        {canEditProduct && (
+          <button
+            type="button"
+            data-testid="create-product-btn"
+            onClick={openCreateModal}
+            className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{t("new_product") || "Yangi mahsulot"}</span>
+          </button>
+        )}
       </div>
 
       {/* FILTER & SEARCH */}
@@ -324,7 +331,7 @@ export const ProductsPage: React.FC = () => {
                         {t("out_of_stock") || "Tugagan"}
                       </span>
                     ) : p.is_active ? (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
                         {t("in_stock") || "Sotuvda"}
                       </span>
                     ) : (
@@ -336,26 +343,30 @@ export const ProductsPage: React.FC = () => {
 
                   <td className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(p)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                        title={t("edit") || "Tahrirlash"}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (confirm(`'${p.name_uz || p.name_ru}' mahsulotini o'chirishni tasdiqlaysizmi?`)) {
-                            deleteMutation.mutate(p.id);
-                          }
-                        }}
-                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
-                        title={t("delete") || "O'chirish"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canEditProduct && (
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(p)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                          title={t("edit") || "Tahrirlash"}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDeleteProduct && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`'${p.name_uz || p.name_ru}' mahsulotini o'chirishni tasdiqlaysizmi?`)) {
+                              deleteMutation.mutate(p.id);
+                            }
+                          }}
+                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
+                          title={t("delete") || "O'chirish"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

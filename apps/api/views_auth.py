@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from apps.stores.models import Store
+from apps.orders.permissions import get_user_permissions
 from .serializers import UserSerializer, StoreSerializer
 
 def get_merchant_store(request):
@@ -17,13 +18,28 @@ def get_merchant_store(request):
         store_id = session.get("merchant_current_store_id") or session.get("selected_store_id")
     if store_id:
         store = Store.objects.filter(id=store_id, owner=user).first()
+        if not store:
+            from apps.orders.models import StoreStaff
+            staff = StoreStaff.objects.filter(store_id=store_id, user=user, is_active=True).first()
+            if staff:
+                return staff.store
         if not store and user.is_superuser:
             store = Store.objects.filter(id=store_id).first()
         if store:
             return store
+
+    # Check store owned by user
     store = Store.objects.filter(owner=user, is_active=True).first()
     if not store:
         store = Store.objects.filter(owner=user).first()
+    
+    # If not owner, check if user is staff or courier in a store
+    if not store:
+        from apps.orders.models import StoreStaff
+        staff = StoreStaff.objects.filter(user=user, is_active=True).select_related('store').first()
+        if staff and staff.store:
+            return staff.store
+
     if not store and user.is_superuser:
         store = Store.objects.filter(is_active=True).first()
     return store
@@ -83,10 +99,17 @@ def login_view(request):
 
     login(request, user)
     store = get_merchant_store(request)
+    perms = get_user_permissions(user, store) if store else None
+
+    from apps.orders.models import StoreStaff
+    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists()
 
     return Response({
         "user": UserSerializer(user).data,
         "store": StoreSerializer(store).data if store else None,
+        "permissions": perms,
+        "is_courier": is_courier,
+        "redirect_url": "/dashboard/courier/" if is_courier else None,
         "message": "Muvaffaqiyatli tizimga kirildi"
     })
 
@@ -140,14 +163,25 @@ def register_view(request):
 def me_view(request):
     user = request.user
     store = get_merchant_store(request)
+    
+    from apps.orders.models import StoreStaff
+    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists()
+
     stores = Store.objects.filter(owner=user)
-    if not stores.exists():
+    if not stores.exists() and store:
+        stores = Store.objects.filter(id=store.id)
+    elif not stores.exists():
         stores = Store.objects.filter(is_active=True)[:5]
+
+    perms = get_user_permissions(user, store) if store else None
 
     return Response({
         "user": UserSerializer(user).data,
         "store": StoreSerializer(store).data if store else None,
         "stores": StoreSerializer(stores, many=True).data,
+        "permissions": perms,
+        "is_courier": is_courier,
+        "redirect_url": "/dashboard/courier/" if is_courier else None,
     })
 
 @api_view(["POST"])
@@ -163,7 +197,72 @@ def switch_store_view(request, store_id):
     if not store:
         return Response({"error": "Dokon topilmadi"}, status=404)
     request.session["selected_store_id"] = store.id
+    request.session["merchant_current_store_id"] = store.id
+    request.session["current_store_subdomain"] = store.subdomain
     return Response({
         "message": "Dokon almashtirildi",
         "store": StoreSerializer(store).data
     })
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_store_view(request):
+    from django.utils.text import slugify
+    from apps.payments.models import StorePaymentSetting
+    from apps.orders.models import StoreStaff
+
+    user = request.user
+    user_stores_count = Store.objects.filter(owner=user).count()
+    if user_stores_count >= 5:
+        return Response({
+            "error": "Bitta hisobda maksimal 5 ta do'kon yaratish mumkin"
+        }, status=400)
+
+    name = request.data.get("name", "").strip()
+    if not name:
+        return Response({"error": "Do'kon nomi kiritilishi shart"}, status=400)
+
+    custom_sub = request.data.get("subdomain", "").strip().lower()
+    b_type = request.data.get("business_type", Store.BusinessTypes.ONLINE_STORE)
+
+    if custom_sub:
+        sub = slugify(custom_sub)
+        if Store.objects.filter(subdomain=sub).exists():
+            return Response({"error": f"'{sub}' subdomeni band, iltimos boshqasini tanlang"}, status=400)
+    else:
+        base_sub = slugify(name) or "store"
+        sub = base_sub
+        c = 1
+        while Store.objects.filter(subdomain=sub).exists():
+            sub = f"{base_sub}-{c}"
+            c += 1
+
+    store = Store.objects.create(
+        owner=user,
+        name=name,
+        business_type=b_type,
+        subdomain=sub,
+        is_active=True
+    )
+    StorePaymentSetting.objects.get_or_create(store=store)
+    StoreStaff.objects.get_or_create(
+        user=user,
+        store=store,
+        defaults={
+            'name': user.get_full_name() or user.username,
+            'phone': getattr(user, 'phone', ''),
+            'role': 'ADMIN'
+        }
+    )
+    request.session["selected_store_id"] = store.id
+    request.session["merchant_current_store_id"] = store.id
+    request.session["current_store_subdomain"] = store.subdomain
+
+    all_stores = Store.objects.filter(owner=user)
+
+    return Response({
+        "message": "Do'kon muvaffaqiyatli yaratildi",
+        "store": StoreSerializer(store).data,
+        "stores": StoreSerializer(all_stores, many=True).data
+    }, status=201)
+

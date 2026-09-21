@@ -25,7 +25,7 @@ export const PlatformsPage: React.FC = () => {
             </div>
           </div>
           <div className="pt-2">
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
               {t("status_active")}
             </span>
           </div>
@@ -46,7 +46,7 @@ export const PlatformsPage: React.FC = () => {
 
         <Link to="/yespos" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 hover:border-brand transition-colors block">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center font-bold">
               <Database className="w-5 h-5" />
             </div>
             <div>
@@ -59,7 +59,7 @@ export const PlatformsPage: React.FC = () => {
 
         <Link to="/design" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 hover:border-brand transition-colors block">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-brand flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center font-bold">
               <Globe className="w-5 h-5" />
             </div>
             <div>
