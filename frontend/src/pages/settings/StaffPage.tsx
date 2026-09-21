@@ -980,7 +980,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     </td>
                     <td className="p-4 font-mono text-slate-500 dark:text-neutral-400">{s.phone}</td>
                     <td className="p-4">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300 border border-slate-200/80 dark:border-neutral-700">
                         {s.role_name || s.role}
                       </span>
                     </td>
@@ -998,7 +998,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           onChange={() => toggleStaffMutation.mutate(s.id)}
                           className="sr-only peer"
                         />
-                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#211b2e] dark:peer-checked:bg-[#c8ff6a] dark:peer-checked:after:bg-[#211b2e]"></div>
                       </label>
                     </td>
                     <td className="p-4 text-right">
@@ -1067,7 +1067,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                       <div className="flex items-center gap-2">
                         <div className="font-bold text-slate-900 dark:text-white">{r.name}</div>
                         {r.is_system && (
-                          <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                          <span className="px-2 py-0.5 text-[9px] font-semibold rounded-md bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400 border border-slate-200 dark:border-neutral-700">
                             Tizim roli
                           </span>
                         )}
@@ -1094,7 +1094,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           onChange={() => toggleRoleMutation.mutate(r.id)}
                           className="sr-only peer disabled:cursor-not-allowed"
                         />
-                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#211b2e] dark:peer-checked:bg-[#c8ff6a] dark:peer-checked:after:bg-[#211b2e]"></div>
                       </label>
                     </td>
                     <td className="p-4 text-right">
@@ -1184,11 +1184,11 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           </div>
                           <div>
                             <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                              <span className="group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:underline transition-colors text-sm">
+                              <span className="group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-sm">
                                 {c.name}
                               </span>
                               {hasOrder && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
                                   Yetkazmoqda
                                 </span>
                               )}
@@ -1201,7 +1201,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                                   ? `Oxirgi signal: ${Math.round(c.last_seen_seconds_ago / 60)} daq. oldin`
                                   : "GPS signali kutilmoqda"}
                               </span>
-                              <span className="text-blue-500 font-semibold group-hover:inline-block hidden">• Profilni ko'rish &rarr;</span>
+                              <span className="text-slate-500 dark:text-neutral-400 font-medium group-hover:inline-block hidden">• Profilni ko'rish &rarr;</span>
                             </p>
                           </div>
                         </div>
@@ -1213,7 +1213,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                             <span className="font-mono font-bold text-slate-900 dark:text-white text-[11px]">
                               #{c.active_order?.order_number}
                             </span>
-                            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold max-w-[140px] truncate">
+                            <span className="text-[10px] text-slate-500 dark:text-neutral-400 font-medium max-w-[140px] truncate">
                               {c.active_order?.delivery_address || c.active_order?.customer_name}
                             </span>
                           </div>
@@ -1234,7 +1234,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                             onChange={() => toggleCourierMutation.mutate(c.id)}
                             className="sr-only peer"
                           />
-                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#211b2e] dark:peer-checked:bg-[#c8ff6a] dark:peer-checked:after:bg-[#211b2e]"></div>
                         </label>
                       </td>
                       <td className="p-4 text-right">
@@ -1243,20 +1243,20 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           <button
                             type="button"
                             onClick={() => setProfileCourierId(c.id)}
-                            className="px-2.5 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-purple-200/60 dark:border-purple-800/60"
+                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200/80 dark:border-neutral-700"
                             title="Kuryer profili va statistikasi"
                           >
-                            <Activity className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                            <Activity className="w-3.5 h-3.5 text-slate-500 dark:text-neutral-400" />
                             <span>Statistika</span>
                           </button>
                           {/* Real-time Tracking Button */}
                           <button
                             type="button"
                             onClick={() => setMonitorCourier(c)}
-                            className="px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-blue-200/60 dark:border-blue-800/60"
+                            className="px-2.5 py-1.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243e] text-white dark:bg-[#c8ff6a] dark:text-[#211b2e] dark:hover:bg-[#bbf556] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                             title="Kuryer jonli harakati va xaritasi"
                           >
-                            <Radio className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
+                            <Radio className="w-3.5 h-3.5 text-[#c8ff6a] dark:text-[#211b2e] animate-pulse" />
                             <span>Jonli xarita</span>
                           </button>
                           <button
@@ -1761,7 +1761,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             {/* Modal Header */}
             <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-md">
+                <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center shadow-md">
                   <Navigation className="w-5 h-5 animate-pulse" />
                 </div>
                 <div>
@@ -1772,7 +1772,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                         monitorCourier.last_seen_seconds_ago !== null &&
                         monitorCourier.last_seen_seconds_ago !== undefined &&
                         monitorCourier.last_seen_seconds_ago < 180
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                          ? "bg-[#c8ff6a]/20 text-[#c8ff6a] border border-[#c8ff6a]/40"
                           : "bg-slate-700 text-slate-300"
                       }`}
                     >
@@ -1813,13 +1813,13 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
             {/* Active Order / Current Status Banner */}
             {monitorCourier.active_order ? (
-              <div className="p-4 bg-blue-50/80 dark:bg-blue-950/40 border-b border-blue-100 dark:border-blue-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="p-4 bg-slate-50 dark:bg-neutral-800/40 border-b border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-black text-slate-900 dark:text-white font-mono text-sm">
                       #{monitorCourier.active_order.order_number}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                    <span className="px-2 py-0.5 rounded-md font-semibold text-[10px] bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700">
                       {monitorCourier.active_order.status_display}
                     </span>
                     {routeInfo && (
@@ -2065,7 +2065,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
                       <div className="flex items-center justify-between text-slate-400 mb-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider">Jami buyurtmalar</span>
-                        <Package className="w-4 h-4 text-blue-500" />
+                        <Package className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
                       <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
                         {courierAnalyticsData.stats.total_orders}
@@ -2073,61 +2073,61 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                       <p className="text-[10px] text-slate-400 mt-0.5">biriktirilgan</p>
                     </div>
 
-                    <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/40">
-                      <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400 mb-1.5">
+                    <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+                      <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider">Yetkazilgan</span>
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <CheckCircle2 className="w-4 h-4 text-slate-600 dark:text-neutral-300" />
                       </div>
-                      <p className="text-xl font-black text-emerald-700 dark:text-emerald-400 font-mono">
+                      <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
                         {courierAnalyticsData.stats.completed_orders}
                       </p>
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-bold mt-0.5">
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 font-medium mt-0.5">
                         {courierAnalyticsData.stats.success_rate}% muvaffaqiyat
                       </p>
                     </div>
 
-                    <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/40 rounded-2xl border border-blue-200/80 dark:border-blue-800/40">
-                      <div className="flex items-center justify-between text-blue-700 dark:text-blue-400 mb-1.5">
+                    <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+                      <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider">Bugun</span>
-                        <Clock className="w-4 h-4 text-blue-600" />
+                        <Clock className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
-                      <p className="text-xl font-black text-blue-700 dark:text-blue-400 font-mono">
+                      <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
                         {courierAnalyticsData.stats.today_orders}
                       </p>
-                      <p className="text-[10px] text-blue-600 dark:text-blue-500 mt-0.5">muvaffaqiyatli</p>
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">muvaffaqiyatli</p>
                     </div>
 
-                    <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/40 rounded-2xl border border-amber-200/80 dark:border-amber-800/40">
-                      <div className="flex items-center justify-between text-amber-700 dark:text-amber-400 mb-1.5">
+                    <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+                      <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider">O'rtacha vaqt</span>
-                        <Activity className="w-4 h-4 text-amber-600" />
+                        <Activity className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
-                      <p className="text-xl font-black text-amber-700 dark:text-amber-400 font-mono">
+                      <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
                         ~{courierAnalyticsData.stats.avg_delivery_minutes} m
                       </p>
-                      <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-0.5">har buyurtmaga</p>
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">har buyurtmaga</p>
                     </div>
 
-                    <div className="p-3.5 bg-purple-50/70 dark:bg-purple-950/40 rounded-2xl border border-purple-200/80 dark:border-purple-800/40">
-                      <div className="flex items-center justify-between text-purple-700 dark:text-purple-400 mb-1.5">
+                    <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+                      <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider">Bosib o'tildi</span>
-                        <Route className="w-4 h-4 text-purple-600" />
+                        <Route className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
-                      <p className="text-xl font-black text-purple-700 dark:text-purple-400 font-mono">
+                      <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
                         ~{courierAnalyticsData.stats.total_distance_km} km
                       </p>
-                      <p className="text-[10px] text-purple-600 dark:text-purple-500 mt-0.5">umumiy masofa</p>
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">umumiy masofa</p>
                     </div>
 
-                    <div className="p-3.5 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200/80 dark:border-indigo-800/40">
-                      <div className="flex items-center justify-between text-indigo-700 dark:text-indigo-400 mb-1.5">
+                    <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+                      <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider">Tushum</span>
-                        <DollarSign className="w-4 h-4 text-indigo-600" />
+                        <DollarSign className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
-                      <p className="text-base sm:text-lg font-black text-indigo-700 dark:text-indigo-400 font-mono truncate">
+                      <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono truncate">
                         {courierAnalyticsData.stats.total_revenue.toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-indigo-600 dark:text-indigo-500 mt-0.5">UZS topshirildi</p>
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">UZS topshirildi</p>
                     </div>
                   </div>
 
@@ -2137,18 +2137,18 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                       Hozirgi yetkazish holati
                     </h4>
                     {courierAnalyticsData.active_order ? (
-                      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-blue-50/40 dark:from-blue-950/30 dark:via-neutral-850 dark:to-blue-950/20 border-2 border-blue-400 dark:border-blue-600 shadow-sm relative overflow-hidden">
+                      <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-neutral-800/40 border border-slate-200 dark:border-neutral-700 shadow-xs relative overflow-hidden">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div className="space-y-1.5 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="relative flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#211b2e] dark:bg-[#c8ff6a]"></span>
                               </span>
                               <span className="font-mono font-black text-slate-900 dark:text-white text-base">
                                 #{courierAnalyticsData.active_order.order_number}
                               </span>
-                              <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                              <span className="px-2 py-0.5 rounded-md font-semibold text-[10px] bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700">
                                 {courierAnalyticsData.active_order.status_display}
                               </span>
                             </div>
@@ -2161,7 +2161,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                               {courierAnalyticsData.active_order.customer_phone && (
                                 <a
                                   href={`tel:${courierAnalyticsData.active_order.customer_phone}`}
-                                  className="text-blue-600 dark:text-blue-400 hover:underline font-mono ml-1"
+                                  className="text-slate-600 dark:text-neutral-300 hover:underline font-mono ml-1 font-semibold"
                                 >
                                   ({courierAnalyticsData.active_order.customer_phone})
                                 </a>
@@ -2172,7 +2172,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           <div className="flex flex-col sm:items-end justify-between gap-3 shrink-0">
                             <div>
                               <span className="text-[10px] font-bold text-slate-400 block uppercase">Buyurtma summasi</span>
-                              <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-base sm:text-lg">
+                              <span className="font-mono font-black text-slate-900 dark:text-white text-base sm:text-lg">
                                 {courierAnalyticsData.active_order.total_amount.toLocaleString()} UZS
                               </span>
                             </div>
@@ -2185,9 +2185,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                                   setMonitorCourier(found);
                                 }
                               }}
-                              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer transition-all"
+                              className="px-4 py-2 rounded-xl bg-[#211b2e] hover:bg-[#2c243e] text-white dark:bg-[#c8ff6a] dark:text-[#211b2e] font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all"
                             >
-                              <Radio className="w-3.5 h-3.5 animate-pulse" />
+                              <Radio className="w-3.5 h-3.5 text-[#c8ff6a] dark:text-[#211b2e] animate-pulse" />
                               <span>Xaritada jonli kuzatish</span>
                             </button>
                           </div>
@@ -2284,9 +2284,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                                   <span
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                       o.status === "COMPLETED"
-                                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                                        ? "bg-slate-900 text-white dark:bg-[#c8ff6a] dark:text-[#211b2e]"
                                         : o.status === "IN_DELIVERY"
-                                        ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                                        ? "bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700"
                                         : o.status === "CANCELLED"
                                         ? "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
                                         : "bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300"
@@ -2329,7 +2329,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     href={`tel:${courierAnalyticsData.courier.phone}`}
                     className="px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-white font-bold text-xs hover:bg-slate-50 flex items-center gap-1.5 transition-colors"
                   >
-                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                    <Phone className="w-3.5 h-3.5 text-slate-600 dark:text-neutral-300" />
                     <span>Qo'ng'iroq</span>
                   </a>
                 )}
@@ -2343,9 +2343,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                         setMonitorCourier(found);
                       }
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold text-xs hover:bg-blue-100 flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl bg-[#211b2e] hover:bg-[#2c243e] text-white dark:bg-[#c8ff6a] dark:text-[#211b2e] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                   >
-                    <Radio className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
+                    <Radio className="w-3.5 h-3.5 text-[#c8ff6a] dark:text-[#211b2e] animate-pulse" />
                     <span>Jonli xarita</span>
                   </button>
                 )}
