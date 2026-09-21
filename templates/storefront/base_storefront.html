@@ -6,11 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}{{ store.name }} — StoreBox{% endblock %}</title>
 
-    <!-- Google Fonts Inter & JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <!-- High-Speed Local Assets for Instant Load -->
     <script src="{% static 'vendor/tailwindcss.js' %}"></script>
     <script>
@@ -19,7 +14,7 @@
                 extend: {
                     fontFamily: {
                         sans: ['Inter', '"Segoe UI"', 'Arial', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'monospace'],
+                        mono: ['Inter', '"Segoe UI"', 'Arial', 'sans-serif'],
                     },
                     colors: {
                         brand: '{{ store.primary_color|default:"#10B981" }}',

@@ -256,11 +256,11 @@ export const DashboardPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {t("live_monitoring") || "Jonli monitoring tizimi"}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
             {store?.name || t("dashboard") || "Boshqaruv paneli"}
           </h1>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
@@ -351,7 +351,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="mt-2">
-              <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
+              <div className="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
                 {formatMoney(metrics?.revenue || 0)}
               </div>
               <div className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
@@ -383,7 +383,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="mt-2">
-              <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
+              <div className="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
                 {metrics?.orders_count || 0} <span className="text-base font-normal text-neutral-400">{t("pcs_unit") || "ta"}</span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
@@ -424,7 +424,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="mt-2">
-              <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
+              <div className="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
                 {metrics?.total_customers || 0}
               </div>
               <div className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
@@ -457,7 +457,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="mt-2">
-              <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white font-mono tracking-tight">
+              <div className="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
                 {formatMoney(metrics?.avg_order || 0)}
               </div>
               <div className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1">
@@ -487,7 +487,7 @@ export const DashboardPage: React.FC = () => {
               <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
                 {chartType === "heatmap" ? "Faollik taqvimi" : "Savdolar grafigi"}
               </div>
-              <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
+              <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white tracking-tight mt-0.5">
                 {chartType === "heatmap" ? "Yillik buyurtmalar xaritasi" : (t("revenue_dynamics") || "Tushum dinamikasi")}
               </h2>
             </div>
@@ -575,7 +575,7 @@ export const DashboardPage: React.FC = () => {
             <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
               {t("traffic_source") || "Savdo kanallari"}
             </div>
-            <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5 mb-4">
+            <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white tracking-tight mt-0.5 mb-4">
               {t("order_sources") || "Buyurtmalar manbai"}
             </h2>
 
@@ -683,7 +683,7 @@ export const DashboardPage: React.FC = () => {
                 <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
                   {t("sales_leaders") || "Sotuvlar yetakchilari"}
                 </div>
-                <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
+                <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white tracking-tight mt-0.5">
                   {t("top_products") || "Top mahsulotlar"}
                 </h2>
               </div>
@@ -703,7 +703,7 @@ export const DashboardPage: React.FC = () => {
                   className="flex items-center justify-between p-3 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/5 hover:bg-white/90 dark:hover:bg-white/10 transition-colors shadow-2xs"
                 >
                   <div className="flex items-center gap-3 truncate">
-                    <span className="w-7 h-7 rounded-xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/90 dark:border-white/10 text-neutral-800 dark:text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                    <span className="w-7 h-7 rounded-xl bg-gradient-to-br from-white to-[#edf3f9] dark:from-white/10 dark:to-white/5 border border-white/90 dark:border-white/10 text-neutral-800 dark:text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                       {idx + 1}
                     </span>
                     <div className="truncate">
@@ -716,7 +716,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="text-right shrink-0 font-mono text-xs font-bold text-neutral-900 dark:text-white">
+                  <div className="text-right shrink-0 text-xs font-bold text-neutral-900 dark:text-white">
                     {formatMoney(p.sold_sum || 0)}
                   </div>
                 </div>
@@ -749,7 +749,7 @@ export const DashboardPage: React.FC = () => {
                 <div className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
                   {t("logistics_addresses") || "Logistika & Manzillar"}
                 </div>
-                <h2 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight mt-0.5">
+                <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white tracking-tight mt-0.5">
                   {t("orders_map") || "Jonli buyurtmalar xaritasi"}
                 </h2>
               </div>
@@ -777,7 +777,7 @@ export const DashboardPage: React.FC = () => {
                     <Popup>
                       <div className="text-xs space-y-1">
                         <div className="font-bold text-slate-900">#{o.num} — {o.client}</div>
-                        <div className="font-mono text-neutral-900 dark:text-white font-bold">{formatMoney(o.total)}</div>
+                        <div className="text-neutral-900 dark:text-white font-bold">{formatMoney(o.total)}</div>
                         <div className="text-[10px] text-slate-500">{o.status}</div>
                       </div>
                     </Popup>

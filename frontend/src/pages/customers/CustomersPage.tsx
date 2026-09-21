@@ -41,7 +41,7 @@ export const CustomersPage: React.FC = () => {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
             {t("customers_list_title") || "Mijozlar ro'yxati"}
           </h1>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
@@ -85,19 +85,19 @@ export const CustomersPage: React.FC = () => {
               {customers.map((c) => (
                 <tr key={c.id} className="hover:bg-neutral-50/60 dark:hover:bg-white/5 transition-colors">
                   <td className="py-3.5 px-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white font-black text-xs flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white font-bold text-xs flex items-center justify-center shrink-0">
                       {c.name?.charAt(0)?.toUpperCase() || "M"}
                     </div>
                     <div className="font-bold text-neutral-900 dark:text-white">{c.name}</div>
                   </td>
-                  <td className="py-3.5 px-4 font-mono font-bold text-neutral-600 dark:text-neutral-300">{c.phone}</td>
-                  <td className="py-3.5 px-4 font-mono font-bold text-neutral-900 dark:text-white">{c.orders_count}</td>
+                  <td className="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-300">{c.phone}</td>
+                  <td className="py-3.5 px-4 font-bold text-neutral-900 dark:text-white">{c.orders_count}</td>
                   <td className="py-3.5 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-bold border border-slate-200 dark:border-white/10 font-mono">
+                    <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-bold border border-slate-200 dark:border-white/10">
                       {c.bonus_balance} {t("points_unit") || "ball"}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4 text-neutral-400 font-mono text-[11px]">
+                  <td className="py-3.5 px-4 text-neutral-400 text-[11px]">
                     {new Date(c.created_at).toLocaleDateString()}
                   </td>
                   <td className="py-3.5 px-4 text-right">
@@ -128,7 +128,7 @@ export const CustomersPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white dark:bg-[#18181b] border border-black/[0.06] dark:border-white/10 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-black text-base text-neutral-900 dark:text-white">
+              <h3 className="font-bold text-base text-neutral-900 dark:text-white">
                 {t("bonus_modal_title") || "Bonus ball berish"}
               </h3>
               <button
@@ -146,7 +146,7 @@ export const CustomersPage: React.FC = () => {
               type="number"
               value={bonusPoints}
               onChange={(e) => setBonusPoints(Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/[0.08] dark:border-white/10 text-sm font-black text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400"
+              className="w-full px-4 py-2.5 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/[0.08] dark:border-white/10 text-sm font-bold text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400"
             />
             <div className="flex gap-2 pt-2">
               <button

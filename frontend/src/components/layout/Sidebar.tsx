@@ -199,7 +199,7 @@ export const Sidebar: React.FC = () => {
                 <div className="text-[17px] font-[850] tracking-[-0.6px] text-neutral-900 dark:text-white leading-none">
                   StoreBox
                 </div>
-                <div className="text-[9px] font-mono font-bold text-neutral-400 mt-1 tracking-wider">
+                <div className="text-[9px] font-bold text-neutral-400 mt-1 tracking-wider">
                   STUDIO 2.0
                 </div>
               </div>
@@ -223,7 +223,7 @@ export const Sidebar: React.FC = () => {
             href={storefrontUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-2.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/[0.04] dark:border-white/10 flex items-center justify-between text-[11px] font-mono font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors group"
+            className="px-2.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/[0.04] dark:border-white/10 flex items-center justify-between text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors group"
             title={t("view_storefront_tooltip") || "Do'kon vitrinasini ochish"}
           >
             <div className="flex items-center gap-1.5 truncate">

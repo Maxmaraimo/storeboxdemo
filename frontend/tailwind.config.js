@@ -38,7 +38,7 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", '"Segoe UI"', "Arial", "sans-serif"],
-        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+        mono: ["Inter", '"Segoe UI"', "Arial", "sans-serif"],
       },
       boxShadow: {
         "2xs": "0 1px 2px 0 rgba(0, 0, 0, 0.03)",

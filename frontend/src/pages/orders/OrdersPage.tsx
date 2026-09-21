@@ -88,7 +88,7 @@ export const OrdersPage: React.FC = () => {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("orders_list_title") || "Buyurtmalar ro`yxati"}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{t("orders_list_title") || "Buyurtmalar ro`yxati"}</h1>
           <p className="text-xs text-slate-500 mt-0.5">{t("orders_list_subtitle") || "Barcha kelib tushgan buyurtmalar"}</p>
         </div>
       </div>
@@ -101,7 +101,7 @@ export const OrdersPage: React.FC = () => {
             onClick={() => setStatus(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
               status === tab.id
-                ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 shadow-xs font-black"
+                ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 shadow-xs font-bold"
                 : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             }`}
           >
@@ -159,7 +159,7 @@ export const OrdersPage: React.FC = () => {
                 >
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-black text-slate-900 group-hover:text-[#211b2e] transition-colors">
+                      <span className="font-bold text-slate-900 group-hover:text-[#211b2e] transition-colors">
                         #{order.order_number}
                       </span>
                       {order.source === "TMA" ? (
@@ -172,16 +172,16 @@ export const OrdersPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    <div className="text-[10px] text-slate-400 mt-0.5">
                       {new Date(order.created_at).toLocaleString()}
                     </div>
                   </td>
                   <td className="py-3.5 px-4">
                     <div className="font-bold text-slate-900">{order.customer_name}</div>
-                    <div className="text-[11px] font-mono text-slate-500">{order.customer_phone}</div>
+                    <div className="text-[11px] text-slate-500">{order.customer_phone}</div>
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="font-mono font-black text-slate-900">
+                    <div className="font-bold text-slate-900">
                       {Number(order.total_amount).toLocaleString()} UZS
                     </div>
                     <div className="text-[10px] text-slate-400 font-bold">{order.payment_method_display}</div>
@@ -190,7 +190,7 @@ export const OrdersPage: React.FC = () => {
                     {order.delivery_address || (t("address_not_specified") || "Manzil ko`rsatilmagan")}
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-200">
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                       {order.status_display}
                     </span>
                   </td>
@@ -238,11 +238,11 @@ export const OrdersPage: React.FC = () => {
             {/* Modal Header */}
             <div className="p-4 sm:p-6 border-b border-black/[0.06] dark:border-white/10 flex items-center justify-between gap-4 bg-slate-50/70 dark:bg-zinc-900/50">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <span className="font-mono font-black text-xl sm:text-2xl text-neutral-900 dark:text-white">
+                <span className="font-bold text-xl sm:text-2xl text-neutral-900 dark:text-white">
                   #{selectedOrder.order_number}
                 </span>
                 <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-black border ${
+                  className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
                     selectedOrder.status === "COMPLETED"
                       ? "bg-[#211b2e] text-[#c8ff6a] border-[#211b2e]/30 dark:bg-[#c8ff6a] dark:text-[#211b2e]"
                       : selectedOrder.status === "CANCELLED"
@@ -265,7 +265,7 @@ export const OrdersPage: React.FC = () => {
                     <Globe className="w-3 h-3" /> {t("website_channel") || "Veb-sayt"}
                   </span>
                 )}
-                <span className="text-xs text-slate-400 font-mono hidden sm:inline">
+                <span className="text-xs text-slate-400 hidden sm:inline">
                   {new Date(selectedOrder.created_at).toLocaleString()}
                 </span>
               </div>
@@ -315,7 +315,7 @@ export const OrdersPage: React.FC = () => {
                   {/* Products List */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black tracking-wider uppercase text-slate-400">
+                      <h4 className="text-xs font-bold tracking-wider uppercase text-slate-400">
                         {t("order_contents") || "Buyurtma tarkibi"} ({selectedOrder.items?.length || 0})
                       </h4>
                       <span className="text-xs font-bold text-slate-500">
@@ -340,12 +340,12 @@ export const OrdersPage: React.FC = () => {
                               <div className="font-bold text-slate-900 dark:text-white text-sm">
                                 {item.product_name}
                               </div>
-                              <div className="text-xs text-slate-400 font-mono mt-0.5">
+                              <div className="text-xs text-slate-400 mt-0.5">
                                 {item.quantity} × {Number(item.unit_price).toLocaleString()} UZS
                               </div>
                             </div>
                           </div>
-                          <div className="font-mono font-black text-slate-900 dark:text-white text-sm whitespace-nowrap">
+                          <div className="font-bold text-slate-900 dark:text-white text-sm whitespace-nowrap">
                             {Number(item.total_price).toLocaleString()} UZS
                           </div>
                         </div>
@@ -359,8 +359,8 @@ export const OrdersPage: React.FC = () => {
                   </div>
 
                   {/* Financial Breakdown Card */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 space-y-2.5 font-mono text-xs">
-                    <div className="text-[11px] font-black uppercase text-slate-400 tracking-wider font-sans mb-3">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 space-y-2.5 text-xs">
+                    <div className="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-3">
                       {t("financial_report") || "Moliyaviy hisobot"}
                     </div>
                     <div className="flex justify-between text-slate-600 dark:text-slate-400">
@@ -377,9 +377,9 @@ export const OrdersPage: React.FC = () => {
                         </span>
                       </div>
                     )}
-                    <div className="flex justify-between items-center text-base sm:text-lg font-black pt-3 border-t border-slate-200 dark:border-white/10 text-slate-900 dark:text-white font-sans">
+                    <div className="flex justify-between items-center text-base sm:text-lg font-bold pt-3 border-t border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
                       <span>{t("total_payment") || "Jami to'lov:"}</span>
-                      <span className="text-slate-900 dark:text-white font-mono">
+                      <span className="text-slate-900 dark:text-white">
                         {Number(selectedOrder.total_amount).toLocaleString()} UZS
                       </span>
                     </div>
@@ -394,7 +394,7 @@ export const OrdersPage: React.FC = () => {
                 <div className={`${isWideModal ? "lg:col-span-5" : ""} space-y-5`}>
                   {/* Status Progression Buttons */}
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-white/10 space-y-2.5">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider block">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                       {t("change_status_title") || "Holatni o'zgartirish"}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -442,7 +442,7 @@ export const OrdersPage: React.FC = () => {
 
                   {/* Customer Information */}
                   <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 space-y-2">
-                    <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       {t("customer_details_title") || "Mijoz ma'lumotlari"}
                     </div>
                     <div className="font-bold text-slate-900 dark:text-white text-base">
@@ -451,7 +451,7 @@ export const OrdersPage: React.FC = () => {
                     <div className="flex items-center gap-2 pt-1">
                       <a
                         href={`tel:${selectedOrder.customer_phone}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-xs font-bold transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
                       >
                         <Phone className="w-3.5 h-3.5" />
                         {selectedOrder.customer_phone}
@@ -472,11 +472,11 @@ export const OrdersPage: React.FC = () => {
                   {/* Delivery Location & Map */}
                   <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 space-y-3">
                     <div className="flex items-center justify-between">
-                      <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 text-rose-500" /> {t("delivery_address_title") || "Yetkazib berish manzili"}
                       </div>
                       {selectedOrder.delivery_lat && selectedOrder.delivery_lng && (
-                        <div className="text-[10px] font-mono text-slate-400">
+                        <div className="text-[10px] text-slate-400">
                           {Number(selectedOrder.delivery_lat).toFixed(4)}, {Number(selectedOrder.delivery_lng).toFixed(4)}
                         </div>
                       )}

@@ -130,7 +130,7 @@ export const LoginPage: React.FC = () => {
               <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
             </svg>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             Store<span className="text-[#10b981]">Box</span> tizimiga kirish
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -145,7 +145,7 @@ export const LoginPage: React.FC = () => {
             onClick={() => { setLoginMode("phone"); setError(""); }}
             className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               loginMode === "phone"
-                ? "bg-[#211b2e] text-white shadow-md shadow-[#211b2e]/25 font-black"
+                ? "bg-[#211b2e] text-white shadow-md shadow-[#211b2e]/25 font-bold"
                 : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
@@ -157,7 +157,7 @@ export const LoginPage: React.FC = () => {
             onClick={() => { setLoginMode("login"); setError(""); }}
             className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               loginMode === "login"
-                ? "bg-[#211b2e] text-white shadow-md shadow-[#211b2e]/25 font-black"
+                ? "bg-[#211b2e] text-white shadow-md shadow-[#211b2e]/25 font-bold"
                 : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
@@ -189,7 +189,7 @@ export const LoginPage: React.FC = () => {
                     className="h-full px-3 py-2.5 flex items-center gap-1.5 bg-slate-100/80 dark:bg-white/5 hover:bg-slate-200/70 rounded-l-xl border-r border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-white transition-colors"
                   >
                     <span className="text-base leading-none">{selectedCountry.flag}</span>
-                    <span className="font-mono text-xs">{selectedCountry.dialCode}</span>
+                    <span className="text-xs font-semibold">{selectedCountry.dialCode}</span>
                     <ChevronDown className="w-3 h-3 text-slate-400" />
                   </button>
 
@@ -213,7 +213,7 @@ export const LoginPage: React.FC = () => {
                         >
                           <span className="text-base">{c.flag}</span>
                           <span className="flex-1 truncate">{c.name}</span>
-                          <span className="font-mono text-[11px] text-slate-400">{c.dialCode}</span>
+                          <span className="text-[11px] text-slate-400 font-medium">{c.dialCode}</span>
                         </button>
                       ))}
                     </div>
@@ -227,7 +227,7 @@ export const LoginPage: React.FC = () => {
                   value={formatPhone(phoneDigits, selectedCountry)}
                   onChange={handlePhoneChange}
                   placeholder={selectedCountry.placeholder}
-                  className="flex-1 px-3.5 py-2.5 bg-transparent text-slate-900 dark:text-white text-xs font-mono font-bold focus:outline-none placeholder:text-slate-400"
+                  className="flex-1 px-3.5 py-2.5 bg-transparent text-slate-900 dark:text-white text-xs font-bold focus:outline-none placeholder:text-slate-400"
                 />
 
                 {isPhoneComplete && (
@@ -274,7 +274,7 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3.5 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-white font-black text-xs shadow-lg shadow-[#211b2e]/25 flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-50 cursor-pointer border border-white/10"
+            className="w-full py-3.5 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-white font-bold text-xs shadow-lg shadow-[#211b2e]/25 flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-50 cursor-pointer border border-white/10"
           >
             <span>{submitting ? "Tekshirilmoqda..." : "Kirish"}</span>
             <ArrowRight className="w-4 h-4 text-[#10b981]" />
