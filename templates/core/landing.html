@@ -6658,8 +6658,8 @@ h1 span {
         }
         try { localStorage.setItem("storebox-language", language); } catch (_) {}
         updatePricingPeriods();
-        if (typeof renderPlatformModule === "function" && typeof platformModuleKeys !== "undefined") {
-            renderPlatformModule(platformModuleKeys[currentPlatformModIdx]);
+        if (typeof window.renderPlatformModule === "function" && window.platformModuleKeys) {
+            window.renderPlatformModule(window.platformModuleKeys[window.currentPlatformModIdx || 0]);
         }
     }
 
@@ -7169,6 +7169,14 @@ h1 span {
                 activateSection(el);
             }
         });
+        if (window.location.hash) {
+            try {
+                const targetEl = document.querySelector(window.location.hash);
+                if (targetEl && targetEl.classList.contains("wow-reveal")) {
+                    activateSection(targetEl);
+                }
+            } catch (_) {}
+        }
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', checkInitialVisibility);
@@ -7176,6 +7184,16 @@ h1 span {
         checkInitialVisibility();
     }
     setTimeout(checkInitialVisibility, 200);
+    window.addEventListener("hashchange", () => {
+        if (window.location.hash) {
+            try {
+                const targetEl = document.querySelector(window.location.hash);
+                if (targetEl && targetEl.classList.contains("wow-reveal")) {
+                    activateSection(targetEl);
+                }
+            } catch (_) {}
+        }
+    });
 
     // =========================================================
     // MOBILE NAVIGATION DRAWER CONTROLLER
@@ -7415,11 +7433,11 @@ h1 span {
         }
     };
 
-    const platformModuleKeys = ["dashboard", "yespos", "courier", "staff", "design", "qr", "products", "telegram"];
-    let currentPlatformModIdx = 0;
+    window.platformModuleKeys = ["dashboard", "yespos", "courier", "staff", "design", "qr", "products", "telegram"];
+    window.currentPlatformModIdx = 0;
     let isPlatformHovered = false;
 
-    function renderPlatformModule(modKey) {
+    window.renderPlatformModule = function(modKey) {
         const data = platformModulesData[modKey];
         if (!data) return;
 
@@ -7478,14 +7496,14 @@ h1 span {
                 card.classList.remove("is-hidden");
             }, 200);
         }
-    }
+    };
 
     // Tab button click events
     document.querySelectorAll(".platform-tab-btn").forEach((btn, idx) => {
         btn.addEventListener("click", () => {
             const modKey = btn.getAttribute("data-module");
-            currentPlatformModIdx = idx;
-            renderPlatformModule(modKey);
+            window.currentPlatformModIdx = idx;
+            window.renderPlatformModule(modKey);
         });
     });
 
@@ -7504,12 +7522,12 @@ h1 span {
 
     setInterval(() => {
         if (isPlatformHovered || document.hidden) return;
-        currentPlatformModIdx = (currentPlatformModIdx + 1) % platformModuleKeys.length;
-        renderPlatformModule(platformModuleKeys[currentPlatformModIdx]);
+        window.currentPlatformModIdx = ((window.currentPlatformModIdx || 0) + 1) % window.platformModuleKeys.length;
+        window.renderPlatformModule(window.platformModuleKeys[window.currentPlatformModIdx]);
     }, 5500);
 
     // Initial render
-    renderPlatformModule("dashboard");
+    window.renderPlatformModule("dashboard");
 </script>
 </body>
 </html>
