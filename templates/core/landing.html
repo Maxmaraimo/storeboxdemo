@@ -3087,10 +3087,11 @@ h1 span {
 
 .platform-stage-card {
     position: relative;
-    max-width: 1140px;
+    max-width: 1280px;
+    width: 100%;
     margin-inline: auto;
     border-radius: 24px;
-    box-shadow: 0 30px 70px -15px rgba(15, 23, 42, 0.16), 0 0 0 1.5px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 35px 85px -15px rgba(15, 23, 42, 0.16), 0 0 0 1.5px rgba(15, 23, 42, 0.08);
     background: #181422;
     overflow: hidden;
     z-index: 2;
@@ -3185,39 +3186,40 @@ h1 span {
     position: relative;
     width: 100%;
     min-height: 480px;
-    background: #0d0a14;
+    background: #f8fafc;
     overflow: hidden;
+}
+
+.theme-dark .platform-screen-viewport {
+    background: #0d0a14;
 }
 
 .platform-image-wrapper {
     width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    height: auto;
+    display: block;
 }
 
 #platformMainImg {
     width: 100%;
     height: auto;
     display: block;
-    object-fit: cover;
-    object-position: top center;
-    transition: opacity 0.28s ease, transform 0.35s ease;
+    object-fit: contain;
+    transition: opacity 0.24s ease, transform 0.28s ease;
 }
 
 .platform-floating-infocard {
     position: absolute;
-    bottom: 26px;
-    right: 26px;
-    width: 370px;
-    max-width: calc(100% - 52px);
+    bottom: 22px;
+    right: 22px;
+    width: 360px;
+    max-width: calc(100% - 44px);
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.35) 100%);
     -webkit-backdrop-filter: blur(24px) saturate(200%);
     backdrop-filter: blur(24px) saturate(200%);
     border: 1.5px solid rgba(255, 255, 255, 0.88);
-    border-radius: 22px;
-    padding: 22px 24px;
+    border-radius: 20px;
+    padding: 18px 20px;
     box-shadow: 
         0 24px 50px rgba(15, 23, 42, 0.12),
         0 6px 18px rgba(15, 23, 42, 0.05),
@@ -3246,12 +3248,12 @@ h1 span {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
-    gap: 12px;
+    margin-bottom: 8px;
+    gap: 10px;
 }
 
 .platform-floating-infocard .pfc-badge {
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -3271,9 +3273,9 @@ h1 span {
 }
 
 .platform-floating-infocard .pfc-metric-pill {
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 800;
-    padding: 3px 10px;
+    padding: 3px 9px;
     border-radius: 8px;
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid rgba(16, 185, 129, 0.28);
@@ -3282,19 +3284,19 @@ h1 span {
 }
 
 .platform-floating-infocard .pfc-title {
-    font-size: 18.5px;
+    font-size: 17.5px;
     font-weight: 850;
     color: #0f172a;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
     line-height: 1.25;
     letter-spacing: -0.015em;
 }
 
 .platform-floating-infocard .pfc-description {
-    font-size: 13px;
+    font-size: 12.5px;
     color: #334155;
-    line-height: 1.5;
-    margin-bottom: 14px;
+    line-height: 1.45;
+    margin-bottom: 10px;
     font-weight: 500;
 }
 
@@ -3304,14 +3306,14 @@ h1 span {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 8.5px;
+    gap: 6.5px;
 }
 
 .platform-floating-infocard .pfc-features-list li {
     display: flex;
     align-items: center;
-    gap: 9px;
-    font-size: 12.5px;
+    gap: 8px;
+    font-size: 12px;
     font-weight: 650;
     color: #0f172a;
     line-height: 1.35;
@@ -3403,28 +3405,9 @@ h1 span {
     color: #c8ff6a;
 }
 
-/* Sticky scroll container on desktop */
 @media (min-width: 992px) {
-    .platform-sticky-container {
-        position: relative;
-        min-height: 280vh;
-    }
-    .platform-sticky-shell {
-        position: sticky;
-        top: 86px;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-    }
-    .platform-screen-viewport {
-        height: clamp(480px, 58vh, 640px);
-    }
-    #platformMainImg {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: top center;
+    .platform-showcase-section {
+        padding-block: 70px 60px;
     }
 }
 
@@ -4853,9 +4836,7 @@ h1 span {
              STOREBOX 2.0 AUTHENTIC PLATFORM SHOWCASE
              ========================================================= -->
         <section class="platform-showcase-section section-shell wow-reveal" id="dashboard">
-            <div class="platform-sticky-container" id="platformStickyContainer">
-                <div class="platform-sticky-shell" id="platformStickyShell">
-                    <div class="section-heading text-center" style="max-width: 860px; margin-inline: auto; text-align: center;">
+            <div class="section-heading text-center" style="max-width: 860px; margin-inline: auto; text-align: center;">
                         <span class="section-kicker" data-i18n="platformKicker">StoreBox 2.0 Boshqaruv Markazi</span>
                         <h2 data-i18n="platformTitle">Bitta ekranda butun biznes nazorati</h2>
                         <p data-i18n="platformLead">Kassa, buyurtmalar, kuryerlar, xodimlar va tovarlar katalogi — barchasi real vaqtda sinxronlashgan yagona boshqaruv tizimi.</p>
@@ -4976,8 +4957,6 @@ h1 span {
                                         </li>
                                     </ul>
                                 </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -7023,7 +7002,6 @@ h1 span {
     window.platformModuleKeys = ["dashboard", "yespos", "courier", "staff", "design", "qr", "products", "telegram"];
     window.currentPlatformModIdx = 0;
     let isPlatformHovered = false;
-    let isProgrammaticModSwitch = false;
 
     // Preload all 8 platform screenshots immediately
     window.platformModuleKeys.forEach((key) => {
@@ -7102,21 +7080,9 @@ h1 span {
         }
     };
 
-    function getPlatformPinMetrics() {
-        const container = document.getElementById("platformStickyContainer");
-        const shell = document.getElementById("platformStickyShell");
-        if (!container || !shell) return null;
 
-        const containerRect = container.getBoundingClientRect();
-        const containerTop = window.scrollY + containerRect.top;
-        const pinStart = containerTop - 86;
-        const pinDistance = container.offsetHeight - shell.offsetHeight;
-        const pinEnd = pinStart + pinDistance;
 
-        return { container, shell, pinStart, pinEnd, pinDistance };
-    }
-
-    window.goToPlatformModule = function(idx, syncScroll = true) {
+    window.goToPlatformModule = function(idx) {
         if (idx < 0 || idx >= window.platformModuleKeys.length) return;
         window.currentPlatformModIdx = idx;
         const modKey = window.platformModuleKeys[idx];
@@ -7127,71 +7093,11 @@ h1 span {
         if (activeBtn) {
             activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         }
-
-        if (syncScroll && window.innerWidth >= 992) {
-            const metrics = getPlatformPinMetrics();
-            if (metrics && metrics.pinDistance > 0) {
-                const segment = metrics.pinDistance / window.platformModuleKeys.length;
-                const targetScrollY = metrics.pinStart + (idx * segment) + (segment * 0.5);
-                isProgrammaticModSwitch = true;
-                window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
-                setTimeout(() => { isProgrammaticModSwitch = false; }, 600);
-            }
-        }
     };
 
-    // Scroll-driven sticky progression on desktop
-    function handlePlatformScroll() {
-        if (window.innerWidth < 992 || isProgrammaticModSwitch) return;
-        const metrics = getPlatformPinMetrics();
-        if (!metrics || metrics.pinDistance <= 0) return;
-
-        const currentY = window.scrollY;
-        if (currentY < metrics.pinStart || currentY > metrics.pinEnd) return;
-
-        const progress = Math.min(Math.max((currentY - metrics.pinStart) / metrics.pinDistance, 0), 0.999);
-        const modCount = window.platformModuleKeys.length;
-        const targetIdx = Math.floor(progress * modCount);
-
-        if (targetIdx !== window.currentPlatformModIdx) {
-            window.currentPlatformModIdx = targetIdx;
-            const modKey = window.platformModuleKeys[targetIdx];
-            window.renderPlatformModule(modKey, false);
-
-            const activeBtn = document.querySelector(`.platform-tab-btn[data-module="${modKey}"]`);
-            if (activeBtn) {
-                activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-            }
-        }
-    }
-    window.addEventListener("scroll", handlePlatformScroll, { passive: true });
-
-    // Mousewheel listener over platform stage card
-    let wheelCooldown = false;
+    // Touch Swipe gestures for mobile
     const stageCardEl = document.getElementById("platformStageCard");
     if (stageCardEl) {
-        stageCardEl.addEventListener("wheel", (e) => {
-            if (Math.abs(e.deltaY) < 25) return;
-            if (wheelCooldown) return;
-
-            if (e.deltaY > 0) {
-                if (window.currentPlatformModIdx < window.platformModuleKeys.length - 1) {
-                    e.preventDefault();
-                    wheelCooldown = true;
-                    window.goToPlatformModule(window.currentPlatformModIdx + 1, true);
-                    setTimeout(() => { wheelCooldown = false; }, 350);
-                }
-            } else {
-                if (window.currentPlatformModIdx > 0) {
-                    e.preventDefault();
-                    wheelCooldown = true;
-                    window.goToPlatformModule(window.currentPlatformModIdx - 1, true);
-                    setTimeout(() => { wheelCooldown = false; }, 350);
-                }
-            }
-        }, { passive: false });
-
-        // Touch Swipe gestures for mobile
         let touchStartX = 0;
         let touchStartY = 0;
         stageCardEl.addEventListener("touchstart", (e) => {
@@ -7207,9 +7113,9 @@ h1 span {
                 const diffY = e.changedTouches[0].clientY - touchStartY;
                 if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
                     if (diffX < 0) {
-                        window.goToPlatformModule((window.currentPlatformModIdx + 1) % window.platformModuleKeys.length, false);
+                        window.goToPlatformModule((window.currentPlatformModIdx + 1) % window.platformModuleKeys.length);
                     } else {
-                        window.goToPlatformModule((window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length, false);
+                        window.goToPlatformModule((window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length);
                     }
                 }
             }
@@ -7226,21 +7132,21 @@ h1 span {
         prevBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             const prevIdx = (window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length;
-            window.goToPlatformModule(prevIdx, true);
+            window.goToPlatformModule(prevIdx);
         });
     }
     if (nextBtn) {
         nextBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             const nextIdx = (window.currentPlatformModIdx + 1) % window.platformModuleKeys.length;
-            window.goToPlatformModule(nextIdx, true);
+            window.goToPlatformModule(nextIdx);
         });
     }
 
     // Tab button click events
     document.querySelectorAll(".platform-tab-btn").forEach((btn, idx) => {
         btn.addEventListener("click", () => {
-            window.goToPlatformModule(idx, true);
+            window.goToPlatformModule(idx);
         });
     });
 
@@ -7250,12 +7156,12 @@ h1 span {
         tabsListEl.addEventListener("mouseleave", () => { isPlatformHovered = false; });
     }
 
-    // Auto-cycle platform tabs every 6s when not hovering or scrolling
+    // Auto-cycle platform tabs every 5.5s when not hovered
     setInterval(() => {
-        if (isPlatformHovered || document.hidden || isProgrammaticModSwitch) return;
+        if (isPlatformHovered || document.hidden) return;
         const nextIdx = ((window.currentPlatformModIdx || 0) + 1) % window.platformModuleKeys.length;
-        window.goToPlatformModule(nextIdx, false);
-    }, 6000);
+        window.goToPlatformModule(nextIdx);
+    }, 5500);
 
     // Initial render
     window.renderPlatformModule("dashboard");
