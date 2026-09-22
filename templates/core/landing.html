@@ -3185,7 +3185,7 @@ h1 span {
 .platform-screen-viewport {
     position: relative;
     width: 100%;
-    min-height: 320px;
+    aspect-ratio: 16 / 10;
     background: #f8fafc;
     overflow: hidden;
 }
@@ -3196,16 +3196,16 @@ h1 span {
 
 .platform-image-wrapper {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
 }
 
 #platformMainImg {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
-    object-fit: contain;
-    transition: opacity 0.24s ease, transform 0.28s ease;
+    object-fit: cover;
+    transition: opacity 0.22s ease, transform 0.25s ease;
 }
 
 .platform-floating-infocard {
@@ -3456,19 +3456,20 @@ h1 span {
         margin-inline: auto;
     }
     .platform-screen-viewport {
+        width: 100%;
+        aspect-ratio: 16 / 10;
         height: auto;
-        min-height: 480px;
     }
     .platform-image-wrapper {
         width: 100%;
-        height: auto;
+        height: 100%;
         display: block;
     }
     #platformMainImg {
         width: 100%;
-        height: auto;
+        height: 100%;
         display: block;
-        object-fit: contain;
+        object-fit: cover;
     }
 }
 
@@ -3486,17 +3487,20 @@ h1 span {
         padding-inline: 16px;
     }
     .platform-screen-viewport {
-        min-height: 380px;
+        width: 100%;
+        aspect-ratio: 16 / 10;
         height: auto;
     }
     .platform-image-wrapper {
         width: 100%;
-        height: auto;
+        height: 100%;
+        display: block;
     }
     #platformMainImg {
         width: 100%;
-        height: auto;
-        object-fit: contain;
+        height: 100%;
+        display: block;
+        object-fit: cover;
     }
 }
 
@@ -6919,8 +6923,8 @@ h1 span {
             img: "/static/images/landing/platform/dashboard.png",
             badgeUz: "Savdo statistikasi",
             badgeRu: "Статистика продаж",
-            metricUz: "3 319 400 UZS",
-            metricRu: "3 319 400 UZS",
+            metricUz: "21 990 400 UZS",
+            metricRu: "21 990 400 UZS",
             titleUz: "Boshqaruv paneli",
             titleRu: "Панель управления",
             descUz: "Kunlik savdo, buyurtmalar soni va o‘rtacha chek dinamikasini jonli kuzating.",
