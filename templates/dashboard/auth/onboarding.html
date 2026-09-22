@@ -13,11 +13,12 @@
                 extend: {
                     colors: {
                         brand: {
-                            DEFAULT: '#00d668',
-                            dark: '#00b859',
+                            DEFAULT: '#211b2e',
+                            dark: '#16121f',
+                            lime: '#c8ff6a',
                             forest: '#0f172a',
-                            light: '#ecfdf5',
-                            glow: '#10b981'
+                            light: '#f8fafc',
+                            glow: '#c8ff6a'
                         }
                     }
                 }
@@ -57,25 +58,23 @@
         }
     </style>
 </head>
-<body class="bg-[#f8fafc] min-h-full font-sans text-slate-900 antialiased relative overflow-x-hidden selection:bg-[#00d668] selection:text-neutral-900" style="background: radial-gradient(130% 90% at 50% 0%, #ffffff 0%, #edf2f8 35%, #e1e9f3 70%, #d4dfea 100%) fixed;" x-data="storeboxWizard()">
+<body class="bg-[#f8fafc] min-h-full font-sans text-slate-900 antialiased relative overflow-x-hidden selection:bg-[#c8ff6a] selection:text-[#211b2e]" style="background: radial-gradient(130% 90% at 50% 0%, #ffffff 0%, #edf2f8 35%, #e1e9f3 70%, #d4dfea 100%) fixed;" x-data="storeboxWizard()">
 
-    <!-- Ambient Lighting (subtle emerald) -->
-    <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-emerald-400/10 blur-[140px] pointer-events-none rounded-full"></div>
+    <!-- Ambient Lighting (subtle lime) -->
+    <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[#c8ff6a]/15 blur-[140px] pointer-events-none rounded-full"></div>
 
     <!-- TOP HEADER -->
     <header class="bg-white/80 backdrop-blur-xl border-b border-slate-200/80 sticky top-0 z-40 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <!-- Brand Logo -->
-            <a href="/" class="flex items-center gap-2.5 group">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#2c243d] to-[#151020] flex items-center justify-center border border-white/10 shadow-md group-hover:scale-105 transition-transform shrink-0">
-                    <svg viewBox="0 0 32 32" class="w-6 h-6 stroke-[#00d668] fill-none stroke-[1.8] stroke-linejoin-round">
+            <a href="/" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-2xl bg-[#211b2e] flex items-center justify-center border border-white/10 shadow-lg shadow-[#211b2e]/25 group-hover:scale-105 transition-transform shrink-0">
+                    <svg viewBox="0 0 32 32" class="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[2] stroke-linejoin-round">
                         <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
                         <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
                     </svg>
                 </div>
-                <div class="text-lg font-black text-slate-900 tracking-tight">
-                    Store<span class="text-[#00d668]">Box</span>
-                </div>
+                <span class="text-xl font-[850] text-slate-900 tracking-tight">StoreBox</span>
             </a>
 
             <!-- Right Controls -->
@@ -93,17 +92,17 @@
                         <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
                     </button>
                     <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-50 text-xs font-semibold text-slate-700">
-                        <a href="/lang/uz/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 {% if current_lang == 'uz' %}text-[#00d668] font-bold bg-emerald-50/60{% else %}text-slate-700{% endif %}">
+                        <a href="/lang/uz/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 {% if current_lang == 'uz' %}text-slate-900 font-bold bg-slate-100/80{% else %}text-slate-700{% endif %}">
                             <span>UZ O'zbek</span>
-                            {% if current_lang == 'uz' %}<i data-lucide="check" class="w-3.5 h-3.5 text-[#00d668]"></i>{% endif %}
+                            {% if current_lang == 'uz' %}<i data-lucide="check" class="w-3.5 h-3.5 text-[#211b2e]"></i>{% endif %}
                         </a>
-                        <a href="/lang/ru/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 {% if current_lang == 'ru' %}text-[#00d668] font-bold bg-emerald-50/60{% else %}text-slate-700{% endif %}">
+                        <a href="/lang/ru/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 {% if current_lang == 'ru' %}text-slate-900 font-bold bg-slate-100/80{% else %}text-slate-700{% endif %}">
                             <span>RU Русский</span>
-                            {% if current_lang == 'ru' %}<i data-lucide="check" class="w-3.5 h-3.5 text-[#00d668]"></i>{% endif %}
+                            {% if current_lang == 'ru' %}<i data-lucide="check" class="w-3.5 h-3.5 text-[#211b2e]"></i>{% endif %}
                         </a>
-                        <a href="/lang/en/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 {% if current_lang == 'en' %}text-[#00d668] font-bold bg-emerald-50/60{% else %}text-slate-700{% endif %}">
+                        <a href="/lang/en/?next={{ request.get_full_path|urlencode }}" class="flex items-center justify-between px-3 py-1.5 hover:bg-slate-50 {% if current_lang == 'en' %}text-slate-900 font-bold bg-slate-100/80{% else %}text-slate-700{% endif %}">
                             <span>EN English</span>
-                            {% if current_lang == 'en' %}<i data-lucide="check" class="w-3.5 h-3.5 text-[#00d668]"></i>{% endif %}
+                            {% if current_lang == 'en' %}<i data-lucide="check" class="w-3.5 h-3.5 text-[#211b2e]"></i>{% endif %}
                         </a>
                     </div>
                 </div>
@@ -124,7 +123,7 @@
 
     <!-- SUCCESS TOAST -->
     <div x-show="showToast" x-transition.opacity x-cloak class="fixed top-20 right-6 z-50 bg-slate-900/95 border border-slate-800 rounded-2xl px-4 py-3 shadow-2xl flex items-center gap-2.5 text-white text-xs font-bold backdrop-blur-xl">
-        <i data-lucide="check-circle-2" class="w-4 h-4 text-[#00d668]"></i>
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-[#c8ff6a]"></i>
         <span>Amal muvaffaqiyatli yakunlandi.</span>
     </div>
 
@@ -141,40 +140,52 @@
             <!-- ============================================================= -->
             <div x-show="step === 0" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch" x-cloak>
                 <!-- Left: Form -->
-                <div class="lg:col-span-7 bg-white/80 backdrop-blur-2xl rounded-3xl border border-white/80 p-8 flex flex-col justify-between text-slate-900" style="box-shadow: inset 0 1.5px 2px rgba(255,255,255,0.95), 0 20px 50px rgba(15,23,42,0.06);">
+                <div class="lg:col-span-7 bg-white/85 backdrop-blur-2xl rounded-3xl border border-white/90 p-8 flex flex-col justify-between text-slate-900 shadow-[0_20px_50px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)]">
                     <div class="space-y-6">
                         <div>
-                            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Biznesingiz tafsilotlari</h1>
-                            <p class="text-xs text-slate-500 mt-1">Platformada do'koningizni yaratish uchun asosiy parametrlarni tanlang</p>
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#211b2e]/5 border border-[#211b2e]/10 text-[11px] font-bold text-slate-700 mb-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#211b2e]"></span>
+                                0-qadam: Boshlang'ich parametrlar
+                            </div>
+                            <h1 class="text-2xl font-[850] text-slate-900 tracking-tight">Biznesingiz tafsilotlari</h1>
+                            <p class="text-xs text-slate-500 mt-1 font-medium">Platformada do'koningizni yaratish uchun asosiy parametrlarni tanlang</p>
                         </div>
 
                         <!-- 1. Kompaniya nomi -->
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Kompaniya nomi *</label>
-                            <input type="text" name="name" x-model="companyName" required placeholder="Kompaniya nomini kiriting"
-                                   class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all">
+                            <input type="text" name="name" x-model="companyName" required placeholder="Masalan: Safia Bakery yoki Bellstore"
+                                   class="w-full px-4 py-3 rounded-2xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                         </div>
 
                         <!-- 2. Biznes turi (Restoran / Onlayn do'kon) -->
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-2">Biznes turi</label>
                             <div class="grid grid-cols-2 gap-3">
-                                <label class="p-3.5 rounded-xl border cursor-pointer flex items-center gap-3 transition-all"
-                                       :class="businessType === 'RESTAURANT' ? 'border-[#00d668] bg-emerald-50/80 text-slate-900 font-bold ring-1 ring-[#00d668]/30 shadow-xs' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
+                                <label class="p-3.5 rounded-2xl border cursor-pointer flex items-center gap-3 transition-all select-none"
+                                       :class="businessType === 'RESTAURANT' ? 'border-[#211b2e] bg-[#211b2e] text-white font-bold shadow-lg shadow-[#211b2e]/20 ring-1 ring-[#211b2e]' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
                                     <input type="radio" name="business_type" value="RESTAURANT" x-model="businessType" class="sr-only">
-                                    <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all" :class="businessType === 'RESTAURANT' ? 'border-[#00d668] bg-[#00d668]' : 'border-slate-300'">
-                                        <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="businessType === 'RESTAURANT'"></div>
+                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0"
+                                         :class="businessType === 'RESTAURANT' ? 'bg-white/15 text-[#c8ff6a]' : 'bg-slate-100 text-slate-600'">
+                                        <i data-lucide="utensils" class="w-4 h-4"></i>
                                     </div>
-                                    <span class="text-xs">Restoran</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold leading-tight">Restoran</div>
+                                        <div class="text-[10px] opacity-75 font-normal truncate">Kafe & taomlar</div>
+                                    </div>
                                 </label>
 
-                                <label class="p-3.5 rounded-xl border cursor-pointer flex items-center gap-3 transition-all"
-                                       :class="businessType === 'STORE' ? 'border-[#00d668] bg-emerald-50/80 text-slate-900 font-bold ring-1 ring-[#00d668]/30 shadow-xs' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
+                                <label class="p-3.5 rounded-2xl border cursor-pointer flex items-center gap-3 transition-all select-none"
+                                       :class="businessType === 'STORE' ? 'border-[#211b2e] bg-[#211b2e] text-white font-bold shadow-lg shadow-[#211b2e]/20 ring-1 ring-[#211b2e]' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
                                     <input type="radio" name="business_type" value="STORE" x-model="businessType" class="sr-only">
-                                    <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all" :class="businessType === 'STORE' ? 'border-[#00d668] bg-[#00d668]' : 'border-slate-300'">
-                                        <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="businessType === 'STORE'"></div>
+                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0"
+                                         :class="businessType === 'STORE' ? 'bg-white/15 text-[#c8ff6a]' : 'bg-slate-100 text-slate-600'">
+                                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
                                     </div>
-                                    <span class="text-xs">Onlayn do'kon</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold leading-tight">Onlayn do'kon</div>
+                                        <div class="text-[10px] opacity-75 font-normal truncate">Tovarlar savdosi</div>
+                                    </div>
                                 </label>
                             </div>
                         </div>
@@ -183,22 +194,30 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-2">Platformani tanlang</label>
                             <div class="grid grid-cols-2 gap-3">
-                                <label class="p-3.5 rounded-xl border cursor-pointer flex items-center gap-3 transition-all"
-                                       :class="platformType === 'TELEGRAM' ? 'border-[#00d668] bg-emerald-50/80 text-slate-900 font-bold ring-1 ring-[#00d668]/30 shadow-xs' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
+                                <label class="p-3.5 rounded-2xl border cursor-pointer flex items-center gap-3 transition-all select-none"
+                                       :class="platformType === 'TELEGRAM' ? 'border-[#211b2e] bg-[#211b2e] text-white font-bold shadow-lg shadow-[#211b2e]/20 ring-1 ring-[#211b2e]' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
                                     <input type="radio" name="platform_type" value="TELEGRAM" x-model="platformType" class="sr-only">
-                                    <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all" :class="platformType === 'TELEGRAM' ? 'border-[#00d668] bg-[#00d668]' : 'border-slate-300'">
-                                        <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="platformType === 'TELEGRAM'"></div>
+                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0"
+                                         :class="platformType === 'TELEGRAM' ? 'bg-white/15 text-[#c8ff6a]' : 'bg-slate-100 text-slate-600'">
+                                        <i data-lucide="send" class="w-4 h-4"></i>
                                     </div>
-                                    <span class="text-xs">Telegram</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold leading-tight">Telegram</div>
+                                        <div class="text-[10px] opacity-75 font-normal truncate">WebApp & bot</div>
+                                    </div>
                                 </label>
 
-                                <label class="p-3.5 rounded-xl border cursor-pointer flex items-center gap-3 transition-all"
-                                       :class="platformType === 'ALL' ? 'border-[#00d668] bg-emerald-50/80 text-slate-900 font-bold ring-1 ring-[#00d668]/30 shadow-xs' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
+                                <label class="p-3.5 rounded-2xl border cursor-pointer flex items-center gap-3 transition-all select-none"
+                                       :class="platformType === 'ALL' ? 'border-[#211b2e] bg-[#211b2e] text-white font-bold shadow-lg shadow-[#211b2e]/20 ring-1 ring-[#211b2e]' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
                                     <input type="radio" name="platform_type" value="ALL" x-model="platformType" class="sr-only">
-                                    <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all" :class="platformType === 'ALL' ? 'border-[#00d668] bg-[#00d668]' : 'border-slate-300'">
-                                        <div class="w-1.5 h-1.5 rounded-full bg-white" x-show="platformType === 'ALL'"></div>
+                                    <div class="w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0"
+                                         :class="platformType === 'ALL' ? 'bg-white/15 text-[#c8ff6a]' : 'bg-slate-100 text-slate-600'">
+                                        <i data-lucide="globe" class="w-4 h-4"></i>
                                     </div>
-                                    <span class="text-xs">Veb-sayt</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold leading-tight">Veb-sayt & Bot</div>
+                                        <div class="text-[10px] opacity-75 font-normal truncate">Barcha kanallar</div>
+                                    </div>
                                 </label>
                             </div>
                         </div>
@@ -206,20 +225,20 @@
                         <!-- 4. Mamlakat -->
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Mamlakat</label>
-                            <select name="country" x-model="country" class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all">
-                                <option value="UZ">O'zbekiston</option>
-                                <option value="KZ">Qozog'iston</option>
-                                <option value="TR">Turkiya</option>
-                                <option value="RU">Rossiya</option>
-                                <option value="KG">Qirg'iziston</option>
-                                <option value="OTHER">Boshqa</option>
+                            <select name="country" x-model="country" class="w-full px-4 py-3 rounded-2xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all cursor-pointer">
+                                <option value="UZ">O'zbekiston (UZS)</option>
+                                <option value="KZ">Qozog'iston (KZT)</option>
+                                <option value="TR">Turkiya (TRY)</option>
+                                <option value="RU">Rossiya (RUB)</option>
+                                <option value="KG">Qirg'iziston (KGS)</option>
+                                <option value="OTHER">Boshqa mamlakat</option>
                             </select>
                         </div>
 
                         <!-- 5. Biznes Toifasi -->
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Biznes Toifasi</label>
-                            <select name="business_category" x-model="businessCategory" class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all">
+                            <select name="business_category" x-model="businessCategory" class="w-full px-4 py-3 rounded-2xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all cursor-pointer">
                                 <option value="FOOD">Oziq-ovqat / Restoran</option>
                                 <option value="ACCESSORIES">Aksessuarlar</option>
                                 <option value="AUTO">Avto ehtiyot qismlar</option>
@@ -238,75 +257,84 @@
                     </div>
 
                     <!-- Next button -->
-                    <button type="button" @click="nextStep(1)" class="w-full mt-8 py-3.5 rounded-2xl bg-neutral-900 hover:bg-black active:scale-[0.99] text-white font-black text-sm transition-all shadow-md border border-neutral-800 flex items-center justify-center gap-2 cursor-pointer">
+                    <button type="button" @click="nextStep(1)" class="w-full mt-8 py-3.5 px-4 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white font-bold text-xs transition-all shadow-lg shadow-[#211b2e]/25 border border-white/10 flex items-center justify-center gap-2 cursor-pointer">
                         <span>Oldinga</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4 text-[#00d668]"></i>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-[#c8ff6a]"></i>
                     </button>
                 </div>
 
-                <!-- Right: StoreBox Graphic Banner -->
-                <div class="lg:col-span-5 bg-gradient-to-br from-[#131722] via-[#0d1017] to-[#080a0f] border border-white/10 rounded-3xl p-8 text-white flex flex-col justify-between relative overflow-hidden shadow-2xl backdrop-blur-xl">
-                    <!-- Ambient subtle glow -->
-                    <div class="absolute -right-16 -top-16 w-60 h-60 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+                <!-- Right: StoreBox 2.0 Ecosystem Preview Card -->
+                <div class="lg:col-span-5 bg-gradient-to-br from-[#211b2e] via-[#1a1525] to-[#120e1a] border border-white/10 rounded-3xl p-8 text-white flex flex-col justify-between relative overflow-hidden shadow-2xl backdrop-blur-xl">
+                    <!-- Ambient subtle lime glow -->
+                    <div class="absolute -right-16 -top-16 w-60 h-60 rounded-full bg-[#c8ff6a]/10 blur-3xl pointer-events-none"></div>
+                    <div class="absolute -left-16 -bottom-16 w-60 h-60 rounded-full bg-[#211b2e]/50 blur-3xl pointer-events-none"></div>
 
                     <div class="space-y-3 z-10">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold text-emerald-400">
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#00d668] animate-pulse"></span>
-                            Tezkor ishga tushirish
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-[11px] font-bold text-[#c8ff6a]">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#c8ff6a] animate-pulse"></span>
+                            StoreBox 2.0 Studio
                         </div>
-                        <h2 class="text-2xl sm:text-3xl font-black leading-tight tracking-tight text-white">
+                        <h2 class="text-2xl sm:text-3xl font-[850] leading-tight tracking-tight text-white">
                             Daromadli biznes boshlashning eng tez usuli 🚀
                         </h2>
-                        <p class="text-xs text-slate-400 font-normal leading-relaxed">
-                            Onlayn savdoni tashkil qilish uchun zamonaviy Telegram bot va veb-sayt konstruktori
+                        <p class="text-xs text-slate-300 font-normal leading-relaxed">
+                            Onlayn savdoni avtomatlashtirish uchun zamonaviy Telegram WebApp va veb-do'kon boshqaruvi
                         </p>
                     </div>
 
-                    <!-- Modern Ecosystem Visual -->
-                    <div class="my-8 py-4 flex flex-col items-center justify-center relative z-10">
-                        <!-- Upper cards: products -->
-                        <div class="grid grid-cols-2 gap-3 w-full max-w-[280px] mb-4">
-                            <div class="bg-white/[0.06] backdrop-blur-md border border-white/10 p-2.5 rounded-2xl text-center shadow-inner">
-                                <div class="text-[10px] text-slate-400 font-bold">Futbolka</div>
-                                <div class="text-[11px] font-black text-[#00d668]">100 000 so'm</div>
+                    <!-- Modern Ecosystem Visual: StoreBox 2.0 Studio Preview -->
+                    <div class="my-6 py-2 flex flex-col items-center justify-center relative z-10">
+                        <div class="w-full bg-white/[0.06] backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-xl">
+                            <!-- Window Header -->
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+                                </div>
+                                <div class="text-[10px] font-mono text-slate-400 bg-white/5 px-2.5 py-0.5 rounded-md border border-white/5">
+                                    app.storebox.uz/dashboard
+                                </div>
                             </div>
-                            <div class="bg-white/[0.06] backdrop-blur-md border border-white/10 p-2.5 rounded-2xl text-center shadow-inner">
-                                <div class="text-[10px] text-slate-400 font-bold">Botik</div>
-                                <div class="text-[11px] font-black text-[#00d668]">150 000 so'm</div>
-                            </div>
-                        </div>
 
-                        <!-- Center StoreBox Hub -->
-                        <div class="px-6 py-2.5 rounded-2xl bg-neutral-900 border border-emerald-500/30 text-white font-black text-sm shadow-xl shadow-black/50 flex items-center gap-2.5">
-                            <div class="w-5 h-5 rounded-lg bg-emerald-500/20 flex items-center justify-center text-[#00d668]">
-                                <svg viewBox="0 0 32 32" class="w-3.5 h-3.5 stroke-[#00d668] fill-none stroke-[2] stroke-linejoin-round">
-                                    <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
-                                    <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
-                                </svg>
+                            <!-- Live Stat Preview -->
+                            <div class="bg-black/20 rounded-xl p-3 border border-white/5 mb-3 flex items-center justify-between">
+                                <div>
+                                    <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Bugungi savdo</div>
+                                    <div class="text-lg font-[850] text-[#c8ff6a] mt-0.5">24 850 000 UZS</div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                                        <i data-lucide="trending-up" class="w-3 h-3"></i> +34.2%
+                                    </span>
+                                    <div class="text-[10px] text-slate-400 mt-1">28 ta buyurtma</div>
+                                </div>
                             </div>
-                            <span>storebox</span>
-                        </div>
 
-                        <!-- Connector line -->
-                        <div class="w-0.5 h-6 bg-white/20 my-1"></div>
-
-                        <!-- Lower services -->
-                        <div class="grid grid-cols-3 gap-2 w-full text-center">
-                            <div class="bg-white/[0.04] border border-white/10 p-2 rounded-xl text-[9px] font-bold text-slate-300">
-                                Boshqaruv paneli
-                            </div>
-                            <div class="bg-white/[0.04] border border-white/10 p-2 rounded-xl text-[9px] font-bold text-slate-300">
-                                Yetkazib berish
-                            </div>
-                            <div class="bg-white/[0.04] border border-white/10 p-2 rounded-xl text-[9px] font-bold text-slate-300">
-                                POS & To'lovlar
+                            <!-- Integrated Modules -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="bg-white/5 border border-white/5 rounded-xl p-2 text-center">
+                                    <i data-lucide="bot" class="w-4 h-4 mx-auto mb-1 text-[#c8ff6a]"></i>
+                                    <div class="text-[10px] font-bold text-white">Telegram</div>
+                                    <div class="text-[8px] text-slate-400">WebApp</div>
+                                </div>
+                                <div class="bg-white/5 border border-white/5 rounded-xl p-2 text-center">
+                                    <i data-lucide="credit-card" class="w-4 h-4 mx-auto mb-1 text-[#c8ff6a]"></i>
+                                    <div class="text-[10px] font-bold text-white">To'lovlar</div>
+                                    <div class="text-[8px] text-slate-400">Payme & Click</div>
+                                </div>
+                                <div class="bg-white/5 border border-white/5 rounded-xl p-2 text-center">
+                                    <i data-lucide="truck" class="w-4 h-4 mx-auto mb-1 text-[#c8ff6a]"></i>
+                                    <div class="text-[10px] font-bold text-white">Kuryer</div>
+                                    <div class="text-[8px] text-slate-400">Smart bot</div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="text-[11px] text-slate-400 z-10 flex items-center gap-2">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#00d668]"></i>
-                        <span>1 500+ tadbirkorlar allaqachon StoreBox orqali sotishmoqda</span>
+                    <div class="text-[11px] text-slate-300 z-10 flex items-center gap-2 pt-2 border-t border-white/10">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-[#c8ff6a]"></i>
+                        <span><strong class="text-white font-bold">1 500+</strong> faol tadbirkorlar StoreBox 2.0 bilan</span>
                     </div>
                 </div>
             </div>
@@ -322,9 +350,9 @@
                         <!-- Step 1 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 1 ? step = 1 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 1 ? 'bg-emerald-50 text-[#00d668] border border-emerald-200' : (step === 1 ? 'bg-neutral-900 text-white shadow-md ring-2 ring-[#00d668]/50 border border-neutral-800' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 1 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 1 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 1">1</span>
-                                <i data-lucide="check" class="w-4 h-4 text-[#00d668]" x-show="step > 1"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 1"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 1 ? 'text-slate-900 font-black' : 'text-slate-500'">Sayt yaratish</span>
                         </div>
@@ -333,9 +361,9 @@
                         <!-- Step 2 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 2 ? step = 2 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 2 ? 'bg-emerald-50 text-[#00d668] border border-emerald-200' : (step === 2 ? 'bg-neutral-900 text-white shadow-md ring-2 ring-[#00d668]/50 border border-neutral-800' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 2 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 2 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 2">2</span>
-                                <i data-lucide="check" class="w-4 h-4 text-[#00d668]" x-show="step > 2"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 2"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 2 ? 'text-slate-900 font-black' : 'text-slate-500'">Sozlamalar</span>
                         </div>
@@ -344,9 +372,9 @@
                         <!-- Step 3 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 3 ? step = 3 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 3 ? 'bg-emerald-50 text-[#00d668] border border-emerald-200' : (step === 3 ? 'bg-neutral-900 text-white shadow-md ring-2 ring-[#00d668]/50 border border-neutral-800' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 3 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 3 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 3">3</span>
-                                <i data-lucide="check" class="w-4 h-4 text-[#00d668]" x-show="step > 3"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 3"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 3 ? 'text-slate-900 font-black' : 'text-slate-500'">Kategoriya qo'shish</span>
                         </div>
@@ -355,9 +383,9 @@
                         <!-- Step 4 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 4 ? step = 4 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 4 ? 'bg-emerald-50 text-[#00d668] border border-emerald-200' : (step === 4 ? 'bg-neutral-900 text-white shadow-md ring-2 ring-[#00d668]/50 border border-neutral-800' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 4 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 4 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 4">4</span>
-                                <i data-lucide="check" class="w-4 h-4 text-[#00d668]" x-show="step > 4"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 4"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 4 ? 'text-slate-900 font-black' : 'text-slate-500'">Mahsulot qo'shish</span>
                         </div>
@@ -366,9 +394,9 @@
                         <!-- Step 5 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 5 ? step = 5 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 5 ? 'bg-emerald-50 text-[#00d668] border border-emerald-200' : (step === 5 ? 'bg-neutral-900 text-white shadow-md ring-2 ring-[#00d668]/50 border border-neutral-800' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 5 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 5 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 5">5</span>
-                                <i data-lucide="check" class="w-4 h-4 text-[#00d668]" x-show="step > 5"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 5"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 5 ? 'text-slate-900 font-black' : 'text-slate-500'">Yetkazib berish</span>
                         </div>
@@ -377,7 +405,7 @@
                         <!-- Step 6 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 6 ? step = 6 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step === 6 ? 'bg-neutral-900 text-white shadow-md ring-2 ring-[#00d668]/50 border border-neutral-800' : 'bg-slate-100 border border-slate-200 text-slate-400'">
+                                 :class="step === 6 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400'">
                                 <span>6</span>
                             </div>
                             <span class="text-xs font-bold" :class="step === 6 ? 'text-slate-900 font-black' : 'text-slate-500'">Ko'rib chiqish</span>
@@ -393,11 +421,11 @@
                         <label class="block text-xs font-bold text-slate-700 mb-2">Sizning shaxsiy domeningiz bormi?</label>
                         <div class="flex gap-4">
                             <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer text-slate-800">
-                                <input type="radio" name="has_domain" value="no" checked class="text-[#00d668] focus:ring-[#00d668]">
+                                <input type="radio" name="has_domain" value="no" checked class="text-[#211b2e] focus:ring-[#211b2e] accent-[#211b2e]">
                                 <span>Yo'q</span>
                             </label>
                             <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer text-slate-600 hover:text-slate-900">
-                                <input type="radio" name="has_domain" value="yes" class="text-[#00d668] focus:ring-[#00d668]">
+                                <input type="radio" name="has_domain" value="yes" class="text-[#211b2e] focus:ring-[#211b2e] accent-[#211b2e]">
                                 <span>Menda bor</span>
                             </label>
                         </div>
@@ -405,12 +433,12 @@
 
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Sub domen *</label>
-                        <div class="flex rounded-xl bg-slate-50/80 border border-slate-200 overflow-hidden focus-within:border-[#00d668] focus-within:ring-2 focus-within:ring-[#00d668]/20 transition-all">
+                        <div class="flex rounded-xl bg-slate-50/80 border border-slate-200 overflow-hidden focus-within:border-[#211b2e] focus-within:ring-2 focus-within:ring-[#211b2e]/15 transition-all">
                             <input type="text" name="subdomain" x-model="subdomain" @input="checkSubdomain()" required placeholder="subdomenni kiriting"
                                    class="flex-1 px-4 py-3 bg-transparent text-xs font-mono font-bold text-slate-900 placeholder-slate-400 focus:outline-none">
                             <span class="px-4 py-3 bg-slate-100 text-xs font-bold text-slate-600 border-l border-slate-200">.storebox.uz</span>
                         </div>
-                        <p x-show="subdomainMsg" class="text-[11px] font-bold mt-1.5" :class="subdomainAvailable ? 'text-[#00d668]' : 'text-rose-600'" x-text="subdomainMsg"></p>
+                        <p x-show="subdomainMsg" class="text-[11px] font-bold mt-1.5" :class="subdomainAvailable ? 'text-emerald-600' : 'text-rose-600'" x-text="subdomainMsg"></p>
                     </div>
 
                     <!-- Bottom Nav -->
@@ -418,9 +446,9 @@
                         <button type="button" @click="step = 0" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition-colors cursor-pointer">
                             ← Orqaga
                         </button>
-                        <button type="button" @click="nextStep(2)" class="px-6 py-2.5 rounded-xl bg-neutral-900 hover:bg-black active:scale-[0.99] text-white text-xs font-bold shadow-md border border-neutral-800 transition-all cursor-pointer flex items-center gap-2">
+                        <button type="button" @click="nextStep(2)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
                             <span>Oldinga</span>
-                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#00d668]"></i>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
                 </div>
@@ -433,16 +461,16 @@
                     <!-- Logo Upload with Crop Modal Trigger -->
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">Logotipni shu yerga o'tkazing yoki tanlang</label>
-                        <div class="border-2 border-dashed border-slate-200 bg-slate-50/60 rounded-2xl p-6 text-center hover:border-[#00d668] transition-colors cursor-pointer group" @click="$refs.logoInput.click()">
+                        <div class="border-2 border-dashed border-slate-200 bg-slate-50/60 rounded-2xl p-6 text-center hover:border-[#211b2e] transition-colors cursor-pointer group" @click="$refs.logoInput.click()">
                             <input type="file" x-ref="logoInput" name="logo" accept="image/*" class="sr-only" @change="handleLogoSelect($event)">
                             <div x-show="!logoPreview">
-                                <i data-lucide="image-plus" class="w-8 h-8 text-slate-400 group-hover:text-[#00d668] mx-auto mb-2 transition-colors"></i>
+                                <i data-lucide="image-plus" class="w-8 h-8 text-slate-400 group-hover:text-[#211b2e] mx-auto mb-2 transition-colors"></i>
                                 <div class="text-xs font-bold text-slate-700">Fayl o'lchami 10 MB gacha</div>
                             </div>
                             <div x-show="logoPreview" class="flex items-center justify-center gap-3">
                                 <img :src="logoPreview" class="w-16 h-16 rounded-xl object-cover border border-slate-200 shadow-xs">
                                 <div class="text-left">
-                                    <span class="text-xs font-bold text-[#00d668]">Logotip yuklandi!</span>
+                                    <span class="text-xs font-bold text-emerald-600">Logotip yuklandi!</span>
                                     <div class="text-[10px] text-slate-400">O'zgartirish uchun bosing</div>
                                 </div>
                             </div>
@@ -450,7 +478,7 @@
 
                         <!-- Tip box -->
                         <div class="mt-3 p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/70 flex items-start gap-3 text-emerald-950">
-                            <i data-lucide="info" class="w-4 h-4 text-[#00d668] shrink-0 mt-0.5"></i>
+                            <i data-lucide="info" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
                             <div class="text-xs font-medium">
                                 Agar siz logotipni saytda ko'rsatishni istasangiz, uni yuklashingizni tavsiya qilamiz
                             </div>
@@ -463,29 +491,29 @@
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <label class="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs font-semibold text-slate-800">
                                 <div class="flex items-center gap-2">
-                                    <input type="checkbox" name="languages" value="uz" checked class="rounded text-[#00d668] focus:ring-[#00d668] border-slate-300">
+                                    <input type="checkbox" name="languages" value="uz" checked class="rounded text-[#211b2e] focus:ring-[#211b2e] border-slate-300 accent-[#211b2e]">
                                     <span>O'zbek</span>
                                 </div>
-                                <span class="text-[10px] text-[#00d668] font-bold">Asosiy til</span>
+                                <span class="text-[10px] text-emerald-600 font-bold">Asosiy til</span>
                             </label>
 
                             <label class="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs font-semibold text-slate-800">
                                 <div class="flex items-center gap-2">
-                                    <input type="checkbox" name="languages" value="ru" checked class="rounded text-[#00d668] focus:ring-[#00d668] border-slate-300">
+                                    <input type="checkbox" name="languages" value="ru" checked class="rounded text-[#211b2e] focus:ring-[#211b2e] border-slate-300 accent-[#211b2e]">
                                     <span>Русский</span>
                                 </div>
                             </label>
 
                             <label class="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs font-semibold text-slate-800">
                                 <div class="flex items-center gap-2">
-                                    <input type="checkbox" name="languages" value="en" class="rounded text-[#00d668] focus:ring-[#00d668] border-slate-300">
+                                    <input type="checkbox" name="languages" value="en" class="rounded text-[#211b2e] focus:ring-[#211b2e] border-slate-300 accent-[#211b2e]">
                                     <span>English</span>
                                 </div>
                             </label>
 
                             <label class="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs font-semibold text-slate-800">
                                 <div class="flex items-center gap-2">
-                                    <input type="checkbox" name="languages" value="tr" class="rounded text-[#00d668] focus:ring-[#00d668] border-slate-300">
+                                    <input type="checkbox" name="languages" value="tr" class="rounded text-[#211b2e] focus:ring-[#211b2e] border-slate-300 accent-[#211b2e]">
                                     <span>Türkçe</span>
                                 </div>
                             </label>
@@ -503,7 +531,7 @@
                             </div>
                         </div>
                         <textarea name="about_us_uz" rows="3" placeholder="Foydalanuvchilar uchun kompaniyangiz ma'lumotlarini kiriting"
-                                  class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all"></textarea>
+                                  class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all"></textarea>
                     </div>
 
                     <!-- Phone & Currency -->
@@ -511,11 +539,11 @@
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="block text-xs font-bold text-slate-700">Aloqa uchun telefon raqami *</label>
-                                <span class="text-[11px] font-bold text-[#00d668]" x-text="selectedCountry ? selectedCountry.name + ' (' + selectedCountry.dialCode + ')' : ''"></span>
+                                <span class="text-[11px] font-bold text-slate-900" x-text="selectedCountry ? selectedCountry.name + ' (' + selectedCountry.dialCode + ')' : ''"></span>
                             </div>
                             
                             <!-- Phone Input Group with Country Selector -->
-                            <div class="relative flex rounded-xl border border-slate-200 bg-slate-50 transition-all focus-within:border-[#00d668] focus-within:ring-2 focus-within:ring-[#00d668]/20"
+                            <div class="relative flex rounded-xl border border-slate-200 bg-slate-50 transition-all focus-within:border-[#211b2e] focus-within:ring-2 focus-within:ring-[#211b2e]/15"
                                  :class="phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : ''">
                                 
                                 <!-- Country Trigger Button -->
@@ -546,14 +574,14 @@
                                     <!-- Search Inside Dropdown -->
                                     <div class="p-2 border-b border-slate-100 bg-slate-50">
                                         <input type="text" x-model="countrySearch" placeholder="Mamlakat yoki kodni qidirish..."
-                                               class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#00d668]">
+                                               class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#211b2e]">
                                     </div>
                                     <!-- Country Options List -->
                                     <div class="overflow-y-auto divide-y divide-slate-100 py-1">
                                         <template x-for="c in filteredCountries" :key="c.id">
                                             <button type="button" @click="selectPhoneCountry(c)"
-                                                    class="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-emerald-50 transition-colors text-xs cursor-pointer"
-                                                    :class="selectedCountry && selectedCountry.id === c.id ? 'bg-emerald-50/80 font-bold text-emerald-800' : 'text-slate-700'">
+                                                    class="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-slate-100 transition-colors text-xs cursor-pointer"
+                                                    :class="selectedCountry && selectedCountry.id === c.id ? 'bg-slate-100 font-bold text-slate-900' : 'text-slate-700'">
                                                 <div class="flex items-center gap-2.5 min-w-0">
                                                     <span class="text-base shrink-0" x-text="c.flag"></span>
                                                     <div class="truncate">
@@ -561,7 +589,7 @@
                                                         <span class="text-[10px] text-slate-400 block" x-text="c.nameRu"></span>
                                                     </div>
                                                 </div>
-                                                <span class="font-mono text-xs font-bold text-[#00d668] shrink-0 ml-2" x-text="c.dialCode"></span>
+                                                <span class="font-mono text-xs font-bold text-slate-900 shrink-0 ml-2" x-text="c.dialCode"></span>
                                             </button>
                                         </template>
                                     </div>
@@ -572,14 +600,14 @@
                             <div class="flex items-center justify-between mt-1 text-[11px] text-slate-500">
                                 <span>Namuna: <strong class="text-slate-700 font-mono" x-text="(selectedCountry ? selectedCountry.dialCode : '+998') + ' ' + (selectedCountry ? selectedCountry.placeholder : '(90) 123-45-67')"></strong></span>
                                 <span x-show="selectedCountry && selectedCountry.id !== 'other'"
-                                      :class="isPhoneComplete ? 'text-[#00d668] font-bold' : 'text-slate-500'"
+                                      :class="isPhoneComplete ? 'text-emerald-600 font-bold' : 'text-slate-500'"
                                       x-text="isPhoneComplete ? '✓ To\'liq kiritildi' : (rawPhoneDigits.length + ' / ' + selectedCountry.digits + ' ta raqam')"></span>
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Valyuta</label>
-                            <select name="currency" class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#00d668]">
+                            <select name="currency" class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#211b2e]">
                                 <option value="UZS">UZS (O'zbek so'mi)</option>
                                 <option value="USD">USD (AQSH dollari)</option>
                                 <option value="RUB">RUB (Rossiya rubli)</option>
@@ -598,37 +626,37 @@
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-pink-500 pointer-events-none"><i data-lucide="instagram" class="w-4 h-4"></i></div>
                                 <input type="text" name="instagram" placeholder="Instagram havolasi yoki @username"
-                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#00d668]">
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- Telegram -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-sky-500 pointer-events-none"><i data-lucide="send" class="w-4 h-4"></i></div>
                                 <input type="text" name="telegram" placeholder="Telegram kanali yoki guruhi"
-                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#00d668]">
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- Facebook -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-blue-600 pointer-events-none"><i data-lucide="facebook" class="w-4 h-4"></i></div>
                                 <input type="text" name="facebook" placeholder="Facebook havolasi"
-                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#00d668]">
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- YouTube -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-rose-500 pointer-events-none"><i data-lucide="youtube" class="w-4 h-4"></i></div>
                                 <input type="text" name="youtube" placeholder="YouTube kanali"
-                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#00d668]">
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- TikTok -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-slate-700 pointer-events-none"><i data-lucide="music" class="w-4 h-4"></i></div>
                                 <input type="text" name="tiktok" placeholder="TikTok @username"
-                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#00d668]">
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- WhatsApp -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-emerald-600 pointer-events-none"><i data-lucide="message-circle" class="w-4 h-4"></i></div>
                                 <input type="text" name="whatsapp" placeholder="WhatsApp raqami (+998...)"
-                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#00d668]">
+                                       class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                         </div>
                     </div>
@@ -652,7 +680,7 @@
                             <template x-for="(d, idx) in scheduleDays" :key="d.key">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs py-2 border-b border-slate-200/60 last:border-0 gap-2">
                                     <div class="w-32 font-bold flex items-center gap-2">
-                                        <span class="w-2 h-2 rounded-full shrink-0" :class="d.isClosed ? 'bg-rose-400' : 'bg-[#00d668]'"></span>
+                                        <span class="w-2 h-2 rounded-full shrink-0" :class="d.isClosed ? 'bg-rose-400' : 'bg-emerald-500'"></span>
                                         <span :class="d.isClosed ? 'text-slate-400 line-through' : 'text-slate-800'" x-text="d.name"></span>
                                     </div>
 
@@ -704,8 +732,8 @@
                         <div class="flex items-center justify-between mb-2">
                             <label class="block text-xs font-bold text-slate-700">Manzil va do'kon filiali</label>
                             <button type="button" @click="locateMe()"
-                                    class="flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-900 transition-colors px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 shadow-2xs cursor-pointer">
-                                <i data-lucide="crosshair" class="w-3.5 h-3.5 text-[#00d668]" :class="isLocating ? 'animate-spin' : ''"></i>
+                                    class="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-slate-900 transition-colors px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 border border-slate-200 shadow-2xs cursor-pointer">
+                                <i data-lucide="crosshair" class="w-3.5 h-3.5 text-[#211b2e]" :class="isLocating ? 'animate-spin' : ''"></i>
                                 <span x-text="isLocating ? 'Aniqlanmoqda...' : 'Mening joylashuvim'"></span>
                             </button>
                         </div>
@@ -714,19 +742,19 @@
                         <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
                             <div class="sm:col-span-5">
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-[#00d668]"></i>
+                                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-600"></i>
                                     <span>Shahar / Viloyat</span>
                                 </label>
                                 <div class="relative">
                                     <select x-model="activeCity" @change="selectCity($event.target.value)"
-                                            class="w-full pl-3 pr-8 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#00d668] transition-all appearance-none cursor-pointer">
+                                            class="w-full pl-3 pr-8 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#211b2e] transition-all appearance-none cursor-pointer">
                                         <option value="tashkent">📍 Toshkent / Ташкент</option>
                                         <option value="samarkand">📍 Samarqand / Самарканд</option>
                                         <option value="bukhara">📍 Buxoro / Бухара</option>
                                         <option value="andijan">📍 Andijon / Андижан</option>
                                         <option value="namangan">📍 Namangan / Наманган</option>
                                         <option value="fergana">📍 Farg'ona / Фергана</option>
-                                        <option value="kokand">📍 Qo'qon / Коканд</option>
+                                        <option value="kokand">📍 Qo'qon / Кокаand</option>
                                         <option value="qarshi">📍 Qarshi / Карши</option>
                                         <option value="urgench">📍 Urganch / Ургенч</option>
                                         <option value="khiva">📍 Xiva / Хива</option>
@@ -744,7 +772,7 @@
                             <div class="sm:col-span-7">
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1">Filial nomi</label>
                                 <input type="text" name="branch_name" placeholder="Masalan: Markaziy filial, Samarqand filiali"
-                                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#00d668]">
+                                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e]">
                             </div>
                         </div>
 
@@ -752,12 +780,12 @@
                             <!-- Search Map with Live Autocomplete Dropdown -->
                             <div class="relative z-50">
                                 <div class="relative flex items-center">
-                                    <i data-lucide="map-pin" class="w-4 h-4 text-[#00d668] absolute left-3.5 pointer-events-none"></i>
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none"></i>
                                     <input type="text" id="mapSearchInput" x-model="mapSearch" @input.debounce.250ms="searchAddress()"
                                            placeholder="Manzil, ko'cha yoki joy nomini yozing (Masalan: Beruniy, Registon, Firdavsiy...)"
-                                           class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#00d668] transition-all">
+                                           class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#211b2e] transition-all">
                                     <div x-show="isSearchingMap" class="absolute right-3.5">
-                                        <i data-lucide="loader-2" class="w-4 h-4 text-[#00d668] animate-spin"></i>
+                                        <i data-lucide="loader-2" class="w-4 h-4 text-slate-600 animate-spin"></i>
                                     </div>
                                     <button type="button" x-show="mapSearch && !isSearchingMap" @click="mapSearch = ''; searchResults = []"
                                             class="absolute right-3 text-slate-400 hover:text-slate-600 font-bold text-sm">×</button>
@@ -768,12 +796,12 @@
                                      class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-100 text-slate-800">
                                     <template x-for="res in searchResults" :key="res.lat + '_' + res.lng + '_' + res.display_name">
                                         <div @click="selectSearchResult(res)" data-action="select-loc"
-                                             class="p-3 text-xs hover:bg-emerald-50 cursor-pointer flex items-start gap-3 transition-colors group">
-                                            <div class="w-7 h-7 rounded-lg bg-emerald-50 text-[#00d668] border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-[#00d668] group-hover:text-neutral-900 transition-colors">
+                                             class="p-3 text-xs hover:bg-slate-50 cursor-pointer flex items-start gap-3 transition-colors group">
+                                            <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-[#211b2e] group-hover:text-[#c8ff6a] transition-colors">
                                                 <i data-lucide="map-pin" class="w-4 h-4"></i>
                                             </div>
                                             <div class="min-w-0 flex-1">
-                                                <div class="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors" x-text="res.name || res.display_name"></div>
+                                                <div class="font-bold text-slate-900 group-hover:text-[#211b2e] transition-colors" x-text="res.name || res.display_name"></div>
                                                 <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1" x-text="res.display_name"></div>
                                             </div>
                                             <span class="text-[10px] font-bold text-slate-400 shrink-0 self-center" x-text="res.city || ''"></span>
@@ -787,16 +815,16 @@
                             <input type="hidden" name="branch_address" x-model="branchAddress">
 
                             <!-- Selected Address Confirmation Badge -->
-                            <div class="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 flex items-center justify-between text-xs transition-all text-emerald-950">
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs transition-all text-slate-800">
                                 <div class="flex items-center gap-2 min-w-0">
-                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-[#00d668] shrink-0" :class="isReverseGeocoding ? 'animate-pulse text-amber-500' : ''"></i>
+                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0" :class="isReverseGeocoding ? 'animate-pulse text-amber-500' : ''"></i>
                                     <span class="truncate">
                                         Tanlangan manzil: <strong class="text-slate-900" x-text="branchAddress || 'Xaritadan tanlang'"></strong>
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0 ml-2">
                                     <span x-show="isReverseGeocoding" class="text-[10px] font-bold text-amber-600 animate-pulse">Aniqlanmoqda...</span>
-                                    <span class="font-mono text-[10px] text-emerald-800 font-bold" x-text="Number(branchLat).toFixed(4) + ', ' + Number(branchLng).toFixed(4)"></span>
+                                    <span class="font-mono text-[10px] text-slate-600 font-bold" x-text="Number(branchLat).toFixed(4) + ', ' + Number(branchLng).toFixed(4)"></span>
                                 </div>
                             </div>
 
@@ -815,9 +843,9 @@
                         <button type="button" @click="step = 1" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                             ← Orqaga
                         </button>
-                        <button type="button" @click="nextStep(3)" class="px-6 py-2.5 rounded-xl bg-neutral-900 hover:bg-black active:scale-[0.99] text-white text-xs font-bold shadow-md border border-neutral-800 transition-all cursor-pointer flex items-center gap-2">
+                        <button type="button" @click="nextStep(3)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
                             <span>Oldinga</span>
-                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#00d668]"></i>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
                 </div>
@@ -829,12 +857,12 @@
                     <!-- Language tabs + Auto-translate button -->
                     <div class="flex items-center justify-between">
                         <div class="flex gap-2">
-                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-neutral-900 text-white text-xs font-bold shadow-md">O'zbek</button>
+                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-[#211b2e] text-white text-xs font-bold shadow-md">O'zbek</button>
                             <button type="button" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold transition-colors">Русский</button>
                             <button type="button" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold transition-colors">English</button>
                         </div>
-                        <button type="button" @click="autoTranslateCategory()" class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
-                            <i data-lucide="languages" class="w-3.5 h-3.5 text-[#00d668]"></i>
+                        <button type="button" @click="autoTranslateCategory()" class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200/70 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
+                            <i data-lucide="languages" class="w-3.5 h-3.5 text-slate-600"></i>
                             <span>Tarjima qilish</span>
                         </button>
                     </div>
@@ -842,7 +870,7 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategoriya nomi (O'zbek) *</label>
                         <input type="text" name="cat_name_uz" x-model="categoryNameUz" required placeholder="Masalan: Gullar"
-                               class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all">
+                               class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                     </div>
                     <input type="hidden" name="cat_name_ru" x-model="categoryNameRu">
                     <input type="hidden" name="cat_name_en" x-model="categoryNameEn">
@@ -850,9 +878,9 @@
                     <!-- Category image -->
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategoriya rasmi</label>
-                        <div class="border-2 border-dashed border-slate-200 bg-slate-50/60 rounded-2xl p-6 text-center hover:border-[#00d668] transition-colors cursor-pointer group" @click="$refs.catImgInput.click()">
+                        <div class="border-2 border-dashed border-slate-200 bg-slate-50/60 rounded-2xl p-6 text-center hover:border-[#211b2e] transition-colors cursor-pointer group" @click="$refs.catImgInput.click()">
                             <input type="file" x-ref="catImgInput" name="cat_image" accept="image/*" class="sr-only">
-                            <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 group-hover:text-[#00d668] mx-auto mb-2 transition-colors"></i>
+                            <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 group-hover:text-[#211b2e] mx-auto mb-2 transition-colors"></i>
                             <div class="text-xs font-bold text-slate-700">Tasvirni shu yerga tashlang yoki yuklang</div>
                             <div class="text-[10px] text-slate-400 mt-1">56px x 56px tavsiya etiladi, fayl hajmi 4 MB gacha</div>
                         </div>
@@ -861,7 +889,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-[11px]">
                             <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-950 space-y-1">
                                 <div class="font-bold flex items-center gap-1.5 text-emerald-800">
-                                    <i data-lucide="check" class="w-3.5 h-3.5 text-[#00d668]"></i>
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
                                     <span>Tavsiya etiladi:</span>
                                 </div>
                                 <div class="text-slate-600">• Yuqori sifatli rasm ishlating</div>
@@ -886,9 +914,9 @@
                         <button type="button" @click="step = 2" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                             ← Orqaga
                         </button>
-                        <button type="button" @click="nextStep(4)" class="px-6 py-2.5 rounded-xl bg-neutral-900 hover:bg-black active:scale-[0.99] text-white text-xs font-bold shadow-md border border-neutral-800 transition-all cursor-pointer flex items-center gap-2">
+                        <button type="button" @click="nextStep(4)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
                             <span>Oldinga</span>
-                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#00d668]"></i>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
                 </div>
@@ -900,12 +928,12 @@
                     <!-- Language tabs + AI Generator (✨ Yaratish) -->
                     <div class="flex items-center justify-between">
                         <div class="flex gap-2">
-                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-neutral-900 text-white text-xs font-bold shadow-md">O'zbek</button>
+                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-[#211b2e] text-white text-xs font-bold shadow-md">O'zbek</button>
                             <button type="button" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold transition-colors">Русский</button>
                             <button type="button" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold transition-colors">English</button>
                         </div>
-                        <button type="button" @click="autoTranslateProduct()" class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
-                            <i data-lucide="languages" class="w-3.5 h-3.5 text-[#00d668]"></i>
+                        <button type="button" @click="autoTranslateProduct()" class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200/70 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
+                            <i data-lucide="languages" class="w-3.5 h-3.5 text-slate-600"></i>
                             <span>Tarjima qilish</span>
                         </button>
                     </div>
@@ -914,7 +942,7 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Mahsulot nomi (O'zbek) *</label>
                         <input type="text" name="prod_name_uz" x-model="productNameUz" required placeholder="Masalan: Qizil atirgul guldastasi"
-                               class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all">
+                               class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                     </div>
                     <input type="hidden" name="prod_name_ru" x-model="productNameRu">
                     <input type="hidden" name="prod_name_en" x-model="productNameEn">
@@ -923,20 +951,20 @@
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
                             <label class="text-xs font-bold text-slate-700">Ta'rif (O'zbek)</label>
-                            <button type="button" @click="generateAiDescription()" class="px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold flex items-center gap-1.5 hover:bg-emerald-100 transition-colors cursor-pointer shadow-xs">
+                            <button type="button" @click="generateAiDescription()" class="px-3 py-1 rounded-lg bg-[#211b2e] text-[#c8ff6a] border border-white/10 text-[11px] font-bold flex items-center gap-1.5 hover:bg-[#2c243d] transition-colors cursor-pointer shadow-xs">
                                 <span>✨ Yaratish</span>
                             </button>
                         </div>
                         <textarea name="prod_desc_uz" x-model="productDescUz" rows="3" placeholder="Mahsulotingiz tavsifini yozing..."
-                                  class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all"></textarea>
+                                  class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all"></textarea>
                     </div>
 
                     <!-- Multi photo upload (3:4 ratio) -->
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Mahsulot rasmlari</label>
-                        <div class="border-2 border-dashed border-slate-200 bg-slate-50/60 rounded-2xl p-6 text-center hover:border-[#00d668] transition-colors cursor-pointer group" @click="$refs.prodPhotosInput.click()">
+                        <div class="border-2 border-dashed border-slate-200 bg-slate-50/60 rounded-2xl p-6 text-center hover:border-[#211b2e] transition-colors cursor-pointer group" @click="$refs.prodPhotosInput.click()">
                             <input type="file" x-ref="prodPhotosInput" name="prod_photos" accept="image/*" multiple class="sr-only" @change="handleProdPhotos($event)">
-                            <i data-lucide="images" class="w-8 h-8 text-slate-400 group-hover:text-[#00d668] mx-auto mb-2 transition-colors"></i>
+                            <i data-lucide="images" class="w-8 h-8 text-slate-400 group-hover:text-[#211b2e] mx-auto mb-2 transition-colors"></i>
                             <div class="text-xs font-bold text-slate-700">Tasvirni shu yerga tashlang yoki yuklang</div>
                             <div class="text-[10px] text-slate-400 mt-1">1200 x 1600 (3:4) tavsiya etiladi, har biri 10 MB gacha</div>
                         </div>
@@ -957,12 +985,12 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Narx (UZS) *</label>
                             <input type="number" name="prod_price" x-model="productPrice" required placeholder="Masalan: 100 000"
-                                   class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all">
+                                   class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">O'lchov Birligi</label>
-                            <select name="prod_unit" class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all">
+                            <select name="prod_unit" class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                                 <option value="Dona">Dona</option>
                                 <option value="Metr">Metr</option>
                                 <option value="Kilogram">Kilogram</option>
@@ -985,7 +1013,7 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Eski narx (Aksiya)</label>
                             <input type="number" name="prod_old_price" x-model="productOldPrice" placeholder="Masalan: 150 000"
-                                   class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-none focus:border-[#00d668] focus:ring-2 focus:ring-[#00d668]/20 transition-all">
+                                   class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                             <span class="text-[10px] text-slate-400">Asosiy narxdan katta bo'lishi kerak</span>
                         </div>
                     </div>
@@ -995,9 +1023,9 @@
                         <button type="button" @click="step = 3" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                             ← Orqaga
                         </button>
-                        <button type="button" @click="nextStep(5)" class="px-6 py-2.5 rounded-xl bg-neutral-900 hover:bg-black active:scale-[0.99] text-white text-xs font-bold shadow-md border border-neutral-800 transition-all cursor-pointer flex items-center gap-2">
+                        <button type="button" @click="nextStep(5)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
                             <span>Oldinga</span>
-                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#00d668]"></i>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
                 </div>
@@ -1010,7 +1038,7 @@
                         <!-- Card 1: Olib ketish -->
                         <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-[#00d668] flex items-center justify-center font-bold">
+                                <div class="w-10 h-10 rounded-xl bg-[#211b2e]/5 border border-[#211b2e]/10 text-[#211b2e] flex items-center justify-center font-bold">
                                     <i data-lucide="store" class="w-5 h-5"></i>
                                 </div>
                                 <div>
@@ -1029,7 +1057,7 @@
                         <!-- Card 2: Yetkazib berish -->
                         <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-[#00d668] flex items-center justify-center font-bold">
+                                <div class="w-10 h-10 rounded-xl bg-[#211b2e]/5 border border-[#211b2e]/10 text-[#211b2e] flex items-center justify-center font-bold">
                                     <i data-lucide="truck" class="w-5 h-5"></i>
                                 </div>
                                 <div>
@@ -1051,9 +1079,9 @@
                         <button type="button" @click="step = 4" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                             ← Orqaga
                         </button>
-                        <button type="button" @click="nextStep(6)" class="px-6 py-2.5 rounded-xl bg-neutral-900 hover:bg-black active:scale-[0.99] text-white text-xs font-bold shadow-md border border-neutral-800 transition-all cursor-pointer flex items-center gap-2">
+                        <button type="button" @click="nextStep(6)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
                             <span>Oldinga</span>
-                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#00d668]"></i>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
                 </div>
@@ -1066,13 +1094,13 @@
                     <div class="flex items-center gap-1 bg-slate-100 border border-slate-200 p-1 rounded-xl mb-6">
                         <button type="button" @click="previewMode = 'mobile'"
                                 class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-                                :class="previewMode === 'mobile' ? 'bg-neutral-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'">
+                                :class="previewMode === 'mobile' ? 'bg-[#211b2e] text-white shadow-md' : 'text-slate-600 hover:text-slate-900'">
                             <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
                             <span>Mobile</span>
                         </button>
                         <button type="button" @click="previewMode = 'desktop'"
                                 class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-                                :class="previewMode === 'desktop' ? 'bg-neutral-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'">
+                                :class="previewMode === 'desktop' ? 'bg-[#211b2e] text-white shadow-md' : 'text-slate-600 hover:text-slate-900'">
                             <i data-lucide="laptop" class="w-3.5 h-3.5"></i>
                             <span>Desktop</span>
                         </button>
@@ -1097,7 +1125,7 @@
 
                             <!-- Category Pill -->
                             <div class="flex gap-2">
-                                <span class="px-3 py-1 rounded-full bg-neutral-900 text-white text-[10px] font-bold shadow-xs" x-text="categoryNameUz || 'Gullar'"></span>
+                                <span class="px-3 py-1 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-bold shadow-xs" x-text="categoryNameUz || 'Gullar'"></span>
                             </div>
 
                             <!-- Product Card -->
@@ -1114,10 +1142,10 @@
                                 <div class="p-2.5">
                                     <div class="font-bold text-xs text-slate-900 truncate" x-text="productNameUz || 'Test'"></div>
                                     <div class="flex items-baseline gap-2 mt-1">
-                                        <span class="font-black text-xs text-[#00d668]" x-text="(productPrice || '100') + ' UZS'"></span>
+                                        <span class="font-black text-xs text-[#059669]" x-text="(productPrice || '100') + ' UZS'"></span>
                                         <span class="text-[9px] text-slate-400 line-through" x-text="(productOldPrice || '150') + ' UZS'"></span>
                                     </div>
-                                    <button type="button" class="w-full mt-2 py-1.5 rounded-lg bg-neutral-900 hover:bg-black text-white text-[10px] font-bold transition-all shadow-xs cursor-pointer">
+                                    <button type="button" class="w-full mt-2 py-1.5 rounded-lg bg-[#211b2e] hover:bg-[#2c243d] text-white text-[10px] font-bold transition-all shadow-xs cursor-pointer">
                                         Savatchaga
                                     </button>
                                 </div>
@@ -1126,7 +1154,7 @@
 
                         <!-- Phone Bottom Nav -->
                         <div class="absolute bottom-0 left-0 right-0 h-12 bg-white/95 backdrop-blur-md border-t border-slate-200/80 flex items-center justify-around text-slate-400">
-                            <i data-lucide="home" class="w-4 h-4 text-[#00d668]"></i>
+                            <i data-lucide="home" class="w-4 h-4 text-[#211b2e]"></i>
                             <i data-lucide="heart" class="w-4 h-4"></i>
                             <i data-lucide="shopping-bag" class="w-4 h-4"></i>
                             <i data-lucide="user" class="w-4 h-4"></i>
@@ -1142,9 +1170,9 @@
                         </button>
 
                         <button type="button" @click="finishWizard('dashboard')"
-                                class="px-6 py-3.5 rounded-xl bg-neutral-900 hover:bg-black active:scale-[0.99] text-white font-bold text-xs flex items-center gap-2 shadow-md border border-neutral-800 transition-all cursor-pointer">
+                                class="px-6 py-3.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-[#211b2e]/25 border border-white/10 transition-all cursor-pointer">
                             <span>Boshqaruv paneliga o'tish</span>
-                            <i data-lucide="arrow-right" class="w-4 h-4 text-[#00d668]"></i>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-[#c8ff6a]"></i>
                         </button>
                     </div>
                 </div>

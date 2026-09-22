@@ -1,34 +1,37 @@
 {% extends 'base.html' %}
 
-{% block title %}Ro'yxatdan o'tish — StoreBox{% endblock %}
+{% block title %}Ro'yxatdan o'tish — StoreBox 2.0{% endblock %}
 
 {% block content %}
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
      style="background: radial-gradient(130% 90% at 50% 0%, #ffffff 0%, #edf2f8 35%, #e1e9f3 70%, #d4dfea 100%) fixed;"
      x-data="phoneRegister()">
 
-    <div class="max-w-md w-full space-y-6 relative z-10 bg-white/80 dark:bg-[#161b26]/80 backdrop-blur-2xl p-8 sm:p-10 rounded-[32px] border border-white/90 dark:border-white/15 shadow-[0_20px_50px_-15px_rgba(15,23,42,0.08),inset_0_1.5px_2px_rgba(255,255,255,0.95)] transition-all">
+    <!-- Ambient Subtle Glow -->
+    <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#c8ff6a]/10 blur-[130px] pointer-events-none rounded-full"></div>
+
+    <div class="max-w-md w-full space-y-6 relative z-10 bg-white/85 dark:bg-[#161b26]/85 backdrop-blur-2xl p-8 sm:p-10 rounded-[32px] border border-white/90 dark:border-white/15 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.08),inset_0_1.5px_2px_rgba(255,255,255,0.95)] transition-all">
         <div class="text-center">
-            <a href="{{ platform_site_url }}/" class="inline-flex flex-col items-center gap-2.5 mb-3 group">
-                <div class="w-12 h-12 rounded-2xl bg-[#211b2e] flex items-center justify-center border border-white/10 shadow-lg shadow-[#211b2e]/25 group-hover:scale-105 transition transform mx-auto">
-                    <svg viewBox="0 0 32 32" class="w-7 h-7 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
+            <a href="{{ platform_site_url }}/" class="inline-flex items-center gap-3 mb-4 group">
+                <div class="w-11 h-11 rounded-2xl bg-[#211b2e] flex items-center justify-center border border-white/10 shadow-lg shadow-[#211b2e]/25 group-hover:scale-105 transition transform shrink-0">
+                    <svg viewBox="0 0 32 32" class="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[2] stroke-linejoin-round">
                         <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
                         <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
                     </svg>
                 </div>
                 <span class="text-2xl font-[850] text-slate-900 dark:text-white tracking-tight">StoreBox</span>
             </a>
-            <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Tezkor ro'yxatdan o'tish</h2>
+            <h2 class="text-xl font-[850] text-slate-900 dark:text-white tracking-tight">Tezkor ro'yxatdan o'tish</h2>
             <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">10 daqiqada o'z internet-do'koningiz va Telegram-vitrinangizni oching</p>
         </div>
 
         {% if selected_plan_label %}
-        <div class="p-3.5 rounded-2xl bg-[#10b981]/15 border border-[#10b981]/40 text-slate-900 dark:text-white text-xs font-bold flex items-center justify-between shadow-2xs">
+        <div class="p-3.5 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs font-bold flex items-center justify-between shadow-2xs">
             <span class="flex items-center gap-2">
-                <i data-lucide="crown" class="w-4 h-4 text-emerald-600 dark:text-[#10b981]"></i>
+                <i data-lucide="crown" class="w-4 h-4 text-[#211b2e] dark:text-[#c8ff6a]"></i>
                 <span>Tanlangan tarif: {{ selected_plan_label }}</span>
             </span>
-            <span class="text-[10px] bg-[#211b2e] text-[#10b981] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider">{{ selected_plan }}</span>
+            <span class="text-[10px] bg-[#211b2e] text-[#c8ff6a] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider">{{ selected_plan }}</span>
         </div>
         {% endif %}
 
@@ -41,7 +44,7 @@
             {% if user_already_registered %}
             <div class="pt-1">
                 <a href="{{ app_site_url }}/dashboard/login/?login={{ submitted_phone|urlencode }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] text-white font-bold text-[11px] transition-colors shadow-xs">
-                    <i data-lucide="log-in" class="w-3.5 h-3.5 text-[#10b981]"></i>
+                    <i data-lucide="log-in" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                     <span>Tizimga kirish</span>
                 </a>
             </div>
@@ -67,8 +70,8 @@
                     <span class="text-[11px] font-bold text-slate-400" x-text="selectedCountry.name + ' (' + selectedCountry.dialCode + ')'"></span>
                 </div>
 
-                <div class="relative flex rounded-2xl bg-white/60 dark:bg-white/5 border transition-all"
-                     :class="phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : (isFocused ? 'border-[#211b2e] dark:border-[#10b981] ring-2 ring-[#10b981]/40 bg-white dark:bg-black/30' : 'border-slate-200 dark:border-white/10')">
+                <div class="relative flex rounded-2xl bg-white/70 dark:bg-white/5 border transition-all"
+                     :class="phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : (isFocused ? 'border-[#211b2e] dark:border-[#c8ff6a] ring-2 ring-[#211b2e]/10 dark:ring-[#c8ff6a]/30 bg-white dark:bg-black/30' : 'border-slate-200 dark:border-white/10')">
                     
                     <!-- Country Selector Dropdown Trigger -->
                     <div class="relative">
@@ -76,8 +79,8 @@
                                 id="countryTriggerBtn"
                                 @click="countryMenuOpen = !countryMenuOpen" 
                                 @keydown.escape="countryMenuOpen = false"
-                                class="h-full px-3 py-3 rounded-l-2xl bg-white/60 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border-r border-slate-200 dark:border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer select-none">
-                            <span class="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-white/10 text-neutral-800 dark:text-white border border-black/5 dark:border-white/10" x-text="selectedCountry.codeBadge || selectedCountry.id.toUpperCase()"></span>
+                                class="h-full px-3 py-3 rounded-l-2xl bg-slate-50/80 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border-r border-slate-200 dark:border-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer select-none">
+                            <span class="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-white dark:bg-white/10 text-neutral-800 dark:text-white border border-black/5 dark:border-white/10" x-text="selectedCountry.codeBadge || selectedCountry.id.toUpperCase()"></span>
                             <span class="font-mono text-xs" x-text="selectedCountry.dialCode"></span>
                             <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="countryMenuOpen ? 'rotate-180' : ''"></i>
                         </button>
@@ -102,7 +105,7 @@
                                 <input type="text" x-model="searchQuery" 
                                        @keydown.enter.prevent
                                        placeholder="Mamlakat yoki kodni qidirish..." 
-                                        class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#211b2e] dark:focus:border-[#10b981]">
+                                        class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a]">
                             </div>
 
                             <!-- Countries List -->
@@ -120,9 +123,9 @@
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-2 shrink-0">
-                                            <span class="font-mono text-xs text-slate-500 font-bold group-hover:text-slate-900 dark:group-hover:text-[#10b981]" x-text="c.dialCode"></span>
+                                            <span class="font-mono text-xs text-slate-500 font-bold group-hover:text-slate-900 dark:group-hover:text-[#c8ff6a]" x-text="c.dialCode"></span>
                                             <template x-if="selectedCountry.id === c.id">
-                                                <i data-lucide="check" class="w-4 h-4 text-[#211b2e] dark:text-[#10b981]"></i>
+                                                <i data-lucide="check" class="w-4 h-4 text-[#211b2e] dark:text-[#c8ff6a]"></i>
                                             </template>
                                         </div>
                                     </button>
@@ -173,9 +176,9 @@
                             </span>
                             <template x-if="rawDigits.length > 0">
                                 <span class="font-bold flex items-center gap-1 transition-colors"
-                                      :class="isComplete ? 'text-[#211b2e] dark:text-[#10b981]' : 'text-slate-400'">
+                                      :class="isComplete ? 'text-[#211b2e] dark:text-[#c8ff6a]' : 'text-slate-400'">
                                     <template x-if="isComplete">
-                                        <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 dark:text-[#10b981]"></i>
+                                        <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 dark:text-[#c8ff6a]"></i>
                                     </template>
                                     <span x-text="isComplete ? 'To\'liq kiritildi' : (rawDigits.length + ' / ' + selectedCountry.digits + ' ta raqam')"></span>
                                 </span>
@@ -192,8 +195,9 @@
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="mail" class="w-4 h-4"></i>
                     </div>
-                    <input type="email" name="email" placeholder="merchant@store.uz" value="{{ submitted_email|default:'' }}"
-                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] dark:focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/40 focus:bg-white dark:focus:bg-black/30 transition-all">
+                    <input type="email" name="email" placeholder="do'kon@misol.uz" value="{{ submitted_email|default:'' }}"
+                           autocomplete="email"
+                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-white/70 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] focus:ring-2 focus:ring-[#211b2e]/10 dark:focus:ring-[#c8ff6a]/30 focus:bg-white dark:focus:bg-black/30 transition-all">
                 </div>
             </div>
 
@@ -209,7 +213,8 @@
                            x-model="password"
                            required 
                            placeholder="Kamida 6 ta belgi"
-                           class="block w-full pl-10 pr-10 py-3 rounded-2xl bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] dark:focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/40 focus:bg-white dark:focus:bg-black/30 transition-all">
+                           autocomplete="new-password"
+                           class="block w-full pl-10 pr-10 py-3 rounded-2xl bg-white/70 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] focus:ring-2 focus:ring-[#211b2e]/10 dark:focus:ring-[#c8ff6a]/30 focus:bg-white dark:focus:bg-black/30 transition-all">
                     <button type="button" 
                             @click="showPassword = !showPassword"
                             class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
@@ -230,7 +235,8 @@
                            x-model="passwordConfirm"
                            required 
                            placeholder="Parolni qaytadan kiriting"
-                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] dark:focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/40 focus:bg-white dark:focus:bg-black/30 transition-all">
+                           autocomplete="new-password"
+                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-white/70 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] focus:ring-2 focus:ring-[#211b2e]/10 dark:focus:ring-[#c8ff6a]/30 focus:bg-white dark:focus:bg-black/30 transition-all">
                 </div>
                 <template x-if="password && passwordConfirm && password !== passwordConfirm">
                     <p class="text-[11px] font-bold text-rose-600 dark:text-rose-400 mt-1 flex items-center gap-1">
@@ -241,17 +247,19 @@
 
             <!-- SUBMIT BUTTON -->
             <button type="submit" 
-                    class="w-full py-3.5 px-4 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white font-black text-xs transition-all shadow-lg shadow-[#211b2e]/25 border border-white/10 mt-2 flex items-center justify-center gap-2 cursor-pointer group">
-                <i data-lucide="user-plus" class="w-4 h-4 text-[#10b981] group-hover:scale-110 transition-transform"></i>
+                    class="w-full py-3.5 px-5 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white font-[800] text-sm transition-all shadow-xl shadow-[#211b2e]/25 border border-white/10 mt-2 flex items-center justify-center gap-2.5 cursor-pointer group">
+                <span class="w-2 h-2 rounded-full bg-[#c8ff6a] group-hover:scale-125 transition-transform"></span>
                 <span>Davom etish va do'kon yaratish</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 text-[#c8ff6a] group-hover:translate-x-1 transition-transform"></i>
             </button>
         </form>
 
         <div class="pt-4 border-t border-slate-100 dark:border-white/10 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
             Hisobingiz bormi?
-            <a href="{{ app_site_url }}/dashboard/login/" class="font-bold text-[#211b2e] dark:text-[#10b981] hover:underline ml-1">Kirish</a>
+            <a href="{{ app_site_url }}/dashboard/login/" class="font-bold text-[#211b2e] dark:text-[#c8ff6a] hover:underline ml-1">Kirish</a>
         </div>
     </div>
+</div>
 </div>
 
 <script>
