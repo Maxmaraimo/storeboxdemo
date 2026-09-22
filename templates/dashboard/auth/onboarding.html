@@ -34,6 +34,18 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         [x-cloak] { display: none !important; }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+            -webkit-text-fill-color: #0f172a !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        .custom-storebox-pin {
+            background: transparent !important;
+            border: none !important;
+        }
         .iphone-frame {
             width: 320px;
             height: 640px;
@@ -290,7 +302,7 @@
                                 <div class="flex items-center gap-1.5">
                                     <div class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></div>
                                     <div class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
-                                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-[#c8ff6a]/90"></div>
                                 </div>
                                 <div class="text-[10px] font-mono text-slate-400 bg-white/5 px-2.5 py-0.5 rounded-md border border-white/5">
                                     app.storebox.uz/dashboard
@@ -304,7 +316,7 @@
                                     <div class="text-lg font-[850] text-[#c8ff6a] mt-0.5">24 850 000 UZS</div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#c8ff6a]/20 text-[#c8ff6a] text-[10px] font-black tracking-wide">
                                         <i data-lucide="trending-up" class="w-3 h-3"></i> +34.2%
                                     </span>
                                     <div class="text-[10px] text-slate-400 mt-1">28 ta buyurtma</div>
@@ -350,9 +362,9 @@
                         <!-- Step 1 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 1 ? step = 1 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 1 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 1 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 1 ? 'bg-[#211b2e] text-[#c8ff6a] border border-[#211b2e] shadow-xs' : (step === 1 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 1">1</span>
-                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 1"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 1"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 1 ? 'text-slate-900 font-black' : 'text-slate-500'">Sayt yaratish</span>
                         </div>
@@ -361,9 +373,9 @@
                         <!-- Step 2 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 2 ? step = 2 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 2 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 2 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 2 ? 'bg-[#211b2e] text-[#c8ff6a] border border-[#211b2e] shadow-xs' : (step === 2 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 2">2</span>
-                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 2"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 2"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 2 ? 'text-slate-900 font-black' : 'text-slate-500'">Sozlamalar</span>
                         </div>
@@ -372,9 +384,9 @@
                         <!-- Step 3 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 3 ? step = 3 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 3 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 3 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 3 ? 'bg-[#211b2e] text-[#c8ff6a] border border-[#211b2e] shadow-xs' : (step === 3 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 3">3</span>
-                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 3"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 3"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 3 ? 'text-slate-900 font-black' : 'text-slate-500'">Kategoriya qo'shish</span>
                         </div>
@@ -383,9 +395,9 @@
                         <!-- Step 4 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 4 ? step = 4 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 4 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 4 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 4 ? 'bg-[#211b2e] text-[#c8ff6a] border border-[#211b2e] shadow-xs' : (step === 4 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 4">4</span>
-                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 4"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 4"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 4 ? 'text-slate-900 font-black' : 'text-slate-500'">Mahsulot qo'shish</span>
                         </div>
@@ -394,9 +406,9 @@
                         <!-- Step 5 -->
                         <div class="flex items-center gap-2 cursor-pointer" @click="step >= 5 ? step = 5 : null">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                                 :class="step > 5 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (step === 5 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
+                                 :class="step > 5 ? 'bg-[#211b2e] text-[#c8ff6a] border border-[#211b2e] shadow-xs' : (step === 5 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400')">
                                 <span x-show="step <= 5">5</span>
-                                <i data-lucide="check" class="w-4 h-4 text-emerald-600" x-show="step > 5"></i>
+                                <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 5"></i>
                             </div>
                             <span class="text-xs font-bold" :class="step === 5 ? 'text-slate-900 font-black' : 'text-slate-500'">Yetkazib berish</span>
                         </div>
@@ -438,7 +450,13 @@
                                    class="flex-1 px-4 py-3 bg-transparent text-xs font-mono font-bold text-slate-900 placeholder-slate-400 focus:outline-none">
                             <span class="px-4 py-3 bg-slate-100 text-xs font-bold text-slate-600 border-l border-slate-200">.storebox.uz</span>
                         </div>
-                        <p x-show="subdomainMsg" class="text-[11px] font-bold mt-1.5" :class="subdomainAvailable ? 'text-emerald-600' : 'text-rose-600'" x-text="subdomainMsg"></p>
+                        <div x-show="subdomainMsg" class="mt-2 flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black shadow-2xs"
+                                  :class="subdomainAvailable ? 'bg-[#211b2e] text-[#c8ff6a] border border-[#c8ff6a]/30' : 'bg-rose-50 text-rose-700 border border-rose-200'">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="subdomainAvailable ? 'bg-[#c8ff6a] ring-2 ring-[#c8ff6a]/40' : 'bg-rose-500'"></span>
+                                <span x-text="subdomainMsg"></span>
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Bottom Nav -->
@@ -470,16 +488,21 @@
                             <div x-show="logoPreview" class="flex items-center justify-center gap-3">
                                 <img :src="logoPreview" class="w-16 h-16 rounded-xl object-cover border border-slate-200 shadow-xs">
                                 <div class="text-left">
-                                    <span class="text-xs font-bold text-emerald-600">Logotip yuklandi!</span>
-                                    <div class="text-[10px] text-slate-400">O'zgartirish uchun bosing</div>
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-xs font-bold shadow-xs">
+                                        <i data-lucide="check" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
+                                        <span>Logotip yuklandi!</span>
+                                    </span>
+                                    <div class="text-[10px] text-slate-400 mt-1">O'zgartirish uchun bosing</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Tip box -->
-                        <div class="mt-3 p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/70 flex items-start gap-3 text-emerald-950">
-                            <i data-lucide="info" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-                            <div class="text-xs font-medium">
+                        <div class="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3 text-slate-700">
+                            <div class="w-6 h-6 rounded-lg bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shrink-0">
+                                <i data-lucide="info" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
+                            </div>
+                            <div class="text-xs font-medium text-slate-600">
                                 Agar siz logotipni saytda ko'rsatishni istasangiz, uni yuklashingizni tavsiya qilamiz
                             </div>
                         </div>
@@ -494,7 +517,7 @@
                                     <input type="checkbox" name="languages" value="uz" checked class="rounded text-[#211b2e] focus:ring-[#211b2e] border-slate-300 accent-[#211b2e]">
                                     <span>O'zbek</span>
                                 </div>
-                                <span class="text-[10px] text-emerald-600 font-bold">Asosiy til</span>
+                                <span class="px-2 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] text-[10px] font-extrabold shadow-2xs">Asosiy til</span>
                             </label>
 
                             <label class="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs font-semibold text-slate-800">
@@ -599,9 +622,17 @@
                             <!-- Phone Format Info & Counter -->
                             <div class="flex items-center justify-between mt-1 text-[11px] text-slate-500">
                                 <span>Namuna: <strong class="text-slate-700 font-mono" x-text="(selectedCountry ? selectedCountry.dialCode : '+998') + ' ' + (selectedCountry ? selectedCountry.placeholder : '(90) 123-45-67')"></strong></span>
-                                <span x-show="selectedCountry && selectedCountry.id !== 'other'"
-                                      :class="isPhoneComplete ? 'text-emerald-600 font-bold' : 'text-slate-500'"
-                                      x-text="isPhoneComplete ? '✓ To\'liq kiritildi' : (rawPhoneDigits.length + ' / ' + selectedCountry.digits + ' ta raqam')"></span>
+                                <div x-show="selectedCountry && selectedCountry.id !== 'other'">
+                                    <template x-if="isPhoneComplete">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-black shadow-2xs">
+                                            <i data-lucide="check" class="w-3 h-3 text-[#c8ff6a]"></i>
+                                            <span>To'liq kiritildi</span>
+                                        </span>
+                                    </template>
+                                    <template x-if="!isPhoneComplete">
+                                        <span class="text-[11px] font-bold text-slate-400" x-text="rawPhoneDigits.length + ' / ' + selectedCountry.digits + ' ta raqam'"></span>
+                                    </template>
+                                </div>
                             </div>
                         </div>
 
@@ -654,7 +685,7 @@
                             </div>
                             <!-- WhatsApp -->
                             <div class="relative flex items-center">
-                                <div class="absolute left-3 text-emerald-600 pointer-events-none"><i data-lucide="message-circle" class="w-4 h-4"></i></div>
+                                <div class="absolute left-3 text-slate-500 pointer-events-none"><i data-lucide="message-circle" class="w-4 h-4"></i></div>
                                 <input type="text" name="whatsapp" placeholder="WhatsApp raqami (+998...)"
                                        class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
@@ -672,7 +703,10 @@
                             <div class="flex flex-wrap gap-1.5 text-[10px] font-bold">
                                 <button type="button" @click="applySchedulePreset('standard')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-colors">09:00 - 22:00</button>
                                 <button type="button" @click="applySchedulePreset('restaurant')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-colors">10:00 - 23:00</button>
-                                <button type="button" @click="applySchedulePreset('24/7')" class="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 transition-colors">24/7 (Kun-u tun)</button>
+                                <button type="button" @click="applySchedulePreset('24/7')" class="px-2.5 py-1 rounded-lg bg-[#211b2e] border border-[#211b2e] text-[#c8ff6a] hover:bg-[#2c243d] transition-colors font-extrabold flex items-center gap-1 shadow-2xs">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#c8ff6a]"></span>
+                                    <span>24/7 (Kun-u tun)</span>
+                                </button>
                             </div>
                         </div>
 
@@ -680,7 +714,7 @@
                             <template x-for="(d, idx) in scheduleDays" :key="d.key">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs py-2 border-b border-slate-200/60 last:border-0 gap-2">
                                     <div class="w-32 font-bold flex items-center gap-2">
-                                        <span class="w-2 h-2 rounded-full shrink-0" :class="d.isClosed ? 'bg-rose-400' : 'bg-emerald-500'"></span>
+                                        <span class="w-2 h-2 rounded-full shrink-0" :class="d.isClosed ? 'bg-rose-400' : 'bg-[#c8ff6a] ring-2 ring-[#211b2e]/10 border border-[#211b2e]/30 shadow-xs'"></span>
                                         <span :class="d.isClosed ? 'text-slate-400 line-through' : 'text-slate-800'" x-text="d.name"></span>
                                     </div>
 
@@ -694,7 +728,7 @@
                                                  <input type="time" :name="'schedule_' + d.key + '_close'" x-model="d.close"
                                                         class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-slate-900">
                                                  <button type="button" @click="copyScheduleToAll(idx)"
-                                                         class="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold text-xs transition-colors shadow-2xs cursor-pointer"
+                                                         class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-[#211b2e] hover:text-[#c8ff6a] border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs transition-colors shadow-2xs cursor-pointer"
                                                          title="Barcha kunlarga nusxalash">
                                                      +
                                                  </button>
@@ -715,7 +749,7 @@
                                         <!-- Toggle Button: Dam olish kuni -->
                                         <button type="button" @click="toggleDayClosed(idx)"
                                                 class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ml-auto sm:ml-0 cursor-pointer"
-                                                :class="d.isClosed ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100' : 'bg-slate-200/70 text-slate-700 hover:bg-rose-50 hover:text-rose-700'"
+                                                :class="d.isClosed ? 'bg-[#211b2e] text-[#c8ff6a] border border-[#211b2e] hover:bg-[#2c243d] shadow-2xs' : 'bg-slate-200/70 text-slate-700 hover:bg-rose-50 hover:text-rose-700'"
                                                 x-text="d.isClosed ? 'Ish kuniga o\'tkazish' : 'Dam olish kuni'">
                                         </button>
 
@@ -732,8 +766,8 @@
                         <div class="flex items-center justify-between mb-2">
                             <label class="block text-xs font-bold text-slate-700">Manzil va do'kon filiali</label>
                             <button type="button" @click="locateMe()"
-                                    class="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-slate-900 transition-colors px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 border border-slate-200 shadow-2xs cursor-pointer">
-                                <i data-lucide="crosshair" class="w-3.5 h-3.5 text-[#211b2e]" :class="isLocating ? 'animate-spin' : ''"></i>
+                                    class="flex items-center gap-2 text-xs font-bold text-white transition-all px-3.5 py-1.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] shadow-sm border border-white/10 cursor-pointer group">
+                                <i data-lucide="crosshair" class="w-3.5 h-3.5 text-[#c8ff6a]" :class="isLocating ? 'animate-spin' : 'group-hover:rotate-45 transition-transform'"></i>
                                 <span x-text="isLocating ? 'Aniqlanmoqda...' : 'Mening joylashuvim'"></span>
                             </button>
                         </div>
@@ -754,7 +788,7 @@
                                         <option value="andijan">📍 Andijon / Андижан</option>
                                         <option value="namangan">📍 Namangan / Наманган</option>
                                         <option value="fergana">📍 Farg'ona / Фергана</option>
-                                        <option value="kokand">📍 Qo'qon / Кокаand</option>
+                                        <option value="kokand">📍 Qo'qon / Коканд</option>
                                         <option value="qarshi">📍 Qarshi / Карши</option>
                                         <option value="urgench">📍 Urganch / Ургенч</option>
                                         <option value="khiva">📍 Xiva / Хива</option>
@@ -815,16 +849,19 @@
                             <input type="hidden" name="branch_address" x-model="branchAddress">
 
                             <!-- Selected Address Confirmation Badge -->
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs transition-all text-slate-800">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0" :class="isReverseGeocoding ? 'animate-pulse text-amber-500' : ''"></i>
-                                    <span class="truncate">
-                                        Tanlangan manzil: <strong class="text-slate-900" x-text="branchAddress || 'Xaritadan tanlang'"></strong>
-                                    </span>
+                            <div class="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between text-xs transition-all text-slate-800">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-7 h-7 rounded-xl bg-[#211b2e] flex items-center justify-center shrink-0 shadow-xs">
+                                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#c8ff6a]" :class="isReverseGeocoding ? 'animate-bounce' : ''"></i>
+                                    </div>
+                                    <div class="truncate">
+                                        <span class="text-slate-500 font-medium">Tanlangan manzil:</span>
+                                        <strong class="text-slate-900 font-extrabold ml-1" x-text="branchAddress || 'Xaritadan tanlang'"></strong>
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-1 shrink-0 ml-2">
-                                    <span x-show="isReverseGeocoding" class="text-[10px] font-bold text-amber-600 animate-pulse">Aniqlanmoqda...</span>
-                                    <span class="font-mono text-[10px] text-slate-600 font-bold" x-text="Number(branchLat).toFixed(4) + ', ' + Number(branchLng).toFixed(4)"></span>
+                                <div class="flex items-center gap-2 shrink-0 ml-2">
+                                    <span x-show="isReverseGeocoding" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold animate-pulse">Aniqlanmoqda...</span>
+                                    <span class="font-mono text-[10px] px-2.5 py-1 rounded-lg bg-[#211b2e] text-[#c8ff6a] font-black tracking-wider shadow-2xs" x-text="Number(branchLat).toFixed(4) + ', ' + Number(branchLng).toFixed(4)"></span>
                                 </div>
                             </div>
 
@@ -887,9 +924,9 @@
 
                         <!-- Recommendations list -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-[11px]">
-                            <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-950 space-y-1">
-                                <div class="font-bold flex items-center gap-1.5 text-emerald-800">
-                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            <div class="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200 text-slate-800 space-y-1">
+                                <div class="font-bold flex items-center gap-1.5 text-slate-900">
+                                    <span class="w-4 h-4 rounded-md bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center text-[10px] font-black">✓</span>
                                     <span>Tavsiya etiladi:</span>
                                 </div>
                                 <div class="text-slate-600">• Yuqori sifatli rasm ishlating</div>
@@ -1044,7 +1081,7 @@
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <span class="font-bold text-xs text-slate-900">Olib ketish</span>
-                                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold">Faol</span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-black shadow-2xs">Faol</span>
                                     </div>
                                     <div class="text-[11px] text-slate-500" x-text="branchAddress || 'Toshkent, Beruniy ko\'chasi'"></div>
                                 </div>
@@ -1063,7 +1100,7 @@
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <span class="font-bold text-xs text-slate-900">Yetkazib berish</span>
-                                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold">Faol</span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-black shadow-2xs">Faol</span>
                                     </div>
                                     <div class="text-[11px] text-slate-500">Yetkazib berish turi: Bepul (150 000 so'mdan yuqori)</div>
                                 </div>
@@ -1142,7 +1179,7 @@
                                 <div class="p-2.5">
                                     <div class="font-bold text-xs text-slate-900 truncate" x-text="productNameUz || 'Test'"></div>
                                     <div class="flex items-baseline gap-2 mt-1">
-                                        <span class="font-black text-xs text-[#059669]" x-text="(productPrice || '100') + ' UZS'"></span>
+                                        <span class="font-black text-xs text-slate-900" x-text="(productPrice || '100') + ' UZS'"></span>
                                         <span class="text-[9px] text-slate-400 line-through" x-text="(productOldPrice || '150') + ' UZS'"></span>
                                     </div>
                                     <button type="button" class="w-full mt-2 py-1.5 rounded-lg bg-[#211b2e] hover:bg-[#2c243d] text-white text-[10px] font-bold transition-all shadow-xs cursor-pointer">
@@ -1555,22 +1592,77 @@
                 },
 
                 // Map & Geosearch methods (Yandex-Taxi style proximity search & reverse geocoding)
+                // Map & Geosearch methods with Auto-City detection and custom StoreBox 2.0 pin
                 citiesConfig: {
-                    tashkent: { name: 'Toshkent', lat: 41.2995, lng: 69.2401, zoom: 13, defaultAddress: "Toshkent shahri, Amir Temur xiyoboni" },
-                    samarkand: { name: 'Samarqand', lat: 39.6542, lng: 66.9597, zoom: 14, defaultAddress: "Samarqand shahri, Registon maydoni" },
-                    bukhara: { name: 'Buxoro', lat: 39.7747, lng: 64.4286, zoom: 14, defaultAddress: "Buxoro shahri, Labi Hovuz" },
-                    andijan: { name: 'Andijon', lat: 40.7821, lng: 72.3442, zoom: 14, defaultAddress: "Andijon shahri, Bobur shohko'chasi" },
-                    namangan: { name: 'Namangan', lat: 40.9983, lng: 71.6726, zoom: 14, defaultAddress: "Namangan shahri, Bobur bog'i" },
-                    fergana: { name: "Farg'ona", lat: 40.3842, lng: 71.7843, zoom: 14, defaultAddress: "Farg'ona shahri, Al-Farg'oniy ko'chasi" },
-                    kokand: { name: "Qo'qon", lat: 40.5286, lng: 70.9425, zoom: 14, defaultAddress: "Qo'qon shahri, Xudoyorxon o'rdasi" },
-                    qarshi: { name: 'Qarshi', lat: 38.8606, lng: 65.7891, zoom: 14, defaultAddress: "Qarshi shahri, Mustaqillik maydoni" },
-                    urgench: { name: 'Urganch', lat: 41.5562, lng: 60.6311, zoom: 14, defaultAddress: "Urganch shahri, Al-Xorazmiy ko'chasi" },
-                    khiva: { name: 'Xiva', lat: 41.3783, lng: 60.3639, zoom: 14, defaultAddress: "Xiva shahri, Ichan Qal'a" },
-                    nukus: { name: 'Nukus', lat: 42.4603, lng: 59.6166, zoom: 14, defaultAddress: "Nukus shahri, Berdaq shohko'chasi" },
-                    navoiy: { name: 'Navoiy', lat: 40.0844, lng: 65.3792, zoom: 14, defaultAddress: "Navoiy shahri, Karmana ko'chasi" },
-                    jizzakh: { name: 'Jizzax', lat: 40.1158, lng: 67.8422, zoom: 14, defaultAddress: "Jizzax shahri, Sharof Rashidov ko'chasi" },
-                    termez: { name: 'Termiz', lat: 37.2242, lng: 67.2783, zoom: 14, defaultAddress: "Termiz shahri, At-Termiziy ko'chasi" },
-                    gulistan: { name: 'Guliston', lat: 40.4897, lng: 68.7844, zoom: 14, defaultAddress: "Guliston shahri, Sayxun ko'chasi" }
+                    tashkent: { name: 'Toshkent', lat: 41.2995, lng: 69.2401, zoom: 13, defaultAddress: "Toshkent shahri, Amir Temur xiyoboni", aliases: ['tashkent', 'toshkent', 'ташкент'] },
+                    samarkand: { name: 'Samarqand', lat: 39.6542, lng: 66.9597, zoom: 14, defaultAddress: "Samarqand shahri, Registon maydoni", aliases: ['samarkand', 'samarqand', 'самарканд'] },
+                    bukhara: { name: 'Buxoro', lat: 39.7747, lng: 64.4286, zoom: 14, defaultAddress: "Buxoro shahri, Labi Hovuz", aliases: ['bukhara', 'buxoro', 'бухара'] },
+                    andijan: { name: 'Andijon', lat: 40.7821, lng: 72.3442, zoom: 14, defaultAddress: "Andijon shahri, Bobur shohko'chasi", aliases: ['andijan', 'andijon', 'андижан'] },
+                    namangan: { name: 'Namangan', lat: 40.9983, lng: 71.6726, zoom: 14, defaultAddress: "Namangan shahri, Bobur bog'i", aliases: ['namangan', 'наманган'] },
+                    fergana: { name: "Farg'ona", lat: 40.3842, lng: 71.7843, zoom: 14, defaultAddress: "Farg'ona shahri, Al-Farg'oniy ko'chasi", aliases: ['fergana', 'farg\'ona', 'fargona', 'фергана'] },
+                    kokand: { name: "Qo'qon", lat: 40.5286, lng: 70.9425, zoom: 14, defaultAddress: "Qo'qon shahri, Xudoyorxon o'rdasi", aliases: ['kokand', 'qo\'qon', 'qoqon', 'коканд'] },
+                    qarshi: { name: 'Qarshi', lat: 38.8606, lng: 65.7891, zoom: 14, defaultAddress: "Qarshi shahri, Mustaqillik maydoni", aliases: ['qarshi', 'karshi', 'карши', 'qashqadaryo', 'кашкадарья'] },
+                    urgench: { name: 'Urganch', lat: 41.5562, lng: 60.6311, zoom: 14, defaultAddress: "Urganch shahri, Al-Xorazmiy ko'chasi", aliases: ['urgench', 'urganch', 'ургенч', 'xorazm', 'хорезм'] },
+                    khiva: { name: 'Xiva', lat: 41.3783, lng: 60.3639, zoom: 14, defaultAddress: "Xiva shahri, Ichan Qal'a", aliases: ['khiva', 'xiva', 'хива'] },
+                    nukus: { name: 'Nukus', lat: 42.4603, lng: 59.6166, zoom: 14, defaultAddress: "Nukus shahri, Berdaq shohko'chasi", aliases: ['nukus', 'нукус', 'qoraqalpog\'iston', 'каракалпакстан'] },
+                    navoiy: { name: 'Navoiy', lat: 40.0844, lng: 65.3792, zoom: 14, defaultAddress: "Navoiy shahri, Karmana ko'chasi", aliases: ['navoiy', 'navoi', 'навои'] },
+                    jizzakh: { name: 'Jizzax', lat: 40.1158, lng: 67.8422, zoom: 14, defaultAddress: "Jizzax shahri, Sharof Rashidov ko'chasi", aliases: ['jizzakh', 'jizzax', 'джизак'] },
+                    termez: { name: 'Termiz', lat: 37.2242, lng: 67.2783, zoom: 14, defaultAddress: "Termiz shahri, At-Termiziy ko'chasi", aliases: ['termez', 'termiz', 'термез', 'surxondaryo', 'сурхандарья'] },
+                    gulistan: { name: 'Guliston', lat: 40.4897, lng: 68.7844, zoom: 14, defaultAddress: "Guliston shahri, Sayxun ko'chasi", aliases: ['gulistan', 'guliston', 'гулистан', 'sirdaryo', 'сырдарья'] }
+                },
+
+                detectCity(lat, lng, addressText, propObj) {
+                    const text = [
+                        addressText,
+                        propObj?.city,
+                        propObj?.state,
+                        propObj?.county,
+                        propObj?.district,
+                        propObj?.name
+                    ].filter(Boolean).join(' ').toLowerCase();
+
+                    // 1. Text/aliases match
+                    for (const [key, cfg] of Object.entries(this.citiesConfig)) {
+                        if (cfg.aliases && cfg.aliases.some(alias => text.includes(alias.toLowerCase()))) {
+                            return key;
+                        }
+                    }
+
+                    // 2. Coordinate proximity check (find closest region center)
+                    if (lat && lng) {
+                        let minDistance = Infinity;
+                        let bestKey = null;
+                        for (const [key, cfg] of Object.entries(this.citiesConfig)) {
+                            const dLat = (lat - cfg.lat) * 111.0;
+                            const dLng = (lng - cfg.lng) * 111.0 * Math.cos((lat * Math.PI) / 180);
+                            const dist = Math.sqrt(dLat * dLat + dLng * dLng); // distance in km
+                            if (dist < minDistance) {
+                                minDistance = dist;
+                                bestKey = key;
+                            }
+                        }
+                        if (minDistance < 200) {
+                            return bestKey;
+                        }
+                    }
+                    return null;
+                },
+
+                createStoreboxPin() {
+                    return L.divIcon({
+                        html: `
+                            <div style="position:relative; width:36px; height:44px; display:flex; align-items:center; justify-content:center; filter:drop-shadow(0 6px 14px rgba(33,27,46,0.4));">
+                                <div style="width:34px; height:34px; background:#211b2e; border:2.5px solid #ffffff; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center;">
+                                    <div style="width:11px; height:11px; background:#c8ff6a; border-radius:50%; transform:rotate(45deg); box-shadow:0 0 10px #c8ff6a;"></div>
+                                </div>
+                                <div style="position:absolute; bottom:1px; left:50%; transform:translateX(-50%); width:10px; height:3px; background:rgba(15,23,42,0.3); border-radius:50%; filter:blur(1px);"></div>
+                            </div>
+                        `,
+                        className: 'custom-storebox-pin',
+                        iconSize: [36, 44],
+                        iconAnchor: [18, 44],
+                        popupAnchor: [0, -44]
+                    });
                 },
 
                 selectCity(cityKey) {
@@ -1611,7 +1703,8 @@
                         attribution: '© Google Maps'
                     }).addTo(this.mapObj);
 
-                    this.mapMarker = L.marker([this.branchLat, this.branchLng], { draggable: true }).addTo(this.mapObj);
+                    const pin = this.createStoreboxPin();
+                    this.mapMarker = L.marker([this.branchLat, this.branchLng], { draggable: true, icon: pin }).addTo(this.mapObj);
                     this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 Boshlang'ich joylashuv</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${this.branchAddress}</div>`);
 
                     this.mapMarker.on('dragend', (e) => {
@@ -1637,6 +1730,12 @@
                         this.mapMarker.setLatLng([this.branchLat, this.branchLng]);
                     }
 
+                    // Proactively detect city from coordinates
+                    const quickCity = this.detectCity(this.branchLat, this.branchLng, '', null);
+                    if (quickCity && quickCity !== this.activeCity) {
+                        this.activeCity = quickCity;
+                    }
+
                     // Try Photon reverse first (fast, open CORS, rich POI/street names)
                     const photonUrl = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;
                     fetch(photonUrl)
@@ -1648,6 +1747,12 @@
                                 const uniqueParts = [];
                                 parts.forEach(pt => { if (!uniqueParts.includes(pt)) uniqueParts.push(pt); });
                                 const address = uniqueParts.join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+                                const detected = this.detectCity(lat, lng, address, p);
+                                if (detected && detected !== this.activeCity) {
+                                    this.activeCity = detected;
+                                }
+
                                 this.applyReverseResult(address, p.name || address);
                             } else {
                                 this.fallbackReverse(lat, lng);
@@ -1663,6 +1768,10 @@
                         .then(r => r.json())
                         .then(data => {
                             if (data && data.address) {
+                                const detected = this.detectCity(lat, lng, data.address, data);
+                                if (detected && detected !== this.activeCity) {
+                                    this.activeCity = detected;
+                                }
                                 this.applyReverseResult(data.address, data.display_name || data.address);
                             } else {
                                 this.isReverseGeocoding = false;
@@ -1747,6 +1856,11 @@
                     this.mapSearch = res.name || res.display_name;
                     this.searchResults = [];
 
+                    const detected = this.detectCity(this.branchLat, this.branchLng, res.display_name, res);
+                    if (detected && detected !== this.activeCity) {
+                        this.activeCity = detected;
+                    }
+
                     if (this.mapObj && this.mapMarker) {
                         this.mapObj.flyTo([this.branchLat, this.branchLng], 17, { animate: true, duration: 1 });
                         this.mapMarker.setLatLng([this.branchLat, this.branchLng]);
@@ -1766,6 +1880,10 @@
                             this.isLocating = false;
                             const lat = pos.coords.latitude;
                             const lng = pos.coords.longitude;
+                            const quickCity = this.detectCity(lat, lng, '', null);
+                            if (quickCity && quickCity !== this.activeCity) {
+                                this.activeCity = quickCity;
+                            }
                             if (this.mapObj) {
                                 this.mapObj.flyTo([lat, lng], 17, { animate: true, duration: 1 });
                             }

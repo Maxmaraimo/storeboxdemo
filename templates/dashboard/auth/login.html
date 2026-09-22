@@ -2,6 +2,27 @@
 
 {% block title %}Kirish — StoreBox 2.0{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Prevent Chrome / Safari yellow/blue autofill background */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+        -webkit-text-fill-color: #0f172a !important;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+    .dark input:-webkit-autofill,
+    .dark input:-webkit-autofill:hover, 
+    .dark input:-webkit-autofill:focus, 
+    .dark input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #161b26 inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden" style="background: radial-gradient(130% 90% at 50% 0%, #ffffff 0%, #edf2f8 35%, #e1e9f3 70%, #d4dfea 100%);">
 
@@ -39,7 +60,7 @@
             countries: [
                 { flag: '🇺🇿', dialCode: '+998', code: '998', digits: 9, name: 'O\'zbekiston', placeholder: '(90) 123-45-67' },
                 { flag: '🇰🇿', dialCode: '+7', code: '7', digits: 10, name: 'Qozog\'iston', placeholder: '(701) 123-45-67' },
-                { flag: '🇷🇺', dialCode: '+7', code: '7', digits: 10, name: 'Rossiya', placeholder: '(999) 123-45-67' },
+                { flag: '🇷🇺', dialCode: '+7', code: '7', digits: 10, name: 'Россия', placeholder: '(999) 123-45-67' },
                 { flag: '🇰🇬', dialCode: '+996', code: '996', digits: 9, name: 'Qirg\'iziston', placeholder: '(555) 123-456' },
                 { flag: '🇹🇯', dialCode: '+992', code: '992', digits: 9, name: 'Tojikiston', placeholder: '(92) 123-45-67' }
             ],
@@ -103,13 +124,13 @@
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
                         <span x-text="mode === 'phone' ? 'Telefon raqam' : 'Login yoki Email'"></span>
                     </label>
-                    <button type="button" @click="mode = (mode === 'phone' ? 'login' : 'phone')" class="text-[11px] font-bold text-slate-700 dark:text-[#10b981] hover:underline">
+                    <button type="button" @click="mode = (mode === 'phone' ? 'login' : 'phone')" class="text-[11px] font-bold text-slate-700 dark:text-[#c8ff6a] hover:underline">
                         <span x-text="mode === 'phone' ? 'Login orqali kirish' : 'Telefon orqali kirish'"></span>
                     </button>
                 </div>
 
                 <!-- Case 1: Phone Mode -->
-                <div x-show="mode === 'phone'" class="relative flex rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus-within:border-[#211b2e] dark:focus-within:border-[#10b981] focus-within:ring-2 focus-within:ring-[#10b981]/40 transition-all overflow-visible">
+                <div x-show="mode === 'phone'" class="relative flex rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus-within:border-[#211b2e] dark:focus-within:border-[#c8ff6a] focus-within:ring-2 focus-within:ring-[#c8ff6a]/30 transition-all overflow-visible">
                     <div class="relative shrink-0">
                         <button type="button" @click="countryOpen = !countryOpen" class="h-full px-3 py-3 flex items-center gap-1.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200/70 rounded-l-2xl border-r border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-white transition-colors">
                             <span class="text-base leading-none" x-text="country.flag"></span>

@@ -3,6 +3,23 @@
 {% block title %}Ro'yxatdan o'tish — StoreBox 2.0{% endblock %}
 
 {% block content %}
+<style>
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+        -webkit-text-fill-color: #0f172a !important;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+    .dark input:-webkit-autofill,
+    .dark input:-webkit-autofill:hover, 
+    .dark input:-webkit-autofill:focus, 
+    .dark input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #161b26 inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+</style>
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
      style="background: radial-gradient(130% 90% at 50% 0%, #ffffff 0%, #edf2f8 35%, #e1e9f3 70%, #d4dfea 100%) fixed;"
      x-data="phoneRegister()">
@@ -175,13 +192,17 @@
                                 Namuna: <span class="font-mono font-semibold text-slate-600 dark:text-slate-300" x-text="selectedCountry.dialCode + ' ' + selectedCountry.placeholder"></span>
                             </span>
                             <template x-if="rawDigits.length > 0">
-                                <span class="font-bold flex items-center gap-1 transition-colors"
-                                      :class="isComplete ? 'text-[#211b2e] dark:text-[#c8ff6a]' : 'text-slate-400'">
+                                <div>
                                     <template x-if="isComplete">
-                                        <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 dark:text-[#c8ff6a]"></i>
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-black shadow-2xs">
+                                            <i data-lucide="check" class="w-3 h-3 text-[#c8ff6a]"></i>
+                                            <span>To'liq kiritildi</span>
+                                        </span>
                                     </template>
-                                    <span x-text="isComplete ? 'To\'liq kiritildi' : (rawDigits.length + ' / ' + selectedCountry.digits + ' ta raqam')"></span>
-                                </span>
+                                    <template x-if="!isComplete">
+                                        <span class="text-[11px] font-bold text-slate-400" x-text="rawDigits.length + ' / ' + selectedCountry.digits + ' ta raqam'"></span>
+                                    </template>
+                                </div>
                             </template>
                         </div>
                     </template>
