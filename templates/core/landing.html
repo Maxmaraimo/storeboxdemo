@@ -2983,9 +2983,9 @@ h1 span {
    STOREBOX 2.0 AUTHENTIC PLATFORM SHOWCASE
    ========================================================= */
 .platform-showcase-section {
-    padding-block: 70px 90px;
+    padding-block: 20px 0;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .platform-tabs-wrapper {
@@ -3185,7 +3185,7 @@ h1 span {
 .platform-screen-viewport {
     position: relative;
     width: 100%;
-    min-height: 480px;
+    min-height: 320px;
     background: #f8fafc;
     overflow: hidden;
 }
@@ -3407,7 +3407,103 @@ h1 span {
 
 @media (min-width: 992px) {
     .platform-showcase-section {
-        padding-block: 70px 60px;
+        position: relative;
+        padding-top: 10px;
+        padding-bottom: 0;
+    }
+    .platform-sticky-container {
+        position: relative;
+        min-height: 280vh;
+        width: 100%;
+    }
+    .platform-sticky-shell {
+        position: sticky;
+        top: 66px;
+        width: 100%;
+        max-width: 1320px;
+        margin-inline: auto;
+        padding-inline: 20px;
+        padding-top: 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        z-index: 5;
+    }
+    .platform-sticky-shell .section-heading {
+        margin-bottom: 6px !important;
+    }
+    .platform-sticky-shell .section-heading .section-kicker {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+    .platform-sticky-shell .section-heading h2 {
+        font-size: clamp(21px, 2.2vw, 32px);
+        margin-bottom: 3px;
+        line-height: 1.15;
+    }
+    .platform-sticky-shell .section-heading p {
+        font-size: 12.5px;
+        line-height: 1.35;
+        max-width: 660px;
+        margin-inline: auto;
+    }
+    .platform-sticky-shell .platform-tabs-wrapper {
+        margin-top: 0 !important;
+        margin-bottom: 8px !important;
+    }
+    .platform-sticky-shell .platform-tabs-scroll {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-block: 2px;
+    }
+    .platform-stage-card {
+        max-width: 1240px;
+        width: 100%;
+        border-radius: 20px;
+    }
+    .platform-screen-viewport {
+        height: clamp(320px, 48vh, 580px);
+    }
+    .platform-image-wrapper {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+    #platformMainImg {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+    }
+}
+
+@media (max-width: 991px) {
+    .platform-showcase-section {
+        padding-block: 60px 40px;
+    }
+    .platform-sticky-container {
+        position: relative;
+        min-height: auto;
+    }
+    .platform-sticky-shell {
+        position: static;
+        width: 100%;
+        padding-inline: 16px;
+    }
+    .platform-screen-viewport {
+        min-height: 420px;
+        height: auto;
+    }
+    .platform-image-wrapper {
+        width: 100%;
+        height: auto;
+    }
+    #platformMainImg {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
     }
 }
 
@@ -4835,8 +4931,10 @@ h1 span {
                 <!-- =========================================================
              STOREBOX 2.0 AUTHENTIC PLATFORM SHOWCASE
              ========================================================= -->
-        <section class="platform-showcase-section section-shell wow-reveal" id="dashboard">
-            <div class="section-heading text-center" style="max-width: 860px; margin-inline: auto; text-align: center;">
+        <section class="platform-showcase-section wow-reveal" id="dashboard">
+            <div class="platform-sticky-container" id="platformStickyContainer">
+                <div class="platform-sticky-shell" id="platformStickyShell">
+                    <div class="section-heading text-center" style="max-width: 860px; margin-inline: auto; text-align: center;">
                         <span class="section-kicker" data-i18n="platformKicker">StoreBox 2.0 Boshqaruv Markazi</span>
                         <h2 data-i18n="platformTitle">Bitta ekranda butun biznes nazorati</h2>
                         <p data-i18n="platformLead">Kassa, buyurtmalar, kuryerlar, xodimlar va tovarlar katalogi — barchasi real vaqtda sinxronlashgan yagona boshqaruv tizimi.</p>
@@ -4957,6 +5055,8 @@ h1 span {
                                         </li>
                                     </ul>
                                 </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -7001,7 +7101,7 @@ h1 span {
 
     window.platformModuleKeys = ["dashboard", "yespos", "courier", "staff", "design", "qr", "products", "telegram"];
     window.currentPlatformModIdx = 0;
-    let isPlatformHovered = false;
+
 
     // Preload all 8 platform screenshots immediately
     window.platformModuleKeys.forEach((key) => {
@@ -7082,18 +7182,82 @@ h1 span {
 
 
 
-    window.goToPlatformModule = function(idx) {
+    let isProgrammaticSwitch = false;
+
+    function syncTabScroll(modKey) {
+        const tabsList = document.getElementById("platformTabsList");
+        const activeBtn = document.querySelector(`.platform-tab-btn[data-module="${modKey}"]`);
+        if (tabsList && activeBtn) {
+            const btnLeft = activeBtn.offsetLeft;
+            const btnWidth = activeBtn.offsetWidth;
+            const listWidth = tabsList.offsetWidth;
+            const targetScroll = btnLeft - (listWidth / 2) + (btnWidth / 2);
+            tabsList.scrollTo({ left: targetScroll, behavior: 'smooth' });
+        }
+    }
+
+    window.goToPlatformModule = function(idx, syncScroll = false) {
         if (idx < 0 || idx >= window.platformModuleKeys.length) return;
         window.currentPlatformModIdx = idx;
         const modKey = window.platformModuleKeys[idx];
         window.renderPlatformModule(modKey, true);
+        syncTabScroll(modKey);
 
-        // Auto-scroll active tab into view in tabs bar
-        const activeBtn = document.querySelector(`.platform-tab-btn[data-module="${modKey}"]`);
-        if (activeBtn) {
-            activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        if (syncScroll && window.innerWidth >= 992) {
+            const container = document.getElementById("platformStickyContainer");
+            const shell = document.getElementById("platformStickyShell");
+            if (container && shell) {
+                const containerTop = window.scrollY + container.getBoundingClientRect().top;
+                const pinDistance = container.offsetHeight - shell.offsetHeight;
+                if (pinDistance > 0) {
+                    const segment = pinDistance / window.platformModuleKeys.length;
+                    const targetScrollY = (containerTop - 68) + (idx * segment) + (segment * 0.5);
+                    isProgrammaticSwitch = true;
+                    window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+                    setTimeout(() => { isProgrammaticSwitch = false; }, 400);
+                }
+            }
         }
     };
+
+    // Scroll-driven slide switching on desktop
+    function handlePlatformScroll() {
+        if (window.innerWidth < 992 || isProgrammaticSwitch) return;
+        const container = document.getElementById("platformStickyContainer");
+        const shell = document.getElementById("platformStickyShell");
+        if (!container || !shell) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const pinTop = 68;
+        const pinDistance = container.offsetHeight - shell.offsetHeight;
+        if (pinDistance <= 0) return;
+
+        const scrollOffset = pinTop - containerRect.top;
+
+        if (scrollOffset >= 0 && scrollOffset <= pinDistance) {
+            const progress = Math.min(Math.max(scrollOffset / pinDistance, 0), 0.999);
+            const totalModules = window.platformModuleKeys.length;
+            const targetIdx = Math.floor(progress * totalModules);
+
+            if (targetIdx !== window.currentPlatformModIdx) {
+                window.currentPlatformModIdx = targetIdx;
+                const modKey = window.platformModuleKeys[targetIdx];
+                window.renderPlatformModule(modKey, false);
+                syncTabScroll(modKey);
+            }
+        }
+    }
+
+    let scrollTicking = false;
+    window.addEventListener("scroll", () => {
+        if (!scrollTicking) {
+            requestAnimationFrame(() => {
+                handlePlatformScroll();
+                scrollTicking = false;
+            });
+            scrollTicking = true;
+        }
+    }, { passive: true });
 
     // Touch Swipe gestures for mobile
     const stageCardEl = document.getElementById("platformStageCard");
@@ -7113,16 +7277,13 @@ h1 span {
                 const diffY = e.changedTouches[0].clientY - touchStartY;
                 if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
                     if (diffX < 0) {
-                        window.goToPlatformModule((window.currentPlatformModIdx + 1) % window.platformModuleKeys.length);
+                        window.goToPlatformModule((window.currentPlatformModIdx + 1) % window.platformModuleKeys.length, false);
                     } else {
-                        window.goToPlatformModule((window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length);
+                        window.goToPlatformModule((window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length, false);
                     }
                 }
             }
         }, { passive: true });
-
-        stageCardEl.addEventListener("mouseenter", () => { isPlatformHovered = true; });
-        stageCardEl.addEventListener("mouseleave", () => { isPlatformHovered = false; });
     }
 
     // Prev / Next button click events
@@ -7132,36 +7293,23 @@ h1 span {
         prevBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             const prevIdx = (window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length;
-            window.goToPlatformModule(prevIdx);
+            window.goToPlatformModule(prevIdx, false);
         });
     }
     if (nextBtn) {
         nextBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             const nextIdx = (window.currentPlatformModIdx + 1) % window.platformModuleKeys.length;
-            window.goToPlatformModule(nextIdx);
+            window.goToPlatformModule(nextIdx, false);
         });
     }
 
     // Tab button click events
     document.querySelectorAll(".platform-tab-btn").forEach((btn, idx) => {
         btn.addEventListener("click", () => {
-            window.goToPlatformModule(idx);
+            window.goToPlatformModule(idx, true);
         });
     });
-
-    const tabsListEl = document.getElementById("platformTabsList");
-    if (tabsListEl) {
-        tabsListEl.addEventListener("mouseenter", () => { isPlatformHovered = true; });
-        tabsListEl.addEventListener("mouseleave", () => { isPlatformHovered = false; });
-    }
-
-    // Auto-cycle platform tabs every 5.5s when not hovered
-    setInterval(() => {
-        if (isPlatformHovered || document.hidden) return;
-        const nextIdx = ((window.currentPlatformModIdx || 0) + 1) % window.platformModuleKeys.length;
-        window.goToPlatformModule(nextIdx);
-    }, 5500);
 
     // Initial render
     window.renderPlatformModule("dashboard");
