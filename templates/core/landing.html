@@ -3355,7 +3355,7 @@ h1 span {
 /* Navigation arrows on the showcase stage */
 .platform-nav-arrow {
     position: absolute;
-    top: 36%;
+    top: 50%;
     transform: translateY(-50%);
     width: 44px;
     height: 44px;
@@ -3408,74 +3408,67 @@ h1 span {
 @media (min-width: 992px) {
     .platform-showcase-section {
         position: relative;
-        padding-top: 10px;
-        padding-bottom: 0;
+        padding-block: 70px 50px;
     }
     .platform-sticky-container {
         position: relative;
-        min-height: 280vh;
+        min-height: auto;
         width: 100%;
     }
     .platform-sticky-shell {
-        position: sticky;
-        top: 66px;
+        position: static;
         width: 100%;
         max-width: 1320px;
         margin-inline: auto;
         padding-inline: 20px;
-        padding-top: 4px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        z-index: 5;
     }
-    .platform-sticky-shell .section-heading {
-        margin-bottom: 6px !important;
+    .platform-showcase-section .section-heading {
+        margin-bottom: 18px !important;
     }
-    .platform-sticky-shell .section-heading .section-kicker {
-        font-size: 11px;
-        margin-bottom: 3px;
+    .platform-showcase-section .section-heading h2 {
+        font-size: clamp(26px, 2.8vw, 38px);
+        margin-bottom: 6px;
+        line-height: 1.2;
     }
-    .platform-sticky-shell .section-heading h2 {
-        font-size: clamp(21px, 2.2vw, 32px);
-        margin-bottom: 3px;
-        line-height: 1.15;
-    }
-    .platform-sticky-shell .section-heading p {
-        font-size: 12.5px;
-        line-height: 1.35;
-        max-width: 660px;
+    .platform-showcase-section .section-heading p {
+        font-size: 14px;
+        line-height: 1.45;
+        max-width: 720px;
         margin-inline: auto;
     }
-    .platform-sticky-shell .platform-tabs-wrapper {
+    .platform-tabs-wrapper {
         margin-top: 0 !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 22px !important;
     }
-    .platform-sticky-shell .platform-tabs-scroll {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        scrollbar-width: none;
-        padding-block: 2px;
+    .platform-tabs-scroll {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
     }
     .platform-stage-card {
         max-width: 1240px;
         width: 100%;
         border-radius: 20px;
+        margin-inline: auto;
     }
     .platform-screen-viewport {
-        height: clamp(320px, 48vh, 580px);
+        height: auto;
+        min-height: 480px;
     }
     .platform-image-wrapper {
         width: 100%;
-        height: 100%;
+        height: auto;
         display: block;
     }
     #platformMainImg {
         width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: top center;
+        height: auto;
+        display: block;
+        object-fit: contain;
     }
 }
 
@@ -3493,7 +3486,7 @@ h1 span {
         padding-inline: 16px;
     }
     .platform-screen-viewport {
-        min-height: 420px;
+        min-height: 380px;
         height: auto;
     }
     .platform-image-wrapper {
@@ -7196,70 +7189,32 @@ h1 span {
         }
     }
 
-    window.goToPlatformModule = function(idx, syncScroll = false) {
+    window.goToPlatformModule = function(idx) {
         if (idx < 0 || idx >= window.platformModuleKeys.length) return;
         window.currentPlatformModIdx = idx;
         const modKey = window.platformModuleKeys[idx];
         window.renderPlatformModule(modKey, true);
         syncTabScroll(modKey);
-
-        if (syncScroll && window.innerWidth >= 992) {
-            const container = document.getElementById("platformStickyContainer");
-            const shell = document.getElementById("platformStickyShell");
-            if (container && shell) {
-                const containerTop = window.scrollY + container.getBoundingClientRect().top;
-                const pinDistance = container.offsetHeight - shell.offsetHeight;
-                if (pinDistance > 0) {
-                    const segment = pinDistance / window.platformModuleKeys.length;
-                    const targetScrollY = (containerTop - 68) + (idx * segment) + (segment * 0.5);
-                    isProgrammaticSwitch = true;
-                    window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
-                    setTimeout(() => { isProgrammaticSwitch = false; }, 400);
-                }
-            }
-        }
     };
 
-    // Scroll-driven slide switching on desktop
-    function handlePlatformScroll() {
-        if (window.innerWidth < 992 || isProgrammaticSwitch) return;
-        const container = document.getElementById("platformStickyContainer");
-        const shell = document.getElementById("platformStickyShell");
-        if (!container || !shell) return;
+    // Keyboard navigation (Left / Right arrow keys) when showcase is in view
+    window.addEventListener("keydown", (e) => {
+        const stage = document.getElementById("platformStageCard");
+        if (!stage) return;
+        const rect = stage.getBoundingClientRect();
+        const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
+        if (!isInViewport) return;
 
-        const containerRect = container.getBoundingClientRect();
-        const pinTop = 68;
-        const pinDistance = container.offsetHeight - shell.offsetHeight;
-        if (pinDistance <= 0) return;
-
-        const scrollOffset = pinTop - containerRect.top;
-
-        if (scrollOffset >= 0 && scrollOffset <= pinDistance) {
-            const progress = Math.min(Math.max(scrollOffset / pinDistance, 0), 0.999);
-            const totalModules = window.platformModuleKeys.length;
-            const targetIdx = Math.floor(progress * totalModules);
-
-            if (targetIdx !== window.currentPlatformModIdx) {
-                window.currentPlatformModIdx = targetIdx;
-                const modKey = window.platformModuleKeys[targetIdx];
-                window.renderPlatformModule(modKey, false);
-                syncTabScroll(modKey);
-            }
+        if (e.key === "ArrowLeft") {
+            const prevIdx = (window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length;
+            window.goToPlatformModule(prevIdx);
+        } else if (e.key === "ArrowRight") {
+            const nextIdx = (window.currentPlatformModIdx + 1) % window.platformModuleKeys.length;
+            window.goToPlatformModule(nextIdx);
         }
-    }
+    });
 
-    let scrollTicking = false;
-    window.addEventListener("scroll", () => {
-        if (!scrollTicking) {
-            requestAnimationFrame(() => {
-                handlePlatformScroll();
-                scrollTicking = false;
-            });
-            scrollTicking = true;
-        }
-    }, { passive: true });
-
-    // Touch Swipe gestures for mobile
+    // Touch Swipe gestures for mobile & tablets
     const stageCardEl = document.getElementById("platformStageCard");
     if (stageCardEl) {
         let touchStartX = 0;
@@ -7277,9 +7232,9 @@ h1 span {
                 const diffY = e.changedTouches[0].clientY - touchStartY;
                 if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
                     if (diffX < 0) {
-                        window.goToPlatformModule((window.currentPlatformModIdx + 1) % window.platformModuleKeys.length, false);
+                        window.goToPlatformModule((window.currentPlatformModIdx + 1) % window.platformModuleKeys.length);
                     } else {
-                        window.goToPlatformModule((window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length, false);
+                        window.goToPlatformModule((window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length);
                     }
                 }
             }
@@ -7293,21 +7248,21 @@ h1 span {
         prevBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             const prevIdx = (window.currentPlatformModIdx - 1 + window.platformModuleKeys.length) % window.platformModuleKeys.length;
-            window.goToPlatformModule(prevIdx, false);
+            window.goToPlatformModule(prevIdx);
         });
     }
     if (nextBtn) {
         nextBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             const nextIdx = (window.currentPlatformModIdx + 1) % window.platformModuleKeys.length;
-            window.goToPlatformModule(nextIdx, false);
+            window.goToPlatformModule(nextIdx);
         });
     }
 
     // Tab button click events
     document.querySelectorAll(".platform-tab-btn").forEach((btn, idx) => {
         btn.addEventListener("click", () => {
-            window.goToPlatformModule(idx, true);
+            window.goToPlatformModule(idx);
         });
     });
 
