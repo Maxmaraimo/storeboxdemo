@@ -12,3 +12,5 @@ staticfiles/
 *.bak*
 scratch_*
 scratch/
+*.lock
+.telegram_polling.lock
