@@ -1,284 +1,394 @@
 {% load l10n %}<!DOCTYPE html>
-<html lang="{{ current_lang|default:'uz' }}" class="h-full bg-slate-50">
+<html lang="{{ current_lang|default:'uz' }}" class="h-full bg-slate-100">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{{ t.courier_panel_title|default:"Kuryer Paneli" }} — StoreBox</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>{{ t.courier_panel_title|default:"Kuryer Paneli" }} — StoreBox 2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
-        body { font-family: 'Inter', "Segoe UI", Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-tap-highlight-color: transparent;
+        }
         [x-cloak] { display: none !important; }
+
+        /* StoreBox 2.0 Brand Colors & Buttons */
+        .btn-storebox-lime {
+            background-color: #c8ff6a;
+            color: #120d1d;
+            font-weight: 900;
+            box-shadow: 0 4px 18px rgba(200, 255, 106, 0.45);
+            transition: all 0.15s ease-out;
+        }
+        .btn-storebox-lime:hover {
+            background-color: #bbf556;
+            box-shadow: 0 6px 24px rgba(200, 255, 106, 0.6);
+        }
+        .btn-storebox-lime:active {
+            transform: scale(0.98);
+        }
+
+        /* Radar pulse around vehicle & destination */
         @keyframes radar-pulse {
-            0% { transform: scale(0.9); opacity: 0.9; }
-            50% { transform: scale(1.4); opacity: 0.3; }
-            100% { transform: scale(1.8); opacity: 0; }
+            0% { transform: scale(0.85); opacity: 0.95; }
+            50% { transform: scale(1.35); opacity: 0.35; }
+            100% { transform: scale(1.85); opacity: 0; }
         }
         .radar-pulse-ring {
             position: absolute;
-            inset: -8px;
+            inset: -10px;
             border-radius: 50%;
-            background: rgba(200, 255, 106, 0.45);
+            background: rgba(200, 255, 106, 0.5);
             animation: radar-pulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
             pointer-events: none;
         }
         .dest-pulse-ring {
             position: absolute;
-            inset: -8px;
+            inset: -10px;
             border-radius: 50%;
-            background: rgba(15, 23, 42, 0.25);
+            background: rgba(33, 27, 46, 0.35);
             animation: radar-pulse 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
             pointer-events: none;
         }
-        .nav-arrow-3d-wrap {
+
+        /* 3D First-Person Perspective Navigation Container (Yandex / Waze style) */
+        .nav-perspective-viewport {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            background: #0f172a;
+            z-index: 10;
+            isolation: isolate;
+        }
+        .nav-perspective-viewport.mode-3d {
+            perspective: 1200px;
+            perspective-origin: 50% 70%;
+        }
+        .nav-perspective-viewport.mode-3d #liveNavigatorMap {
+            position: absolute;
+            top: -60vh;
+            left: -80vw;
+            width: 260vw;
+            height: 260vh;
+            transform-origin: 50% 50%;
+            transform: rotateX(36deg) rotateZ(calc(-1 * var(--nav-bearing-deg, 0deg))) scale(1.15);
+            transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: transform;
+        }
+        .nav-perspective-viewport.mode-2d #liveNavigatorMap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            transform-origin: 50% 50%;
+            transform: none;
+            transition: transform 0.35s ease-out;
+        }
+
+        /* Subtle atmospheric horizon fade at top */
+        .nav-horizon-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 14%;
+            background: linear-gradient(to bottom, rgba(33, 27, 46, 0.6) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 3D Navigation Vehicle Arrow & Headlights */
+        .nav-vehicle-3d-wrap {
             position: relative;
-            width: 56px;
-            height: 56px;
+            width: 64px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: none;
         }
-        .nav-arrow-3d-body {
-            width: 48px;
-            height: 48px;
-            filter: drop-shadow(0 8px 16px rgba(217, 119, 6, 0.6)) drop-shadow(0 2px 4px rgba(0,0,0,0.35));
-            transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+        .nav-vehicle-headlight-cone {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 120px;
+            background: linear-gradient(to top, rgba(200, 255, 106, 0.55), rgba(200, 255, 106, 0.15) 60%, transparent 100%);
+            clip-path: polygon(35% 100%, 65% 100%, 100% 0%, 0% 0%);
+            pointer-events: none;
+            filter: blur(2px);
+        }
+        .nav-vehicle-body {
+            width: 46px;
+            height: 46px;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(200,255,106,0.5));
             transform-origin: center center;
+            transition: transform 0.2s ease-out;
         }
-        .btn-storebox-lime {
-            background-color: #c8ff6a;
-            color: #120d1d;
-            font-weight: 900;
-            box-shadow: 0 4px 16px rgba(200, 255, 106, 0.4);
-            transition: all 0.15s ease-out;
-        }
-        .btn-storebox-lime:hover {
-            background-color: #bbf556;
-            box-shadow: 0 6px 20px rgba(200, 255, 106, 0.55);
-        }
-        .btn-storebox-lime:active {
-            transform: scale(0.98);
+
+        /* Prevent Chrome blue autofill */
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+            -webkit-text-fill-color: #0f172a !important;
         }
     </style>
 </head>
-<body class="h-full flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-[#c8ff6a] selection:text-[#120d1d]" x-data="courierApp()">
+<body class="h-full flex flex-col bg-slate-100 text-slate-800 antialiased selection:bg-[#c8ff6a] selection:text-[#120d1d]" x-data="courierApp()">
 
-    <!-- TOP APP BAR -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 shadow-xs">
-        <div class="max-w-2xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-[#120d1d] text-[#c8ff6a] font-black flex items-center justify-center text-lg shadow-sm border border-[#c8ff6a]/20">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+    <!-- MOBILE-OPTIMIZED TOP BAR -->
+    <header class="sticky top-0 z-30 bg-[#211b2e] text-white px-4 py-3 shadow-lg border-b border-white/10">
+        <div class="max-w-xl mx-auto flex items-center justify-between">
+            <!-- Left: Brand Logo & Courier Info -->
+            <div class="flex items-center gap-2.5">
+                <!-- StoreBox 2.0 Cube -->
+                <div class="w-10 h-10 rounded-2xl bg-[#171320] border border-white/10 flex items-center justify-center shadow-md shadow-black/30 shrink-0">
+                    <svg viewBox="0 0 32 32" class="w-5 h-5 stroke-[#c8ff6a] fill-none stroke-[2] stroke-linejoin-round">
+                        <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
+                        <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
                     </svg>
                 </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-sm font-black text-slate-900 truncate" x-text="courierInfo.name || 'Kuryer'">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <h1 class="text-sm font-black text-white truncate max-w-[140px] sm:max-w-xs" x-text="courierInfo.name || 'Kuryer'">
                             {% if courier %}{{ courier.name }}{% else %}{{ request.user.first_name|default:request.user.username }}{% endif %}
                         </h1>
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-600 border border-emerald-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-[#c8ff6a]/15 text-[#c8ff6a] border border-[#c8ff6a]/30 shrink-0">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#c8ff6a] animate-pulse"></span>
                             Online
                         </span>
                     </div>
-                    <p class="text-[11px] font-medium text-slate-500">{{ store.name }}</p>
+                    <p class="text-[11px] font-medium text-slate-400 truncate">{{ store.name }}</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <!-- Right: Actions & Language -->
+            <div class="flex items-center gap-1.5">
                 <!-- Language Switcher -->
-                <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-[11px] font-bold">
-                    <a href="/change-language/uz/?next={{ request.get_full_path|urlencode }}" class="px-2 py-1 rounded-lg transition-all {% if current_lang == 'uz' %}bg-white text-slate-900 shadow-xs font-black{% else %}text-slate-500 hover:text-slate-800{% endif %}">UZ</a>
-                    <a href="/change-language/ru/?next={{ request.get_full_path|urlencode }}" class="px-2 py-1 rounded-lg transition-all {% if current_lang == 'ru' %}bg-white text-slate-900 shadow-xs font-black{% else %}text-slate-500 hover:text-slate-800{% endif %}">RU</a>
-                    <a href="/change-language/en/?next={{ request.get_full_path|urlencode }}" class="px-2 py-1 rounded-lg transition-all {% if current_lang == 'en' %}bg-white text-slate-900 shadow-xs font-black{% else %}text-slate-500 hover:text-slate-800{% endif %}">EN</a>
+                <div class="flex items-center bg-white/10 p-0.5 rounded-xl border border-white/10 text-[10px] font-black">
+                    <a href="/change-language/uz/?next={{ request.get_full_path|urlencode }}" class="px-2 py-1 rounded-lg transition-all {% if current_lang == 'uz' %}bg-[#c8ff6a] text-[#120d1d] shadow-xs{% else %}text-slate-300 hover:text-white{% endif %}">UZ</a>
+                    <a href="/change-language/ru/?next={{ request.get_full_path|urlencode }}" class="px-2 py-1 rounded-lg transition-all {% if current_lang == 'ru' %}bg-[#c8ff6a] text-[#120d1d] shadow-xs{% else %}text-slate-300 hover:text-white{% endif %}">RU</a>
+                    <a href="/change-language/en/?next={{ request.get_full_path|urlencode }}" class="px-2 py-1 rounded-lg transition-all {% if current_lang == 'en' %}bg-[#c8ff6a] text-[#120d1d] shadow-xs{% else %}text-slate-300 hover:text-white{% endif %}">EN</a>
                 </div>
 
-                <button type="button" @click="window.location.reload()" class="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors" title="{{ t.refresh_tooltip|default:'Yangilash' }}">
+                <button type="button" @click="window.location.reload()" class="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors" title="{{ t.refresh_tooltip|default:'Yangilash' }}">
                     <i data-lucide="rotate-cw" class="w-4 h-4"></i>
                 </button>
-                <a href="/logout/" class="p-2 rounded-xl text-rose-500 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="{{ t.logout_tooltip|default:'Chiqish' }}">
+                <a href="/logout/" class="p-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors" title="{{ t.logout_tooltip|default:'Chiqish' }}">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- STATS COUNTER BAR -->
-    <section class="bg-white border-b border-slate-200/80 px-4 py-3">
-        <div class="max-w-2xl mx-auto grid grid-cols-3 gap-2 text-center">
-            <button type="button" @click="activeTab = 'pending'" class="p-2.5 rounded-2xl transition-all cursor-pointer border" :class="activeTab === 'pending' ? 'bg-slate-900 text-[#c8ff6a] border-slate-900 font-bold' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'">
-                <p class="text-lg font-black leading-tight" :class="activeTab === 'pending' ? 'text-[#c8ff6a]' : 'text-slate-900'" x-text="pendingOrdersList.length"></p>
-                <p class="text-[10px] font-bold uppercase tracking-wider mt-0.5">{{ t.stat_pending|default:"Tayyor / Kutilmoqda" }}</p>
+    <!-- QUICK STATS DASHBOARD WIDGETS -->
+    <section class="bg-white border-b border-slate-200/80 px-4 py-3 shadow-xs">
+        <div class="max-w-xl mx-auto grid grid-cols-3 gap-2.5">
+            <!-- 1. Pending -->
+            <button type="button" @click="activeTab = 'pending'"
+                    class="p-2.5 rounded-2xl transition-all cursor-pointer border text-center relative overflow-hidden"
+                    :class="activeTab === 'pending' ? 'bg-[#211b2e] text-[#c8ff6a] border-[#211b2e] shadow-md ring-1 ring-[#c8ff6a]/30' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
+                <p class="text-xl font-black leading-tight font-mono" :class="activeTab === 'pending' ? 'text-[#c8ff6a]' : 'text-slate-900'" x-text="pendingOrdersList.length"></p>
+                <p class="text-[10px] font-extrabold uppercase tracking-wide mt-0.5" :class="activeTab === 'pending' ? 'text-slate-300' : 'text-slate-500'">{{ t.stat_pending|default:"Tayyor" }}</p>
             </button>
-            <button type="button" @click="activeTab = 'delivering'" class="p-2.5 rounded-2xl transition-all cursor-pointer border" :class="activeTab === 'delivering' ? 'bg-[#c8ff6a] border-[#bbf556] text-[#120d1d] font-bold shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'">
-                <p class="text-lg font-black leading-tight text-slate-900" x-text="deliveringOrdersList.length"></p>
-                <p class="text-[10px] font-bold uppercase tracking-wider mt-0.5">{{ t.stat_delivering|default:"Yo'lda" }}</p>
+
+            <!-- 2. Delivering -->
+            <button type="button" @click="activeTab = 'delivering'"
+                    class="p-2.5 rounded-2xl transition-all cursor-pointer border text-center relative overflow-hidden"
+                    :class="activeTab === 'delivering' ? 'bg-[#211b2e] text-[#c8ff6a] border-[#211b2e] shadow-md ring-1 ring-[#c8ff6a]/30' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
+                <p class="text-xl font-black leading-tight font-mono" :class="activeTab === 'delivering' ? 'text-[#c8ff6a]' : 'text-slate-900'" x-text="deliveringOrdersList.length"></p>
+                <p class="text-[10px] font-extrabold uppercase tracking-wide mt-0.5" :class="activeTab === 'delivering' ? 'text-slate-300' : 'text-slate-500'">{{ t.stat_delivering|default:"Yo'lda" }}</p>
             </button>
-            <button type="button" @click="activeTab = 'completed'" class="p-2.5 rounded-2xl transition-all cursor-pointer border" :class="activeTab === 'completed' ? 'bg-slate-900 text-white border-slate-900 font-bold' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'">
-                <p class="text-lg font-black leading-tight text-slate-900">{{ completed_count }}</p>
-                <p class="text-[10px] font-bold uppercase tracking-wider mt-0.5">{{ t.stat_completed|default:"Yetkazildi" }}</p>
+
+            <!-- 3. Completed -->
+            <button type="button" @click="activeTab = 'completed'"
+                    class="p-2.5 rounded-2xl transition-all cursor-pointer border text-center relative overflow-hidden"
+                    :class="activeTab === 'completed' ? 'bg-[#211b2e] text-[#c8ff6a] border-[#211b2e] shadow-md ring-1 ring-[#c8ff6a]/30' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
+                <p class="text-xl font-black leading-tight font-mono text-slate-900" :class="activeTab === 'completed' ? 'text-[#c8ff6a]' : 'text-slate-900'">{{ completed_count }}</p>
+                <p class="text-[10px] font-extrabold uppercase tracking-wide mt-0.5" :class="activeTab === 'completed' ? 'text-slate-300' : 'text-slate-500'">{{ t.stat_completed|default:"Yetkazildi" }}</p>
             </button>
         </div>
     </section>
 
-    <!-- TAB SWITCHER -->
-    <div class="sticky top-[61px] z-20 bg-slate-50/95 backdrop-blur-md px-4 py-2 border-b border-slate-200">
-        <div class="max-w-2xl mx-auto flex items-center gap-1 bg-slate-200/80 p-1 rounded-2xl text-xs font-bold">
-            <button type="button" @click="activeTab = 'pending'" :class="activeTab === 'pending' ? 'bg-white text-slate-900 shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'" class="flex-1 py-2 rounded-xl transition-all text-center">
-                {{ t.tab_pending|default:"Biriktirilgan" }} (<span x-text="pendingOrdersList.length"></span>)
+    <!-- NATIVE-STYLE SEGMENTED TAB SWITCHER -->
+    <div class="sticky top-[61px] z-20 bg-slate-100/95 backdrop-blur-md px-4 py-2 border-b border-slate-200/80">
+        <div class="max-w-xl mx-auto flex items-center bg-slate-200/90 p-1 rounded-2xl text-xs font-bold shadow-inner">
+            <button type="button" @click="activeTab = 'pending'"
+                    :class="activeTab === 'pending' ? 'bg-white text-[#211b2e] shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'"
+                    class="flex-1 py-2 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>{{ t.tab_pending|default:"Назначенные" }}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black" :class="activeTab === 'pending' ? 'bg-[#211b2e] text-[#c8ff6a]' : 'bg-slate-300/80 text-slate-700'" x-text="pendingOrdersList.length"></span>
             </button>
-            <button type="button" @click="activeTab = 'delivering'" :class="activeTab === 'delivering' ? 'bg-[#120d1d] text-[#c8ff6a] shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'" class="flex-1 py-2 rounded-xl transition-all text-center">
-                {{ t.tab_delivering|default:"Yetkazilmoqda" }} (<span x-text="deliveringOrdersList.length"></span>)
+            <button type="button" @click="activeTab = 'delivering'"
+                    :class="activeTab === 'delivering' ? 'bg-[#211b2e] text-[#c8ff6a] shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'"
+                    class="flex-1 py-2 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>{{ t.tab_delivering|default:"В доставке" }}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black" :class="activeTab === 'delivering' ? 'bg-[#c8ff6a] text-[#120d1d]' : 'bg-slate-300/80 text-slate-700'" x-text="deliveringOrdersList.length"></span>
             </button>
-            <button type="button" @click="activeTab = 'completed'" :class="activeTab === 'completed' ? 'bg-slate-800 text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'" class="flex-1 py-2 rounded-xl transition-all text-center">
-                {{ t.tab_completed|default:"Tugallangan" }} ({{ completed_count }})
+            <button type="button" @click="activeTab = 'completed'"
+                    :class="activeTab === 'completed' ? 'bg-white text-[#211b2e] shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'"
+                    class="flex-1 py-2 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>{{ t.tab_completed|default:"Завершённые" }}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-300/80 text-slate-700">{{ completed_count }}</span>
             </button>
         </div>
     </div>
 
-    <!-- MAIN ORDERS FEED -->
-    <main class="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
+    <!-- MAIN ORDERS LIST (MOBILE FIRST) -->
+    <main class="flex-1 max-w-xl w-full mx-auto p-4 space-y-4 pb-20">
 
-        <!-- TAB 1: PENDING ORDERS -->
+        <!-- TAB 1: PENDING ORDERS (READY TO TAKE) -->
         <div x-show="activeTab === 'pending'" class="space-y-4" x-cloak>
             <template x-for="order in pendingOrdersList" :key="order.id">
-                <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3.5 hover:border-slate-300 transition-all">
+                <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-4 hover:border-slate-300 transition-all">
+                    <!-- Order Header -->
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <div class="flex items-center gap-2">
                             <span class="font-black text-slate-900 text-base font-mono" x-text="'#' + order.order_number"></span>
-                            <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-black bg-slate-100 text-slate-700 border border-slate-200" x-text="order.status_display"></span>
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-slate-100 text-slate-700 border border-slate-200" x-text="order.status_display"></span>
                         </div>
                         <span class="text-[11px] font-semibold text-slate-400 font-mono" x-text="order.created_at"></span>
                     </div>
 
-                    <!-- Customer Info -->
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
-                                <span class="font-bold text-slate-800 text-sm" x-text="order.customer_name"></span>
+                    <!-- Customer Info & 1-Tap Call -->
+                    <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-xl bg-slate-200/70 text-slate-700 flex items-center justify-center font-black">
+                                <i data-lucide="user" class="w-4 h-4"></i>
                             </div>
-                            <a :href="'tel:' + order.customer_phone" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 font-bold text-xs flex items-center gap-1.5 transition-colors">
-                                <i data-lucide="phone-call" class="w-3.5 h-3.5 text-slate-600"></i>
-                                <span class="font-mono" x-text="order.customer_phone"></span>
-                            </a>
+                            <div>
+                                <p class="text-xs font-black text-slate-900" x-text="order.customer_name"></p>
+                                <p class="text-[11px] font-semibold text-slate-500 font-mono" x-text="order.customer_phone"></p>
+                            </div>
                         </div>
+                        <a :href="'tel:' + order.customer_phone" class="px-3.5 py-2 rounded-xl bg-[#211b2e] text-[#c8ff6a] font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors">
+                            <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                            <span>Qo'ng'iroq</span>
+                        </a>
+                    </div>
 
-                        <!-- Address -->
-                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                            <div class="flex items-start gap-2 text-xs text-slate-700 font-medium">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
-                                <span x-text="order.delivery_address || 'Manzil kiritilmagan'"></span>
-                            </div>
+                    <!-- Delivery Address -->
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5 text-xs">
+                        <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold uppercase text-slate-400">Yetkazish manzili:</p>
+                            <p class="text-slate-900 font-bold leading-snug" x-text="order.delivery_address || 'Manzil kiritilmagan'"></p>
                         </div>
                     </div>
 
                     <!-- Items Summary -->
                     <div class="border-t border-slate-100 pt-2.5">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{{ t.order_items_title|default:"Buyurtma tarkibi" }}</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{{ t.order_items_title|default:"Buyurtma tarkibi" }}</p>
                         <ul class="text-xs text-slate-600 divide-y divide-slate-100">
                             <template x-for="(it, idx) in order.items" :key="idx">
-                                <li class="py-1 flex justify-between">
-                                    <span x-text="it.quantity + 'x ' + it.product_name + (it.variation_name ? ' (' + it.variation_name + ')' : '')"></span>
+                                <li class="py-1.5 flex justify-between">
+                                    <span class="font-medium" x-text="it.quantity + 'x ' + it.product_name + (it.variation_name ? ' (' + it.variation_name + ')' : '')"></span>
                                     <span class="font-bold text-slate-900 font-mono" x-text="Number(it.total_price).toLocaleString() + ' UZS'"></span>
                                 </li>
                             </template>
                         </ul>
                     </div>
 
-                    <!-- Price & Actions -->
+                    <!-- Price & Start Delivery Action Button -->
                     <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
                         <div>
                             <p class="text-[10px] font-bold text-slate-400 uppercase">{{ t.total_payment|default:"Jami to'lov" }}</p>
                             <p class="text-base font-black text-slate-900 font-mono" x-text="Number(order.total_amount).toLocaleString() + ' UZS'"></p>
-                            <span class="text-[10px] font-semibold text-slate-500" x-text="order.payment_method_display"></span>
+                            <span class="text-[10px] font-bold text-slate-500" x-text="order.payment_method_display"></span>
                         </div>
 
-                        <button type="button" @click="takeOrder(order.id)" class="px-5 py-3 rounded-2xl btn-storebox-lime text-xs flex items-center gap-2 cursor-pointer">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-                            </svg>
+                        <button type="button" @click="takeOrder(order.id)" class="px-5 py-3 rounded-2xl btn-storebox-lime text-xs flex items-center gap-2 cursor-pointer shadow-md">
+                            <i data-lucide="navigation" class="w-4 h-4"></i>
                             <span>{{ t.start_delivery_btn|default:"Yetkazishni boshlash" }}</span>
                         </button>
                     </div>
                 </div>
             </template>
 
-            <div x-show="pendingOrdersList.length === 0" class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
-                <i data-lucide="package-open" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
-                <p class="font-bold text-sm text-slate-700">{{ t.no_pending_orders|default:"Yangi buyurtmalar yo'q" }}</p>
-                <p class="text-xs mt-1 text-slate-400">{{ t.no_pending_desc|default:"Yangi buyurtmalar paydo bo'lganda bu yerda avtomatik ko'rinadi" }}</p>
+            <!-- Empty State -->
+            <div x-show="pendingOrdersList.length === 0" class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                    <i data-lucide="package" class="w-7 h-7"></i>
+                </div>
+                <p class="font-black text-sm text-slate-800">{{ t.no_pending_orders|default:"Yangi buyurtmalar yo'q" }}</p>
+                <p class="text-xs text-slate-500 max-w-xs mx-auto">{{ t.no_pending_desc|default:"Yangi buyurtmalar do'kon tomonidan tasdiqlanganda bu yerda ko'rinadi." }}</p>
             </div>
         </div>
 
-        <!-- TAB 2: DELIVERING ORDERS (ACTIVE) -->
+        <!-- TAB 2: DELIVERING ORDERS (ACTIVE IN ROUTE) -->
         <div x-show="activeTab === 'delivering'" class="space-y-4" x-cloak>
             <template x-for="order in deliveringOrdersList" :key="order.id">
-                <div class="bg-white rounded-3xl p-4 sm:p-5 border-2 border-slate-900 shadow-xl space-y-4 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-[#c8ff6a]/15 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="bg-white rounded-3xl p-5 border-2 border-[#211b2e] shadow-xl space-y-4 relative overflow-hidden">
+                    <!-- Subtle neon ambient glow -->
+                    <div class="absolute top-0 right-0 w-36 h-36 bg-[#c8ff6a]/15 rounded-full blur-2xl pointer-events-none"></div>
 
                     <!-- Header -->
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <div class="flex items-center gap-2">
                             <span class="font-black text-slate-900 text-lg font-mono" x-text="'#' + order.order_number"></span>
-                            <span class="px-2.5 py-1 rounded-full text-xs font-black bg-slate-900 text-[#c8ff6a]">
-                                {{ t.stat_delivering|default:"Yo'lda" }}
+                            <span class="px-3 py-1 rounded-full text-xs font-black bg-[#211b2e] text-[#c8ff6a] shadow-xs">
+                                {{ t.stat_delivering|default:"В пути" }}
                             </span>
                         </div>
-                        <span class="text-xs font-bold text-emerald-600 flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span class="text-xs font-black text-[#211b2e] flex items-center gap-1.5 bg-[#c8ff6a]/25 px-3 py-1 rounded-full border border-[#c8ff6a]/40">
+                            <span class="w-2 h-2 rounded-full bg-[#211b2e] animate-ping"></span>
                             {{ t.customer_waiting|default:"Mijoz kutyapti" }}
                         </span>
                     </div>
 
-                    <!-- Customer Profile & Call -->
+                    <!-- Customer & Quick Call -->
                     <div class="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
                         <div>
-                            <p class="text-[11px] text-slate-400 font-bold">Mijoz:</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">Mijoz:</p>
                             <p class="font-black text-slate-900 text-base" x-text="order.customer_name"></p>
                         </div>
-                        <a :href="'tel:' + order.customer_phone" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-[#c8ff6a] font-black text-xs flex items-center gap-2 shadow-xs transition-colors">
+                        <a :href="'tel:' + order.customer_phone" class="px-4 py-2.5 rounded-xl bg-[#211b2e] text-[#c8ff6a] font-black text-xs flex items-center gap-2 shadow-xs transition-colors">
                             <i data-lucide="phone-call" class="w-4 h-4"></i>
                             <span class="font-mono" x-text="order.customer_phone"></span>
                         </a>
                     </div>
 
-                    <!-- Address & MAIN STOREBOX LIVE NAVIGATOR BUTTON -->
-                    <div class="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/70 border border-slate-200/80 space-y-3.5">
-                        <div class="flex items-start gap-2.5 text-xs text-slate-700 font-semibold">
-                            <div class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
-                                <i data-lucide="map-pin" class="w-4 h-4"></i>
+                    <!-- Address Display -->
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5 text-xs">
+                        <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Yetkazish manzili:</span>
+                            <span class="text-slate-900 font-bold text-sm block leading-snug" x-text="order.delivery_address || 'Manzil kiritilmagan'"></span>
+                        </div>
+                    </div>
+
+                    <!-- HERO LIVE 3D NAVIGATOR BUTTON (YANDEX STYLE 3D FIRST-PERSON CALLOUT) -->
+                    <button type="button" @click="openLiveNavigator(order.id)" class="w-full py-4 px-4.5 rounded-2xl bg-gradient-to-r from-[#c8ff6a] to-[#bbf556] text-[#120d1d] flex items-center justify-between shadow-xl shadow-[#c8ff6a]/35 cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all border border-[#c8ff6a]/50">
+                        <div class="flex items-center gap-3 text-left">
+                            <div class="w-11 h-11 rounded-2xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shadow-md shrink-0">
+                                <svg class="w-6 h-6 transform rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6">
+                                    <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+                                </svg>
                             </div>
-                            <div class="flex-1">
-                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Yetkazish manzili:</span>
-                                <span class="text-slate-900 font-bold" x-text="order.delivery_address || 'Manzil kiritilmagan'"></span>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <p class="text-sm font-black leading-tight text-[#120d1d]">Jonli 3D Navigator</p>
+                                    <span class="px-1.5 py-0.2 rounded-md bg-[#211b2e] text-[#c8ff6a] text-[9px] font-black uppercase">3D GPS</span>
+                                </div>
+                                <p class="text-[11px] font-bold text-[#120d1d]/85 mt-0.5">Avtomobil / piyoda yo'nalishi (от первого лица)</p>
                             </div>
                         </div>
-
-                        <!-- PRIMARY LIVE NAVIGATOR BUTTON (STOREBOX LIME STYLE) -->
-                        <button type="button" @click="openLiveNavigator(order.id)" class="w-full py-4 px-4 rounded-2xl btn-storebox-lime text-sm flex items-center justify-between shadow-lg cursor-pointer">
-                            <div class="flex items-center gap-3 text-left">
-                                <div class="w-10 h-10 rounded-xl bg-[#120d1d] text-[#c8ff6a] flex items-center justify-center">
-                                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                        <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-black leading-tight text-[#120d1d]">{{ t.live_navigator_btn|default:"Jonli Navigator (В путь)" }}</p>
-                                    <p class="text-[11px] font-bold text-[#120d1d]/80">{{ t.live_navigator_desc|default:"Haqiqiy GPS lokatsiya & Tirbandliklar" }}</p>
-                                </div>
-                            </div>
-                            <span class="px-3.5 py-1.5 rounded-xl bg-[#120d1d] text-[#c8ff6a] text-xs font-black uppercase tracking-wider shadow-xs flex items-center gap-1.5">
-                                <span>NAVIGATOR</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                            </span>
-                        </button>
-                    </div>
+                        <span class="px-3.5 py-2 rounded-xl bg-[#211b2e] text-[#c8ff6a] text-xs font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 shrink-0">
+                            <span>NAVIGATOR</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </span>
+                    </button>
 
                     <!-- Payment Amount Banner -->
                     <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
@@ -294,7 +404,7 @@
                         <button type="button" @click="openCancelModal(order.id)" class="py-3 rounded-2xl bg-white text-rose-600 font-bold text-xs hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer">
                             {{ t.delivery_failed_btn|default:"Yetkazib bo'lmadi" }}
                         </button>
-                        <button type="button" @click="updateStatus(order.id, 'COMPLETED')" class="py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-[#c8ff6a] font-black text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer">
+                        <button type="button" @click="updateStatus(order.id, 'COMPLETED')" class="py-3.5 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-[#c8ff6a] font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#211b2e]/25 transition-all cursor-pointer">
                             <i data-lucide="check-circle" class="w-4 h-4"></i>
                             <span>{{ t.delivered_and_payment_btn|default:"Yetkazildi & To'lov" }}</span>
                         </button>
@@ -302,10 +412,13 @@
                 </div>
             </template>
 
-            <div x-show="deliveringOrdersList.length === 0" class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
-                <i data-lucide="navigation" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
-                <p class="font-bold text-sm text-slate-700">{{ t.no_delivering_orders|default:"Hozirda yetkazilayotgan buyurtma yo'q" }}</p>
-                <p class="text-xs mt-1 text-slate-400">{{ t.no_delivering_desc|default:"Biriktirilgan buyurtmalardan birini «Yetkazishni boshlash» tugmasini bosing" }}</p>
+            <!-- Empty State -->
+            <div x-show="deliveringOrdersList.length === 0" class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                    <i data-lucide="navigation" class="w-7 h-7"></i>
+                </div>
+                <p class="font-black text-sm text-slate-800">{{ t.no_delivering_orders|default:"Hozirda yetkazilayotgan buyurtma yo'q" }}</p>
+                <p class="text-xs text-slate-500 max-w-xs mx-auto">{{ t.no_delivering_desc|default:"Biriktirilgan buyurtmalardan birini «Yetkazishni boshlash» tugmasini bosing" }}</p>
             </div>
         </div>
 
@@ -315,153 +428,282 @@
             <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="font-bold text-slate-900 text-xs font-mono">#{{ order.order_number }}</span>
+                        <span class="font-black text-slate-900 text-xs font-mono">#{{ order.order_number }}</span>
                         {% if order.status == 'COMPLETED' %}
-                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">{{ t.stat_completed|default:"Yetkazildi" }}</span>
+                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-[#211b2e] text-[#c8ff6a]">{{ t.stat_completed|default:"Yetkazildi" }}</span>
                         {% else %}
-                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">{{ t.status_cancelled|default:"Bekor qilindi" }}</span>
+                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">{{ t.status_cancelled|default:"Bekor qilindi" }}</span>
                         {% endif %}
                     </div>
-                    <p class="text-xs text-slate-500 font-medium mt-0.5">{{ order.customer_name }} — <span class="font-mono font-bold text-slate-900">{{ order.total_amount|floatformat:0 }} UZS</span></p>
+                    <p class="text-xs text-slate-500 font-medium mt-1">{{ order.customer_name }} — <span class="font-mono font-bold text-slate-900">{{ order.total_amount|floatformat:0 }} UZS</span></p>
                 </div>
                 <span class="text-[11px] font-semibold text-slate-400 font-mono">{{ order.updated_at|date:"H:i, d.m" }}</span>
             </div>
             {% empty %}
             <div class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
-                <p class="font-bold text-sm text-slate-600">{{ t.no_completed_orders|default:"Tugallangan buyurtmalar tarixi bo'sh" }}</p>
+                <p class="font-black text-sm text-slate-700">{{ t.no_completed_orders|default:"Tugallangan buyurtmalar tarixi bo'sh" }}</p>
             </div>
             {% endfor %}
         </div>
     </main>
 
-    <!-- FULLSCREEN LIVE NAVIGATOR WITH COMPACT BOTTOM SHEET -->
-    <div x-show="navigatorModalOpen" x-cloak class="fixed inset-0 z-50 flex flex-col bg-slate-900 text-slate-800 overflow-hidden">
+    <!-- ========================================================================= -->
+    <!-- FULLSCREEN 3D FIRST-PERSON LIVE DRIVING NAVIGATOR (YANDEX TAXI STYLE)      -->
+    <!-- ========================================================================= -->
+    <div x-show="navigatorModalOpen" x-cloak class="fixed inset-0 z-50 flex flex-col bg-slate-950 text-slate-800 overflow-hidden select-none">
 
-        <!-- TOP FLOATING BAR -->
-        <div class="absolute top-3 inset-x-3 sm:top-5 sm:inset-x-6 z-30 pointer-events-none flex items-center justify-between">
-            <!-- Left: Real-time GPS status pill -->
-            <div class="pointer-events-auto flex items-center gap-2 bg-slate-900/90 text-white backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-xl border border-white/10">
-                <span class="w-2.5 h-2.5 rounded-full" :class="gpsActive ? 'bg-[#c8ff6a] animate-pulse' : 'bg-amber-400'"></span>
-                <span class="text-xs font-black text-white font-mono" x-text="gpsActive ? 'GPS FAOL' : 'LOKATSIYA'"></span>
-                <span class="text-[11px] text-slate-400 font-mono font-bold" x-text="navSpeed + ' km/s'"></span>
+        <!-- 3D PERSPECTIVE MAP VIEWPORT -->
+        <div class="nav-perspective-viewport" :class="navViewMode === '3d' ? 'mode-3d' : 'mode-2d'">
+            <!-- Sky/Atmosphere Horizon Gradient (visible in 3D perspective) -->
+            <div x-show="navViewMode === '3d'" class="nav-horizon-gradient"></div>
+
+            <!-- LEAFLET MAP SURFACE -->
+            <div id="liveNavigatorMap"></div>
+        </div>
+
+        <!-- 1. TOP TURN-BY-TURN INSTRUCTION SHIELD (HUD КАК У ЯНДЕКС НАВИГАТОРА) -->
+        <div class="absolute top-3 inset-x-3 sm:top-5 sm:inset-x-6 z-40 max-w-lg mx-auto pointer-events-none">
+            <!-- OVERVIEW MODE TOP BAR -->
+            <div x-show="navStage === 'overview'" class="pointer-events-auto bg-[#211b2e]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-3.5 sm:p-4 shadow-2xl text-white flex items-center justify-between gap-3 transition-all">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-[#c8ff6a] text-[#120d1d] flex items-center justify-center font-black shadow-md shadow-[#c8ff6a]/20 shrink-0">
+                        <svg class="w-6 h-6 stroke-[#120d1d] fill-none stroke-[2.5]" viewBox="0 0 24 24">
+                            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-black text-white leading-tight">Marshrut ko'rinishi (Обзор)</p>
+                        <p class="text-[11px] font-bold text-slate-300 mt-0.5">«Yo'lga chiqish (В путь)» tugmasini bosing</p>
+                    </div>
+                </div>
+                <button type="button" @click="closeLiveNavigator()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0" title="Yopish">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
 
-            <!-- Right: "Yopish" Capsule Button -->
-            <div class="pointer-events-auto flex items-center gap-2">
-                <button type="button" @click="closeLiveNavigator()" class="px-4 py-2 rounded-full bg-slate-900/90 text-white backdrop-blur-md hover:bg-slate-900 flex flex-col items-center justify-center shadow-xl border border-white/10 active:scale-95 transition-all cursor-pointer">
-                    <span class="text-xs font-black leading-tight text-white">Yopish</span>
-                    <span class="text-[9px] font-bold text-[#c8ff6a] leading-none mt-0.5">StoreBox</span>
+            <!-- DRIVING / ARRIVED MODE TOP SHIELD -->
+            <div x-show="navStage === 'driving' || navStage === 'arrived'" class="pointer-events-auto bg-[#211b2e]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-3.5 sm:p-4 shadow-2xl text-white flex items-center gap-3.5 transition-all">
+                <!-- Large Animated Maneuver Icon -->
+                <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-[#c8ff6a] text-[#120d1d] flex items-center justify-center font-black shadow-lg shadow-[#c8ff6a]/25 shrink-0">
+                    <!-- Dynamic Maneuver SVG -->
+                    <template x-if="activeManeuver.type === 'left' || activeManeuver.type === 'turn-left'">
+                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
+                            <path d="M19 19v-6a4 4 0 0 0-4-4H5"/>
+                            <polyline points="9 5 5 9 9 13"/>
+                        </svg>
+                    </template>
+                    <template x-if="activeManeuver.type === 'right' || activeManeuver.type === 'turn-right'">
+                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
+                            <path d="M5 19v-6a4 4 0 0 1 4-4h10"/>
+                            <polyline points="15 5 19 9 15 13"/>
+                        </svg>
+                    </template>
+                    <template x-if="activeManeuver.type === 'straight'">
+                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
+                            <line x1="12" y1="19" x2="12" y2="5"/>
+                            <polyline points="5 12 12 5 19 12"/>
+                        </svg>
+                    </template>
+                    <template x-if="activeManeuver.type === 'slight-left'">
+                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
+                            <path d="M16 19l-4-8-4-4"/>
+                            <polyline points="4 11 8 7 12 7"/>
+                        </svg>
+                    </template>
+                    <template x-if="activeManeuver.type === 'slight-right'">
+                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
+                            <path d="M8 19l4-8 4-4"/>
+                            <polyline points="12 7 16 7 20 11"/>
+                        </svg>
+                    </template>
+                    <template x-if="activeManeuver.type === 'uturn'">
+                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
+                            <path d="M19 19V9a6 6 0 0 0-12 0v10"/>
+                            <polyline points="3 15 7 19 11 15"/>
+                        </svg>
+                    </template>
+                    <template x-if="activeManeuver.type === 'arrive'">
+                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                            <line x1="4" y1="22" x2="4" y2="15"/>
+                        </svg>
+                    </template>
+                </div>
+
+                <!-- Maneuver Details -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white" x-text="activeManeuver.distanceText">150 m</span>
+                        <span class="text-xs font-black text-[#c8ff6a] uppercase tracking-wide truncate" x-text="activeManeuver.instruction">O'ngga buriling</span>
+                    </div>
+                    <p class="text-xs font-bold text-slate-300 truncate" x-text="activeManeuver.streetName || navOrder?.delivery_address">Narpay ko'chasiga</p>
+
+                    <!-- Lane Indicators & Second Maneuver Preview -->
+                    <div class="flex items-center gap-1.5 mt-1">
+                        <div class="flex items-center gap-0.5">
+                            <span class="px-1.5 py-0.2 rounded text-[10px] font-black" :class="activeManeuver.lane === 'left' ? 'bg-[#c8ff6a] text-[#120d1d]' : 'bg-white/10 text-slate-400'">↑</span>
+                            <span class="px-1.5 py-0.2 rounded text-[10px] font-black" :class="activeManeuver.lane === 'center' ? 'bg-[#c8ff6a] text-[#120d1d]' : 'bg-white/10 text-slate-400'">↑</span>
+                            <span class="px-1.5 py-0.2 rounded text-[10px] font-black" :class="activeManeuver.lane === 'right' ? 'bg-[#c8ff6a] text-[#120d1d]' : 'bg-white/10 text-slate-400'">↱</span>
+                        </div>
+                        <span class="text-slate-500 font-bold text-[10px]">•</span>
+                        <span class="text-[11px] font-bold text-slate-400 truncate" x-text="secondManeuverText || 'Keyin: To\'g\'riga'"></span>
+                    </div>
+                </div>
+
+                <!-- Close Navigator Button -->
+                <button type="button" @click="closeLiveNavigator()" class="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0" title="Yopish">
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
 
-        <!-- LEAFLET MAP CONTAINER (100% FULLSCREEN CANVAS) -->
-        <div id="liveNavigatorMap" class="absolute inset-0 w-full h-full z-0 bg-slate-100" style="min-height: 100vh; width: 100vw;"></div>
+        <!-- 2. SPEEDOMETER & GPS STATUS (LEFT SIDE FLOATING) -->
+        <div class="absolute left-3 top-24 sm:left-6 sm:top-28 z-30 pointer-events-none flex flex-col gap-2">
+            <!-- Yandex Style Digital Speedometer -->
+            <div class="pointer-events-auto flex items-center gap-2.5 bg-[#211b2e]/90 text-white backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-2xl border border-white/15">
+                <div class="w-10 h-10 rounded-full border-2 border-[#c8ff6a] flex flex-col items-center justify-center font-mono shrink-0 shadow-sm" :class="navSpeed > 60 ? 'border-rose-500 text-rose-400' : 'border-[#c8ff6a] text-[#c8ff6a]'">
+                    <span class="text-sm font-black leading-none" x-text="navSpeed">38</span>
+                </div>
+                <div class="leading-tight">
+                    <span class="text-[10px] font-mono font-bold text-slate-400 block uppercase">km/s</span>
+                    <span class="text-[9px] font-black text-slate-500 block">Maks 60</span>
+                </div>
+            </div>
 
-        <!-- FLOATING CONTROLS (Right Side) -->
-        <div class="absolute right-4 z-20 pointer-events-auto transition-all" :class="sheetExpanded ? 'bottom-80' : 'bottom-48 sm:bottom-44'">
-            <button type="button" @click="recenterMap()" class="w-12 h-12 rounded-2xl bg-white text-slate-800 hover:text-black hover:bg-slate-50 border border-slate-200 shadow-2xl flex items-center justify-center transition-transform active:scale-90 cursor-pointer" title="Mening joyimga">
-                <i data-lucide="crosshair" class="w-6 h-6"></i>
+            <!-- GPS Status Pill -->
+            <div class="pointer-events-auto inline-flex items-center gap-1.5 bg-[#211b2e]/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 shadow-lg text-[10px] font-mono font-black text-white">
+                <span class="w-2.5 h-2.5 rounded-full" :class="gpsActive ? 'bg-[#c8ff6a] animate-pulse' : 'bg-amber-400'"></span>
+                <span x-text="gpsActive ? 'GPS FAOL' : 'LOKATSIYA'"></span>
+            </div>
+        </div>
+
+        <!-- 3. RIGHT FLOATING CONTROLS: 3D/2D TOGGLE, COMPASS & RECENTER -->
+        <div class="absolute right-3 top-24 sm:right-6 sm:top-28 z-30 pointer-events-auto flex flex-col items-center gap-2">
+            <!-- 3D / 2D Perspective Toggle Button (LIKE YANDEX / 2GIS) -->
+            <button type="button" @click="toggle3DMode()"
+                    class="w-12 h-12 rounded-2xl bg-[#211b2e] text-[#c8ff6a] border-2 border-[#c8ff6a] shadow-2xl flex flex-col items-center justify-center transition-transform active:scale-90 cursor-pointer font-mono font-black text-xs"
+                    :title="navViewMode === '3d' ? '3D Rejim (Bosqichma-bosqich)' : '2D Rejim (Umumiy ko\'rinish)'">
+                <span class="text-xs font-black tracking-tight" x-text="navViewMode === '3d' ? '3D' : '2D'">3D</span>
+                <span class="text-[8px] font-bold text-slate-400 leading-none mt-0.5" x-text="navViewMode === '3d' ? 'Kurs' : 'Shimal'"></span>
+            </button>
+
+            <!-- Compass Needle (Rotates to show Magnetic North relative to tilted map) -->
+            <div class="w-11 h-11 rounded-2xl bg-white/95 text-slate-800 border border-slate-200 shadow-xl flex items-center justify-center cursor-pointer select-none"
+                 @click="navBearing = 0; updateMapPerspectiveTransform();"
+                 title="Shimolga yo'naltirish">
+                <div class="w-6 h-6 flex items-center justify-center" :style="'transform: rotate(' + (navViewMode === '3d' ? (-navBearing) : 0) + 'deg); transition: transform 0.25s ease-out;'">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6">
+                        <polygon points="12 2 16 12 12 9 8 12" fill="#ef4444"/>
+                        <polygon points="12 22 16 12 12 15 8 12" fill="#94a3b8"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Recenter to vehicle -->
+            <button type="button" @click="recenterMap()"
+                    class="w-11 h-11 rounded-2xl bg-white/95 text-slate-800 hover:bg-white border border-slate-200 shadow-xl flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
+                    title="Mening joyimga">
+                <i data-lucide="crosshair" class="w-5 h-5"></i>
             </button>
         </div>
 
-        <!-- ARRIVAL CELEBRATION NOTIFICATION -->
-        <div x-show="navStage === 'arrived'" x-cloak class="absolute top-20 inset-x-4 z-40 max-w-sm mx-auto p-4 rounded-3xl bg-[#120d1d] text-white text-center shadow-2xl space-y-2 border-2 border-[#c8ff6a] animate-bounce">
+        <!-- 4. ARRIVAL CELEBRATION MODAL -->
+        <div x-show="navStage === 'arrived'" x-cloak class="absolute top-28 inset-x-4 z-40 max-w-sm mx-auto p-5 rounded-3xl bg-[#211b2e] text-white text-center shadow-2xl space-y-2 border-2 border-[#c8ff6a] animate-bounce">
+            <div class="w-12 h-12 rounded-2xl bg-[#c8ff6a] text-[#120d1d] flex items-center justify-center mx-auto shadow-md">
+                <i data-lucide="map-pin" class="w-6 h-6"></i>
+            </div>
             <p class="text-base font-black text-[#c8ff6a]">Manzilga yetib kelindi!</p>
             <p class="text-xs text-slate-200">Mijoz eshigi oldidasiz. Buyurtmani topshirib to'lovni tasdiqlang.</p>
         </div>
 
-        <!-- ULTRA-COMPACT / EXPANDABLE FLOATING BOTTOM SHEET (YANDEX STYLE COMPACT BAR) -->
-        <div class="absolute bottom-0 inset-x-0 z-30 pointer-events-none p-2.5 sm:p-4">
-            <div class="max-w-md mx-auto pointer-events-auto bg-white/98 backdrop-blur-md rounded-[28px] p-4 sm:p-5 border border-slate-200 shadow-2xl space-y-3 transition-all duration-300">
+        <!-- 5. ULTRA-MODERN BOTTOM SHEET (YANDEX PRO / UBER STYLE) -->
+        <div class="absolute bottom-0 inset-x-0 z-40 pointer-events-none p-2.5 sm:p-4">
+            <div class="max-w-md mx-auto pointer-events-auto bg-white/98 backdrop-blur-xl rounded-[32px] p-4 sm:p-5 border border-slate-200 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] space-y-3 transition-all duration-300">
                 
-                <!-- DRAG HANDLE & TOGGLE -->
+                <!-- Drag Handle -->
                 <div @click="sheetExpanded = !sheetExpanded" class="w-full flex flex-col items-center cursor-pointer select-none pb-0.5 group">
                     <div class="w-12 h-1.5 rounded-full bg-slate-300 group-hover:bg-slate-400 transition-colors"></div>
                 </div>
 
-                <!-- ROW 1: Distance & Time Header + Quick Call & Expand Toggle -->
+                <!-- ROW 1: Distance & ETA + Quick Call & Expand Toggle -->
                 <div class="flex items-center justify-between gap-3">
                     <div @click="sheetExpanded = !sheetExpanded" class="flex items-baseline gap-2 cursor-pointer flex-1 min-w-0">
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono" x-text="navDistText || '700 m'"></span>
+                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono" x-text="navDistText || '700 m'">2.9 km</span>
                         <span class="text-slate-300 font-light text-2xl mx-0.5">•</span>
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono" x-text="navEtaText || '2 daq'"></span>
+                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono" x-text="navEtaText || '4 daq'">4 daq</span>
+                        <span class="text-xs font-bold text-slate-400 font-mono ml-1" x-text="'(' + navArrivalTime + ')'"></span>
                     </div>
 
                     <div class="flex items-center gap-1.5 shrink-0">
-                        <a :href="'tel:' + (navOrder?.customer_phone || '')" class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-800 hover:bg-slate-200 flex items-center justify-center transition-colors" title="Qo'ng'iroq">
+                        <a :href="'tel:' + (navOrder?.customer_phone || '')" class="w-11 h-11 rounded-2xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shadow-md transition-colors" title="Qo'ng'iroq">
                             <i data-lucide="phone" class="w-4 h-4"></i>
                         </a>
-                        <button type="button" @click="sheetExpanded = !sheetExpanded" class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors" :title="sheetExpanded ? 'Kichiklashtirish' : 'Kengaytirish'">
+                        <button type="button" @click="sheetExpanded = !sheetExpanded" class="w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer" :title="sheetExpanded ? 'Kichiklashtirish' : 'Kengaytirish'">
                             <i data-lucide="chevron-up" class="w-4 h-4 transition-transform duration-200" :class="sheetExpanded ? 'rotate-180' : ''"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- ROW 2: Address Preview (Compact line) -->
+                <!-- ROW 2: Address Preview -->
                 <div class="flex items-center gap-2 text-xs text-slate-600 truncate">
                     <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500 shrink-0"></i>
                     <span class="font-bold text-slate-800 truncate" x-text="navOrder?.delivery_address || 'Manzil kiritilmagan'"></span>
                 </div>
 
-                <!-- EXPANDED DETAILS ACCORDION -->
-                <div x-show="sheetExpanded" x-cloak class="space-y-3 pt-2.5 border-t border-slate-100 transition-all">
-                    <!-- Priority & Price pills with clean vector SVGs (ZERO EMOJIS) -->
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/80">
-                            <div class="w-7 h-7 rounded-lg bg-slate-900 text-[#c8ff6a] flex items-center justify-center shrink-0">
-                                <svg class="w-3.5 h-3.5 fill-[#c8ff6a]" viewBox="0 0 24 24">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <span class="text-[9px] font-bold text-slate-400 block uppercase">Prioritet</span>
-                                <span class="text-xs font-black text-slate-900 font-mono">99 / 100</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/80">
-                            <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <rect width="20" height="14" x="2" y="5" rx="2"/>
-                                    <line x1="2" x2="22" y1="10" y2="10"/>
-                                </svg>
-                            </div>
-                            <div class="min-w-0">
-                                <span class="text-[9px] font-bold text-slate-400 block uppercase truncate">To'lov</span>
-                                <span class="text-xs font-black text-slate-900 font-mono truncate" x-text="Number(navOrder?.total_amount || 0).toLocaleString() + ' UZS'"></span>
-                            </div>
+                <!-- EXPANDED ACCORDION: External Navigators & Order Details -->
+                <div x-show="sheetExpanded" x-cloak class="space-y-3 pt-3 border-t border-slate-100 transition-all">
+                    <!-- EXTERNAL NAVIGATORS SHORTCUTS (YANDEX, GOOGLE, 2GIS) -->
+                    <div>
+                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Tashqi ilovada ochish:</p>
+                        <div class="grid grid-cols-3 gap-2">
+                            <!-- Yandex Navi -->
+                            <button type="button" @click="openExternalNav('yandex')" class="py-2.5 px-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 flex flex-col items-center justify-center text-[10px] font-black gap-1 cursor-pointer transition-colors">
+                                <span class="text-sm">🟡</span>
+                                <span>Yandex Navi</span>
+                            </button>
+                            <!-- Google Maps -->
+                            <button type="button" @click="openExternalNav('google')" class="py-2.5 px-2 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 flex flex-col items-center justify-center text-[10px] font-black gap-1 cursor-pointer transition-colors">
+                                <span class="text-sm">🔵</span>
+                                <span>Google Maps</span>
+                            </button>
+                            <!-- 2GIS -->
+                            <button type="button" @click="openExternalNav('2gis')" class="py-2.5 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 flex flex-col items-center justify-center text-[10px] font-black gap-1 cursor-pointer transition-colors">
+                                <span class="text-sm">🟢</span>
+                                <span>2GIS</span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Customer & Method -->
-                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                    <!-- Payment & Customer Pill -->
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
                         <div>
-                            <span class="text-[10px] text-slate-400 block font-semibold">Mijoz:</span>
+                            <span class="text-[10px] text-slate-400 block font-bold uppercase">Mijoz:</span>
                             <span class="font-black text-slate-900" x-text="navOrder?.customer_name"></span>
                         </div>
                         <div class="text-right">
-                            <span class="text-[10px] text-slate-400 block font-semibold">To'lov turi:</span>
-                            <span class="font-bold text-slate-800" x-text="navOrder?.payment_method_display || 'Naqd'"></span>
+                            <span class="text-[10px] text-slate-400 block font-bold uppercase">To'lov:</span>
+                            <span class="font-black text-slate-900 font-mono" x-text="Number(navOrder?.total_amount || 0).toLocaleString() + ' UZS'"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- ROW 3: PRIMARY ACTION BUTTONS (STOREBOX SIGNATURE LIME #c8ff6a) -->
+                <!-- ROW 3: PRIMARY ACTION BUTTONS (LIME #c8ff6a & OBSIDIAN #211b2e) -->
                 <div class="flex items-center gap-2 pt-1">
                     <!-- Harakat testi toggle -->
-                    <button type="button" @click="toggleDriveSimulation()" class="py-3.5 px-3 rounded-2xl border font-black text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0" :class="isSimulatingDrive ? 'bg-slate-900 text-[#c8ff6a] border-slate-900 shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'">
+                    <button type="button" @click="toggleDriveSimulation()"
+                            class="py-3.5 px-3 rounded-2xl border font-black text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
+                            :class="isSimulatingDrive ? 'bg-[#211b2e] text-[#c8ff6a] border-[#211b2e] shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'">
                         <i :data-lucide="isSimulatingDrive ? 'pause' : 'play'" class="w-4 h-4"></i>
                         <span x-text="isSimulatingDrive ? 'To\'xtatish' : 'Harakat'"></span>
                     </button>
 
-                    <!-- STAGE 1: Overview mode -> "Yo'lga chiqish (В путь)" -->
+                    <!-- STAGE 1: Overview mode -> "Yo'lga chiqish (В путь - 3D)" -->
                     <template x-if="navStage === 'overview'">
                         <button type="button" @click="startDrivingMode()" class="flex-1 py-3.5 px-4 rounded-2xl btn-storebox-lime text-sm flex items-center justify-center gap-2 cursor-pointer">
-                            <svg class="w-5 h-5 text-[#120d1d]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <svg class="w-5 h-5 text-[#120d1d] transform rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <polygon points="3 11 22 2 13 21 11 13 3 11"/>
                             </svg>
-                            <span class="font-black text-[#120d1d]">Yo'lga chiqish (В путь)</span>
+                            <span class="font-black text-[#120d1d]">Yo'lga chiqish (В путь - 3D)</span>
                         </button>
                     </template>
 
@@ -469,7 +711,7 @@
                     <template x-if="navStage === 'driving'">
                         <button type="button" @click="markArrived()" class="flex-1 py-3.5 px-4 rounded-2xl btn-storebox-lime text-sm flex items-center justify-center gap-2 cursor-pointer">
                             <i data-lucide="map-pin" class="w-5 h-5 text-[#120d1d]"></i>
-                            <span class="font-black text-[#120d1d]">Yetib keldim</span>
+                            <span class="font-black text-[#120d1d]">Yetib keldim (На месте)</span>
                         </button>
                     </template>
 
@@ -489,7 +731,7 @@
     <div x-show="cancelModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="cancelModalOpen = false" class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-200">
             <h3 class="font-black text-sm text-slate-900">{{ t.cancel_reason_title|default:"Nima uchun yetkazib bo'lmadi?" }}</h3>
-            <textarea x-model="cancelReason" rows="3" placeholder="{{ t.cancel_reason_placeholder|default:'Masalan: Mijoz telefonni ko\'tarmadi yoki manzil noto\'g\'ri ko\'rsatilgan...' }}" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium focus:outline-none focus:border-emerald-500"></textarea>
+            <textarea x-model="cancelReason" rows="3" placeholder="{{ t.cancel_reason_placeholder|default:'Masalan: Mijoz telefonni ko\'tarmadi yoki manzil noto\'g\'ri ko\'rsatilgan...' }}" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/20"></textarea>
             <div class="grid grid-cols-2 gap-2">
                 <button type="button" @click="cancelModalOpen = false" class="py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">{{ t.cancel_btn|default:"Bekor qilish" }}</button>
                 <button type="button" @click="submitCancel()" class="py-2.5 rounded-xl bg-rose-600 text-white text-xs font-black hover:bg-rose-700">{{ t.confirm_btn|default:"Tasdiqlash" }}</button>
@@ -498,7 +740,7 @@
     </div>
 
     <!-- TOAST NOTIFICATION -->
-    <div x-show="toastMessage" x-cloak x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl bg-slate-900 text-white font-bold text-xs shadow-2xl border border-slate-700 flex items-center gap-2">
+    <div x-show="toastMessage" x-cloak x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl bg-[#211b2e] text-white font-bold text-xs shadow-2xl border border-white/10 flex items-center gap-2">
         <i data-lucide="info" class="w-4 h-4 text-[#c8ff6a]"></i>
         <span x-text="toastMessage"></span>
     </div>
@@ -525,6 +767,7 @@
 
                 // Live Navigator State
                 navigatorModalOpen: false,
+                navViewMode: '2d', // '3d' (first-person heading-up perspective) | '2d' (flat north-up overview)
                 navOrder: null,
                 navMap: null,
                 navCourierMarker: null,
@@ -534,10 +777,23 @@
                 navCourierPos: null,
                 navBearing: 0,
                 navSpeed: 38,
-                navEtaText: '2 daq',
-                navDistText: '700 m',
+                navEtaText: '4 daq',
+                navDistText: '2.9 km',
+                navArrivalTime: '15:45',
                 gpsActive: false,
                 lastReportTime: 0,
+
+                // Turn-by-Turn Maneuvers Engine (Yandex Style)
+                parsedSteps: [],
+                currentStepIdx: 0,
+                activeManeuver: {
+                    type: 'straight',
+                    instruction: 'To\'g\'riga harakatlaning',
+                    distanceText: '150 m',
+                    streetName: '',
+                    lane: 'center'
+                },
+                secondManeuverText: '',
 
                 // Stage & UI Controls
                 navStage: 'overview', // 'overview' | 'driving' | 'arrived'
@@ -576,9 +832,13 @@
                     this.navOrder = order;
                     this.navigatorModalOpen = true;
                     this.navStage = 'overview';
+                    this.navViewMode = '2d';
                     this.sheetExpanded = false;
                     this.navEtaText = 'Hisoblanmoqda...';
                     this.navDistText = '...';
+
+                    // Compute ETA arrival clock
+                    this.updateArrivalTime(4);
 
                     setTimeout(() => {
                         if (window.lucide) lucide.createIcons();
@@ -605,18 +865,41 @@
                     }
                 },
 
+                toggle3DMode() {
+                    this.navViewMode = this.navViewMode === '3d' ? '2d' : '3d';
+                    this.updateMapPerspectiveTransform();
+                    this.showToast(this.navViewMode === '3d' ? "3D rejim (kurs bo'yicha)" : "2D rejim (shimol)");
+                    if (this.navMap) {
+                        setTimeout(() => {
+                            this.navMap.invalidateSize({ pan: false });
+                            if (this.navCourierPos) {
+                                const targetZoom = this.navViewMode === '3d' ? 17.5 : 15.5;
+                                this.navMap.setView(this.navCourierPos, targetZoom, { animate: true, duration: 0.4 });
+                            }
+                        }, 100);
+                    }
+                },
+
+                updateArrivalTime(minutes) {
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + (minutes || 4));
+                    const hh = String(now.getHours()).padStart(2, '0');
+                    const mm = String(now.getMinutes()).padStart(2, '0');
+                    this.navArrivalTime = `${hh}:${mm}`;
+                },
+
                 startGpsAndInitNavigator() {
-                    const destLat = parseFloat(this.navOrder?.dest_lat) || 41.2995;
-                    const destLng = parseFloat(this.navOrder?.dest_lng) || 69.2401;
+                    const destLat = parseFloat(this.navOrder?.dest_lat) || 39.6772;
+                    const destLng = parseFloat(this.navOrder?.dest_lng) || 66.9325;
 
                     // Fallback coordinates
-                    let initialLat = parseFloat(this.courierInfo?.current_lat) || (destLat - 0.009);
-                    let initialLng = parseFloat(this.courierInfo?.current_lng) || (destLng - 0.008);
+                    let initialLat = parseFloat(this.courierInfo?.current_lat) || (destLat - 0.014);
+                    let initialLng = parseFloat(this.courierInfo?.current_lng) || (destLng - 0.014);
 
                     // Initialize Map Container
                     this.initNavigatorMap(initialLat, initialLng, destLat, destLng);
 
-                    // ALWAYS Request Real Geolocation
+                    // Request Real Geolocation
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
                             (pos) => {
@@ -630,14 +913,13 @@
                                 this.updateCourierMarkerPosition(lat, lng);
                                 this.calculateLiveRoute(lat, lng, destLat, destLng);
                                 this.reportLocationToServer(lat, lng);
-                                this.showToast("Haqiqiy GPS lokatsiyangiz olindi");
+                                this.showToast("GPS lokatsiyangiz aniqlandi");
                             },
                             (err) => {
                                 console.warn("GPS fallback used:", err.message);
                                 this.gpsActive = false;
                                 this.updateCourierMarkerPosition(initialLat, initialLng);
                                 this.calculateLiveRoute(initialLat, initialLng, destLat, destLng);
-                                this.showToast("Standart lokatsiya faollashtirildi");
                             },
                             { enableHighAccuracy: true, timeout: 8000 }
                         );
@@ -653,8 +935,6 @@
                                     this.navBearing = Math.round(pos.coords.heading);
                                 }
                                 this.updateCourierMarkerPosition(lat, lng);
-
-                                // Check dynamic rerouting if courier turned into another street
                                 this.checkAndReroute(lat, lng);
 
                                 const now = Date.now();
@@ -678,11 +958,11 @@
                         this.navMap = null;
                     }
 
-                    // Leaflet map
+                    // Leaflet map with zoom control disabled
                     this.navMap = L.map('liveNavigatorMap', {
                         zoomControl: false,
                         attributionControl: false
-                    }).setView([cLat, cLng], 15);
+                    }).setView([cLat, cLng], 16);
 
                     L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ active_lang|default:"ru" }}&x={x}&y={y}&z={z}', {
                         subdomains: ['0', '1', '2', '3'],
@@ -694,24 +974,24 @@
                         className: 'custom-dest-pin',
                         html: `<div class="relative flex items-center justify-center">
                             <div class="dest-pulse-ring"></div>
-                            <div class="w-11 h-11 rounded-2xl bg-white text-slate-900 flex items-center justify-center shadow-2xl border-2 border-slate-900">
+                            <div class="w-12 h-12 rounded-2xl bg-[#211b2e] text-white flex items-center justify-center shadow-2xl border-2 border-white/20">
                                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                                    <path d="M4 2v20" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/>
-                                    <rect x="6" y="3" width="7" height="6" fill="#0f172a"/>
-                                    <rect x="13" y="3" width="7" height="6" fill="#ffffff" stroke="#0f172a" stroke-width="0.5"/>
-                                    <rect x="6" y="9" width="7" height="6" fill="#ffffff" stroke="#0f172a" stroke-width="0.5"/>
-                                    <rect x="13" y="9" width="7" height="6" fill="#0f172a"/>
+                                    <path d="M4 2v20" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                                    <rect x="6" y="3" width="7" height="6" fill="#ffffff"/>
+                                    <rect x="13" y="3" width="7" height="6" fill="#c8ff6a"/>
+                                    <rect x="6" y="9" width="7" height="6" fill="#c8ff6a"/>
+                                    <rect x="13" y="9" width="7" height="6" fill="#ffffff"/>
                                 </svg>
                             </div>
                         </div>`,
-                        iconSize: [44, 44],
-                        iconAnchor: [22, 38]
+                        iconSize: [48, 48],
+                        iconAnchor: [24, 40]
                     });
 
                     this.navDestMarker = L.marker([destLat, destLng], { icon: destIcon }).addTo(this.navMap)
                         .bindPopup(`<b>${this.navOrder.customer_name}</b><br>${this.navOrder.delivery_address}`);
 
-                    // Allow interactive click on map to test dynamic rerouting on the fly!
+                    // Map click allows testing rerouting
                     this.navMap.on('click', (e) => {
                         const newLat = e.latlng.lat;
                         const newLng = e.latlng.lng;
@@ -726,100 +1006,142 @@
                     }, 250);
                 },
 
+                updateMapPerspectiveTransform() {
+                    const el = document.getElementById('liveNavigatorMap');
+                    if (!el) return;
+                    if (this.navViewMode === '3d') {
+                        el.style.setProperty('--nav-bearing-deg', `${this.navBearing}deg`);
+                    } else {
+                        el.style.removeProperty('--nav-bearing-deg');
+                    }
+                },
+
                 updateCourierMarkerPosition(lat, lng) {
                     this.navCourierPos = [lat, lng];
+                    this.updateMapPerspectiveTransform();
 
-                    // 3D Navigation Arrow Marker (Yandex Pro Golden-Yellow Arrow)
+                    // In 3D mode, the map rotates to `-bearing`, so vehicle arrow points forward (0deg).
+                    // In 2D mode, map is static north-up, so vehicle arrow rotates to `bearing`.
+                    const arrowRotation = this.navViewMode === '3d' ? 0 : this.navBearing;
+
                     const courierIcon = L.divIcon({
-                        className: 'nav-arrow-3d-wrap',
+                        className: 'nav-vehicle-3d-wrap',
                         html: `<div class="relative flex items-center justify-center">
                             <div class="radar-pulse-ring"></div>
-                            <div id="courierNavArrow" class="nav-arrow-3d-body" style="transform: rotate(${this.navBearing}deg);">
+                            <!-- Headlight beam projecting onto road -->
+                            <div class="nav-vehicle-headlight-cone" style="transform: rotate(${arrowRotation}deg) translateX(-50%);"></div>
+                            <div id="courierVehicleBody" class="nav-vehicle-body" style="transform: rotate(${arrowRotation}deg);">
                                 <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
-                                    <path d="M24 4 L42 42 L24 33 L6 42 Z" fill="rgba(0,0,0,0.25)" transform="translate(0, 3.5)"/>
-                                    <path d="M24 4 L6 42 L24 33 Z" fill="url(#navFacetLeft)" stroke="#d97706" stroke-width="1.2" stroke-linejoin="round"/>
-                                    <path d="M24 4 L42 42 L24 33 Z" fill="url(#navFacetRight)" stroke="#b45309" stroke-width="1.2" stroke-linejoin="round"/>
-                                    <line x1="24" y1="4" x2="24" y2="33" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.95"/>
+                                    <path d="M24 3 L43 43 L24 33 L5 43 Z" fill="rgba(15,23,42,0.4)" transform="translate(0, 4)"/>
+                                    <!-- Left Facet -->
+                                    <path d="M24 3 L5 43 L24 33 Z" fill="url(#navFacetLeft)" stroke="#211b2e" stroke-width="1.5" stroke-linejoin="round"/>
+                                    <!-- Right Facet -->
+                                    <path d="M24 3 L43 43 L24 33 Z" fill="url(#navFacetRight)" stroke="#211b2e" stroke-width="1.5" stroke-linejoin="round"/>
+                                    <!-- Glowing Spine -->
+                                    <line x1="24" y1="3" x2="24" y2="33" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                                    <!-- Neon Core Dot -->
+                                    <circle cx="24" cy="22" r="3.5" fill="#c8ff6a" stroke="#211b2e" stroke-width="1.5"/>
                                     <defs>
-                                        <linearGradient id="navFacetLeft" x1="6" y1="4" x2="24" y2="33" gradientUnits="userSpaceOnUse">
-                                            <stop stop-color="#fef08a"/>
-                                            <stop offset="0.5" stop-color="#facc15"/>
-                                            <stop offset="1" stop-color="#eab308"/>
+                                        <linearGradient id="navFacetLeft" x1="5" y1="3" x2="24" y2="33" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#c8ff6a"/>
+                                            <stop offset="0.7" stop-color="#a3e635"/>
+                                            <stop offset="1" stop-color="#4d7c0f"/>
                                         </linearGradient>
-                                        <linearGradient id="navFacetRight" x1="42" y1="4" x2="24" y2="33" gradientUnits="userSpaceOnUse">
-                                            <stop stop-color="#f59e0b"/>
-                                            <stop offset="0.7" stop-color="#d97706"/>
-                                            <stop offset="1" stop-color="#b45309"/>
+                                        <linearGradient id="navFacetRight" x1="43" y1="3" x2="24" y2="33" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#a3e635"/>
+                                            <stop offset="0.7" stop-color="#65a30d"/>
+                                            <stop offset="1" stop-color="#365314"/>
                                         </linearGradient>
                                     </defs>
                                 </svg>
                             </div>
                         </div>`,
-                        iconSize: [56, 56],
-                        iconAnchor: [28, 28]
+                        iconSize: [64, 64],
+                        iconAnchor: [32, 32]
                     });
 
                     if (!this.navCourierMarker) {
                         this.navCourierMarker = L.marker([lat, lng], { icon: courierIcon }).addTo(this.navMap);
                     } else {
                         this.navCourierMarker.setLatLng([lat, lng]);
-                        const arrowEl = document.getElementById('courierNavArrow');
-                        if (arrowEl) arrowEl.style.transform = `rotate(${this.navBearing}deg)`;
+                        const arrowEl = document.getElementById('courierVehicleBody');
+                        if (arrowEl) arrowEl.style.transform = `rotate(${arrowRotation}deg)`;
                     }
+
+                    // Update Top HUD Maneuver relative distance
+                    this.updateManeuverHUD(lat, lng);
                 },
 
                 // STAGE 2: Start Driving Mode ("Yo'lga chiqish / В путь")
                 startDrivingMode() {
                     this.navStage = 'driving';
-                    this.sheetExpanded = false; // keep it ultra compact
-                    this.showToast("Harakat boshlandi! Yo'nalish faollashdi");
+                    this.navViewMode = '3d'; // Activate 3D first-person camera
+                    this.sheetExpanded = false;
+                    this.updateMapPerspectiveTransform();
+                    this.showToast("3D Navigatsiya faollashdi! (От первого лица)");
 
                     if (this.navMap && this.navCourierPos) {
-                        // Smoothly zoom in to the vehicle arrow looking forward along the street!
-                        this.navMap.setView(this.navCourierPos, 17.5, { animate: true, duration: 0.8 });
+                        setTimeout(() => {
+                            this.navMap.invalidateSize({ pan: false });
+                            this.navMap.setView(this.navCourierPos, 17.5, { animate: true, duration: 0.5 });
+                        }, 100);
                     }
                 },
 
                 async calculateLiveRoute(cLat, cLng, dLat, dLng) {
                     let route = null;
+                    let steps = [];
+
+                    // Fetch OSRM with steps=true
                     try {
-                        const url = `https://router.project-osrm.org/route/v1/driving/${cLng},${cLat};${dLng},${dLat}?overview=full&geometries=geojson`;
+                        const url = `https://router.project-osrm.org/route/v1/driving/${cLng},${cLat};${dLng},${dLat}?overview=full&geometries=geojson&steps=true`;
                         const res = await fetch(url);
                         const data = await res.json();
                         if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
                             route = data.routes[0];
+                            if (route.legs && route.legs[0] && route.legs[0].steps) {
+                                steps = route.legs[0].steps;
+                            }
                         }
                     } catch (e) {
-                        console.warn("OSRM primary error, trying mirror:", e);
+                        console.warn("OSRM primary route error:", e);
                     }
 
                     if (!route) {
                         try {
-                            const mirrorUrl = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${cLng},${cLat};${dLng},${dLat}?overview=full&geometries=geojson`;
+                            const mirrorUrl = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${cLng},${cLat};${dLng},${dLat}?overview=full&geometries=geojson&steps=true`;
                             const res2 = await fetch(mirrorUrl);
                             const data2 = await res2.json();
                             if (data2.code === 'Ok' && data2.routes && data2.routes.length > 0) {
                                 route = data2.routes[0];
+                                if (route.legs && route.legs[0] && route.legs[0].steps) {
+                                    steps = route.legs[0].steps;
+                                }
                             }
                         } catch (e2) {}
                     }
 
-                    // Fallback interpolation if offline
+                    // Offline Geometric Fallback
                     if (!route) {
                         const pts = [];
-                        for (let i = 0; i <= 25; i++) {
-                            const r = i / 25;
+                        for (let i = 0; i <= 28; i++) {
+                            const r = i / 28;
                             pts.push([cLat + (dLat - cLat) * r, cLng + (dLng - cLng) * r]);
                         }
                         this.simRouteCoords = pts;
+                        this.generateSyntheticManeuvers(pts);
                         this.renderTrafficRoute(pts);
-                        this.navDistText = '1.2 km';
+                        this.navDistText = '1.8 km';
                         this.navEtaText = '4 daq';
+                        this.updateArrivalTime(4);
                         return;
                     }
 
                     const coords = route.geometry.coordinates.map(pt => [pt[1], pt[0]]);
                     this.simRouteCoords = coords;
+
+                    // Parse real OSRM Maneuver steps
+                    this.parseRouteSteps(steps, coords);
 
                     const distanceM = route.distance;
                     if (distanceM >= 1000) {
@@ -829,20 +1151,138 @@
                     }
                     const durationMin = Math.max(1, Math.round(route.duration / 60));
                     this.navEtaText = `${durationMin} daq`;
+                    this.updateArrivalTime(durationMin);
 
                     // Initial Bearing calculation
                     if (coords.length > 1) {
                         this.navBearing = this.calculateBearing(coords[0], coords[1]);
-                        const arrowEl = document.getElementById('courierNavArrow');
-                        if (arrowEl) arrowEl.style.transform = `rotate(${this.navBearing}deg)`;
+                        this.updateCourierMarkerPosition(cLat, cLng);
                     }
 
                     this.renderTrafficRoute(coords);
 
-                    // If in overview stage, fit bounds
+                    // If overview, fit bounds
                     if (this.navStage === 'overview' && this.navMap) {
                         const bounds = L.latLngBounds(coords);
-                        this.navMap.fitBounds(bounds, { padding: [80, 40] });
+                        this.navMap.fitBounds(bounds, { padding: [100, 40] });
+                    }
+                },
+
+                parseRouteSteps(steps, fullCoords) {
+                    if (!steps || steps.length === 0) {
+                        this.generateSyntheticManeuvers(fullCoords);
+                        return;
+                    }
+
+                    this.parsedSteps = steps.map(s => {
+                        const m = s.maneuver;
+                        const mod = (m.modifier || '').toLowerCase();
+                        let type = 'straight';
+                        let instruction = 'To\'g\'riga harakatlaning';
+                        let lane = 'center';
+
+                        if (mod.includes('left')) {
+                            type = mod.includes('sharp') ? 'sharp-left' : (mod.includes('slight') ? 'slight-left' : 'left');
+                            instruction = 'Chapga buriling';
+                            lane = 'left';
+                        } else if (mod.includes('right')) {
+                            type = mod.includes('sharp') ? 'sharp-right' : (mod.includes('slight') ? 'slight-right' : 'right');
+                            instruction = 'O\'ngga buriling';
+                            lane = 'right';
+                        } else if (mod.includes('u-turn') || mod.includes('uturn')) {
+                            type = 'uturn';
+                            instruction = 'Qayrilib oling';
+                            lane = 'left';
+                        } else if (m.type === 'arrive') {
+                            type = 'arrive';
+                            instruction = 'Manzilga yetib kelindi';
+                            lane = 'center';
+                        }
+
+                        return {
+                            type: type,
+                            instruction: instruction,
+                            streetName: s.name ? (s.name + " ko'chasiga") : (this.navOrder?.delivery_address || 'Asosiy yo\'l'),
+                            distance: Math.round(s.distance || 150),
+                            location: [m.location[1], m.location[0]], // [lat, lng]
+                            lane: lane
+                        };
+                    });
+
+                    this.currentStepIdx = 0;
+                    this.applyManeuverStep(0);
+                },
+
+                generateSyntheticManeuvers(pts) {
+                    const steps = [];
+                    steps.push({
+                        type: 'straight',
+                        instruction: 'To\'g\'riga harakatlaning',
+                        streetName: 'Narpay ko\'chasiga',
+                        distance: 250,
+                        location: pts[0],
+                        lane: 'center'
+                    });
+                    steps.push({
+                        type: 'right',
+                        instruction: 'O\'ngga buriling',
+                        streetName: 'Beruniy ko\'chasiga',
+                        distance: 600,
+                        location: pts[Math.floor(pts.length * 0.4)],
+                        lane: 'right'
+                    });
+                    steps.push({
+                        type: 'left',
+                        instruction: 'Chapga buriling',
+                        streetName: '42-maktab tomon',
+                        distance: 400,
+                        location: pts[Math.floor(pts.length * 0.75)],
+                        lane: 'left'
+                    });
+                    steps.push({
+                        type: 'arrive',
+                        instruction: 'Yetib kelindi',
+                        streetName: this.navOrder?.delivery_address || 'Mijoz manzili',
+                        distance: 50,
+                        location: pts[pts.length - 1],
+                        lane: 'center'
+                    });
+                    this.parsedSteps = steps;
+                    this.currentStepIdx = 0;
+                    this.applyManeuverStep(0);
+                },
+
+                applyManeuverStep(idx) {
+                    if (!this.parsedSteps || this.parsedSteps.length === 0) return;
+                    const step = this.parsedSteps[idx] || this.parsedSteps[0];
+                    this.activeManeuver = {
+                        type: step.type,
+                        instruction: step.instruction,
+                        distanceText: step.distance >= 1000 ? `${(step.distance / 1000).toFixed(1)} km` : `${step.distance} m`,
+                        streetName: step.streetName,
+                        lane: step.lane
+                    };
+
+                    const nextStep = this.parsedSteps[idx + 1];
+                    if (nextStep) {
+                        const iconSymbol = nextStep.type.includes('left') ? '⬅️' : (nextStep.type.includes('right') ? '➡️' : '⬆️');
+                        this.secondManeuverText = `Keyin: ${iconSymbol} ${nextStep.distance} m (${nextStep.streetName})`;
+                    } else {
+                        this.secondManeuverText = '🏁 Manzil yaqinida';
+                    }
+                },
+
+                updateManeuverHUD(curLat, curLng) {
+                    if (!this.parsedSteps || this.parsedSteps.length === 0) return;
+                    const curStep = this.parsedSteps[this.currentStepIdx];
+                    if (!curStep) return;
+
+                    const d = this.getDistanceMeters(curLat, curLng, curStep.location[0], curStep.location[1]);
+                    if (d < 25 && this.currentStepIdx < this.parsedSteps.length - 1) {
+                        this.currentStepIdx++;
+                        this.applyManeuverStep(this.currentStepIdx);
+                    } else {
+                        this.activeManeuver.distanceText = d >= 1000 ? `${(d / 1000).toFixed(1)} km` : `${Math.round(d)} m`;
                     }
                 },
 
@@ -852,27 +1292,27 @@
                     }
                     this.navTrafficPolylines = [];
 
-                    // Base Casing Line
+                    // Base Casing Line (Dark Obsidian)
                     const casing = L.polyline(coords, {
                         color: '#0f172a',
-                        weight: 8,
-                        opacity: 0.85,
+                        weight: 9,
+                        opacity: 0.9,
                         lineCap: 'round',
                         lineJoin: 'round'
                     }).addTo(this.navMap);
                     this.navTrafficPolylines.push(casing);
 
-                    // Multi-color traffic segments (Green -> Amber -> Red)
+                    // Multi-color traffic flow line: StoreBox Neon Lime -> Amber -> Red
                     const totalPts = coords.length;
-                    const seg1 = coords.slice(0, Math.ceil(totalPts * 0.55));
-                    const seg2 = coords.slice(Math.max(0, Math.floor(totalPts * 0.50)), Math.ceil(totalPts * 0.85));
+                    const seg1 = coords.slice(0, Math.ceil(totalPts * 0.6));
+                    const seg2 = coords.slice(Math.max(0, Math.floor(totalPts * 0.55)), Math.ceil(totalPts * 0.85));
                     const seg3 = coords.slice(Math.max(0, Math.floor(totalPts * 0.80)));
 
-                    const lineGreen = L.polyline(seg1, { color: '#22c55e', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.navMap);
-                    const lineOrange = L.polyline(seg2, { color: '#f59e0b', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.navMap);
-                    const lineRed = L.polyline(seg3, { color: '#ef4444', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.navMap);
+                    const lineLime = L.polyline(seg1, { color: '#c8ff6a', weight: 6, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.navMap);
+                    const lineOrange = L.polyline(seg2, { color: '#f59e0b', weight: 6, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.navMap);
+                    const lineRed = L.polyline(seg3, { color: '#ef4444', weight: 6, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.navMap);
 
-                    this.navTrafficPolylines.push(lineGreen, lineOrange, lineRed);
+                    this.navTrafficPolylines.push(lineLime, lineOrange, lineRed);
                 },
 
                 calculateBearing(p1, p2) {
@@ -896,11 +1336,10 @@
                     return R * c;
                 },
 
-                // Dynamic Rerouting on deviation
                 checkAndReroute(curLat, curLng) {
                     if (!this.simRouteCoords || this.simRouteCoords.length < 2) return;
-                    const destLat = parseFloat(this.navOrder?.dest_lat) || 41.2995;
-                    const destLng = parseFloat(this.navOrder?.dest_lng) || 69.2401;
+                    const destLat = parseFloat(this.navOrder?.dest_lat) || 39.6772;
+                    const destLng = parseFloat(this.navOrder?.dest_lng) || 66.9325;
 
                     let minDist = Infinity;
                     for (let i = 0; i < this.simRouteCoords.length; i++) {
@@ -913,7 +1352,7 @@
                     }
                 },
 
-                // DRIVE SIMULATION (ANIMATED LIVE MOVEMENT)
+                // DRIVE SIMULATION (ANIMATED FIRST-PERSON LIVE DRIVING)
                 toggleDriveSimulation() {
                     if (this.isSimulatingDrive) {
                         this.stopDriveSimulation();
@@ -936,7 +1375,7 @@
                     this.simIndex = 0;
                     if (this.simInterval) clearInterval(this.simInterval);
 
-                    this.showToast("Harakat boshlandi! 3D-streлка yo'l bo'ylab harakatlanmoqda");
+                    this.showToast("3D Harakat boshlandi! Xarita kurs bo'yicha aylanadi");
 
                     this.simInterval = setInterval(() => {
                         if (this.simIndex >= this.simRouteCoords.length - 1) {
@@ -952,15 +1391,15 @@
                         // Dynamic Bearing
                         this.navBearing = this.calculateBearing(p1, p2);
 
-                        // Move courier marker
+                        // Move courier marker & rotate 3D canvas
                         this.updateCourierMarkerPosition(p2[0], p2[1]);
 
                         // Follow with camera
                         if (this.navMap) {
-                            this.navMap.panTo([p2[0], p2[1]], { animate: true, duration: 0.5 });
+                            this.navMap.panTo([p2[0], p2[1]], { animate: false });
                         }
 
-                        // Recalculate remaining distance & ETA
+                        // Remaining distance & ETA
                         const remainingPts = this.simRouteCoords.length - this.simIndex;
                         const mLeft = Math.round(remainingPts * 55);
                         if (mLeft >= 1000) {
@@ -968,11 +1407,16 @@
                         } else {
                             this.navDistText = `${mLeft} m`;
                         }
-                        this.navEtaText = `${Math.max(1, Math.round(remainingPts * 0.25))} daq`;
+                        const minLeft = Math.max(1, Math.round(remainingPts * 0.22));
+                        this.navEtaText = `${minLeft} daq`;
+                        this.updateArrivalTime(minLeft);
 
-                        // Send real-time GPS coordinate update to backend
+                        // Fluctuating realistic city speed
+                        this.navSpeed = Math.floor(38 + Math.sin(this.simIndex * 0.8) * 12);
+
+                        // Report to backend
                         this.reportLocationToServer(p2[0], p2[1]);
-                    }, 1000);
+                    }, 900);
                 },
 
                 stopDriveSimulation() {
@@ -988,14 +1432,44 @@
                     this.navDistText = '0 m';
                     this.navEtaText = 'Yetib kelindi';
                     this.navSpeed = 0;
-                    this.showToast("Manzilga yetib kelindi!");
+                    this.activeManeuver.instruction = "Manzilga yetib kelindi!";
+                    this.activeManeuver.type = "arrive";
+                    this.activeManeuver.distanceText = "0 m";
+                    this.showToast("Manzilga yetib kelindi! Mijoz eshigi oldidasiz");
                 },
 
                 recenterMap() {
                     if (this.navMap && this.navCourierPos) {
-                        const targetZoom = this.navStage === 'driving' ? 17.5 : 15;
+                        const targetZoom = this.navStage === 'driving' ? 17.5 : 16;
                         this.navMap.setView(this.navCourierPos, targetZoom, { animate: true });
                     }
+                },
+
+                openExternalNav(app) {
+                    const destLat = parseFloat(this.navOrder?.dest_lat) || 39.6772;
+                    const destLng = parseFloat(this.navOrder?.dest_lng) || 66.9325;
+                    let url = '';
+
+                    if (app === 'yandex') {
+                        // Yandex Navigator deep-link
+                        url = `yandexnavi://build_route_on_map?lat_to=${destLat}&lon_to=${destLng}`;
+                        setTimeout(() => {
+                            // Web fallback if app not installed
+                            window.open(`https://yandex.ru/maps/?rtext=~${destLat},${destLng}&rtt=auto`, '_blank');
+                        }, 500);
+                        window.location.href = url;
+                        return;
+                    } else if (app === 'google') {
+                        url = `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`;
+                    } else if (app === '2gis') {
+                        url = `dgis://2gis.ru/routeSearch/rsType/car/to/${destLng},${destLat}`;
+                        setTimeout(() => {
+                            window.open(`https://2gis.ru/routeSearch/rsType/car/to/${destLng},${destLat}`, '_blank');
+                        }, 500);
+                        window.location.href = url;
+                        return;
+                    }
+                    window.open(url, '_blank');
                 },
 
                 async reportLocationToServer(lat, lng) {
