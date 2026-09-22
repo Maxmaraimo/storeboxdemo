@@ -2983,7 +2983,8 @@ h1 span {
    STOREBOX 2.0 AUTHENTIC PLATFORM SHOWCASE
    ========================================================= */
 .platform-showcase-section {
-    padding-block: 20px 0;
+    scroll-margin-top: 96px;
+    padding-block: 28px 40px;
     position: relative;
     overflow: visible;
 }
@@ -2991,36 +2992,54 @@ h1 span {
 .platform-tabs-wrapper {
     position: relative;
     z-index: 5;
-    margin-top: 36px;
-    margin-bottom: 30px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    width: 100%;
 }
 
 .platform-tabs-scroll {
     display: flex;
-    gap: 10px;
-    justify-content: center;
+    gap: 8px;
     align-items: center;
-    flex-wrap: wrap;
-    max-width: 1140px;
+    max-width: 1240px;
     margin-inline: auto;
+    padding-inline: 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.platform-tabs-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+@media (min-width: 1240px) {
+    .platform-tabs-scroll {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
 }
 
 .platform-tab-btn {
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
+    gap: 7px;
+    padding: 8px 15px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.85);
     border: 1.5px solid rgba(15, 23, 42, 0.08);
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     color: #334155;
     cursor: pointer;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    white-space: nowrap;
 }
 
 .theme-dark .platform-tab-btn {
@@ -3204,22 +3223,23 @@ h1 span {
     width: 100%;
     height: 100%;
     display: block;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center top;
     transition: opacity 0.22s ease, transform 0.25s ease;
 }
 
 .platform-floating-infocard {
     position: absolute;
-    bottom: 22px;
-    right: 22px;
-    width: 360px;
-    max-width: calc(100% - 44px);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.35) 100%);
+    bottom: 20px;
+    right: 20px;
+    width: 340px;
+    max-width: calc(100% - 40px);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.42) 100%);
     -webkit-backdrop-filter: blur(24px) saturate(200%);
     backdrop-filter: blur(24px) saturate(200%);
-    border: 1.5px solid rgba(255, 255, 255, 0.88);
-    border-radius: 20px;
-    padding: 18px 20px;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 18px;
+    padding: 16px 18px;
     box-shadow: 
         0 24px 50px rgba(15, 23, 42, 0.12),
         0 6px 18px rgba(15, 23, 42, 0.05),
@@ -3228,6 +3248,30 @@ h1 span {
     z-index: 10;
     transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, box-shadow 0.3s ease;
     will-change: transform, opacity;
+}
+
+@media (max-width: 1080px) {
+    .platform-floating-infocard {
+        bottom: 14px;
+        right: 14px;
+        width: 310px;
+        padding: 13px 15px;
+        border-radius: 15px;
+    }
+    .platform-floating-infocard .pfc-title {
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
+    .platform-floating-infocard .pfc-description {
+        font-size: 11.5px;
+        line-height: 1.35;
+        margin-bottom: 6px;
+    }
+    .platform-floating-infocard .pfc-features-list li {
+        font-size: 11px;
+        line-height: 1.25;
+        gap: 6px;
+    }
 }
 
 .platform-floating-infocard:hover {
@@ -3408,7 +3452,8 @@ h1 span {
 @media (min-width: 992px) {
     .platform-showcase-section {
         position: relative;
-        padding-block: 70px 50px;
+        padding-block: 30px 45px;
+        scroll-margin-top: 96px;
     }
     .platform-sticky-container {
         position: relative;
@@ -3427,27 +3472,22 @@ h1 span {
         justify-content: flex-start;
     }
     .platform-showcase-section .section-heading {
-        margin-bottom: 18px !important;
+        margin-bottom: 14px !important;
     }
     .platform-showcase-section .section-heading h2 {
-        font-size: clamp(26px, 2.8vw, 38px);
-        margin-bottom: 6px;
+        font-size: clamp(24px, 2.6vw, 36px);
+        margin-bottom: 5px;
         line-height: 1.2;
     }
     .platform-showcase-section .section-heading p {
-        font-size: 14px;
+        font-size: 13.5px;
         line-height: 1.45;
-        max-width: 720px;
+        max-width: 700px;
         margin-inline: auto;
     }
     .platform-tabs-wrapper {
         margin-top: 0 !important;
-        margin-bottom: 22px !important;
-    }
-    .platform-tabs-scroll {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
+        margin-bottom: 18px !important;
     }
     .platform-stage-card {
         max-width: 1240px;
@@ -3469,13 +3509,15 @@ h1 span {
         width: 100%;
         height: 100%;
         display: block;
-        object-fit: cover;
+        object-fit: contain;
+        object-position: center top;
     }
 }
 
 @media (max-width: 991px) {
     .platform-showcase-section {
-        padding-block: 60px 40px;
+        padding-block: 24px 35px;
+        scroll-margin-top: 86px;
     }
     .platform-sticky-container {
         position: relative;
@@ -3500,24 +3542,8 @@ h1 span {
         width: 100%;
         height: 100%;
         display: block;
-        object-fit: cover;
-    }
-}
-
-@media (max-width: 900px) {
-    .platform-tabs-scroll {
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-        overflow-x: auto;
-        padding-inline: 16px;
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
-    }
-    .platform-tabs-scroll::-webkit-scrollbar {
-        display: none;
-    }
-    .platform-tab-btn {
-        flex-shrink: 0;
+        object-fit: contain;
+        object-position: center top;
     }
 }
 
@@ -5018,7 +5044,7 @@ h1 span {
                             <!-- Screen Viewport with Image Crossfade -->
                             <div class="platform-screen-viewport">
                                 <div class="platform-image-wrapper">
-                                    <img id="platformMainImg" src="/static/images/landing/platform/dashboard.png" alt="StoreBox 2.0 Boshqaruv Paneli" loading="lazy">
+                                    <img id="platformMainImg" src="/static/images/landing/platform/dashboard.png?v=sb2026_09_22" alt="StoreBox 2.0 Boshqaruv Paneli" loading="lazy">
                                 </div>
 
                                 <!-- Navigation Arrows -->
@@ -6920,7 +6946,7 @@ h1 span {
     const platformModulesData = {
         dashboard: {
             url: "app.storebox.uz/dashboard/",
-            img: "/static/images/landing/platform/dashboard.png",
+            img: "/static/images/landing/platform/dashboard.png?v=sb2026_09_22",
             badgeUz: "Savdo statistikasi",
             badgeRu: "Статистика продаж",
             metricUz: "21 990 400 UZS",
@@ -6942,7 +6968,7 @@ h1 span {
         },
         yespos: {
             url: "app.storebox.uz/integrations/yespos/",
-            img: "/static/images/landing/platform/yespos.png",
+            img: "/static/images/landing/platform/yespos.png?v=sb2026_09_22",
             badgeUz: "YES POS integratsiyasi",
             badgeRu: "Интеграция YES POS",
             metricUz: "100% Avtosinxron",
@@ -6964,7 +6990,7 @@ h1 span {
         },
         courier: {
             url: "app.storebox.uz/logistics/couriers/",
-            img: "/static/images/landing/platform/courier.png",
+            img: "/static/images/landing/platform/courier.png?v=sb2026_09_22",
             badgeUz: "Logistika nazorati",
             badgeRu: "Контроль логистики",
             metricUz: "GPS & Balans",
@@ -6986,7 +7012,7 @@ h1 span {
         },
         staff: {
             url: "app.storebox.uz/settings/staff/",
-            img: "/static/images/landing/platform/staff.png",
+            img: "/static/images/landing/platform/staff.png?v=sb2026_09_22",
             badgeUz: "Xavfsiz boshqaruv",
             badgeRu: "Безопасный доступ",
             metricUz: "Nozik ruxsatlar",
@@ -7008,7 +7034,7 @@ h1 span {
         },
         design: {
             url: "app.storebox.uz/storefront/customizer/",
-            img: "/static/images/landing/platform/design.png",
+            img: "/static/images/landing/platform/design.png?v=sb2026_09_22",
             badgeUz: "Vitrina konstruktori",
             badgeRu: "Конструктор витрины",
             metricUz: "100% Moslashuv",
@@ -7030,7 +7056,7 @@ h1 span {
         },
         qr: {
             url: "app.storebox.uz/restaurants/tables-qr/",
-            img: "/static/images/landing/platform/qr.png",
+            img: "/static/images/landing/platform/qr.png?v=sb2026_09_22",
             badgeUz: "Smart QR menyu",
             badgeRu: "Smart QR меню",
             metricUz: "0 soniya kutish",
@@ -7052,7 +7078,7 @@ h1 span {
         },
         products: {
             url: "app.storebox.uz/catalog/products/",
-            img: "/static/images/landing/platform/products.png",
+            img: "/static/images/landing/platform/products.png?v=sb2026_09_22",
             badgeUz: "Tovar katalogi",
             badgeRu: "Каталог товаров",
             metricUz: "Cheksiz toifalar",
@@ -7074,7 +7100,7 @@ h1 span {
         },
         telegram: {
             url: "t.me/StoreBoxDemoBot/app",
-            img: "/static/images/landing/platform/telegram.png",
+            img: "/static/images/landing/platform/telegram.png?v=sb2026_09_22",
             badgeUz: "Telegram WebApp",
             badgeRu: "Telegram WebApp",
             metricUz: "200M+ auditoriya",
