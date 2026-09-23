@@ -30,6 +30,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [lang, setLangState] = useState<Language>(() => {
     try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlLang = urlParams.get("lang") as Language;
+      if (urlLang === "uz" || urlLang === "ru" || urlLang === "en") {
+        return urlLang;
+      }
+      const initialWindowLang = (window as any).__INITIAL_LANG__ as Language;
+      if (initialWindowLang === "uz" || initialWindowLang === "ru" || initialWindowLang === "en") {
+        return initialWindowLang;
+      }
       const match = document.cookie.match(/(?:^|;\s*)(?:storebox_lang|django_language)=([^;]+)/);
       if (match && (match[1] === "uz" || match[1] === "ru" || match[1] === "en")) {
         return match[1] as Language;
@@ -50,7 +59,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem("storebox_lang", l);
       document.cookie = `storebox_lang=${l}; path=/; max-age=31536000; SameSite=Lax`;
       document.cookie = `django_language=${l}; path=/; max-age=31536000; SameSite=Lax`;
+      document.documentElement.lang = l;
       fetch(`/lang/${l}/?next=${encodeURIComponent(window.location.pathname)}`, { method: "GET" }).catch(() => {});
+      const curUrl = new URL(window.location.href);
+      curUrl.searchParams.set("lang", l);
+      window.history.replaceState({}, "", curUrl.toString());
     } catch {
       // ignore
     }

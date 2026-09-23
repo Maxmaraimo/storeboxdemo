@@ -56,13 +56,13 @@
         <div x-data="{
             showPass: false,
             mode: 'phone',
-            country: { flag: '🇺🇿', dialCode: '+998', code: '998', digits: 9, placeholder: '(90) 123-45-67' },
+            country: { flag: 'UZ', dialCode: '+998', code: '998', digits: 9, placeholder: '(90) 123-45-67' },
             countries: [
-                { flag: '🇺🇿', dialCode: '+998', code: '998', digits: 9, name: 'O\'zbekiston', placeholder: '(90) 123-45-67' },
-                { flag: '🇰🇿', dialCode: '+7', code: '7', digits: 10, name: 'Qozog\'iston', placeholder: '(701) 123-45-67' },
-                { flag: '🇷🇺', dialCode: '+7', code: '7', digits: 10, name: 'Россия', placeholder: '(999) 123-45-67' },
-                { flag: '🇰🇬', dialCode: '+996', code: '996', digits: 9, name: 'Qirg\'iziston', placeholder: '(555) 123-456' },
-                { flag: '🇹🇯', dialCode: '+992', code: '992', digits: 9, name: 'Tojikiston', placeholder: '(92) 123-45-67' }
+                { flag: 'UZ', dialCode: '+998', code: '998', digits: 9, name: 'O\'zbekiston', placeholder: '(90) 123-45-67' },
+                { flag: 'KZ', dialCode: '+7', code: '7', digits: 10, name: 'Qozog\'iston', placeholder: '(701) 123-45-67' },
+                { flag: 'RU', dialCode: '+7', code: '7', digits: 10, name: 'Россия', placeholder: '(999) 123-45-67' },
+                { flag: 'KG', dialCode: '+996', code: '996', digits: 9, name: 'Qirg\'iziston', placeholder: '(555) 123-456' },
+                { flag: 'TJ', dialCode: '+992', code: '992', digits: 9, name: 'Tojikiston', placeholder: '(92) 123-45-67' }
             ],
             countryOpen: false,
             phoneDigits: '',
@@ -133,7 +133,7 @@
                 <div x-show="mode === 'phone'" class="relative flex rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus-within:border-[#211b2e] dark:focus-within:border-[#c8ff6a] focus-within:ring-2 focus-within:ring-[#c8ff6a]/30 transition-all overflow-visible">
                     <div class="relative shrink-0">
                         <button type="button" @click="countryOpen = !countryOpen" class="h-full px-3 py-3 flex items-center gap-1.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200/70 rounded-l-2xl border-r border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-white transition-colors">
-                            <span class="text-base leading-none" x-text="country.flag"></span>
+                            <span class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/20 text-slate-800 dark:text-white text-[10px] font-black tracking-wider" x-text="country.flag"></span>
                             <span class="text-xs" x-text="country.dialCode"></span>
                             <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
                         </button>
@@ -141,7 +141,7 @@
                             <template x-for="c in countries" :key="c.code">
                                 <button type="button" @click="country = c; phoneDigits = ''; countryOpen = false"
                                         class="w-full px-3 py-2 rounded-xl text-left text-xs font-bold flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200">
-                                    <span class="text-base" x-text="c.flag"></span>
+                                    <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[10px] font-black tracking-wider" x-text="c.flag"></span>
                                     <span class="flex-1 truncate" x-text="c.name"></span>
                                     <span class="text-[11px] text-slate-400" x-text="c.dialCode"></span>
                                 </button>

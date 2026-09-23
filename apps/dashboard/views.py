@@ -38,6 +38,14 @@ from apps.orders.permissions import (
 from apps.payments.models import StorePaymentSetting
 from apps.super_admin.models import TariffRequest
 from apps.telegram_bot.services import send_telegram_notification, test_bot_connection
+from apps.core.translations import (
+    get_order_status_label,
+    get_delivery_method_label,
+    get_payment_method_label,
+    get_payment_status_label,
+    get_order_source_label,
+    get_unit_label,
+)
 
 
 def get_merchant_store(request):
@@ -1061,10 +1069,19 @@ def dashboard_home_view(request):
             day_sum = orders_scope.filter(created_at__date__gte=start_d, created_at__date__lte=end_d).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             chart_labels.append(start_d.strftime('%d.%m'))
             chart_revenue.append(float(day_sum))
+    current_lang = request.session.get('lang') or request.COOKIES.get('storebox_lang') or getattr(request, 'language', 'uz')
+    if current_lang not in ['uz', 'ru', 'en']:
+        current_lang = 'uz'
+
     elif period == 'year':
         filter_date = now - timezone.timedelta(days=365)
         orders_scope = store_orders.filter(created_at__gte=filter_date)
-        chart_labels = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek']
+        if current_lang == 'ru':
+            chart_labels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+        elif current_lang == 'en':
+            chart_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        else:
+            chart_labels = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek']
         chart_revenue = []
         for m in range(1, 13):
             m_sum = orders_scope.filter(created_at__year=now.year, created_at__month=m).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
@@ -1115,15 +1132,33 @@ def dashboard_home_view(request):
             sold_sum=Sum('total_price')
         ).order_by('-sold_qty')[:10])
 
-    period_labels = {
-        'today': 'Bugungi',
-        'week': 'Haftalik',
-        'month': 'Oylik',
-        'quarter': 'Choraklik',
-        'year': 'Yillik',
-        'custom': 'Tanlangan oraliq'
+    period_labels_all = {
+        'uz': {
+            'today': 'Bugungi',
+            'week': 'Haftalik',
+            'month': 'Oylik',
+            'quarter': 'Choraklik',
+            'year': 'Yillik',
+            'custom': 'Tanlangan oraliq'
+        },
+        'ru': {
+            'today': 'Сегодня',
+            'week': 'За неделю',
+            'month': 'За месяц',
+            'quarter': 'За квартал',
+            'year': 'За год',
+            'custom': 'Выбранный период'
+        },
+        'en': {
+            'today': 'Today',
+            'week': 'This Week',
+            'month': 'This Month',
+            'quarter': 'This Quarter',
+            'year': 'This Year',
+            'custom': 'Custom Range'
+        }
     }
-    period_display = period_labels.get(period, 'Bugungi')
+    period_display = period_labels_all.get(current_lang, period_labels_all['uz']).get(period, 'Bugungi')
 
     # Deliveries map
     map_orders = []
@@ -1134,17 +1169,19 @@ def dashboard_home_view(request):
             'lat': ord.delivery_lat,
             'lng': ord.delivery_lng,
             'total': float(ord.total_amount),
-            'status': ord.get_status_display()
+            'status': get_order_status_label(ord.status, current_lang)
         })
     if not map_orders and store.branches.exists():
         br = store.branches.first()
+        branch_status_label = {'uz': 'Asosiy filial', 'ru': 'Основной филиал', 'en': 'Main branch'}.get(current_lang, 'Asosiy filial')
+        branch_name_label = {'uz': 'Filial', 'ru': 'Филиал', 'en': 'Branch'}.get(current_lang, 'Filial')
         map_orders.append({
-            'num': 'Filial',
+            'num': branch_name_label,
             'client': br.name,
             'lat': br.latitude,
             'lng': br.longitude,
             'total': 0,
-            'status': 'Asosiy filial'
+            'status': branch_status_label
         })
 
     # Balance & cards
@@ -2426,14 +2463,26 @@ def order_detail_api(request, order_id):
     store = get_merchant_store(request)
     order = get_object_or_404(Order, id=order_id, store=store)
 
+    current_lang = request.session.get('lang') or request.COOKIES.get('storebox_lang') or getattr(request, 'language', 'uz')
+    if current_lang not in ['uz', 'ru', 'en']:
+        current_lang = 'uz'
+
+    unknown_customer = {'uz': "Noma'lum xaridor", 'ru': 'Неизвестный покупатель', 'en': 'Unknown customer'}.get(current_lang, "Noma'lum xaridor")
+
     items_data = []
     for it in order.items.all():
         img_url = None
-        if it.product and it.product.primary_image_url:
-            img_url = it.product.primary_image_url
+        prod_name = it.product_name
+        if it.product:
+            if it.product.primary_image_url:
+                img_url = it.product.primary_image_url
+            p_name_loc = it.product.get_name(current_lang)
+            if p_name_loc:
+                prod_name = p_name_loc
+
         items_data.append({
             'id': it.id,
-            'product_name': it.product_name,
+            'product_name': prod_name,
             'variation_name': it.variation_name or '',
             'unit_price': int(it.unit_price),
             'quantity': it.quantity,
@@ -2452,12 +2501,12 @@ def order_detail_api(request, order_id):
         'id': order.id,
         'order_number': order.order_number,
         'created_at': order.created_at.strftime('%d.%m.%Y %H:%M'),
-        'customer_name': order.customer_name or 'Noma\'lum xaridor',
+        'customer_name': order.customer_name or unknown_customer,
         'customer_phone': order.customer_phone or '',
         'customer_orders_count': customer_orders_count,
         'delivery_method': order.delivery_method,
-        'delivery_method_display': order.get_delivery_method_display(),
-        'delivery_city': order.delivery_city or 'Toshkent',
+        'delivery_method_display': get_delivery_method_label(order.delivery_method, current_lang),
+        'delivery_city': order.delivery_city or ('Ташкент' if current_lang == 'ru' else ('Tashkent' if current_lang == 'en' else 'Toshkent')),
         'delivery_address': order.delivery_address or '',
         'delivery_lat': order.delivery_lat,
         'delivery_lng': order.delivery_lng,
@@ -2468,13 +2517,13 @@ def order_detail_api(request, order_id):
         'subtotal': int(order.subtotal or 0),
         'total_amount': int(order.total_amount or 0),
         'payment_method': order.payment_method,
-        'payment_method_display': order.get_payment_method_display(),
+        'payment_method_display': get_payment_method_label(order.payment_method, current_lang),
         'payment_status': order.payment_status,
-        'payment_status_display': order.get_payment_status_display(),
+        'payment_status_display': get_payment_status_label(order.payment_status, current_lang),
         'status': order.status,
-        'status_display': order.get_status_display(),
+        'status_display': get_order_status_label(order.status, current_lang),
         'source': order.source,
-        'source_display': order.get_source_display(),
+        'source_display': get_order_source_label(order.source, current_lang),
         'branch_name': order.branch.name if order.branch else None,
         'courier_id': order.courier.id if order.courier else None,
         'courier_name': order.courier.name if order.courier else None,

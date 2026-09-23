@@ -11,27 +11,27 @@
     {% endif %}
 
     <div class="text-center max-w-2xl mx-auto space-y-2">
-        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Yetarli! Biznesingizni onlayn qilish uchun 10 barobar ko'p pul sarflashingiz shart emas</p>
-        <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">STOREBOX BILAN TEZROQ TARIFNI TANLANG VA SAMARADORLIKNI OSHIRING!</h1>
+        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{{ t.tariffs_subtitle }}</p>
+        <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{{ t.tariffs_main_banner }}</h1>
     </div>
 
-    <!-- Duration Pill Switcher (Video 09:59) -->
+    <!-- Duration Pill Switcher -->
     <div class="flex items-center justify-center gap-2">
         <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold">
-            <button type="button" @click="duration = 1" :class="duration === 1 ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'" class="px-4 py-2 rounded-xl">1 oylik</button>
-            <button type="button" @click="duration = 3" :class="duration === 3 ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'" class="px-4 py-2 rounded-xl">3 oylik</button>
+            <button type="button" @click="duration = 1" :class="duration === 1 ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'" class="px-4 py-2 rounded-xl">{{ t.duration_1_month }}</button>
+            <button type="button" @click="duration = 3" :class="duration === 3 ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'" class="px-4 py-2 rounded-xl">{{ t.duration_3_months }}</button>
             <button type="button" @click="duration = 6" :class="duration === 6 ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'" class="px-4 py-2 rounded-xl flex items-center gap-1.5">
-                <span>6 oylik</span>
+                <span>{{ t.duration_6_months }}</span>
                 <span class="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-black">-10%</span>
             </button>
             <button type="button" @click="duration = 12" :class="duration === 12 ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'" class="px-4 py-2 rounded-xl flex items-center gap-1.5">
-                <span>12 oylik</span>
+                <span>{{ t.duration_12_months }}</span>
                 <span class="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-black">-20%</span>
             </button>
         </div>
     </div>
 
-    <!-- 3 Tier Cards (Video 09:59) -->
+    <!-- 3 Tier Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         <!-- 1. Start -->
@@ -41,31 +41,31 @@
                     <h3 class="font-bold text-sm text-slate-900">Start</h3>
                     <div class="mt-2 flex items-baseline gap-1">
                         <span class="text-2xl font-black text-slate-900" x-text="duration === 12 ? '240 000' : (duration === 6 ? '270 000' : '300 000')">300 000</span>
-                        <span class="text-xs text-slate-400 font-bold">UZS / 1 oy</span>
+                        <span class="text-xs text-slate-400 font-bold">{{ t.plan_per_month }}</span>
                     </div>
                 </div>
 
                 <div class="border-t border-slate-100 pt-4 space-y-2.5 text-xs text-slate-600 font-semibold">
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>Telegram bot (WebApp)</span>
+                        <span>{{ t.plan_tg_webapp }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>Veb-sayt (Faqat subdomen)</span>
+                        <span>{{ t.plan_website_subdomain }}</span>
                     </div>
                 </div>
             </div>
 
             <button type="button" @click="selectedPlan = 'start'; upgradeModal = true" class="w-full mt-6 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 font-bold text-xs">
-                Tarifni yangilang
+                {{ t.upgrade_plan_btn }}
             </button>
         </div>
 
         <!-- 2. Basic (Featured) -->
         <div class="bg-white rounded-3xl border-2 border-brand p-6 sm:p-8 shadow-xl flex flex-col justify-between relative">
             <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-brand text-white font-black text-[10px] uppercase tracking-wider">
-                Tavsiya etiladi
+                {{ t.recommended_badge }}
             </div>
 
             <div class="space-y-4">
@@ -73,32 +73,32 @@
                     <h3 class="font-bold text-sm text-slate-900">Basic</h3>
                     <div class="mt-2 flex items-baseline gap-1">
                         <span class="text-2xl font-black text-slate-900" x-text="duration === 12 ? '400 000' : (duration === 6 ? '450 000' : '500 000')">500 000</span>
-                        <span class="text-xs text-slate-400 font-bold">UZS / 1 oy</span>
+                        <span class="text-xs text-slate-400 font-bold">{{ t.plan_per_month }}</span>
                     </div>
                 </div>
 
                 <div class="border-t border-slate-100 pt-4 space-y-2.5 text-xs text-slate-600 font-semibold">
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>Telegram bot (WebApp)</span>
+                        <span>{{ t.plan_tg_webapp }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>Veb-sayt</span>
+                        <span>{{ t.plan_website }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>QR Menyu / Katalog</span>
+                        <span>{{ t.plan_qr_menu }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>Instagram</span>
+                        <span>{{ t.plan_instagram }}</span>
                     </div>
                 </div>
             </div>
 
             <button type="button" @click="selectedPlan = 'basic'; upgradeModal = true" class="w-full mt-6 py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
-                Tarifni yangilang
+                {{ t.upgrade_plan_btn }}
             </button>
         </div>
 
@@ -109,97 +109,97 @@
                     <h3 class="font-bold text-sm text-slate-900">Professional</h3>
                     <div class="mt-2 flex items-baseline gap-1">
                         <span class="text-2xl font-black text-slate-900" x-text="duration === 12 ? '720 000' : (duration === 6 ? '810 000' : '900 000')">900 000</span>
-                        <span class="text-xs text-slate-400 font-bold">UZS / 1 oy</span>
+                        <span class="text-xs text-slate-400 font-bold">{{ t.plan_per_month }}</span>
                     </div>
                 </div>
 
                 <div class="border-t border-slate-100 pt-4 space-y-2.5 text-xs text-slate-600 font-semibold">
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>Telegram bot (WebApp)</span>
+                        <span>{{ t.plan_tg_webapp }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>Veb-sayt</span>
+                        <span>{{ t.plan_website }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>QR Menyu / Katalog</span>
+                        <span>{{ t.plan_qr_menu }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>Instagram</span>
+                        <span>{{ t.plan_instagram }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                        <span>ClickSuperApp</span>
+                        <span>{{ t.plan_click_superapp }}</span>
                     </div>
                 </div>
             </div>
 
             <button type="button" @click="selectedPlan = 'pro'; upgradeModal = true" class="w-full mt-6 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 font-bold text-xs">
-                Tarifni yangilang
+                {{ t.upgrade_plan_btn }}
             </button>
         </div>
     </div>
 
-    <!-- COMPARISON TABLE (Video 10:01) -->
+    <!-- COMPARISON TABLE -->
     <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-4">
         <h3 class="text-center font-black text-base text-slate-900 tracking-tight uppercase">
-            STOREBOX SIZ ENG MINIMAL YO'QOTISHLARNI KO'RIB CHIQDIK
+            {{ t.tariffs_comparison_title }}
         </h3>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
                     <tr>
-                        <th class="py-3 px-4">Xizmat turi</th>
-                        <th class="py-3 px-4">Maxsus dasturlash (1 oydan boshlangan muddat)</th>
+                        <th class="py-3 px-4">{{ t.th_service_type }}</th>
+                        <th class="py-3 px-4">{{ t.th_custom_dev }}</th>
                         <th class="py-3 px-4 font-black text-brand">storebox</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
                     <tr>
-                        <td class="py-3 px-4 font-bold">Telegram bot</td>
-                        <td class="py-3 px-4 text-slate-500 font-mono">5 000 000 - 7 000 000 So'm</td>
-                        <td class="py-3 px-4 text-emerald-600 font-bold">Obunaga kiritilgan</td>
+                        <td class="py-3 px-4 font-bold">{{ t.telegram_bot }}</td>
+                        <td class="py-3 px-4 text-slate-500 font-mono">5 000 000 - 7 000 000 UZS</td>
+                        <td class="py-3 px-4 text-emerald-600 font-bold">{{ t.included_in_subscription }}</td>
                     </tr>
                     <tr>
-                        <td class="py-3 px-4 font-bold">Veb-sayt</td>
-                        <td class="py-3 px-4 text-slate-500 font-mono">15 000 000 - 20 000 000 So'm</td>
-                        <td class="py-3 px-4 text-emerald-600 font-bold">Obunaga kiritilgan</td>
+                        <td class="py-3 px-4 font-bold">{{ t.plan_website }}</td>
+                        <td class="py-3 px-4 text-slate-500 font-mono">15 000 000 - 20 000 000 UZS</td>
+                        <td class="py-3 px-4 text-emerald-600 font-bold">{{ t.included_in_subscription }}</td>
                     </tr>
                     <tr>
-                        <td class="py-3 px-4 font-bold">Administrator paneli</td>
-                        <td class="py-3 px-4 text-slate-500 font-mono">5 000 000 - 7 000 000 So'm</td>
-                        <td class="py-3 px-4 text-emerald-600 font-bold">Obunaga kiritilgan</td>
+                        <td class="py-3 px-4 font-bold">{{ t.admin_panel }}</td>
+                        <td class="py-3 px-4 text-slate-500 font-mono">5 000 000 - 7 000 000 UZS</td>
+                        <td class="py-3 px-4 text-emerald-600 font-bold">{{ t.included_in_subscription }}</td>
                     </tr>
                     <tr>
-                        <td class="py-3 px-4 font-bold">Integratsiyalar (to'lov/omborxona)</td>
-                        <td class="py-3 px-4 text-slate-500 font-mono">5 000 000 - 7 000 000 So'm</td>
-                        <td class="py-3 px-4 text-emerald-600 font-bold">Obunaga kiritilgan</td>
+                        <td class="py-3 px-4 font-bold">{{ t.integrations_payment_warehouse }}</td>
+                        <td class="py-3 px-4 text-slate-500 font-mono">5 000 000 - 7 000 000 UZS</td>
+                        <td class="py-3 px-4 text-emerald-600 font-bold">{{ t.included_in_subscription }}</td>
                     </tr>
                     <tr>
-                        <td class="py-3 px-4 font-bold">Ta'min va qo'llab-quvvatlash</td>
-                        <td class="py-3 px-4 text-slate-500 font-mono">5 000 000 - 7 000 000 So'm</td>
-                        <td class="py-3 px-4 text-emerald-600 font-bold">Obunaga kiritilgan</td>
+                        <td class="py-3 px-4 font-bold">{{ t.maintenance_and_support }}</td>
+                        <td class="py-3 px-4 text-slate-500 font-mono">5 000 000 - 7 000 000 UZS</td>
+                        <td class="py-3 px-4 text-emerald-600 font-bold">{{ t.included_in_subscription }}</td>
                     </tr>
                     <tr class="bg-slate-50/80 font-black">
-                        <td class="py-3 px-4 text-slate-900">Jami xarajatlar</td>
-                        <td class="py-3 px-4 text-rose-600 font-mono">50 000 000 - 62 000 000 So'm</td>
-                        <td class="py-3 px-4 text-brand font-mono text-sm">500 000 So'm / oy</td>
+                        <td class="py-3 px-4 text-slate-900">{{ t.total_expenses }}</td>
+                        <td class="py-3 px-4 text-rose-600 font-mono">50 000 000 - 62 000 000 UZS</td>
+                        <td class="py-3 px-4 text-brand font-mono text-sm">500 000 UZS / {{ t.months_suffix }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- TARIFNI YANGILASH TO'LOV MODALI (Video birinchi.mov 09:55-10:10) -->
+    <!-- TARIFNI YANGILASH TO'LOV MODALI -->
     <div x-show="upgradeModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="upgradeModal = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-black text-base text-slate-900">Tarif rejasini faollashtirish</h3>
-                <button type="button" @click="upgradeModal = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+                <h3 class="font-black text-base text-slate-900">{{ t.activate_plan_title }}</h3>
+                <button type="button" @click="upgradeModal = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
             </div>
 
             <form method="POST" class="space-y-4 text-xs">
@@ -210,27 +210,27 @@
                 <!-- Plan summary -->
                 <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Tanlangan tarif:</span>
+                        <span class="text-slate-500">{{ t.selected_plan_label }}</span>
                         <span class="font-black text-slate-900 uppercase" x-text="selectedPlan"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500">Davr:</span>
-                        <span class="font-bold text-slate-900" x-text="duration + ' oy'"></span>
+                        <span class="text-slate-500">{{ t.period_label }}</span>
+                        <span class="font-bold text-slate-900" x-text="duration + ' {{ t.months_suffix }}'"></span>
                     </div>
                     <div class="flex justify-between border-t border-slate-200 pt-2 font-black text-sm">
-                        <span class="text-slate-800">Jami to'lov:</span>
+                        <span class="text-slate-800">{{ t.total_payment_label }}</span>
                         <span class="text-brand" x-text="(selectedPlan === 'start' ? (duration === 12 ? 240000*12 : (duration === 6 ? 270000*6 : 300000*duration)) : (selectedPlan === 'basic' ? (duration === 12 ? 400000*12 : (duration === 6 ? 450000*6 : 500000*duration)) : (duration === 12 ? 720000*12 : (duration === 6 ? 810000*6 : 900000*duration)))).toLocaleString() + ' UZS'"></span>
                     </div>
                 </div>
 
                 <!-- Payment Method -->
                 <div>
-                    <label class="block font-bold text-slate-700 mb-2">To'lov usulini tanlang:</label>
+                    <label class="block font-bold text-slate-700 mb-2">{{ t.select_payment_method }}</label>
                     <div class="space-y-2">
                         <label class="p-3 rounded-xl border border-slate-200 cursor-pointer flex items-center justify-between hover:bg-slate-50">
                             <div class="flex items-center gap-2.5">
                                 <input type="radio" name="payment_method" value="balance" checked class="text-brand focus:ring-brand">
-                                <span class="font-bold text-slate-800">Do'kon balansi</span>
+                                <span class="font-bold text-slate-800">{{ t.store_balance }}</span>
                             </div>
                             <span class="text-xs font-mono font-bold text-slate-500">{{ merchant_balance.balance|floatformat:0 }} UZS</span>
                         </label>
@@ -252,7 +252,7 @@
                 </div>
 
                 <button type="submit" class="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-md shadow-brand/20 transition-all">
-                    To'lovni tasdiqlash
+                    {{ t.confirm_payment_btn }}
                 </button>
             </form>
         </div>

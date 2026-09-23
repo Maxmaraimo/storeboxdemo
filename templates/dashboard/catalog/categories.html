@@ -1,4 +1,5 @@
 {% extends 'dashboard/base_dashboard.html' %}
+{% load core_tags %}
 
 {% block title %}{{ t.categories_list_title }} — StoreBox{% endblock %}
 
@@ -60,10 +61,10 @@
                     <tr id="cat-row-{{ cat.id }}" class="hover:bg-slate-50/70 transition-colors group">
                         <!-- Category Image / Icon -->
                         <td class="py-3 px-4">
-                            <div @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat.name_uz|default:cat.name_ru|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
+                            <div @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat|localized_name:current_lang|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
                                  class="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200/80 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs cursor-pointer hover:ring-2 hover:ring-brand/40 transition-all">
                                 {% if cat.primary_image_url %}
-                                    <img src="{{ cat.primary_image_url }}" alt="{{ cat.name_uz|default:cat.name_ru }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                                    <img src="{{ cat.primary_image_url }}" alt="{{ cat|localized_name:current_lang }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
                                     <div class="w-full h-full items-center justify-center hidden text-slate-500 bg-slate-100">
                                         <i data-lucide="{{ cat.icon|default:'folder' }}" class="w-5 h-5"></i>
                                     </div>
@@ -76,21 +77,18 @@
                         <!-- Category Name & Quick View Link -->
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-2">
-                                <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat.name_uz|default:cat.name_ru|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
+                                <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat|localized_name:current_lang|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
                                         class="font-black text-slate-900 text-sm text-left hover:text-brand transition-colors flex items-center gap-1.5 group/btn">
-                                    <span>{{ cat.name_uz|default:cat.name_ru }}</span>
+                                    <span>{{ cat|localized_name:current_lang }}</span>
                                     <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400 group-hover/btn:text-brand group-hover/btn:translate-x-0.5 transition-all"></i>
                                 </button>
                             </div>
-                            {% if cat.name_ru and cat.name_uz != cat.name_ru %}
-                            <div class="text-[11px] text-slate-400 font-normal mt-0.5">{{ cat.name_ru }}</div>
-                            {% endif %}
                         </td>
 
                         <!-- Products Count & View Button -->
                         <td class="py-3 px-4">
-                            <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat.name_uz|default:cat.name_ru|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold transition-all group/cnt">
+                            <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat|localized_name:current_lang|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
+                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold transition-all group/cnt">
                                 <i data-lucide="package" class="w-3.5 h-3.5 text-slate-500 group-hover/cnt:text-brand"></i>
                                 <span id="cat-count-{{ cat.id }}" class="font-mono">{{ cat.active_products_count|default:cat.products_count|default:0 }} {{ t.products_count_unit }}</span>
                                 <span class="text-[10px] text-brand font-semibold hover:underline ml-1">{{ t.view_btn }}</span>
@@ -118,28 +116,28 @@
                         <td class="py-3 px-4 text-right">
                             <div class="flex items-center justify-end gap-1">
                                 <!-- + Add Product Button -->
-                                <button type="button" @click="openQuickAddProduct({{ cat.id }}, '{{ cat.name_uz|default:cat.name_ru|escapejs }}')"
+                                <button type="button" @click="openQuickAddProduct({{ cat.id }}, '{{ cat|localized_name:current_lang|escapejs }}')"
                                         class="px-2.5 py-1.5 rounded-xl bg-brand/10 hover:bg-brand text-brand hover:text-white font-bold text-xs transition-all flex items-center gap-1 shadow-2xs"
-                                        title="Ushbu kategoriyaga tovar qo'shish">
+                                        title="{{ t.add_product_to_cat }}">
                                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                    <span class="hidden md:inline">Tovar qo'shish</span>
+                                    <span class="hidden md:inline">{{ t.add_product_btn }}</span>
                                 </button>
 
                                 <!-- View Products Drawer -->
-                                <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat.name_uz|default:cat.name_ru|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
-                                        class="p-2 rounded-xl text-slate-500 hover:text-brand hover:bg-slate-100 transition-colors" title="Tovarlarni ko'rish">
+                                <button type="button" @click="openProductsDrawer({id: {{ cat.id }}, name: '{{ cat|localized_name:current_lang|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image: '{{ cat.primary_image_url|default:''|escapejs }}'})"
+                                        class="p-2 rounded-xl text-slate-500 hover:text-brand hover:bg-slate-100 transition-colors" title="{{ t.view_btn }}">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
 
                                 <!-- Edit Category -->
                                 <button type="button" @click="editCategory({id: '{{ cat.id }}', name_uz: '{{ cat.name_uz|escapejs }}', name_ru: '{{ cat.name_ru|escapejs }}', icon: '{{ cat.icon|escapejs }}', is_active: {{ cat.is_active|yesno:'true,false' }}, image_url: '{{ cat.primary_image_url|default:''|escapejs }}'})"
-                                        class="p-2 rounded-xl text-slate-500 hover:text-brand hover:bg-slate-100 transition-colors" title="Tahrirlash">
+                                        class="p-2 rounded-xl text-slate-500 hover:text-brand hover:bg-slate-100 transition-colors" title="{{ t.edit_btn }}">
                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
                                 </button>
 
                                 <!-- Delete Category -->
                                 <button type="button" @click="deleteCategory('{{ cat.id }}')"
-                                        class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 transition-colors" title="O'chirish">
+                                        class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 transition-colors" title="{{ t.delete_btn }}">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -149,8 +147,7 @@
                     <tr>
                         <td colspan="5" class="py-12 text-center text-slate-400">
                             <i data-lucide="folder-open" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
-                            <p class="font-bold">Hozircha kategoriyalar mavjud emas</p>
-                            <p class="text-[11px] text-slate-400 mt-1">«Kategoriya qo'shish» tugmasi orqali yangi kategoriya yarating</p>
+                            <p class="font-bold">{{ t.no_categories_found }}</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -189,10 +186,10 @@
                             <h3 class="font-black text-lg text-slate-900 truncate" x-text="activeCategory.name"></h3>
                             <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider"
                                   :class="activeCategory.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'"
-                                  x-text="activeCategory.is_active ? 'Saytda faol' : 'Yashiringan'"></span>
+                                  x-text="activeCategory.is_active ? '{{ t.cat_active }}' : '{{ t.cat_inactive }}'"></span>
                         </div>
                         <p class="text-xs text-slate-500 mt-0.5">
-                            Katalogdagi tovarlar: <span class="font-bold font-mono text-slate-800" x-text="categoryProducts.length"></span> ta
+                            {{ t.products_in_catalog }} <span class="font-bold font-mono text-slate-800" x-text="categoryProducts.length"></span>
                         </p>
                     </div>
                 </div>
@@ -202,7 +199,7 @@
                             class="px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5"
                             :class="activeCategory.is_active ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'">
                         <i data-lucide="power" class="w-3.5 h-3.5" :class="activeCategory.is_active ? 'text-emerald-600' : 'text-slate-400'"></i>
-                        <span x-text="activeCategory.is_active ? 'Saytda faol' : 'Saytga qo\'shish'"></span>
+                        <span x-text="activeCategory.is_active ? '{{ t.cat_active }}' : '{{ t.show_on_site_btn }}'"></span>
                     </button>
                     <button type="button" @click="productsDrawerOpen = false" class="w-8 h-8 rounded-xl bg-slate-200/80 hover:bg-slate-300 text-slate-600 flex items-center justify-center text-lg font-black transition-colors">×</button>
                 </div>
@@ -213,12 +210,12 @@
                 <button type="button" @click="openQuickAddProduct(activeCategory.id, activeCategory.name)"
                         class="px-3.5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95">
                     <i data-lucide="plus" class="w-4 h-4"></i>
-                    <span>+ Tovar qo'shish</span>
+                    <span>+ {{ t.add_product_btn }}</span>
                 </button>
 
                 <a :href="'/dashboard/products/?category=' + activeCategory.id"
                    class="text-xs font-bold text-slate-600 hover:text-brand flex items-center gap-1 transition-colors">
-                    <span>Mahsulotlar sahifasida ko'rish</span>
+                    <span>{{ t.view_on_products_page }}</span>
                     <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                 </a>
             </div>
@@ -228,7 +225,7 @@
                 <!-- Loading state -->
                 <div x-show="loadingProducts" class="py-16 text-center text-slate-400 text-xs">
                     <div class="w-8 h-8 border-3 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    <span>Tovarlar yuklanmoqda...</span>
+                    <span>{{ t.products_loading }}</span>
                 </div>
 
                 <!-- Products list -->
@@ -254,7 +251,7 @@
                                                     <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded-md font-bold" x-text="'Qoldiq: ' + p.stock + ' ' + (p.unit || 'dona')"></span>
                                                 </template>
                                                 <template x-if="p.stock <= 0">
-                                                    <span class="text-[10px] text-rose-600 bg-rose-50 border border-rose-200/60 px-1.5 py-0.5 rounded-md font-bold">Qoldiq: 0 (Tugagan)</span>
+                                                    <span class="text-[10px] text-rose-600 bg-rose-50 border border-rose-200/60 px-1.5 py-0.5 rounded-md font-bold">{{ t.out_of_stock }}</span>
                                                 </template>
                                             </div>
                                         </div>
@@ -263,8 +260,8 @@
                                     <div class="flex items-center gap-1.5 shrink-0">
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold"
                                               :class="p.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
-                                              x-text="p.is_active ? 'Faol' : 'Nofaol'"></span>
-                                        <a :href="p.edit_url" class="p-2 rounded-lg text-slate-400 hover:text-brand hover:bg-slate-100 transition-colors" title="Tahrirlash">
+                                              x-text="p.is_active ? '{{ t.active_badge }}' : '{{ t.inactive_badge }}'"></span>
+                                        <a :href="p.edit_url" class="p-2 rounded-lg text-slate-400 hover:text-brand hover:bg-slate-100 transition-colors" title="{{ t.edit_btn }}">
                                             <i data-lucide="edit-3" class="w-4 h-4"></i>
                                         </a>
                                     </div>
@@ -277,12 +274,12 @@
                     <template x-if="categoryProducts.length === 0">
                         <div class="py-16 text-center border-2 border-dashed border-slate-200 rounded-3xl p-8 bg-slate-50/50">
                             <i data-lucide="package-open" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
-                            <h4 class="font-black text-slate-800 text-sm">Ushbu kategoriyada hali tovarlar yo'q</h4>
-                            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Tezkor tugma orqali hoziroq ushbu bo'limga mahsulot qo'shishingiz mumkin</p>
+                            <h4 class="font-black text-slate-800 text-sm">{{ t.no_products_in_cat }}</h4>
+                            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">{{ t.no_products_in_cat_hint }}</p>
                             <button type="button" @click="openQuickAddProduct(activeCategory.id, activeCategory.name)"
                                     class="mt-4 px-4 py-2 rounded-xl bg-brand text-white font-black text-xs hover:bg-brand-dark transition-all inline-flex items-center gap-1.5 shadow-xs">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
-                                <span>Birinchi tovarni qo'shish</span>
+                                <span>{{ t.add_first_product }}</span>
                             </button>
                         </div>
                     </template>
@@ -298,46 +295,46 @@
         <div @click.away="quickAddModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                    <h3 class="font-black text-base text-slate-900">Kategoriyaga tovar qo'shish</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Bo'lim: <b class="text-brand font-bold" x-text="targetCategoryName"></b></p>
+                    <h3 class="font-black text-base text-slate-900">{{ t.add_product_to_cat }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ t.category_word }}: <b class="text-brand font-bold" x-text="targetCategoryName"></b></p>
                 </div>
                 <button type="button" @click="quickAddModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
 
             <form @submit.prevent="submitQuickProduct()" class="space-y-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Mahsulot nomi (O'zbekcha) *</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.product_name_uz_label }}</label>
                     <input type="text" x-model="quickProd.name_uz" required placeholder="Masalan: Go'shtli somsa"
                            class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Mahsulot nomi (Русский)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.product_name_ru_label }}</label>
                     <input type="text" x-model="quickProd.name_ru" placeholder="Например: Самса с мясом"
                            class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-bold text-slate-700 mb-1">Sotuv narxi (UZS) *</label>
+                        <label class="block font-bold text-slate-700 mb-1">{{ t.selling_price_label }}</label>
                         <input type="number" x-model="quickProd.price" required placeholder="15000"
                                class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono font-bold">
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-700 mb-1">Qoldiq (dona)</label>
+                        <label class="block font-bold text-slate-700 mb-1">{{ t.stock_remains_label }}</label>
                         <input type="number" x-model="quickProd.stock" value="10" placeholder="10"
                                class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Mahsulot fotosurati (Fayl yuklash)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.product_photos_title }}</label>
                     <input type="file" id="quickProdFile" accept="image/*"
                            class="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand/10 file:text-brand">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Yoki rasm havolasi (URL)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.or_image_url }}</label>
                     <input type="url" x-model="quickProd.image_url" placeholder="https://images.unsplash.com/..."
                            class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
                 </div>
@@ -345,14 +342,14 @@
                 <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
                     <a :href="'/dashboard/products/new/?category=' + targetCategoryId"
                        class="text-[11px] font-bold text-brand hover:underline flex items-center gap-1">
-                        <span>Kengaytirilgan shakl</span>
+                        <span>{{ t.extended_form_link }}</span>
                         <i data-lucide="arrow-right" class="w-3 h-3"></i>
                     </a>
                     <div class="flex gap-2">
-                        <button type="button" @click="quickAddModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
+                        <button type="button" @click="quickAddModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">{{ t.cancel_btn }}</button>
                         <button type="submit" :disabled="savingProduct" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black shadow-xs hover:bg-brand-dark disabled:opacity-50 flex items-center gap-1">
-                            <span x-show="!savingProduct">Saqlash</span>
-                            <span x-show="savingProduct">Saqlanmoqda...</span>
+                            <span x-show="!savingProduct">{{ t.save_btn }}</span>
+                            <span x-show="savingProduct">...</span>
                         </button>
                     </div>
                 </div>
@@ -366,7 +363,7 @@
     <div x-show="addModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="addModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-black text-base text-slate-900">Yangi kategoriya qo'shish</h3>
+                <h3 class="font-black text-base text-slate-900">{{ t.add_category_btn }}</h3>
                 <button type="button" @click="addModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
 
@@ -375,27 +372,27 @@
                 <input type="hidden" name="action" value="create">
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kategoriya nomi (O'zbekcha) *</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.category_name_uz_label }}</label>
                     <input type="text" name="name_uz" required placeholder="Masalan: Ichimliklar" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kategoriya nomi (Русский)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.category_name_ru_label }}</label>
                     <input type="text" name="name_ru" placeholder="Например: Напитки" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kategoriya rasmi (Fayl yuklash)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.category_image_file }}</label>
                     <input type="file" name="image" accept="image/*" class="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand/10 file:text-brand">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Yoki rasm havolasi (URL)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.or_image_url }}</label>
                     <input type="url" name="image_url" placeholder="https://..." class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Belgi (Icon)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.icon_label }}</label>
                     <input type="text" name="icon" value="folder" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
                 </div>
 
@@ -403,13 +400,13 @@
                 <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200/80 flex items-center gap-2.5">
                     <input type="checkbox" id="addCatActive" name="is_active" value="1" checked class="rounded border-emerald-400 text-brand focus:ring-brand w-4 h-4">
                     <label for="addCatActive" class="text-xs font-bold text-emerald-950 cursor-pointer">
-                        Saytda ko'rsatish (Darhol sayt vitrinasiga qo'shish)
+                        {{ t.show_on_site_checkbox }}
                     </label>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                    <button type="button" @click="addModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black shadow-xs hover:bg-brand-dark">Saqlash</button>
+                    <button type="button" @click="addModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">{{ t.cancel_btn }}</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black shadow-xs hover:bg-brand-dark">{{ t.save_btn }}</button>
                 </div>
             </form>
         </div>
@@ -421,7 +418,7 @@
     <div x-show="editModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="editModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-black text-base text-slate-900">Kategoriyani tahrirlash</h3>
+                <h3 class="font-black text-base text-slate-900">{{ t.edit_category_title }}</h3>
                 <button type="button" @click="editModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
 
@@ -433,33 +430,33 @@
                 <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200/60" x-show="editingCat.image_url">
                     <img :src="editingCat.image_url" class="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0">
                     <div>
-                        <div class="font-bold text-slate-800 text-xs">Joriy rasm</div>
-                        <div class="text-[10px] text-slate-400">Yangi fayl tanlasangiz rasm yangilanadi</div>
+                        <div class="font-bold text-slate-800 text-xs">{{ t.current_image }}</div>
+                        <div class="text-[10px] text-slate-400">{{ t.image_update_hint }}</div>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kategoriya nomi (O'zbekcha) *</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.category_name_uz_label }}</label>
                     <input type="text" name="name_uz" required x-model="editingCat.name_uz" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kategoriya nomi (Русский)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.category_name_ru_label }}</label>
                     <input type="text" name="name_ru" x-model="editingCat.name_ru" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Yangi rasm yuklash</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.category_image_file }}</label>
                     <input type="file" name="image" accept="image/*" class="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand/10 file:text-brand">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Rasm havolasi (URL)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.or_image_url }}</label>
                     <input type="url" name="image_url" x-model="editingCat.image_url" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Belgi (Icon)</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.icon_label }}</label>
                     <input type="text" name="icon" x-model="editingCat.icon" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
                 </div>
 
@@ -467,13 +464,13 @@
                 <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center gap-2.5">
                     <input type="checkbox" id="editCatActive" name="is_active" value="1" :checked="editingCat.is_active" class="rounded border-slate-300 text-brand focus:ring-brand w-4 h-4">
                     <label for="editCatActive" class="text-xs font-bold text-slate-800 cursor-pointer">
-                        Saytda ko'rsatish (Faol bo'lsin)
+                        {{ t.show_on_site_checkbox }}
                     </label>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                    <button type="button" @click="editModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black shadow-xs hover:bg-brand-dark">Saqlash</button>
+                    <button type="button" @click="editModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">{{ t.cancel_btn }}</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black shadow-xs hover:bg-brand-dark">{{ t.save_btn }}</button>
                 </div>
             </form>
         </div>
@@ -563,7 +560,7 @@
                                 dot.classList.add('translate-x-5');
                                 label.classList.remove('text-slate-400');
                                 label.classList.add('text-emerald-700');
-                                label.textContent = 'Saytda faol';
+                                label.textContent = '{{ t.cat_active }}';
                             } else {
                                 btn.classList.remove('bg-emerald-500');
                                 btn.classList.add('bg-slate-300');
@@ -571,7 +568,7 @@
                                 dot.classList.add('translate-x-0');
                                 label.classList.remove('text-emerald-700');
                                 label.classList.add('text-slate-400');
-                                label.textContent = 'Yashiringan';
+                                label.textContent = '{{ t.cat_inactive }}';
                             }
                         }
 
@@ -596,7 +593,7 @@
             // 4. SUBMIT QUICK ADD PRODUCT
             submitQuickProduct() {
                 if (!this.quickProd.name_uz || !this.quickProd.price) {
-                    alert('Iltimos, tovar nomi va narxini kiriting');
+                    alert('{{ t.enter_name_first_alert }}');
                     return;
                 }
                 this.savingProduct = true;
@@ -634,7 +631,7 @@
                         const countBadge = document.getElementById(`cat-count-${this.targetCategoryId}`);
                         if (countBadge) {
                             const current = parseInt(countBadge.textContent) || 0;
-                            countBadge.textContent = `${current + 1} ta tovar`;
+                            countBadge.textContent = `${current + 1} {{ t.products_count_unit }}`;
                         }
 
                         if (window.showToast) {
@@ -645,7 +642,7 @@
                             if (window.lucide) lucide.createIcons();
                         });
                     } else {
-                        alert(data.message || 'Xatolik yuz berdi');
+                        alert(data.message || 'Error');
                     }
                 })
                 .catch(err => {
@@ -662,7 +659,7 @@
 
             // 6. DELETE CATEGORY
             deleteCategory(id) {
-                if (!confirm("Haqiqatan ham ushbu kategoriyani o'chirmoqchimisiz?")) return;
+                if (!confirm("{{ t.delete_category_confirm }}")) return;
                 const fd = new FormData();
                 fd.append('action', 'delete');
                 fd.append('category_id', id);
@@ -675,7 +672,7 @@
                 .then(() => {
                     const row = document.getElementById(`cat-row-${id}`);
                     if (row) row.remove();
-                    if (window.showToast) showToast("Kategoriya o'chirildi!");
+                    if (window.showToast) showToast("{{ t.category_deleted }}");
                 });
             }
         }

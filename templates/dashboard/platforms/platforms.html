@@ -410,42 +410,42 @@
             <div class="divide-y divide-slate-100 text-xs">
                 <div class="py-3 flex items-center justify-between">
                     <div>
-                        <div class="font-bold text-slate-900">🛍 {{ store.telegram_button_name|default:"Do'kon" }} / Menyu (TMA)</div>
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5"><i data-lucide="shopping-bag" class="w-4 h-4 text-slate-600"></i> <span>{{ store.telegram_button_name|default:"Do'kon" }} / Menyu (TMA)</span></div>
                         <div class="text-[11px] text-slate-400">Do'koningiz to'liq katalogini Telegram ichidagi oyna (TMA) orqali ochadi</div>
                     </div>
                     <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">Faol</span>
                 </div>
                 <div class="py-3 flex items-center justify-between">
                     <div>
-                        <div class="font-bold text-slate-900">🌐 Tilni o'zgartirish</div>
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5"><i data-lucide="globe" class="w-4 h-4 text-slate-600"></i> <span>Tilni o'zgartirish</span></div>
                         <div class="text-[11px] text-slate-400">Xaridorlar uchun O'zbek, Rus va Ingliz tillarini tanlash menyusi</div>
                     </div>
                     <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">Faol</span>
                 </div>
                 <div class="py-3 flex items-center justify-between">
                     <div>
-                        <div class="font-bold text-slate-900">💬 Chat</div>
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5"><i data-lucide="message-square" class="w-4 h-4 text-slate-600"></i> <span>Chat</span></div>
                         <div class="text-[11px] text-slate-400">Xaridorlardan to'g'ridan-to'g'ri xabarlar va savollarni qabul qilish</div>
                     </div>
                     <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">Faol</span>
                 </div>
                 <div class="py-3 flex items-center justify-between">
                     <div>
-                        <div class="font-bold text-slate-900">📦 Buyurtmalarim</div>
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5"><i data-lucide="package" class="w-4 h-4 text-slate-600"></i> <span>Buyurtmalarim</span></div>
                         <div class="text-[11px] text-slate-400">Xaridorning do'kondagi joriy va o'tgan buyurtmalari ro'yxati</div>
                     </div>
                     <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black">Faol</span>
                 </div>
                 <div class="py-3 flex items-center justify-between">
                     <div>
-                        <div class="font-bold text-slate-900">ℹ️ Biz haqimizda</div>
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5"><i data-lucide="info" class="w-4 h-4 text-slate-600"></i> <span>Biz haqimizda</span></div>
                         <div class="text-[11px] text-slate-400">Do'kon tavsifi, ish vaqti, telefon va manzili</div>
                     </div>
                     <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">Faol</span>
                 </div>
                 <div class="py-3 flex items-center justify-between">
                     <div>
-                        <div class="font-bold text-slate-900">📞 Kontaktlar</div>
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5"><i data-lucide="phone" class="w-4 h-4 text-slate-600"></i> <span>Kontaktlar</span></div>
                         <div class="text-[11px] text-slate-400">Do'kon telefon raqami va manzili</div>
                     </div>
                     <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">Faol</span>
@@ -529,7 +529,7 @@
                                     <button type="button" @click="selectNiche(n.id)"
                                             class="p-2.5 rounded-2xl border text-left transition-all flex items-center gap-2 text-xs font-bold cursor-pointer"
                                             :class="selectedNiche === n.id ? 'bg-white text-slate-900 border-white shadow-md scale-[1.02]' : 'bg-white/10 text-white border-white/10 hover:bg-white/15'">
-                                        <span class="text-base" x-text="n.emoji"></span>
+                                        <span class="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black uppercase shrink-0" :class="selectedNiche === n.id ? 'bg-slate-100 text-slate-800' : 'bg-white/20 text-white'" x-text="n.code"></span>
                                         <span class="truncate text-[11px]" x-text="n.name"></span>
                                     </button>
                                 </template>
@@ -560,7 +560,7 @@
                                 <template x-if="!aiLoading">
                                     <div class="flex items-center gap-2">
                                         <i data-lucide="sparkles" class="w-4 h-4"></i>
-                                        <span>⚡ AI orqali banner va tovarlarni fotosuratlar bilan yuklash</span>
+                                        <span>AI orqali banner va tovarlarni fotosuratlar bilan yuklash</span>
                                     </div>
                                 </template>
                                 <template x-if="aiLoading">
@@ -1066,14 +1066,14 @@
             showUrlInput: false,
 
             nicheList: [
-                { id: 'flowers', name: "Gullar", emoji: '🌸' },
-                { id: 'restaurant', name: "Restoran", emoji: '🍽️' },
-                { id: 'tech', name: "Texnika", emoji: '📱' },
-                { id: 'fashion', name: "Kiyim / Moda", emoji: '👗' },
-                { id: 'grocery', name: "Oziq-ovqat", emoji: '🛒' },
-                { id: 'beauty', name: "Kosmetika", emoji: '💄' },
-                { id: 'coffee', name: "Qahva / Kofe", emoji: '☕' },
-                { id: 'custom', name: "Maxsus / O'z sohangiz", emoji: '✨' }
+                { id: 'flowers', name: "Gullar", code: 'FL' },
+                { id: 'restaurant', name: "Restoran", code: 'RT' },
+                { id: 'tech', name: "Texnika", code: 'TC' },
+                { id: 'fashion', name: "Kiyim / Moda", code: 'FS' },
+                { id: 'grocery', name: "Oziq-ovqat", code: 'GR' },
+                { id: 'beauty', name: "Kosmetika", code: 'BT' },
+                { id: 'coffee', name: "Qahva / Kofe", code: 'CF' },
+                { id: 'custom', name: "Maxsus / O'z sohangiz", code: 'CS' }
             ],
 
             quickColors: ['#10B981', '#EC4899', '#EA580C', '#2563EB', '#18181B', '#D946EF', '#78350F', '#059669', '#DC2626', '#06B6D4', '#8B5CF6'],

@@ -1,12 +1,19 @@
 <!doctype html>
-<html lang="uz">
+<html lang="{{ current_lang|default:'uz' }}">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StoreBox — Do`kon Boshqaruv Paneli</title>
+    {% if current_lang == 'ru' %}
+    <title>StoreBox — Панель управления магазином</title>
+    {% elif current_lang == 'en' %}
+    <title>StoreBox — Store Admin Dashboard</title>
+    {% else %}
+    <title>StoreBox — Do'kon Boshqaruv Paneli</title>
+    {% endif %}
     <script>
       (function() {
+        window.__INITIAL_LANG__ = "{{ current_lang|default:'uz' }}";
         const urlParams = new URLSearchParams(window.location.search);
         const themeParam = urlParams.get('theme');
         if (themeParam === 'dark' || themeParam === 'light') {
@@ -21,7 +28,7 @@
         }
       })();
     </script>
-    <script type="module" crossorigin src="/static/dist/assets/index-ClYL77E3.js"></script>
+    <script type="module" crossorigin src="/static/dist/assets/index-DlTSyWsE.js"></script>
     <link rel="stylesheet" crossorigin href="/static/dist/assets/index-ZAgEWgAy.css">
   </head>
   <body class="bg-[#F5F5F7] dark:bg-[#0A0A0C] text-neutral-900 dark:text-neutral-100 font-sans antialiased selection:bg-neutral-900 selection:text-white transition-colors duration-300">

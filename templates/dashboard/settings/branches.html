@@ -1,6 +1,6 @@
 {% extends 'dashboard/base_dashboard.html' %}
 
-{% block title %}Filiallar — StoreBox{% endblock %}
+{% block title %}{{ t.branches_list_title }} — StoreBox{% endblock %}
 
 {% block dashboard_content %}
 <div class="space-y-6" x-data="branchesApp()">
@@ -8,13 +8,13 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Filiallar ro'yxati</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Olib ketish va yetkazib berish punktlari</p>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{{ t.branches_list_title }}</h1>
+            <p class="text-xs text-slate-500 mt-0.5">{{ t.branches_list_subtitle }}</p>
         </div>
 
         <button type="button" @click="openAddBranch()" class="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-black hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
             <i data-lucide="plus" class="w-4 h-4"></i>
-            <span>Filial qo'shish</span>
+            <span>{{ t.add_branch_btn }}</span>
         </button>
     </div>
 
@@ -24,12 +24,12 @@
             <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
                     <tr>
-                        <th class="py-3.5 px-4">Filial nomi</th>
-                        <th class="py-3.5 px-4">Manzil</th>
-                        <th class="py-3.5 px-4">Telefon</th>
-                        <th class="py-3.5 px-4">Ish vaqti</th>
-                        <th class="py-3.5 px-4">Holat</th>
-                        <th class="py-3.5 px-4 text-right">Harakat</th>
+                        <th class="py-3.5 px-4">{{ t.th_branch_name }}</th>
+                        <th class="py-3.5 px-4">{{ t.delivery_and_address }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_phone }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_working_hours }}</th>
+                        <th class="py-3.5 px-4">{{ t.th_status_col }}</th>
+                        <th class="py-3.5 px-4 text-right">{{ t.th_act }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-semibold text-slate-700" id="branches-tbody">
@@ -37,7 +37,7 @@
                     <tr id="branch-row-{{ b.id }}" class="hover:bg-slate-50/60 transition-colors">
                         <td class="py-3.5 px-4">
                             <div class="font-bold text-slate-900">{{ b.name }}</div>
-                            {% if b.is_main %}<span class="text-[10px] text-emerald-600 font-bold">Asosiy filial</span>{% endif %}
+                            {% if b.is_main %}<span class="text-[10px] text-emerald-600 font-bold">{{ t.main_branch_badge }}</span>{% endif %}
                         </td>
                         <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate">
                             {{ b.address }}
@@ -50,11 +50,11 @@
                         </td>
                         <td class="py-3.5 px-4">
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-black {% if b.is_active %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-slate-100 text-slate-500{% endif %}">
-                                {% if b.is_active %}Faol{% else %}Nofaol{% endif %}
+                                {% if b.is_active %}{{ t.active_badge }}{% else %}{{ t.inactive_badge }}{% endif %}
                             </span>
                         </td>
                         <td class="py-3.5 px-4 text-right space-x-2">
-                            <button type="button" @click="deleteBranch('{{ b.id }}')" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50">
+                            <button type="button" @click="deleteBranch('{{ b.id }}')" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50" title="{{ t.delete_btn }}">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </td>
@@ -62,7 +62,7 @@
                     {% empty %}
                     <tr>
                         <td colspan="6" class="py-12 text-center text-slate-400">
-                            Filiallar mavjud emas
+                            {{ t.no_branches_found|default:"Filiallar mavjud emas" }}
                         </td>
                     </tr>
                     {% endfor %}
@@ -75,40 +75,40 @@
     <div x-show="addModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="addModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-black text-base text-slate-900">Yangi filial qo'shish</h3>
+                <h3 class="font-black text-base text-slate-900">{{ t.add_branch_btn }}</h3>
                 <button type="button" @click="addModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
 
             <div class="space-y-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Filial nomi *</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.th_branch_name }} *</label>
                     <input type="text" x-model="branchName" placeholder="Masalan: Yunusobod filiali" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-brand">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Manzil *</label>
+                    <label class="block font-bold text-slate-700 mb-1">{{ t.delivery_and_address }} *</label>
                     <div class="flex gap-2 mb-2">
-                        <input type="text" x-model="branchAddress" placeholder="Toshkent, Amir Temur shoh ko'chasi, 12" class="flex-1 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                        <button type="button" @click="searchAddress()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">Qidirish</button>
+                        <input type="text" x-model="branchAddress" placeholder="Toshkent, Amir Temur..." class="flex-1 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                        <button type="button" @click="searchAddress()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">{{ t.apply_btn|default:"Qidirish" }}</button>
                     </div>
                     <div id="branchModalMap" class="w-full h-44 rounded-xl border border-slate-200 bg-slate-100"></div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-bold text-slate-700 mb-1">Telefon</label>
+                        <label class="block font-bold text-slate-700 mb-1">{{ t.th_phone }}</label>
                         <input type="text" x-model="branchPhone" placeholder="+998 71 200 00 00" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-700 mb-1">Ish vaqti</label>
+                        <label class="block font-bold text-slate-700 mb-1">{{ t.th_working_hours }}</label>
                         <input type="text" x-model="branchHours" placeholder="09:00 - 23:00" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
                     </div>
                 </div>
             </div>
 
             <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button type="button" @click="addModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
-                <button type="button" @click="saveBranch()" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Saqlash</button>
+                <button type="button" @click="addModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">{{ t.cancel_btn }}</button>
+                <button type="button" @click="saveBranch()" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">{{ t.save_btn }}</button>
             </div>
         </div>
     </div>
@@ -119,7 +119,7 @@
         return {
             addModalOpen: false,
             branchName: '',
-            branchAddress: "Toshkent, Amir Temur ko'chasi",
+            branchAddress: "Toshkent",
             branchPhone: '+998 71 200 11 22',
             branchHours: '09:00 - 23:00',
             branchLat: 41.3111,
@@ -132,7 +132,7 @@
                 setTimeout(() => {
                     if (!this.mapInstance) {
                         this.mapInstance = L.map('branchModalMap').setView([this.branchLat, this.branchLng], 13);
-                        L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ request.language|default:"ru" }}&x={x}&y={y}&z={z}', {
+                        L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ current_lang|default:"uz" }}&x={x}&y={y}&z={z}', {
                             maxZoom: 20,
                             subdomains: ['0', '1', '2', '3'],
                             attribution: '© Google Maps'
@@ -166,7 +166,7 @@
             },
 
             saveBranch() {
-                if (!this.branchName.trim()) { alert('Filial nomini kiriting'); return; }
+                if (!this.branchName.trim()) { alert('Name required'); return; }
                 const fd = new FormData();
                 fd.append('action', 'create');
                 fd.append('name', this.branchName);
@@ -184,14 +184,13 @@
                 .then(r => r.json())
                 .then(data => {
                     this.addModalOpen = false;
-                    showToast("Filial muvaffaqiyatli qo'shildi!");
-                    // Seamless refresh
+                    showToast("OK");
                     spaNavigate('/dashboard/settings/branches/', false);
                 });
             },
 
             deleteBranch(id) {
-                if (!confirm("Ushbu filialni o'chirmoqchimisiz?")) return;
+                if (!confirm("Delete?")) return;
                 const fd = new FormData();
                 fd.append('action', 'delete');
                 fd.append('branch_id', id);
@@ -205,7 +204,7 @@
                 .then(data => {
                     const row = document.getElementById(`branch-row-${id}`);
                     if (row) row.remove();
-                    showToast("Filial o'chirildi!");
+                    showToast("OK");
                 });
             }
         }

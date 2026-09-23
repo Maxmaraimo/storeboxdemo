@@ -39,6 +39,9 @@ def landing_view(request):
     return response
 
 
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+
+
 def switch_language_view(request, lang):
     lang = (lang or '').lower().strip()
     if lang in ['uz', 'ru', 'en']:
@@ -52,6 +55,19 @@ def switch_language_view(request, lang):
         next_url = next_url.split('#')[0]
     if not next_url.strip():
         next_url = '/dashboard/'
+
+    try:
+        parsed = urlparse(next_url)
+        query_params = parse_qs(parsed.query, keep_blank_values=True)
+        if 'lang' in query_params:
+            if lang in ['uz', 'ru', 'en']:
+                query_params['lang'] = [lang]
+            else:
+                query_params.pop('lang', None)
+            new_query = urlencode(query_params, doseq=True)
+            next_url = urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+    except Exception:
+        pass
 
     response = redirect(next_url)
     if lang in ['uz', 'ru', 'en']:

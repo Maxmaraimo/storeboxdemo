@@ -1,26 +1,26 @@
 {% extends 'dashboard/base_dashboard.html' %}
 
-{% block title %}Chat — StoreBox{% endblock %}
+{% block title %}{{ t.chat }} — StoreBox{% endblock %}
 
 {% block dashboard_content %}
 <div class="h-[calc(100vh-10rem)] bg-white rounded-3xl border border-slate-200/80 shadow-xs flex overflow-hidden" x-data="chatApp()">
 
-    <!-- LEFT COLUMN: CONVERSATIONS LIST (Video 08:22) -->
+    <!-- LEFT COLUMN: CONVERSATIONS LIST -->
     <div class="w-80 sm:w-96 border-r border-slate-100 flex flex-col shrink-0">
         <!-- Search & Filter Tabs -->
         <div class="p-4 border-b border-slate-100 space-y-3">
-            <h2 class="font-black text-base text-slate-900">Mijozlar bilan chat / Xabarlar</h2>
+            <h2 class="font-black text-base text-slate-900">{{ t.chat_title }}</h2>
             
-            <!-- Channels Tabs (Video 08:23) -->
+            <!-- Channels Tabs -->
             <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] font-bold">
-                <button type="button" @click="activeTab = 'all'" :class="activeTab === 'all' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">Barchasi</button>
-                <button type="button" @click="activeTab = 'unread'" :class="activeTab === 'unread' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">O'qilmagan</button>
+                <button type="button" @click="activeTab = 'all'" :class="activeTab === 'all' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">{{ t.tab_all_chats }}</button>
+                <button type="button" @click="activeTab = 'unread'" :class="activeTab === 'unread' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">{{ t.tab_unread_chats }}</button>
                 <button type="button" @click="activeTab = 'instagram'" :class="activeTab === 'instagram' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">Instagram</button>
-                <button type="button" @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">Sharhlar</button>
+                <button type="button" @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'" class="flex-1 py-1 rounded-lg">{{ t.tab_reviews_chats }}</button>
             </div>
 
             <div class="relative">
-                <input type="text" placeholder="Qidirish..." class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand">
+                <input type="text" placeholder="{{ t.search_placeholder }}" class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
             </div>
         </div>
@@ -45,7 +45,7 @@
             </div>
             {% endwith %}
             {% empty %}
-            <div class="p-8 text-center text-xs text-slate-400">Hozircha xabarlar yo'q</div>
+            <div class="p-8 text-center text-xs text-slate-400">{{ t.no_messages_yet }}</div>
             {% endfor %}
         </div>
     </div>
@@ -60,7 +60,7 @@
                     <span x-text="selectedName ? selectedName[0].toUpperCase() : 'M'"></span>
                 </div>
                 <div>
-                    <div class="font-black text-xs text-slate-900" x-text="selectedName || 'Mijoz tanlanmagan'"></div>
+                    <div class="font-black text-xs text-slate-900" x-text="selectedName || '{{ t.no_client_selected|escapejs }}'"></div>
                     <div class="text-[10px] text-slate-400 font-mono" x-text="selectedPhone"></div>
                 </div>
             </div>
@@ -79,12 +79,12 @@
             </template>
         </div>
 
-        <!-- Input Bar (Video 08:24) -->
+        <!-- Input Bar -->
         <div class="p-3 bg-white border-t border-slate-100 flex items-center gap-2">
-            <input type="text" x-model="inputText" @keydown.enter="sendMessage()" placeholder="Xabar yozing..."
+            <input type="text" x-model="inputText" @keydown.enter="sendMessage()" placeholder="{{ t.type_message_placeholder }}"
                    class="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand">
             <button type="button" @click="sendMessage()" class="px-4 py-2.5 rounded-xl bg-brand text-white font-bold text-xs hover:bg-brand-dark flex items-center gap-1.5 shadow-xs">
-                <span>Yuborish</span>
+                <span>{{ t.send_btn }}</span>
                 <i data-lucide="send" class="w-3.5 h-3.5"></i>
             </button>
         </div>
@@ -97,10 +97,10 @@
         return {
             activeTab: 'all',
             selectedPhone: '{{ active_phone|default:"" }}',
-            selectedName: '{{ active_name|default:"Mijoz" }}',
+            selectedName: '{{ active_name|default:t.client|escapejs }}',
             inputText: '',
             currentMessages: initialMsgs.length > 0 ? initialMsgs : [
-                { id: 1, sender: 'CUSTOMER', message: 'Assalomu alaykum! Savollaringiz bo\'lsa, bemalol yozishingiz mumkin.', time: '12:00' }
+                { id: 1, sender: 'CUSTOMER', message: '{{ t.chat_default_greeting|escapejs }}', time: '12:00' }
             ],
             pollTimer: null,
 
@@ -170,7 +170,7 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.telegram_delivered && typeof showToast === 'function') {
-                        showToast("Xabar Telegram botga yetkazildi ✈️");
+                        showToast('{{ t.chat_telegram_delivered|escapejs }}');
                     }
                 })
                 .catch(err => console.error(err));

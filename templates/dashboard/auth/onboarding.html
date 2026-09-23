@@ -294,7 +294,7 @@
                             StoreBox 2.0 Studio
                         </div>
                         <h2 class="text-2xl sm:text-3xl font-[850] leading-tight tracking-tight text-white">
-                            {{ t.banner_headline|default:"Daromadli biznes boshlashning eng tez usuli" }} 🚀
+                            {{ t.banner_headline|default:"Daromadli biznes boshlashning eng tez usuli" }}
                         </h2>
                         <p class="text-xs text-slate-300 font-normal leading-relaxed">
                             {{ t.banner_sub|default:"Onlayn savdoni avtomatlashtirish uchun zamonaviy Telegram WebApp va veb-do'kon boshqaruvi" }}
@@ -580,7 +580,7 @@
                                 <!-- Country Trigger Button -->
                                 <button type="button" @click="countryMenuOpen = !countryMenuOpen" id="onboardingCountryTriggerBtn"
                                         class="flex items-center gap-1.5 px-3 py-2.5 bg-slate-100 hover:bg-slate-200/70 border-r border-slate-200 rounded-l-xl text-xs font-bold text-slate-800 transition-colors shrink-0 cursor-pointer">
-                                    <span class="text-base" x-text="selectedCountry ? selectedCountry.flag : '🇺🇿'"></span>
+                                    <span class="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-black tracking-wider" x-text="selectedCountry ? selectedCountry.flag : 'UZ'"></span>
                                     <span class="font-mono text-xs text-slate-900 font-bold" x-text="selectedCountry ? selectedCountry.dialCode : '+998'"></span>
                                     <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-500 transition-transform duration-200" :class="countryMenuOpen ? 'rotate-180' : ''"></i>
                                 </button>
@@ -614,7 +614,7 @@
                                                     class="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-slate-100 transition-colors text-xs cursor-pointer"
                                                     :class="selectedCountry && selectedCountry.id === c.id ? 'bg-slate-100 font-bold text-slate-900' : 'text-slate-700'">
                                                 <div class="flex items-center gap-2.5 min-w-0">
-                                                    <span class="text-base shrink-0" x-text="c.flag"></span>
+                                                    <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-black tracking-wider shrink-0" x-text="c.flag"></span>
                                                     <div class="truncate">
                                                         <span class="font-semibold text-slate-900" x-text="c.name"></span>
                                                         <span class="text-[10px] text-slate-400 block" x-text="c.nameRu"></span>
@@ -747,7 +747,7 @@
                                         <template x-if="d.isClosed">
                                              <div class="flex items-center gap-2">
                                                  <span class="px-3 py-1 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold border border-rose-200">
-                                                     {{ t.schedule_day_off_closed|default:'⛔ Dam olish kuni (Yopiq)' }}
+                                                     {{ t.schedule_day_off_closed|default:'Dam olish kuni (Yopiq)' }}
                                                  </span>
                                                  <input type="hidden" :name="'schedule_' + d.key + '_open'" value="00:00">
                                                  <input type="hidden" :name="'schedule_' + d.key + '_close'" value="00:00">
@@ -790,21 +790,21 @@
                                 <div class="relative">
                                     <select x-model="activeCity" @change="selectCity($event.target.value)"
                                             class="w-full pl-3 pr-8 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#211b2e] transition-all appearance-none cursor-pointer">
-                                        <option value="tashkent">📍 Toshkent / Ташкент</option>
-                                        <option value="samarkand">📍 Samarqand / Самарканд</option>
-                                        <option value="bukhara">📍 Buxoro / Бухара</option>
-                                        <option value="andijan">📍 Andijon / Андижан</option>
-                                        <option value="namangan">📍 Namangan / Наманган</option>
-                                        <option value="fergana">📍 Farg'ona / Фергана</option>
-                                        <option value="kokand">📍 Qo'qon / Коканд</option>
-                                        <option value="qarshi">📍 Qarshi / Карши</option>
-                                        <option value="urgench">📍 Urganch / Ургенч</option>
-                                        <option value="khiva">📍 Xiva / Хива</option>
-                                        <option value="nukus">📍 Nukus / Нукус</option>
-                                        <option value="navoiy">📍 Navoiy / Навои</option>
-                                        <option value="jizzakh">📍 Jizzax / Джизак</option>
-                                        <option value="termez">📍 Termiz / Термез</option>
-                                        <option value="gulistan">📍 Guliston / Гулистан</option>
+                                        <option value="tashkent">Toshkent / Ташкент</option>
+                                        <option value="samarkand">Samarqand / Самарканд</option>
+                                        <option value="bukhara">Buxoro / Бухара</option>
+                                        <option value="andijan">Andijon / Андижан</option>
+                                        <option value="namangan">Namangan / Наманган</option>
+                                        <option value="fergana">Farg'ona / Фергана</option>
+                                        <option value="kokand">Qo'qon / Коканд</option>
+                                        <option value="qarshi">Qarshi / Карши</option>
+                                        <option value="urgench">Urganch / Ургенч</option>
+                                        <option value="khiva">Xiva / Хива</option>
+                                        <option value="nukus">Nukus / Нукус</option>
+                                        <option value="navoiy">Navoiy / Навои</option>
+                                        <option value="jizzakh">Jizzax / Джизак</option>
+                                        <option value="termez">Termiz / Термез</option>
+                                        <option value="gulistan">Guliston / Гулистан</option>
                                     </select>
                                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
                                         <i data-lucide="chevron-down" class="w-4 h-4"></i>
@@ -876,7 +876,7 @@
                             <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
                                 <div id="onboardingMap" class="w-full h-64 bg-slate-100"></div>
                                 <div class="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-semibold text-slate-700 shadow-xs border border-slate-200 flex items-center gap-1.5">
-                                    <span>💡</span>
+                                    <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-500"></i>
                                     <span>{{ t.map_hint|default:'Xaritani bosib yoki markerni surib aniq nuqtani belgilang (nomi avtomat chiqadi)' }}</span>
                                 </div>
                             </div>
@@ -971,7 +971,7 @@
                 <!-- STEP 4: MAHSULOT QO'SHISH (Video 03:33 - 05:04)               -->
                 <!-- ------------------------------------------------------------- -->
                 <div x-show="step === 4" class="bg-white/80 backdrop-blur-2xl rounded-3xl border border-white/80 p-8 space-y-6 text-slate-900" style="box-shadow: inset 0 1.5px 2px rgba(255,255,255,0.95), 0 20px 50px rgba(15,23,42,0.06);">
-                    <!-- Language tabs + AI Generator (✨ Yaratish) -->
+                    <!-- Language tabs + AI Generator -->
                     <div class="flex items-center justify-between">
                         <div class="flex gap-2">
                             <button type="button" class="px-3.5 py-1.5 rounded-xl bg-[#211b2e] text-white text-xs font-bold shadow-md">O'zbek</button>
@@ -993,12 +993,12 @@
                     <input type="hidden" name="prod_name_ru" x-model="productNameRu">
                     <input type="hidden" name="prod_name_en" x-model="productNameEn">
 
-                    <!-- Description with AI Generator ✨ Yaratish -->
+                    <!-- Description with AI Generator -->
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
                             <label class="text-xs font-bold text-slate-700">{{ t.description_label|default:"Ta'rif" }}</label>
                             <button type="button" @click="generateAiDescription()" class="px-3 py-1 rounded-lg bg-[#211b2e] text-[#c8ff6a] border border-white/10 text-[11px] font-bold flex items-center gap-1.5 hover:bg-[#2c243d] transition-colors cursor-pointer shadow-xs">
-                                <span>{{ t.ai_generate|default:'✨ Yaratish' }}</span>
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> <span>{{ t.ai_generate|default:'Yaratish' }}</span>
                             </button>
                         </div>
                         <textarea name="prod_desc_uz" x-model="productDescUz" rows="3" placeholder="{{ t.prod_desc_ph|default:'Mahsulotingiz tavsifini yozing...' }}"
@@ -1266,7 +1266,7 @@
                         nameRu: "Узбекистан",
                         dialCode: '+998',
                         code: '998',
-                        flag: '🇺🇿',
+                        flag: 'UZ',
                         digits: 9,
                         placeholder: '(90) 123-45-67',
                         format(d) {
@@ -1285,7 +1285,7 @@
                         nameRu: "Турция",
                         dialCode: '+90',
                         code: '90',
-                        flag: '🇹🇷',
+                        flag: 'TR',
                         digits: 10,
                         placeholder: '(532) 123-4567',
                         format(d) {
@@ -1303,7 +1303,7 @@
                         nameRu: "Россия",
                         dialCode: '+7',
                         code: '7',
-                        flag: '🇷🇺',
+                        flag: 'RU',
                         digits: 10,
                         placeholder: '(912) 345-67-89',
                         format(d) {
@@ -1322,7 +1322,7 @@
                         nameRu: "Казахстан",
                         dialCode: '+7',
                         code: '7_kz',
-                        flag: '🇰🇿',
+                        flag: 'KZ',
                         digits: 10,
                         placeholder: '(701) 234-56-78',
                         format(d) {
@@ -1341,7 +1341,7 @@
                         nameRu: "Кыргызстан",
                         dialCode: '+996',
                         code: '996',
-                        flag: '🇰🇬',
+                        flag: 'KG',
                         digits: 9,
                         placeholder: '(555) 12-34-56',
                         format(d) {
@@ -1360,7 +1360,7 @@
                         nameRu: "Таджикистан",
                         dialCode: '+992',
                         code: '992',
-                        flag: '🇹🇯',
+                        flag: 'TJ',
                         digits: 9,
                         placeholder: '(92) 123-4567',
                         format(d) {
@@ -1378,7 +1378,7 @@
                         nameRu: "ОАЭ (Дубай)",
                         dialCode: '+971',
                         code: '971',
-                        flag: '🇦🇪',
+                        flag: 'AE',
                         digits: 9,
                         placeholder: '(50) 123-4567',
                         format(d) {
@@ -1396,7 +1396,7 @@
                         nameRu: "США / Канада",
                         dialCode: '+1',
                         code: '1',
-                        flag: '🇺🇸',
+                        flag: 'US',
                         digits: 10,
                         placeholder: '(202) 555-0123',
                         format(d) {
@@ -1414,7 +1414,7 @@
                         nameRu: "Другая страна",
                         dialCode: '+',
                         code: '',
-                        flag: '🌐',
+                        flag: 'INT',
                         digits: 15,
                         placeholder: '1234567890',
                         format(d) {
@@ -1690,7 +1690,7 @@
                     }
                     if (this.mapMarker) {
                         this.mapMarker.setLatLng([city.lat, city.lng]);
-                        this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${city.name}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${city.defaultAddress}</div>`).openPopup();
+                        this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">${city.name}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${city.defaultAddress}</div>`).openPopup();
                     }
                     this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
                 },
@@ -1715,7 +1715,7 @@
 
                     const pin = this.createStoreboxPin();
                     this.mapMarker = L.marker([this.branchLat, this.branchLng], { draggable: true, icon: pin }).addTo(this.mapObj);
-                    this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 Boshlang'ich joylashuv</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${this.branchAddress}</div>`);
+                    this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">Boshlang'ich joylashuv</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${this.branchAddress}</div>`);
 
                     this.mapMarker.on('dragend', (e) => {
                         const pos = e.target.getLatLng();
@@ -1797,7 +1797,7 @@
                     this.mapSearch = address;
                     this.isReverseGeocoding = false;
                     if (this.mapMarker) {
-                        this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${title}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${address}</div>`).openPopup();
+                        this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">${title}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${address}</div>`).openPopup();
                     }
                     this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
                 },
@@ -1874,7 +1874,7 @@
                     if (this.mapObj && this.mapMarker) {
                         this.mapObj.flyTo([this.branchLat, this.branchLng], 17, { animate: true, duration: 1 });
                         this.mapMarker.setLatLng([this.branchLat, this.branchLng]);
-                        this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${res.name || 'Tanlangan manzil'}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${res.display_name}</div>`).openPopup();
+                        this.mapMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">${res.name || 'Tanlangan manzil'}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${res.display_name}</div>`).openPopup();
                     }
                     this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
                 },

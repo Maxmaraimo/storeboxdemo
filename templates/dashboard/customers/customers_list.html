@@ -65,8 +65,9 @@
                             <span class="font-mono font-bold text-slate-900">{{ c.orders_count }} {{ t.pcs_unit }}</span>
                         </td>
                         <td class="py-3.5 px-4">
-                            <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-black border border-amber-200 font-mono">
-                                🎁 {{ c.bonus_balance }} ball
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-black border border-amber-200 font-mono">
+                                <i data-lucide="gift" class="w-3.5 h-3.5 text-amber-600"></i>
+                                <span>{{ c.bonus_balance }} {{ t.th_bonus }}</span>
                             </span>
                         </td>
                         <td class="py-3.5 px-4 text-slate-500 font-mono text-[11px]">

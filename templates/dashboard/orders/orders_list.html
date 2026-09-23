@@ -1,5 +1,5 @@
 {% extends 'dashboard/base_dashboard.html' %}
-{% load humanize %}
+{% load humanize core_tags %}
 
 {% block title %}{{ t.orders_list_title }} — StoreBox{% endblock %}
 
@@ -163,12 +163,12 @@
                                     #{{ order.order_number }}
                                 </span>
                                 {% if order.source == 'TMA' %}
-                                <span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-bold bg-sky-50 text-sky-700 border border-sky-200/60 shrink-0" title="Telegram Mini App">
-                                    <i data-lucide="send" class="w-2 h-2"></i> TG
+                                <span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-bold bg-sky-50 text-sky-700 border border-sky-200/60 shrink-0" title="{{ t.source_tma }}">
+                                    <i data-lucide="send" class="w-2 h-2"></i> {{ t.source_tg_badge }}
                                 </span>
                                 {% else %}
-                                <span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shrink-0" title="Veb-sayt">
-                                    <i data-lucide="globe" class="w-2 h-2"></i> Sayt
+                                <span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shrink-0" title="{{ t.source_web }}">
+                                    <i data-lucide="globe" class="w-2 h-2"></i> {{ t.source_web_badge }}
                                 </span>
                                 {% endif %}
                             </div>
@@ -195,17 +195,17 @@
                         <!-- 3. Ordered Products Summary -->
                         <td class="py-2 px-2">
                             <div class="font-bold text-slate-800 text-[11px] leading-tight">
-                                {{ order.items.count }} ta
+                                {{ order.items.count }} {{ t.pcs_unit }}
                             </div>
-                            <div class="text-[10px] text-slate-400 truncate mt-0.5" title="{% with first_item=order.items.first %}{% if first_item %}{{ first_item.product_name }}{% endif %}{% endwith %}">
+                            <div class="text-[10px] text-slate-400 truncate mt-0.5">
                                 {% with first_item=order.items.first %}
                                 {% if first_item %}
-                                    {{ first_item.product_name|default:"Mahsulot" }}
+                                    {% if first_item.product %}{{ first_item.product|localized_name:current_lang }}{% else %}{{ first_item.product_name|default:t.product_word }}{% endif %}
                                     {% if order.items.count > 1 %}
                                     <span class="text-slate-400 font-medium">+{{ order.items.count|add:"-1" }}</span>
                                     {% endif %}
                                 {% else %}
-                                    <span class="text-slate-400 italic">Buyurtma</span>
+                                    <span class="text-slate-400 italic">{{ t.order_word }}</span>
                                 {% endif %}
                                 {% endwith %}
                             </div>
@@ -218,12 +218,12 @@
                             </div>
                             <div class="mt-0.5 flex items-center gap-1">
                                 <span class="text-[9px] font-bold text-slate-500 truncate">
-                                    {% if order.payment_method == 'CASH' %}Naqd{% elif order.payment_method == 'TERMINAL' %}Terminal{% elif order.payment_method == 'CLICK' %}Click{% elif order.payment_method == 'PAYME' %}Payme{% elif order.payment_method == 'UZUM' %}Uzum{% else %}{{ order.get_payment_method_display }}{% endif %}
+                                    {{ order.payment_method|payment_label:current_lang }}
                                 </span>
                                 {% if order.payment_status == 'PAID' %}
-                                <span class="px-1 py-0.2 rounded bg-emerald-50 text-emerald-700 font-bold text-[8px] border border-emerald-200 shrink-0">To'landi</span>
+                                <span class="px-1 py-0.2 rounded bg-emerald-50 text-emerald-700 font-bold text-[8px] border border-emerald-200 shrink-0">{{ t.payment_paid }}</span>
                                 {% else %}
-                                <span class="px-1 py-0.2 rounded bg-amber-50 text-amber-700 font-bold text-[8px] border border-amber-200 shrink-0">Kutilmoqda</span>
+                                <span class="px-1 py-0.2 rounded bg-amber-50 text-amber-700 font-bold text-[8px] border border-amber-200 shrink-0">{{ t.payment_pending }}</span>
                                 {% endif %}
                             </div>
                         </td>
@@ -233,7 +233,7 @@
                             {% if order.delivery_method == 'COURIER' %}
                             <div class="inline-flex items-center gap-0.5 text-emerald-700 font-bold text-[10px] leading-tight">
                                 <i data-lucide="truck" class="w-2.5 h-2.5 shrink-0"></i>
-                                <span>Kuryer</span>
+                                <span>{{ t.delivery_courier }}</span>
                             </div>
                             {% if order.delivery_address %}
                             <div class="text-[10px] text-slate-400 truncate mt-0.5" title="{{ order.delivery_address }}">
@@ -242,7 +242,7 @@
                             {% endif %}
                             <div id="order-courier-cell-{{ order.id }}">
                                 {% if order.courier %}
-                                <div class="mt-1 inline-flex items-center gap-1 text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60 max-w-[120px] truncate" title="Kuryer: {{ order.courier.name }}">
+                                <div class="mt-1 inline-flex items-center gap-1 text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60 max-w-[120px] truncate" title="{{ t.delivery_courier }}: {{ order.courier.name }}">
                                     <i data-lucide="bike" class="w-2.5 h-2.5 shrink-0"></i>
                                     <span class="truncate">{{ order.courier.name }}</span>
                                 </div>
@@ -251,7 +251,7 @@
                             {% else %}
                             <div class="inline-flex items-center gap-0.5 text-slate-600 font-bold text-[10px] leading-tight">
                                 <i data-lucide="store" class="w-2.5 h-2.5 shrink-0"></i>
-                                <span>Olib ketish</span>
+                                <span>{{ t.delivery_pickup }}</span>
                             </div>
                             {% endif %}
                         </td>
@@ -261,32 +261,32 @@
                             {% if order.status == 'NEW' %}
                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[9px] font-black border border-amber-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                <span>Yangi</span>
+                                <span>{{ t.status_new }}</span>
                             </span>
                             {% elif order.status == 'PROCESSING' %}
                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[9px] font-black border border-blue-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                <span>Jarayonda</span>
+                                <span>{{ t.status_accepted }}</span>
                             </span>
                             {% elif order.status == 'READY' %}
                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-800 text-[9px] font-black border border-indigo-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                                <span>Tayyor</span>
+                                <span>{{ t.status_ready }}</span>
                             </span>
                             {% elif order.status == 'IN_DELIVERY' or order.status == 'SHIPPED' %}
                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-800 text-[9px] font-black border border-purple-200">
                                 <i data-lucide="truck" class="w-2.5 h-2.5 text-purple-600"></i>
-                                <span>Yo'lda</span>
+                                <span>{{ t.status_delivering }}</span>
                             </span>
                             {% elif order.status == 'COMPLETED' or order.status == 'DELIVERED' %}
                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[9px] font-black border border-emerald-200">
                                 <i data-lucide="check" class="w-2.5 h-2.5 text-emerald-600"></i>
-                                <span>Yetkazildi</span>
+                                <span>{{ t.status_completed }}</span>
                             </span>
                             {% else %}
                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-800 text-[9px] font-black border border-rose-200">
                                 <i data-lucide="x" class="w-2.5 h-2.5 text-rose-600"></i>
-                                <span>Bekor</span>
+                                <span>{{ t.status_cancelled }}</span>
                             </span>
                             {% endif %}
                         </td>
@@ -296,12 +296,12 @@
                             <div class="flex items-center justify-end gap-1">
                                 <button type="button" @click.stop="openOrderDrawer('{{ order.id }}')"
                                         class="p-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-all shadow-2xs"
-                                        title="Batafsil ko'rish">
+                                        title="{{ t.view_details }}">
                                     <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                                 </button>
                                 <a href="/dashboard/orders/{{ order.id }}/"
                                    class="p-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-all shadow-2xs"
-                                   title="To'liq sahifada ochish">
+                                   title="{{ t.open_full_order }}">
                                     <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                                 </a>
                             </div>
@@ -356,8 +356,8 @@
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="font-black text-base text-slate-900 font-mono" x-text="selectedOrder ? '#' + selectedOrder.order_number : 'Yuklanmoqda...'">#RB-...</h3>
-                                <button type="button" @click="copyOrderNum()" class="text-slate-400 hover:text-slate-700 text-xs" title="Nusxa olish">
+                                <h3 class="font-black text-base text-slate-900 font-mono" x-text="selectedOrder ? '#' + selectedOrder.order_number : '{{ t.loading }}'">#RB-...</h3>
+                                <button type="button" @click="copyOrderNum()" class="text-slate-400 hover:text-slate-700 text-xs" title="{{ t.copy_order_num }}">
                                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                 </button>
                                 <span class="px-2 py-0.5 rounded-md text-[10px] font-bold"
@@ -369,7 +369,7 @@
                         </div>
                     </div>
 
-                    <button type="button" @click="orderDrawerOpen = false" class="w-8 h-8 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors">
+                    <button type="button" @click="orderDrawerOpen = false" class="w-8 h-8 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors" title="{{ t.close_drawer }}">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -380,7 +380,7 @@
                     <!-- 1. STATUS BAR & QUICK STATUS BUTTONS -->
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500 font-bold uppercase tracking-wider text-[10px]">{{ t.order_status_label|default:"Buyurtma holati:" }}</span>
+                            <span class="text-slate-500 font-bold uppercase tracking-wider text-[10px]">{{ t.order_status_label }}</span>
                             <span class="px-3 py-1 rounded-full text-xs font-black border"
                                   :class="{
                                       'bg-amber-50 text-amber-700 border-amber-200': selectedOrder && selectedOrder.status === 'NEW',
@@ -394,27 +394,32 @@
                             </span>
                         </div>
 
-                        <!-- One-click Status Action Buttons -->
+                        <!-- One-click Status Action Buttons (Zero Emojis - Clean Lucide SVG) -->
                         <div class="pt-2 border-t border-slate-200/60 flex flex-wrap gap-1.5">
                             <button type="button" @click="changeStatus(selectedOrder.id, 'PROCESSING')"
-                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200 text-blue-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                {{ t.action_processing|default:"⚡️ Jarayonga olish" }}
+                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200 text-blue-700 font-bold text-[11px] transition-colors shadow-2xs flex items-center gap-1.5">
+                                <i data-lucide="play" class="w-3.5 h-3.5 text-blue-600"></i>
+                                <span>{{ t.action_processing }}</span>
                             </button>
                             <button type="button" @click="changeStatus(selectedOrder.id, 'READY')"
-                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-indigo-50 border border-slate-200 text-indigo-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                {{ t.action_ready|default:"👨‍🍳 Tayyor" }}
+                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-indigo-50 border border-slate-200 text-indigo-700 font-bold text-[11px] transition-colors shadow-2xs flex items-center gap-1.5">
+                                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                <span>{{ t.action_ready }}</span>
                             </button>
                             <button type="button" @click="changeStatus(selectedOrder.id, 'IN_DELIVERY')"
-                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-purple-50 border border-slate-200 text-purple-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                {{ t.action_in_delivery|default:"🛵 Yo'lga chiqarish" }}
+                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-purple-50 border border-slate-200 text-purple-700 font-bold text-[11px] transition-colors shadow-2xs flex items-center gap-1.5">
+                                <i data-lucide="truck" class="w-3.5 h-3.5 text-purple-600"></i>
+                                <span>{{ t.action_in_delivery }}</span>
                             </button>
                             <button type="button" @click="changeStatus(selectedOrder.id, 'COMPLETED')"
-                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200 text-emerald-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                {{ t.action_completed|default:"✅ Yetkazildi" }}
+                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200 text-emerald-700 font-bold text-[11px] transition-colors shadow-2xs flex items-center gap-1.5">
+                                <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                <span>{{ t.action_completed }}</span>
                             </button>
                             <button type="button" @click="changeStatus(selectedOrder.id, 'CANCELLED')"
-                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 text-rose-700 font-bold text-[11px] transition-colors shadow-2xs">
-                                {{ t.action_cancelled|default:"❌ Bekor qilish" }}
+                                    class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 text-rose-700 font-bold text-[11px] transition-colors shadow-2xs flex items-center gap-1.5">
+                                <i data-lucide="ban" class="w-3.5 h-3.5 text-rose-600"></i>
+                                <span>{{ t.action_cancelled }}</span>
                             </button>
                         </div>
                     </div>
@@ -424,9 +429,9 @@
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
                                 <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
-                                <span>{{ t.customer_info_title|default:"Mijoz ma'lumotlari" }}</span>
+                                <span>{{ t.customer_info_title }}</span>
                             </h4>
-                            <span class="text-[10px] font-bold text-slate-400" x-text="selectedOrder ? selectedOrder.customer_orders_count + ' {{ t.orders_count_suffix|default:"-marta buyurtma bergan" }}' : ''"></span>
+                            <span class="text-[10px] font-bold text-slate-400" x-text="selectedOrder ? selectedOrder.customer_orders_count + ' {{ t.customer_orders_count_badge }}' : ''"></span>
                         </div>
 
                         <div class="flex items-center justify-between">
@@ -445,11 +450,11 @@
 
                             <div class="flex items-center gap-1.5">
                                 <a :href="'tel:' + (selectedOrder ? selectedOrder.customer_phone : '')"
-                                   class="p-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold transition-colors" title="Qo'ng'iroq qilish">
+                                   class="p-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold transition-colors" title="{{ t.call_customer }}">
                                     <i data-lucide="phone" class="w-4 h-4"></i>
                                 </a>
                                 <a :href="'https://t.me/' + (selectedOrder ? selectedOrder.customer_phone.replace('+', '') : '')" target="_blank"
-                                   class="p-2 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold transition-colors" title="Telegramda ochish">
+                                   class="p-2 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold transition-colors" title="{{ t.open_in_telegram }}">
                                     <i data-lucide="send" class="w-4 h-4"></i>
                                 </a>
                             </div>
@@ -486,7 +491,7 @@
                                             class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-xs flex items-center justify-between shadow-xs transition-all">
                                         <div class="flex items-center gap-2">
                                             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                                            <span>Kuryerni jonli kuzatish (Jonli xarita & ETA)</span>
+                                            <span>{{ t.live_tracking_title|default:"Kuryerni jonli kuzatish" }}</span>
                                         </div>
                                         <i data-lucide="compass" class="w-4 h-4"></i>
                                     </button>
@@ -494,8 +499,8 @@
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <a :href="'https://yandex.uz/maps/?rtext=~' + selectedOrder.delivery_lat + ',' + selectedOrder.delivery_lng + '&rtt=auto'" target="_blank"
                                            class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-2xs transition-colors">
-                                            <span>🚕</span>
-                                            <span>{{ t.yandex_navigator_route|default:"Yandex Navigator (Marshrut)" }}</span>
+                                            <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                                            <span>Yandex Maps</span>
                                         </a>
                                         <a :href="'https://maps.google.com/?q=' + selectedOrder.delivery_lat + ',' + selectedOrder.delivery_lng" target="_blank"
                                            class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 text-blue-700 hover:bg-blue-50 font-bold text-xs transition-colors">
@@ -509,7 +514,7 @@
                             <!-- Notes / Izoh -->
                             <template x-if="selectedOrder && selectedOrder.notes">
                                 <div class="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-amber-900 text-xs">
-                                    <span class="font-bold block text-[10px] uppercase text-amber-700">{{ t.customer_notes_title|default:"Mijoz izohi:" }}</span>
+                                    <span class="font-bold block text-[10px] uppercase text-amber-700">{{ t.customer_notes|default:"Mijoz izohi:" }}</span>
                                     <span x-text="selectedOrder.notes"></span>
                                 </div>
                             </template>
@@ -565,7 +570,7 @@
                                     <template x-if="selectedOrder.courier_phone">
                                         <a :href="'tel:' + selectedOrder.courier_phone"
                                            class="p-2 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 transition-colors"
-                                           title="Kuryerga qo'ng'iroq qilish">
+                                           title="{{ t.call_customer }}">
                                             <i data-lucide="phone" class="w-3.5 h-3.5"></i>
                                         </a>
                                     </template>
@@ -579,9 +584,9 @@
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
                             <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
                                 <i data-lucide="package" class="w-4 h-4 text-emerald-600"></i>
-                                <span>{{ t.order_items_title|default:"Buyurtma tarkibi" }}</span>
+                                <span>{{ t.ordered_items }}</span>
                             </h4>
-                            <span class="text-slate-400 font-bold text-[10px]" x-text="selectedOrder ? selectedOrder.items_count + ' {{ t.items_variety_suffix|default:"xil" }}' : ''"></span>
+                            <span class="text-slate-400 font-bold text-[10px]" x-text="selectedOrder ? selectedOrder.items_count + ' {{ t.pcs_unit }}' : ''"></span>
                         </div>
 
                         <div class="divide-y divide-slate-100">
@@ -593,7 +598,7 @@
                                                 <img :src="item.image_url" class="w-full h-full object-cover">
                                             </template>
                                             <template x-if="!item.image_url">
-                                                <span class="text-xs">📦</span>
+                                                <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
                                             </template>
                                         </div>
                                         <div>
@@ -659,7 +664,7 @@
 
                     <a :href="selectedOrder ? selectedOrder.full_detail_url : '#'"
                        class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
-                        <span>{{ t.view_btn|default:"To'liq sahifa" }}</span>
+                        <span>{{ t.open_full_order }}</span>
                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                     </a>
                 </div>
@@ -672,7 +677,7 @@
     <div x-show="packingSlipOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="packingSlipOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-black text-base text-slate-900">Yig'ish varaqasi (Packing slip)</h3>
+                <h3 class="font-black text-base text-slate-900">{{ t.packing_slip }}</h3>
                 <button type="button" @click="packingSlipOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
             <div class="text-xs text-slate-600 space-y-3 font-medium">
@@ -684,8 +689,8 @@
                 </div>
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button type="button" @click="packingSlipOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Yopish</button>
-                <button type="button" onclick="window.print()" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Chop etish</button>
+                <button type="button" @click="packingSlipOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">{{ t.close_drawer }}</button>
+                <button type="button" onclick="window.print()" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">{{ t.print_receipt_btn }}</button>
             </div>
         </div>
     </div>
@@ -694,7 +699,7 @@
     <div x-show="autoReplyModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="autoReplyModal = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-black text-base text-slate-900">Avto-javob sozlamasi</h3>
+                <h3 class="font-black text-base text-slate-900">{{ t.auto_reply }}</h3>
                 <button type="button" @click="autoReplyModal = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
             <div class="space-y-3 text-xs">
@@ -702,8 +707,8 @@
                 <textarea rows="3" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand">Assalomu alaykum! Buyurtmangiz qabul qilindi va tayyorlanmoqda. Tez orada yetkazib beramiz!</textarea>
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button type="button" @click="autoReplyModal = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Bekor qilish</button>
-                <button type="button" @click="autoReplyModal = false; showToast('Avto-javob faollashtirildi!')" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">Saqlash</button>
+                <button type="button" @click="autoReplyModal = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">{{ t.cancel_btn }}</button>
+                <button type="button" @click="autoReplyModal = false; showToast('Avto-javob faollashtirildi!')" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">{{ t.save_changes }}</button>
             </div>
         </div>
     </div>
@@ -719,10 +724,10 @@
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h3 class="font-black text-sm text-white">Jonli kuryer harakati (Real-Time GPS)</h3>
+                            <h3 class="font-black text-sm text-white">{{ t.live_tracking_title|default:"Jonli kuryer harakati (Real-Time GPS)" }}</h3>
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                         </div>
-                        <p class="text-[11px] text-slate-400 font-mono" x-text="trackingData ? '#' + trackingData.order.order_number + ' • ' + trackingData.order.customer_name : 'Yuklanmoqda...'"></p>
+                        <p class="text-[11px] text-slate-400 font-mono" x-text="trackingData ? '#' + trackingData.order.order_number + ' • ' + trackingData.order.customer_name : '{{ t.loading }}'"></p>
                     </div>
                 </div>
                 <button type="button" @click="closeLiveTrackingModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300">
@@ -733,12 +738,12 @@
             <!-- ETA HUD Banner -->
             <div class="px-4 py-3 bg-slate-950/90 border-b border-slate-800/80 flex items-center justify-between text-xs">
                 <div>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kuryer holati</span>
-                    <span class="font-black text-emerald-400" x-text="trackingData?.courier ? (trackingData.courier.name + (trackingData.courier.is_online ? ' (Online)' : '')) : 'Kuryer biriktirilmagan'"></span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{{ t.courier_badge }}</span>
+                    <span class="font-black text-emerald-400" x-text="trackingData?.courier ? (trackingData.courier.name + (trackingData.courier.is_online ? ' (Online)' : '')) : '{{ t.courier_not_assigned }}'"></span>
                 </div>
                 <div class="text-right">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mijozgacha masofa / ETA</span>
-                    <span class="font-black text-amber-400 text-sm" x-text="trackingEtaText || 'Hisoblanmoqda...'"></span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{{ t.avg_time_label }}</span>
+                    <span class="font-black text-amber-400 text-sm" x-text="trackingEtaText || '{{ t.loading }}'"></span>
                 </div>
             </div>
 
@@ -749,12 +754,12 @@
             <div class="p-3.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs">
                 <div class="flex items-center gap-2 text-slate-400">
                     <i data-lucide="map-pin" class="w-4 h-4 text-rose-500 shrink-0"></i>
-                    <span class="truncate max-w-xs" x-text="trackingData?.order?.delivery_address || 'Manzil ko\'rsatilmagan'"></span>
+                    <span class="truncate max-w-xs" x-text="trackingData?.order?.delivery_address || '{{ t.no_address_provided|default:"Manzil ko\'rsatilmagan" }}'"></span>
                 </div>
                 <template x-if="trackingData?.courier?.phone">
                     <a :href="'tel:' + trackingData.courier.phone" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm">
                         <i data-lucide="phone" class="w-3.5 h-3.5"></i>
-                        <span>Kuryerga qo'ng'iroq</span>
+                        <span>{{ t.call_customer }}</span>
                     </a>
                 </template>
             </div>

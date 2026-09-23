@@ -1,6 +1,6 @@
 {% extends 'dashboard/base_dashboard.html' %}
 
-{% block title %}Xodimlar va Rollar — StoreBox{% endblock %}
+{% block title %}{{ t.staff_and_roles_title }} — StoreBox{% endblock %}
 
 {% block dashboard_content %}
 <div class="space-y-6" x-data="staffManagementApp()">
@@ -8,30 +8,30 @@
     <!-- Header & Title -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight" x-text="tabTitles[activeTab]">Xodimlar</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Xodimlar huquqlari va kirish nazorati (Robosell RBAC tizimi)</p>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight" x-text="tabTitles[activeTab]">{{ t.tab_staff }}</h1>
+            <p class="text-xs text-slate-500 mt-0.5">{{ t.staff_subtitle }}</p>
         </div>
 
         <div class="flex items-center gap-2">
             <!-- Action button changes depending on active tab -->
             <button type="button" x-show="activeTab === 'staff'" @click="openAddStaffModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-2 shadow-xs transition-all">
                 <i data-lucide="user-plus" class="w-4 h-4"></i>
-                <span>+ Xodimni qo'shish</span>
+                <span>+ {{ t.add_staff_btn }}</span>
             </button>
 
             <button type="button" x-show="activeTab === 'roles'" @click="openAddRoleModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-2 shadow-xs transition-all" x-cloak>
                 <i data-lucide="shield-plus" class="w-4 h-4"></i>
-                <span>+ Rol qo'shish</span>
+                <span>+ {{ t.add_role_btn }}</span>
             </button>
 
             <button type="button" x-show="activeTab === 'courier'" @click="openAddCourierModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-2 shadow-xs transition-all" x-cloak>
                 <i data-lucide="bike" class="w-4 h-4"></i>
-                <span>+ Kuryer qo'shish</span>
+                <span>+ {{ t.add_courier_btn }}</span>
             </button>
 
-            <a href="/courier/" target="_blank" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors" title="Kuryer panelini yangi oynada ochish">
+            <a href="/courier/" target="_blank" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors" title="{{ t.courier_panel_btn }}">
                 <i data-lucide="external-link" class="w-4 h-4 text-slate-500"></i>
-                <span class="hidden sm:inline">Kuryer paneli</span>
+                <span class="hidden sm:inline">{{ t.courier_panel_btn }}</span>
             </a>
         </div>
     </div>
@@ -40,19 +40,19 @@
     <div class="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl w-fit text-xs font-bold border border-slate-200/60 shadow-2xs">
         <button type="button" @click="switchTab('staff')" :class="activeTab === 'staff' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'" class="px-5 py-2 rounded-xl transition-all flex items-center gap-2">
             <i data-lucide="users" class="w-3.5 h-3.5"></i>
-            <span>Xodimlar</span>
+            <span>{{ t.tab_staff }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-100 text-slate-700" x-text="staffList.length"></span>
         </button>
 
         <button type="button" @click="switchTab('roles')" :class="activeTab === 'roles' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'" class="px-5 py-2 rounded-xl transition-all flex items-center gap-2">
             <i data-lucide="shield" class="w-3.5 h-3.5"></i>
-            <span>Rollar</span>
+            <span>{{ t.tab_roles }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-100 text-slate-700" x-text="rolesList.length"></span>
         </button>
 
         <button type="button" @click="switchTab('courier')" :class="activeTab === 'courier' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'" class="px-5 py-2 rounded-xl transition-all flex items-center gap-2">
             <i data-lucide="bike" class="w-3.5 h-3.5"></i>
-            <span>Kuryer</span>
+            <span>{{ t.tab_couriers }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-100 text-slate-700" x-text="couriersList.length"></span>
         </button>
     </div>
@@ -775,9 +775,9 @@ function staffManagementApp() {
     return {
         activeTab: '{{ active_tab|default:"staff" }}',
         tabTitles: {
-            'staff': 'Xodimlar',
-            'roles': 'Rollar',
-            'courier': 'Kuryer'
+            'staff': '{{ t.tab_staff }}',
+            'roles': '{{ t.tab_roles }}',
+            'courier': '{{ t.tab_couriers }}'
         },
 
         // Data lists

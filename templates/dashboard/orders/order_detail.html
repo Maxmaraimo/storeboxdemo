@@ -1,7 +1,7 @@
 {% extends 'dashboard/base_dashboard.html' %}
-{% load l10n humanize %}
+{% load l10n humanize core_tags %}
 
-{% block page_title %}Buyurtma #{{ order.order_number }}{% endblock %}
+{% block page_title %}{{ t.order_word }} #{{ order.order_number }}{% endblock %}
 
 {% block dashboard_content %}
 <div class="max-w-5xl mx-auto space-y-6">
@@ -9,17 +9,17 @@
     <!-- Top Breadcrumbs & Action -->
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
-            <a href="/dashboard/orders/" class="hover:text-slate-800 transition-colors">Buyurtmalar</a>
+            <a href="/dashboard/orders/" class="hover:text-slate-800 transition-colors">{{ t.orders }}</a>
             <span>/</span>
             <span class="text-slate-900 font-extrabold font-mono">#{{ order.order_number }}</span>
         </div>
         <div class="flex items-center gap-2">
             <button onclick="window.print()" type="button" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                <span>Chop etish</span>
+                <span>{{ t.print_btn|default:"Chop etish" }}</span>
             </button>
             <a href="/dashboard/orders/" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
-                ← Ro'yxatga qaytish
+                ← {{ t.back_to_products|default:"Ro'yxatga qaytish" }}
             </a>
         </div>
     </div>
@@ -41,9 +41,9 @@
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
                         <i data-lucide="shopping-bag" class="w-4 h-4 text-brand"></i>
-                        <span>Buyurtma tarkibi</span>
+                        <span>{{ t.ordered_items }}</span>
                     </h3>
-                    <span class="text-xs font-bold text-slate-400">{{ order.items.count }} ta mahsulot</span>
+                    <span class="text-xs font-bold text-slate-400">{{ order.items.count }} {{ t.pcs_unit }}</span>
                 </div>
 
                 <div class="divide-y divide-slate-100 space-y-3">
@@ -54,7 +54,13 @@
                                 {{ forloop.counter }}
                             </div>
                             <div>
-                                <h4 class="font-bold text-xs text-slate-900">{{ item.product_name }}</h4>
+                                <h4 class="font-bold text-xs text-slate-900">
+                                    {% if item.product %}
+                                        {{ item.product|localized_name:current_lang }}
+                                    {% else %}
+                                        {{ item.product_name }}
+                                    {% endif %}
+                                </h4>
                                 {% if item.variation_name %}
                                 <span class="text-[10px] font-semibold text-brand block">Variant: {{ item.variation_name }}</span>
                                 {% endif %}
@@ -71,27 +77,27 @@
                 <!-- Totals Breakdown -->
                 <div class="bg-slate-50 rounded-2xl p-4 space-y-2 border border-slate-100 text-xs font-semibold text-slate-600">
                     <div class="flex justify-between">
-                        <span>Mahsulotlar summasi:</span>
+                        <span>{{ t.products_subtotal|default:"Mahsulotlar summasi:" }}</span>
                         <span class="font-mono text-slate-900">{{ order.subtotal|floatformat:0|intcomma }} UZS</span>
                     </div>
                     {% if order.discount_amount > 0 %}
                     <div class="flex justify-between text-rose-600 font-bold">
-                        <span>Chegirma{% if order.promo_code %} ({{ order.promo_code.code }}){% endif %}:</span>
+                        <span>{{ t.discount_label|default:"Chegirma" }}{% if order.promo_code %} ({{ order.promo_code.code }}){% endif %}:</span>
                         <span class="font-mono">-{{ order.discount_amount|floatformat:0|intcomma }} UZS</span>
                     </div>
                     {% endif %}
                     <div class="flex justify-between">
-                        <span>Yetkazib berish narxi:</span>
+                        <span>{{ t.delivery_fee_label|default:"Yetkazib berish narxi:" }}</span>
                         <span class="font-mono text-slate-900">
                             {% if order.delivery_fee > 0 %}
                                 {{ order.delivery_fee|floatformat:0|intcomma }} UZS
                             {% else %}
-                                <span class="text-emerald-600 font-bold">Bepul</span>
+                                <span class="text-emerald-600 font-bold">{{ t.free_delivery|default:"Bepul" }}</span>
                             {% endif %}
                         </span>
                     </div>
                     <div class="pt-2 border-t border-slate-200/80 flex justify-between items-center text-sm font-black text-slate-900">
-                        <span>JAMI TO'LOV:</span>
+                        <span>{{ t.total_due_label|default:"JAMI TO'LOV:" }}</span>
                         <span class="text-brand font-mono text-base">{{ order.total_amount|floatformat:0|intcomma }} UZS</span>
                     </div>
                 </div>
@@ -101,20 +107,20 @@
             <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs space-y-4">
                 <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
                     <i data-lucide="user" class="w-4 h-4 text-brand"></i>
-                    <span>Mijoz va yetkazish ma'lumotlari</span>
+                    <span>{{ t.delivery_and_address|default:"Mijoz va yetkazish ma'lumotlari" }}</span>
                 </h3>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Mijoz</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">{{ t.th_client|default:"Mijoz" }}</span>
                         <div class="font-black text-xs text-slate-900">{{ order.customer_name }}</div>
                         <a href="tel:{{ order.customer_phone }}" class="text-xs font-mono font-bold text-brand hover:underline mt-1 block">
                             {{ order.customer_phone }}
                         </a>
                     </div>
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Yetkazish turi</span>
-                        <div class="font-bold text-xs text-slate-900">{{ order.get_delivery_method_display }}</div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">{{ t.delivery_price_label|default:"Yetkazish turi" }}</span>
+                        <div class="font-bold text-xs text-slate-900">{{ order.delivery_method|delivery_label:current_lang }}</div>
                         <div class="text-[11px] text-slate-500 mt-1">
                             {{ order.delivery_city }}{% if order.delivery_address %}, {{ order.delivery_address }}{% endif %}
                         </div>
@@ -126,17 +132,19 @@
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                             <i data-lucide="map-pin" class="w-4 h-4 text-brand"></i>
-                            <span>Xaritadagi yetkazish nuqtasi:</span>
+                            <span>{{ t.orders_map|default:"Xaritadagi yetkazish nuqtasi:" }}</span>
                         </span>
                         <div class="flex items-center gap-2">
                             <a href="https://yandex.com/maps/?pt={{ order.delivery_lng|unlocalize }},{{ order.delivery_lat|unlocalize }}&z=17&l=map" target="_blank"
                                class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-[11px] font-bold transition-colors flex items-center gap-1">
-                                <span>📍 Yandex Xarita</span>
+                                <i data-lucide="navigation" class="w-3 h-3"></i>
+                                <span>Yandex Maps</span>
                                 <i data-lucide="external-link" class="w-3 h-3"></i>
                             </a>
                             <a href="https://maps.google.com/?q={{ order.delivery_lat|unlocalize }},{{ order.delivery_lng|unlocalize }}" target="_blank"
                                class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold transition-colors flex items-center gap-1">
-                                <span>🗺 Google Xarita</span>
+                                <i data-lucide="map" class="w-3 h-3"></i>
+                                <span>Google Maps</span>
                                 <i data-lucide="external-link" class="w-3 h-3"></i>
                             </a>
                         </div>
@@ -158,13 +166,13 @@
                                 const lat = {{ order.delivery_lat|unlocalize }};
                                 const lng = {{ order.delivery_lng|unlocalize }};
                                 const map = L.map('orderDeliveryMap').setView([lat, lng], 16);
-                                L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ request.language|default:"ru" }}&x={x}&y={y}&z={z}', {
+                                L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ current_lang|default:"ru" }}&x={x}&y={y}&z={z}', {
                                     maxZoom: 20,
                                     subdomains: ['0', '1', '2', '3'],
                                     attribution: '© Google Maps'
                                 }).addTo(map);
                                 const marker = L.marker([lat, lng]).addTo(map);
-                                marker.bindPopup("<div style='font-size:12px;font-weight:bold;margin-bottom:2px;'>📍 {{ order.customer_name|escapejs }}</div><div style='font-size:11px;color:#555;'>{{ order.delivery_address|escapejs }}</div>").openPopup();
+                                marker.bindPopup("<div style='font-size:12px;font-weight:bold;margin-bottom:2px;'>{{ order.customer_name|escapejs }}</div><div style='font-size:11px;color:#555;'>{{ order.delivery_address|escapejs }}</div>").openPopup();
                                 setTimeout(() => { map.invalidateSize(); }, 300);
                             }
                             if (document.readyState === 'loading') {
@@ -179,7 +187,7 @@
 
                 {% if order.notes %}
                 <div class="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
-                    <b>Mijoz izohi:</b> {{ order.notes }}
+                    <b>{{ t.customer_notes|default:"Mijoz izohi:" }}</b> {{ order.notes }}
                 </div>
                 {% endif %}
             </div>
@@ -190,33 +198,33 @@
             <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs space-y-5">
                 <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
                     <i data-lucide="activity" class="w-4 h-4 text-brand"></i>
-                    <span>Statusni boshqarish</span>
+                    <span>{{ t.order_status_label|default:"Statusni boshqarish" }}</span>
                 </h3>
 
                 <form method="POST" class="space-y-4">
                     {% csrf_token %}
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Buyurtma holati</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.th_status }}</label>
                         <select name="status" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold focus:outline-none focus:border-brand transition-colors">
                             {% for s_val, s_label in order_statuses %}
-                            <option value="{{ s_val }}" {% if order.status == s_val %}selected{% endif %}>{{ s_label }}</option>
+                            <option value="{{ s_val }}" {% if order.status == s_val %}selected{% endif %}>{{ s_val|order_status_label:current_lang }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">To'lov holati</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.th_payment }}</label>
                         <select name="payment_status" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold focus:outline-none focus:border-brand transition-colors">
                             {% for p_val, p_label in payment_statuses %}
-                            <option value="{{ p_val }}" {% if order.payment_status == p_val %}selected{% endif %}>{{ p_label }}</option>
+                            <option value="{{ p_val }}" {% if order.payment_status == p_val %}selected{% endif %}>{{ p_val|payment_status_label:current_lang }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                            <span>Biriktirilgan kuryer</span>
+                            <span>{{ t.courier_assign_title|default:"Biriktirilgan kuryer" }}</span>
                             {% if order.courier %}
                             <a href="tel:{{ order.courier.phone }}" class="text-[11px] font-bold text-purple-600 hover:underline flex items-center gap-1">
                                 <i data-lucide="phone" class="w-3 h-3"></i> {{ order.courier.phone }}
@@ -224,7 +232,7 @@
                             {% endif %}
                         </label>
                         <select name="courier_id" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold focus:outline-none focus:border-purple-500 transition-colors">
-                            <option value="none">-- Kuryer biriktirilmagan --</option>
+                            <option value="none">-- {{ t.courier_not_assigned|default:"Kuryer biriktirilmagan" }} --</option>
                             {% for c in couriers %}
                             <option value="{{ c.id }}" {% if order.courier_id == c.id %}selected{% endif %}>{{ c.name }} ({{ c.phone }})</option>
                             {% endfor %}
@@ -234,20 +242,20 @@
                     <div class="pt-1">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="notify_telegram" checked class="w-4 h-4 rounded text-brand border-slate-300 focus:ring-brand">
-                            <span class="text-xs font-semibold text-slate-600">Telegramga bildirishnoma yuborish</span>
+                            <span class="text-xs font-semibold text-slate-600">{{ t.broadcast|default:"Telegramga bildirishnoma yuborish" }}</span>
                         </label>
                     </div>
 
                     <button type="submit"
                             class="w-full py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-extrabold text-xs shadow-md shadow-brand/20 transition-all">
-                        Statusni saqlash
+                        {{ t.save_changes|default:"Statusni saqlash" }}
                     </button>
                 </form>
 
                 <div class="pt-4 border-t border-slate-100 text-[11px] text-slate-400 space-y-1">
-                    <div>Manba: <b class="text-slate-700">{{ order.get_source_display }}</b></div>
-                    <div>To'lov turi: <b class="text-slate-700">{{ order.get_payment_method_display }}</b></div>
-                    <div>Yaratilgan vaqti: <b class="text-slate-700">{{ order.created_at|date:"d.m.Y H:i:s" }}</b></div>
+                    <div>{{ t.sources|default:"Manba" }}: <b class="text-slate-700">{{ order.source|source_label:current_lang }}</b></div>
+                    <div>{{ t.th_payment }}: <b class="text-slate-700">{{ order.payment_method|payment_label:current_lang }}</b></div>
+                    <div>{{ t.order_date }}: <b class="text-slate-700">{{ order.created_at|date:"d.m.Y H:i:s" }}</b></div>
                 </div>
             </div>
         </div>
