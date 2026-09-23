@@ -3608,422 +3608,88 @@ h1 span {
     pointer-events: none;
     z-index: 0;
 }
-/* Realistic Curved Pedestal / Stand («Подноситель») */
+/* Realistic Curved Metallic Stand in StoreBox Brand Lime Green */
 .mob-stand-pedestal {
     position: absolute;
-    bottom: 25px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    width: 360px;
-    height: 180px;
+    transform: translate(-50%, -46%);
+    width: 480px;
+    height: 720px;
     pointer-events: none;
     z-index: 1;
 }
-.stand-base-glow {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 340px;
-    height: 44px;
-    border-radius: 50%;
-    background: radial-gradient(ellipse at center, rgba(33, 27, 46, 0.55) 0%, rgba(15, 23, 42, 0.2) 60%, transparent 80%);
-    filter: blur(10px);
+.stand-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
 }
-.stand-curved-bar {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 250px;
-    height: 150px;
-    border-radius: 46px;
-    border-bottom: 24px solid #282136;
-    border-left: 20px solid #362c4a;
-    border-right: 20px solid #1f182c;
-    background: transparent;
-    filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.3));
-    box-shadow: inset 0 -4px 10px rgba(200, 255, 106, 0.2);
-}
-.stand-bracket {
-    position: absolute;
-    bottom: 74px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 150px;
-    height: 16px;
-    background: linear-gradient(90deg, #372d4c 0%, #4a3d64 50%, #221b2f 100%);
-    border-radius: 999px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.3);
-}
+
+/* 3D Smartphone Frame Displaying Real Shop 655 Screenshot */
 .mob-phone-frame {
     position: relative;
     z-index: 2;
-    width: 330px;
-    height: 670px;
+    width: 320px;
+    height: 650px;
     background: #110e19;
-    border-radius: 48px;
-    padding: 11px;
-    border: 3.5px solid #3e3353;
+    border-radius: 46px;
+    padding: 10px;
+    border: 3.5px solid #282136;
     box-shadow: 
-        -22px 36px 75px rgba(15, 23, 42, 0.42),
-        0 15px 35px rgba(33, 27, 46, 0.3),
-        inset 0 0 0 2px rgba(255, 255, 255, 0.15),
-        inset 0 2px 4px rgba(200, 255, 106, 0.25);
-    transform: rotateY(-9deg) rotateX(9deg) rotateZ(-2.5deg);
+        -18px 30px 65px rgba(15, 23, 42, 0.35),
+        0 10px 25px rgba(33, 27, 46, 0.25),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.12),
+        inset 0 2px 4px rgba(200, 255, 106, 0.3);
+    transform: rotateY(-8deg) rotateX(7deg) rotateZ(-1.5deg);
     transform-style: preserve-3d;
     transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s ease;
 }
 .mob-phone-frame:hover {
-    transform: rotateY(-2deg) rotateX(4deg) rotateZ(-0.5deg) translateY(-8px);
+    transform: rotateY(-1deg) rotateX(2deg) rotateZ(0deg) translateY(-6px);
     box-shadow: 
-        -15px 45px 95px rgba(33, 27, 46, 0.48),
+        -12px 35px 80px rgba(33, 27, 46, 0.4),
         0 0 0 2.5px #c8ff6a,
-        0 20px 55px rgba(200, 255, 106, 0.25);
+        0 15px 45px rgba(200, 255, 106, 0.2);
 }
-.mob-phone-screen {
+.mob-phone-screen-img-wrap {
     width: 100%;
     height: 100%;
-    background: #f8fafc;
     border-radius: 36px;
     overflow: hidden;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    font-family: var(--font-sans, 'Inter', "Segoe UI", Arial, sans-serif);
+    background: #000000;
 }
-.mob-phone-screen svg {
-    flex-shrink: 0;
+.mob-phone-real-screen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
 }
-.mob-notch {
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 18px 0;
-    position: relative;
-    z-index: 10;
-}
-.mob-time {
-    font-size: 12px;
-    font-weight: 700;
-    color: #0f172a;
-}
-.mob-island {
-    width: 82px;
+.mob-notch-island {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
     height: 22px;
     background: #000000;
     border-radius: 20px;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding-right: 7px;
+    padding-right: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.mob-camera-dot {
+.mob-island-cam {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #1e293b;
-}
-.mob-status-icons {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    color: #0f172a;
-}
-.mob-status-icons svg {
-    width: 13px;
-    height: 13px;
-    fill: #0f172a;
-    display: block;
-}
-.mob-phone-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px 14px 18px;
-    scrollbar-width: none;
-}
-.mob-phone-body::-webkit-scrollbar {
-    display: none;
-}
-.mob-header-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-}
-.mob-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #e2e8f0;
-    display: grid;
-    place-items: center;
-    color: #475569;
-}
-.mob-avatar svg {
-    width: 16px;
-    height: 16px;
-    fill: #475569;
-}
-.mob-addr-box {
-    text-align: center;
-}
-.mob-addr-label {
-    font-size: 9.5px;
-    color: #94a3b8;
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-}
-.mob-addr-val {
-    font-size: 12px;
-    font-weight: 700;
-    color: #0f172a;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-}
-.mob-addr-val svg {
-    width: 12px;
-    height: 12px;
-    stroke: #0f172a;
-    fill: none;
-    stroke-width: 2;
-}
-.mob-chat-icon-btn {
-    position: relative;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #f1f5f9;
-    display: grid;
-    place-items: center;
-    color: #334155;
-}
-.mob-chat-icon-btn svg {
-    width: 16px;
-    height: 16px;
-    stroke: #334155;
-    fill: none;
-    stroke-width: 2;
-}
-.mob-chat-badge {
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    background: #ef4444;
-    color: white;
-    font-size: 9px;
-    font-weight: 800;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    border: 2px solid #fff;
-}
-.mob-promo-card {
-    background: linear-gradient(135deg, #181922 0%, #242938 100%);
-    border-radius: 18px;
-    padding: 14px;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
-    position: relative;
-    overflow: hidden;
-}
-.mob-promo-text {
-    flex: 1;
-    z-index: 1;
-}
-.mob-promo-tag {
-    font-size: 10px;
-    font-weight: 800;
-    color: #c8ff6a;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-.mob-promo-title {
-    font-size: 16px;
-    font-weight: 900;
-    line-height: 1.15;
-    margin: 2px 0 3px;
-}
-.mob-promo-sub {
-    font-size: 10px;
-    color: #94a3b8;
-    margin-bottom: 8px;
-}
-.mob-promo-btn {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 12px;
-    background: #c8ff6a;
-    color: #211b2e;
-    font-size: 10.5px;
-    font-weight: 850;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-.mob-promo-img {
-    width: 82px;
-    height: 82px;
-    object-fit: cover;
-    border-radius: 16px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
-    z-index: 1;
-}
-.mob-search-box {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 9px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #94a3b8;
-    font-size: 12px;
-    margin-bottom: 14px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-}
-.mob-search-box svg {
-    width: 15px;
-    height: 15px;
-    min-width: 15px;
-    stroke: #94a3b8;
-    fill: none;
-    stroke-width: 2.2;
-    flex-shrink: 0;
-}
-.mob-categories-scroll {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    padding-bottom: 6px;
-    margin-bottom: 16px;
-    scrollbar-width: none;
-}
-.mob-categories-scroll::-webkit-scrollbar {
-    display: none;
-}
-.mob-cat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    flex-shrink: 0;
-}
-.mob-cat-thumb {
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: #ffffff;
-    border: 1.5px solid #e2e8f0;
-    padding: 2px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-}
-.mob-cat-thumb img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-}
-.mob-cat-name {
-    font-size: 10px;
-    font-weight: 600;
-    color: #334155;
-}
-.mob-section-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-}
-.mob-section-title {
-    font-size: 12px;
-    font-weight: 850;
-    color: #0f172a;
-    letter-spacing: 0.04em;
-}
-.mob-section-more {
-    font-size: 11px;
-    font-weight: 700;
-    color: #211b2e;
-}
-.mob-products-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-.mob-prod-card {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 9px;
-    border: 1px solid #f1f5f9;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    display: flex;
-    flex-direction: column;
-}
-.mob-prod-thumb {
-    width: 100%;
-    height: 82px;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 7px;
-}
-.mob-prod-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.mob-prod-tag {
-    align-self: flex-start;
-    font-size: 8px;
-    font-weight: 700;
-    padding: 2px 5px;
-    border-radius: 6px;
-    margin-bottom: 4px;
-}
-.tag-green { background: #dcfce7; color: #15803d; }
-.tag-orange { background: #ffedd5; color: #c2410c; }
-.mob-prod-name {
-    font-size: 11px;
-    font-weight: 750;
-    color: #0f172a;
-    line-height: 1.25;
-    margin-bottom: 3px;
-}
-.mob-prod-weight {
-    font-size: 9.5px;
-    color: #94a3b8;
-    margin-bottom: 6px;
-}
-.mob-prod-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: auto;
-}
-.mob-prod-price {
-    font-size: 11px;
-    font-weight: 850;
-    color: #0f172a;
-}
-.mob-prod-add {
-    width: 22px;
-    height: 22px;
-    border-radius: 7px;
-    background: #211b2e;
-    color: #c8ff6a;
-    display: grid;
-    place-items: center;
-    font-size: 13px;
-    font-weight: 800;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .mob-showcase-content {
@@ -4124,7 +3790,56 @@ h1 span {
     scroll-margin-top: 100px;
 }
 
+@media (max-width: 991px) {
+    .mob-showcase-container {
+        grid-template-columns: 1fr !important;
+        gap: 40px !important;
+        text-align: center !important;
+    }
+    .mob-showcase-content {
+        padding-left: 0 !important;
+        max-width: 540px !important;
+        margin: 0 auto !important;
+    }
+    .mob-checklist {
+        align-items: flex-start !important;
+        text-align: left !important;
+        max-width: 440px !important;
+        margin: 0 auto 32px !important;
+    }
+    .mob-start-btn {
+        margin: 0 auto !important;
+    }
+    .mob-showcase-visual {
+        min-height: 600px;
+    }
+}
+
 @media (max-width: 640px) {
+    .mob-phone-frame {
+        width: 275px !important;
+        height: 560px !important;
+        border-radius: 38px !important;
+        padding: 8px !important;
+        transform: rotateY(-3deg) rotateX(3deg) !important;
+    }
+    .mob-phone-screen-img-wrap {
+        border-radius: 30px !important;
+    }
+    .mob-stand-pedestal {
+        width: 380px !important;
+        height: 560px !important;
+        transform: translate(-50%, -46%) scale(0.8) !important;
+    }
+    .mob-showcase-title {
+        font-size: 28px !important;
+    }
+    .mob-showcase-lead {
+        font-size: 15px !important;
+    }
+    .mob-showcase-visual {
+        min-height: 540px !important;
+    }
     .eco-grid {
         grid-template-columns: 1fr !important;
         max-width: 360px;
@@ -4140,37 +3855,31 @@ h1 span {
     .eco-card {
         height: 490px;
     }
-    .mob-showcase-visual {
-        min-height: 580px;
-    }
-    .mob-stand-pedestal {
-        transform: translate(-50%, -50%) scale(0.82) !important;
-    }
 }
 
 /* =========================================================
-   STOREBOX 2.0 ECOSYSTEM SHOWCASE (INSPIRATION: FIGMA ONBOARDING CARDS)
+   STOREBOX 2.0 ECOSYSTEM SHOWCASE (LIGHT & PROFESSIONAL SAAS DESIGN)
    ========================================================= */
 .storebox-ecosystem-showcase {
-    background: radial-gradient(ellipse 90% 70% at 50% 10%, #201a35 0%, #0d0f18 60%, #07080d 100%);
+    background: #ffffff;
     border-radius: 40px;
     padding: 85px 36px 95px;
-    margin: 60px auto 90px;
+    margin: 70px auto 90px;
     max-width: 1300px;
-    box-shadow: 0 35px 90px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+    box-shadow: 0 25px 70px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.03);
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid #e2e8f0;
 }
 .eco-ambient-glow {
     position: absolute;
-    width: 650px;
-    height: 380px;
-    top: -90px;
+    width: 600px;
+    height: 300px;
+    top: -60px;
     left: 50%;
     transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(200, 255, 106, 0.14) 0%, rgba(139, 92, 246, 0.2) 45%, transparent 70%);
-    filter: blur(85px);
+    background: radial-gradient(circle, rgba(200, 255, 106, 0.25) 0%, rgba(34, 197, 94, 0.12) 40%, transparent 70%);
+    filter: blur(80px);
     pointer-events: none;
     z-index: 0;
 }
@@ -4187,9 +3896,9 @@ h1 span {
     gap: 8px;
     padding: 7px 18px;
     border-radius: 999px;
-    background: rgba(200, 255, 106, 0.12);
-    border: 1px solid rgba(200, 255, 106, 0.35);
-    color: #c8ff6a;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
     font-size: 12.5px;
     font-weight: 800;
     margin-bottom: 20px;
@@ -4200,38 +3909,39 @@ h1 span {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #c8ff6a;
-    box-shadow: 0 0 10px #c8ff6a;
+    background: #22c55e;
+    box-shadow: 0 0 10px #22c55e;
     animation: livePulse 2s infinite;
 }
 .eco-title {
     font-size: 44px;
     font-weight: 900;
-    color: #ffffff;
+    color: #0f172a;
     letter-spacing: -0.025em;
     line-height: 1.15;
     margin: 0 0 16px;
 }
 .eco-title span {
-    background: linear-gradient(135deg, #ffffff 40%, #c8ff6a 100%);
+    color: #16a34a;
+    background: linear-gradient(135deg, #0f172a 20%, #16a34a 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 .eco-sub-lead {
-    font-size: 19px;
+    font-size: 18.5px;
     font-weight: 600;
-    color: #e2e8f0;
+    color: #334155;
     margin: 0 0 8px;
-    line-height: 1.4;
+    line-height: 1.45;
 }
 .eco-sub-desc {
-    font-size: 15px;
-    color: #94a3b8;
+    font-size: 14.5px;
+    color: #64748b;
     margin: 0;
     line-height: 1.5;
 }
 
-/* 4-Card Presentation Grid */
+/* 4-Card Presentation Grid (Light & Clean) */
 .eco-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -4242,40 +3952,27 @@ h1 span {
 
 /* Individual Showcase Card */
 .eco-card {
-    border-radius: 32px;
+    border-radius: 28px;
     overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
     height: 520px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04), 0 2px 8px rgba(15, 23, 42, 0.02);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
     cursor: default;
 }
 .eco-card:hover {
-    transform: translateY(-8px) scale(1.015);
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 40px rgba(200, 255, 106, 0.15);
-    border-color: rgba(200, 255, 106, 0.35);
-}
-
-/* Specific Card Colorways */
-.eco-card-1 {
-    background: linear-gradient(180deg, #1b264f 0%, #0d1326 60%, #080b16 100%);
-}
-.eco-card-2 {
-    background: linear-gradient(180deg, #2d1847 0%, #170d26 60%, #0c0714 100%);
-}
-.eco-card-3 {
-    background: linear-gradient(180deg, #143534 0%, #0b1e1d 60%, #061110 100%);
-}
-.eco-card-4 {
-    background: linear-gradient(180deg, #2b1f48 0%, #151128 60%, #0b0918 100%);
+    transform: translateY(-8px);
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.09), 0 4px 16px rgba(15, 23, 42, 0.04);
+    border-color: #cbd5e1;
 }
 
 /* Card Top Info Area */
 .eco-card-top {
-    padding: 30px 24px 18px;
+    padding: 26px 22px 16px;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -4289,28 +3986,28 @@ h1 span {
     border-radius: 999px;
     font-size: 11px;
     font-weight: 800;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     width: fit-content;
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
-.eco-badge-blue { background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); }
-.eco-badge-pink { background: rgba(244, 114, 182, 0.18); color: #f472b6; border: 1px solid rgba(244, 114, 182, 0.35); }
-.eco-badge-green { background: rgba(200, 255, 106, 0.18); color: #c8ff6a; border: 1px solid rgba(200, 255, 106, 0.35); }
-.eco-badge-purple { background: rgba(192, 132, 252, 0.18); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.35); }
+.eco-badge-blue { background: #eff6ff; color: #0284c7; border: 1px solid #bfdbfe; }
+.eco-badge-pink { background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; }
+.eco-badge-green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.eco-badge-purple { background: #faf5ff; color: #7c3aed; border: 1px solid #e9d5ff; }
 
 .eco-card-title {
-    font-size: 24px;
+    font-size: 21px;
     font-weight: 850;
-    color: #ffffff;
-    line-height: 1.18;
+    color: #0f172a;
+    line-height: 1.25;
     margin: 0 0 8px;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
 }
 .eco-card-desc {
     font-size: 13px;
     line-height: 1.45;
-    color: #cbd5e1;
+    color: #64748b;
     margin: 0;
 }
 
@@ -4319,283 +4016,276 @@ h1 span {
     flex: 1;
     position: relative;
     display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 0 16px;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 16px 16px;
     overflow: hidden;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
 }
 
-/* Floating interactive pill or button */
-.eco-float-badge {
-    position: absolute;
-    z-index: 4;
-    box-shadow: 0 14px 30px rgba(0,0,0,0.45);
-    border-radius: 999px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 16px;
-    font-size: 12px;
-    font-weight: 800;
-    backdrop-filter: blur(12px);
-    transition: transform 0.3s ease;
-}
-.eco-card:hover .eco-float-badge {
-    transform: translateY(-4px) scale(1.05);
-}
-
-/* Card 1 Specifics */
-.eco-card-1 .eco-float-badge {
-    top: 18px;
-    left: 18px;
-    background: #0088cc;
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.25);
-}
-.eco-card-2 .eco-float-badge {
-    top: 18px;
-    right: 18px;
-    background: #ec4899;
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.25);
-}
-.eco-card-3 .eco-float-badge {
-    top: 18px;
-    left: 18px;
-    background: #10b981;
-    color: #061110;
-    border: 1px solid rgba(255,255,255,0.3);
-}
-.eco-card-4 .eco-float-badge {
-    top: 18px;
-    right: 18px;
-    background: #c8ff6a;
-    color: #211b2e;
-    border: 1px solid rgba(200,255,106,0.4);
-}
-
-/* Inner Phone / Device Preview Inside Card */
-.eco-phone-mock {
-    width: 220px;
-    height: 290px;
-    background: #0f1118;
-    border-radius: 26px 26px 0 0;
-    border: 3px solid #334155;
-    border-bottom: none;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
-.eco-phone-header {
-    background: #1e293b;
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.eco-phone-content {
-    flex: 1;
-    background: #0b0f19;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* Card 2: AI Assistant glowing center sphere (like reference photo 5) */
-.eco-ai-mic-btn {
-    width: 68px;
-    height: 68px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #f43f5e 0%, #ec4899 50%, #8b5cf6 100%);
-    display: grid;
-    place-items: center;
-    box-shadow: 0 0 35px rgba(236, 72, 153, 0.65);
-    margin: 10px auto 0;
-    animation: livePulse 2s infinite;
-}
-.eco-ai-mic-btn svg {
-    width: 28px;
-    height: 28px;
-    fill: #ffffff;
-}
-
-/* Card 3: Payment Badges Row */
-.eco-payment-row {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+/* Mini iPhone in Card 1 (Telegram WebApp) */
+.eco-tg-mock {
     width: 100%;
-    padding: 12px;
+    background: #ffffff;
+    border-radius: 20px 20px 0 0;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 -8px 25px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
-.eco-pay-chip {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
+.eco-tg-top {
+    background: #0284c7;
+    color: #ffffff;
     padding: 10px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #fff;
-    font-size: 13px;
+    font-size: 11.5px;
     font-weight: 750;
 }
-.eco-pay-chip.verified {
-    border-color: rgba(200, 255, 106, 0.4);
-    background: rgba(200, 255, 106, 0.08);
-}
-.eco-pay-chip span.status {
-    color: #c8ff6a;
-    font-size: 11px;
-}
-
-/* Card 4: Logistics Live Tracker */
-.eco-tracker-box {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 14px;
+.eco-tg-body {
+    padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 20px;
+    background: #ffffff;
 }
-.eco-tracker-head {
+.eco-tg-dish-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px 10px;
+}
+.eco-tg-dish-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+.eco-tg-btn-order {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+    padding: 9px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+/* Card 2: AI Assistant Stage */
+.eco-ai-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 12px 10px;
+    text-align: center;
+    gap: 12px;
+}
+.eco-ai-glow-mic {
+    width: 66px;
+    height: 66px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ec4899 0%, #d946ef 50%, #8b5cf6 100%);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 10px 28px rgba(217, 70, 239, 0.4);
+    animation: livePulse 2s infinite;
+}
+.eco-ai-glow-mic svg {
+    width: 28px;
+    height: 28px;
+    fill: #ffffff;
+}
+.eco-ai-prompt-box {
+    background: #ffffff;
+    border: 1px solid #f0abfc;
+    border-radius: 14px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 14px rgba(236, 72, 153, 0.08);
+    width: 100%;
+}
+.eco-ai-prompt-text {
+    font-size: 12px;
+    font-weight: 750;
+    color: #701a75;
+}
+.eco-ai-prompt-sub {
+    font-size: 10.5px;
+    color: #db2777;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+.eco-ai-rating-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fdf2f8;
+    border: 1px solid #fbcfe8;
+    color: #db2777;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+/* Card 3: Payments & POS Stage */
+.eco-pos-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 10px;
+    width: 100%;
+}
+.eco-pos-row {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 9px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-size: 12px;
     font-weight: 750;
-    color: #cbd5e1;
+    color: #0f172a;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
 }
-.eco-tracker-time {
-    color: #c8ff6a;
-    font-weight: 850;
+.eco-pos-row.active {
+    border-color: #86efac;
+    background: #f0fdf4;
 }
-.eco-tracker-route {
-    height: 6px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.1);
-    position: relative;
-    overflow: hidden;
+.eco-pos-row span.badge-ok {
+    color: #16a34a;
+    font-size: 11px;
+    font-weight: 800;
 }
-.eco-tracker-progress {
-    width: 65%;
-    height: 100%;
-    background: linear-gradient(90deg, #c8ff6a, #38bdf8);
-    border-radius: 999px;
-}
-
-/* High-Res 3D Card Artwork Styles */
-.eco-card-3d {
-    background: #0f1118;
-    height: 540px;
-    padding: 0;
+.eco-receipt-card {
+    background: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
 }
-.eco-card-artwork {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+.eco-receipt-header {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 750;
+    color: #334155;
 }
-.eco-card-img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
-    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.eco-card:hover .eco-card-img {
-    transform: scale(1.05);
-}
-.eco-card-glass-footer {
-    position: relative;
-    z-index: 3;
-    padding: 22px 20px 24px;
-    background: linear-gradient(180deg, rgba(15, 17, 24, 0.05) 0%, rgba(15, 17, 24, 0.78) 35%, rgba(10, 11, 16, 0.96) 100%);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-.eco-card-glass-footer .eco-card-title {
-    font-size: 20px;
+.eco-receipt-sum {
+    font-size: 13px;
     font-weight: 850;
-    margin: 0 0 6px;
-    color: #ffffff;
-    line-height: 1.25;
-}
-.eco-card-glass-footer .eco-card-desc {
-    font-size: 12.5px;
-    color: #cbd5e1;
-    line-height: 1.45;
-    margin: 0;
+    color: #16a34a;
 }
 
-/* Phone Screen Image Container */
-.mob-phone-frame {
-    position: relative;
-    z-index: 2;
-    width: 310px;
-    height: 640px;
-    border-radius: 46px;
-    background: #0f172a;
-    padding: 10px;
-    border: 3.5px solid rgba(255, 255, 255, 0.22);
-    box-shadow: 0 35px 90px rgba(15, 23, 42, 0.4), 0 0 35px rgba(200, 255, 106, 0.2);
-    transform: rotate(-3.5deg) translateY(-8px);
-    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.mob-phone-frame:hover {
-    transform: rotate(-1.5deg) translateY(-14px) scale(1.02);
-}
-.mob-phone-screen-img-wrap {
+/* Card 4: Logistics Tracker Stage */
+.eco-logistics-stage {
+    padding: 16px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     width: 100%;
-    height: 100%;
-    border-radius: 38px;
-    overflow: hidden;
-    position: relative;
+}
+.eco-tracker-card {
     background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
-.mob-notch-island {
-    position: absolute;
-    top: 9px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 82px;
-    height: 22px;
-    background: #000;
-    border-radius: 20px;
-    z-index: 10;
+.eco-tracker-top {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding-right: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    justify-content: space-between;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #0f172a;
 }
-.mob-island-cam {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #1e293b;
-    box-shadow: inset 0 0 2px rgba(255,255,255,0.4);
+.eco-tracker-eta {
+    color: #2563eb;
+    background: #eff6ff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
 }
-.mob-phone-real-screen {
-    width: 100%;
+.eco-route-bar {
+    height: 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    position: relative;
+    overflow: hidden;
+}
+.eco-route-fill {
+    width: 70%;
     height: 100%;
-    object-fit: cover;
-    object-position: top center;
-    display: block;
+    background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+    border-radius: 999px;
+}
+.eco-route-points {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+}
+.eco-speed-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 800;
+}
+
+@media (max-width: 1024px) {
+    .eco-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .storebox-ecosystem-showcase {
+        padding: 55px 20px 65px;
+        margin: 40px auto 60px;
+        border-radius: 28px;
+    }
+    .eco-grid {
+        grid-template-columns: 1fr !important;
+        max-width: 360px;
+        margin: 0 auto;
+        gap: 20px;
+    }
+    .eco-title {
+        font-size: 28px !important;
+    }
+    .eco-sub-lead {
+        font-size: 15.5px !important;
+    }
+    .eco-card {
+        height: 480px;
+    }
 }
 
 /* =========================================================
@@ -5538,6 +5228,10 @@ h1 span {
              SECTION: STOREBOX 2.0 ECOSYSTEM SHOWCASE (FIGMA 3D ARTWORK CARDS)
              "Bitta platforma — Cheksiz biznes imkoniyatlari"
              ========================================================= -->
+        <!-- =========================================================
+             SECTION: STOREBOX 2.0 ECOSYSTEM SHOWCASE (LIGHT & PROFESSIONAL)
+             "Bitta platforma — Cheksiz biznes imkoniyatlari"
+             ========================================================= -->
         <section class="storebox-ecosystem-showcase wow-reveal" id="ecosystem-showcase">
             <div class="eco-ambient-glow" aria-hidden="true"></div>
 
@@ -5552,52 +5246,123 @@ h1 span {
                 <p class="eco-sub-desc" data-i18n="ecoDesc">Onlayn va oflayn savdoni kengaytirish uchun to'liq tayyor yechim</p>
             </div>
 
-            <!-- 4-Card Presentation Grid with Bespoke 3D Artworks -->
+            <!-- 4-Card Presentation Grid (Light, Clean, Professional) -->
             <div class="eco-grid">
                 <!-- Card 1: Telegram WebApp -->
-                <div class="eco-card eco-card-3d">
-                    <div class="eco-card-artwork">
-                        <img src="/static/images/landing/ecosystem/eco_telegram_3d.jpg" alt="StoreBox Telegram WebApp 3D" class="eco-card-img" loading="lazy">
-                        <div class="eco-card-glass-footer">
-                            <span class="eco-card-badge eco-badge-blue" data-i18n="ecoCard1Badge">Telegram WebApp</span>
-                            <h3 class="eco-card-title" data-i18n="ecoCard1Title">1 bosishda ulanish</h3>
-                            <p class="eco-card-desc" data-i18n="ecoCard1Desc">Telegram ichida to'liq ishlaydigan savat, to'lov va bildirishnomalar bilan zamonaviy do'kon</p>
+                <div class="eco-card">
+                    <div class="eco-card-top">
+                        <span class="eco-card-badge eco-badge-blue" data-i18n="ecoCard1Badge">Telegram WebApp</span>
+                        <h3 class="eco-card-title" data-i18n="ecoCard1Title">1 bosishda ulanish</h3>
+                        <p class="eco-card-desc" data-i18n="ecoCard1Desc">Telegram ichida to'liq ishlaydigan savat, to'lov va bildirishnomalar bilan zamonaviy do'kon</p>
+                    </div>
+                    <div class="eco-card-visual">
+                        <div class="eco-tg-mock">
+                            <div class="eco-tg-top">
+                                <span>Shop 655 · Telegram Bot</span>
+                                <span style="font-size: 10px; background: rgba(255,255,255,0.25); padding: 2px 6px; border-radius: 4px;" data-i18n="ecoCard1Sub">WebApp Live</span>
+                            </div>
+                            <div class="eco-tg-body">
+                                <div class="eco-tg-dish-row">
+                                    <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=120&q=80" alt="Burger" class="eco-tg-dish-thumb">
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="font-size: 11.5px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Katta Burger Classic</div>
+                                        <div style="font-size: 11px; color: #0284c7; font-weight: 750;">48 000 UZS</div>
+                                    </div>
+                                    <span style="background: #0284c7; color: #fff; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 13px; font-weight: 800;">+</span>
+                                </div>
+                                <div class="eco-tg-btn-order" data-i18n="ecoCard1Btn">
+                                    Savatga o'tish (48 000 UZS)
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Card 2: AI Assistant & Catalog -->
-                <div class="eco-card eco-card-3d">
-                    <div class="eco-card-artwork">
-                        <img src="/static/images/landing/ecosystem/eco_ai_3d.jpg" alt="StoreBox AI Assistant 3D" class="eco-card-img" loading="lazy">
-                        <div class="eco-card-glass-footer">
-                            <span class="eco-card-badge eco-badge-pink" data-i18n="ecoCard2Badge">AI Yordamchi</span>
-                            <h3 class="eco-card-title" data-i18n="ecoCard2Title">Aqlli katalog va generatsiya</h3>
-                            <p class="eco-card-desc" data-i18n="ecoCard2Desc">Avtomatik tavsiflar, taomlar va tovarlarni sun'iy intellekt yordamida soniyalarda yaratish</p>
+                <div class="eco-card">
+                    <div class="eco-card-top">
+                        <span class="eco-card-badge eco-badge-pink" data-i18n="ecoCard2Badge">AI Yordamchi</span>
+                        <h3 class="eco-card-title" data-i18n="ecoCard2Title">Aqlli katalog va generatsiya</h3>
+                        <p class="eco-card-desc" data-i18n="ecoCard2Desc">Avtomatik tavsiflar, taomlar va tovarlarni sun'iy intellekt yordamida soniyalarda yaratish</p>
+                    </div>
+                    <div class="eco-card-visual">
+                        <div class="eco-ai-stage">
+                            <div class="eco-ai-glow-mic">
+                                <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                            </div>
+                            <div class="eco-ai-prompt-box">
+                                <div class="eco-ai-prompt-text" data-i18n="ecoCard2Prompt">"Steyk tavsifini yozib ber"</div>
+                                <div class="eco-ai-prompt-sub">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <span data-i18n="ecoCard2Done">Generatsiya yakunlandi · 0.8s</span>
+                                </div>
+                            </div>
+                            <div class="eco-ai-rating-pill">
+                                <span>★★★★★</span>
+                                <span data-i18n="ecoCard2Rating">4.9 · 450+ do'konlar</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Card 3: Payments & YES POS -->
-                <div class="eco-card eco-card-3d">
-                    <div class="eco-card-artwork">
-                        <img src="/static/images/landing/ecosystem/eco_payments_3d.jpg" alt="StoreBox Payments & POS 3D" class="eco-card-img" loading="lazy">
-                        <div class="eco-card-glass-footer">
-                            <span class="eco-card-badge eco-badge-green" data-i18n="ecoCard3Badge">To'lovlar &amp; POS</span>
-                            <h3 class="eco-card-title" data-i18n="ecoCard3Title">To'lovlar &amp; YES POS</h3>
-                            <p class="eco-card-desc" data-i18n="ecoCard3Desc">Click, Payme, Uzum Bank va kassa apparatlari bilan real-vaqt rejimida to'liq integratsiya</p>
+                <div class="eco-card">
+                    <div class="eco-card-top">
+                        <span class="eco-card-badge eco-badge-green" data-i18n="ecoCard3Badge">To'lovlar &amp; POS</span>
+                        <h3 class="eco-card-title" data-i18n="ecoCard3Title">To'lovlar &amp; YES POS</h3>
+                        <p class="eco-card-desc" data-i18n="ecoCard3Desc">Click, Payme, Uzum Bank va kassa apparatlari bilan real-vaqt rejimida to'liq integratsiya</p>
+                    </div>
+                    <div class="eco-card-visual">
+                        <div class="eco-pos-stage">
+                            <div class="eco-pos-row active">
+                                <span>Click &amp; Payme</span>
+                                <span class="badge-ok" data-i18n="ecoCard3Payme">Ulangan ✓</span>
+                            </div>
+                            <div class="eco-pos-row active">
+                                <span>Uzum Bank &amp; Nasiya</span>
+                                <span class="badge-ok" data-i18n="ecoCard3Uzum">Faol ✓</span>
+                            </div>
+                            <div class="eco-pos-row active">
+                                <span>YES POS Kassa Terminal</span>
+                                <span class="badge-ok" data-i18n="ecoCard3Pos">Sinxron ✓</span>
+                            </div>
+                            <div class="eco-receipt-card">
+                                <div class="eco-receipt-header">
+                                    <span data-i18n="ecoReceiptNum">Buyurtma #SB-1049</span>
+                                    <span style="color: #16a34a; font-weight: 800;" data-i18n="ecoCard3Badge2">0% Yashirin to'lov</span>
+                                </div>
+                                <div class="eco-receipt-sum" data-i18n="ecoReceiptPaid">113 000 UZS · To'landi ✅</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Card 4: Logistics & Delivery -->
-                <div class="eco-card eco-card-3d">
-                    <div class="eco-card-artwork">
-                        <img src="/static/images/landing/ecosystem/eco_logistics_3d.jpg" alt="StoreBox Logistics & Courier 3D" class="eco-card-img" loading="lazy">
-                        <div class="eco-card-glass-footer">
-                            <span class="eco-card-badge eco-badge-purple" data-i18n="ecoCard4Badge">Logistika</span>
-                            <h3 class="eco-card-title" data-i18n="ecoCard4Title">Yetkazib berish &amp; kuryerlar</h3>
-                            <p class="eco-card-desc" data-i18n="ecoCard4Desc">Yandex Go va Uzum Tezkor bilan integratsiya: buyurtmalarni jonli xaritada kuzatish</p>
+                <div class="eco-card">
+                    <div class="eco-card-top">
+                        <span class="eco-card-badge eco-badge-purple" data-i18n="ecoCard4Badge">Logistika</span>
+                        <h3 class="eco-card-title" data-i18n="ecoCard4Title">Yetkazib berish &amp; kuryerlar</h3>
+                        <p class="eco-card-desc" data-i18n="ecoCard4Desc">Yandex Go va Uzum Tezkor bilan integratsiya: buyurtmalarni jonli xaritada kuzatish</p>
+                    </div>
+                    <div class="eco-card-visual">
+                        <div class="eco-logistics-stage">
+                            <div class="eco-tracker-card">
+                                <div class="eco-tracker-top">
+                                    <span data-i18n="ecoCard4Courier">Kuryer: Farxod K.</span>
+                                    <span class="eco-tracker-eta" data-i18n="ecoCard4Time">8 min qoldi</span>
+                                </div>
+                                <div class="eco-route-bar">
+                                    <div class="eco-route-fill"></div>
+                                </div>
+                                <div class="eco-route-points">
+                                    <span>Shop 655</span>
+                                    <span data-i18n="ecoCard4Route">Manzilga yo'lda 🛵</span>
+                                </div>
+                            </div>
+                            <div class="eco-speed-pill">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                <span data-i18n="ecoCard4Speed">25-35 min · Tezkor yetkazish</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -6009,6 +5774,10 @@ h1 span {
             ecoCard4Courier: "Курьер: Фарход К.",
             ecoCard4Time: "Осталось 8 мин",
             ecoCard4Route: "В пути к клиенту 🛵",
+            ecoReceiptNum: "Заказ #SB-1049",
+            ecoReceiptPaid: "113 000 сум · Оплачено ✅",
+            ecoCard2Rating: "4.9 · 450+ магазинов",
+            ecoCard4Speed: "25-35 мин · Быстрая доставка",
 
             chatsKicker: "Живой диалог и Поддержка",
             chatsTitle: "Всегда оставайтесь на связи со своими клиентами",
@@ -6312,6 +6081,10 @@ h1 span {
             ecoCard4Courier: "Kuryer: Farxod K.",
             ecoCard4Time: "8 min qoldi",
             ecoCard4Route: "Manzilga yo'lda 🛵",
+            ecoReceiptNum: "Buyurtma #SB-1049",
+            ecoReceiptPaid: "113 000 UZS · To'landi ✅",
+            ecoCard2Rating: "4.9 · 450+ do'konlar",
+            ecoCard4Speed: "25-35 min · Tezkor yetkazish",
 
             chatsKicker: "Jonli muloqot va Support",
             chatsTitle: "Mijozlaringiz bilan doimo aloqada bo'ling",
