@@ -3587,10 +3587,23 @@ h1 span {
 /* =========================================================
    NEW SECTION 1: STOREBOX RESTORAN & DO'KON (ROBO STYLE)
    ========================================================= */
+/* =========================================================
+   BLOCK 2: STOREBOX RESTORAN & DO'KON (ORBIX STUDIO PHOTO 2 STYLE)
+   ========================================================= */
 .storebox-mobile-showcase {
-    padding-block: 80px 70px;
+    padding-block: 90px 80px;
     position: relative;
     overflow: hidden;
+    background: radial-gradient(circle at 45% 35%, #ffffff 0%, #faf8f5 55%, #f1ece4 100%);
+    scroll-margin-top: 100px;
+}
+.storebox-mobile-showcase::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(90deg, rgba(140, 120, 100, 0.035) 0px, rgba(140, 120, 100, 0.035) 1px, transparent 1px, transparent 56px);
+    pointer-events: none;
+    z-index: 0;
 }
 .mob-showcase-container {
     max-width: 1200px;
@@ -3599,26 +3612,28 @@ h1 span {
     grid-template-columns: 1.05fr 1fr;
     align-items: center;
     gap: 60px;
+    position: relative;
+    z-index: 1;
 }
 .mob-showcase-visual {
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 30px 20px 80px;
+    padding: 30px 20px 70px;
     perspective: 1200px;
 }
 .mob-visual-glow {
     position: absolute;
-    width: 520px;
-    height: 520px;
+    width: 480px;
+    height: 480px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(200, 255, 106, 0.28) 0%, rgba(99, 102, 241, 0.1) 45%, transparent 70%);
-    filter: blur(48px);
+    background: radial-gradient(circle, rgba(230, 215, 195, 0.45) 0%, rgba(200, 255, 106, 0.12) 40%, transparent 70%);
+    filter: blur(50px);
     pointer-events: none;
     z-index: 0;
 }
-/* 3D Floating Apple iPhone 16 Pro Showcase */
+/* 3D Floating Apple iPhone 16 Pro Showcase (Photo 2 Reference) */
 .mob-iphone-wrapper {
     position: relative;
     z-index: 2;
@@ -3629,118 +3644,73 @@ h1 span {
 }
 .mob-iphone-device {
     position: relative;
-    width: 324px;
-    height: 686px;
-    background: #0f0d14;
-    border-radius: 52px;
+    width: 326px;
+    height: 694px;
+    background: #1e1b24;
+    border-radius: 54px;
     padding: 10px;
-    border: 3.5px solid #2a2336;
+    border: 3.5px solid #d8cec4;
     box-shadow: 
-        -20px 32px 70px rgba(15, 23, 42, 0.35),
-        0 12px 30px rgba(33, 27, 46, 0.25),
-        inset 0 0 0 2px rgba(255, 255, 255, 0.15),
-        inset 0 2px 4px rgba(200, 255, 106, 0.25);
-    transform: rotateY(-8deg) rotateX(6deg) rotateZ(-1deg);
+        36px 52px 105px -20px rgba(45, 32, 25, 0.32),
+        16px 26px 52px -10px rgba(0, 0, 0, 0.14),
+        inset 0 0 0 1.5px rgba(255, 255, 255, 0.8),
+        inset 0 2px 4px rgba(255, 255, 255, 0.5);
+    transform: rotateY(-6deg) rotateX(4deg);
     transform-style: preserve-3d;
     animation: floatIphoneLevitate 5s ease-in-out infinite;
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
 }
 .mob-iphone-device:hover {
     animation-play-state: paused;
-    transform: rotateY(-1deg) rotateX(2deg) rotateZ(0deg) translateY(-8px);
+    transform: rotateY(0deg) rotateX(0deg) translateY(-8px);
     box-shadow: 
-        -15px 40px 85px rgba(33, 27, 46, 0.45),
+        30px 60px 115px -15px rgba(45, 32, 25, 0.4),
         0 0 0 2px #c8ff6a,
         0 20px 50px rgba(200, 255, 106, 0.25);
 }
 @keyframes floatIphoneLevitate {
     0%, 100% {
-        transform: translateY(0px) rotateY(-8deg) rotateX(6deg) rotateZ(-1deg);
+        transform: translateY(0px) rotateY(-6deg) rotateX(4deg);
     }
     50% {
-        transform: translateY(-16px) rotateY(-6deg) rotateX(3.5deg) rotateZ(0deg);
+        transform: translateY(-15px) rotateY(-4deg) rotateX(2deg);
     }
 }
-/* Side Buttons */
+/* Titanium Side Buttons */
 .mob-iphone-btn {
     position: absolute;
-    background: #231c2e;
+    background: #c8bcb0;
     border-radius: 4px;
-    box-shadow: inset 0 1px 1px rgba(255,255,255,0.2);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.7);
 }
-.mob-btn-vol-up {
-    left: -6px;
-    top: 130px;
-    width: 4px;
-    height: 48px;
-}
-.mob-btn-vol-down {
-    left: -6px;
-    top: 190px;
-    width: 4px;
-    height: 48px;
-}
-.mob-btn-power {
-    right: -6px;
-    top: 155px;
-    width: 4px;
-    height: 64px;
-}
-/* Screen Container */
+.mob-btn-vol-up { left: -6px; top: 130px; width: 4px; height: 48px; }
+.mob-btn-vol-down { left: -6px; top: 190px; width: 4px; height: 48px; }
+.mob-btn-power { right: -6px; top: 155px; width: 4px; height: 64px; }
+
+/* Screen Container: Pure Crisp Light Native UI */
 .mob-iphone-screen-wrap {
     width: 100%;
     height: 100%;
-    border-radius: 42px;
+    border-radius: 44px;
     overflow: hidden;
     position: relative;
-    background: #000000;
+    background: #ffffff;
     display: flex;
     flex-direction: column;
 }
-.mob-iphone-screen-img {
-    width: 100%;
-    flex: 1;
-    object-fit: cover;
-    object-position: top center;
-    display: block;
-}
-/* Glass Glare Sheen */
-.mob-iphone-glass-glare {
-    position: absolute;
-    top: 44px;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 55%);
-    pointer-events: none;
-    z-index: 15;
-}
-/* Home Indicator */
-.mob-ios-home-indicator {
-    position: absolute;
-    bottom: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 120px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.65);
-    border-radius: 999px;
-    z-index: 25;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-}
 
-/* Authentic Apple iOS Status Bar */
+/* Light iOS Status Bar (Photo 2 Style) */
 .mob-ios-status-bar {
     width: 100%;
-    height: 44px;
-    padding: 8px 22px 4px;
+    height: 42px;
+    padding: 8px 20px 2px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     z-index: 25;
-    background: #000000;
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #ffffff;
+    color: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
     pointer-events: none;
     box-sizing: border-box;
     flex-shrink: 0;
@@ -3748,26 +3718,24 @@ h1 span {
 }
 .mob-ios-time {
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 750;
     letter-spacing: -0.01em;
-    color: #ffffff;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    color: #0f172a;
 }
 .mob-ios-island {
     position: absolute;
-    top: 10px;
+    top: 9px;
     left: 50%;
     transform: translateX(-50%);
-    width: 90px;
-    height: 24px;
+    width: 88px;
+    height: 23px;
     background: #000000;
     border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     padding-right: 9px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     gap: 5px;
 }
 .mob-island-cam {
@@ -3787,46 +3755,44 @@ h1 span {
 .mob-ios-indicators {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
 }
 .mob-ios-sig-bars {
     display: inline-flex;
     align-items: flex-end;
     gap: 2px;
-    height: 11px;
+    height: 10px;
 }
 .mob-ios-sig-bars i {
     width: 2.5px;
-    background: #ffffff;
+    background: #0f172a;
     border-radius: 1px;
     display: block;
 }
-.mob-ios-sig-bars i:nth-child(1) { height: 4px; }
-.mob-ios-sig-bars i:nth-child(2) { height: 6px; }
-.mob-ios-sig-bars i:nth-child(3) { height: 8px; }
-.mob-ios-sig-bars i:nth-child(4) { height: 11px; }
-
+.mob-ios-sig-bars i:nth-child(1) { height: 3px; }
+.mob-ios-sig-bars i:nth-child(2) { height: 5px; }
+.mob-ios-sig-bars i:nth-child(3) { height: 7px; }
+.mob-ios-sig-bars i:nth-child(4) { height: 10px; }
 .mob-ios-wifi-icon {
     width: 14px;
     height: 14px;
-    fill: #ffffff;
+    fill: #0f172a;
 }
 .mob-ios-battery-pill {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
 }
 .mob-ios-bat-text {
-    font-size: 10px;
-    font-weight: 700;
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    font-size: 9.5px;
+    font-weight: 750;
+    color: #0f172a;
 }
 .mob-ios-bat-shell {
-    width: 22px;
-    height: 11px;
-    border: 1.5px solid rgba(255, 255, 255, 0.85);
-    border-radius: 3.5px;
+    width: 21px;
+    height: 10.5px;
+    border: 1.5px solid #0f172a;
+    border-radius: 3px;
     padding: 1px;
     position: relative;
     box-sizing: border-box;
@@ -3837,25 +3803,278 @@ h1 span {
     right: -3.5px;
     top: 2px;
     width: 2px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.85);
+    height: 3.5px;
+    background: #0f172a;
     border-radius: 0 1px 1px 0;
 }
 .mob-ios-bat-fill {
     height: 100%;
-    background: #34C759;
+    background: #16a34a;
     border-radius: 1.5px;
+}
+
+/* Light-Themed Native StoreBox Food & Retail UI (Photo 2 Orbix Studio) */
+.sb-app-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    overflow: hidden;
+    position: relative;
+    user-select: none;
+}
+.sb-app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 14px 8px;
+    flex-shrink: 0;
+}
+.sb-icon-btn {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    color: #1e293b;
+    border-radius: 50%;
+}
+.sb-icon-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+.sb-app-loc {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 750;
+    color: #0f172a;
+    background: #f8fafc;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+}
+.sb-app-loc svg.pin { width: 13px; height: 13px; color: #dc2626; fill: #dc2626; }
+.sb-app-loc svg.chev { width: 11px; height: 11px; color: #64748b; stroke: currentColor; fill: none; }
+
+.sb-app-search-box {
+    margin: 0 14px 8px;
+    background: #f3f4f7;
+    border-radius: 13px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    border: 1px solid #e9ecf2;
+}
+.sb-search-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 500;
+}
+.sb-search-left svg { width: 14px; height: 14px; stroke: #94a3b8; fill: none; stroke-width: 2; }
+.sb-cutlery-icon { width: 14px; height: 14px; color: #64748b; fill: currentColor; }
+
+.sb-app-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px 10px;
+    flex-shrink: 0;
+    overflow-x: hidden;
+}
+.sb-chip-filter {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #0f172a;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+.sb-chip-filter svg { width: 12px; height: 12px; stroke: #ffffff; fill: none; stroke-width: 2; }
+.sb-chip {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    font-size: 10px;
+    font-weight: 650;
+    color: #334155;
+    background: #ffffff;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.sb-chip.active {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    font-weight: 750;
+}
+.sb-chip svg.star-mini { width: 10px; height: 10px; fill: #eab308; }
+
+/* Large Appetizing Featured Food Card 1 (Photo 2 Reference) */
+.sb-dish-card-main {
+    margin: 0 14px 8px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid #e9edf4;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.sb-dish-img-box {
+    width: 100%;
+    height: 135px;
+    position: relative;
+    overflow: hidden;
+}
+.sb-dish-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.sb-dish-body {
+    padding: 9px 12px;
+}
+.sb-dish-row1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+.sb-dish-name {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+.sb-dish-rating-pill {
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 2.5px 7px;
+    font-size: 9.5px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+.sb-dish-rating-pill svg { width: 9px; height: 9px; fill: #ffffff; }
+.sb-dish-sub {
+    font-size: 9.5px;
+    color: #64748b;
+    margin: 0 0 5px;
+    font-weight: 500;
+}
+.sb-dish-deliv {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9.5px;
+    font-weight: 750;
+    color: #334155;
+    margin-bottom: 7px;
+}
+.sb-dish-deliv svg { width: 12px; height: 12px; stroke: #0284c7; fill: none; stroke-width: 2; }
+/* Metallic Bronze/StoreBox-Lime Promo Banner */
+.sb-promo-banner {
+    background: linear-gradient(135deg, #a77038 0%, #d89f5c 50%, #8c5722 100%);
+    border-radius: 9px;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #ffffff;
+    font-size: 9.5px;
+    font-weight: 850;
+    box-shadow: 0 3px 10px rgba(167, 112, 56, 0.3);
+}
+.sb-promo-banner svg { width: 11px; height: 11px; fill: #ffffff; }
+
+/* Second Dish Card Peeking (Photo 2 Reference) */
+.sb-dish-card-peek {
+    margin: 0 14px;
+    border-radius: 16px 16px 0 0;
+    background: #ffffff;
+    border: 1px solid #e9edf4;
+    border-bottom: none;
+    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.sb-peek-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.sb-peek-details { flex: 1; }
+.sb-peek-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+.sb-peek-title { font-size: 11px; font-weight: 800; color: #0f172a; margin: 0; }
+.sb-peek-sub { font-size: 9px; color: #64748b; margin: 0; }
+
+/* Native iOS Tab Bar (Explore, Pickup, Search, Promos, History) */
+.sb-app-tabbar {
+    height: 50px;
+    background: #ffffff;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px;
+    flex-shrink: 0;
+    margin-top: auto;
+}
+.sb-tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 8px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+.sb-tab-item svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+.sb-tab-item.active {
+    color: #0f172a;
+    font-weight: 800;
+}
+.sb-tab-item.active svg { stroke: #0f172a; }
+
+/* iOS Home Indicator */
+.mob-ios-home-indicator {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 115px;
+    height: 3.5px;
+    background: #0f172a;
+    border-radius: 999px;
+    z-index: 25;
 }
 
 /* Floor Shadow under iPhone */
 .mob-iphone-floor-shadow {
     position: absolute;
-    bottom: -22px;
+    bottom: -20px;
     left: 50%;
     transform: translateX(-50%);
-    width: 270px;
-    height: 38px;
-    background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.15) 50%, transparent 75%);
+    width: 260px;
+    height: 36px;
+    background: radial-gradient(ellipse at center, rgba(30, 20, 15, 0.42) 0%, rgba(30, 20, 15, 0.12) 50%, transparent 75%);
     border-radius: 50%;
     filter: blur(12px);
     pointer-events: none;
@@ -3863,19 +4082,11 @@ h1 span {
     animation: floorShadowPulse 5s ease-in-out infinite;
 }
 @keyframes floorShadowPulse {
-    0%, 100% {
-        transform: translateX(-50%) scale(1);
-        opacity: 0.45;
-    }
-    50% {
-        transform: translateX(-50%) scale(0.85);
-        opacity: 0.25;
-    }
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.45; }
+    50% { transform: translateX(-50%) scale(0.85); opacity: 0.22; }
 }
 
-.mob-showcase-content {
-    padding-left: 20px;
-}
+.mob-showcase-content { padding-left: 20px; }
 .mob-showcase-title {
     font-size: 40px;
     font-weight: 900;
@@ -3915,7 +4126,6 @@ h1 span {
 .mob-check-icon svg {
     width: 16px;
     height: 16px;
-    min-width: 16px;
     stroke: #211b2e;
     fill: none;
     stroke-width: 3;
@@ -3959,99 +4169,24 @@ h1 span {
     box-shadow: 0 16px 36px rgba(33, 27, 46, 0.45), 0 0 28px rgba(200, 255, 106, 0.28);
     color: #d8ff8a !important;
 }
-.mob-start-btn svg {
-    stroke: #c8ff6a;
-    transition: transform 0.25s ease;
-}
-.mob-start-btn:hover svg {
-    transform: translateX(4px);
-}
+.mob-start-btn svg { stroke: #c8ff6a; transition: transform 0.25s ease; }
+.mob-start-btn:hover svg { transform: translateX(4px); }
 
-#showcase, #mobile-showcase, #ecosystem-showcase {
-    scroll-margin-top: 100px;
-}
-
-@media (max-width: 991px) {
-    .mob-showcase-container {
-        grid-template-columns: 1fr !important;
-        gap: 40px !important;
-        text-align: center !important;
-    }
-    .mob-showcase-content {
-        padding-left: 0 !important;
-        max-width: 540px !important;
-        margin: 0 auto !important;
-    }
-    .mob-checklist {
-        align-items: flex-start !important;
-        text-align: left !important;
-        max-width: 440px !important;
-        margin: 0 auto 32px !important;
-    }
-    .mob-start-btn {
-        margin: 0 auto !important;
-    }
-    .mob-showcase-visual {
-        min-height: 600px;
-    }
-}
-
-@media (max-width: 640px) {
-    .mob-iphone-device {
-        width: 280px !important;
-        height: 590px !important;
-        border-radius: 46px !important;
-        padding: 8px !important;
-        transform: rotateY(-3deg) rotateX(3deg) !important;
-    }
-    .mob-iphone-screen-wrap {
-        border-radius: 38px !important;
-    }
-    .mob-iphone-floor-shadow {
-        width: 220px !important;
-        bottom: -15px !important;
-    }
-    .mob-showcase-title {
-        font-size: 28px !important;
-    }
-    .mob-showcase-lead {
-        font-size: 15px !important;
-    }
-    .mob-showcase-visual {
-        min-height: 540px !important;
-        padding-bottom: 40px !important;
-    }
-    .eco-grid {
-        grid-template-columns: 1fr !important;
-        max-width: 360px;
-        margin: 0 auto;
-        gap: 24px;
-    }
-    .eco-title {
-        font-size: 28px !important;
-    }
-    .eco-sub-lead {
-        font-size: 15px !important;
-    }
-    .eco-card {
-        height: 540px !important;
-    }
-}
 
 /* =========================================================
-   STOREBOX 2.0 ECOSYSTEM SHOWCASE (FIGMA 3D APP FEATURE CARDS)
+   BLOCK 3: STOREBOX 2.0 ECOSYSTEM SHOWCASE (PHOTO 1 FIGMA 3D CARDS)
    ========================================================= */
 .storebox-ecosystem-showcase {
     background: #ffffff;
     border-radius: 40px;
-    padding: 100px 36px 90px;
-    margin: 80px auto 90px;
-    max-width: 1320px;
+    padding: 90px 36px 85px;
+    margin: 70px auto 90px;
+    max-width: 1340px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 25px 70px rgba(15, 23, 42, 0.05), 0 4px 16px rgba(15, 23, 42, 0.02);
+    box-shadow: 0 25px 70px rgba(15, 23, 42, 0.05);
     position: relative;
     overflow: hidden;
-    scroll-margin-top: 130px;
+    scroll-margin-top: 120px;
 }
 .eco-ambient-glow {
     position: absolute;
@@ -4068,7 +4203,7 @@ h1 span {
 .eco-header {
     text-align: center;
     max-width: 860px;
-    margin: 0 auto 50px;
+    margin: 0 auto 40px;
     position: relative;
     z-index: 1;
 }
@@ -4112,111 +4247,135 @@ h1 span {
     line-height: 1.5;
 }
 
-/* 4-Card Presentation Grid (Figma 3D App Showcase) */
-.eco-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 22px;
+/* Outer Rounded Frame (1:1 with Figma on Laptop Photo 1) */
+.eco-cards-frame {
+    background: #edf2f9;
+    border-radius: 34px;
+    padding: 20px;
+    border: 1.5px solid rgba(210, 225, 245, 0.9);
+    box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.04);
     position: relative;
     z-index: 1;
 }
+.eco-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    position: relative;
+}
 
-/* Individual Figma Showcase Card */
+/* Individual 3D Showcase Card (Photo 1 Reference) */
 .eco-card {
-    border-radius: 32px;
-    overflow: hidden;
+    border-radius: 26px;
+    overflow: visible;
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 590px;
-    border: 1.5px solid rgba(255, 255, 255, 0.16);
-    box-shadow: 0 20px 50px rgba(10, 7, 20, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+    height: 610px;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 18px 45px rgba(2, 60, 180, 0.22), inset 0 1.5px 2px rgba(255, 255, 255, 0.45);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: default;
 }
 .eco-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 28px 65px rgba(10, 7, 20, 0.5), 0 0 30px rgba(200, 255, 106, 0.22);
-    border-color: rgba(200, 255, 106, 0.5);
+    box-shadow: 0 26px 60px rgba(2, 60, 180, 0.35);
 }
 
-/* Distinct Vibrant Luxury Figma Gradients for each Card */
-.eco-card-tg {
-    background: linear-gradient(175deg, #0284c7 0%, #0369a1 40%, #082f49 100%);
-    box-shadow: 0 20px 50px rgba(2, 132, 199, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-}
-.eco-card-ai {
-    background: linear-gradient(175deg, #7c3aed 0%, #581c87 45%, #180d2c 100%);
-    box-shadow: 0 20px 50px rgba(124, 58, 237, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-}
-.eco-card-pos {
-    background: linear-gradient(175deg, #059669 0%, #047857 45%, #06261d 100%);
-    box-shadow: 0 20px 50px rgba(5, 150, 105, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-}
-.eco-card-courier {
-    background: linear-gradient(175deg, #2563eb 0%, #1d4ed8 45%, #091e42 100%);
-    box-shadow: 0 20px 50px rgba(37, 99, 235, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-}
+/* Vibrant Royal Blue & Ultramarine Gradients (Photo 1 Reference) */
+.eco-card-tg { background: linear-gradient(180deg, #0264f7 0%, #0046c7 100%); }
+.eco-card-ai { background: linear-gradient(180deg, #026bfb 0%, #004ecf 100%); }
+.eco-card-pos { background: linear-gradient(180deg, #005ce6 0%, #0043b8 100%); }
+.eco-card-courier { background: linear-gradient(180deg, #0072ff 0%, #0055d4 100%); }
 
-/* Top Area Inside Card */
+/* 3D Extruded Inflated Titles (Photo 1 Reference) */
 .eco-card-header {
-    padding: 26px 22px 10px;
+    padding: 24px 20px 10px;
     position: relative;
-    z-index: 3;
+    z-index: 4;
 }
-.eco-cat-tag {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 850;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-}
-.tag-cyan { background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.35); }
-.tag-pink { background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.35); }
-.tag-lime { background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.35); }
-.tag-purple { background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.35); }
-
-.eco-card-h {
-    font-size: 28px;
+.eco-3d-title {
+    font-size: 30px;
     font-weight: 900;
     color: #ffffff;
-    line-height: 1.15;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
     margin: 0 0 6px;
-    letter-spacing: -0.02em;
-    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+    text-shadow: 
+        0 1px 0 #b3d4fc,
+        0 2px 0 #85b8fa,
+        0 3px 0 #589cf6,
+        0 4px 0 #287df1,
+        0 5px 6px rgba(0, 24, 80, 0.45),
+        0 12px 24px rgba(0, 16, 60, 0.35);
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.18));
 }
-.eco-card-sub {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.82);
-    line-height: 1.4;
+.eco-3d-sub {
+    font-size: 11px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
     margin: 0;
-    font-weight: 500;
+}
+
+/* Floating 3D Popout StoreBox Cube Coin/Orb (Crossing Card 1 and Card 2 like "1G" in Photo 1) */
+.eco-popout-coin {
+    position: absolute;
+    right: -26px;
+    top: 175px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c8ff6a 0%, #8ee419 100%);
+    border: 2.5px solid #ffffff;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+    display: grid;
+    place-items: center;
+    z-index: 35;
+    animation: floatCoin 4s ease-in-out infinite;
+}
+@keyframes floatCoin {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(4deg); }
+}
+.eco-coin-cube {
+    width: 24px;
+    height: 24px;
+}
+.eco-coin-txt {
+    font-size: 9px;
+    font-weight: 900;
+    color: #171321;
+    margin-top: -3px;
 }
 
 /* Visual Stage Area */
 .eco-card-stage {
     flex: 1;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
-/* Card 1: Telegram WebApp Shop 655 Phone Mockup */
+/* Card 1: Telegram WebApp Rising iPhone */
 .eco-c1-stage {
     display: flex;
     justify-content: center;
     align-items: flex-end;
 }
 .eco-phone-mockup {
-    width: 220px;
-    height: 400px;
+    width: 215px;
+    height: 410px;
     border-radius: 36px;
-    background: #0c0914;
+    background: #000000;
     padding: 7px;
-    border: 3.5px solid #231b2e;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    border: 3.5px solid #1e293b;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
     position: absolute;
     bottom: -35px;
     left: 50%;
@@ -4259,38 +4418,31 @@ h1 span {
     display: block;
 }
 .eco-c1-phone {
-    transform: translateX(-50%) rotate(-3.5deg);
+    transform: translateX(-50%) rotate(-3deg);
 }
 .eco-card:hover .eco-c1-phone {
     transform: translateX(-50%) rotate(0deg) translateY(-8px);
 }
-.eco-float-badge {
-    position: absolute;
-    z-index: 6;
-}
+.eco-float-badge { position: absolute; z-index: 6; }
 .eco-badge-tg {
     top: 24px;
-    left: 16px;
-    width: 52px;
-    height: 52px;
+    left: 14px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     box-shadow: 0 12px 28px rgba(2, 132, 199, 0.6), inset 0 2px 4px rgba(255,255,255,0.4);
     display: grid;
     place-items: center;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.35);
 }
-.eco-badge-tg svg {
-    width: 26px;
-    height: 26px;
-    fill: #ffffff;
-}
+.eco-badge-tg svg { width: 24px; height: 24px; fill: #ffffff; }
 .eco-pill-rating {
     bottom: 24px;
-    right: 14px;
-    background: rgba(15, 23, 42, 0.88);
+    right: 12px;
+    background: rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 999px;
     padding: 6px 14px;
     color: #ffffff;
@@ -4301,13 +4453,11 @@ h1 span {
     align-items: center;
     gap: 5px;
 }
-.eco-pill-rating span.star {
-    color: #eab308;
-}
+.eco-pill-rating svg.star { width: 12px; height: 12px; fill: #eab308; }
 
-/* Card 2: AI Grocery & Restaurant Assistant (Figma Reference 2) */
+/* Card 2: AI Grocery & Restaurant Assistant (Photo 1 Reference 2) */
 .eco-c2-stage {
-    padding: 10px 16px 20px;
+    padding: 10px 14px 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -4316,37 +4466,36 @@ h1 span {
 .eco-c2-photo-box {
     position: relative;
     width: 100%;
-    height: 195px;
-    border-radius: 22px;
+    height: 200px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
-.eco-c2-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
+.eco-c2-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .c2-food-badge {
     position: absolute;
     bottom: 10px;
     left: 10px;
-    background: rgba(18, 14, 26, 0.88);
+    background: rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     padding: 5px 12px;
     border-radius: 10px;
     font-size: 11px;
     font-weight: 800;
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
-/* 3D Glowing Circular Microphone Button */
+.c2-food-badge svg { width: 12px; height: 12px; fill: #c8ff6a; }
+
+/* 3D Glowing Circular Microphone Button (Photo 1 Reference) */
 .eco-figma-mic-btn {
     position: relative;
-    width: 68px;
-    height: 68px;
-    margin: 8px auto;
+    width: 72px;
+    height: 72px;
+    margin: 12px auto;
     display: grid;
     place-items: center;
     z-index: 10;
@@ -4354,39 +4503,36 @@ h1 span {
 }
 .eco-mic-ring-pulse {
     position: absolute;
-    inset: -10px;
+    inset: -12px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(236, 72, 153, 0.5) 0%, rgba(168, 85, 247, 0) 70%);
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.55) 0%, rgba(168, 85, 247, 0) 70%);
     animation: livePulse 2s infinite ease-in-out;
 }
 .eco-mic-ring-pulse-2 {
     position: absolute;
-    inset: -18px;
+    inset: -20px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, rgba(168, 85, 247, 0) 70%);
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.28) 0%, rgba(168, 85, 247, 0) 70%);
     animation: livePulse 2s infinite ease-in-out 0.6s;
 }
 .eco-mic-disc {
-    width: 60px;
-    height: 60px;
+    width: 62px;
+    height: 62px;
     border-radius: 50%;
     background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
     display: grid;
     place-items: center;
-    box-shadow: 0 12px 32px rgba(236, 72, 153, 0.85), inset 0 2px 4px rgba(255,255,255,0.7);
-    border: 2.5px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 14px 34px rgba(236, 72, 153, 0.85), inset 0 2px 4px rgba(255,255,255,0.7);
+    border: 2.5px solid rgba(255, 255, 255, 0.6);
     z-index: 2;
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 .eco-figma-mic-btn:hover .eco-mic-disc {
     transform: scale(1.08);
-    box-shadow: 0 16px 40px rgba(236, 72, 153, 1), inset 0 2px 4px rgba(255,255,255,0.9);
+    box-shadow: 0 18px 42px rgba(236, 72, 153, 1), inset 0 2px 4px rgba(255,255,255,0.9);
 }
-.eco-mic-disc svg {
-    width: 26px;
-    height: 26px;
-    fill: #ffffff;
-}
+.eco-mic-disc svg { width: 26px; height: 26px; fill: #ffffff; }
+
 .eco-c2-dialog {
     width: 100%;
     display: flex;
@@ -4395,9 +4541,9 @@ h1 span {
 }
 .c2-chat-bubble-user {
     align-self: flex-end;
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.22);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.35);
     color: #ffffff;
     padding: 7px 14px;
     border-radius: 14px 14px 2px 14px;
@@ -4405,128 +4551,122 @@ h1 span {
     font-weight: 750;
     max-width: 90%;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
+.c2-chat-bubble-user svg { width: 12px; height: 12px; stroke: #ffffff; fill: none; stroke-width: 2; }
 .c2-chat-bubble-ai {
     align-self: flex-start;
-    background: rgba(200, 255, 106, 0.15);
-    border: 1px solid rgba(200, 255, 106, 0.4);
-    color: #d9ff85;
+    background: rgba(200, 255, 106, 0.2);
+    border: 1px solid rgba(200, 255, 106, 0.45);
+    color: #e5ffaa;
     padding: 7px 14px;
     border-radius: 14px 14px 14px 2px;
     font-size: 11px;
     font-weight: 800;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
+.c2-chat-bubble-ai svg { width: 12px; height: 12px; fill: #c8ff6a; }
 
-/* Card 3: YES POS & Payments */
+/* Card 3: YES POS & Payments with Floating "Swipe To Accept" (Photo 1 Reference 3) */
 .eco-c3-stage {
-    padding: 10px 16px 20px;
+    padding: 10px 14px 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     box-sizing: border-box;
 }
-.eco-c3-photo-box {
-    position: relative;
-    width: 100%;
-    height: 210px;
-    border-radius: 22px;
-    overflow: hidden;
-    margin-top: 48px;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15);
-}
-.eco-c3-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-.c3-terminal-badge {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background: rgba(18, 14, 26, 0.88);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 5px 12px;
-    border-radius: 10px;
-    font-size: 10.5px;
-    font-weight: 800;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-.terminal-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #34C759;
-    box-shadow: 0 0 8px #34C759;
-}
 .eco-c3-pills {
-    position: absolute;
-    top: 10px;
-    left: 16px;
     display: flex;
     gap: 8px;
+    margin-bottom: 10px;
     z-index: 10;
 }
 .eco-c3-pill {
-    background: rgba(16, 12, 24, 0.88);
+    background: rgba(15, 23, 42, 0.85);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 12px;
-    padding: 6px 12px;
-    font-size: 11px;
+    padding: 5px 10px;
+    font-size: 10.5px;
     font-weight: 750;
     color: #ffffff;
     display: flex;
     align-items: center;
-    gap: 6px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    gap: 5px;
 }
-.eco-c3-pill .pill-ok {
-    color: #c8ff6a;
-    font-weight: 850;
-}
-.eco-c3-receipt-wrap {
+.eco-c3-pill .pill-ok { color: #c8ff6a; font-weight: 850; }
+.eco-c3-photo-box {
+    position: relative;
     width: 100%;
-    margin-top: 12px;
+    height: 180px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
-.eco-c3-receipt-card {
-    background: #ffffff;
-    border-radius: 14px 14px 0 0;
-    padding: 10px 14px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+.eco-c3-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Floating Frosted Glass Notification Card (1:1 with "Swipe To Answer" in Photo 1) */
+.eco-c3-swipe-card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(14px);
+    border-radius: 18px;
+    padding: 12px 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+    margin-top: 10px;
+}
+.c3-swipe-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 8px;
 }
-.c3-rec-num {
+.c3-swipe-title {
     font-size: 11px;
     font-weight: 800;
     color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
-.c3-rec-fee {
-    font-size: 9.5px;
-    color: #64748b;
+.c3-swipe-title svg { width: 13px; height: 13px; stroke: #0284c7; fill: none; stroke-width: 2; }
+.c3-swipe-sum { font-size: 11.5px; font-weight: 900; color: #16a34a; }
+.c3-swipe-track {
+    background: #f1f5f9;
+    border-radius: 999px;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #e2e8f0;
 }
-.c3-rec-sum {
-    font-size: 12px;
-    font-weight: 850;
-    color: #15803d;
+.c3-swipe-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 4px 10px rgba(22, 163, 74, 0.4);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
 }
-.c3-rec-zigzag {
-    height: 7px;
-    background-image: radial-gradient(circle, transparent, transparent 50%, #ffffff 50%, #ffffff 100%);
-    background-size: 12px 12px;
+.c3-swipe-btn svg { width: 14px; height: 14px; stroke: #ffffff; fill: none; stroke-width: 3; }
+.c3-swipe-text {
+    font-size: 10.5px;
+    font-weight: 750;
+    color: #475569;
+    flex: 1;
 }
+.c3-swipe-arrows svg { width: 14px; height: 14px; stroke: #94a3b8; fill: none; stroke-width: 2.5; }
 
-/* Card 4: Fast Delivery & Couriers (Figma Reference 4) */
+/* Card 4: Fast Delivery & 3 Stacked 3D Glossy Buttons (1:1 with Photo 1 Reference 4) */
 .eco-c4-stage {
-    padding: 10px 16px 20px;
+    padding: 10px 14px 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -4535,7 +4675,7 @@ h1 span {
 .eco-c4-stacked-pills {
     position: absolute;
     top: 10px;
-    right: 16px;
+    right: 14px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -4544,48 +4684,53 @@ h1 span {
 .eco-side-pill {
     display: flex;
     align-items: center;
-    gap: 7px;
-    background: rgba(16, 12, 28, 0.9);
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.88);
     backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.28);
     border-radius: 999px;
-    padding: 6px 14px;
+    padding: 5px 12px 5px 6px;
     font-size: 11px;
     font-weight: 800;
     color: #ffffff;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-    transition: transform 0.25s ease, border-color 0.25s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    transition: transform 0.25s ease;
     white-space: nowrap;
 }
-.eco-side-pill:hover {
-    transform: translateX(-4px);
-    border-color: #c8ff6a;
+.eco-side-pill:hover { transform: translateX(-4px); }
+/* 3D Glowing Spheres Inside Pills (Photo 1 Reference) */
+.p-orb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.7), 0 3px 8px rgba(0,0,0,0.3);
 }
-.pill-yellow .p-icon { color: #facc15; }
-.pill-cyan .p-icon { color: #38bdf8; }
-.pill-purple .p-icon { color: #c084fc; }
+.p-orb svg { width: 12px; height: 12px; fill: #ffffff; }
+.orb-lime { background: linear-gradient(135deg, #c8ff6a 0%, #65a30d 100%); }
+.orb-lime svg { fill: #171321; }
+.orb-cyan { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); }
+.orb-blue { background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%); }
 
 .eco-c4-photo-box {
     position: relative;
     width: 100%;
-    height: 210px;
-    border-radius: 22px;
+    height: 200px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
-.eco-c4-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
+.eco-c4-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 .c4-mini-tracker {
     width: 100%;
     background: rgba(15, 23, 42, 0.88);
     backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 14px;
-    padding: 10px 14px;
+    padding: 10px 12px;
     box-sizing: border-box;
     box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
@@ -4598,6 +4743,8 @@ h1 span {
     color: #ffffff;
     margin-bottom: 6px;
 }
+.c4-courier-name { display: flex; align-items: center; gap: 5px; }
+.c4-courier-name svg { width: 13px; height: 13px; stroke: #c8ff6a; fill: none; stroke-width: 2; }
 .c4-time-tag {
     background: rgba(200, 255, 106, 0.2);
     color: #c8ff6a;
@@ -4625,19 +4772,28 @@ h1 span {
     color: #cbd5e1;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     font-weight: 600;
 }
+.c4-track-bot svg { width: 12px; height: 12px; stroke: #38bdf8; fill: none; stroke-width: 2; }
 
 @media (max-width: 1100px) {
     .eco-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 20px !important;
     }
+    .eco-popout-coin {
+        display: none !important;
+    }
 }
 @media (max-width: 640px) {
     .storebox-ecosystem-showcase {
-        padding: 50px 20px 60px !important;
+        padding: 50px 16px 60px !important;
         border-radius: 28px !important;
+    }
+    .eco-cards-frame {
+        padding: 12px !important;
+        border-radius: 24px !important;
     }
     .eco-grid {
         grid-template-columns: 1fr !important;
@@ -4646,18 +4802,12 @@ h1 span {
         gap: 24px !important;
     }
     .eco-card {
-        height: 520px !important;
+        height: 570px !important;
+        overflow: hidden !important;
     }
-    .eco-c3-phone, .eco-c4-phone {
-        left: 50% !important;
-    }
-    .eco-c3-pills {
-        top: 14px !important;
-        left: 10px !important;
-    }
-    .eco-c4-stacked-pills {
-        top: 14px !important;
-        right: 10px !important;
+    .eco-c1-phone {
+        bottom: -20px !important;
+        transform: translateX(-50%) scale(0.9) !important;
     }
     .eco-title {
         font-size: 28px !important;
@@ -5208,11 +5358,110 @@ h1 span {
                                     </div>
                                 </div>
 
-                                <!-- Screen Content: Shop 655 -->
-                                <img src="/static/images/showcase/shop655_mobile_screen.png?v=sb_655_2026" alt="StoreBox Shop 655" class="mob-iphone-screen-img">
+                                <!-- Light-Themed Native StoreBox Food & Retail UI (Photo 2 Orbix Studio Reference) -->
+                                <div class="sb-app-screen">
+                                    <!-- App Header -->
+                                    <div class="sb-app-header">
+                                        <div class="sb-icon-btn">
+                                            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </div>
+                                        <div class="sb-app-loc">
+                                            <svg class="pin" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
+                                            <span data-i18n="sbLoc">Home · Toshkent</span>
+                                            <svg class="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                        </div>
+                                        <div class="sb-icon-btn">
+                                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
+                                        </div>
+                                    </div>
 
-                                <!-- Glass Glare Overlay -->
-                                <div class="mob-iphone-glass-glare"></div>
+                                    <!-- Search Box -->
+                                    <div class="sb-app-search-box">
+                                        <div class="sb-search-left">
+                                            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                            <span data-i18n="sbSearch">Qanday taom qidiryapsiz?</span>
+                                        </div>
+                                        <svg class="sb-cutlery-icon" viewBox="0 0 24 24"><path d="M18 2v8a2 2 0 01-2 2h-1v10h-2V12h-1a2 2 0 01-2-2V2h2v6h1V2h1v6h1V2h2zM7 2v20H5V13H3V2h4z"/></svg>
+                                    </div>
+
+                                    <!-- Filter Chips -->
+                                    <div class="sb-app-chips">
+                                        <div class="sb-chip-filter">
+                                            <svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                                        </div>
+                                        <div class="sb-chip active" data-i18n="sbChipNear">Yaqin atrofda</div>
+                                        <div class="sb-chip">
+                                            <svg class="star-mini" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                            <span data-i18n="sbChipRating">Reyting 4.5+</span>
+                                        </div>
+                                        <div class="sb-chip" data-i18n="sbChipCuisine">Oshxonalar ▾</div>
+                                    </div>
+
+                                    <!-- Main Appetizing Food Card (Photo 2 Reference) -->
+                                    <div class="sb-dish-card-main">
+                                        <div class="sb-dish-img-box">
+                                            <img src="/static/images/showcase/eco_food_ai.jpg?v=2026" alt="StoreBox Gourmet Steak" class="sb-dish-img">
+                                        </div>
+                                        <div class="sb-dish-body">
+                                            <div class="sb-dish-row1">
+                                                <h5 class="sb-dish-name" data-i18n="sbDish1Title">Maxsus Ribay Steyk</h5>
+                                                <div class="sb-dish-rating-pill">
+                                                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                                    <span>4.9</span>
+                                                </div>
+                                            </div>
+                                            <div class="sb-dish-sub" data-i18n="sbDish1Sub">Fast-Fud, Milliy taomlar · $$$$</div>
+                                            <div class="sb-dish-deliv">
+                                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                <span data-i18n="sbDish1Deliv">20-30 min · 1.8 km</span>
+                                            </div>
+                                            <!-- Metallic Bronze Promo Banner -->
+                                            <div class="sb-promo-banner">
+                                                <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                                                <span data-i18n="sbDish1Promo">50% maxsus chegirma &amp; StoreBox PLUS</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Peeking Second Food Card -->
+                                    <div class="sb-dish-card-peek">
+                                        <img src="/static/images/demo_burger.png" alt="Smash Burger" class="sb-peek-img">
+                                        <div class="sb-peek-details">
+                                            <div class="sb-peek-title-row">
+                                                <h5 class="sb-peek-title" data-i18n="sbDish2Title">Smash Burger Kombo</h5>
+                                                <div class="sb-dish-rating-pill">
+                                                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                                    <span>4.8</span>
+                                                </div>
+                                            </div>
+                                            <div class="sb-peek-sub" data-i18n="sbDish2Sub">Burgerlar, Ichimliklar · $$$$</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Native iOS Bottom Tab Bar -->
+                                    <div class="sb-app-tabbar">
+                                        <div class="sb-tab-item active">
+                                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                                            <span data-i18n="sbTab1">Explore</span>
+                                        </div>
+                                        <div class="sb-tab-item">
+                                            <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                                            <span data-i18n="sbTab2">Pickup</span>
+                                        </div>
+                                        <div class="sb-tab-item">
+                                            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                            <span data-i18n="sbTab3">Search</span>
+                                        </div>
+                                        <div class="sb-tab-item">
+                                            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h.01M17 9h.01M7 9l10 6"/></svg>
+                                            <span data-i18n="sbTab4">Promos</span>
+                                        </div>
+                                        <div class="sb-tab-item">
+                                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+                                            <span data-i18n="sbTab5">History</span>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <!-- iOS Home Indicator -->
                                 <div class="mob-ios-home-indicator"></div>
@@ -5311,48 +5560,58 @@ h1 span {
                 <p class="eco-sub-lead" data-i18n="ecoLead">Telegram WebApp, aqlli AI yordamchi, to'lov tizimlari va avtomatlashtirilgan kassa bitta boshqaruv panelida</p>
             </div>
 
-            <!-- 4-Card Presentation Grid (Exact Figma 3D Style from Reference) -->
-            <div class="eco-grid">
-                <!-- Card 1: Telegram WebApp -->
-                <div class="eco-card eco-card-tg">
-                    <div class="eco-card-header">
-                        <span class="eco-cat-tag tag-cyan" data-i18n="ecoCard1Cat">TELEGRAM WEBAPP</span>
-                        <h3 class="eco-card-h" data-i18n="ecoCard1H">Do'kon<br>1 bosishda</h3>
-                        <p class="eco-card-sub" data-i18n="ecoCard1Sub">Telegram Bot orqali to'g'ridan-to'g'ri buyurtma</p>
-                    </div>
-                    <div class="eco-card-stage eco-c1-stage">
-                        <div class="eco-float-badge eco-badge-tg">
-                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+            <!-- Outer Rounded Frame (1:1 with Figma on Laptop Reference) -->
+            <div class="eco-cards-frame">
+                <div class="eco-grid">
+                    <!-- Card 1: Telegram WebApp -->
+                    <div class="eco-card eco-card-tg">
+                        <!-- Floating 3D Popout StoreBox Cube Coin (Crossing Card 1 and Card 2) -->
+                        <div class="eco-popout-coin" aria-hidden="true">
+                            <svg class="eco-coin-cube" viewBox="0 0 24 24" fill="none" stroke="#171321" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                <line x1="12" y1="22.08" x2="12" y2="12"/>
+                            </svg>
                         </div>
-                        <div class="eco-phone-mockup eco-c1-phone">
-                            <div class="eco-phone-screen">
+                        <div class="eco-card-header">
+                            <h3 class="eco-3d-title" data-i18n="ecoCard1H">Telegram<br>WebApp</h3>
+                            <div class="eco-3d-sub" data-i18n="ecoCard1Sub">Do'kon 1 bosishda</div>
+                        </div>
+                        <div class="eco-card-stage eco-c1-stage">
+                            <div class="eco-float-badge eco-badge-tg">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                            </div>
+                            <div class="eco-phone-mockup eco-c1-phone">
                                 <div class="eco-phone-notch-bar">
                                     <div class="eco-phone-notch"></div>
                                 </div>
-                                <img src="/static/images/showcase/shop655_mobile_screen.png?v=sb_655_2026" alt="StoreBox Shop 655" class="eco-screen-full-img">
+                                <div class="eco-phone-screen">
+                                    <img src="/static/images/showcase/shop655_mobile_screen.png?v=sb_655_2026" alt="StoreBox Shop 655" class="eco-screen-full-img">
+                                </div>
+                            </div>
+                            <div class="eco-float-badge eco-pill-rating">
+                                <svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                <span data-i18n="ecoCard1Pill">4.9 · 450+ do'konlar</span>
                             </div>
                         </div>
-                        <div class="eco-float-badge eco-pill-rating">
-                            <span class="star">★</span>
-                            <span data-i18n="ecoCard1Pill">4.9 · 450+ do'konlar</span>
-                        </div>
                     </div>
-                </div>
 
-                <!-- Card 2: AI Grocery & Restaurant Assistant (Figma Photo 2 Style) -->
+                <!-- Card 2: AI Grocery & Restaurant Assistant -->
                 <div class="eco-card eco-card-ai">
                     <div class="eco-card-header">
-                        <span class="eco-cat-tag tag-pink" data-i18n="ecoCard2Cat">SUN'IY INTELLEKT · AI</span>
-                        <h3 class="eco-card-h" data-i18n="ecoCard2H">Aqlli AI<br>Assistent</h3>
-                        <p class="eco-card-sub" data-i18n="ecoCard2Sub">Taom tavsifi va fotosuratlarni yaratish</p>
+                        <h3 class="eco-3d-title" data-i18n="ecoCard2H">AI<br>Assistent</h3>
+                        <div class="eco-3d-sub" data-i18n="ecoCard2Sub">Avtomatlashtirish</div>
                     </div>
                     <div class="eco-card-stage eco-c2-stage">
                         <div class="eco-c2-photo-box">
                             <img src="/static/images/showcase/eco_food_ai.jpg?v=2026" alt="Gourmet Dishes AI" class="eco-c2-img">
-                            <div class="c2-food-badge">🥩 Ribay Steyk · 145 000 UZS</div>
+                            <div class="c2-food-badge">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                                <span data-i18n="ecoCard2Food">Ribay Steyk · 145 000 UZS</span>
+                            </div>
                         </div>
                         
-                        <!-- 3D Glowing Circular Microphone Button (Figma Reference 2) -->
+                        <!-- 3D Glowing Circular Microphone Button (Photo 1 Reference) -->
                         <div class="eco-figma-mic-btn">
                             <div class="eco-mic-ring-pulse"></div>
                             <div class="eco-mic-ring-pulse-2"></div>
@@ -5361,10 +5620,16 @@ h1 span {
                             </div>
                         </div>
 
-                        <!-- AI Chat Bubbles Below -->
+                        <!-- AI Chat Bubbles Below (Zero emojis!) -->
                         <div class="eco-c2-dialog">
-                            <div class="c2-chat-bubble-user" data-i18n="ecoCard2Prompt">"Steyk tavsifini yozib ber"</div>
-                            <div class="c2-chat-bubble-ai" data-i18n="ecoCard2Done">⚡ 0.8s da tayyorlandi</div>
+                            <div class="c2-chat-bubble-user">
+                                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                <span data-i18n="ecoCard2Prompt">"Steyk tavsifini yozib ber"</span>
+                            </div>
+                            <div class="c2-chat-bubble-ai">
+                                <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                <span data-i18n="ecoCard2Done">0.8s da tayyorlandi</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -5372,9 +5637,8 @@ h1 span {
                 <!-- Card 3: YES POS & Payments -->
                 <div class="eco-card eco-card-pos">
                     <div class="eco-card-header">
-                        <span class="eco-cat-tag tag-lime" data-i18n="ecoCard3Cat">YES POS · TO'LOVLAR</span>
-                        <h3 class="eco-card-h" data-i18n="ecoCard3H">YES POS<br>&amp; Kassa</h3>
-                        <p class="eco-card-sub" data-i18n="ecoCard3Sub">Click, Payme, Uzum Bank va kassa integratsiyasi</p>
+                        <h3 class="eco-3d-title" data-i18n="ecoCard3H">YES POS<br>Kassa</h3>
+                        <div class="eco-3d-sub" data-i18n="ecoCard3Sub">To'lovlar &amp; Fiskalizatsiya</div>
                     </div>
                     <div class="eco-card-stage eco-c3-stage">
                         <div class="eco-c3-pills">
@@ -5389,44 +5653,54 @@ h1 span {
                         </div>
                         <div class="eco-c3-photo-box">
                             <img src="/static/images/showcase/eco_pos_terminal.jpg?v=2026" alt="POS Terminal & Checkout" class="eco-c3-img">
-                            <div class="c3-terminal-badge">
-                                <span class="terminal-dot"></span>
-                                <span>YES POS #01</span>
-                            </div>
                         </div>
-                        <div class="eco-c3-receipt-wrap">
-                            <div class="eco-c3-receipt-card">
-                                <div>
-                                    <div class="c3-rec-num" data-i18n="ecoCard3RecNum">Buyurtma #SB-1049</div>
-                                    <div class="c3-rec-fee" data-i18n="ecoCard3RecFee">0% Komissiya</div>
+                        <!-- Floating Frosted-Glass "Swipe to Accept" Notification (1:1 with Photo 1) -->
+                        <div class="eco-c3-swipe-card">
+                            <div class="c3-swipe-header">
+                                <div class="c3-swipe-title">
+                                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    <span data-i18n="c3SwipeTitle">Yangi Buyurtma #1049</span>
                                 </div>
-                                <div class="c3-rec-sum" data-i18n="ecoCard3RecPaid">113 000 UZS · To'landi ✅</div>
+                                <span class="c3-swipe-sum">113 000 UZS</span>
                             </div>
-                            <div class="c3-rec-zigzag"></div>
+                            <div class="c3-swipe-track">
+                                <div class="c3-swipe-btn">
+                                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </div>
+                                <span class="c3-swipe-text" data-i18n="c3SwipeText">Qabul qilish uchun suring</span>
+                                <div class="c3-swipe-arrows">
+                                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card 4: Fast Delivery & Couriers (Figma Reference 4) -->
+                <!-- Card 4: Fast Delivery & Couriers -->
                 <div class="eco-card eco-card-courier">
                     <div class="eco-card-header">
-                        <span class="eco-cat-tag tag-purple" data-i18n="ecoCard4Cat">LOGISTIKA · DOSTAVKA</span>
-                        <h3 class="eco-card-h" data-i18n="ecoCard4H">Tezkor<br>Yetkazish</h3>
-                        <p class="eco-card-sub" data-i18n="ecoCard4Sub">Yandex Go va Uzum Tezkor bilan jonli kuzatuv</p>
+                        <h3 class="eco-3d-title" data-i18n="ecoCard4H">Tezkor<br>Yetkazish</h3>
+                        <div class="eco-3d-sub" data-i18n="ecoCard4Sub">Jonli GPS &amp; Logistika</div>
                     </div>
                     <div class="eco-card-stage eco-c4-stage">
-                        <!-- 3 Stacked 3D Glossy Pills from Figma Reference 4 -->
+                        <!-- Stack of 3 Glossy 3D Pills with Glowing Spheres (Photo 1 Reference 4) -->
                         <div class="eco-c4-stacked-pills">
-                            <div class="eco-side-pill pill-yellow">
-                                <span class="p-icon">⚡</span>
+                            <div class="eco-side-pill">
+                                <div class="p-orb orb-lime">
+                                    <svg viewBox="0 0 24 24"><path d="M13 2L3 14h8v8l10-12h-8z"/></svg>
+                                </div>
                                 <span data-i18n="ecoCard4Btn1">25-35 min</span>
                             </div>
-                            <div class="eco-side-pill pill-cyan">
-                                <span class="p-icon">📍</span>
+                            <div class="eco-side-pill">
+                                <div class="p-orb orb-cyan">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s8-7.5 8-12a8 8 0 10-16 0c0 4.5 8 12 8 12z"/><circle cx="12" cy="9" r="2.5" fill="currentColor"/></svg>
+                                </div>
                                 <span data-i18n="ecoCard4Btn2">Jonli GPS</span>
                             </div>
-                            <div class="eco-side-pill pill-purple">
-                                <span class="p-icon">🚀</span>
+                            <div class="eco-side-pill">
+                                <div class="p-orb orb-blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                </div>
                                 <span data-i18n="ecoCard4Btn3">Tezkor</span>
                             </div>
                         </div>
@@ -5435,7 +5709,10 @@ h1 span {
                         </div>
                         <div class="c4-mini-tracker">
                             <div class="c4-track-top">
-                                <span data-i18n="ecoCard4Courier">🛵 Kuryer: Farxod K.</span>
+                                <div class="c4-courier-name">
+                                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                                    <span data-i18n="ecoCard4Courier">Kuryer: Farxod K.</span>
+                                </div>
                                 <span class="c4-time-tag" data-i18n="ecoCard4Time">8 min qoldi</span>
                             </div>
                             <div class="c4-track-bar">
@@ -5443,12 +5720,13 @@ h1 span {
                             </div>
                             <div class="c4-track-bot">
                                 <span>Shop 655</span>
-                                <span data-i18n="ecoCard4Route">Mijozga yo'lda 🛵</span>
+                                <span data-i18n="ecoCard4Route">Mijozga yo'lda</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
         </section>
 
         <!-- Features Section -->
@@ -5806,33 +6084,53 @@ h1 span {
             mobF4Desc: "Мгновенный поиск любого блюда или товара в один клик",
                         mobStartBtn: "Начать бесплатно",
 
+            sbLoc: "Дом · Ташкент",
+            sbSearch: "Что хотите заказать?",
+            sbChipNear: "Рядом",
+            sbChipRating: "Рейтинг 4.5+",
+            sbChipCuisine: "Кухни ▾",
+            sbDish1Title: "Фирменный Рибай Стейк",
+            sbDish1Sub: "Мясо, Национальные блюда · $$$$",
+            sbDish1Deliv: "20-30 мин · 1.8 км",
+            sbDish1Promo: "Скидка 50% & StoreBox PLUS",
+            sbDish2Title: "Смаш Бургер Комбо",
+            sbDish2Sub: "Бургеры, Напитки · $$$$",
+            sbTab1: "Главная",
+            sbTab2: "Самовывоз",
+            sbTab3: "Поиск",
+            sbTab4: "Акции",
+            sbTab5: "История",
+
             ecoKicker: "ЭКОСИСТЕМА STOREBOX 2.0",
             ecoTitle: "Одна платформа — Безграничные возможности",
             ecoLead: "Telegram WebApp, умный AI-ассистент, платежные системы и автоматизированная касса",
             ecoCard1Cat: "TELEGRAM WEBAPP",
-            ecoCard1H: "Магазин<br>в 1 клик",
-            ecoCard1Sub: "Прямые заказы через Telegram-бота",
+            ecoCard1H: "Telegram<br>WebApp",
+            ecoCard1Sub: "Магазин в 1 клик",
             ecoCard1Pill: "4.9 · 450+ магазинов",
             ecoCard2Cat: "ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ · AI",
-            ecoCard2H: "Умный AI<br>Ассистент",
-            ecoCard2Sub: "Создание описаний блюд и фото",
+            ecoCard2H: "AI<br>Ассистент",
+            ecoCard2Sub: "Автоматизация",
             ecoCard2Prompt: "\"Напиши описание для стейка\"",
-            ecoCard2Done: "⚡ Готово за 0.8 сек",
+            ecoCard2Done: "Готово за 0.8 сек",
+            ecoCard2Food: "Рибай Стейк · 145 000 сум",
             ecoCard3Cat: "YES POS · ПЛАТЕЖИ",
-            ecoCard3H: "YES POS<br>и Касса",
-            ecoCard3Sub: "Click, Payme, Uzum Bank и касса в реальном времени",
+            ecoCard3H: "YES POS<br>Касса",
+            ecoCard3Sub: "Платежи & Фискализация",
             ecoCard3Payme: "Подключено ✓",
             ecoCard3Uzum: "Активно ✓",
             ecoCard3Pos: "YES POS Терминал ✓",
             ecoCard3RecNum: "Заказ #SB-1049",
             ecoCard3RecFee: "0% Комиссий",
-            ecoCard3RecPaid: "113 000 сум · Оплачено ✅",
+            ecoCard3RecPaid: "113 000 сум · Оплачено",
+            c3SwipeTitle: "Новый Заказ #1049",
+            c3SwipeText: "Проведите для приема",
             ecoCard4Cat: "ЛОГИСТИКА · ДОСТАВКА",
             ecoCard4H: "Быстрая<br>Доставка",
-            ecoCard4Sub: "Интеграция с Yandex Go и Uzum Tezkor с живым трекингом",
-            ecoCard4Courier: "🛵 Курьер: Фарход К.",
+            ecoCard4Sub: "Живой GPS & Логистика",
+            ecoCard4Courier: "Курьер: Фарход К.",
             ecoCard4Time: "Осталось 8 мин",
-            ecoCard4Route: "В пути к клиенту 🛵",
+            ecoCard4Route: "В пути к клиенту",
             ecoCard4Btn1: "25-35 мин",
             ecoCard4Btn2: "Живой GPS",
             ecoCard4Btn3: "Быстро",
@@ -5859,11 +6157,11 @@ h1 span {
             zmCategory: "Фастфуд ▾",
             zmItem1Title: "Большой Бургер Классик (Мраморная)",
             zmItem1Desc: "Фастфуд, Бургеры, Снеки · $$$$",
-            zmItem1Deliv: "🛵 25-35 мин · 2.1 км",
+            zmItem1Deliv: "25-35 мин · 2.1 км",
             zmItem1Promo: "50% супер-акция & StoreBox PLUS",
             zmItem2Title: "Пицца Маргарита 32см (Моцарелла)",
             zmItem2Desc: "Итальянский сыр, свежие томаты · $$$$",
-            zmItem2Deliv: "🛵 20-30 мин · 1.8 км",
+            zmItem2Deliv: "20-30 мин · 1.8 км",
             zmTabExplore: "Главная",
             zmTabPickup: "Самовывоз",
             zmTabSearch: "Поиск",
@@ -5880,9 +6178,9 @@ h1 span {
             ecoCard3Pos: "Синхронно ✓",
             ecoCard4Courier: "Курьер: Фарход К.",
             ecoCard4Time: "Осталось 8 мин",
-            ecoCard4Route: "В пути к клиенту 🛵",
+            ecoCard4Route: "В пути к клиенту",
             ecoReceiptNum: "Заказ #SB-1049",
-            ecoReceiptPaid: "113 000 сум · Оплачено ✅",
+            ecoReceiptPaid: "113 000 сум · Оплачено",
             ecoCard2Rating: "4.9 · 450+ магазинов",
             ecoCard4Speed: "25-35 мин · Быстрая доставка",
 
@@ -6139,33 +6437,53 @@ h1 span {
             mobF4Desc: "Kerakli taomni tezda toping",
                         mobStartBtn: "Boshlash",
 
+            sbLoc: "Uy · Toshkent",
+            sbSearch: "Qanday taom qidiryapsiz?",
+            sbChipNear: "Yaqin atrofda",
+            sbChipRating: "Reyting 4.5+",
+            sbChipCuisine: "Oshxonalar ▾",
+            sbDish1Title: "Maxsus Ribay Steyk",
+            sbDish1Sub: "Fast-Fud, Milliy taomlar · $$$$",
+            sbDish1Deliv: "20-30 min · 1.8 km",
+            sbDish1Promo: "50% maxsus chegirma & StoreBox PLUS",
+            sbDish2Title: "Smash Burger Kombo",
+            sbDish2Sub: "Burgerlar, Ichimliklar · $$$$",
+            sbTab1: "Explore",
+            sbTab2: "Pickup",
+            sbTab3: "Search",
+            sbTab4: "Promos",
+            sbTab5: "History",
+
             ecoKicker: "STOREBOX 2.0 EKOTIZIMI",
             ecoTitle: "Bitta platforma — Cheksiz imkoniyatlar",
             ecoLead: "Telegram WebApp, aqlli AI yordamchi, to'lov tizimlari va avtomatlashtirilgan kassa bitta boshqaruv panelida",
             ecoCard1Cat: "TELEGRAM WEBAPP",
-            ecoCard1H: "Do'kon<br>1 bosishda",
-            ecoCard1Sub: "Telegram Bot orqali to'g'ridan-to'g'ri buyurtma",
+            ecoCard1H: "Telegram<br>WebApp",
+            ecoCard1Sub: "Do'kon 1 bosishda",
             ecoCard1Pill: "4.9 · 450+ do'konlar",
             ecoCard2Cat: "SUN'IY INTELLEKT · AI",
-            ecoCard2H: "Aqlli AI<br>Assistent",
-            ecoCard2Sub: "Taom tavsifi va fotosuratlarni yaratish",
+            ecoCard2H: "AI<br>Assistent",
+            ecoCard2Sub: "Avtomatlashtirish",
             ecoCard2Prompt: "\"Steyk tavsifini yozib ber\"",
-            ecoCard2Done: "⚡ 0.8s da tayyorlandi",
+            ecoCard2Done: "0.8s da tayyorlandi",
+            ecoCard2Food: "Ribay Steyk · 145 000 UZS",
             ecoCard3Cat: "YES POS · TO'LOVLAR",
-            ecoCard3H: "YES POS<br>&amp; Kassa",
-            ecoCard3Sub: "Click, Payme, Uzum Bank va kassa integratsiyasi",
+            ecoCard3H: "YES POS<br>Kassa",
+            ecoCard3Sub: "To'lovlar & Fiskalizatsiya",
             ecoCard3Payme: "Ulangan ✓",
             ecoCard3Uzum: "Faol ✓",
             ecoCard3Pos: "YES POS Terminal ✓",
             ecoCard3RecNum: "Buyurtma #SB-1049",
             ecoCard3RecFee: "0% Komissiya",
-            ecoCard3RecPaid: "113 000 UZS · To'landi ✅",
+            ecoCard3RecPaid: "113 000 UZS · To'landi",
+            c3SwipeTitle: "Yangi Buyurtma #1049",
+            c3SwipeText: "Qabul qilish uchun suring",
             ecoCard4Cat: "LOGISTIKA · DOSTAVKA",
             ecoCard4H: "Tezkor<br>Yetkazish",
-            ecoCard4Sub: "Yandex Go va Uzum Tezkor bilan jonli kuzatuv",
-            ecoCard4Courier: "🛵 Kuryer: Farxod K.",
+            ecoCard4Sub: "Jonli GPS & Logistika",
+            ecoCard4Courier: "Kuryer: Farxod K.",
             ecoCard4Time: "8 min qoldi",
-            ecoCard4Route: "Mijozga yo'lda 🛵",
+            ecoCard4Route: "Mijozga yo'lda",
             ecoCard4Btn1: "25-35 min",
             ecoCard4Btn2: "Jonli GPS",
             ecoCard4Btn3: "Tezkor",
@@ -6192,11 +6510,11 @@ h1 span {
             zmCategory: "Fast-Fud ▾",
             zmItem1Title: "Katta Burger Classic (Marmar mol)",
             zmItem1Desc: "Fast food, Burgerlar, Sneklar · $$$$",
-            zmItem1Deliv: "🛵 25-35 min · 2.1 km",
+            zmItem1Deliv: "25-35 min · 2.1 km",
             zmItem1Promo: "50% maxsus aksiya & StoreBox PLUS",
             zmItem2Title: "Pitsa Margarita 32sm (Mozzarella)",
             zmItem2Desc: "Italyancha pishloq, yangi pomidorlar · $$$$",
-            zmItem2Deliv: "🛵 20-30 min · 1.8 km",
+            zmItem2Deliv: "20-30 min · 1.8 km",
             zmTabExplore: "Explore",
             zmTabPickup: "Pickup",
             zmTabSearch: "Search",
@@ -6213,9 +6531,9 @@ h1 span {
             ecoCard3Pos: "Sinxron ✓",
             ecoCard4Courier: "Kuryer: Farxod K.",
             ecoCard4Time: "8 min qoldi",
-            ecoCard4Route: "Manzilga yo'lda 🛵",
+            ecoCard4Route: "Manzilga yo'lda",
             ecoReceiptNum: "Buyurtma #SB-1049",
-            ecoReceiptPaid: "113 000 UZS · To'landi ✅",
+            ecoReceiptPaid: "113 000 UZS · To'landi",
             ecoCard2Rating: "4.9 · 450+ do'konlar",
             ecoCard4Speed: "25-35 min · Tezkor yetkazish",
 
