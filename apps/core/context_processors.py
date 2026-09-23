@@ -8,7 +8,16 @@ def tenant_context(request):
     is_platform_root = getattr(request, 'is_platform_root', False)
     session = getattr(request, 'session', {})
     session_get = session.get if hasattr(session, 'get') else (lambda k, d=None: d)
-    current_lang = getattr(request, 'language', None) or session_get('lang') or request.COOKIES.get('django_language') or 'uz'
+    query_lang = request.GET.get('lang') if hasattr(request, 'GET') else None
+    if query_lang in ['uz', 'ru', 'en']:
+        current_lang = query_lang
+        if hasattr(request, 'session'):
+            request.session['lang'] = current_lang
+            request.session['_language'] = current_lang
+    else:
+        current_lang = getattr(request, 'language', None) or session_get('lang') or request.COOKIES.get('storebox_lang') or request.COOKIES.get('django_language') or 'uz'
+    if current_lang not in ['uz', 'ru', 'en']:
+        current_lang = 'uz'
     cart = session_get('cart', {})
     cart_count = sum(item.get('quantity', 0) for item in cart.values())
 

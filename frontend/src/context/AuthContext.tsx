@@ -29,13 +29,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
   const [lang, setLangState] = useState<Language>(() => {
-    return (localStorage.getItem("storebox_lang") as Language) || "uz";
+    try {
+      const match = document.cookie.match(/(?:^|;\s*)(?:storebox_lang|django_language)=([^;]+)/);
+      if (match && (match[1] === "uz" || match[1] === "ru" || match[1] === "en")) {
+        return match[1] as Language;
+      }
+      const saved = localStorage.getItem("storebox_lang") as Language;
+      if (saved === "uz" || saved === "ru" || saved === "en") {
+        return saved;
+      }
+    } catch {
+      // ignore
+    }
+    return "uz";
   });
 
   const setLang = (l: Language) => {
     setLangState(l);
-    localStorage.setItem("storebox_lang", l);
-    document.cookie = `django_language=${l}; path=/; max-age=31536000`;
+    try {
+      localStorage.setItem("storebox_lang", l);
+      document.cookie = `storebox_lang=${l}; path=/; max-age=31536000; SameSite=Lax`;
+      document.cookie = `django_language=${l}; path=/; max-age=31536000; SameSite=Lax`;
+      fetch(`/lang/${l}/?next=${encodeURIComponent(window.location.pathname)}`, { method: "GET" }).catch(() => {});
+    } catch {
+      // ignore
+    }
   };
 
   const t = (key: string) => getTranslation(lang, key);

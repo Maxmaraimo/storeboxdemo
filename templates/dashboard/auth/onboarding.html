@@ -94,13 +94,13 @@
                 {% if has_existing_store %}
                 <a href="/dashboard/" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white/90 backdrop-blur-md text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs">
                     <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-slate-500"></i>
-                    <span>Boshqaruv paneli</span>
+                    <span>{{ t.back_to_dashboard|default:'Boshqaruv paneli' }}</span>
                 </a>
                 {% endif %}
 
                 <!-- Language Selector -->
                 <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white/90 backdrop-blur-md text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs">
+                    <button @click="open = !open" type="button" id="onboardingLangTriggerBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white/90 backdrop-blur-md text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs">
                         {% if current_lang == 'ru' %}
                             <span>RU Русский</span>
                         {% elif current_lang == 'en' %}
@@ -127,14 +127,14 @@
                 </div>
 
                 <!-- Help Link -->
-                <a href="https://t.me/storebox_support" target="_blank" class="w-8 h-8 rounded-xl border border-slate-200 bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs" title="Yordam">
+                <a href="https://t.me/storebox_support" target="_blank" class="w-8 h-8 rounded-xl border border-slate-200 bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs" title="{{ t.support|default:'Yordam' }}">
                     <i data-lucide="help-circle" class="w-4 h-4"></i>
                 </a>
 
                 <!-- Exit / Logout -->
                 <a href="{% url 'dashboard:logout' %}" class="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 transition-colors">
                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-                    <span class="hidden sm:inline">Chiqish</span>
+                    <span class="hidden sm:inline">{{ t.logout|default:'Chiqish' }}</span>
                 </a>
             </div>
         </div>
@@ -143,7 +143,7 @@
     <!-- SUCCESS TOAST -->
     <div x-show="showToast" x-transition.opacity x-cloak class="fixed top-20 right-6 z-50 bg-slate-900/95 border border-slate-800 rounded-2xl px-4 py-3 shadow-2xl flex items-center gap-2.5 text-white text-xs font-bold backdrop-blur-xl">
         <i data-lucide="check-circle-2" class="w-4 h-4 text-[#c8ff6a]"></i>
-        <span>Amal muvaffaqiyatli yakunlandi.</span>
+        <span>{{ t.toast_success|default:'Amal muvaffaqiyatli yakunlandi.' }}</span>
     </div>
 
     <!-- MAIN CONTAINER -->
@@ -164,22 +164,22 @@
                         <div>
                             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#211b2e]/5 border border-[#211b2e]/10 text-[11px] font-bold text-slate-700 mb-2">
                                 <span class="w-1.5 h-1.5 rounded-full bg-[#211b2e]"></span>
-                                0-qadam: Boshlang'ich parametrlar
+                                {{ t.step0_badge|default:"0-qadam: Boshlang'ich parametrlar" }}
                             </div>
-                            <h1 class="text-2xl font-[850] text-slate-900 tracking-tight">{% if is_new %}Yangi do'kon qo'shish{% else %}Biznesingiz tafsilotlari{% endif %}</h1>
-                            <p class="text-xs text-slate-500 mt-1 font-medium">{% if is_new %}Yangi do'koningiz parametrlarini kiriting va bir necha daqiqada ishga tushiring{% else %}Platformada do'koningizni yaratish uchun asosiy parametrlarni tanlang{% endif %}</p>
+                            <h1 class="text-2xl font-[850] text-slate-900 tracking-tight">{% if is_new %}{{ t.step0_title_new|default:"Yangi do'kon qo'shish" }}{% else %}{{ t.step0_title_existing|default:"Biznesingiz tafsilotlari" }}{% endif %}</h1>
+                            <p class="text-xs text-slate-500 mt-1 font-medium">{% if is_new %}{{ t.step0_sub_new|default:"Yangi do'koningiz parametrlarini kiriting va bir necha daqiqada ishga tushiring" }}{% else %}{{ t.step0_sub_existing|default:"Platformada do'koningizni yaratish uchun asosiy parametrlarni tanlang" }}{% endif %}</p>
                         </div>
 
                         <!-- 1. Kompaniya nomi -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Kompaniya nomi *</label>
-                            <input type="text" name="name" x-model="companyName" required placeholder="Masalan: Safia Bakery yoki Bellstore"
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.company_name_label|default:"Kompaniya nomi *" }}</label>
+                            <input type="text" name="name" x-model="companyName" required placeholder="{{ t.company_name_ph|default:'Masalan: Safia Bakery yoki Bellstore' }}"
                                    class="w-full px-4 py-3 rounded-2xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                         </div>
 
                         <!-- 2. Biznes turi (Restoran / Onlayn do'kon) -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-2">Biznes turi</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">{{ t.business_type_label|default:"Biznes turi" }}</label>
                             <div class="grid grid-cols-2 gap-3">
                                 <label class="p-3.5 rounded-2xl border cursor-pointer flex items-center gap-3 transition-all select-none"
                                        :class="businessType === 'RESTAURANT' ? 'border-[#211b2e] bg-[#211b2e] text-white font-bold shadow-lg shadow-[#211b2e]/20 ring-1 ring-[#211b2e]' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
@@ -189,8 +189,8 @@
                                         <i data-lucide="utensils" class="w-4 h-4"></i>
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="text-xs font-bold leading-tight">Restoran</div>
-                                        <div class="text-[10px] opacity-75 font-normal truncate">Kafe & taomlar</div>
+                                        <div class="text-xs font-bold leading-tight">{{ t.type_restaurant|default:"Restoran" }}</div>
+                                        <div class="text-[10px] opacity-75 font-normal truncate">{{ t.type_restaurant_sub|default:"Kafe & taomlar" }}</div>
                                     </div>
                                 </label>
 
@@ -202,8 +202,8 @@
                                         <i data-lucide="shopping-bag" class="w-4 h-4"></i>
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="text-xs font-bold leading-tight">Onlayn do'kon</div>
-                                        <div class="text-[10px] opacity-75 font-normal truncate">Tovarlar savdosi</div>
+                                        <div class="text-xs font-bold leading-tight">{{ t.type_store|default:"Onlayn do'kon" }}</div>
+                                        <div class="text-[10px] opacity-75 font-normal truncate">{{ t.type_store_sub|default:"Tovarlar savdosi" }}</div>
                                     </div>
                                 </label>
                             </div>
@@ -211,7 +211,7 @@
 
                         <!-- 3. Platformani tanlang -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-2">Platformani tanlang</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">{{ t.platform_select_label|default:"Platformani tanlang" }}</label>
                             <div class="grid grid-cols-2 gap-3">
                                 <label class="p-3.5 rounded-2xl border cursor-pointer flex items-center gap-3 transition-all select-none"
                                        :class="platformType === 'TELEGRAM' ? 'border-[#211b2e] bg-[#211b2e] text-white font-bold shadow-lg shadow-[#211b2e]/20 ring-1 ring-[#211b2e]' : 'border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50'">
@@ -222,7 +222,7 @@
                                     </div>
                                     <div class="min-w-0">
                                         <div class="text-xs font-bold leading-tight">Telegram</div>
-                                        <div class="text-[10px] opacity-75 font-normal truncate">WebApp & bot</div>
+                                        <div class="text-[10px] opacity-75 font-normal truncate">{{ t.platform_tg_sub|default:"WebApp & bot" }}</div>
                                     </div>
                                 </label>
 
@@ -234,8 +234,8 @@
                                         <i data-lucide="globe" class="w-4 h-4"></i>
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="text-xs font-bold leading-tight">Veb-sayt & Bot</div>
-                                        <div class="text-[10px] opacity-75 font-normal truncate">Barcha kanallar</div>
+                                        <div class="text-xs font-bold leading-tight">{{ t.platform_all|default:"Veb-sayt & Bot" }}</div>
+                                        <div class="text-[10px] opacity-75 font-normal truncate">{{ t.platform_all_sub|default:"Barcha kanallar" }}</div>
                                     </div>
                                 </label>
                             </div>
@@ -243,41 +243,41 @@
 
                         <!-- 4. Mamlakat -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Mamlakat</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.country_label|default:"Mamlakat" }}</label>
                             <select name="country" x-model="country" class="w-full px-4 py-3 rounded-2xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all cursor-pointer">
-                                <option value="UZ">O'zbekiston (UZS)</option>
-                                <option value="KZ">Qozog'iston (KZT)</option>
-                                <option value="TR">Turkiya (TRY)</option>
-                                <option value="RU">Rossiya (RUB)</option>
-                                <option value="KG">Qirg'iziston (KGS)</option>
-                                <option value="OTHER">Boshqa mamlakat</option>
+                                <option value="UZ">{{ t.country_uz|default:"O'zbekiston (UZS)" }}</option>
+                                <option value="KZ">{{ t.country_kz|default:"Qozog'iston (KZT)" }}</option>
+                                <option value="TR">{{ t.country_tr|default:"Turkiya (TRY)" }}</option>
+                                <option value="RU">{{ t.country_ru|default:"Rossiya (RUB)" }}</option>
+                                <option value="KG">{{ t.country_kg|default:"Qirg'iziston (KGS)" }}</option>
+                                <option value="OTHER">{{ t.country_other|default:"Boshqa mamlakat" }}</option>
                             </select>
                         </div>
 
                         <!-- 5. Biznes Toifasi -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Biznes Toifasi</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.business_category_label|default:"Biznes Toifasi" }}</label>
                             <select name="business_category" x-model="businessCategory" class="w-full px-4 py-3 rounded-2xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all cursor-pointer">
-                                <option value="FOOD">Oziq-ovqat / Restoran</option>
-                                <option value="ACCESSORIES">Aksessuarlar</option>
-                                <option value="AUTO">Avto ehtiyot qismlar</option>
-                                <option value="ELECTRONICS">Elektronika</option>
-                                <option value="BEAUTY">Go'zallik va parvarish</option>
-                                <option value="PETS">Hayvonlar uchun mahsulotlar</option>
-                                <option value="DRINKS">Ichimliklar</option>
-                                <option value="BOOKS">Kitoblar va ofis anjomlari</option>
-                                <option value="CLOTHES">Kiyim-kechak</option>
-                                <option value="APPLIANCES">Maishiy texnika</option>
-                                <option value="SHOES">Poyabzal</option>
-                                <option value="SPORT">Sport anjomlari</option>
-                                <option value="HOME">Uy jihozlari</option>
+                                <option value="FOOD">{{ t.cat_food|default:"Oziq-ovqat / Restoran" }}</option>
+                                <option value="ACCESSORIES">{{ t.cat_accessories|default:"Aksessuarlar" }}</option>
+                                <option value="AUTO">{{ t.cat_auto|default:"Avto ehtiyot qismlar" }}</option>
+                                <option value="ELECTRONICS">{{ t.cat_electronics|default:"Elektronika" }}</option>
+                                <option value="BEAUTY">{{ t.cat_beauty|default:"Go'zallik va parvarish" }}</option>
+                                <option value="PETS">{{ t.cat_pets|default:"Hayvonlar uchun mahsulotlar" }}</option>
+                                <option value="DRINKS">{{ t.cat_drinks|default:"Ichimliklar" }}</option>
+                                <option value="BOOKS">{{ t.cat_books|default:"Kitoblar va ofis anjomlari" }}</option>
+                                <option value="CLOTHES">{{ t.cat_clothes|default:"Kiyim-kechak" }}</option>
+                                <option value="APPLIANCES">{{ t.cat_appliances|default:"Maishiy texnika" }}</option>
+                                <option value="SHOES">{{ t.cat_shoes|default:"Poyabzal" }}</option>
+                                <option value="SPORT">{{ t.cat_sport|default:"Sport anjomlari" }}</option>
+                                <option value="HOME">{{ t.cat_home|default:"Uy jihozlari" }}</option>
                             </select>
                         </div>
                     </div>
 
                     <!-- Next button -->
                     <button type="button" @click="nextStep(1)" class="w-full mt-8 py-3.5 px-4 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white font-bold text-xs transition-all shadow-lg shadow-[#211b2e]/25 border border-white/10 flex items-center justify-center gap-2 cursor-pointer">
-                        <span>Oldinga</span>
+                        <span>{{ t.next_step|default:'Oldinga' }}</span>
                         <i data-lucide="arrow-right" class="w-4 h-4 text-[#c8ff6a]"></i>
                     </button>
                 </div>
@@ -294,10 +294,10 @@
                             StoreBox 2.0 Studio
                         </div>
                         <h2 class="text-2xl sm:text-3xl font-[850] leading-tight tracking-tight text-white">
-                            Daromadli biznes boshlashning eng tez usuli 🚀
+                            {{ t.banner_headline|default:"Daromadli biznes boshlashning eng tez usuli" }} 🚀
                         </h2>
                         <p class="text-xs text-slate-300 font-normal leading-relaxed">
-                            Onlayn savdoni avtomatlashtirish uchun zamonaviy Telegram WebApp va veb-do'kon boshqaruvi
+                            {{ t.banner_sub|default:"Onlayn savdoni avtomatlashtirish uchun zamonaviy Telegram WebApp va veb-do'kon boshqaruvi" }}
                         </p>
                     </div>
 
@@ -319,14 +319,14 @@
                             <!-- Live Stat Preview -->
                             <div class="bg-black/20 rounded-xl p-3 border border-white/5 mb-3 flex items-center justify-between">
                                 <div>
-                                    <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Bugungi savdo</div>
+                                    <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{{ t.banner_today_sales|default:"Bugungi savdo" }}</div>
                                     <div class="text-lg font-[850] text-[#c8ff6a] mt-0.5">24 850 000 UZS</div>
                                 </div>
                                 <div class="text-right">
                                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#c8ff6a]/20 text-[#c8ff6a] text-[10px] font-black tracking-wide">
                                         <i data-lucide="trending-up" class="w-3 h-3"></i> +34.2%
                                     </span>
-                                    <div class="text-[10px] text-slate-400 mt-1">28 ta buyurtma</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">{{ t.banner_orders_count|default:"28 ta buyurtma" }}</div>
                                 </div>
                             </div>
 
@@ -339,12 +339,12 @@
                                 </div>
                                 <div class="bg-white/5 border border-white/5 rounded-xl p-2 text-center">
                                     <i data-lucide="credit-card" class="w-4 h-4 mx-auto mb-1 text-[#c8ff6a]"></i>
-                                    <div class="text-[10px] font-bold text-white">To'lovlar</div>
+                                    <div class="text-[10px] font-bold text-white">{{ t.banner_payments|default:"To'lovlar" }}</div>
                                     <div class="text-[8px] text-slate-400">Payme & Click</div>
                                 </div>
                                 <div class="bg-white/5 border border-white/5 rounded-xl p-2 text-center">
                                     <i data-lucide="truck" class="w-4 h-4 mx-auto mb-1 text-[#c8ff6a]"></i>
-                                    <div class="text-[10px] font-bold text-white">Kuryer</div>
+                                    <div class="text-[10px] font-bold text-white">{{ t.banner_courier|default:"Kuryer" }}</div>
                                     <div class="text-[8px] text-slate-400">Smart bot</div>
                                 </div>
                             </div>
@@ -353,7 +353,7 @@
 
                     <div class="text-[11px] text-slate-300 z-10 flex items-center gap-2 pt-2 border-t border-white/10">
                         <i data-lucide="shield-check" class="w-4 h-4 text-[#c8ff6a]"></i>
-                        <span><strong class="text-white font-bold">1 500+</strong> faol tadbirkorlar StoreBox 2.0 bilan</span>
+                        <span>{{ t.banner_proof|default:"1 500+ faol tadbirkorlar StoreBox 2.0 bilan" }}</span>
                     </div>
                 </div>
             </div>
@@ -373,7 +373,7 @@
                                 <span x-show="step <= 1">1</span>
                                 <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 1"></i>
                             </div>
-                            <span class="text-xs font-bold" :class="step === 1 ? 'text-slate-900 font-black' : 'text-slate-500'">Sayt yaratish</span>
+                            <span class="text-xs font-bold" :class="step === 1 ? 'text-slate-900 font-black' : 'text-slate-500'">{{ t.step1_label|default:'Sayt yaratish' }}</span>
                         </div>
                         <div class="w-8 h-0.5 bg-slate-200"></div>
 
@@ -384,7 +384,7 @@
                                 <span x-show="step <= 2">2</span>
                                 <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 2"></i>
                             </div>
-                            <span class="text-xs font-bold" :class="step === 2 ? 'text-slate-900 font-black' : 'text-slate-500'">Sozlamalar</span>
+                            <span class="text-xs font-bold" :class="step === 2 ? 'text-slate-900 font-black' : 'text-slate-500'">{{ t.step2_label|default:'Sozlamalar' }}</span>
                         </div>
                         <div class="w-8 h-0.5 bg-slate-200"></div>
 
@@ -395,7 +395,7 @@
                                 <span x-show="step <= 3">3</span>
                                 <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 3"></i>
                             </div>
-                            <span class="text-xs font-bold" :class="step === 3 ? 'text-slate-900 font-black' : 'text-slate-500'">Kategoriya qo'shish</span>
+                            <span class="text-xs font-bold" :class="step === 3 ? 'text-slate-900 font-black' : 'text-slate-500'">{{ t.step3_label|default:"Kategoriya qo'shish" }}</span>
                         </div>
                         <div class="w-8 h-0.5 bg-slate-200"></div>
 
@@ -406,7 +406,7 @@
                                 <span x-show="step <= 4">4</span>
                                 <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 4"></i>
                             </div>
-                            <span class="text-xs font-bold" :class="step === 4 ? 'text-slate-900 font-black' : 'text-slate-500'">Mahsulot qo'shish</span>
+                            <span class="text-xs font-bold" :class="step === 4 ? 'text-slate-900 font-black' : 'text-slate-500'">{{ t.step4_label|default:"Mahsulot qo'shish" }}</span>
                         </div>
                         <div class="w-8 h-0.5 bg-slate-200"></div>
 
@@ -417,7 +417,7 @@
                                 <span x-show="step <= 5">5</span>
                                 <i data-lucide="check" class="w-4 h-4 text-[#c8ff6a]" x-show="step > 5"></i>
                             </div>
-                            <span class="text-xs font-bold" :class="step === 5 ? 'text-slate-900 font-black' : 'text-slate-500'">Yetkazib berish</span>
+                            <span class="text-xs font-bold" :class="step === 5 ? 'text-slate-900 font-black' : 'text-slate-500'">{{ t.step5_label|default:'Yetkazib berish' }}</span>
                         </div>
                         <div class="w-8 h-0.5 bg-slate-200"></div>
 
@@ -427,7 +427,7 @@
                                  :class="step === 6 ? 'bg-[#211b2e] text-white shadow-md ring-2 ring-[#c8ff6a]/60 border border-[#211b2e]' : 'bg-slate-100 border border-slate-200 text-slate-400'">
                                 <span>6</span>
                             </div>
-                            <span class="text-xs font-bold" :class="step === 6 ? 'text-slate-900 font-black' : 'text-slate-500'">Ko'rib chiqish</span>
+                            <span class="text-xs font-bold" :class="step === 6 ? 'text-slate-900 font-black' : 'text-slate-500'">{{ t.step6_label|default:"Ko'rib chiqish" }}</span>
                         </div>
                     </div>
                 </div>
@@ -437,23 +437,23 @@
                 <!-- ------------------------------------------------------------- -->
                 <div x-show="step === 1" class="bg-white/80 backdrop-blur-2xl rounded-3xl border border-white/80 p-8 space-y-6 text-slate-900" style="box-shadow: inset 0 1.5px 2px rgba(255,255,255,0.95), 0 20px 50px rgba(15,23,42,0.06);">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Sizning shaxsiy domeningiz bormi?</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">{{ t.has_domain_question|default:'Sizning shaxsiy domeningiz bormi?' }}</label>
                         <div class="flex gap-4">
                             <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer text-slate-800">
                                 <input type="radio" name="has_domain" value="no" checked class="text-[#211b2e] focus:ring-[#211b2e] accent-[#211b2e]">
-                                <span>Yo'q</span>
+                                <span>{{ t.no|default:"Yo'q" }}</span>
                             </label>
                             <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer text-slate-600 hover:text-slate-900">
                                 <input type="radio" name="has_domain" value="yes" class="text-[#211b2e] focus:ring-[#211b2e] accent-[#211b2e]">
-                                <span>Menda bor</span>
+                                <span>{{ t.has_domain_yes|default:'Menda bor' }}</span>
                             </label>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Sub domen *</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.subdomain_label|default:'Sub domen *' }}</label>
                         <div class="flex rounded-xl bg-slate-50/80 border border-slate-200 overflow-hidden focus-within:border-[#211b2e] focus-within:ring-2 focus-within:ring-[#211b2e]/15 transition-all">
-                            <input type="text" name="subdomain" x-model="subdomain" @input="checkSubdomain()" required placeholder="subdomenni kiriting"
+                            <input type="text" name="subdomain" x-model="subdomain" @input="checkSubdomain()" required placeholder="{{ t.subdomain_ph|default:'subdomenni kiriting' }}"
                                    class="flex-1 px-4 py-3 bg-transparent text-xs font-mono font-bold text-slate-900 placeholder-slate-400 focus:outline-none">
                             <span class="px-4 py-3 bg-slate-100 text-xs font-bold text-slate-600 border-l border-slate-200">.storebox.uz</span>
                         </div>
@@ -469,13 +469,14 @@
                     <!-- Bottom Nav -->
                     <div class="flex items-center justify-between pt-4 border-t border-slate-100">
                         <button type="button" @click="step = 0" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition-colors cursor-pointer">
-                            ← Orqaga
+                            ← {{ t.prev_step|default:'Orqaga' }}
                         </button>
                         <button type="button" @click="nextStep(2)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
-                            <span>Oldinga</span>
+                            <span>{{ t.next_step|default:'Oldinga' }}</span>
                             <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
+                </div>
                 </div>
 
                 <!-- ------------------------------------------------------------- -->
@@ -485,21 +486,21 @@
                     
                     <!-- Logo Upload with Crop Modal Trigger -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Logotipni shu yerga o'tkazing yoki tanlang</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">{{ t.logo_upload_title|default:"Logotipni shu yerga o'tkazing yoki tanlang" }}</label>
                         <div class="border-2 border-dashed border-slate-200 bg-slate-50/60 rounded-2xl p-6 text-center hover:border-[#211b2e] transition-colors cursor-pointer group" @click="$refs.logoInput.click()">
                             <input type="file" x-ref="logoInput" name="logo" accept="image/*" class="sr-only" @change="handleLogoSelect($event)">
                             <div x-show="!logoPreview">
                                 <i data-lucide="image-plus" class="w-8 h-8 text-slate-400 group-hover:text-[#211b2e] mx-auto mb-2 transition-colors"></i>
-                                <div class="text-xs font-bold text-slate-700">Fayl o'lchami 10 MB gacha</div>
+                                <div class="text-xs font-bold text-slate-700">{{ t.logo_size_limit|default:"Fayl o'lchami 10 MB gacha" }}</div>
                             </div>
                             <div x-show="logoPreview" class="flex items-center justify-center gap-3">
                                 <img :src="logoPreview" class="w-16 h-16 rounded-xl object-cover border border-slate-200 shadow-xs">
                                 <div class="text-left">
                                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-xs font-bold shadow-xs">
                                         <i data-lucide="check" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
-                                        <span>Logotip yuklandi!</span>
+                                        <span>{{ t.logo_uploaded|default:"Logotip yuklandi!" }}</span>
                                     </span>
-                                    <div class="text-[10px] text-slate-400 mt-1">O'zgartirish uchun bosing</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">{{ t.logo_change_hint|default:"O'zgartirish uchun bosing" }}</div>
                                 </div>
                             </div>
                         </div>
@@ -510,21 +511,21 @@
                                 <i data-lucide="info" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                             </div>
                             <div class="text-xs font-medium text-slate-600">
-                                Agar siz logotipni saytda ko'rsatishni istasangiz, uni yuklashingizni tavsiya qilamiz
+                                {{ t.logo_tip|default:"Agar siz logotipni saytda ko'rsatishni istasangiz, uni yuklashingizni tavsiya qilamiz" }}
                             </div>
                         </div>
                     </div>
 
                     <!-- Til sozlamalari -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Saytingiz qo'llab-quvvatlaydigan tillarni tanlang</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">{{ t.supported_languages_title|default:"Saytingiz qo'llab-quvvatlaydigan tillarni tanlang" }}</label>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <label class="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs font-semibold text-slate-800">
                                 <div class="flex items-center gap-2">
                                     <input type="checkbox" name="languages" value="uz" checked class="rounded text-[#211b2e] focus:ring-[#211b2e] border-slate-300 accent-[#211b2e]">
                                     <span>O'zbek</span>
                                 </div>
-                                <span class="px-2 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] text-[10px] font-extrabold shadow-2xs">Asosiy til</span>
+                                <span class="px-2 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] text-[10px] font-extrabold shadow-2xs">{{ t.primary_language_badge|default:"Asosiy til" }}</span>
                             </label>
 
                             <label class="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs font-semibold text-slate-800">
@@ -553,14 +554,14 @@
                     <!-- Biz haqimizda with Rich text buttons (B, I, U) -->
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
-                            <label class="text-xs font-bold text-slate-700">Biz haqimizda (O'zbek)</label>
+                            <label class="text-xs font-bold text-slate-700">{{ t.about_us_label|default:"Biz haqimizda" }}</label>
                             <div class="flex gap-1 bg-slate-100 p-0.5 rounded-lg text-xs border border-slate-200">
                                 <button type="button" class="px-2 py-0.5 rounded font-black hover:bg-slate-200 text-slate-700">B</button>
                                 <button type="button" class="px-2 py-0.5 rounded italic hover:bg-slate-200 text-slate-700">I</button>
                                 <button type="button" class="px-2 py-0.5 rounded underline hover:bg-slate-200 text-slate-700">U</button>
                             </div>
                         </div>
-                        <textarea name="about_us_uz" rows="3" placeholder="Foydalanuvchilar uchun kompaniyangiz ma'lumotlarini kiriting"
+                        <textarea name="about_us_uz" rows="3" placeholder="{{ t.about_us_ph|default:"Foydalanuvchilar uchun kompaniyangiz ma'lumotlarini kiriting" }}"
                                   class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all"></textarea>
                     </div>
 
@@ -568,7 +569,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
-                                <label class="block text-xs font-bold text-slate-700">Aloqa uchun telefon raqami *</label>
+                                <label class="block text-xs font-bold text-slate-700">{{ t.phone_number_label|default:"Aloqa uchun telefon raqami *" }}</label>
                                 <span class="text-[11px] font-bold text-slate-900" x-text="selectedCountry ? selectedCountry.name + ' (' + selectedCountry.dialCode + ')' : ''"></span>
                             </div>
                             
@@ -603,13 +604,13 @@
                                      class="absolute left-0 top-full mt-1.5 w-72 max-h-72 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col text-slate-800">
                                     <!-- Search Inside Dropdown -->
                                     <div class="p-2 border-b border-slate-100 bg-slate-50">
-                                        <input type="text" x-model="countrySearch" placeholder="Mamlakat yoki kodni qidirish..."
+                                        <input type="text" x-model="countrySearch" placeholder="{{ t.country_search_ph|default:'Mamlakat yoki kodni qidirish...' }}"
                                                class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#211b2e]">
                                     </div>
                                     <!-- Country Options List -->
                                     <div class="overflow-y-auto divide-y divide-slate-100 py-1">
                                         <template x-for="c in filteredCountries" :key="c.id">
-                                            <button type="button" @click="selectPhoneCountry(c)"
+                                             <button type="button" @click="selectPhoneCountry(c)"
                                                     class="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-slate-100 transition-colors text-xs cursor-pointer"
                                                     :class="selectedCountry && selectedCountry.id === c.id ? 'bg-slate-100 font-bold text-slate-900' : 'text-slate-700'">
                                                 <div class="flex items-center gap-2.5 min-w-0">
@@ -628,72 +629,72 @@
 
                             <!-- Phone Format Info & Counter -->
                             <div class="flex items-center justify-between mt-1 text-[11px] text-slate-500">
-                                <span>Namuna: <strong class="text-slate-700 font-mono" x-text="(selectedCountry ? selectedCountry.dialCode : '+998') + ' ' + (selectedCountry ? selectedCountry.placeholder : '(90) 123-45-67')"></strong></span>
+                                <span>{{ t.phone_sample|default:'Namuna:' }} <strong class="text-slate-700 font-mono" x-text="(selectedCountry ? selectedCountry.dialCode : '+998') + ' ' + (selectedCountry ? selectedCountry.placeholder : '(90) 123-45-67')"></strong></span>
                                 <div x-show="selectedCountry && selectedCountry.id !== 'other'">
                                     <template x-if="isPhoneComplete">
                                         <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-black shadow-2xs">
                                             <i data-lucide="check" class="w-3 h-3 text-[#c8ff6a]"></i>
-                                            <span>To'liq kiritildi</span>
+                                            <span>{{ t.phone_complete_badge|default:"To'liq kiritildi" }}</span>
                                         </span>
                                     </template>
                                     <template x-if="!isPhoneComplete">
-                                        <span class="text-[11px] font-bold text-slate-400" x-text="rawPhoneDigits.length + ' / ' + selectedCountry.digits + ' ta raqam'"></span>
+                                        <span class="text-[11px] font-bold text-slate-400" x-text="rawPhoneDigits.length + ' / ' + selectedCountry.digits + ' {{ t.phone_digits_count|default:'ta raqam' }}'"></span>
                                     </template>
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Valyuta</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.currency_label|default:'Valyuta' }}</label>
                             <select name="currency" class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#211b2e]">
-                                <option value="UZS">UZS (O'zbek so'mi)</option>
-                                <option value="USD">USD (AQSH dollari)</option>
-                                <option value="RUB">RUB (Rossiya rubli)</option>
-                                <option value="EUR">EUR (Yevro)</option>
-                                <option value="KZT">KZT (Qozoq tengesi)</option>
+                                <option value="UZS">{{ t.currency_uzs|default:"UZS (O'zbek so'mi)" }}</option>
+                                <option value="USD">{{ t.currency_usd|default:"USD (AQSH dollari)" }}</option>
+                                <option value="RUB">{{ t.currency_rub|default:"RUB (Rossiya rubli)" }}</option>
+                                <option value="EUR">{{ t.currency_eur|default:"EUR (Yevro)" }}</option>
+                                <option value="KZT">{{ t.currency_kzt|default:"KZT (Qozoq tengesi)" }}</option>
                             </select>
                         </div>
                     </div>
 
                     <!-- 6 Social Links with Branded Icons -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Ijtimoiy tarmoqlarga havola</label>
-                        <p class="text-[11px] text-slate-500 mb-2.5">Do'kon vitrinangiz va sahifalaringizda ushbu tarmoqlarning faol havolalari va ikonkasi ko'rinadi</p>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ t.social_links_title|default:'Ijtimoiy tarmoqlarga havola' }}</label>
+                        <p class="text-[11px] text-slate-500 mb-2.5">{{ t.social_links_sub|default:"Do'kon vitrinangiz va sahifalaringizda ushbu tarmoqlarning faol havolalari va ikonkasi ko'rinadi" }}</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <!-- Instagram -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-pink-500 pointer-events-none"><i data-lucide="instagram" class="w-4 h-4"></i></div>
-                                <input type="text" name="instagram" placeholder="Instagram havolasi yoki @username"
+                                <input type="text" name="instagram" placeholder="{{ t.instagram_ph|default:'Instagram havolasi yoki @username' }}"
                                        class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- Telegram -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-sky-500 pointer-events-none"><i data-lucide="send" class="w-4 h-4"></i></div>
-                                <input type="text" name="telegram" placeholder="Telegram kanali yoki guruhi"
+                                <input type="text" name="telegram" placeholder="{{ t.telegram_ph|default:'Telegram kanali yoki guruhi' }}"
                                        class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- Facebook -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-blue-600 pointer-events-none"><i data-lucide="facebook" class="w-4 h-4"></i></div>
-                                <input type="text" name="facebook" placeholder="Facebook havolasi"
+                                <input type="text" name="facebook" placeholder="{{ t.facebook_ph|default:'Facebook havolasi' }}"
                                        class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- YouTube -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-rose-500 pointer-events-none"><i data-lucide="youtube" class="w-4 h-4"></i></div>
-                                <input type="text" name="youtube" placeholder="YouTube kanali"
+                                <input type="text" name="youtube" placeholder="{{ t.youtube_ph|default:'YouTube kanali' }}"
                                        class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- TikTok -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-slate-700 pointer-events-none"><i data-lucide="music" class="w-4 h-4"></i></div>
-                                <input type="text" name="tiktok" placeholder="TikTok @username"
+                                <input type="text" name="tiktok" placeholder="{{ t.tiktok_ph|default:'TikTok @username' }}"
                                        class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                             <!-- WhatsApp -->
                             <div class="relative flex items-center">
                                 <div class="absolute left-3 text-slate-500 pointer-events-none"><i data-lucide="message-circle" class="w-4 h-4"></i></div>
-                                <input type="text" name="whatsapp" placeholder="WhatsApp raqami (+998...)"
+                                <input type="text" name="whatsapp" placeholder="{{ t.whatsapp_ph|default:'WhatsApp raqami (+998...)' }}"
                                        class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-[#211b2e]">
                             </div>
                         </div>
@@ -703,8 +704,8 @@
                     <div>
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                             <div>
-                                <label class="block text-xs font-bold text-slate-700">Ish vaqti</label>
-                                <p class="text-[11px] text-slate-500">Har bir kun uchun ish vaqtini belgilang yoki dam olish kuni (yopiq) qilib sozlang</p>
+                                <label class="block text-xs font-bold text-slate-700">{{ t.working_hours_title|default:'Ish vaqti' }}</label>
+                                <p class="text-[11px] text-slate-500">{{ t.working_hours_sub|default:'Har bir kun uchun ish vaqtini belgilang yoki dam olish kuni (yopiq) qilib sozlang' }}</p>
                             </div>
                             <!-- Quick Presets -->
                             <div class="flex flex-wrap gap-1.5 text-[10px] font-bold">
@@ -712,7 +713,7 @@
                                 <button type="button" @click="applySchedulePreset('restaurant')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-colors">10:00 - 23:00</button>
                                 <button type="button" @click="applySchedulePreset('24/7')" class="px-2.5 py-1 rounded-lg bg-[#211b2e] border border-[#211b2e] text-[#c8ff6a] hover:bg-[#2c243d] transition-colors font-extrabold flex items-center gap-1 shadow-2xs">
                                     <span class="w-1.5 h-1.5 rounded-full bg-[#c8ff6a]"></span>
-                                    <span>24/7 (Kun-u tun)</span>
+                                    <span>{{ t.schedule_24_7|default:'24/7 (Kun-u tun)' }}</span>
                                 </button>
                             </div>
                         </div>
@@ -736,7 +737,7 @@
                                                         class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-slate-900">
                                                  <button type="button" @click="copyScheduleToAll(idx)"
                                                          class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-[#211b2e] hover:text-[#c8ff6a] border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs transition-colors shadow-2xs cursor-pointer"
-                                                         title="Barcha kunlarga nusxalash">
+                                                         title="{{ t.schedule_copy_all_title|default:'Barcha kunlarga nusxalash' }}">
                                                      +
                                                  </button>
                                              </div>
@@ -746,7 +747,7 @@
                                         <template x-if="d.isClosed">
                                              <div class="flex items-center gap-2">
                                                  <span class="px-3 py-1 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold border border-rose-200">
-                                                     ⛔ Dam olish kuni (Yopiq)
+                                                     {{ t.schedule_day_off_closed|default:'⛔ Dam olish kuni (Yopiq)' }}
                                                  </span>
                                                  <input type="hidden" :name="'schedule_' + d.key + '_open'" value="00:00">
                                                  <input type="hidden" :name="'schedule_' + d.key + '_close'" value="00:00">
@@ -757,7 +758,7 @@
                                         <button type="button" @click="toggleDayClosed(idx)"
                                                 class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ml-auto sm:ml-0 cursor-pointer"
                                                 :class="d.isClosed ? 'bg-[#211b2e] text-[#c8ff6a] border border-[#211b2e] hover:bg-[#2c243d] shadow-2xs' : 'bg-slate-200/70 text-slate-700 hover:bg-rose-50 hover:text-rose-700'"
-                                                x-text="d.isClosed ? 'Ish kuniga o\'tkazish' : 'Dam olish kuni'">
+                                                x-text="d.isClosed ? '{{ t.schedule_toggle_to_work }}' : '{{ t.schedule_toggle_to_closed }}'">
                                         </button>
 
                                         <!-- Hidden input for closed flag -->
@@ -771,11 +772,11 @@
                     <!-- Manzil & Leaflet Map with Live Geosearch -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label class="block text-xs font-bold text-slate-700">Manzil va do'kon filiali</label>
+                            <label class="block text-xs font-bold text-slate-700">{{ t.branch_and_location|default:"Manzil va do'kon filiali" }}</label>
                             <button type="button" @click="locateMe()"
                                     class="flex items-center gap-2 text-xs font-bold text-white transition-all px-3.5 py-1.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] shadow-sm border border-white/10 cursor-pointer group">
                                 <i data-lucide="crosshair" class="w-3.5 h-3.5 text-[#c8ff6a]" :class="isLocating ? 'animate-spin' : 'group-hover:rotate-45 transition-transform'"></i>
-                                <span x-text="isLocating ? 'Aniqlanmoqda...' : 'Mening joylashuvim'"></span>
+                                <span x-text="isLocating ? '{{ t.locating_status }}' : '{{ t.detect_my_location }}'"></span>
                             </button>
                         </div>
 
@@ -784,7 +785,7 @@
                             <div class="sm:col-span-5">
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
                                     <i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-600"></i>
-                                    <span>Shahar / Viloyat</span>
+                                    <span>{{ t.city_region_label|default:'Shahar / Viloyat' }}</span>
                                 </label>
                                 <div class="relative">
                                     <select x-model="activeCity" @change="selectCity($event.target.value)"
@@ -811,8 +812,8 @@
                                 </div>
                             </div>
                             <div class="sm:col-span-7">
-                                <label class="block text-[11px] font-bold text-slate-700 mb-1">Filial nomi</label>
-                                <input type="text" name="branch_name" placeholder="Masalan: Markaziy filial, Samarqand filiali"
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">{{ t.branch_name_label|default:'Filial nomi' }}</label>
+                                <input type="text" name="branch_name" placeholder="{{ t.branch_name_ph|default:'Masalan: Markaziy filial, Samarqand filiali' }}"
                                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e]">
                             </div>
                         </div>
@@ -823,7 +824,7 @@
                                 <div class="relative flex items-center">
                                     <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none"></i>
                                     <input type="text" id="mapSearchInput" x-model="mapSearch" @input.debounce.250ms="searchAddress()"
-                                           placeholder="Manzil, ko'cha yoki joy nomini yozing (Masalan: Beruniy, Registon, Firdavsiy...)"
+                                           placeholder="{{ t.map_search_ph|default:"Manzil, ko'cha yoki joy nomini yozing (Masalan: Beruniy, Registon, Firdavsiy...)" }}"
                                            class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#211b2e] transition-all">
                                     <div x-show="isSearchingMap" class="absolute right-3.5">
                                         <i data-lucide="loader-2" class="w-4 h-4 text-slate-600 animate-spin"></i>
@@ -862,12 +863,12 @@
                                         <i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#c8ff6a]" :class="isReverseGeocoding ? 'animate-bounce' : ''"></i>
                                     </div>
                                     <div class="truncate">
-                                        <span class="text-slate-500 font-medium">Tanlangan manzil:</span>
-                                        <strong class="text-slate-900 font-extrabold ml-1" x-text="branchAddress || 'Xaritadan tanlang'"></strong>
+                                        <span class="text-slate-500 font-medium">{{ t.selected_address_label|default:'Tanlangan manzil:' }}</span>
+                                        <strong class="text-slate-900 font-extrabold ml-1" x-text="branchAddress || '{{ t.select_from_map }}'"></strong>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0 ml-2">
-                                    <span x-show="isReverseGeocoding" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold animate-pulse">Aniqlanmoqda...</span>
+                                    <span x-show="isReverseGeocoding" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold animate-pulse">{{ t.locating_status|default:'Aniqlanmoqda...' }}</span>
                                     <span class="font-mono text-[10px] px-2.5 py-1 rounded-lg bg-[#211b2e] text-[#c8ff6a] font-black tracking-wider shadow-2xs" x-text="Number(branchLat).toFixed(4) + ', ' + Number(branchLng).toFixed(4)"></span>
                                 </div>
                             </div>
@@ -876,7 +877,7 @@
                                 <div id="onboardingMap" class="w-full h-64 bg-slate-100"></div>
                                 <div class="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-semibold text-slate-700 shadow-xs border border-slate-200 flex items-center gap-1.5">
                                     <span>💡</span>
-                                    <span>Xaritani bosib yoki markerni surib aniq nuqtani belgilang (nomi avtomat chiqadi)</span>
+                                    <span>{{ t.map_hint|default:'Xaritani bosib yoki markerni surib aniq nuqtani belgilang (nomi avtomat chiqadi)' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -885,13 +886,14 @@
                     <!-- Bottom Nav -->
                     <div class="flex items-center justify-between pt-4 border-t border-slate-100">
                         <button type="button" @click="step = 1" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                            ← Orqaga
+                            ← {{ t.prev_step|default:'Orqaga' }}
                         </button>
                         <button type="button" @click="nextStep(3)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
-                            <span>Oldinga</span>
+                            <span>{{ t.next_step|default:'Oldinga' }}</span>
                             <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
+                </div>
                 </div>
 
                 <!-- ------------------------------------------------------------- -->
@@ -907,13 +909,13 @@
                         </div>
                         <button type="button" @click="autoTranslateCategory()" class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200/70 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
                             <i data-lucide="languages" class="w-3.5 h-3.5 text-slate-600"></i>
-                            <span>Tarjima qilish</span>
+                            <span>{{ t.auto_translate|default:'Tarjima qilish' }}</span>
                         </button>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategoriya nomi (O'zbek) *</label>
-                        <input type="text" name="cat_name_uz" x-model="categoryNameUz" required placeholder="Masalan: Gullar"
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.category_name_label|default:'Kategoriya nomi *' }}</label>
+                        <input type="text" name="cat_name_uz" x-model="categoryNameUz" required placeholder="{{ t.category_name_ph|default:'Masalan: Gullar' }}"
                                class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                     </div>
                     <input type="hidden" name="cat_name_ru" x-model="categoryNameRu">
@@ -921,12 +923,12 @@
 
                     <!-- Category image -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategoriya rasmi</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.category_image_label|default:'Kategoriya rasmi' }}</label>
                         <div class="border-2 border-dashed border-slate-200 bg-slate-50/60 rounded-2xl p-6 text-center hover:border-[#211b2e] transition-colors cursor-pointer group" @click="$refs.catImgInput.click()">
                             <input type="file" x-ref="catImgInput" name="cat_image" accept="image/*" class="sr-only">
                             <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 group-hover:text-[#211b2e] mx-auto mb-2 transition-colors"></i>
-                            <div class="text-xs font-bold text-slate-700">Tasvirni shu yerga tashlang yoki yuklang</div>
-                            <div class="text-[10px] text-slate-400 mt-1">56px x 56px tavsiya etiladi, fayl hajmi 4 MB gacha</div>
+                            <div class="text-xs font-bold text-slate-700">{{ t.upload_drag_drop|default:'Tasvirni shu yerga tashlang yoki yuklang' }}</div>
+                            <div class="text-[10px] text-slate-400 mt-1">{{ t.cat_img_tip|default:'56px x 56px tavsiya etiladi, fayl hajmi 4 MB gacha' }}</div>
                         </div>
 
                         <!-- Recommendations list -->
@@ -934,21 +936,21 @@
                             <div class="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200 text-slate-800 space-y-1">
                                 <div class="font-bold flex items-center gap-1.5 text-slate-900">
                                     <span class="w-4 h-4 rounded-md bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center text-[10px] font-black">✓</span>
-                                    <span>Tavsiya etiladi:</span>
+                                    <span>{{ t.recommended_title|default:'Tavsiya etiladi:' }}</span>
                                 </div>
-                                <div class="text-slate-600">• Yuqori sifatli rasm ishlating</div>
-                                <div class="text-slate-600">• Oddiy va mos rasm tanlang</div>
-                                <div class="text-slate-600">• Bir xil uslubda bo'lsin</div>
+                                <div class="text-slate-600">{{ t.rec_high_quality|default:'• Yuqori sifatli rasm ishlating' }}</div>
+                                <div class="text-slate-600">{{ t.rec_simple_relevant|default:'• Oddiy va mos rasm tanlang' }}</div>
+                                <div class="text-slate-600">{{ t.rec_consistent_style|default:"• Bir xil uslubda bo'lsin" }}</div>
                             </div>
 
                             <div class="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200/80 text-rose-950 space-y-1">
                                 <div class="font-bold flex items-center gap-1.5 text-rose-700">
                                     <i data-lucide="x" class="w-3.5 h-3.5 text-rose-600"></i>
-                                    <span>Tavsiya etilmaydi:</span>
+                                    <span>{{ t.not_recommended_title|default:'Tavsiya etilmaydi:' }}</span>
                                 </div>
-                                <div class="text-slate-600">• Ichida matn qolgan rasmlar</div>
-                                <div class="text-slate-600">• Xira qilib olingan rasmlar</div>
-                                <div class="text-slate-600">• GIF yoki harakatli rasm</div>
+                                <div class="text-slate-600">{{ t.not_rec_text_in_img|default:'• Ichida matn qolgan rasmlar' }}</div>
+                                <div class="text-slate-600">{{ t.not_rec_blurry|default:'• Xira qilib olingan rasmlar' }}</div>
+                                <div class="text-slate-600">{{ t.not_rec_gif|default:'• GIF yoki harakatli rasm' }}</div>
                             </div>
                         </div>
                     </div>
@@ -956,10 +958,10 @@
                     <!-- Bottom Nav -->
                     <div class="flex items-center justify-between pt-4 border-t border-slate-100">
                         <button type="button" @click="step = 2" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                            ← Orqaga
+                            ← {{ t.prev_step|default:'Orqaga' }}
                         </button>
                         <button type="button" @click="nextStep(4)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
-                            <span>Oldinga</span>
+                            <span>{{ t.next_step|default:'Oldinga' }}</span>
                             <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
@@ -978,14 +980,14 @@
                         </div>
                         <button type="button" @click="autoTranslateProduct()" class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200/70 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
                             <i data-lucide="languages" class="w-3.5 h-3.5 text-slate-600"></i>
-                            <span>Tarjima qilish</span>
+                            <span>{{ t.auto_translate|default:'Tarjima qilish' }}</span>
                         </button>
                     </div>
 
                     <!-- Product Name -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mahsulot nomi (O'zbek) *</label>
-                        <input type="text" name="prod_name_uz" x-model="productNameUz" required placeholder="Masalan: Qizil atirgul guldastasi"
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.prod_name_label|default:'Mahsulot nomi *' }}</label>
+                        <input type="text" name="prod_name_uz" x-model="productNameUz" required placeholder="{{ t.prod_name_ph|default:'Masalan: Qizil atirgul guldastasi' }}"
                                class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                     </div>
                     <input type="hidden" name="prod_name_ru" x-model="productNameRu">
@@ -994,23 +996,23 @@
                     <!-- Description with AI Generator ✨ Yaratish -->
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
-                            <label class="text-xs font-bold text-slate-700">Ta'rif (O'zbek)</label>
+                            <label class="text-xs font-bold text-slate-700">{{ t.description_label|default:"Ta'rif" }}</label>
                             <button type="button" @click="generateAiDescription()" class="px-3 py-1 rounded-lg bg-[#211b2e] text-[#c8ff6a] border border-white/10 text-[11px] font-bold flex items-center gap-1.5 hover:bg-[#2c243d] transition-colors cursor-pointer shadow-xs">
-                                <span>✨ Yaratish</span>
+                                <span>{{ t.ai_generate|default:'✨ Yaratish' }}</span>
                             </button>
                         </div>
-                        <textarea name="prod_desc_uz" x-model="productDescUz" rows="3" placeholder="Mahsulotingiz tavsifini yozing..."
+                        <textarea name="prod_desc_uz" x-model="productDescUz" rows="3" placeholder="{{ t.prod_desc_ph|default:'Mahsulotingiz tavsifini yozing...' }}"
                                   class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all"></textarea>
                     </div>
 
                     <!-- Multi photo upload (3:4 ratio) -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mahsulot rasmlari</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.prod_photos_label|default:'Mahsulot rasmlari' }}</label>
                         <div class="border-2 border-dashed border-slate-200 bg-slate-50/60 rounded-2xl p-6 text-center hover:border-[#211b2e] transition-colors cursor-pointer group" @click="$refs.prodPhotosInput.click()">
                             <input type="file" x-ref="prodPhotosInput" name="prod_photos" accept="image/*" multiple class="sr-only" @change="handleProdPhotos($event)">
                             <i data-lucide="images" class="w-8 h-8 text-slate-400 group-hover:text-[#211b2e] mx-auto mb-2 transition-colors"></i>
-                            <div class="text-xs font-bold text-slate-700">Tasvirni shu yerga tashlang yoki yuklang</div>
-                            <div class="text-[10px] text-slate-400 mt-1">1200 x 1600 (3:4) tavsiya etiladi, har biri 10 MB gacha</div>
+                            <div class="text-xs font-bold text-slate-700">{{ t.upload_drag_drop|default:'Tasvirni shu yerga tashlang yoki yuklang' }}</div>
+                            <div class="text-[10px] text-slate-400 mt-1">{{ t.prod_img_tip|default:'1200 x 1600 (3:4) tavsiya etiladi, har biri 10 MB gacha' }}</div>
                         </div>
 
                         <!-- Gallery Thumbnails -->
@@ -1027,26 +1029,26 @@
                     <!-- Price, Unit & Old Price (16 Units from Video 04:31) -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Narx (UZS) *</label>
-                            <input type="number" name="prod_price" x-model="productPrice" required placeholder="Masalan: 100 000"
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.prod_price_label|default:'Narx (UZS) *' }}</label>
+                            <input type="number" name="prod_price" x-model="productPrice" required placeholder="{{ t.price_ph|default:'Masalan: 100 000' }}"
                                    class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">O'lchov Birligi</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.unit_label|default:"O'lchov Birligi" }}</label>
                             <select name="prod_unit" class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
-                                <option value="Dona">Dona</option>
-                                <option value="Metr">Metr</option>
-                                <option value="Kilogram">Kilogram</option>
-                                <option value="Gramm">Gramm</option>
+                                <option value="Dona">{{ t.unit_piece|default:'Dona' }}</option>
+                                <option value="Metr">{{ t.unit_meter|default:'Metr' }}</option>
+                                <option value="Kilogram">{{ t.unit_kg|default:'Kilogram' }}</option>
+                                <option value="Gramm">{{ t.unit_gram|default:'Gramm' }}</option>
                                 <option value="Santimetr">Santimetr</option>
-                                <option value="Litr">Litr</option>
+                                <option value="Litr">{{ t.unit_liter|default:'Litr' }}</option>
                                 <option value="Kvadrat metr">Kvadrat metr</option>
-                                <option value="Portsiya">Portsiya</option>
+                                <option value="Portsiya">{{ t.unit_portion|default:'Portsiya' }}</option>
                                 <option value="Tonna">Tonna</option>
                                 <option value="Kub metr">Kub metr</option>
-                                <option value="Upakovka">Upakovka</option>
-                                <option value="Korobka">Korobka</option>
+                                <option value="Upakovka">{{ t.unit_package|default:'Upakovka' }}</option>
+                                <option value="Korobka">{{ t.unit_box|default:'Korobka' }}</option>
                                 <option value="Pachka">Pachka</option>
                                 <option value="Blok">Blok</option>
                                 <option value="Milligram">Milligram</option>
@@ -1055,23 +1057,24 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Eski narx (Aksiya)</label>
-                            <input type="number" name="prod_old_price" x-model="productOldPrice" placeholder="Masalan: 150 000"
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ t.prod_old_price_label|default:'Eski narx (Aksiya)' }}</label>
+                            <input type="number" name="prod_old_price" x-model="productOldPrice" placeholder="{{ t.old_price_ph|default:'Masalan: 150 000' }}"
                                    class="w-full px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/15 transition-all">
-                            <span class="text-[10px] text-slate-400">Asosiy narxdan katta bo'lishi kerak</span>
+                            <span class="text-[10px] text-slate-400">{{ t.old_price_hint|default:"Asosiy narxdan katta bo'lishi kerak" }}</span>
                         </div>
                     </div>
 
                     <!-- Bottom Nav -->
                     <div class="flex items-center justify-between pt-4 border-t border-slate-100">
                         <button type="button" @click="step = 3" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                            ← Orqaga
+                            ← {{ t.prev_step|default:'Orqaga' }}
                         </button>
                         <button type="button" @click="nextStep(5)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
-                            <span>Oldinga</span>
+                            <span>{{ t.next_step|default:'Oldinga' }}</span>
                             <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
+                </div>
                 </div>
 
                 <!-- ------------------------------------------------------------- -->
@@ -1087,14 +1090,14 @@
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <span class="font-bold text-xs text-slate-900">Olib ketish</span>
-                                        <span class="px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-black shadow-2xs">Faol</span>
+                                        <span class="font-bold text-xs text-slate-900">{{ t.pickup_title|default:'Olib ketish' }}</span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-black shadow-2xs">{{ t.active_badge|default:'Faol' }}</span>
                                     </div>
                                     <div class="text-[11px] text-slate-500" x-text="branchAddress || 'Toshkent, Beruniy ko\'chasi'"></div>
                                 </div>
                             </div>
                             <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs">
-                                Tahrirlash
+                                {{ t.edit|default:'Tahrirlash' }}
                             </button>
                         </div>
 
@@ -1106,14 +1109,14 @@
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <span class="font-bold text-xs text-slate-900">Yetkazib berish</span>
-                                        <span class="px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-black shadow-2xs">Faol</span>
+                                        <span class="font-bold text-xs text-slate-900">{{ t.delivery_title|default:'Yetkazib berish' }}</span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-black shadow-2xs">{{ t.active_badge|default:'Faol' }}</span>
                                     </div>
-                                    <div class="text-[11px] text-slate-500">Yetkazib berish turi: Bepul (150 000 so'mdan yuqori)</div>
+                                    <div class="text-[11px] text-slate-500">{{ t.delivery_free_info|default:"Yetkazib berish turi: Bepul (150 000 so'mdan yuqori)" }}</div>
                                 </div>
                             </div>
                             <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs">
-                                Tahrirlash
+                                {{ t.edit|default:'Tahrirlash' }}
                             </button>
                         </div>
                     </div>
@@ -1121,10 +1124,10 @@
                     <!-- Bottom Nav -->
                     <div class="flex items-center justify-between pt-4 border-t border-slate-100">
                         <button type="button" @click="step = 4" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                            ← Orqaga
+                            ← {{ t.prev_step|default:'Orqaga' }}
                         </button>
                         <button type="button" @click="nextStep(6)" class="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-[#211b2e]/20 border border-white/10 transition-all cursor-pointer flex items-center gap-2">
-                            <span>Oldinga</span>
+                            <span>{{ t.next_step|default:'Oldinga' }}</span>
                             <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
                         </button>
                     </div>
@@ -1140,13 +1143,13 @@
                                 class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                                 :class="previewMode === 'mobile' ? 'bg-[#211b2e] text-white shadow-md' : 'text-slate-600 hover:text-slate-900'">
                             <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
-                            <span>Mobile</span>
+                            <span>{{ t.preview_mobile|default:'Mobile' }}</span>
                         </button>
                         <button type="button" @click="previewMode = 'desktop'"
                                 class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                                 :class="previewMode === 'desktop' ? 'bg-[#211b2e] text-white shadow-md' : 'text-slate-600 hover:text-slate-900'">
                             <i data-lucide="laptop" class="w-3.5 h-3.5"></i>
-                            <span>Desktop</span>
+                            <span>{{ t.preview_desktop|default:'Desktop' }}</span>
                         </button>
                     </div>
 
@@ -1162,14 +1165,14 @@
                                     <template x-if="logoPreview">
                                         <img :src="logoPreview" class="w-6 h-6 rounded-md object-cover">
                                     </template>
-                                    <span class="font-bold text-[11px] text-slate-900" x-text="companyName || 'Do\'kon'"></span>
+                                    <span class="font-bold text-[11px] text-slate-900" x-text="companyName || 'Store'"></span>
                                 </div>
                                 <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400"></i>
                             </div>
 
                             <!-- Category Pill -->
                             <div class="flex gap-2">
-                                <span class="px-3 py-1 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-bold shadow-xs" x-text="categoryNameUz || 'Gullar'"></span>
+                                <span class="px-3 py-1 rounded-full bg-[#211b2e] text-[#c8ff6a] text-[10px] font-bold shadow-xs" x-text="categoryNameUz || 'Category'"></span>
                             </div>
 
                             <!-- Product Card -->
@@ -1184,13 +1187,13 @@
                                     <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-rose-500 text-white text-[9px] font-black">-33.3%</span>
                                 </div>
                                 <div class="p-2.5">
-                                    <div class="font-bold text-xs text-slate-900 truncate" x-text="productNameUz || 'Test'"></div>
+                                    <div class="font-bold text-xs text-slate-900 truncate" x-text="productNameUz || 'Product'"></div>
                                     <div class="flex items-baseline gap-2 mt-1">
                                         <span class="font-black text-xs text-slate-900" x-text="(productPrice || '100') + ' UZS'"></span>
                                         <span class="text-[9px] text-slate-400 line-through" x-text="(productOldPrice || '150') + ' UZS'"></span>
                                     </div>
                                     <button type="button" class="w-full mt-2 py-1.5 rounded-lg bg-[#211b2e] hover:bg-[#2c243d] text-white text-[10px] font-bold transition-all shadow-xs cursor-pointer">
-                                        Savatchaga
+                                        {{ t.add_to_cart|default:'Savatchaga' }}
                                     </button>
                                 </div>
                             </div>
@@ -1210,12 +1213,12 @@
                         <button type="button" @click="finishWizard('open_store')"
                                 class="px-6 py-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs">
                             <i data-lucide="external-link" class="w-4 h-4 text-slate-500"></i>
-                            <span>Veb-saytda oching</span>
+                            <span>{{ t.open_in_web|default:'Veb-saytda oching' }}</span>
                         </button>
 
                         <button type="button" @click="finishWizard('dashboard')"
                                 class="px-6 py-3.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] active:scale-[0.99] text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-[#211b2e]/25 border border-white/10 transition-all cursor-pointer">
-                            <span>Boshqaruv paneliga o'tish</span>
+                            <span>{{ t.go_to_dashboard|default:"Boshqaruv paneliga o'tish" }}</span>
                             <i data-lucide="arrow-right" class="w-4 h-4 text-[#c8ff6a]"></i>
                         </button>
                     </div>
@@ -1243,16 +1246,16 @@
                 subdomainMsg: '',
 
                 logoPreview: null,
-                categoryNameUz: 'Gullar',
+                categoryNameUz: '{{ current_lang }}' === 'ru' ? 'Цветы' : ('{{ current_lang }}' === 'en' ? 'Flowers' : 'Gullar'),
                 categoryNameRu: '',
                 categoryNameEn: '',
 
-                productNameUz: 'Test',
+                productNameUz: '{{ current_lang }}' === 'ru' ? 'Букет роз' : ('{{ current_lang }}' === 'en' ? 'Rose Bouquet' : 'Atirgul guldastasi'),
                 productNameRu: '',
                 productNameEn: '',
                 productDescUz: '',
-                productPrice: '100',
-                productOldPrice: '150',
+                productPrice: '100000',
+                productOldPrice: '150000',
                 prodPhotosPreviews: [],
 
                 // Phone & Country Selector
@@ -1427,13 +1430,13 @@
 
                 // Working Hours (Schedule)
                 scheduleDays: [
-                    { key: 'mon', name: 'Dushanba', open: '09:00', close: '22:00', isClosed: false },
-                    { key: 'tue', name: 'Seshanba', open: '09:00', close: '22:00', isClosed: false },
-                    { key: 'wed', name: 'Chorshanba', open: '09:00', close: '22:00', isClosed: false },
-                    { key: 'thu', name: 'Payshanba', open: '09:00', close: '22:00', isClosed: false },
-                    { key: 'fri', name: 'Juma', open: '09:00', close: '22:00', isClosed: false },
-                    { key: 'sat', name: 'Shanba', open: '10:00', close: '23:00', isClosed: false },
-                    { key: 'sun', name: 'Yakshanba', open: '10:00', close: '22:00', isClosed: true },
+                    { key: 'mon', name: '{{ current_lang }}' === 'ru' ? 'Понедельник' : ('{{ current_lang }}' === 'en' ? 'Monday' : 'Dushanba'), open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'tue', name: '{{ current_lang }}' === 'ru' ? 'Вторник' : ('{{ current_lang }}' === 'en' ? 'Tuesday' : 'Seshanba'), open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'wed', name: '{{ current_lang }}' === 'ru' ? 'Среда' : ('{{ current_lang }}' === 'en' ? 'Wednesday' : 'Chorshanba'), open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'thu', name: '{{ current_lang }}' === 'ru' ? 'Четверг' : ('{{ current_lang }}' === 'en' ? 'Thursday' : 'Payshanba'), open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'fri', name: '{{ current_lang }}' === 'ru' ? 'Пятница' : ('{{ current_lang }}' === 'en' ? 'Friday' : 'Juma'), open: '09:00', close: '22:00', isClosed: false },
+                    { key: 'sat', name: '{{ current_lang }}' === 'ru' ? 'Суббота' : ('{{ current_lang }}' === 'en' ? 'Saturday' : 'Shanba'), open: '10:00', close: '23:00', isClosed: false },
+                    { key: 'sun', name: '{{ current_lang }}' === 'ru' ? 'Воскресенье' : ('{{ current_lang }}' === 'en' ? 'Sunday' : 'Yakshanba'), open: '10:00', close: '22:00', isClosed: true },
                 ],
 
                 // Map & Branch Location
@@ -1921,7 +1924,7 @@
                     this.submitAction = action;
                     const form = document.getElementById('wizardForm');
                     if (!this.companyName || !this.companyName.trim()) {
-                        this.companyName = "Mening do'konim";
+                        this.companyName = '{{ current_lang }}' === 'ru' ? 'Мой магазин' : ('{{ current_lang }}' === 'en' ? 'My Store' : "Mening do'konim");
                     }
                     if (!this.subdomain || !this.subdomain.trim()) {
                         this.subdomain = 'shop-' + Math.floor(Math.random() * 8999 + 1000);
@@ -1937,7 +1940,7 @@
 
                 checkSubdomain() {
                     if (this.subdomain.length < 3) {
-                        this.subdomainMsg = 'Kamida 3 ta belgi kiriting';
+                        this.subdomainMsg = '{{ current_lang }}' === 'ru' ? 'Минимум 3 символа' : ('{{ current_lang }}' === 'en' ? 'At least 3 characters' : 'Kamida 3 ta belgi kiriting');
                         this.subdomainAvailable = false;
                         return;
                     }

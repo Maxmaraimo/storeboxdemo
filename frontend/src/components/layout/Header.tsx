@@ -461,7 +461,7 @@ export const Header: React.FC = () => {
                     </a>
                   ) : (
                     <div className="px-2 py-1 text-[10px] text-neutral-400 font-medium">
-                      Maksimal 5 ta do'kon faol (5/5)
+                      {t("max_stores_reached") || "Maksimal 5 ta do'kon faol (5/5)"}
                     </div>
                   )}
                 </div>

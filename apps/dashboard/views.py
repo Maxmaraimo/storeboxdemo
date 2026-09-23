@@ -721,6 +721,16 @@ def onboarding_wizard_view(request):
     if existing_store and not is_new:
         return redirect('dashboard:home')
 
+    query_lang = request.GET.get('lang')
+    if query_lang in ['uz', 'ru', 'en']:
+        current_lang = query_lang
+        request.session['lang'] = current_lang
+        request.session['_language'] = current_lang
+    else:
+        current_lang = request.session.get('lang') or request.COOKIES.get('storebox_lang') or request.COOKIES.get('django_language') or 'uz'
+    if current_lang not in ['uz', 'ru', 'en']:
+        current_lang = 'uz'
+
     if is_new and request.user.is_authenticated:
         user_stores_count = Store.objects.filter(owner=request.user).count()
         if user_stores_count >= 5:
@@ -919,16 +929,24 @@ def onboarding_wizard_view(request):
         except Exception as e:
             error = f"Xatolik yuz berdi: {str(e)}"
 
-    return render(request, 'dashboard/auth/onboarding.html', {
+    from apps.core.translations import get_translations
+    t = get_translations(current_lang)
+
+    response = render(request, 'dashboard/auth/onboarding.html', {
         'error': error,
         'is_new': is_new,
         'has_existing_store': bool(existing_store),
+        'current_lang': current_lang,
+        't': t,
         'business_types': Store.BusinessTypes.choices,
         'platform_types': Store.PlatformTypes.choices,
         'countries': Store.Countries.choices,
         'categories_choices': Store.BusinessCategories.choices,
         'units': Product.Units.choices,
     })
+    response.set_cookie('storebox_lang', current_lang, max_age=365*24*60*60, samesite='Lax')
+    response.set_cookie('django_language', current_lang, max_age=365*24*60*60, samesite='Lax')
+    return response
 
 
 # -----------------------------------------------------------------
