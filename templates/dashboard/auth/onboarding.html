@@ -91,6 +91,13 @@
 
             <!-- Right Controls -->
             <div class="flex items-center gap-3 sm:gap-4">
+                {% if has_existing_store %}
+                <a href="/dashboard/" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white/90 backdrop-blur-md text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs">
+                    <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-slate-500"></i>
+                    <span>Boshqaruv paneli</span>
+                </a>
+                {% endif %}
+
                 <!-- Language Selector -->
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white/90 backdrop-blur-md text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs">
@@ -159,8 +166,8 @@
                                 <span class="w-1.5 h-1.5 rounded-full bg-[#211b2e]"></span>
                                 0-qadam: Boshlang'ich parametrlar
                             </div>
-                            <h1 class="text-2xl font-[850] text-slate-900 tracking-tight">Biznesingiz tafsilotlari</h1>
-                            <p class="text-xs text-slate-500 mt-1 font-medium">Platformada do'koningizni yaratish uchun asosiy parametrlarni tanlang</p>
+                            <h1 class="text-2xl font-[850] text-slate-900 tracking-tight">{% if is_new %}Yangi do'kon qo'shish{% else %}Biznesingiz tafsilotlari{% endif %}</h1>
+                            <p class="text-xs text-slate-500 mt-1 font-medium">{% if is_new %}Yangi do'koningiz parametrlarini kiriting va bir necha daqiqada ishga tushiring{% else %}Platformada do'koningizni yaratish uchun asosiy parametrlarni tanlang{% endif %}</p>
                         </div>
 
                         <!-- 1. Kompaniya nomi -->

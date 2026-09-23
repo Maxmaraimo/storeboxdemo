@@ -716,9 +716,16 @@ def logout_view(request):
 
 @login_required
 def onboarding_wizard_view(request):
+    is_new = request.GET.get('new') in ['1', 'true', 'yes'] or request.GET.get('force') in ['1', 'true', 'yes'] or request.path.endswith('/stores/create/') or request.path.endswith('/new-store/')
     existing_store = get_merchant_store(request)
-    if existing_store and not request.GET.get('force'):
+    if existing_store and not is_new:
         return redirect('dashboard:home')
+
+    if is_new and request.user.is_authenticated:
+        user_stores_count = Store.objects.filter(owner=request.user).count()
+        if user_stores_count >= 5:
+            messages.error(request, "Bitta hisobda maksimal 5 ta do'kon yaratish mumkin")
+            return redirect('dashboard:home')
 
     error = None
     if request.method == 'POST':
@@ -820,10 +827,29 @@ def onboarding_wizard_view(request):
             )
 
             request.session['merchant_current_store_id'] = store.id
+            request.session['selected_store_id'] = store.id
             request.session['current_store_subdomain'] = store.subdomain
 
+            # Ensure default roles for store
+            try:
+                ensure_default_roles_for_store(store)
+            except Exception:
+                pass
+
+            # Create StoreStaff for the owner
+            from apps.orders.models import StoreStaff
+            StoreStaff.objects.get_or_create(
+                user=request.user,
+                store=store,
+                defaults={
+                    'name': request.user.get_full_name() or request.user.username,
+                    'phone': getattr(request.user, 'phone', ''),
+                    'role': 'ADMIN'
+                }
+            )
+
             # Create Merchant Balance & Trial
-            MerchantBalance.objects.create(store=store, balance=Decimal('0'), trial_days_left=7)
+            MerchantBalance.objects.get_or_create(store=store, defaults={'balance': Decimal('0'), 'trial_days_left': 7})
 
             # Create Branch
             Branch.objects.create(
@@ -837,7 +863,7 @@ def onboarding_wizard_view(request):
             )
 
             # Create Payments Settings
-            StorePaymentSetting.objects.create(store=store)
+            StorePaymentSetting.objects.get_or_create(store=store)
 
             # Step 3: Category
             cat_name_uz = request.POST.get('cat_name_uz', 'Gullar').strip() or 'Gullar'
@@ -895,6 +921,8 @@ def onboarding_wizard_view(request):
 
     return render(request, 'dashboard/auth/onboarding.html', {
         'error': error,
+        'is_new': is_new,
+        'has_existing_store': bool(existing_store),
         'business_types': Store.BusinessTypes.choices,
         'platform_types': Store.PlatformTypes.choices,
         'countries': Store.Countries.choices,

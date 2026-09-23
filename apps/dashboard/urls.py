@@ -40,6 +40,8 @@ urlpatterns = [
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
     path('onboarding/', views.onboarding_wizard_view, name='onboarding'),
+    path('stores/create/', views.onboarding_wizard_view, name='store_create'),
+    path('new-store/', views.onboarding_wizard_view, name='new_store'),
     path('dev-login/', views.dev_login_view, name='dev_login'),
     
     # APIs

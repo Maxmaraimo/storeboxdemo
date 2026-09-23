@@ -43,38 +43,6 @@ export const Header: React.FC = () => {
     return document.documentElement.classList.contains("dark");
   });
 
-  // Create store modal state
-  const [createStoreOpen, setCreateStoreOpen] = useState(false);
-  const [newStoreName, setNewStoreName] = useState("");
-  const [newStoreSubdomain, setNewStoreSubdomain] = useState("");
-  const [newStoreType, setNewStoreType] = useState<"online_store" | "restaurant">("online_store");
-  const [createError, setCreateError] = useState("");
-  const [createLoading, setCreateLoading] = useState(false);
-
-  const handleCreateStore = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newStoreName.trim()) {
-      setCreateError("Do'kon nomini kiriting");
-      return;
-    }
-    setCreateLoading(true);
-    setCreateError("");
-    try {
-      await createStore({
-        name: newStoreName.trim(),
-        subdomain: newStoreSubdomain.trim() || undefined,
-        business_type: newStoreType,
-      });
-      setCreateStoreOpen(false);
-      setNewStoreName("");
-      setNewStoreSubdomain("");
-    } catch (err: any) {
-      setCreateError(err?.response?.data?.error || "Do'kon yaratishda xatolik yuz berdi");
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
   // Real store branches query
   const { data: branchesData } = useQuery({
     queryKey: ["branches", store?.id],
@@ -481,13 +449,8 @@ export const Header: React.FC = () => {
                     </button>
                   ))}
                   {stores.length < 5 ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserOpen(false);
-                        setCreateError("");
-                        setCreateStoreOpen(true);
-                      }}
+                    <a
+                      href="/onboarding/?new=1"
                       className="w-full flex items-center justify-between px-2.5 py-2 text-[11px] font-bold text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer text-left transition-colors"
                     >
                       <div className="flex items-center gap-1.5">
@@ -495,7 +458,7 @@ export const Header: React.FC = () => {
                         <span>{t("create_store") || t("add_store") || "Yangi do'kon qo'shish"}</span>
                       </div>
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-neutral-500 font-bold">{stores.length}/5</span>
-                    </button>
+                    </a>
                   ) : (
                     <div className="px-2 py-1 text-[10px] text-neutral-400 font-medium">
                       Maksimal 5 ta do'kon faol (5/5)
@@ -517,140 +480,6 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Create Store Modal */}
-      {createStoreOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#161b26] rounded-3xl border border-white/80 dark:border-white/10 p-6 sm:p-7 max-w-md w-full shadow-2xl relative space-y-5 animate-scale-in">
-            <button
-              type="button"
-              onClick={() => setCreateStoreOpen(false)}
-              className="absolute top-5 right-5 w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-slate-800 dark:hover:text-white cursor-pointer transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-[#211b2e] flex items-center justify-center shadow-lg shadow-[#211b2e]/25 border border-white/10 shrink-0">
-                <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
-                  <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
-                  <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Yangi do'kon yaratish</h3>
-                <p className="text-xs text-slate-400">Bitta hisobda 5 tagacha do'kon ({stores.length}/5)</p>
-              </div>
-            </div>
-
-            {createError && (
-              <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                <span>{createError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleCreateStore} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Do'kon nomi *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newStoreName}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setNewStoreName(val);
-                    setNewStoreSubdomain(val.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-"));
-                  }}
-                  placeholder="Masalan: Burger Bar yoki Premium Market"
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] focus:ring-2 focus:ring-[#c8ff6a]/40 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Subdomen (vitrina manzili)
-                </label>
-                <div className="relative flex rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 overflow-hidden focus-within:border-[#211b2e] dark:focus-within:border-[#c8ff6a] focus-within:ring-2 focus-within:ring-[#c8ff6a]/40 transition-all">
-                  <input
-                    type="text"
-                    value={newStoreSubdomain}
-                    onChange={(e) => setNewStoreSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                    placeholder="burgerbar"
-                    className="flex-1 px-3.5 py-2.5 bg-transparent text-xs font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
-                  />
-                  <span className="px-3 py-2.5 bg-slate-100 dark:bg-white/10 border-l border-slate-200 dark:border-white/10 text-xs text-slate-500 font-semibold flex items-center">
-                    .storebox.uz
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Biznes yo'nalishi
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setNewStoreType("online_store")}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                      newStoreType === "online_store"
-                        ? "bg-[#211b2e] text-white border-transparent shadow-md shadow-[#211b2e]/20"
-                        : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5 font-bold text-xs">
-                      <ShoppingBag className="w-3.5 h-3.5 text-[#c8ff6a]" />
-                      <span>Online Do'kon</span>
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-1">Tovarlar, kiyim, market</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewStoreType("restaurant")}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                      newStoreType === "restaurant"
-                        ? "bg-[#211b2e] text-white border-transparent shadow-md shadow-[#211b2e]/20"
-                        : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5 font-bold text-xs">
-                      <Utensils className="w-3.5 h-3.5 text-[#c8ff6a]" />
-                      <span>Restoran / Kafe</span>
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-1">Fast-fud, pitsa, yetkazish</div>
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-2 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCreateStoreOpen(false)}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200/80 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors cursor-pointer"
-                >
-                  Bekor qilish
-                </button>
-                <button
-                  type="submit"
-                  disabled={createLoading}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-white font-bold text-xs transition-all shadow-lg shadow-[#211b2e]/25 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
-                >
-                  {createLoading ? (
-                    <span>Yaratilmoqda...</span>
-                  ) : (
-                    <>
-                      <Plus className="w-3.5 h-3.5 text-[#c8ff6a]" />
-                      <span>Yaratish va o'tish</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </header>
   );
 };

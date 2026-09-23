@@ -172,10 +172,10 @@
                         </a>
                         {% endfor %}
                         <div class="border-t border-slate-100 my-1"></div>
-                        <button type="button" @click="createStoreModalOpen = true; open = false" class="w-full flex items-center gap-2 p-2 rounded-xl text-brand font-bold hover:bg-brand/5 text-left text-xs">
+                        <a href="/onboarding/?new=1" class="w-full flex items-center gap-2 p-2 rounded-xl text-brand font-bold hover:bg-brand/5 text-left text-xs">
                             <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                            <span>{{ t.add_store }}</span>
-                        </button>
+                            <span>{{ t.add_store|default:"Yangi do'kon qo'shish" }}</span>
+                        </a>
                     </div>
                 </div>
 
