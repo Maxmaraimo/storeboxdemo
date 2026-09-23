@@ -3858,35 +3858,35 @@ h1 span {
 }
 
 /* =========================================================
-   STOREBOX 2.0 ECOSYSTEM SHOWCASE (LIGHT & PROFESSIONAL SAAS DESIGN)
+   STOREBOX 2.0 ECOSYSTEM SHOWCASE (FIGMA 3D APP FEATURE CARDS)
    ========================================================= */
 .storebox-ecosystem-showcase {
     background: #ffffff;
     border-radius: 40px;
-    padding: 85px 36px 95px;
-    margin: 70px auto 90px;
-    max-width: 1300px;
-    box-shadow: 0 25px 70px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.03);
+    padding: 80px 36px 90px;
+    margin: 60px auto 80px;
+    max-width: 1320px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 25px 70px rgba(15, 23, 42, 0.05), 0 4px 16px rgba(15, 23, 42, 0.02);
     position: relative;
     overflow: hidden;
-    border: 1px solid #e2e8f0;
 }
 .eco-ambient-glow {
     position: absolute;
-    width: 600px;
-    height: 300px;
-    top: -60px;
+    width: 650px;
+    height: 320px;
+    top: -80px;
     left: 50%;
     transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(200, 255, 106, 0.25) 0%, rgba(34, 197, 94, 0.12) 40%, transparent 70%);
-    filter: blur(80px);
+    background: radial-gradient(circle, rgba(200, 255, 106, 0.22) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 70%);
+    filter: blur(90px);
     pointer-events: none;
     z-index: 0;
 }
 .eco-header {
     text-align: center;
     max-width: 860px;
-    margin: 0 auto 55px;
+    margin: 0 auto 50px;
     position: relative;
     z-index: 1;
 }
@@ -3896,22 +3896,23 @@ h1 span {
     gap: 8px;
     padding: 7px 18px;
     border-radius: 999px;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    color: #16a34a;
-    font-size: 12.5px;
-    font-weight: 800;
-    margin-bottom: 20px;
-    letter-spacing: 0.04em;
+    background: #211b2e;
+    border: 1px solid rgba(200, 255, 106, 0.35);
+    color: #c8ff6a;
+    font-size: 12px;
+    font-weight: 850;
+    margin-bottom: 18px;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    box-shadow: 0 6px 18px rgba(33, 27, 46, 0.2);
 }
-.eco-kicker-dot {
+.brand-cube-dot {
     width: 8px;
     height: 8px;
-    border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 10px #22c55e;
-    animation: livePulse 2s infinite;
+    border-radius: 2px;
+    background: #c8ff6a;
+    box-shadow: 0 0 10px #c8ff6a;
+    display: inline-block;
 }
 .eco-title {
     font-size: 44px;
@@ -3919,29 +3920,17 @@ h1 span {
     color: #0f172a;
     letter-spacing: -0.025em;
     line-height: 1.15;
-    margin: 0 0 16px;
-}
-.eco-title span {
-    color: #16a34a;
-    background: linear-gradient(135deg, #0f172a 20%, #16a34a 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    margin: 0 0 14px;
 }
 .eco-sub-lead {
-    font-size: 18.5px;
-    font-weight: 600;
-    color: #334155;
-    margin: 0 0 8px;
-    line-height: 1.45;
-}
-.eco-sub-desc {
-    font-size: 14.5px;
-    color: #64748b;
+    font-size: 18px;
+    font-weight: 500;
+    color: #475569;
     margin: 0;
     line-height: 1.5;
 }
 
-/* 4-Card Presentation Grid (Light & Clean) */
+/* 4-Card Presentation Grid (Figma 3D App Showcase) */
 .eco-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -3950,344 +3939,395 @@ h1 span {
     z-index: 1;
 }
 
-/* Individual Showcase Card */
+/* Individual Figma Showcase Card */
 .eco-card {
-    border-radius: 28px;
+    border-radius: 32px;
     overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 520px;
-    background: #ffffff;
-    border: 1.5px solid #e2e8f0;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04), 0 2px 8px rgba(15, 23, 42, 0.02);
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+    height: 560px;
+    background: linear-gradient(170deg, #281f3b 0%, #1c152a 55%, #120d1c 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18), 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
     cursor: default;
 }
 .eco-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.09), 0 4px 16px rgba(15, 23, 42, 0.04);
-    border-color: #cbd5e1;
+    box-shadow: 0 28px 65px rgba(33, 27, 46, 0.45), 0 0 28px rgba(200, 255, 106, 0.22);
+    border-color: rgba(200, 255, 106, 0.55);
 }
 
-/* Card Top Info Area */
-.eco-card-top {
-    padding: 26px 22px 16px;
-    display: flex;
-    flex-direction: column;
+/* Top Area Inside Card */
+.eco-card-header {
+    padding: 26px 22px 14px;
     position: relative;
-    z-index: 2;
+    z-index: 3;
 }
-.eco-card-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-    margin-bottom: 12px;
-    width: fit-content;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-.eco-badge-blue { background: #eff6ff; color: #0284c7; border: 1px solid #bfdbfe; }
-.eco-badge-pink { background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; }
-.eco-badge-green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-.eco-badge-purple { background: #faf5ff; color: #7c3aed; border: 1px solid #e9d5ff; }
-
-.eco-card-title {
-    font-size: 21px;
+.eco-cat-tag {
+    display: inline-block;
+    font-size: 10px;
     font-weight: 850;
-    color: #0f172a;
-    line-height: 1.25;
-    margin: 0 0 8px;
-    letter-spacing: -0.015em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 8px;
+    margin-bottom: 12px;
 }
-.eco-card-desc {
-    font-size: 13px;
-    line-height: 1.45;
-    color: #64748b;
+.tag-cyan { background: rgba(14, 165, 233, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); }
+.tag-pink { background: rgba(236, 72, 153, 0.18); color: #f472b6; border: 1px solid rgba(244, 114, 182, 0.35); }
+.tag-lime { background: rgba(200, 255, 106, 0.15); color: #c8ff6a; border: 1px solid rgba(200, 255, 106, 0.35); }
+.tag-purple { background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.35); }
+
+.eco-card-h {
+    font-size: 28px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.15;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
+}
+.eco-card-sub {
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.4;
     margin: 0;
+    font-weight: 500;
 }
 
-/* Card Visual Mockup Area */
-.eco-card-visual {
+/* Visual Stage Area */
+.eco-card-stage {
     flex: 1;
     position: relative;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: flex-end;
-    padding: 0 16px 16px;
-    overflow: hidden;
-    background: #f8fafc;
-    border-top: 1px solid #f1f5f9;
 }
 
-/* Mini iPhone in Card 1 (Telegram WebApp) */
-.eco-tg-mock {
+/* Card 1: 3D Phone with Shop 655 Screen */
+.eco-c1-phone {
+    width: 210px;
+    height: 380px;
+    border-radius: 32px;
+    background: #0b0910;
+    padding: 7px;
+    border: 3px solid #3d3254;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3.5deg);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.eco-card:hover .eco-c1-phone {
+    transform: translateX(-50%) rotate(0deg) translateY(-8px);
+}
+.eco-c1-screen-wrap {
     width: 100%;
-    background: #ffffff;
-    border-radius: 20px 20px 0 0;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 -8px 25px rgba(15, 23, 42, 0.06);
+    height: 100%;
+    border-radius: 25px;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    position: relative;
 }
-.eco-tg-top {
-    background: #0284c7;
-    color: #ffffff;
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11.5px;
-    font-weight: 750;
-}
-.eco-tg-body {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background: #ffffff;
-}
-.eco-tg-dish-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 8px 10px;
-}
-.eco-tg-dish-thumb {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
+.eco-c1-img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+    object-position: top center;
+    display: block;
 }
-.eco-tg-btn-order {
-    background: #0284c7;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 800;
-    text-align: center;
-    padding: 9px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+.eco-float-badge {
+    position: absolute;
+    z-index: 4;
 }
-
-/* Card 2: AI Assistant Stage */
-.eco-ai-stage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px 12px 10px;
-    text-align: center;
-    gap: 12px;
-}
-.eco-ai-glow-mic {
-    width: 66px;
-    height: 66px;
+.eco-badge-tg {
+    top: 24px;
+    left: 18px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ec4899 0%, #d946ef 50%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    box-shadow: 0 10px 25px rgba(2, 132, 199, 0.5), inset 0 2px 4px rgba(255,255,255,0.4);
     display: grid;
     place-items: center;
-    box-shadow: 0 10px 28px rgba(217, 70, 239, 0.4);
-    animation: livePulse 2s infinite;
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
-.eco-ai-glow-mic svg {
-    width: 28px;
-    height: 28px;
+.eco-badge-tg svg {
+    width: 26px;
+    height: 26px;
     fill: #ffffff;
 }
-.eco-ai-prompt-box {
-    background: #ffffff;
-    border: 1px solid #f0abfc;
-    border-radius: 14px;
-    padding: 10px 14px;
-    box-shadow: 0 4px 14px rgba(236, 72, 153, 0.08);
-    width: 100%;
-}
-.eco-ai-prompt-text {
-    font-size: 12px;
+.eco-pill-rating {
+    bottom: 22px;
+    right: 14px;
+    background: rgba(33, 27, 46, 0.88);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(200, 255, 106, 0.3);
+    border-radius: 999px;
+    padding: 6px 14px;
+    color: #ffffff;
+    font-size: 11px;
     font-weight: 750;
-    color: #701a75;
-}
-.eco-ai-prompt-sub {
-    font-size: 10.5px;
-    color: #db2777;
-    margin-top: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
-.eco-ai-rating-pill {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: #fdf2f8;
-    border: 1px solid #fbcfe8;
-    color: #db2777;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 750;
+    gap: 5px;
+}
+.eco-pill-rating span.star {
+    color: #eab308;
 }
 
-/* Card 3: Payments & POS Stage */
-.eco-pos-stage {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 14px 10px;
+/* Card 2: AI Grocery / Restaurant Food Photo + Mic */
+.eco-c2-media {
+    width: 90%;
+    height: 275px;
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+    margin-bottom: 24px;
+}
+.eco-c2-media img {
     width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
-.eco-pos-row {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 9px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 12px;
-    font-weight: 750;
-    color: #0f172a;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+.eco-c2-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(20, 13, 29, 0.1) 0%, rgba(20, 13, 29, 0.85) 100%);
 }
-.eco-pos-row.active {
-    border-color: #86efac;
-    background: #f0fdf4;
+.eco-c2-mic {
+    position: absolute;
+    top: 36%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+    box-shadow: 0 0 30px rgba(236, 72, 153, 0.8), inset 0 2px 4px rgba(255,255,255,0.5);
+    display: grid;
+    place-items: center;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    z-index: 2;
+    animation: livePulse 2s infinite;
 }
-.eco-pos-row span.badge-ok {
-    color: #16a34a;
-    font-size: 11px;
-    font-weight: 800;
+.eco-c2-mic svg {
+    width: 24px;
+    height: 24px;
+    fill: #ffffff;
 }
-.eco-receipt-card {
-    background: #f8fafc;
-    border: 1.5px dashed #cbd5e1;
-    border-radius: 12px;
+.eco-c2-prompt-box {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    background: rgba(33, 27, 46, 0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
     padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 4px;
+    z-index: 2;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
-.eco-receipt-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    font-weight: 750;
-    color: #334155;
+.eco-prompt-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 2px;
 }
-.eco-receipt-sum {
-    font-size: 13px;
-    font-weight: 850;
-    color: #16a34a;
+.eco-prompt-status {
+    font-size: 10px;
+    font-weight: 700;
+    color: #c8ff6a;
 }
 
-/* Card 4: Logistics Tracker Stage */
-.eco-logistics-stage {
-    padding: 16px 10px;
+/* Card 3: POS Terminal Photo + Floating Badges */
+.eco-c3-wrap {
+    width: 90%;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    width: 100%;
+    margin-bottom: 22px;
 }
-.eco-tracker-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 14px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+.eco-c3-photo {
+    width: 100%;
+    height: 175px;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+.eco-c3-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.eco-c3-badges {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 7px;
 }
-.eco-tracker-top {
+.eco-pos-pill {
+    background: rgba(33, 27, 46, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 7px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 12.5px;
-    font-weight: 800;
+    font-size: 11px;
+    font-weight: 750;
+    color: #ffffff;
+}
+.eco-pos-pill .ok-lime {
+    color: #c8ff6a;
+    font-weight: 850;
+}
+.eco-c3-receipt {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 8px 12px;
+    border-top: 2.5px dashed #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+.eco-rec-left {
+    font-size: 10.5px;
+    font-weight: 750;
     color: #0f172a;
 }
-.eco-tracker-eta {
-    color: #2563eb;
-    background: #eff6ff;
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 11px;
+.eco-rec-sum {
+    font-size: 11.5px;
+    font-weight: 850;
+    color: #15803d;
 }
-.eco-route-bar {
-    height: 6px;
-    border-radius: 999px;
-    background: #e2e8f0;
-    position: relative;
+
+/* Card 4: High Speed Delivery Photo + Tracker */
+.eco-c4-wrap {
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+.eco-c4-photo {
+    width: 100%;
+    height: 175px;
+    border-radius: 20px;
     overflow: hidden;
+    position: relative;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
 }
-.eco-route-fill {
-    width: 70%;
+.eco-c4-photo img {
+    width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
-    border-radius: 999px;
+    object-fit: cover;
+    display: block;
 }
-.eco-route-points {
+.eco-c4-tracker {
+    background: rgba(33, 27, 46, 0.9);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(200, 255, 106, 0.35);
+    border-radius: 14px;
+    padding: 9px 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.eco-track-row {
     display: flex;
     justify-content: space-between;
-    font-size: 10.5px;
-    color: #64748b;
-    font-weight: 600;
-}
-.eco-speed-pill {
-    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    color: #1d4ed8;
-    padding: 7px 14px;
-    border-radius: 999px;
-    font-size: 11.5px;
+    font-size: 11px;
+    font-weight: 750;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+.eco-track-eta {
+    background: rgba(200, 255, 106, 0.18);
+    color: #c8ff6a;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 10px;
     font-weight: 800;
 }
-
-@media (max-width: 1024px) {
-    .eco-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 20px;
-    }
+.eco-track-bar {
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 5px;
+}
+.eco-track-fill {
+    width: 75%;
+    height: 100%;
+    background: #c8ff6a;
+    box-shadow: 0 0 10px #c8ff6a;
+    border-radius: 999px;
+}
+.eco-track-sub {
+    font-size: 9.5px;
+    color: #94a3b8;
+    display: flex;
+    justify-content: space-between;
+}
+.eco-c4-btns {
+    display: flex;
+    gap: 6px;
+}
+.eco-c4-pill {
+    flex: 1;
+    background: rgba(33, 27, 46, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 6px 4px;
+    font-size: 10px;
+    font-weight: 750;
+    color: #ffffff;
+    text-align: center;
+    white-space: nowrap;
 }
 
+@media (max-width: 1100px) {
+    .eco-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 20px !important;
+    }
+}
 @media (max-width: 640px) {
     .storebox-ecosystem-showcase {
-        padding: 55px 20px 65px;
-        margin: 40px auto 60px;
-        border-radius: 28px;
+        padding: 50px 20px 60px !important;
+        border-radius: 28px !important;
     }
     .eco-grid {
         grid-template-columns: 1fr !important;
-        max-width: 360px;
-        margin: 0 auto;
-        gap: 20px;
+        max-width: 330px !important;
+        margin: 0 auto !important;
+        gap: 24px !important;
+    }
+    .eco-card {
+        height: 520px !important;
     }
     .eco-title {
         font-size: 28px !important;
     }
     .eco-sub-lead {
-        font-size: 15.5px !important;
-    }
-    .eco-card {
-        height: 480px;
+        font-size: 15px !important;
     }
 }
-
 /* =========================================================
    ZEMART 3D PHONE PEDESTAL (SECTION 2: MOBILE SHOWCASE)
    ========================================================= */
@@ -5229,146 +5269,136 @@ h1 span {
              "Bitta platforma — Cheksiz biznes imkoniyatlari"
              ========================================================= -->
         <!-- =========================================================
-             SECTION: STOREBOX 2.0 ECOSYSTEM SHOWCASE (LIGHT & PROFESSIONAL)
-             "Bitta platforma — Cheksiz biznes imkoniyatlari"
+             SECTION: STOREBOX 2.0 ECOSYSTEM SHOWCASE (FIGMA 3D APP FEATURE CARDS)
              ========================================================= -->
         <section class="storebox-ecosystem-showcase wow-reveal" id="ecosystem-showcase">
             <div class="eco-ambient-glow" aria-hidden="true"></div>
 
-            <!-- Header -->
+            <!-- Header: Crisp, Brand Dark-Purple & Neon-Lime, No generic green -->
             <div class="eco-header">
                 <div class="eco-kicker">
-                    <span class="eco-kicker-dot"></span>
-                    <span data-i18n="ecoKicker">StoreBox 2.0 Ekotizimi</span>
+                    <span class="brand-cube-dot"></span>
+                    <span data-i18n="ecoKicker">STOREBOX 2.0 EKOTIZIMI</span>
                 </div>
-                <h2 class="eco-title" data-i18n="ecoTitle">Bitta platforma — <span>Cheksiz imkoniyatlar</span></h2>
+                <h2 class="eco-title" data-i18n="ecoTitle">Bitta platforma — Cheksiz imkoniyatlar</h2>
                 <p class="eco-sub-lead" data-i18n="ecoLead">Telegram WebApp, aqlli AI yordamchi, to'lov tizimlari va avtomatlashtirilgan kassa bitta boshqaruv panelida</p>
-                <p class="eco-sub-desc" data-i18n="ecoDesc">Onlayn va oflayn savdoni kengaytirish uchun to'liq tayyor yechim</p>
             </div>
 
-            <!-- 4-Card Presentation Grid (Light, Clean, Professional) -->
+            <!-- 4-Card Presentation Grid (Exact Figma 3D Style from Reference) -->
             <div class="eco-grid">
                 <!-- Card 1: Telegram WebApp -->
                 <div class="eco-card">
-                    <div class="eco-card-top">
-                        <span class="eco-card-badge eco-badge-blue" data-i18n="ecoCard1Badge">Telegram WebApp</span>
-                        <h3 class="eco-card-title" data-i18n="ecoCard1Title">1 bosishda ulanish</h3>
-                        <p class="eco-card-desc" data-i18n="ecoCard1Desc">Telegram ichida to'liq ishlaydigan savat, to'lov va bildirishnomalar bilan zamonaviy do'kon</p>
+                    <div class="eco-card-header">
+                        <span class="eco-cat-tag tag-cyan" data-i18n="ecoCard1Cat">TELEGRAM WEBAPP</span>
+                        <h3 class="eco-card-h" data-i18n="ecoCard1H">Do'kon<br>1 bosishda</h3>
+                        <p class="eco-card-sub" data-i18n="ecoCard1Sub">Telegram Bot orqali to'g'ridan-to'g'ri buyurtma</p>
                     </div>
-                    <div class="eco-card-visual">
-                        <div class="eco-tg-mock">
-                            <div class="eco-tg-top">
-                                <span>Shop 655 · Telegram Bot</span>
-                                <span style="font-size: 10px; background: rgba(255,255,255,0.25); padding: 2px 6px; border-radius: 4px;" data-i18n="ecoCard1Sub">WebApp Live</span>
+                    <div class="eco-card-stage">
+                        <div class="eco-float-badge eco-badge-tg">
+                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                        </div>
+                        <div class="eco-c1-phone">
+                            <div class="eco-c1-screen-wrap">
+                                <img src="/static/images/showcase/shop655_mobile_screen.png?v=sb_655_2026" alt="StoreBox Shop 655" class="eco-c1-img">
                             </div>
-                            <div class="eco-tg-body">
-                                <div class="eco-tg-dish-row">
-                                    <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=120&q=80" alt="Burger" class="eco-tg-dish-thumb">
-                                    <div style="flex: 1; min-width: 0;">
-                                        <div style="font-size: 11.5px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Katta Burger Classic</div>
-                                        <div style="font-size: 11px; color: #0284c7; font-weight: 750;">48 000 UZS</div>
-                                    </div>
-                                    <span style="background: #0284c7; color: #fff; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 13px; font-weight: 800;">+</span>
-                                </div>
-                                <div class="eco-tg-btn-order" data-i18n="ecoCard1Btn">
-                                    Savatga o'tish (48 000 UZS)
-                                </div>
-                            </div>
+                        </div>
+                        <div class="eco-float-badge eco-pill-rating">
+                            <span class="star">★</span>
+                            <span data-i18n="ecoCard1Pill">4.9 · 450+ do'konlar</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card 2: AI Assistant & Catalog -->
+                <!-- Card 2: AI Grocery & Restaurant Assistant -->
                 <div class="eco-card">
-                    <div class="eco-card-top">
-                        <span class="eco-card-badge eco-badge-pink" data-i18n="ecoCard2Badge">AI Yordamchi</span>
-                        <h3 class="eco-card-title" data-i18n="ecoCard2Title">Aqlli katalog va generatsiya</h3>
-                        <p class="eco-card-desc" data-i18n="ecoCard2Desc">Avtomatik tavsiflar, taomlar va tovarlarni sun'iy intellekt yordamida soniyalarda yaratish</p>
+                    <div class="eco-card-header">
+                        <span class="eco-cat-tag tag-pink" data-i18n="ecoCard2Cat">SUN'IY INTELLEKT · AI</span>
+                        <h3 class="eco-card-h" data-i18n="ecoCard2H">Aqlli AI<br>Assistent</h3>
+                        <p class="eco-card-sub" data-i18n="ecoCard2Sub">Taom tavsifi va fotosuratlarni yaratish</p>
                     </div>
-                    <div class="eco-card-visual">
-                        <div class="eco-ai-stage">
-                            <div class="eco-ai-glow-mic">
+                    <div class="eco-card-stage">
+                        <div class="eco-c2-media">
+                            <img src="/static/images/showcase/eco_food_ai.jpg?v=2026" alt="Gourmet Dishes AI">
+                            <div class="eco-c2-overlay"></div>
+                            <div class="eco-c2-mic">
                                 <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
                             </div>
-                            <div class="eco-ai-prompt-box">
-                                <div class="eco-ai-prompt-text" data-i18n="ecoCard2Prompt">"Steyk tavsifini yozib ber"</div>
-                                <div class="eco-ai-prompt-sub">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                    <span data-i18n="ecoCard2Done">Generatsiya yakunlandi · 0.8s</span>
-                                </div>
-                            </div>
-                            <div class="eco-ai-rating-pill">
-                                <span>★★★★★</span>
-                                <span data-i18n="ecoCard2Rating">4.9 · 450+ do'konlar</span>
+                            <div class="eco-c2-prompt-box">
+                                <div class="eco-prompt-title" data-i18n="ecoCard2Prompt">"Steyk tavsifini yozib ber"</div>
+                                <div class="eco-prompt-status" data-i18n="ecoCard2Done">⚡ 0.8s da tayyorlandi</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card 3: Payments & YES POS -->
+                <!-- Card 3: YES POS & Payments -->
                 <div class="eco-card">
-                    <div class="eco-card-top">
-                        <span class="eco-card-badge eco-badge-green" data-i18n="ecoCard3Badge">To'lovlar &amp; POS</span>
-                        <h3 class="eco-card-title" data-i18n="ecoCard3Title">To'lovlar &amp; YES POS</h3>
-                        <p class="eco-card-desc" data-i18n="ecoCard3Desc">Click, Payme, Uzum Bank va kassa apparatlari bilan real-vaqt rejimida to'liq integratsiya</p>
+                    <div class="eco-card-header">
+                        <span class="eco-cat-tag tag-lime" data-i18n="ecoCard3Cat">YES POS · TO'LOVLAR</span>
+                        <h3 class="eco-card-h" data-i18n="ecoCard3H">YES POS<br>&amp; Kassa</h3>
+                        <p class="eco-card-sub" data-i18n="ecoCard3Sub">Click, Payme, Uzum Bank va kassa integratsiyasi</p>
                     </div>
-                    <div class="eco-card-visual">
-                        <div class="eco-pos-stage">
-                            <div class="eco-pos-row active">
-                                <span>Click &amp; Payme</span>
-                                <span class="badge-ok" data-i18n="ecoCard3Payme">Ulangan ✓</span>
+                    <div class="eco-card-stage">
+                        <div class="eco-c3-wrap">
+                            <div class="eco-c3-photo">
+                                <img src="/static/images/showcase/eco_pos_terminal.jpg?v=2026" alt="POS Terminal & Checkout">
                             </div>
-                            <div class="eco-pos-row active">
-                                <span>Uzum Bank &amp; Nasiya</span>
-                                <span class="badge-ok" data-i18n="ecoCard3Uzum">Faol ✓</span>
-                            </div>
-                            <div class="eco-pos-row active">
-                                <span>YES POS Kassa Terminal</span>
-                                <span class="badge-ok" data-i18n="ecoCard3Pos">Sinxron ✓</span>
-                            </div>
-                            <div class="eco-receipt-card">
-                                <div class="eco-receipt-header">
-                                    <span data-i18n="ecoReceiptNum">Buyurtma #SB-1049</span>
-                                    <span style="color: #16a34a; font-weight: 800;" data-i18n="ecoCard3Badge2">0% Yashirin to'lov</span>
+                            <div class="eco-c3-badges">
+                                <div class="eco-pos-pill">
+                                    <span>Click &amp; Payme</span>
+                                    <span class="ok-lime" data-i18n="ecoCard3Payme">Ulangan ✓</span>
                                 </div>
-                                <div class="eco-receipt-sum" data-i18n="ecoReceiptPaid">113 000 UZS · To'landi ✅</div>
+                                <div class="eco-pos-pill">
+                                    <span>Uzum Bank &amp; Nasiya</span>
+                                    <span class="ok-lime" data-i18n="ecoCard3Uzum">Faol ✓</span>
+                                </div>
+                            </div>
+                            <div class="eco-c3-receipt">
+                                <div class="eco-rec-left">
+                                    <span data-i18n="ecoCard3RecNum">Buyurtma #SB-1049</span>
+                                    <div style="color: #64748b; font-size: 9px;" data-i18n="ecoCard3RecFee">0% Komissiya</div>
+                                </div>
+                                <div class="eco-rec-sum" data-i18n="ecoCard3RecPaid">113 000 UZS · To'landi ✅</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card 4: Logistics & Delivery -->
+                <!-- Card 4: Fast Delivery & Couriers -->
                 <div class="eco-card">
-                    <div class="eco-card-top">
-                        <span class="eco-card-badge eco-badge-purple" data-i18n="ecoCard4Badge">Logistika</span>
-                        <h3 class="eco-card-title" data-i18n="ecoCard4Title">Yetkazib berish &amp; kuryerlar</h3>
-                        <p class="eco-card-desc" data-i18n="ecoCard4Desc">Yandex Go va Uzum Tezkor bilan integratsiya: buyurtmalarni jonli xaritada kuzatish</p>
+                    <div class="eco-card-header">
+                        <span class="eco-cat-tag tag-purple" data-i18n="ecoCard4Cat">LOGISTIKA · DOSTAVKA</span>
+                        <h3 class="eco-card-h" data-i18n="ecoCard4H">Tezkor<br>Yetkazish</h3>
+                        <p class="eco-card-sub" data-i18n="ecoCard4Sub">Yandex Go va Uzum Tezkor bilan jonli kuzatuv</p>
                     </div>
-                    <div class="eco-card-visual">
-                        <div class="eco-logistics-stage">
-                            <div class="eco-tracker-card">
-                                <div class="eco-tracker-top">
-                                    <span data-i18n="ecoCard4Courier">Kuryer: Farxod K.</span>
-                                    <span class="eco-tracker-eta" data-i18n="ecoCard4Time">8 min qoldi</span>
+                    <div class="eco-card-stage">
+                        <div class="eco-c4-wrap">
+                            <div class="eco-c4-photo">
+                                <img src="/static/images/showcase/eco_courier.jpg?v=2026" alt="Express Delivery Courier">
+                            </div>
+                            <div class="eco-c4-tracker">
+                                <div class="eco-track-row">
+                                    <span data-i18n="ecoCard4Courier">🛵 Kuryer: Farxod K.</span>
+                                    <span class="eco-track-eta" data-i18n="ecoCard4Time">8 min qoldi</span>
                                 </div>
-                                <div class="eco-route-bar">
-                                    <div class="eco-route-fill"></div>
+                                <div class="eco-track-bar">
+                                    <div class="eco-track-fill"></div>
                                 </div>
-                                <div class="eco-route-points">
+                                <div class="eco-track-sub">
                                     <span>Shop 655</span>
-                                    <span data-i18n="ecoCard4Route">Manzilga yo'lda 🛵</span>
+                                    <span data-i18n="ecoCard4Route">Mijozga yo'lda 🛵</span>
                                 </div>
                             </div>
-                            <div class="eco-speed-pill">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                <span data-i18n="ecoCard4Speed">25-35 min · Tezkor yetkazish</span>
+                            <div class="eco-c4-btns">
+                                <div class="eco-c4-pill" data-i18n="ecoCard4Btn1">⚡ 25-35 min</div>
+                                <div class="eco-c4-pill" data-i18n="ecoCard4Btn2">📍 Jonli GPS</div>
+                                <div class="eco-c4-pill" data-i18n="ecoCard4Btn3">🚀 Tezkor</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-
 
         <!-- Features Section -->
         <section class="content-section section-shell wow-reveal" id="features">
@@ -5725,10 +5755,36 @@ h1 span {
             mobF4Desc: "Мгновенный поиск любого блюда или товара в один клик",
                         mobStartBtn: "Начать бесплатно",
 
-            ecoKicker: "Экосистема StoreBox 2.0",
-            ecoTitle: "Одна платформа — <span>Безграничные возможности</span>",
-            ecoLead: "Telegram WebApp, умный AI-ассистент, платежные системы и автоматизированная касса в единой панели",
-            ecoDesc: "Всё готово для масштабных продаж в интернете и офлайн",
+            ecoKicker: "ЭКОСИСТЕМА STOREBOX 2.0",
+            ecoTitle: "Одна платформа — Безграничные возможности",
+            ecoLead: "Telegram WebApp, умный AI-ассистент, платежные системы и автоматизированная касса",
+            ecoCard1Cat: "TELEGRAM WEBAPP",
+            ecoCard1H: "Магазин<br>в 1 клик",
+            ecoCard1Sub: "Прямые заказы через Telegram-бота",
+            ecoCard1Pill: "4.9 · 450+ магазинов",
+            ecoCard2Cat: "ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ · AI",
+            ecoCard2H: "Умный AI<br>Ассистент",
+            ecoCard2Sub: "Создание описаний блюд и фото",
+            ecoCard2Prompt: "\"Напиши описание для стейка\"",
+            ecoCard2Done: "⚡ Готово за 0.8 сек",
+            ecoCard3Cat: "YES POS · ПЛАТЕЖИ",
+            ecoCard3H: "YES POS<br>и Касса",
+            ecoCard3Sub: "Click, Payme, Uzum Bank и касса в реальном времени",
+            ecoCard3Payme: "Подключено ✓",
+            ecoCard3Uzum: "Активно ✓",
+            ecoCard3Pos: "YES POS Терминал ✓",
+            ecoCard3RecNum: "Заказ #SB-1049",
+            ecoCard3RecFee: "0% Комиссий",
+            ecoCard3RecPaid: "113 000 сум · Оплачено ✅",
+            ecoCard4Cat: "ЛОГИСТИКА · ДОСТАВКА",
+            ecoCard4H: "Быстрая<br>Доставка",
+            ecoCard4Sub: "Интеграция с Yandex Go и Uzum Tezkor с живым трекингом",
+            ecoCard4Courier: "🛵 Курьер: Фарход К.",
+            ecoCard4Time: "Осталось 8 мин",
+            ecoCard4Route: "В пути к клиенту 🛵",
+            ecoCard4Btn1: "⚡ 25-35 мин",
+            ecoCard4Btn2: "📍 Живой GPS",
+            ecoCard4Btn3: "🚀 Быстро",
 
             ecoCard1Badge: "Telegram WebApp",
             ecoCard1Title: "Подключение<br>в 1 клик",
@@ -6032,10 +6088,36 @@ h1 span {
             mobF4Desc: "Kerakli taomni tezda toping",
                         mobStartBtn: "Boshlash",
 
-            ecoKicker: "StoreBox 2.0 Ekotizimi",
-            ecoTitle: "Bitta platforma — <span>Cheksiz imkoniyatlar</span>",
+            ecoKicker: "STOREBOX 2.0 EKOTIZIMI",
+            ecoTitle: "Bitta platforma — Cheksiz imkoniyatlar",
             ecoLead: "Telegram WebApp, aqlli AI yordamchi, to'lov tizimlari va avtomatlashtirilgan kassa bitta boshqaruv panelida",
-            ecoDesc: "Onlayn va oflayn savdoni kengaytirish uchun to'liq tayyor yechim",
+            ecoCard1Cat: "TELEGRAM WEBAPP",
+            ecoCard1H: "Do'kon<br>1 bosishda",
+            ecoCard1Sub: "Telegram Bot orqali to'g'ridan-to'g'ri buyurtma",
+            ecoCard1Pill: "4.9 · 450+ do'konlar",
+            ecoCard2Cat: "SUN'IY INTELLEKT · AI",
+            ecoCard2H: "Aqlli AI<br>Assistent",
+            ecoCard2Sub: "Taom tavsifi va fotosuratlarni yaratish",
+            ecoCard2Prompt: "\"Steyk tavsifini yozib ber\"",
+            ecoCard2Done: "⚡ 0.8s da tayyorlandi",
+            ecoCard3Cat: "YES POS · TO'LOVLAR",
+            ecoCard3H: "YES POS<br>&amp; Kassa",
+            ecoCard3Sub: "Click, Payme, Uzum Bank va kassa integratsiyasi",
+            ecoCard3Payme: "Ulangan ✓",
+            ecoCard3Uzum: "Faol ✓",
+            ecoCard3Pos: "YES POS Terminal ✓",
+            ecoCard3RecNum: "Buyurtma #SB-1049",
+            ecoCard3RecFee: "0% Komissiya",
+            ecoCard3RecPaid: "113 000 UZS · To'landi ✅",
+            ecoCard4Cat: "LOGISTIKA · DOSTAVKA",
+            ecoCard4H: "Tezkor<br>Yetkazish",
+            ecoCard4Sub: "Yandex Go va Uzum Tezkor bilan jonli kuzatuv",
+            ecoCard4Courier: "🛵 Kuryer: Farxod K.",
+            ecoCard4Time: "8 min qoldi",
+            ecoCard4Route: "Mijozga yo'lda 🛵",
+            ecoCard4Btn1: "⚡ 25-35 min",
+            ecoCard4Btn2: "📍 Jonli GPS",
+            ecoCard4Btn3: "🚀 Tezkor",
 
             ecoCard1Badge: "Telegram WebApp",
             ecoCard1Title: "1 bosishda<br>ulanish",
