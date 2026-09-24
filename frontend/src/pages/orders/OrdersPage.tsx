@@ -74,6 +74,25 @@ export const OrdersPage: React.FC = () => {
   const counts = data?.counts || { all: 0, new: 0, processing: 0, ready: 0, in_delivery: 0, history: 0 };
   const orders = data?.orders || [];
 
+  const getOrderStatusLabel = (st: string) => {
+    switch (st?.toUpperCase()) {
+      case "NEW":
+        return t("status_new") || "Yangi";
+      case "PROCESSING":
+        return t("status_accepted") || "Jarayonda";
+      case "READY":
+        return t("status_ready") || "Tayyor";
+      case "IN_DELIVERY":
+        return t("status_delivering") || "Yo`lda";
+      case "COMPLETED":
+        return t("status_completed") || "Bajarildi";
+      case "CANCELLED":
+        return t("status_cancelled") || "Bekor qilindi";
+      default:
+        return st;
+    }
+  };
+
   const tabs = [
     { id: "ALL", label: t("status_all") || "Barchasi", count: counts.all },
     { id: "NEW", label: t("status_new") || "Yangi", count: counts.new, badgeColor: "bg-amber-100 text-amber-800" },
@@ -191,7 +210,7 @@ export const OrdersPage: React.FC = () => {
                   </td>
                   <td className="py-3.5 px-4">
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                      {order.status_display}
+                      {getOrderStatusLabel(order.status) || order.status_display}
                     </span>
                   </td>
                   <td className="py-3.5 px-4 text-right">
@@ -254,7 +273,7 @@ export const OrdersPage: React.FC = () => {
                       : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
                   }`}
                 >
-                  {selectedOrder.status_display}
+                  {getOrderStatusLabel(selectedOrder.status) || selectedOrder.status_display}
                 </span>
                 {selectedOrder.source === "TMA" ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">

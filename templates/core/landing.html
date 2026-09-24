@@ -2541,10 +2541,11 @@ h1 span {
 }
 .pricing-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 22px;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1080px;
+    margin: 28px auto 0;
+    gap: 26px;
     align-items: stretch;
-    margin-top: 24px;
     position: relative;
 }
 .pricing-grid::before {
@@ -2562,12 +2563,13 @@ h1 span {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
     z-index: 1;
 }
 .pricing-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 22px 48px rgba(160, 175, 200, 0.22), inset 0 1.5px 1px #ffffff;
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 26px 52px rgba(33, 27, 46, 0.18), inset 0 1.5px 1px #ffffff;
+    border-color: #211b2e;
 }
 .pricing-card.is-popular {
     background: rgba(255, 255, 255, 0.95);
@@ -2577,8 +2579,8 @@ h1 span {
     z-index: 2;
 }
 .pricing-card.is-popular:hover {
-    transform: scale(1.04) translateY(-6px);
-    box-shadow: 0 30px 65px rgba(33, 27, 46, 0.22), 0 0 0 1px rgba(33, 27, 46, 0.18), inset 0 1.5px 1.5px #ffffff;
+    transform: scale(1.05) translateY(-8px);
+    box-shadow: 0 34px 72px rgba(33, 27, 46, 0.25), 0 0 0 1px rgba(33, 27, 46, 0.2), inset 0 1.5px 1.5px #ffffff;
 }
 .popular-ribbon {
     position: absolute;
@@ -5877,9 +5879,13 @@ h1 span {
                 <p data-i18n="pricingLead">Выберите подходящий тариф для вашего бизнеса. Никаких скрытых комиссий — платите только фиксированную стоимость.</p>
                 
                 <div class="billing-cycle-switch" role="group" aria-label="Период оплаты">
-                    <button class="cycle-btn is-active" type="button" data-cycle="monthly" data-i18n="cycleMonthly">Ежемесячно</button>
+                    <button class="cycle-btn is-active" type="button" data-cycle="monthly" data-i18n="cycleMonthly">Месяц</button>
+                    <button class="cycle-btn" type="button" data-cycle="semiannual">
+                        <span data-i18n="cycleSemiannual">6 месяцев</span>
+                        <span class="cycle-badge">-10%</span>
+                    </button>
                     <button class="cycle-btn" type="button" data-cycle="annual">
-                        <span data-i18n="cycleAnnual">Ежегодно</span>
+                        <span data-i18n="cycleAnnual">12 месяцев</span>
                         <span class="cycle-badge">-20%</span>
                     </button>
                 </div>
@@ -5889,96 +5895,73 @@ h1 span {
                 <!-- 1. Start Plan -->
                 <div class="pricing-card">
                     <div>
-                        <h3 class="plan-tier-title" data-i18n="planStartTitle">Старт</h3>
-                        <p class="plan-tier-desc" data-i18n="planStartDesc">Для начинающих предпринимателей и первых онлайн-продаж</p>
+                        <h3 class="plan-tier-title" data-i18n="planStartTitle">Start</h3>
+                        <p class="plan-tier-desc" data-i18n="planStartDesc">Для растущих магазинов и активных брендов</p>
                         <div class="plan-price-box">
                             <div>
-                                <span class="price-val" data-plan-price="start">99 000</span>
+                                <span class="price-val" data-plan-price="start">199 000</span>
                                 <span class="price-curr">UZS</span>
                             </div>
-                            <span class="price-period" data-plan-period="start">в месяц (3 300 / день)</span>
+                            <span class="price-period" data-plan-period="start">в месяц (6 633 / день)</span>
                         </div>
                         <ul class="pricing-features">
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF1">До 100 товаров в каталоге</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF2">Субдомен .storebox.uz</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF3">Telegram-бот уведомления</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF4">Адаптивная витрина и корзина</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF5">QR-код визитка магазина</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF1">До 1 000 товаров в каталоге</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF2">Telegram WebApp бот-магазин</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF3">Подключение собственного домена</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF4">Маркетинг: промокоды и рассылки</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF5">AI-дизайн и темы оформления</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF6">Синхронизация с рабочей группой</span></li>
                         </ul>
                     </div>
-                    <a class="button button-ghost pricing-btn" href="/register/?plan=start" data-i18n="planSelectStart">Выбрать Старт</a>
+                    <a class="button button-ghost pricing-btn" href="/register/?plan=start" data-i18n="planSelectStart">Выбрать Start</a>
                 </div>
 
-                <!-- 2. Standard Plan (Popular) -->
+                <!-- 2. Standard Plan (Popular / Best Choice) -->
                 <div class="pricing-card is-popular">
                     <span class="popular-ribbon" data-i18n="planPopularBadge">Хит продаж</span>
                     <div>
-                        <h3 class="plan-tier-title" data-i18n="planStandardTitle">Стандарт</h3>
-                        <p class="plan-tier-desc" data-i18n="planStandardDesc">Для растущих магазинов и активных брендов</p>
+                        <h3 class="plan-tier-title" data-i18n="planStandardTitle">Standard</h3>
+                        <p class="plan-tier-desc" data-i18n="planStandardDesc">Для зрелого бизнеса, ресторанов и торговых сетей</p>
                         <div class="plan-price-box">
                             <div>
-                                <span class="price-val" data-plan-price="standard">199 000</span>
+                                <span class="price-val" data-plan-price="standard">399 000</span>
                                 <span class="price-curr">UZS</span>
                             </div>
-                            <span class="price-period" data-plan-period="standard">в месяц (6 633 / день)</span>
+                            <span class="price-period" data-plan-period="standard">в месяц (13 300 / день)</span>
                         </div>
                         <ul class="pricing-features">
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF1">До 1 000 товаров в каталоге</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF2">Telegram WebApp бот-магазин</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF3">Подключение собственного домена</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF4">Маркетинг: промокоды и рассылки</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF5">AI-дизайн и темы оформления</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF6">Синхронизация с рабочей группой</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF1">Безлимитное количество товаров</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF2">Интеграция с YES POS кассой</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF3">Импорт товаров из постов соцсетей</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF4">QR-меню для столиков заведения</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF5">Расширенная финансовая аналитика</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF6">Команда до 5 сотрудников</span></li>
                         </ul>
                     </div>
-                    <a class="button button-primary pricing-btn" href="/register/?plan=standard" data-i18n="planSelectStandard">Выбрать Стандарт</a>
+                    <a class="button button-primary pricing-btn" href="/register/?plan=standard" data-i18n="planSelectStandard">Выбрать Standard</a>
                 </div>
 
                 <!-- 3. Pro Plan -->
                 <div class="pricing-card">
                     <div>
-                        <h3 class="plan-tier-title" data-i18n="planProTitle">Про</h3>
-                        <p class="plan-tier-desc" data-i18n="planProDesc">Для зрелого бизнеса, ресторанов и торговых сетей</p>
+                        <h3 class="plan-tier-title" data-i18n="planProTitle">Pro</h3>
+                        <p class="plan-tier-desc" data-i18n="planProDesc">Для крупных сетей и персональных интеграций</p>
                         <div class="plan-price-box">
                             <div>
-                                <span class="price-val" data-plan-price="pro">399 000</span>
+                                <span class="price-val" data-plan-price="pro">799 000</span>
                                 <span class="price-curr">UZS</span>
                             </div>
-                            <span class="price-period" data-plan-period="pro">в месяц (13 300 / день)</span>
+                            <span class="price-period" data-plan-period="pro">в месяц (26 633 / день)</span>
                         </div>
                         <ul class="pricing-features">
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF1">Безлимитное количество товаров</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF2">Интеграция с YES POS кассой</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF3">Импорт товаров из постов соцсетей</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF4">QR-меню для столиков заведения</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF5">Расширенная финансовая аналитика</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF6">Команда до 5 сотрудников</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF1">Полный безлимит всех функций</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF2">Мультифилиальность и сеть точек</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF3">Индивидуальные интеграции по API</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF4">Выделенный персональный менеджер</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF5">SLA 99.9% и обучение персонала</span></li>
                         </ul>
                     </div>
-                    <a class="button button-ghost pricing-btn" href="/register/?plan=pro" data-i18n="planSelectPro">Выбрать Про</a>
-                </div>
-
-                <!-- 4. Enterprise Plan -->
-                <div class="pricing-card">
-                    <div>
-                        <h3 class="plan-tier-title" data-i18n="planEnterpriseTitle">Бизнес</h3>
-                        <p class="plan-tier-desc" data-i18n="planEnterpriseDesc">Для крупных сетей и персональных интеграций</p>
-                        <div class="plan-price-box">
-                            <div>
-                                <span class="price-val" data-plan-price="enterprise">799 000</span>
-                                <span class="price-curr">UZS</span>
-                            </div>
-                            <span class="price-period" data-plan-period="enterprise">в месяц (26 633 / день)</span>
-                        </div>
-                        <ul class="pricing-features">
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planEnterpriseF1">Полный безлимит всех функций</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planEnterpriseF2">Мультифилиальность и сеть точек</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planEnterpriseF3">Индивидуальные интеграции по API</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planEnterpriseF4">Выделенный персональный менеджер</span></li>
-                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planEnterpriseF5">SLA 99.9% и обучение персонала</span></li>
-                        </ul>
-                    </div>
-                    <a class="button button-ghost pricing-btn" href="/register/?plan=enterprise" data-i18n="planSelectEnterprise">Выбрать Бизнес</a>
+                    <a class="button button-ghost pricing-btn" href="/register/?plan=pro" data-i18n="planSelectPro">Выбрать Pro</a>
                 </div>
             </div>
         </section>
@@ -6351,43 +6334,44 @@ h1 span {
             pricingKicker: "Тарифы платформы",
             pricingTitle: "Прозрачные цены для любого масштаба",
             pricingLead: "Выберите подходящий тариф для вашего бизнеса. Никаких скрытых комиссий — платите только фиксированную стоимость.",
-            cycleMonthly: "Ежемесячно",
-            cycleAnnual: "Ежегодно",
+            cycleMonthly: "Месяц",
+            cycleSemiannual: "6 месяцев",
+            cycleAnnual: "12 месяцев",
             planPopularBadge: "Хит продаж",
-            planStartTitle: "Старт",
-            planStartDesc: "Для начинающих предпринимателей и первых онлайн-продаж",
-            planStartF1: "До 100 товаров в каталоге",
-            planStartF2: "Субдомен .storebox.uz",
-            planStartF3: "Telegram-бот уведомления",
-            planStartF4: "Адаптивная витрина и корзина",
-            planStartF5: "QR-код визитка магазина",
-            planSelectStart: "Выбрать Старт",
-            planStandardTitle: "Стандарт",
-            planStandardDesc: "Для растущих магазинов и активных брендов",
-            planStandardF1: "До 1 000 товаров в каталоге",
-            planStandardF2: "Telegram WebApp бот-магазин",
-            planStandardF3: "Подключение собственного домена",
-            planStandardF4: "Маркетинг: промокоды и рассылки",
-            planStandardF5: "AI-дизайн и темы оформления",
-            planStandardF6: "Синхронизация с рабочей группой",
-            planSelectStandard: "Выбрать Стандарт",
-            planProTitle: "Про",
-            planProDesc: "Для зрелого бизнеса, ресторанов и торговых сетей",
-            planProF1: "Безлимитное количество товаров",
-            planProF2: "Интеграция с YES POS кассой",
-            planProF3: "Импорт товаров из постов соцсетей",
-            planProF4: "QR-меню для столиков заведения",
-            planProF5: "Расширенная финансовая аналитика",
-            planProF6: "Команда до 5 сотрудников",
-            planSelectPro: "Выбрать Про",
-            planEnterpriseTitle: "Бизнес",
+            planStartTitle: "Start",
+            planStartDesc: "Для растущих магазинов и активных брендов",
+            planStartF1: "До 1 000 товаров в каталоге",
+            planStartF2: "Telegram WebApp бот-магазин",
+            planStartF3: "Подключение собственного домена",
+            planStartF4: "Маркетинг: промокоды и рассылки",
+            planStartF5: "AI-дизайн и темы оформления",
+            planStartF6: "Синхронизация с рабочей группой",
+            planSelectStart: "Выбрать Start",
+            planStandardTitle: "Standard",
+            planStandardDesc: "Для зрелого бизнеса, ресторанов и торговых сетей",
+            planStandardF1: "Безлимитное количество товаров",
+            planStandardF2: "Интеграция с YES POS кассой",
+            planStandardF3: "Импорт товаров из постов соцсетей",
+            planStandardF4: "QR-меню для столиков заведения",
+            planStandardF5: "Расширенная финансовая аналитика",
+            planStandardF6: "Команда до 5 сотрудников",
+            planSelectStandard: "Выбрать Standard",
+            planProTitle: "Pro",
+            planProDesc: "Для крупных сетей и персональных интеграций",
+            planProF1: "Полный безлимит всех функций",
+            planProF2: "Мультифилиальность и сеть точек",
+            planProF3: "Индивидуальные интеграции по API",
+            planProF4: "Выделенный персональный менеджер",
+            planProF5: "SLA 99.9% и обучение персонала",
+            planSelectPro: "Выбрать Pro",
+            planEnterpriseTitle: "Enterprise",
             planEnterpriseDesc: "Для крупных сетей и персональных интеграций",
             planEnterpriseF1: "Полный безлимит всех функций",
             planEnterpriseF2: "Мультифилиальность и сеть точек",
             planEnterpriseF3: "Индивидуальные интеграции по API",
             planEnterpriseF4: "Выделенный персональный менеджер",
             planEnterpriseF5: "SLA 99.9% и обучение персонала",
-            planSelectEnterprise: "Выбрать Бизнес",
+            planSelectEnterprise: "Выбрать Enterprise",
             faqTitle: "Частые вопросы",
             faqOneQ: "StoreBox — это один общий магазин?",
             faqOneA: "Нет. StoreBox — SaaS-платформа: каждый клиент получает свой магазин, каталог, настройки и доступ для команды.",
@@ -6702,43 +6686,44 @@ h1 span {
             pricingKicker: "Platforma tariflari",
             pricingTitle: "Har qanday biznes miqyosi uchun shaffof narxlar",
             pricingLead: "Biznesingiz uchun eng qulay tarifni tanlang. Hech qanday yashirin komissiyalarsiz — faqat belgilangan narxda to'lang.",
-            cycleMonthly: "Oylik",
-            cycleAnnual: "Yillik",
+            cycleMonthly: "Oy",
+            cycleSemiannual: "6 oy",
+            cycleAnnual: "12 oy",
             planPopularBadge: "Eng ommabop",
             planStartTitle: "Start",
-            planStartDesc: "Boshlang'ich tadbirkorlar va ilk onlayn sotuvlar uchun",
-            planStartF1: "Katalogda 100 tagacha mahsulot",
-            planStartF2: ".storebox.uz subdomeni",
-            planStartF3: "Telegram-bot bildirishnomalari",
-            planStartF4: "Moslashuvchan vitrina va savat",
-            planStartF5: "Do'konning QR-kod vizitkasi",
+            planStartDesc: "O'sayotgan do'konlar va faol brendlar uchun",
+            planStartF1: "Katalogda 1 000 tagacha mahsulot",
+            planStartF2: "Telegram WebApp bot-do'kon",
+            planStartF3: "Shaxsiy domenni ulash",
+            planStartF4: "Marketing: promokodlar va xabarnomalar",
+            planStartF5: "AI-dizayn va mavzular",
+            planStartF6: "Ishchi guruh bilan sinxronizatsiya",
             planSelectStart: "Start tarifini tanlash",
-            planStandardTitle: "Standart",
-            planStandardDesc: "O'sayotgan do'konlar va faol brendlar uchun",
-            planStandardF1: "Katalogda 1 000 tagacha mahsulot",
-            planStandardF2: "Telegram WebApp bot-do'kon",
-            planStandardF3: "Shaxsiy domenni ulash",
-            planStandardF4: "Marketing: promokodlar va xabarnomalar",
-            planStandardF5: "AI-dizayn va mavzular",
-            planStandardF6: "Ishchi guruh bilan sinxronizatsiya",
-            planSelectStandard: "Standart tarifini tanlash",
+            planStandardTitle: "Standard",
+            planStandardDesc: "Katta biznes, restoranlar va savdo tarmoqlari uchun",
+            planStandardF1: "Cheksiz mahsulotlar soni",
+            planStandardF2: "YES POS kassasi bilan integratsiya",
+            planStandardF3: "Ijtimoiy tarmoq postlaridan import",
+            planStandardF4: "Stollar uchun QR-menyu",
+            planStandardF5: "Kengaytirilgan moliyaviy analitika",
+            planStandardF6: "5 nafargacha xodimlar jamoasi",
+            planSelectStandard: "Standard tarifini tanlash",
             planProTitle: "Pro",
-            planProDesc: "Katta biznes, restoranlar va savdo tarmoqlari uchun",
-            planProF1: "Cheksiz mahsulotlar soni",
-            planProF2: "YES POS kassasi bilan integratsiya",
-            planProF3: "Ijtimoiy tarmoq postlaridan import",
-            planProF4: "Stollar uchun QR-menyu",
-            planProF5: "Kengaytirilgan moliyaviy analitika",
-            planProF6: "5 nafargacha xodimlar jamoasi",
+            planProDesc: "Katta tarmoqlar va maxsus integratsiyalar uchun",
+            planProF1: "Barcha funksiyalar to'liq cheksiz",
+            planProF2: "Ko'p filialli tarmoq boshqaruvi",
+            planProF3: "API orqali maxsus integratsiyalar",
+            planProF4: "Biriktirilgan shaxsiy menejer",
+            planProF5: "SLA 99.9% va xodimlarni o'qitish",
             planSelectPro: "Pro tarifini tanlash",
-            planEnterpriseTitle: "Biznes",
+            planEnterpriseTitle: "Enterprise",
             planEnterpriseDesc: "Katta tarmoqlar va maxsus integratsiyalar uchun",
             planEnterpriseF1: "Barcha funksiyalar to'liq cheksiz",
             planEnterpriseF2: "Ko'p filialli tarmoq boshqaruvi",
             planEnterpriseF3: "API orqali maxsus integratsiyalar",
             planEnterpriseF4: "Biriktirilgan shaxsiy menejer",
             planEnterpriseF5: "SLA 99.9% va xodimlarni o'qitish",
-            planSelectEnterprise: "Biznes tarifini tanlash",
+            planSelectEnterprise: "Enterprise tarifini tanlash",
             faqTitle: "Ko‘p so‘raladigan savollar",
             faqOneQ: "StoreBox bitta umumiy do‘konmi?",
             faqOneA: "Yo‘q. StoreBox — SaaS platforma: har bir mijoz o‘z do‘koni, katalogi, sozlamalari va jamoa ruxsatlarini oladi.",
@@ -6763,16 +6748,22 @@ h1 span {
     // =========================================================
     const planPrices = {
         monthly: {
-            start: "99 000",
-            standard: "199 000",
-            pro: "399 000",
+            start: "199 000",
+            standard: "399 000",
+            pro: "799 000",
             enterprise: "799 000"
         },
+        semiannual: {
+            start: "179 100",
+            standard: "359 100",
+            pro: "719 100",
+            enterprise: "719 100"
+        },
         annual: {
-            start: "79 000",
-            standard: "159 000",
-            pro: "319 000",
-            enterprise: "639 000"
+            start: "159 200",
+            standard: "319 200",
+            pro: "639 200",
+            enterprise: "639 200"
         }
     };
 
@@ -6783,12 +6774,17 @@ h1 span {
         document.querySelectorAll("[data-plan-period]").forEach((el) => {
             const plan = el.dataset.planPeriod;
             if (currentCycle === "monthly") {
-                if (plan === "start") el.textContent = isUz ? "oyiga (3 300 / kun)" : "в месяц (3 300 / день)";
-                if (plan === "standard") el.textContent = isUz ? "oyiga (6 633 / kun)" : "в месяц (6 633 / день)";
-                if (plan === "pro") el.textContent = isUz ? "oyiga (13 300 / kun)" : "в месяц (13 300 / день)";
-                if (plan === "enterprise") el.textContent = isUz ? "oyiga (26 633 / kun)" : "в месяц (26 633 / день)";
+                if (plan === "start") el.textContent = isUz ? "oyiga (6 633 / kun)" : "в месяц (6 633 / день)";
+                if (plan === "standard") el.textContent = isUz ? "oyiga (13 300 / kun)" : "в месяц (13 300 / день)";
+                if (plan === "pro" || plan === "enterprise") el.textContent = isUz ? "oyiga (26 633 / kun)" : "в месяц (26 633 / день)";
+            } else if (currentCycle === "semiannual") {
+                if (plan === "start") el.textContent = isUz ? "oyiga (6 oylik to'lovda -10%)" : "в месяц (при оплате за 6 мес -10%)";
+                if (plan === "standard") el.textContent = isUz ? "oyiga (6 oylik to'lovda -10%)" : "в месяц (при оплате за 6 мес -10%)";
+                if (plan === "pro" || plan === "enterprise") el.textContent = isUz ? "oyiga (6 oylik to'lovda -10%)" : "в месяц (при оплате за 6 мес -10%)";
             } else {
-                el.textContent = isUz ? "oyiga yillik to'lovda (-20%)" : "в месяц при оплате за год (-20%)";
+                if (plan === "start") el.textContent = isUz ? "oyiga (12 oylik to'lovda -20%)" : "в месяц (при оплате за 12 мес -20%)";
+                if (plan === "standard") el.textContent = isUz ? "oyiga (12 oylik to'lovda -20%)" : "в месяц (при оплате за 12 мес -20%)";
+                if (plan === "pro" || plan === "enterprise") el.textContent = isUz ? "oyiga (12 oylik to'lovda -20%)" : "в месяц (при оплате за 12 мес -20%)";
             }
         });
     }

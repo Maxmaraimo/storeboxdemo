@@ -598,8 +598,8 @@
                 </div>
                 <h4 class="font-black text-sm text-slate-900">Tilni tanlash</h4>
                 <div class="flex items-center gap-2 pt-1">
-                    <a href="?lang=uz" class="px-3 py-1.5 rounded-xl border text-xs font-bold {% if current_lang == 'uz' %}bg-brand text-white border-brand{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">O'zbekcha</a>
-                    <a href="?lang=ru" class="px-3 py-1.5 rounded-xl border text-xs font-bold {% if current_lang == 'ru' %}bg-brand text-white border-brand{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">Русский</a>
+                    <a href="?lang=uz" @click.prevent="switchStoreLanguage('uz', $event)" class="px-3 py-1.5 rounded-xl border text-xs font-bold {% if current_lang == 'uz' %}bg-brand text-white border-brand{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">O'zbekcha</a>
+                    <a href="?lang=ru" @click.prevent="switchStoreLanguage('ru', $event)" class="px-3 py-1.5 rounded-xl border text-xs font-bold {% if current_lang == 'ru' %}bg-brand text-white border-brand{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">Русский</a>
                 </div>
             </div>
         </div>

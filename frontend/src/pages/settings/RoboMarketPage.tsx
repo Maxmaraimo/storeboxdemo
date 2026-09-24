@@ -5,10 +5,30 @@ import { useAuth } from "../../context/AuthContext";
 export const RoboMarketPage: React.FC = () => {
   const { t } = useAuth();
   const apps = [
-    { id: 1, name: "YES POS Sinxronizatsiya", desc: "Tovarlar va qoldiqlarni real vaqtda yangilash", installed: true },
-    { id: 2, name: "AI Tavsif Generator", desc: "Sun'iy intellekt orqali mahsulot tavsiflarini yozish", installed: true },
-    { id: 3, name: "Yandex Go Delivery", desc: "Kuryerlarni avtomatik chaqirish integratsiyasi", installed: false },
-    { id: 4, name: "Instagram Shop Sync", desc: "Instagram direct orqali avtomatik sotuvlar", installed: false },
+    {
+      id: 1,
+      name: t("market_yespos_title") || "YES POS Sinxronizatsiya",
+      desc: t("market_yespos_desc") || "Tovarlar va qoldiqlarni real vaqtda yangilash",
+      installed: true,
+    },
+    {
+      id: 2,
+      name: t("market_ai_title") || "AI Tavsif Generator",
+      desc: t("market_ai_desc") || "Sun'iy intellekt orqali mahsulot tavsiflarini yozish",
+      installed: true,
+    },
+    {
+      id: 3,
+      name: t("market_yandex_title") || "Yandex Go Delivery",
+      desc: t("market_yandex_desc") || "Kuryerlarni avtomatik chaqirish integratsiyasi",
+      installed: false,
+    },
+    {
+      id: 4,
+      name: t("market_insta_title") || "Instagram Shop Sync",
+      desc: t("market_insta_desc") || "Instagram direct orqali avtomatik sotuvlar",
+      installed: false,
+    },
   ];
 
   return (

@@ -195,12 +195,18 @@ def dashboard_summary_view(request):
         except (ValueError, TypeError):
             pass
 
+    today_date = timezone.localdate(now)
+    store_created_date = store.created_at.date() if store.created_at else timezone.datetime(2026, 1, 1).date()
+
     if custom_start and custom_end:
         try:
             s_date = timezone.datetime.strptime(custom_start, "%Y-%m-%d").date()
             e_date = timezone.datetime.strptime(custom_end, "%Y-%m-%d").date()
+            # Enforce business rules: cannot pick before store inception or after today
+            s_date = max(s_date, store_created_date)
+            e_date = min(e_date, today_date)
             if s_date > e_date:
-                s_date, e_date = e_date, s_date
+                s_date = e_date
             start_date = timezone.make_aware(timezone.datetime.combine(s_date, timezone.datetime.min.time()))
             end_date = timezone.make_aware(timezone.datetime.combine(e_date, timezone.datetime.max.time()))
             period = "custom"
@@ -290,8 +296,8 @@ def dashboard_summary_view(request):
             day_date = (now - timezone.timedelta(days=i)).date()
             label = day_date.strftime("%d.%m")
             rev = store_orders.filter(
-                created_at__date__gte=day_date,
-                created_at__date__lt=day_date + timezone.timedelta(days=3)
+                created_at__gte=day_date,
+                created_at__lt=day_date + timezone.timedelta(days=3)
             ).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(tot=Sum("total_amount"))["tot"] or 0
             chart_labels.append(label)
             chart_revenue.append(float(rev))
@@ -300,25 +306,103 @@ def dashboard_summary_view(request):
             day_date = (now - timezone.timedelta(days=i * 30)).date()
             label = day_date.strftime("%m.%y")
             rev = store_orders.filter(
-                created_at__date__gte=day_date,
-                created_at__date__lt=day_date + timezone.timedelta(days=30)
+                created_at__gte=day_date,
+                created_at__lt=day_date + timezone.timedelta(days=30)
             ).exclude(status=Order.OrderStatuses.CANCELLED).aggregate(tot=Sum("total_amount"))["tot"] or 0
             chart_labels.append(label)
             chart_revenue.append(float(rev))
 
     # Top products
-    top_products_qs = OrderItem.objects.filter(order__in=orders_scope).values("product_name").annotate(
+    top_products_qs = OrderItem.objects.filter(
+        order__in=orders_scope.exclude(status=Order.OrderStatuses.CANCELLED)
+    ).values("product_name").annotate(
         sold_qty=Sum("quantity"),
         sold_sum=Sum("total_price")
-    ).order_by("-sold_qty")[:8]
+    ).order_by("-sold_sum")[:8]
     
     if not top_products_qs.exists():
-        top_products_qs = OrderItem.objects.filter(order__store=store).values("product_name").annotate(
+        top_products_qs = OrderItem.objects.filter(
+            order__store=store
+        ).exclude(order__status=Order.OrderStatuses.CANCELLED).values("product_name").annotate(
             sold_qty=Sum("quantity"),
             sold_sum=Sum("total_price")
-        ).order_by("-sold_qty")[:8]
+        ).order_by("-sold_sum")[:8]
 
     top_products = list(top_products_qs)
+
+    # FanRuan ABC-XYZ Sales Analysis
+    all_order_items_qs = OrderItem.objects.filter(
+        order__in=orders_scope.exclude(status=Order.OrderStatuses.CANCELLED)
+    ).values("product_name").annotate(
+        sold_qty=Sum("quantity"),
+        sold_sum=Sum("total_price")
+    ).order_by("-sold_sum")
+
+    if not all_order_items_qs.exists():
+        all_order_items_qs = OrderItem.objects.filter(
+            order__store=store
+        ).exclude(order__status=Order.OrderStatuses.CANCELLED).values("product_name").annotate(
+            sold_qty=Sum("quantity"),
+            sold_sum=Sum("total_price")
+        ).order_by("-sold_sum")
+
+    total_abc_revenue = sum(float(item["sold_sum"] or 0) for item in all_order_items_qs)
+    abc_items = []
+    running_revenue = 0.0
+    group_a_rev, group_a_cnt = 0.0, 0
+    group_b_rev, group_b_cnt = 0.0, 0
+    group_c_rev, group_c_cnt = 0.0, 0
+
+    for idx, item in enumerate(all_order_items_qs):
+        rev = float(item["sold_sum"] or 0)
+        qty = int(item["sold_qty"] or 0)
+        running_revenue += rev
+        share_pct = round((rev / total_abc_revenue * 100), 1) if total_abc_revenue > 0 else 0.0
+        cum_pct = round((running_revenue / total_abc_revenue * 100), 1) if total_abc_revenue > 0 else 0.0
+
+        # FanRuan standard: Group A <= 80%, Group B <= 95%, Group C > 95%
+        if cum_pct <= 80.0 or (idx == 0 and cum_pct > 80.0):
+            grp = "A"
+            group_a_rev += rev
+            group_a_cnt += 1
+        elif cum_pct <= 95.0 or (group_b_cnt == 0 and idx < 3 and total_abc_revenue > 0):
+            grp = "B"
+            group_b_rev += rev
+            group_b_cnt += 1
+        else:
+            grp = "C"
+            group_c_rev += rev
+            group_c_cnt += 1
+
+        abc_items.append({
+            "product_name": item["product_name"],
+            "sold_qty": qty,
+            "sold_sum": rev,
+            "share_pct": share_pct,
+            "cum_pct": cum_pct,
+            "group": grp
+        })
+
+    abc_analysis = {
+        "total_revenue": total_abc_revenue,
+        "total_products": len(abc_items),
+        "group_a": {
+            "count": group_a_cnt,
+            "revenue": group_a_rev,
+            "pct": round((group_a_rev / total_abc_revenue * 100), 1) if total_abc_revenue > 0 else 0.0
+        },
+        "group_b": {
+            "count": group_b_cnt,
+            "revenue": group_b_rev,
+            "pct": round((group_b_rev / total_abc_revenue * 100), 1) if total_abc_revenue > 0 else 0.0
+        },
+        "group_c": {
+            "count": group_c_cnt,
+            "revenue": group_c_rev,
+            "pct": round((group_c_rev / total_abc_revenue * 100), 1) if total_abc_revenue > 0 else 0.0
+        },
+        "items": abc_items[:15]
+    }
 
     # Deliveries map
     map_orders = []
@@ -335,6 +419,10 @@ def dashboard_summary_view(request):
     return Response({
         "metrics": {
             "period": period,
+            "start_date": start_date.strftime("%Y-%m-%d"),
+            "end_date": end_date.strftime("%Y-%m-%d"),
+            "store_inception_date": store_created_date.strftime("%Y-%m-%d"),
+            "today_date": today_date.strftime("%Y-%m-%d"),
             "revenue": float(foyda),
             "sales_sum": float(sotuvlar_summasi),
             "delivery_fee": float(yetkazib_berish_summasi),
@@ -357,6 +445,7 @@ def dashboard_summary_view(request):
             "heatmap": get_dashboard_heatmap_data(store),
         },
         "top_products": top_products,
+        "abc_analysis": abc_analysis,
         "map_orders": map_orders
     })
 

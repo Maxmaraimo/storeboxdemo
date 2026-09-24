@@ -89,6 +89,25 @@ export const OrderDetailPage: React.FC = () => {
     });
   };
 
+  const getOrderStatusLabel = (st: string) => {
+    switch (st?.toUpperCase()) {
+      case "NEW":
+        return t("status_new") || "Yangi";
+      case "PROCESSING":
+        return t("status_accepted") || "Jarayonda";
+      case "READY":
+        return t("status_ready") || "Tayyor";
+      case "IN_DELIVERY":
+        return t("status_delivering") || "Yo`lda";
+      case "COMPLETED":
+        return t("status_completed") || "Bajarildi";
+      case "CANCELLED":
+        return t("status_cancelled") || "Bekor qilindi";
+      default:
+        return st;
+    }
+  };
+
   const handleQuickStatus = (newStatus: string) => {
     if (newStatus === "CANCELLED") {
       if (!confirm("Buyurtmani bekor qilishni tasdiqlaysizmi? Mahsulotlar qoldiqqa qaytariladi.")) {
@@ -164,7 +183,7 @@ export const OrderDetailPage: React.FC = () => {
                 : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
             }`}
           >
-            {order.status_display}
+            {getOrderStatusLabel(order.status) || order.status_display}
           </span>
           {order.source === "TMA" ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
@@ -575,7 +594,7 @@ export const OrderDetailPage: React.FC = () => {
                   onClick={() => handleQuickStatus("CANCELLED")}
                   className="py-2 px-3 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] col-span-2 transition flex items-center justify-center gap-1"
                 >
-                  <XCircle className="w-3.5 h-3.5" /> {t("cancel_return_stock") || "Bekor qilish (Qoldiqni qaytarish)"}
+                  <XCircle className="w-3.5 h-3.5" /> {t("cancel_return_stock_btn") || t("cancel_return_stock") || "Bekor qilish (Qoldiqni qaytarish)"}
                 </button>
               </div>
             </div>

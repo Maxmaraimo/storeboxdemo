@@ -180,21 +180,21 @@ export const Sidebar: React.FC = () => {
     >
       {/* 1. TOP LOGO & STORE SUBDOMAIN */}
       <div className="flex flex-col gap-3 pb-3 border-b border-black/[0.06] dark:border-white/10">
-        <div className="flex items-center justify-between px-1">
-          <Link
-            to="/"
-            className="flex items-center gap-2.5 group overflow-hidden"
-            title="StoreBox Dashboard"
-          >
-            {/* StoreBox Official Brand Cube Logo */}
-            <div className="w-10 h-10 rounded-2xl bg-[#211b2e] flex items-center justify-center shadow-lg shadow-[#211b2e]/25 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
-              <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
-                <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
-                <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
-              </svg>
-            </div>
+        <div className={`flex items-center ${isExpanded ? "justify-between px-1" : "justify-center"}`}>
+          {isExpanded && (
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 group overflow-hidden"
+              title="StoreBox Dashboard"
+            >
+              {/* StoreBox Official Brand Cube Logo */}
+              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] flex items-center justify-center shadow-lg shadow-[#211b2e]/25 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
+                <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
+                  <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
+                  <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
+                </svg>
+              </div>
 
-            {isExpanded && (
               <div className="text-left truncate">
                 <div className="text-[17px] font-[850] tracking-[-0.6px] text-neutral-900 dark:text-white leading-none">
                   StoreBox
@@ -203,14 +203,14 @@ export const Sidebar: React.FC = () => {
                   STUDIO 2.0
                 </div>
               </div>
-            )}
-          </Link>
+            </Link>
+          )}
 
           {/* Collapse/Expand Toggle Button */}
           <button
             type="button"
             onClick={toggleExpand}
-            className="w-7 h-7 rounded-xl flex items-center justify-center text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
             title={isExpanded ? (t("collapse") || "Kichraytirish") : (t("expand") || "Kengaytirish")}
           >
             {isExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}

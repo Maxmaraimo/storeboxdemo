@@ -140,7 +140,7 @@ export const PaymentsPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-xs font-black text-slate-900">Payme</h2>
-                <p className="text-[11px] text-slate-500">Payme ilovasi orqali onlayn to'lov</p>
+                <p className="text-[11px] text-slate-500">{t("payme_desc") || "Payme ilovasi orqali onlayn to'lov"}</p>
               </div>
             </div>
             <button
@@ -178,7 +178,7 @@ export const PaymentsPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-xs font-black text-slate-900">Click Up</h2>
-                <p className="text-[11px] text-slate-500">Click ilovasi yoki USSD orqali to'lov</p>
+                <p className="text-[11px] text-slate-500">{t("click_desc") || "Click ilovasi yoki USSD orqali to'lov"}</p>
               </div>
             </div>
             <button
@@ -225,7 +225,7 @@ export const PaymentsPage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-xs font-black text-slate-900">Uzum Pay</h2>
-              <p className="text-[11px] text-slate-500">Uzum ilovasi orqali QR-kod va tezkor to'lov</p>
+              <p className="text-[11px] text-slate-500">{t("uzum_desc") || "Uzum ilovasi orqali QR-kod va tezkor to'lov"}</p>
             </div>
           </div>
           <button

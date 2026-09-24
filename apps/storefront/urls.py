@@ -7,6 +7,8 @@ urlpatterns = [
     path('', views.storefront_home_view, name='home'),
     path('store/<slug:subdomain>/', views.storefront_home_view, name='store_subdomain'),
     path('api/product/<int:product_id>/', views.product_detail_json_view, name='product_detail_json'),
+    path('cart/', views.cart_page_view, name='cart_page'),
+    path('store/<slug:subdomain>/cart/', views.cart_page_view, name='store_cart_page'),
     path('cart/add/', views.cart_add_view, name='cart_add'),
     path('store/<slug:subdomain>/cart/add/', views.cart_add_view, name='store_cart_add'),
     path('cart/update/', views.cart_update_view, name='cart_update'),
@@ -25,6 +27,8 @@ urlpatterns = [
     # Dedicated Product Detail Page
     path('product/<int:product_id>/', views.product_detail_page_view, name='product_detail'),
     path('store/<slug:subdomain>/product/<int:product_id>/', views.product_detail_page_view, name='store_product_detail'),
+    path('api/product/<int:product_id>/review/', views.submit_product_review_api, name='submit_product_review_api'),
+    path('store/<slug:subdomain>/api/product/<int:product_id>/review/', views.submit_product_review_api, name='store_submit_product_review_api'),
 
     # Wishlist Products API
     path('api/wishlist/', views.wishlist_products_api, name='wishlist_products_api'),

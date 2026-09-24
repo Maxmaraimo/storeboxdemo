@@ -143,39 +143,55 @@ def tariff_info_view(request):
         {
             "code": "START",
             "name": "Start",
-            "monthly_price": 99000,
-            "daily_rate": 3300,
+            "monthly_price": 199000,
+            "daily_rate": 6633,
             "period_label": "oyiga",
-            "features": ["100 tagacha tovar", "Telegram bot (WebApp)", "Standart dizayn", "1 ta filial"],
-            "current": (store.license_plan == "START"),
+            "desc": "O'sayotgan do'konlar va faol brendlar uchun",
+            "features": [
+                "Katalogda 1 000 tagacha mahsulot",
+                "Telegram WebApp bot-do'kon",
+                "Shaxsiy domenni ulash",
+                "Marketing: promokodlar va xabarnomalar",
+                "AI-dizayn va mavzular",
+                "Ishchi guruh bilan sinxronizatsiya",
+            ],
+            "recommended": False,
+            "current": (store.license_plan == "START" or not store.license_plan),
         },
         {
             "code": "STANDARD",
             "name": "Standard",
-            "monthly_price": 199000,
-            "daily_rate": 6633,
+            "monthly_price": 399000,
+            "daily_rate": 13300,
             "period_label": "oyiga",
-            "features": ["1 000 tagacha tovar", "Telegram bot + Veb-sayt", "QR Menyu / Katalog", "Instagram do'kon", "3 ta filial"],
+            "desc": "Katta biznes, restoranlar va savdo tarmoqlari uchun",
+            "features": [
+                "Cheksiz mahsulotlar soni",
+                "YES POS kassasi bilan integratsiya",
+                "Ijtimoiy tarmoq postlaridan import",
+                "Stollar uchun QR-menyu",
+                "Kengaytirilgan moliyaviy analitika",
+                "5 nafargacha xodimlar jamoasi",
+            ],
             "recommended": True,
-            "current": (store.license_plan == "STANDARD" or not store.license_plan),
+            "current": (store.license_plan == "STANDARD"),
         },
         {
             "code": "PRO",
             "name": "Pro",
-            "monthly_price": 399000,
-            "daily_rate": 13300,
-            "period_label": "oyiga",
-            "features": ["Cheksiz tovarlar", "Telegram bot + Veb-sayt", "AI Dizayn Studio", "YES POS integratsiyasi", "ClickSuperApp", "5 ta filial"],
-            "current": (store.license_plan == "PRO"),
-        },
-        {
-            "code": "ENTERPRISE",
-            "name": "Enterprise",
             "monthly_price": 799000,
             "daily_rate": 26633,
             "period_label": "oyiga",
-            "features": ["Barcha Pro imkoniyatlar", "Shaxsiy domen (.uz)", "Cheksiz filiallar", "Maxsus server ajratish", "24/7 Shaxsiy menejer"],
-            "current": (store.license_plan == "ENTERPRISE"),
+            "desc": "Katta tarmoqlar va maxsus integratsiyalar uchun",
+            "features": [
+                "Barcha funksiyalar to'liq cheksiz",
+                "Ko'p filialli tarmoq boshqaruvi",
+                "API orqali maxsus integratsiyalar",
+                "Biriktirilgan shaxsiy menejer",
+                "SLA 99.9% va xodimlarni o'qitish",
+            ],
+            "recommended": False,
+            "current": (store.license_plan == "PRO" or store.license_plan == "ENTERPRISE"),
         },
     ]
 
@@ -184,7 +200,7 @@ def tariff_info_view(request):
             "id": store.id,
             "name": store.name,
             "subdomain": store.subdomain,
-            "plan": store.license_plan or "STANDARD",
+            "plan": store.license_plan or "START",
             "plan_display": store.get_license_plan_display(),
             "expires_at": expires_at.strftime("%d.%m.%Y %H:%M") if expires_at else "Cheksiz",
             "expires_at_iso": expires_at.isoformat() if expires_at else None,
@@ -210,9 +226,9 @@ def calculate_tariff_view(request):
     if not store:
         return Response({"error": "Dokon topilmadi"}, status=404)
 
-    plan = (request.data.get("plan") or store.license_plan or "STANDARD").upper()
+    plan = (request.data.get("plan") or store.license_plan or "START").upper()
     if plan == "BASIC":
-        plan = "STANDARD"
+        plan = "START"
 
     amount = request.data.get("amount")
     months = request.data.get("months")
@@ -239,9 +255,9 @@ def tariff_request_view(request):
     if not store:
         return Response({"error": "Dokon topilmadi"}, status=404)
 
-    plan = (request.data.get("plan") or "STANDARD").upper()
+    plan = (request.data.get("plan") or "START").upper()
     if plan == "BASIC":
-        plan = "STANDARD"
+        plan = "START"
 
     months_raw = request.data.get("months")
     months = int(months_raw) if months_raw and str(months_raw).isdigit() else 1

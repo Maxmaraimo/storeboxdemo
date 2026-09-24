@@ -212,12 +212,12 @@ class Store(models.Model):
     )
     license_plan = models.CharField(
         max_length=30,
-        default='STANDARD',
+        default='START',
         choices=[
-            ('START', 'Старт'),
-            ('STANDARD', 'Стандарт'),
-            ('PRO', 'Профессиональный'),
-            ('ENTERPRISE', 'Корпоративный'),
+            ('START', 'Start'),
+            ('STANDARD', 'Standard'),
+            ('PRO', 'Pro'),
+            ('ENTERPRISE', 'Enterprise'),
         ],
         verbose_name='Тарифный план'
     )
@@ -239,9 +239,9 @@ class Store(models.Model):
         super().save(*args, **kwargs)
 
     TARIFF_RATES = {
-        'START': Decimal('99000.00'),        # ~3 300 UZS/день
-        'STANDARD': Decimal('199000.00'),    # ~6 633 UZS/день
-        'PRO': Decimal('399000.00'),         # ~13 300 UZS/день
+        'START': Decimal('199000.00'),       # ~6 633 UZS/день
+        'STANDARD': Decimal('399000.00'),    # ~13 300 UZS/день
+        'PRO': Decimal('799000.00'),         # ~26 633 UZS/день
         'ENTERPRISE': Decimal('799000.00'),  # ~26 633 UZS/день
     }
 

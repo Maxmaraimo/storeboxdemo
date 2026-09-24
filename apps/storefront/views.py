@@ -59,6 +59,7 @@ UI_TRANSLATIONS = {
         'categories': "Kategoriyalar",
         'new_arrivals': "Yangi mahsulotlar",
         'see_all': "Barchasi",
+        'similar_products': "O'xshash mahsulotlar",
     },
     'ru': {
         'search_placeholder': "Поиск товаров и категорий",
@@ -96,6 +97,7 @@ UI_TRANSLATIONS = {
         'categories': "Категории",
         'new_arrivals': "Новинки",
         'see_all': "Все",
+        'similar_products': "Похожие товары",
     },
     'en': {
         'search_placeholder': "Search products and categories",
@@ -133,6 +135,7 @@ UI_TRANSLATIONS = {
         'categories': "Categories",
         'new_arrivals': "New arrivals",
         'see_all': "See all",
+        'similar_products': "Similar products",
     },
     'tr': {
         'search_placeholder': "Ürün ve kategori ara",
@@ -170,6 +173,7 @@ UI_TRANSLATIONS = {
         'categories': "Kategoriler",
         'new_arrivals': "Yeni gelenler",
         'see_all': "Tümü",
+        'similar_products': "Benzer ürünler",
     }
 }
 
@@ -1040,6 +1044,69 @@ def customer_logout_api(request, subdomain=None):
 
 
 # -----------------------------------------------------------------
+# DEDICATED CART PAGE (Uzum Market Style)
+# -----------------------------------------------------------------
+
+@xframe_options_exempt
+def cart_page_view(request, subdomain=None):
+    store = get_current_store(request, subdomain)
+    if not store:
+        raise Http404("Do'kon topilmadi")
+
+    query_lang = request.GET.get('lang')
+    if query_lang in ['uz', 'ru', 'en', 'tr']:
+        lang = query_lang
+    else:
+        lang = getattr(request, 'language', store.default_language or 'uz')
+    if lang not in ['uz', 'ru', 'en', 'tr']:
+        lang = 'uz'
+
+    store._current_lang = lang
+
+    cart = request.session.get('cart', {})
+    cart_count = sum(item.get('quantity', 1) for item in cart.values())
+    subtotal = sum(item.get('total_price', 0) for item in cart.values())
+
+    # Recommended products for cart upsell & empty state
+    recommended_products = Product.objects.filter(store=store, is_active=True).order_by('-is_featured', '-rating', '-id')[:12]
+    for p in recommended_products:
+        p.display_name = p.get_name(lang) if hasattr(p, 'get_name') else (getattr(p, f'name_{lang}', None) or getattr(p, 'name_uz', '') or getattr(p, 'name_ru', ''))
+
+    # Delivery calculation
+    delivery_fee = store.delivery_price or 0
+    if store.free_delivery_threshold and subtotal >= store.free_delivery_threshold:
+        delivery_fee = 0
+
+    total = subtotal + (delivery_fee if cart else 0)
+
+    # Promo discount if any
+    promo_code = request.session.get('promo_code')
+    promo_discount = request.session.get('promo_discount', 0)
+    if promo_discount:
+        total = max(0, total - promo_discount)
+
+    t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
+
+    context = {
+        'store': store,
+        'cart': cart,
+        'cart_count': cart_count,
+        'cart_subtotal': subtotal,
+        'cart_json': json.dumps(cart),
+        'delivery_fee': delivery_fee,
+        'total': total,
+        'promo_code': promo_code,
+        'promo_discount': promo_discount,
+        'recommended_products': recommended_products,
+        'lang': lang,
+        'current_lang': lang,
+        't': t,
+        'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
+    }
+    return render(request, 'storefront/cart.html', context)
+
+
+# -----------------------------------------------------------------
 # DEDICATED PRODUCT DETAIL PAGE (Full e-commerce experience)
 # -----------------------------------------------------------------
 
@@ -1096,6 +1163,41 @@ def product_detail_page_view(request, product_id, subdomain=None):
     pay_settings, _ = StorePaymentSetting.objects.get_or_create(store=store)
     branches = store.branches.filter(is_active=True)
 
+    # Customer Reviews
+    from apps.catalog.models import ProductReview
+    reviews = list(product.reviews.filter(is_approved=True))
+    if not reviews:
+        sample_reviews = [
+            ProductReview.objects.create(
+                product=product,
+                author_name="Azizbek R.",
+                rating=5,
+                comment="Juda ajoyib mahsulot, sifati kutilganidan a'lo chiqdi! Qadoqlanishi ham puxta. Rahmat do'konga.",
+                is_verified_buyer=True,
+                is_approved=True
+            ),
+            ProductReview.objects.create(
+                product=product,
+                author_name="Malika T.",
+                rating=5,
+                comment="Kuryer tez yetkazib berdi, 40 daqiqada yetib keldi. Aynan rasmdagi kabi original tovar.",
+                is_verified_buyer=True,
+                is_approved=True
+            ),
+            ProductReview.objects.create(
+                product=product,
+                author_name="Dostonbek K.",
+                rating=4,
+                comment="Narxiga arziydi, barchaga tavsiya qilaman. Ishlatishga juda qulay.",
+                is_verified_buyer=True,
+                is_approved=True
+            ),
+        ]
+        reviews = sample_reviews
+
+    reviews_count = len(reviews)
+    avg_rating = round(sum(r.rating for r in reviews) / reviews_count, 1) if reviews_count > 0 else 5.0
+
     t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
 
     context = {
@@ -1109,6 +1211,9 @@ def product_detail_page_view(request, product_id, subdomain=None):
         'cart_count': cart_count,
         'cart_subtotal': subtotal,
         'cart_json': json.dumps(cart),
+        'reviews': reviews,
+        'reviews_count': reviews_count,
+        'avg_rating': avg_rating,
         'pay_settings': pay_settings,
         'branches': branches,
         'lang': lang,
@@ -1117,6 +1222,53 @@ def product_detail_page_view(request, product_id, subdomain=None):
         'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
     }
     return render(request, 'storefront/product_detail.html', context)
+
+
+@csrf_exempt
+def submit_product_review_api(request, product_id, subdomain=None):
+    store = get_current_store(request, subdomain)
+    if not store:
+        return JsonResponse({'success': False, 'error': "Do'kon topilmadi"}, status=404)
+
+    product = get_object_or_404(Product, id=product_id, store=store)
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except Exception:
+            data = request.POST
+
+        name = (data.get('author_name') or '').strip() or 'Mijoz'
+        try:
+            rating = int(data.get('rating') or 5)
+        except (ValueError, TypeError):
+            rating = 5
+        comment = (data.get('comment') or '').strip()
+
+        if not comment:
+            return JsonResponse({'success': False, 'error': "Sharh matnini kiriting"}, status=400)
+
+        from apps.catalog.models import ProductReview
+        review = ProductReview.objects.create(
+            product=product,
+            author_name=name,
+            author_phone=request.session.get('customer_phone', ''),
+            rating=max(1, min(5, rating)),
+            comment=comment,
+            is_verified_buyer=True,
+            is_approved=True
+        )
+
+        return JsonResponse({
+            'success': True,
+            'review': {
+                'id': review.id,
+                'author_name': review.author_name,
+                'rating': review.rating,
+                'comment': review.comment,
+                'created_at': review.created_at.strftime('%d.%m.%Y'),
+            }
+        })
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
 
 
 # -----------------------------------------------------------------

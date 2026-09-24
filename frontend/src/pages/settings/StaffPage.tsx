@@ -839,7 +839,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             Xodimlar va Huquqlar
           </h1>
           <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1 font-medium">
-            Xodimlar, kirish rollari va kuryerlar ro'yxatini to'liq boshqarish
+            {t("staff_page_subtitle") || "Xodimlar, kirish rollari va kuryerlar ro'yxatini to'liq boshqarish"}
           </p>
         </div>
 
@@ -852,7 +852,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
               className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-bold hover:bg-brand-dark transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>Xodim qo'shish</span>
+              <span>{t("add_staff_btn") || "Xodim qo'shish"}</span>
             </button>
           )}
           {activeTab === "roles" && (
@@ -862,7 +862,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
               className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-bold hover:bg-brand-dark transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>Rol qo'shish</span>
+              <span>{t("add_role_btn") || "Rol qo'shish"}</span>
             </button>
           )}
           {activeTab === "couriers" && (
@@ -872,7 +872,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
               className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-bold hover:bg-brand-dark transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>Kuryer qo'shish</span>
+              <span>{t("add_courier_btn") || "Kuryer qo'shish"}</span>
             </button>
           )}
         </div>
@@ -891,7 +891,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             }`}
           >
             <UserCheck className="w-4 h-4" />
-            <span>Xodimlar</span>
+            <span>{t("staff_title") || "Xodimlar"}</span>
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200/80 dark:bg-neutral-600 font-bold">
               {staffList.length}
             </span>
@@ -907,7 +907,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>Rollar</span>
+            <span>{t("roles_title") || "Rollar"}</span>
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200/80 dark:bg-neutral-600 font-bold">
               {rolesList.length}
             </span>
@@ -923,7 +923,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             }`}
           >
             <Truck className="w-4 h-4" />
-            <span>Kuryer</span>
+            <span>{t("courier_title") || "Kuryer"}</span>
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200/80 dark:bg-neutral-600 font-bold">
               {couriersList.length}
             </span>

@@ -45,11 +45,21 @@ class Category(models.Model):
         return f"{self.name_uz or self.name_ru} ({self.store.name})"
 
     def get_name(self, lang='uz'):
+        from apps.catalog.translations import resolve_translation
+        if lang == 'ru' and self.name_ru and self.name_ru.strip().lower() != self.name_uz.strip().lower():
+            return self.name_ru
+        elif lang == 'en' and self.name_en and self.name_en.strip().lower() != self.name_uz.strip().lower():
+            return self.name_en
+        
+        translated = resolve_translation(self.name_uz or self.name_ru, lang=lang)
+        if translated and translated.strip().lower() != (self.name_uz or '').strip().lower():
+            return translated
+
         if lang == 'ru' and self.name_ru:
             return self.name_ru
-        elif lang == 'en' and self.name_en:
+        if lang == 'en' and self.name_en:
             return self.name_en
-        return self.name_uz or self.name_ru or self.name_en or ''
+        return translated or self.name_uz or self.name_ru or self.name_en or ''
 
 
 class Product(models.Model):
@@ -117,11 +127,21 @@ class Product(models.Model):
         return f"{self.name_uz or self.name_ru} ({self.store.name})"
 
     def get_name(self, lang='uz'):
+        from apps.catalog.translations import resolve_translation
+        if lang == 'ru' and self.name_ru and self.name_ru.strip().lower() != self.name_uz.strip().lower():
+            return self.name_ru
+        elif lang == 'en' and self.name_en and self.name_en.strip().lower() != self.name_uz.strip().lower():
+            return self.name_en
+        
+        translated = resolve_translation(self.name_uz or self.name_ru, lang=lang)
+        if translated and translated.strip().lower() != (self.name_uz or '').strip().lower():
+            return translated
+
         if lang == 'ru' and self.name_ru:
             return self.name_ru
-        elif lang == 'en' and self.name_en:
+        if lang == 'en' and self.name_en:
             return self.name_en
-        return self.name_uz or self.name_ru or self.name_en or ''
+        return translated or self.name_uz or self.name_ru or self.name_en or ''
 
     def get_description(self, lang='uz'):
         if lang == 'ru' and self.description_ru:
@@ -224,3 +244,27 @@ class YesPosProductLink(models.Model):
 
     class Meta:
         unique_together = ('store', 'remote_product_id')
+
+
+class ProductReview(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Mahsulot'
+    )
+    author_name = models.CharField(max_length=120, verbose_name='Mijoz ismi')
+    author_phone = models.CharField(max_length=30, blank=True, verbose_name='Telefon')
+    rating = models.PositiveSmallIntegerField(default=5, verbose_name='Baho (1-5)')
+    comment = models.TextField(verbose_name='Sharh matni')
+    is_verified_buyer = models.BooleanField(default=True, verbose_name='Xarid tasdiqlangan')
+    is_approved = models.BooleanField(default=True, verbose_name='Tasdiqlangan')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Sharh'
+        verbose_name_plural = 'Sharhlar'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.author_name} ({self.rating}★) - {self.product.name_uz}"

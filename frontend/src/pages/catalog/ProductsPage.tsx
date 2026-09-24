@@ -6,12 +6,26 @@ import { useAuth } from "../../context/AuthContext";
 import { Product, Category } from "../../types";
 
 export const ProductsPage: React.FC = () => {
-  const { t, hasPermission } = useAuth();
+  const { t, lang, hasPermission } = useAuth();
   const canEditProduct = hasPermission("products", "edit");
   const canDeleteProduct = hasPermission("products", "delete");
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+
+  const getCategoryName = (c?: Category | null) => {
+    if (!c) return "";
+    if (lang === "ru") return c.name_ru || c.name_uz || c.name_en || "";
+    if (lang === "en") return c.name_en || c.name_uz || c.name_ru || "";
+    return c.name_uz || c.name_ru || c.name_en || "";
+  };
+
+  const getProductName = (p?: Product | null) => {
+    if (!p) return "";
+    if (lang === "ru") return p.name_ru || p.name_uz || p.name_en || "";
+    if (lang === "en") return p.name_en || p.name_uz || p.name_ru || "";
+    return p.name_uz || p.name_ru || p.name_en || "";
+  };
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -259,7 +273,7 @@ export const ProductsPage: React.FC = () => {
                 selectedCategory === cat.id ? "bg-brand text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
-              {cat.name_uz || cat.name_ru}
+              {getCategoryName(cat)}
             </button>
           ))}
         </div>
@@ -296,9 +310,12 @@ export const ProductsPage: React.FC = () => {
                       </div>
                     )}
                     <div>
-                      <div className="font-bold text-slate-900 text-sm">{p.name_uz || p.name_ru}</div>
-                      {p.name_ru && p.name_uz !== p.name_ru && (
+                      <div className="font-bold text-slate-900 text-sm">{getProductName(p)}</div>
+                      {p.name_ru && p.name_uz !== p.name_ru && lang !== "ru" && (
                         <div className="text-[10px] text-slate-400">{p.name_ru}</div>
+                      )}
+                      {p.name_uz && p.name_uz !== p.name_ru && lang === "ru" && (
+                        <div className="text-[10px] text-slate-400">{p.name_uz}</div>
                       )}
                       {p.barcode && (
                         <div className="text-[10px] text-slate-400">#{p.barcode}</div>
@@ -433,7 +450,7 @@ export const ProductsPage: React.FC = () => {
                   <option value="">{t("not_selected") || "Tanlanmagan"}</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name_uz || c.name_ru}
+                      {getCategoryName(c)}
                     </option>
                   ))}
                 </select>

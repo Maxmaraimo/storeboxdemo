@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 export interface HeatmapDay {
   date: string;
@@ -39,43 +40,24 @@ interface Props {
   formatMoney: (sum: number) => string;
 }
 
-const UZ_MONTH_NAMES = [
-  "",
-  "yanvar",
-  "fevral",
-  "mart",
-  "aprel",
-  "may",
-  "iyun",
-  "iyul",
-  "avgust",
-  "sentabr",
-  "oktabr",
-  "noyabr",
-  "dekabr",
-];
+const MONTH_NAMES: Record<string, string[]> = {
+  uz: ["", "yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"],
+  ru: ["", "января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"],
+  en: ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+};
 
-const RU_MONTH_NAMES = [
-  "",
-  "января",
-  "февраля",
-  "марта",
-  "апреля",
-  "мая",
-  "июня",
-  "июля",
-  "августа",
-  "сентября",
-  "октября",
-  "ноября",
-  "декабря",
-];
+const DAY_LABELS: Record<string, string[]> = {
+  uz: ["Dush", "Sesh", "Chor", "Pay", "Juma", "Shan", "Yak"],
+  ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+  en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+};
 
 export const ContributionHeatmap: React.FC<Props> = ({
   heatmap,
   currency,
   formatMoney,
 }) => {
+  const { lang, t } = useAuth();
   const [hoveredCell, setHoveredCell] = useState<{
     day: HeatmapDay;
     x: number;
@@ -87,7 +69,7 @@ export const ContributionHeatmap: React.FC<Props> = ({
   if (!heatmap || !heatmap.weeks || heatmap.weeks.length === 0) {
     return (
       <div className="h-64 flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-500 text-xs font-medium space-y-2">
-        <span>Faollik ma'lumotlari yuklanmoqda...</span>
+        <span>{lang === "ru" ? "Загрузка данных активности..." : lang === "en" ? "Loading activity data..." : "Faollik ma'lumotlari yuklanmoqda..."}</span>
       </div>
     );
   }
@@ -102,10 +84,18 @@ export const ContributionHeatmap: React.FC<Props> = ({
   } = heatmap;
 
   const formatDateLabel = (day: HeatmapDay) => {
-    const uzStr = `${day.day}-${UZ_MONTH_NAMES[day.month]}, ${day.year}`;
-    const ruStr = `${day.day} ${RU_MONTH_NAMES[day.month]} ${day.year}`;
-    return { uzStr, ruStr };
+    const monthList = MONTH_NAMES[lang] || MONTH_NAMES.uz;
+    const monthName = monthList[day.month] || "";
+    if (lang === "ru") {
+      return `${day.day} ${monthName} ${day.year} г.`;
+    }
+    if (lang === "en") {
+      return `${monthName} ${day.day}, ${day.year}`;
+    }
+    return `${day.day}-${monthName}, ${day.year}`;
   };
+
+  const dayNames = DAY_LABELS[lang] || DAY_LABELS.uz;
 
   const getCellColorClass = (day: HeatmapDay) => {
     if (day.is_future) {
@@ -132,27 +122,27 @@ export const ContributionHeatmap: React.FC<Props> = ({
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-black/[0.04] dark:border-white/5">
         <div className="flex items-center gap-2">
           <span className="text-sm font-black text-neutral-900 dark:text-white tracking-tight">
-            {total_orders.toLocaleString()} ta buyurtma
+            {total_orders.toLocaleString()} {lang === "ru" ? "заказов" : lang === "en" ? "orders" : "ta buyurtma"}
           </span>
           <span className="text-[11px] text-neutral-400 dark:text-neutral-500 font-medium">
-            (so'nggi 1 yilda)
+            ({lang === "ru" ? "за последние 52 недели" : lang === "en" ? "in past 52 weeks" : "so'nggi 1 yilda"})
           </span>
         </div>
 
         <div className="flex items-center gap-3 text-[11px]">
           {active_days > 0 && (
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 font-bold">
-              <span>Faol kunlar: {active_days} kun</span>
+              <span>{lang === "ru" ? `Активные дни: ${active_days}` : lang === "en" ? `Active days: ${active_days}` : `Faol kunlar: ${active_days} kun`}</span>
             </div>
           )}
           {max_orders_day > 0 && (
             <div className="hidden sm:flex items-center gap-1 text-neutral-500 dark:text-neutral-400">
-              <span>Eng faol kun: <strong className="text-neutral-800 dark:text-neutral-200">{max_orders_day} ta</strong></span>
+              <span>{lang === "ru" ? "Пик за день:" : lang === "en" ? "Daily peak:" : "Eng faol kun:"} <strong className="text-neutral-800 dark:text-neutral-200">{max_orders_day} {lang === "ru" ? "зак." : lang === "en" ? "pcs" : "ta"}</strong></span>
             </div>
           )}
           {current_streak > 0 && (
             <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400">
-              <span>Streak: <strong className="text-slate-700 dark:text-slate-300 font-bold">{current_streak} kun</strong></span>
+              <span>Streak: <strong className="text-slate-700 dark:text-slate-300 font-bold">{current_streak} {lang === "ru" ? "дн." : lang === "en" ? "days" : "kun"}</strong></span>
             </div>
           )}
         </div>
@@ -179,13 +169,13 @@ export const ContributionHeatmap: React.FC<Props> = ({
           <div className="flex items-start">
             {/* Weekday labels on left (Mon, Wed, Fri) */}
             <div className="flex flex-col justify-between text-[9px] text-neutral-400 dark:text-neutral-500 font-mono pr-2 h-[105px] select-none">
-              <span className="h-3 leading-3">Dush</span>
-              <span className="h-3 leading-3 opacity-0">Sesh</span>
-              <span className="h-3 leading-3">Chor</span>
-              <span className="h-3 leading-3 opacity-0">Pay</span>
-              <span className="h-3 leading-3">Juma</span>
-              <span className="h-3 leading-3 opacity-0">Shan</span>
-              <span className="h-3 leading-3 opacity-0">Yak</span>
+              <span className="h-3 leading-3">{dayNames[0]}</span>
+              <span className="h-3 leading-3 opacity-0">{dayNames[1]}</span>
+              <span className="h-3 leading-3">{dayNames[2]}</span>
+              <span className="h-3 leading-3 opacity-0">{dayNames[3]}</span>
+              <span className="h-3 leading-3">{dayNames[4]}</span>
+              <span className="h-3 leading-3 opacity-0">{dayNames[5]}</span>
+              <span className="h-3 leading-3 opacity-0">{dayNames[6]}</span>
             </div>
 
             {/* Matrix Columns */}
@@ -234,19 +224,19 @@ export const ContributionHeatmap: React.FC<Props> = ({
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
           <span className="font-medium text-neutral-600 dark:text-neutral-400">
-            Real vaqtdagi buyurtmalar faolligi
+            {lang === "ru" ? "Активность заказов в реальном времени" : lang === "en" ? "Real-time orders activity" : "Real vaqtdagi buyurtmalar faolligi"}
           </span>
         </div>
 
-        {/* Legend Scale: Kamroq [ ] [ ] [ ] [ ] [ ] Ko'proq */}
+        {/* Legend Scale */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px]">Kamroq</span>
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-neutral-100 dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04]" title="0 buyurtma" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/30 dark:bg-[#c8ff6a]/20 border border-[#c8ff6a]/40" title="1-2 buyurtma" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/55 dark:bg-[#c8ff6a]/45 border border-[#c8ff6a]/60" title="3-5 buyurtma" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/80 dark:bg-[#c8ff6a]/70 border border-[#c8ff6a]/85" title="6-9 buyurtma" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a] dark:bg-[#c8ff6a] border border-[#a8f03b]" title="10+ buyurtma" />
-          <span className="text-[10px]">Ko'proq</span>
+          <span className="text-[10px]">{lang === "ru" ? "Меньше" : lang === "en" ? "Less" : "Kamroq"}</span>
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-neutral-100 dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04]" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/30 dark:bg-[#c8ff6a]/20 border border-[#c8ff6a]/40" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/55 dark:bg-[#c8ff6a]/45 border border-[#c8ff6a]/60" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/80 dark:bg-[#c8ff6a]/70 border border-[#c8ff6a]/85" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a] dark:bg-[#c8ff6a] border border-[#a8f03b]" />
+          <span className="text-[10px]">{lang === "ru" ? "Больше" : lang === "en" ? "More" : "Ko'proq"}</span>
         </div>
       </div>
 
@@ -274,29 +264,23 @@ export const ContributionHeatmap: React.FC<Props> = ({
               <div>
                 <div className="font-black text-[#c8ff6a] flex items-center gap-1.5">
                   <span>
-                    {hoveredCell.day.count} ta buyurtma
+                    {hoveredCell.day.count} {lang === "ru" ? (hoveredCell.day.count === 1 ? "заказ" : "заказа") : lang === "en" ? (hoveredCell.day.count === 1 ? "order" : "orders") : "ta buyurtma"}
                   </span>
-                  <span className="text-white/60 font-normal text-[11px]">
+                  <span className="text-white/70 font-normal text-[11px]">
                     ({formatMoney(hoveredCell.day.revenue)})
                   </span>
                 </div>
                 <div className="text-[11px] text-neutral-300 mt-0.5">
-                  {formatDateLabel(hoveredCell.day).uzStr}
-                </div>
-                <div className="text-[10px] text-neutral-400 italic">
-                  {hoveredCell.day.count === 1 ? "1 заказ" : `${hoveredCell.day.count} заказа`} • {formatDateLabel(hoveredCell.day).ruStr}
+                  {formatDateLabel(hoveredCell.day)}
                 </div>
               </div>
             ) : (
               <div>
                 <div className="font-bold text-neutral-300">
-                  Buyurtmalar bo'lmagan
+                  {lang === "ru" ? "Заказов не было" : lang === "en" ? "No orders" : "Buyurtmalar bo'lmagan"}
                 </div>
                 <div className="text-[11px] text-neutral-400 mt-0.5">
-                  {formatDateLabel(hoveredCell.day).uzStr}
-                </div>
-                <div className="text-[10px] text-neutral-500 italic">
-                  Заказов не было • {formatDateLabel(hoveredCell.day).ruStr}
+                  {formatDateLabel(hoveredCell.day)}
                 </div>
               </div>
             )}
@@ -312,3 +296,4 @@ export const ContributionHeatmap: React.FC<Props> = ({
     </div>
   );
 };
+

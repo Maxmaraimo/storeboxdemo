@@ -7,10 +7,10 @@ export const IkpuPage: React.FC = () => {
   const [search, setSearch] = useState("");
 
   const ikpuList = [
-    { code: "01111001001000000", package_code: "123456", name: "Bug'doy va arpa mahsulotlari", vat_rate: 12 },
-    { code: "01121001001000000", package_code: "123457", name: "Sabzavotlar va mevalar", vat_rate: 12 },
-    { code: "10711001001000000", package_code: "123458", name: "Non va non-bulka mahsulotlari", vat_rate: 0 },
-    { code: "47711001001000000", package_code: "123459", name: "Kiyim-kechak va poyabzallar", vat_rate: 12 },
+    { code: "01111001001000000", package_code: "123456", name_key: "ikpu_wheat", fallback: "Bug'doy va arpa mahsulotlari", vat_rate: 12 },
+    { code: "01121001001000000", package_code: "123457", name_key: "ikpu_veg_fruit", fallback: "Sabzavotlar va mevalar", vat_rate: 12 },
+    { code: "10711001001000000", package_code: "123458", name_key: "ikpu_bakery", fallback: "Non va non-bulka mahsulotlari", vat_rate: 0 },
+    { code: "47711001001000000", package_code: "123459", name_key: "ikpu_clothing", fallback: "Kiyim-kechak va poyabzallar", vat_rate: 12 },
   ];
 
   return (
@@ -49,7 +49,7 @@ export const IkpuPage: React.FC = () => {
                 <tr key={item.code} className="hover:bg-slate-50/80 transition-colors">
                   <td className="p-4 font-mono font-bold text-slate-900">{item.code}</td>
                   <td className="p-4 font-mono text-slate-400">{item.package_code}</td>
-                  <td className="p-4 font-bold text-slate-800">{item.name}</td>
+                  <td className="p-4 font-bold text-slate-800">{t(item.name_key) || item.fallback}</td>
                   <td className="p-4 text-center font-bold text-brand">{item.vat_rate}%</td>
                 </tr>
               ))}

@@ -39,6 +39,7 @@ interface PlanTier {
   monthly_price: number;
   daily_rate: number;
   period_label: string;
+  desc?: string;
   features: string[];
   recommended?: boolean;
   current?: boolean;
@@ -55,7 +56,7 @@ interface PendingRequest {
 }
 
 export const TariffsPage: React.FC = () => {
-  const { t } = useAuth();
+  const { t, lang } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [storeInfo, setStoreInfo] = useState<StoreBillingInfo | null>(null);
@@ -281,46 +282,37 @@ export const TariffsPage: React.FC = () => {
       {/* Duration Switcher Pills */}
       <div className="flex flex-col items-center justify-center space-y-3 pt-2">
         <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("select_duration") || "Obuna davrini tanlang:"}</div>
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl text-xs font-bold shadow-inner">
+        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-neutral-800 p-1.5 rounded-2xl text-xs font-bold shadow-inner">
           <button
             type="button"
             onClick={() => setDuration(1)}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-              duration === 1 ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+            className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              duration === 1 ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            {t("month_1") || "1 oy"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setDuration(3)}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-              duration === 3 ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            {t("month_3") || "3 oy"}
+            {t("month_1_simple") || (lang === "ru" ? "Месяц" : lang === "en" ? "Month" : "Oy")}
           </button>
           <button
             type="button"
             onClick={() => setDuration(6)}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
-              duration === 6 ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+            className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+              duration === 6 ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <span>{t("month_6") || "6 oy"}</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-bold">
+            <span>{t("month_6_simple") || (lang === "ru" ? "6 месяцев" : lang === "en" ? "6 months" : "6 oy")}</span>
+            <span className="px-1.5 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
               -10%
             </span>
           </button>
           <button
             type="button"
             onClick={() => setDuration(12)}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
-              duration === 12 ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+            className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+              duration === 12 ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <span>{t("month_12") || "12 oy"}</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-bold">
+            <span>{t("month_12_simple") || (lang === "ru" ? "12 месяцев" : lang === "en" ? "12 months" : "12 oy")}</span>
+            <span className="px-1.5 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
               -20%
             </span>
           </button>
@@ -328,21 +320,94 @@ export const TariffsPage: React.FC = () => {
       </div>
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto pt-2">
         {plans.map((p) => {
           const discountPct = calculateDiscountPercent(duration);
           const totalPrice = calculateDiscountedPrice(p.monthly_price, duration);
           const isCurrentPlan = storeInfo?.plan === p.code;
 
+          const featMap: Record<string, Record<string, string>> = {
+            "Katalogda 1 000 tagacha mahsulot": { ru: "До 1 000 товаров в каталоге", en: "Up to 1,000 products in catalog", uz: "Katalogda 1 000 tagacha mahsulot" },
+            "1 000 tagacha tovar": { ru: "До 1 000 товаров в каталоге", en: "Up to 1,000 products in catalog", uz: "Katalogda 1 000 tagacha mahsulot" },
+            "Telegram WebApp bot-do'kon": { ru: "Telegram WebApp бот-магазин", en: "Telegram WebApp bot store", uz: "Telegram WebApp bot-do'kon" },
+            "Telegram bot + Veb-sayt": { ru: "Telegram WebApp бот-магазин", en: "Telegram WebApp bot store", uz: "Telegram WebApp bot-do'kon" },
+            "QR Menyu / Katalog": { ru: "QR-меню для столиков заведения", en: "Table QR menu", uz: "Stollar uchun QR-menyu" },
+            "Instagram do'kon": { ru: "Синхронизация с Instagram", en: "Instagram shop sync", uz: "Instagram do'kon" },
+            "3 ta filial": { ru: "До 3 филиалов", en: "Up to 3 branches", uz: "3 ta filial" },
+            "Shaxsiy domenni ulash": { ru: "Подключение собственного домена", en: "Custom domain connection", uz: "Shaxsiy domenni ulash" },
+            "Marketing: promokodlar va xabarnomalar": { ru: "Маркетинг: промокоды и рассылки", en: "Marketing: promo codes & broadcasts", uz: "Marketing: promokodlar va xabarnomalar" },
+            "Marketing: promokodlar va tarqatish": { ru: "Маркетинг: промокоды и рассылки", en: "Marketing: promo codes & broadcasts", uz: "Marketing: promokodlar va xabarnomalar" },
+            "AI-dizayn va mavzular": { ru: "AI-дизайн и темы оформления", en: "AI-design and visual themes", uz: "AI-dizayn va mavzular" },
+            "Ishchi guruh bilan sinxronizatsiya": { ru: "Синхронизация с рабочей группой", en: "Workgroup synchronization", uz: "Ishchi guruh bilan sinxronizatsiya" },
+            "Cheksiz tovarlar": { ru: "Безлимитное количество товаров", en: "Unlimited products", uz: "Cheksiz mahsulotlar soni" },
+            "Cheksiz tovarlar soni": { ru: "Безлимитное количество товаров", en: "Unlimited products", uz: "Cheksiz mahsulotlar soni" },
+            "AI Dizayn Studio": { ru: "AI-дизайн и темы оформления", en: "AI Design Studio", uz: "AI Dizayn Studio" },
+            "YES POS integratsiyasi": { ru: "Интеграция с YES POS кассой", en: "YES POS integration", uz: "YES POS kassasi bilan integratsiya" },
+            "YES POS kassa bilan integratsiya": { ru: "Интеграция с YES POS кассой", en: "YES POS integration", uz: "YES POS kassasi bilan integratsiya" },
+            "YES POS kassasi bilan integratsiya": { ru: "Интеграция с YES POS кассой", en: "YES POS integration", uz: "YES POS kassasi bilan integratsiya" },
+            "Ijtimoiy tarmoq postlaridan import": { ru: "Импорт товаров из постов соцсетей", en: "Social media post import", uz: "Ijtimoiy tarmoq postlaridan import" },
+            "ClickSuperApp": { ru: "Индивидуальные интеграции по API", en: "Click SuperApp integration", uz: "ClickSuperApp" },
+            "Stollar uchun QR-menyu": { ru: "QR-меню для столиков заведения", en: "Table QR menu", uz: "Stollar uchun QR-menyu" },
+            "Muassasa stollari uchun QR-menyu": { ru: "QR-меню для столиков заведения", en: "Table QR menu", uz: "Stollar uchun QR-menyu" },
+            "Kengaytirilgan moliyaviy analitika": { ru: "Расширенная финансовая аналитика", en: "Advanced financial analytics", uz: "Kengaytirilgan moliyaviy analitika" },
+            "Kengaytirilgan moliyaviy tahlil": { ru: "Расширенная финансовая аналитика", en: "Advanced financial analytics", uz: "Kengaytirilgan moliyaviy analitika" },
+            "5 nafargacha xodimlar jamoasi": { ru: "Команда до 5 сотрудников", en: "Team up to 5 staff", uz: "5 nafargacha xodimlar jamoasi" },
+            "5 tagacha xodimlar jamoasi": { ru: "Команда до 5 сотрудников", en: "Team up to 5 staff", uz: "5 nafargacha xodimlar jamoasi" },
+            "5 ta filial": { ru: "Команда до 5 сотрудников", en: "Up to 5 branches", uz: "5 ta filial" },
+            "Barcha funksiyalar to'liq cheksiz": { ru: "Полный безлимит всех функций", en: "Full unlimited features", uz: "Barcha funksiyalar to'liq cheksiz" },
+            "Barcha imkoniyatlar to'liq cheksiz": { ru: "Полный безлимит всех функций", en: "Full unlimited features", uz: "Barcha funksiyalar to'liq cheksiz" },
+            "Barcha Pro imkoniyatlar": { ru: "Полный безлимит всех функций", en: "Full unlimited features", uz: "Barcha funksiyalar to'liq cheksiz" },
+            "Ko'p filialli tarmoq boshqaruvi": { ru: "Мультифилиальность и сеть точек", en: "Multi-branch & network management", uz: "Ko'p filialli tarmoq boshqaruvi" },
+            "API orqali maxsus integratsiyalar": { ru: "Индивидуальные интеграции по API", en: "Custom API integrations", uz: "API orqali maxsus integratsiyalar" },
+            "Biriktirilgan shaxsiy menejer": { ru: "Выделенный персональный менеджер", en: "Dedicated personal manager", uz: "Biriktirilgan shaxsiy menejer" },
+            "SLA 99.9% va xodimlarni o'qitish": { ru: "SLA 99.9% и обучение персонала", en: "SLA 99.9% & staff training", uz: "SLA 99.9% va xodimlarni o'qitish" },
+            "Shaxsiy domen (.uz)": { ru: "Собственный домен (.uz)", en: "Custom domain (.uz)", uz: "Shaxsiy domen (.uz)" },
+            "Cheksiz filiallar": { ru: "Мультифилиальность и сеть точек", en: "Unlimited branches", uz: "Cheksiz filiallar" },
+            "Maxsus server ajratish": { ru: "Выделенный сервер", en: "Dedicated server instance", uz: "Maxsus server ajratish" },
+            "24/7 Shaxsiy menejer": { ru: "24/7 персональный менеджер", en: "24/7 personal manager", uz: "24/7 Shaxsiy menejer" },
+          };
+
+          const planDescMap: Record<string, Record<string, string>> = {
+            START: {
+              uz: "O'sayotgan do'konlar va faol brendlar uchun",
+              ru: "Для растущих магазинов и активных брендов",
+              en: "For growing stores and active brands",
+            },
+            STANDARD: {
+              uz: "Katta biznes, restoranlar va savdo tarmoqlari uchun",
+              ru: "Для зрелого бизнеса, ресторанов и торговых сетей",
+              en: "For mature businesses, restaurants, and retail chains",
+            },
+            PRO: {
+              uz: "Katta tarmoqlar va maxsus integratsiyalar uchun",
+              ru: "Для крупных сетей и персональных интеграций",
+              en: "For large retail chains and custom enterprise integrations",
+            },
+            ENTERPRISE: {
+              uz: "Katta tarmoqlar va maxsus integratsiyalar uchun",
+              ru: "Для крупных сетей и персональных интеграций",
+              en: "For large retail chains and custom enterprise integrations",
+            },
+          };
+
+          // Always display plan titles in clean English as requested: Start, Standard, Pro
+          const planTitle = p.code === "START" ? "Start"
+                          : p.code === "STANDARD" ? "Standard"
+                          : p.code === "PRO" ? "Pro"
+                          : p.code === "ENTERPRISE" ? "Pro"
+                          : p.name;
+
+          const planDesc = planDescMap[p.code]?.[lang] || planDescMap[p.code]?.uz || p.desc;
+
           return (
             <div
               key={p.code}
-              className={`bg-white rounded-3xl border transition-all duration-200 flex flex-col justify-between p-6 relative ${
+              className={`bg-white rounded-3xl border transition-all duration-300 flex flex-col justify-between p-6 relative hover:-translate-y-2 hover:shadow-2xl hover:border-slate-300 ${
                 p.recommended
                   ? "border-2 border-brand shadow-xl ring-2 ring-brand/10 scale-[1.02]"
                   : isCurrentPlan
                   ? "border-[#211b2e] shadow-md ring-1 ring-[#211b2e]/20"
-                  : "border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300"
+                  : "border-slate-200/90 shadow-xs"
               }`}
             >
               {p.recommended && (
@@ -352,12 +417,19 @@ export const TariffsPage: React.FC = () => {
               )}
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-bold text-slate-900">{p.name}</h2>
-                  {isCurrentPlan && (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
-                      {t("current_plan_badge") || "Joriy tarif"}
-                    </span>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-base font-bold text-slate-900">{planTitle}</h2>
+                    {isCurrentPlan && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
+                        {t("current_plan_badge") || "Joriy tarif"}
+                      </span>
+                    )}
+                  </div>
+                  {planDesc && (
+                    <p className="text-xs text-slate-500 font-medium mt-1 leading-snug">
+                      {planDesc}
+                    </p>
                   )}
                 </div>
 
@@ -365,7 +437,7 @@ export const TariffsPage: React.FC = () => {
                 <div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-bold text-slate-900">
-                      {(totalPrice / duration).toLocaleString()}
+                      {Math.round(totalPrice / duration).toLocaleString()}
                     </span>
                     <span className="text-xs text-slate-400 font-bold">{t("per_month") || "UZS / oy"}</span>
                   </div>
@@ -383,7 +455,7 @@ export const TariffsPage: React.FC = () => {
                     {p.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-slate-600 font-medium">
                         <Check className="w-4 h-4 text-[#211b2e] dark:text-[#c8ff6a] shrink-0 mt-0.5" />
-                        <span>{f}</span>
+                        <span>{featMap[f]?.[lang] || f}</span>
                       </li>
                     ))}
                   </ul>

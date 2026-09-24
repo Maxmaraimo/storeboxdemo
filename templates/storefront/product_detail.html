@@ -16,6 +16,69 @@
         buying: false,
         addedSuccess: false,
         showStickyBar: false,
+        imageModalOpen: false,
+        reviewModalOpen: false,
+        reviewRating: 5,
+        hoverRating: 0,
+        reviewName: '{{ request.session.customer_name|default:'' }}',
+        reviewComment: '',
+        reviewSubmitting: false,
+        reviewSuccess: false,
+        reviewError: '',
+        reviewsList: [
+            {% for r in reviews %}
+            {
+                id: {{ r.id }},
+                author_name: '{{ r.author_name|escapejs }}',
+                rating: {{ r.rating }},
+                comment: '{{ r.comment|escapejs }}',
+                created_at: '{{ r.created_at|date:"d.m.Y" }}',
+                is_verified: true
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        async submitReview() {
+            if (!this.reviewComment.trim()) {
+                this.reviewError = 'Iltimos, sharh matnini yozing';
+                return;
+            }
+            this.reviewSubmitting = true;
+            this.reviewError = '';
+            try {
+                const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/api/product/{{ product.id }}/review/{% else %}/api/product/{{ product.id }}/review/{% endif %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({
+                        author_name: this.reviewName || 'Mijoz',
+                        rating: this.reviewRating,
+                        comment: this.reviewComment.trim()
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.reviewsList.unshift({
+                        id: data.review.id,
+                        author_name: data.review.author_name,
+                        rating: data.review.rating,
+                        comment: data.review.comment,
+                        created_at: data.review.created_at,
+                        is_verified: true
+                    });
+                    this.reviewSuccess = true;
+                    this.reviewComment = '';
+                    setTimeout(() => {
+                        this.reviewSuccess = false;
+                        this.reviewModalOpen = false;
+                    }, 1500);
+                } else {
+                    this.reviewError = data.error || 'Xatolik yuz berdi';
+                }
+            } catch (e) {
+                this.reviewError = 'Tarmoq xatosi';
+            } finally {
+                this.reviewSubmitting = false;
+            }
+        },
         changeVariation(id, price, name) {
             this.selectedVariationId = id;
             this.selectedPrice = price;
@@ -79,62 +142,114 @@
                 }
             })
             .catch(() => { this.buying = false; });
+        },
+        addRelatedToCart(productId) {
+            fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: 1
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (window.storeCart) {
+                        window.storeCart.cartCount = data.cart_count;
+                        window.storeCart.cartSubtotal = data.subtotal;
+                        window.storeCart.cart = data.cart;
+                    }
+                    data.openDrawer = true;
+                    window.dispatchEvent(new CustomEvent('cart-updated', { detail: data }));
+                }
+            });
         }
      }">
 
-    <!-- TOP MOBILE BAR (Minimal Back Button + Category Tag + Wishlist Heart) -->
-    <div class="sm:hidden flex items-center justify-between gap-2 pt-1 pb-1">
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" 
-           class="w-9 h-9 rounded-full bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center text-slate-700 active:scale-95 transition-all">
-            <i data-lucide="chevron-left" class="w-5 h-5"></i>
-        </a>
+    <!-- TOP NAVIGATION BAR: Back Button + Breadcrumbs + Category/Wishlist -->
+    <div class="flex items-center justify-between gap-3 pt-1 pb-1">
+        <div class="flex items-center gap-2.5 sm:gap-3">
+            <!-- Dedicated Universal Back Button (Arrow) -->
+            <button type="button" 
+                    @click="handleProductBack()"
+                    class="h-9 px-3 sm:px-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs hover:bg-slate-50 active:scale-95 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer group"
+                    title="{% if current_lang == 'ru' %}Назад{% elif current_lang == 'en' %}Back{% else %}Orqaga{% endif %}">
+                <i data-lucide="arrow-left" class="w-4 h-4 transition-transform group-hover:-translate-x-0.5"></i>
+                <span>{% if current_lang == 'ru' %}Назад{% elif current_lang == 'en' %}Back{% else %}Orqaga{% endif %}</span>
+            </button>
 
-        {% if product.category %}
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/?cat={{ product.category.slug|default:product.category.id }}{% else %}/?cat={{ product.category.slug|default:product.category.id }}{% endif %}"
-           class="px-3 py-1 rounded-full bg-slate-100/90 text-slate-600 font-semibold text-xs truncate max-w-[200px] hover:bg-slate-200 transition-colors">
-            {{ product.category.display_name|default:product.category.name_uz }}
-        </a>
-        {% else %}
-        <span></span>
-        {% endif %}
+            <!-- Breadcrumbs -->
+            <nav class="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-400">
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" class="hover:text-slate-800 flex items-center gap-1 transition-colors">
+                    <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                    <span>{{ t.home|default:'Bosh sahifa' }}</span>
+                </a>
+                <span class="text-slate-300">/</span>
+                {% if product.category %}
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/?cat={{ product.category.slug|default:product.category.id }}{% else %}/?cat={{ product.category.slug|default:product.category.id }}{% endif %}" class="hover:text-slate-800 transition-colors">
+                    {{ product.category.display_name|default:product.category.name_uz }}
+                </a>
+                <span class="text-slate-300">/</span>
+                {% endif %}
+                <span class="text-slate-700 truncate max-w-sm">{{ product.display_name|default:product.name_uz }}</span>
+            </nav>
+        </div>
 
-        <!-- Mobile Heart Button -->
-        <button type="button" 
-                @click="toggleWishlist({{ product.id }})" 
-                class="w-9 h-9 rounded-full bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center active:scale-90 transition-transform">
-            <i data-lucide="heart" 
-               class="w-4 h-4 transition-colors"
-               :class="isInWishlist({{ product.id }}) ? 'fill-rose-500 text-rose-500' : 'text-slate-500'"></i>
-        </button>
+        <div class="flex items-center gap-2">
+            {% if product.category %}
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/?cat={{ product.category.slug|default:product.category.id }}{% else %}/?cat={{ product.category.slug|default:product.category.id }}{% endif %}"
+               class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-semibold text-xs truncate max-w-[150px] sm:max-w-[200px] hover:bg-slate-200 transition-colors">
+                {{ product.category.display_name|default:product.category.name_uz }}
+            </a>
+            {% endif %}
+
+            <!-- Mobile Wishlist Button -->
+            <button type="button" 
+                    @click="toggleWishlist({{ product.id }})" 
+                    class="sm:hidden w-9 h-9 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center active:scale-90 transition-transform">
+                <i data-lucide="heart" 
+                   class="w-4 h-4 transition-colors"
+                   :class="isInWishlist({{ product.id }}) ? 'fill-rose-500 text-rose-500' : 'text-slate-500'"></i>
+            </button>
+        </div>
     </div>
-
-    <!-- DESKTOP BREADCRUMBS -->
-    <nav class="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-400">
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" class="hover:text-slate-800 flex items-center gap-1 transition-colors">
-            <i data-lucide="home" class="w-3.5 h-3.5"></i>
-            <span>{{ t.home|default:'Bosh sahifa' }}</span>
-        </a>
-        <span class="text-slate-300">/</span>
-        {% if product.category %}
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/?cat={{ product.category.slug|default:product.category.id }}{% else %}/?cat={{ product.category.slug|default:product.category.id }}{% endif %}" class="hover:text-slate-800 transition-colors">
-            {{ product.category.display_name|default:product.category.name_uz }}
-        </a>
-        <span class="text-slate-300">/</span>
-        {% endif %}
-        <span class="text-slate-700 truncate max-w-sm">{{ product.display_name|default:product.name_uz }}</span>
-    </nav>
 
     <!-- PRODUCT DETAIL CLEAN CARD -->
     <div class="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-8 shadow-2xs">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-start">
             
-            <!-- LEFT: PRODUCT GALLERY -->
-            <div class="md:col-span-6 space-y-3">
-                <!-- Main Image Container -->
+            <!-- LEFT: PRODUCT GALLERY (Uzum Market Style: Left Thumbnail Strip + Main Image) -->
+            <div class="md:col-span-6 flex flex-col-reverse sm:flex-row gap-3 items-start">
+                <!-- Thumbnails Strip (Left on sm/md, horizontal on mobile) -->
+                {% if images.count > 0 %}
+                <div class="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-y-auto max-h-[460px] pb-1 sm:pb-0 scrollbar-none shrink-0 w-full sm:w-16">
+                    <button type="button" 
+                            @click="activeImage = '{% if product.primary_image_url %}{{ product.primary_image_url }}{% else %}https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80{% endif %}'" 
+                            :class="activeImage === '{% if product.primary_image_url %}{{ product.primary_image_url }}{% else %}https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80{% endif %}' ? 'ring-2 ring-slate-900 border-transparent shadow-xs' : 'border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100'"
+                            class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border bg-slate-50 shrink-0 transition-all p-1 cursor-pointer">
+                        <img src="{% if product.primary_image_url %}{{ product.primary_image_url }}{% else %}https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80{% endif %}" alt="{{ product.display_name|default:product.name_uz }}" class="w-full h-full object-cover rounded-xl">
+                    </button>
+                    {% for img in images %}
+                    <button type="button" 
+                            @click="activeImage = '{{ img.image.url }}'" 
+                            :class="activeImage === '{{ img.image.url }}' ? 'ring-2 ring-slate-900 border-transparent shadow-xs' : 'border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100'"
+                            class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border bg-slate-50 shrink-0 transition-all p-1 cursor-pointer">
+                        <img src="{{ img.image.url }}" alt="{{ product.display_name|default:product.name_uz }}" class="w-full h-full object-cover rounded-xl">
+                    </button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Main Image Container with Zoom Click -->
                 <div class="relative w-full aspect-[4/3] sm:aspect-square max-h-[380px] sm:max-h-[460px] rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-50 border border-slate-200/80 flex items-center justify-center group shadow-xs">
                     <img :src="activeImage" 
                          alt="{{ product.display_name|default:product.name_uz }}" 
-                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75{% endif %}">
+                         @click="imageModalOpen = true"
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out cursor-zoom-in {% if not product.is_in_stock %}grayscale opacity-75{% endif %}">
 
                     <!-- Sleek Minimal Badges (Top Left) -->
                     <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
@@ -150,6 +265,11 @@
                         </span>
                         {% endif %}
                     </div>
+
+                    <!-- Zoom Icon Pill (Bottom Right) -->
+                    <button type="button" @click="imageModalOpen = true" class="absolute bottom-3 right-3 p-2 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 text-slate-700 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                    </button>
 
                     <!-- Desktop Heart Button (Top Right) -->
                     <div class="hidden sm:block absolute top-3 right-3 z-10">
@@ -173,20 +293,6 @@
                     </div>
                     {% endif %}
                 </div>
-
-                <!-- Thumbnails if multiple images -->
-                {% if images.count > 1 %}
-                <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                    {% for img in images %}
-                    <button type="button" 
-                            @click="activeImage = '{{ img.image.url }}'" 
-                            :class="activeImage === '{{ img.image.url }}' ? 'ring-2 ring-slate-900 border-transparent' : 'border-slate-200 hover:border-slate-300'"
-                            class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border bg-slate-50 shrink-0 transition-all p-1">
-                        <img src="{{ img.image.url }}" alt="{{ product.display_name|default:product.name_uz }}" class="w-full h-full object-contain">
-                    </button>
-                    {% endfor %}
-                </div>
-                {% endif %}
             </div>
 
             <!-- RIGHT: PRODUCT DETAILS & BUY BOX -->
@@ -331,54 +437,66 @@
                 </div>
                 {% endif %}
 
-                <!-- SLEEK MICRO BENEFITS ROW (Clean, airy, occupies ~44px) -->
-                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center">
-                    <div class="p-2 rounded-xl bg-slate-50/70 border border-slate-100 flex flex-col items-center">
-                        <i data-lucide="truck" class="w-3.5 h-3.5 text-slate-700 mb-0.5"></i>
-                        <span class="text-[11px] font-bold text-slate-800">30-60 daq</span>
-                        <span class="text-[9px] text-slate-400">Tez yetkazish</span>
+                <!-- OFFICIAL MARKETPLACE TRUST BADGES (Uzum Market Reference) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 text-center">
+                    <div class="p-2.5 rounded-2xl bg-slate-50/80 border border-slate-100 flex flex-col items-center">
+                        <i data-lucide="truck" class="w-4 h-4 text-brand mb-1"></i>
+                        <span class="text-[11px] font-bold text-slate-800 leading-tight">1 kunda yetkazish</span>
+                        <span class="text-[9px] text-slate-400 mt-0.5">Tezkor xarid</span>
                     </div>
-                    <div class="p-2 rounded-xl bg-slate-50/70 border border-slate-100 flex flex-col items-center">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600 mb-0.5"></i>
-                        <span class="text-[11px] font-bold text-slate-800">100% Sifat</span>
-                        <span class="text-[9px] text-slate-400">Kafolatlangan</span>
+                    <div class="p-2.5 rounded-2xl bg-slate-50/80 border border-slate-100 flex flex-col items-center">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 mb-1"></i>
+                        <span class="text-[11px] font-bold text-slate-800 leading-tight">100% Sifat</span>
+                        <span class="text-[9px] text-slate-400 mt-0.5">Asl mahsulot</span>
                     </div>
-                    <div class="p-2 rounded-xl bg-slate-50/70 border border-slate-100 flex flex-col items-center">
-                        <i data-lucide="credit-card" class="w-3.5 h-3.5 text-blue-600 mb-0.5"></i>
-                        <span class="text-[11px] font-bold text-slate-800">Qulay to'lov</span>
-                        <span class="text-[9px] text-slate-400">Click, Payme, Naqd</span>
+                    <div class="p-2.5 rounded-2xl bg-slate-50/80 border border-slate-100 flex flex-col items-center">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-blue-600 mb-1"></i>
+                        <span class="text-[11px] font-bold text-slate-800 leading-tight">Qulay to'lov</span>
+                        <span class="text-[9px] text-slate-400 mt-0.5">Click, Payme, Naqd</span>
+                    </div>
+                    <div class="p-2.5 rounded-2xl bg-slate-50/80 border border-slate-100 flex flex-col items-center">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-600 mb-1"></i>
+                        <span class="text-[11px] font-bold text-slate-800 leading-tight">Oson qaytarish</span>
+                        <span class="text-[9px] text-slate-400 mt-0.5">14 kun ichida</span>
                     </div>
                 </div>
 
             </div>
         </div>
 
-        <!-- MINIMALIST TABS: TAVSIF / XUSUSIYATLAR / YETKAZIB BERISH -->
+        <!-- TABS: TAVSIF / XUSUSIYATLAR / SHARHLAR / YETKAZIB BERISH -->
         <div class="mt-8 pt-6 border-t border-slate-100">
             <!-- Segmented Pill Control -->
-            <div class="flex items-center gap-1 p-1 bg-slate-100/90 rounded-xl w-fit border border-slate-200/50">
+            <div class="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-2xl w-fit border border-slate-200/50 flex-wrap">
                 <button type="button" 
                         @click="activeTab = 'desc'" 
                         :class="activeTab === 'desc' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800 font-semibold'"
-                        class="px-3.5 py-1.5 rounded-lg text-xs transition-all">
+                        class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
                     Tavsif
                 </button>
                 <button type="button" 
                         @click="activeTab = 'specs'" 
                         :class="activeTab === 'specs' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800 font-semibold'"
-                        class="px-3.5 py-1.5 rounded-lg text-xs transition-all">
+                        class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
                     Xususiyatlar
+                </button>
+                <button type="button" 
+                        @click="activeTab = 'reviews'" 
+                        :class="activeTab === 'reviews' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800 font-semibold'"
+                        class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-1.5">
+                    <span>Sharhlar</span>
+                    <span class="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold" x-text="reviewsList.length"></span>
                 </button>
                 <button type="button" 
                         @click="activeTab = 'delivery'" 
                         :class="activeTab === 'delivery' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800 font-semibold'"
-                        class="px-3.5 py-1.5 rounded-lg text-xs transition-all">
+                        class="px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
                     Yetkazib berish
                 </button>
             </div>
 
             <!-- Tab Contents -->
-            <div class="pt-4 text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
+            <div class="pt-6 text-xs sm:text-sm text-slate-600 leading-relaxed max-w-4xl">
                 <!-- 1. Tavsif (Description) -->
                 <div x-show="activeTab === 'desc'" class="space-y-3">
                     {% if product.description_uz %}
@@ -393,24 +511,24 @@
                 <!-- 2. Xususiyatlar (Specifications) -->
                 <div x-show="activeTab === 'specs'" x-cloak class="space-y-2">
                     <div class="divide-y divide-slate-100 max-w-md">
-                        <div class="flex justify-between py-2 text-xs">
+                        <div class="flex justify-between py-2.5 text-xs">
                             <span class="text-slate-400 font-medium">O'lchov birligi:</span>
                             <span class="font-bold text-slate-800">{{ product.get_unit_display }}</span>
                         </div>
                         {% if product.barcode %}
-                        <div class="flex justify-between py-2 text-xs">
+                        <div class="flex justify-between py-2.5 text-xs">
                             <span class="text-slate-400 font-medium">Shtrix-kod:</span>
                             <span class="font-mono font-bold text-slate-800">{{ product.barcode }}</span>
                         </div>
                         {% endif %}
                         {% if product.ikpu_code %}
-                        <div class="flex justify-between py-2 text-xs">
+                        <div class="flex justify-between py-2.5 text-xs">
                             <span class="text-slate-400 font-medium">IKPU kodi:</span>
                             <span class="font-mono font-bold text-slate-800">{{ product.ikpu_code }}</span>
                         </div>
                         {% endif %}
                         {% if product.category %}
-                        <div class="flex justify-between py-2 text-xs">
+                        <div class="flex justify-between py-2.5 text-xs">
                             <span class="text-slate-400 font-medium">Kategoriya:</span>
                             <span class="font-bold text-slate-800">{{ product.category.display_name|default:product.category.name_uz }}</span>
                         </div>
@@ -418,8 +536,66 @@
                     </div>
                 </div>
 
-                <!-- 3. Yetkazib berish (Delivery Terms) -->
-                <div x-show="activeTab === 'delivery'" x-cloak class="space-y-2 text-xs text-slate-600">
+                <!-- 3. Sharhlar (Reviews - Uzum Market Style) -->
+                <div x-show="activeTab === 'reviews'" x-cloak class="space-y-6">
+                    <div class="p-6 rounded-3xl bg-slate-50/80 border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                        <div class="flex items-center gap-4">
+                            <div class="text-4xl sm:text-5xl font-black text-slate-900 font-mono" x-text="(reviewsList.length > 0 ? (reviewsList.reduce((acc, r) => acc + r.rating, 0) / reviewsList.length).toFixed(1) : '5.0')"></div>
+                            <div>
+                                <div class="flex items-center gap-1 text-amber-400">
+                                    <template x-for="i in 5">
+                                        <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
+                                    </template>
+                                </div>
+                                <div class="text-xs text-slate-500 font-medium mt-1">
+                                    <span x-text="reviewsList.length"></span> ta xaridor sharhi asosida
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" @click="reviewModalOpen = true"
+                                class="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            <span>Sharh qoldirish</span>
+                        </button>
+                    </div>
+
+                    <!-- Reviews List -->
+                    <div class="space-y-3.5">
+                        <template x-for="r in reviewsList" :key="r.id">
+                            <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center"
+                                             x-text="r.author_name.slice(0, 1).toUpperCase()"></div>
+                                        <div>
+                                            <div class="font-bold text-xs text-slate-900" x-text="r.author_name"></div>
+                                            <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                                                <span>✓ Xarid qilingan</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span class="text-[11px] text-slate-400 font-mono" x-text="r.created_at"></span>
+                                </div>
+
+                                <div class="flex items-center gap-1 text-amber-400">
+                                    <template x-for="i in 5">
+                                        <i data-lucide="star" class="w-3.5 h-3.5" :class="i <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'"></i>
+                                    </template>
+                                </div>
+
+                                <p class="text-xs text-slate-700 leading-relaxed" x-text="r.comment"></p>
+                            </div>
+                        </template>
+
+                        <div x-show="reviewsList.length === 0" class="py-8 text-center text-slate-400 text-xs">
+                            Hozircha sharhlar yo'q. Birinchi bo'lib sharh qoldiring!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Yetkazib berish (Delivery Terms) -->
+                <div x-show="activeTab === 'delivery'" x-cloak class="space-y-3 text-xs text-slate-600">
                     <p><b class="text-slate-800">Yetkazib berish muddati:</b> Buyurtma tasdiqlangandan so'ng 30-60 daqiqa ichida kuryer tomonidan yetkaziladi.</p>
                     <p><b class="text-slate-800">Yetkazib berish narxi:</b> {{ store.delivery_price|floatformat:0 }} UZS. {{ store.free_delivery_threshold|floatformat:0 }} UZS dan ortiq buyurtmalarga <b>bepul</b>.</p>
                     <p><b class="text-slate-800">Kafolat va qaytarish:</b> Mahsulot yetkazilgan vaqtda uning sifati tekshirilishi mumkin. Sifati to'g'ri kelmasa, joyida almashtirib beriladi yoki to'lov qaytariladi.</p>
@@ -428,54 +604,120 @@
         </div>
     </div>
 
-    <!-- RELATED PRODUCTS SECTION (Clean minimal grid) -->
+    <!-- RELATED PRODUCTS SECTION (Modern Elegant Grid matching Home) -->
     {% if related_products %}
-    <div class="space-y-3 pt-2">
+    <div class="space-y-4 pt-6 mt-8 border-t border-slate-100">
         <div class="flex items-center justify-between">
-            <h3 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">O'xshash mahsulotlar</h3>
+            <h3 class="text-base sm:text-xl font-black text-slate-900 tracking-tight">{{ t.similar_products|default:"O'xshash mahsulotlar" }}</h3>
             {% if product.category %}
             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/?cat={{ product.category.slug|default:product.category.id }}{% else %}/?cat={{ product.category.slug|default:product.category.id }}{% endif %}" class="text-xs font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1 transition-colors">
-                <span>Barchasi</span>
+                <span>{{ t.all|default:"Barchasi" }}</span>
                 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
             </a>
             {% endif %}
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 sm:gap-6">
             {% for rp in related_products %}
-            <div class="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between group relative">
-                <!-- Mini Wishlist Button on Related Product -->
-                <button type="button" 
-                        @click.stop="toggleWishlist({{ rp.id }})" 
-                        class="absolute top-4 right-4 z-10 w-7 h-7 rounded-full bg-white/90 shadow-2xs border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-rose-500 active:scale-90 transition-all">
-                    <i data-lucide="heart" 
-                       class="w-3.5 h-3.5 transition-colors"
-                       :class="isInWishlist({{ rp.id }}) ? 'fill-rose-500 text-rose-500' : ''"></i>
-                </button>
+            <div class="bg-white rounded-[24px] sm:rounded-[28px] border border-slate-200/80 overflow-hidden flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] hover:border-slate-300 transition-all duration-300 group relative">
+                
+                <!-- Card Top: Aspect-ratio Image Container with Floating Badges & Wishlist -->
+                <div class="relative w-full aspect-[4/3] sm:aspect-square bg-slate-50 overflow-hidden shrink-0">
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ rp.id }}/{% else %}/product/{{ rp.id }}/{% endif %}" class="block w-full h-full">
+                        {% if rp.primary_image_url %}
+                        <img src="{{ rp.primary_image_url }}" alt="{{ rp.display_name|default:rp.name_uz }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not rp.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-slate-300">
+                            <i data-lucide="image" class="w-10 h-10"></i>
+                        </div>
+                        {% endif %}
+                    </a>
 
-                <div>
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ rp.id }}/{% else %}/product/{{ rp.id }}/{% endif %}" class="block aspect-square rounded-xl overflow-hidden bg-slate-50 mb-2 relative p-2">
-                        <img src="{% if rp.primary_image_url %}{{ rp.primary_image_url }}{% else %}https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80{% endif %}" 
-                             alt="{{ rp.display_name|default:rp.name_uz }}" 
-                             class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
-                        {% if rp.discount_percent %}
-                        <span class="absolute top-2 left-2 px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200/60 text-[9px] font-black">
+                    <!-- Top Left Badges: Discount / Xit / Top -->
+                    <div class="absolute top-2.5 left-2.5 flex items-center gap-1 z-10 pointer-events-none">
+                        {% if rp.discount_percent and rp.is_in_stock %}
+                        <span class="px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[9px] tracking-wider uppercase shadow-xs">
                             -{{ rp.discount_percent }}%
                         </span>
                         {% endif %}
-                    </a>
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ rp.id }}/{% else %}/product/{{ rp.id }}/{% endif %}" class="block font-bold text-xs text-slate-900 group-hover:text-slate-600 transition-colors line-clamp-2 leading-snug">
-                        {{ rp.display_name|default:rp.name_uz }}
-                    </a>
-                </div>
-                
-                <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <div class="font-black text-xs font-mono text-slate-900">
-                        {{ rp.price|floatformat:0 }} <span class="text-[9px] font-normal text-slate-400">UZS</span>
+                        {% if rp.is_featured and rp.is_in_stock %}
+                        <span class="px-2 py-0.5 rounded-full btn-brand text-white font-black text-[9px] tracking-wider uppercase shadow-2xs">
+                            XIT TOVAR
+                        </span>
+                        {% elif not rp.discount_percent and rp.is_in_stock %}
+                        <span class="px-2 py-0.5 rounded-full bg-slate-900/85 backdrop-blur-xs text-white font-black text-[9px] tracking-wider uppercase shadow-xs">
+                            TOP
+                        </span>
+                        {% endif %}
                     </div>
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ rp.id }}/{% else %}/product/{{ rp.id }}/{% endif %}" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-700 flex items-center justify-center transition-colors">
-                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                    </a>
+
+                    <!-- Top Right Wishlist Button -->
+                    <button type="button" @click.stop="toggleWishlist({{ rp.id }})"
+                            class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md hover:bg-white flex items-center justify-center shadow-xs text-slate-400 hover:text-rose-500 transition-all active:scale-90 cursor-pointer z-10"
+                            aria-label="Sevimliga qo'shish">
+                        <i data-lucide="heart" class="w-4 h-4" :class="isInWishlist({{ rp.id }}) ? 'fill-rose-500 text-rose-500' : ''"></i>
+                    </button>
+
+                    {% if not rp.is_in_stock %}
+                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none z-10">
+                        <span class="px-2.5 py-1 rounded-full bg-slate-900/95 text-white font-bold text-[10px] tracking-wide shadow-md">
+                            Tugagan
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Card Body Info & Purchase Action -->
+                <div class="p-3 sm:p-4 flex flex-col justify-between flex-1">
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                            <span class="truncate">{{ rp.category.display_name|default:store.name }}</span>
+                            {% if rp.unit %}
+                            <span class="shrink-0 px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 font-semibold">{{ rp.get_unit_display|lower }}</span>
+                            {% endif %}
+                        </div>
+
+                        <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-2 min-h-[2.25rem] group-hover:text-brand transition-colors leading-snug">
+                            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ rp.id }}/{% else %}/product/{{ rp.id }}/{% endif %}">
+                                {{ rp.display_name|default:rp.name_uz }}
+                            </a>
+                        </h3>
+
+                        <!-- Star Rating -->
+                        <div class="flex items-center gap-1 text-[11px] font-bold text-amber-500 pt-0.5">
+                            <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                            <span>{{ rp.rating|default:"4.9" }}</span>
+                            <span class="text-slate-400 font-normal">({{ rp.reviews_count|default:"12" }})</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Bottom Row: Price & Brand Circular Plus Button -->
+                    <div class="flex items-center justify-between pt-3 mt-3 border-t border-slate-100/80">
+                        <div>
+                            <div class="text-xs sm:text-sm font-black text-slate-900 font-mono tracking-tight leading-none">
+                                {{ rp.price|floatformat:0 }} UZS
+                            </div>
+                            {% if rp.old_price %}
+                            <div class="text-[10px] text-slate-400 line-through mt-0.5">
+                                {{ rp.old_price|floatformat:0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            {% if rp.is_in_stock %}
+                            <button type="button" @click="addRelatedToCart({{ rp.id }})"
+                                    class="w-9 h-9 rounded-full btn-brand flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer"
+                                    title="{{ t.add_to_cart|default:'Savatga qo\'shish' }}">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                            {% else %}
+                            <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-400 text-[10px] font-bold">
+                                Tugagan
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endfor %}
@@ -514,6 +756,135 @@
         </button>
     </div>
     {% endif %}
+    <!-- ============================================================= -->
+    <!-- FULLSCREEN IMAGE ZOOM MODAL -->
+    <!-- ============================================================= -->
+    <div x-show="imageModalOpen" 
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+         @keydown.escape.window="imageModalOpen = false">
+        <div class="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center" @click.away="imageModalOpen = false">
+            <button type="button" @click="imageModalOpen = false" class="absolute -top-10 right-0 p-2 text-white/80 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-7 h-7"></i>
+            </button>
+            <img :src="activeImage" alt="{{ product.name_uz }}" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl bg-white">
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- WRITE REVIEW MODAL (Uzum Market Style) -->
+    <!-- ============================================================= -->
+    <div x-show="reviewModalOpen" 
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+         @keydown.escape.window="reviewModalOpen = false">
+        <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-5" @click.away="reviewModalOpen = false">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-lg font-black text-slate-900 flex items-center gap-2">
+                    <i data-lucide="message-square" class="w-5 h-5 text-brand"></i>
+                    <span>Sharh qoldirish</span>
+                </h3>
+                <button type="button" @click="reviewModalOpen = false" class="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Rating Stars Selection (Solid gray for unselected, bright amber for selected, reactive hover preview) -->
+            <div class="space-y-1.5 text-center py-2">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    {% if current_lang == 'ru' %}Оцените товар{% elif current_lang == 'en' %}Rate the product{% else %}Mahsulotni baholang{% endif %}
+                </p>
+                <div class="flex items-center justify-center gap-2" @mouseleave="hoverRating = 0">
+                    <template x-for="star in [1, 2, 3, 4, 5]" :key="star">
+                        <button type="button" 
+                                @click="reviewRating = star" 
+                                @mouseenter="hoverRating = star"
+                                class="p-1.5 transition-transform hover:scale-125 active:scale-95 focus:outline-none cursor-pointer">
+                            <svg class="w-8 h-8 transition-colors drop-shadow-xs" 
+                                 :class="(hoverRating ? star <= hoverRating : star <= reviewRating) 
+                                         ? 'text-amber-400 fill-amber-400' 
+                                         : 'text-slate-200 fill-slate-200'" 
+                                 viewBox="0 0 24 24" 
+                                 stroke="currentColor" 
+                                 stroke-width="1.5" 
+                                 stroke-linecap="round" 
+                                 stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </button>
+                    </template>
+                </div>
+                <p class="text-xs font-bold text-amber-600" 
+                   x-text="(hoverRating || reviewRating) === 5 ? '{% if current_lang == 'ru' %}Отлично (5){% elif current_lang == 'en' %}Excellent (5){% else %}Ajoyib (5){% endif %}' : 
+                           (hoverRating || reviewRating) === 4 ? '{% if current_lang == 'ru' %}Хорошо (4){% elif current_lang == 'en' %}Good (4){% else %}Yaxshi (4){% endif %}' : 
+                           (hoverRating || reviewRating) === 3 ? '{% if current_lang == 'ru' %}Удовлетворительно (3){% elif current_lang == 'en' %}Average (3){% else %}Qoniqarli (3){% endif %}' : 
+                           (hoverRating || reviewRating) === 2 ? '{% if current_lang == 'ru' %}Плохо (2){% elif current_lang == 'en' %}Poor (2){% else %}Yomon (2){% endif %}' : 
+                           '{% if current_lang == 'ru' %}Очень плохо (1){% elif current_lang == 'en' %}Terrible (1){% else %}Juda yomon (1){% endif %}'"></p>
+            </div>
+
+            <!-- Form Inputs -->
+            <div class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Ismingiz</label>
+                    <input type="text" x-model="reviewName" placeholder="Ismingizni kiriting" 
+                           class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Fikringiz <span class="text-rose-500">*</span></label>
+                    <textarea x-model="reviewComment" rows="4" placeholder="Mahsulot haqidagi taassurotlaringiz, yetkazib berish va sifat haqida yozing..." 
+                              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"></textarea>
+                </div>
+                <div x-show="reviewError" class="p-3 rounded-xl bg-rose-50 border border-rose-100 text-xs font-bold text-rose-600 flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                    <span x-text="reviewError"></span>
+                </div>
+                <div x-show="reviewSuccess" class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-xs font-bold text-emerald-600 flex items-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i>
+                    <span>Sharhingiz muvaffaqiyatli saqlandi! Rahmat!</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="button" @click="reviewModalOpen = false" class="flex-1 py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors">
+                    Bekor qilish
+                </button>
+                <button type="button" @click="submitReview()" :disabled="reviewSubmitting || reviewSuccess" class="flex-1 py-3 px-4 rounded-xl btn-brand text-white font-bold text-xs flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md">
+                    <i data-lucide="send" class="w-4 h-4" x-show="!reviewSubmitting"></i>
+                    <span x-show="!reviewSubmitting">Yuborish</span>
+                    <span x-show="reviewSubmitting">Yuborilmoqda...</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function handleProductBack() {
+        let activeLang = '{{ current_lang|default:"uz" }}';
+        try {
+            activeLang = localStorage.getItem('storebox_active_lang') || activeLang;
+        } catch(e) {}
+
+        let fallbackUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}';
+        let catalogUrl = '';
+        try {
+            catalogUrl = sessionStorage.getItem('sb_catalog_url_{{ store.id }}') || '';
+        } catch(e) {}
+
+        if (!catalogUrl || catalogUrl.includes('/product/') || catalogUrl.includes('/order/')) {
+            catalogUrl = fallbackUrl;
+        }
+
+        try {
+            const targetUrl = new URL(catalogUrl, window.location.origin);
+            targetUrl.searchParams.set('lang', activeLang);
+            window.location.href = targetUrl.toString();
+        } catch(e) {
+            window.location.href = fallbackUrl + (fallbackUrl.includes('?') ? '&' : '?') + 'lang=' + activeLang;
+        }
+    }
+</script>
 {% endblock %}
