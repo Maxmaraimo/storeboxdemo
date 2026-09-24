@@ -301,7 +301,7 @@ export const DashboardPage: React.FC = () => {
       {/* ======================================================== */}
       {/* 1. TOP HEADER BAR: STORE TITLE & WORKING PERIOD CONTROLS */}
       {/* ======================================================== */}
-      <div className="relative z-40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
@@ -373,7 +373,7 @@ export const DashboardPage: React.FC = () => {
 
               {/* Date Range Popover */}
               {showDatePicker && (
-                <div className="absolute right-0 top-full mt-2.5 z-50 w-72 sm:w-80 p-4 rounded-2xl bg-white dark:bg-[#161b26] border border-neutral-200 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.22)] space-y-3.5">
+                <div className="absolute right-0 top-full mt-2.5 z-30 w-72 sm:w-80 p-4 rounded-2xl bg-white dark:bg-[#161b26] border border-neutral-200 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.22)] space-y-3.5">
                   <div className="flex items-center justify-between pb-2 border-b border-black/[0.06] dark:border-white/10">
                     <div className="font-bold text-neutral-900 dark:text-white text-xs flex items-center gap-1.5">
                       <Calendar className="w-4 h-4 text-[#211b2e] dark:text-[#c8ff6a]" />

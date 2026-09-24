@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -38,6 +38,101 @@ export const Header: React.FC = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [periodOpen, setPeriodOpen] = useState(false);
+
+  const langRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const regionRef = useRef<HTMLDivElement>(null);
+  const periodRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (langRef.current && !langRef.current.contains(target)) {
+        setLangOpen(false);
+      }
+      if (userRef.current && !userRef.current.contains(target)) {
+        setUserOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(target)) {
+        setNotifOpen(false);
+      }
+      if (regionRef.current && !regionRef.current.contains(target)) {
+        setRegionOpen(false);
+      }
+      if (periodRef.current && !periodRef.current.contains(target)) {
+        setPeriodOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleLang = () => {
+    setLangOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setUserOpen(false);
+        setNotifOpen(false);
+        setRegionOpen(false);
+        setPeriodOpen(false);
+      }
+      return next;
+    });
+  };
+
+  const toggleUser = () => {
+    setUserOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setLangOpen(false);
+        setNotifOpen(false);
+        setRegionOpen(false);
+        setPeriodOpen(false);
+      }
+      return next;
+    });
+  };
+
+  const toggleNotif = () => {
+    setNotifOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setLangOpen(false);
+        setUserOpen(false);
+        setRegionOpen(false);
+        setPeriodOpen(false);
+      }
+      return next;
+    });
+  };
+
+  const toggleRegion = () => {
+    setRegionOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setLangOpen(false);
+        setUserOpen(false);
+        setNotifOpen(false);
+        setPeriodOpen(false);
+      }
+      return next;
+    });
+  };
+
+  const togglePeriod = () => {
+    setPeriodOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setLangOpen(false);
+        setUserOpen(false);
+        setNotifOpen(false);
+        setRegionOpen(false);
+      }
+      return next;
+    });
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isDark, setIsDark] = useState<boolean>(() => {
     return document.documentElement.classList.contains("dark");
@@ -118,7 +213,7 @@ export const Header: React.FC = () => {
     periodOptions.find((p) => p.id === selectedPeriod)?.label || t("today") || "Bugun";
 
   return (
-    <header className="h-16 bg-white/75 dark:bg-[#12141a] backdrop-blur-2xl border border-white/85 dark:border-white/10 rounded-[28px] shadow-[0_16px_40px_-12px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] px-4 sm:px-6 flex items-center justify-between sticky top-4 z-30 transition-colors duration-300 gap-3">
+    <header className="h-16 bg-white/75 dark:bg-[#12141a] backdrop-blur-2xl border border-white/85 dark:border-white/10 rounded-[28px] shadow-[0_16px_40px_-12px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] px-4 sm:px-6 flex items-center justify-between sticky top-4 z-50 transition-colors duration-300 gap-3">
       {/* 1. LEFT: SEARCH PILL */}
       <div className="flex items-center gap-3 flex-1 max-w-md">
         <div className="relative w-full">
@@ -155,14 +250,11 @@ export const Header: React.FC = () => {
         {/* Quick Filter Pills */}
         <div className="hidden md:flex items-center gap-1.5 text-xs font-bold text-neutral-600 dark:text-neutral-300">
           {/* Branch / Region Dropdown */}
-          <div className="relative">
+          <div ref={regionRef} className="relative">
             <button
               type="button"
               data-testid="region-dropdown-btn"
-              onClick={() => {
-                setRegionOpen(!regionOpen);
-                setPeriodOpen(false);
-              }}
+              onClick={toggleRegion}
               className="px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-white/80 dark:border-white/10 flex items-center gap-1.5 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition-colors shadow-2xs"
             >
               <Building2 className="w-3 h-3 text-neutral-400" />
@@ -170,7 +262,7 @@ export const Header: React.FC = () => {
               <ChevronDown className="w-3 h-3 text-neutral-400 shrink-0" />
             </button>
             {regionOpen && (
-              <div className="absolute left-0 mt-2 w-52 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 rounded-2xl shadow-xl py-1.5 z-50 text-xs font-medium">
+              <div className="absolute left-0 mt-2 w-52 bg-white dark:bg-[#181a20] border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl py-1.5 z-50 text-xs font-medium">
                 {branchOptions.map((opt) => (
                   <button
                     key={opt.id}
@@ -210,21 +302,18 @@ export const Header: React.FC = () => {
           </div>
 
           {/* Period Dropdown */}
-          <div className="relative">
+          <div ref={periodRef} className="relative">
             <button
               type="button"
               data-testid="period-dropdown-btn"
-              onClick={() => {
-                setPeriodOpen(!periodOpen);
-                setRegionOpen(false);
-              }}
+              onClick={togglePeriod}
               className="px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-white/80 dark:border-white/10 flex items-center gap-1.5 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition-colors shadow-2xs"
             >
               <span>{currentPeriodLabel}</span>
               <ChevronDown className="w-3 h-3 text-neutral-400" />
             </button>
             {periodOpen && (
-              <div className="absolute left-0 mt-2 w-44 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl border border-white/80 dark:border-white/10 rounded-2xl shadow-xl py-1.5 z-50 text-xs font-medium">
+              <div className="absolute left-0 mt-2 w-44 bg-white dark:bg-[#181a20] border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl py-1.5 z-50 text-xs font-medium">
                 {periodOptions.map((opt) => (
                   <button
                     key={opt.id}
@@ -277,11 +366,11 @@ export const Header: React.FC = () => {
         </button>
 
         {/* Notification Bell with Dynamic Red Badge & Dropdown */}
-        <div className="relative">
+        <div ref={notifRef} className="relative">
           <button
             type="button"
             data-testid="notif-bell-btn"
-            onClick={() => setNotifOpen(!notifOpen)}
+            onClick={toggleNotif}
             className="w-9 h-9 rounded-2xl border border-white/80 dark:border-white/10 bg-white/70 dark:bg-white/5 shadow-2xs flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer relative"
             title={totalUnread > 0 ? `${totalUnread} ${t("new") || "ta yangi"} ${t("notifications") || "bildirishnoma"}` : (t("notifications") || "Bildirishnomalar")}
           >
@@ -292,7 +381,7 @@ export const Header: React.FC = () => {
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 rounded-3xl shadow-2xl p-4 z-50 space-y-3">
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-[#181a20] border border-neutral-200 dark:border-white/10 rounded-3xl shadow-2xl p-4 z-50 space-y-3">
               <div className="flex items-center justify-between pb-2.5 border-b border-black/[0.06] dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-sm text-neutral-900 dark:text-white">{t("notifications") || "Bildirishnomalar"}</span>
@@ -365,51 +454,69 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Language Selector */}
-        <div className="relative">
+        <div ref={langRef} className="relative">
           <button
             type="button"
             data-testid="language-selector-btn"
-            onClick={() => setLangOpen(!langOpen)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors cursor-pointer"
+            onClick={toggleLang}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border transition-all cursor-pointer ${
+              langOpen
+                ? "border-[#211b2e] dark:border-[#c8ff6a] bg-neutral-200/90 dark:bg-white/15 ring-2 ring-[#211b2e]/10 dark:ring-[#c8ff6a]/20"
+                : "border-slate-200/80 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 hover:bg-slate-200/60 dark:hover:bg-white/10"
+            } text-xs font-bold text-slate-700 dark:text-slate-200`}
+            title={lang === "ru" ? "Сменить язык" : lang === "en" ? "Change language" : "Tilni o'zgartirish"}
           >
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-white/10 text-neutral-800 dark:text-white font-bold">
-              {languages.find((l) => l.code === lang)?.badge}
+              {languages.find((l) => l.code === lang)?.badge || "UZ"}
             </span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
+            <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${langOpen ? "rotate-180" : ""}`} />
           </button>
 
           {langOpen && (
-            <div className="absolute right-0 mt-2 w-36 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 rounded-2xl shadow-xl py-1.5 z-50 text-xs font-semibold">
-              {languages.map((l) => (
-                <button
-                  key={l.code}
-                  onClick={() => {
-                    setLang(l.code);
-                    setLangOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors ${
-                    lang === l.code ? "text-neutral-900 dark:text-white font-bold bg-black/5 dark:bg-white/10" : "text-neutral-700 dark:text-neutral-300"
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-white/10">
-                      {l.badge}
+            <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-[#181a20] border border-neutral-200 dark:border-white/15 rounded-2xl shadow-2xl py-1.5 z-50 text-xs font-semibold ring-1 ring-black/5 animate-in fade-in duration-150">
+              <div className="px-3 py-1 text-[10px] font-bold text-neutral-400 uppercase tracking-wider border-b border-black/[0.04] dark:border-white/10 mb-1">
+                {lang === "ru" ? "Язык" : lang === "en" ? "Language" : "Til"}
+              </div>
+              {languages.map((l) => {
+                const isActive = lang === l.code;
+                return (
+                  <button
+                    key={l.code}
+                    type="button"
+                    onClick={() => {
+                      setLang(l.code);
+                      setLangOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 transition-colors cursor-pointer text-left ${
+                      isActive
+                        ? "text-neutral-900 dark:text-white font-bold bg-[#211b2e]/5 dark:bg-[#c8ff6a]/10"
+                        : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                        isActive
+                          ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]"
+                          : "bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-white/10"
+                      }`}>
+                        {l.badge}
+                      </span>
+                      <span className="text-xs font-semibold">{l.label}</span>
                     </span>
-                    <span>{l.label}</span>
-                  </span>
-                  {lang === l.code && <Check className="w-3.5 h-3.5 text-[#211b2e] dark:text-[#c8ff6a]" />}
-                </button>
-              ))}
+                    {isActive && <Check className="w-3.5 h-3.5 text-[#211b2e] dark:text-[#c8ff6a] shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
 
         {/* User Profile Avatar */}
-        <div className="relative">
+        <div ref={userRef} className="relative">
           <button
             type="button"
             data-testid="user-profile-btn"
-            onClick={() => setUserOpen(!userOpen)}
+            onClick={toggleUser}
             className="flex items-center gap-2 p-0.5 rounded-2xl hover:scale-105 transition-transform cursor-pointer"
           >
             <div className="w-9 h-9 rounded-2xl bg-[#211B2E] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center text-xs font-bold shadow-sm ring-2 ring-black/5 dark:ring-white/5">
@@ -418,7 +525,7 @@ export const Header: React.FC = () => {
           </button>
 
           {userOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl border border-black/[0.06] dark:border-white/10 rounded-2xl shadow-xl p-2 z-50 space-y-1 text-xs">
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#181a20] border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl p-2 z-50 space-y-1 text-xs">
               <div className="p-2 border-b border-black/[0.06] dark:border-white/10">
                 <div className="font-bold text-neutral-900 dark:text-white truncate">{user?.first_name || "Admin"}</div>
                 <div className="text-[10px] text-neutral-400">{user?.phone}</div>
