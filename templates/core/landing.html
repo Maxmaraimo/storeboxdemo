@@ -5323,71 +5323,6 @@ h1 span {
         <!-- =========================================================
              NEW: MULTI-DEVICE 3D INTERACTIVE SHOWCASE (5 STORES)
              ========================================================= -->
-        <style>
-            #showcase .store-carousel-wrapper,
-            #showcase .store-dots-row,
-            #showcase .showcase-controls-wrapper,
-            #showcase .showcase-stage { display: none !important; }
-            .storebox-promo-gallery {
-                display: grid;
-                grid-auto-flow: column;
-                grid-auto-columns: minmax(270px, 1fr);
-                gap: 18px;
-                overflow-x: auto;
-                padding: 10px 4px 28px;
-                margin-top: 38px;
-                scroll-snap-type: x mandatory;
-                scrollbar-width: none;
-            }
-            .storebox-promo-gallery::-webkit-scrollbar { display: none; }
-            .storebox-promo-card {
-                position: relative;
-                min-height: 520px;
-                border-radius: 32px;
-                padding: 28px 26px 0;
-                overflow: hidden;
-                color: #fff;
-                scroll-snap-align: start;
-                box-shadow: 0 24px 60px rgba(20, 16, 35, .16);
-                isolation: isolate;
-            }
-            .storebox-promo-card::before {
-                content: "";
-                position: absolute;
-                inset: 0;
-                background: radial-gradient(circle at 72% 18%, rgba(255,255,255,.24), transparent 34%);
-                z-index: -1;
-            }
-            .storebox-promo-card.blue { background: linear-gradient(160deg, #0067ff, #0434b8 58%, #07184f); }
-            .storebox-promo-card.violet { background: linear-gradient(160deg, #bc2dff, #6d12c5 55%, #27075d); }
-            .storebox-promo-card.green { background: linear-gradient(160deg, #12c98a, #087a67 58%, #06463f); }
-            .storebox-promo-card.orange { background: linear-gradient(160deg, #ff8a1f, #e44716 58%, #75200e); }
-            .promo-eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .78; }
-            .storebox-promo-card h3 { margin: 14px 0 10px; font-size: 34px; line-height: .98; letter-spacing: -.04em; color: #fff; }
-            .storebox-promo-card p { margin: 0; max-width: 250px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,.84); }
-            .promo-stat { display: inline-flex; margin-top: 18px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; background: rgba(255,255,255,.14); font-size: 12px; font-weight: 750; backdrop-filter: blur(10px); }
-            .promo-device {
-                position: absolute;
-                left: 22px;
-                right: 22px;
-                bottom: -18px;
-                height: 285px;
-                border: 7px solid rgba(15, 13, 29, .92);
-                border-radius: 24px 24px 0 0;
-                background: #fff;
-                box-shadow: 0 -16px 45px rgba(0,0,0,.22);
-                overflow: hidden;
-                transform: perspective(900px) rotateX(2deg);
-            }
-            .promo-device.phone { left: 70px; right: 70px; height: 300px; border-radius: 34px 34px 0 0; border-width: 8px; }
-            .promo-device img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
-            @media (min-width: 1180px) { .storebox-promo-gallery { grid-template-columns: repeat(4, 1fr); grid-auto-flow: initial; } }
-            @media (max-width: 700px) {
-                .storebox-promo-gallery { grid-auto-columns: 82vw; margin-top: 26px; }
-                .storebox-promo-card { min-height: 500px; border-radius: 26px; }
-                .storebox-promo-card h3 { font-size: 31px; }
-            }
-        </style>
                 <section class="showcase-section" id="showcase">
             <div class="showcase-pin-track" id="showcasePinTrack">
                 <div class="showcase-sticky-box">
@@ -5396,37 +5331,6 @@ h1 span {
                             <span class="section-kicker" data-i18n="showcaseKicker">Реальные витрины</span>
                             <h2 data-i18n="showcaseTitle">Ваш магазин на десктопе, ноутбуке и телефоне</h2>
                             <p data-i18n="showcaseLead">StoreBox автоматически оптимизирует витрину под каждый экран. Быстрый отклик, адаптивная сетка и удобная корзина гарантируют высокие продажи.</p>
-
-                            <div class="storebox-promo-gallery" aria-label="Возможности StoreBox">
-                                <article class="storebox-promo-card blue">
-                                    <span class="promo-eyebrow">Онлайн-витрина</span>
-                                    <h3>Магазин готов к продажам</h3>
-                                    <p>Каталог, корзина и оформление заказа на любом экране.</p>
-                                    <span class="promo-stat">0.3 сек · 100/100 Speed</span>
-                                    <div class="promo-device"><img src="/static/images/showcase/showcase_desktop.png?v=promo1" alt="Интернет-магазин StoreBox"></div>
-                                </article>
-                                <article class="storebox-promo-card violet">
-                                    <span class="promo-eyebrow">Управление бизнесом</span>
-                                    <h3>Все продажи в одной панели</h3>
-                                    <p>Заказы, клиенты, товары и аналитика обновляются в реальном времени.</p>
-                                    <span class="promo-stat">Live · 24/7</span>
-                                    <div class="promo-device"><img src="/static/images/showcase/real_platform_dashboard.png?v=promo1" alt="Панель управления StoreBox"></div>
-                                </article>
-                                <article class="storebox-promo-card green">
-                                    <span class="promo-eyebrow">Mobile Commerce</span>
-                                    <h3>Удобно покупать с телефона</h3>
-                                    <p>Быстрый мобильный каталог и заказ в несколько касаний.</p>
-                                    <span class="promo-stat">100% адаптивно</span>
-                                    <div class="promo-device phone"><img src="/static/images/showcase/showcase_mobile.png?v=promo1" alt="Мобильная витрина StoreBox"></div>
-                                </article>
-                                <article class="storebox-promo-card orange">
-                                    <span class="promo-eyebrow">Доставка и курьеры</span>
-                                    <h3>Заказ всегда под контролем</h3>
-                                    <p>Статусы, курьеры и маршруты доступны в единой системе.</p>
-                                    <span class="promo-stat">GPS · Real time</span>
-                                    <div class="promo-device phone"><img src="/static/images/landing/platform/courier.png?v=promo1" alt="Панель курьера StoreBox"></div>
-                                </article>
-                            </div>
                             
                             <!-- Store Selector Bar & Carousel (3 Real Stores, No Emojis, Pure SVG) -->
                             <div class="store-carousel-wrapper">
