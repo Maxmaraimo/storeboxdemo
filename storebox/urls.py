@@ -2,11 +2,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import RedirectView
 from apps.dashboard import views as dashboard_views
 from apps.core import views as core_views
 from apps.api import views_dashboard
 
 urlpatterns = [
+    path('favicon.ico', RedirectView.as_view(url='/static/images/storebox-favicon.svg', permanent=True), name='favicon'),
     path('admin/', admin.site.urls),
     path('django-admin/', admin.site.urls),
 
