@@ -2167,97 +2167,206 @@ h1 span {
    ========================================================= */
 .bento-macbook-section {
     position: relative;
-    padding-block: 60px 80px;
-    max-width: 1400px;
+    padding-block: 60px 90px;
+    max-width: 1360px;
     margin: 0 auto;
     width: 100%;
 }
 .bento-macbook-grid {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
-    gap: 24px;
+    gap: 26px;
     position: relative;
     z-index: 2;
 }
 .bento-mac-card {
     position: relative;
-    border-radius: 32px;
-    padding: 34px 32px;
+    border-radius: 36px;
+    padding: 38px 36px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
 }
 .bento-mac-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-6px);
 }
 
-/* Card 1: Telegram WebApp (Deep Blue) */
+/* Card 1: Telegram WebApp (Vibrant Cobalt / Sapphire Blue) */
 .bento-mac-card-1 {
     grid-column: span 7;
-    min-height: 430px;
-    background: linear-gradient(135deg, #102654 0%, #0c1c3f 50%, #060e22 100%);
-    border: 1px solid rgba(59, 130, 246, 0.32);
-    box-shadow: 0 24px 60px -15px rgba(3, 10, 28, 0.7), inset 0 1px 1px rgba(147, 197, 253, 0.2);
+    min-height: 440px;
+    background: linear-gradient(145deg, #1d4ed8 0%, #1e3a8a 45%, #0f172a 100%);
+    border: 1.5px solid rgba(147, 197, 253, 0.45);
+    box-shadow: 0 25px 60px -15px rgba(29, 78, 216, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 .bento-mac-card-1:hover {
-    border-color: rgba(96, 165, 250, 0.6);
-    box-shadow: 0 32px 70px -15px rgba(37, 99, 235, 0.3), inset 0 1px 2px rgba(147, 197, 253, 0.3);
+    border-color: rgba(191, 219, 254, 0.8);
+    box-shadow: 0 35px 80px -15px rgba(37, 99, 235, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
 }
 
-/* Card 2: YES POS Касса (Deep Emerald Green) */
+/* Card 2: YES POS Касса (Vibrant Emerald Green) */
 .bento-mac-card-2 {
     grid-column: span 5;
-    min-height: 430px;
-    background: linear-gradient(135deg, #0d3026 0%, #08211b 50%, #04120f 100%);
-    border: 1px solid rgba(16, 185, 129, 0.32);
-    box-shadow: 0 24px 60px -15px rgba(2, 20, 14, 0.7), inset 0 1px 1px rgba(110, 231, 183, 0.2);
+    min-height: 440px;
+    background: linear-gradient(145deg, #059669 0%, #047857 45%, #022c22 100%);
+    border: 1.5px solid rgba(110, 231, 183, 0.45);
+    box-shadow: 0 25px 60px -15px rgba(5, 150, 105, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 .bento-mac-card-2:hover {
-    border-color: rgba(52, 211, 153, 0.6);
-    box-shadow: 0 32px 70px -15px rgba(16, 185, 129, 0.3), inset 0 1px 2px rgba(110, 231, 183, 0.3);
+    border-color: rgba(167, 243, 208, 0.8);
+    box-shadow: 0 35px 80px -15px rgba(16, 185, 129, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
 }
 
-/* Card 3: CRM-система (Deep Royal Violet) */
+/* Card 3: CRM-система (Vibrant Royal Violet / Indigo) */
 .bento-mac-card-3 {
     grid-column: span 7;
-    min-height: 410px;
-    background: linear-gradient(135deg, #22123d 0%, #170b2b 50%, #0a0414 100%);
-    border: 1px solid rgba(168, 85, 247, 0.32);
-    box-shadow: 0 24px 60px -15px rgba(18, 5, 33, 0.7), inset 0 1px 1px rgba(216, 180, 254, 0.2);
+    min-height: 420px;
+    background: linear-gradient(145deg, #7c3aed 0%, #5b21b6 45%, #1e1b4b 100%);
+    border: 1.5px solid rgba(216, 180, 254, 0.45);
+    box-shadow: 0 25px 60px -15px rgba(124, 58, 237, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 .bento-mac-card-3:hover {
-    border-color: rgba(192, 132, 252, 0.6);
-    box-shadow: 0 32px 70px -15px rgba(168, 85, 247, 0.3), inset 0 1px 2px rgba(216, 180, 254, 0.3);
+    border-color: rgba(233, 213, 255, 0.8);
+    box-shadow: 0 35px 80px -15px rgba(139, 92, 246, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
 }
 
-/* Card 4: Аналитика (Deep Dark Amber / Gold) */
+/* Card 4: Аналитика (Vibrant Amber / Warm Gold) */
 .bento-mac-card-4 {
     grid-column: span 5;
-    min-height: 410px;
-    background: linear-gradient(135deg, #33230b 0%, #241806 50%, #120b02 100%);
-    border: 1px solid rgba(245, 158, 11, 0.32);
-    box-shadow: 0 24px 60px -15px rgba(28, 18, 3, 0.7), inset 0 1px 1px rgba(253, 230, 138, 0.2);
+    min-height: 420px;
+    background: linear-gradient(145deg, #d97706 0%, #b45309 45%, #1c1917 100%);
+    border: 1.5px solid rgba(253, 230, 138, 0.45);
+    box-shadow: 0 25px 60px -15px rgba(217, 119, 6, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 .bento-mac-card-4:hover {
-    border-color: rgba(251, 191, 36, 0.6);
-    box-shadow: 0 32px 70px -15px rgba(245, 158, 11, 0.3), inset 0 1px 2px rgba(253, 230, 138, 0.3);
+    border-color: rgba(254, 240, 138, 0.8);
+    box-shadow: 0 35px 80px -15px rgba(245, 158, 11, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
 }
 
-/* Card 5: Быстрая Доставка (Deep Ocean Teal / Cyan - Full Width) */
+/* Card 5: Быстрая Доставка (Vibrant Ocean Cyan / Teal - Full Width) */
 .bento-mac-card-5 {
     grid-column: span 12;
-    min-height: 250px;
-    background: linear-gradient(135deg, #0e353f 0%, #09242c 50%, #041217 100%);
-    border: 1px solid rgba(6, 182, 212, 0.32);
-    box-shadow: 0 24px 60px -15px rgba(2, 23, 28, 0.7), inset 0 1px 1px rgba(103, 232, 249, 0.2);
+    min-height: 260px;
+    background: linear-gradient(145deg, #0891b2 0%, #0e7490 45%, #083344 100%);
+    border: 1.5px solid rgba(103, 232, 249, 0.45);
+    box-shadow: 0 25px 60px -15px rgba(8, 145, 178, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 .bento-mac-card-5:hover {
-    border-color: rgba(34, 211, 238, 0.6);
-    box-shadow: 0 32px 70px -15px rgba(6, 182, 212, 0.3), inset 0 1px 2px rgba(103, 232, 249, 0.3);
+    border-color: rgba(165, 243, 252, 0.8);
+    box-shadow: 0 35px 80px -15px rgba(6, 182, 212, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
+}
+
+/* 3D Elements Styles */
+.bento-3d-scene {
+    position: relative;
+    perspective: 1200px;
+    width: 280px;
+    height: 360px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+}
+.bento-3d-glass-pedestal {
+    position: absolute;
+    width: 250px;
+    height: 290px;
+    border-radius: 32px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transform: rotateX(56deg) rotateZ(-24deg) translateY(45px) translateZ(-40px);
+    pointer-events: none;
+}
+.bento-3d-phone-mockup {
+    position: relative;
+    z-index: 10;
+    width: 195px;
+    height: 335px;
+    border-radius: 36px;
+    background: #0b0f19;
+    padding: 7px;
+    border: 2.5px solid #334155;
+    box-shadow: 
+        -18px 30px 60px -8px rgba(0, 0, 0, 0.6),
+        0 15px 35px -5px rgba(15, 23, 42, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+    transform: rotateY(-18deg) rotateX(14deg) rotateZ(3deg);
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.bento-mac-card-1:hover .bento-3d-phone-mockup {
+    transform: rotateY(-10deg) rotateX(8deg) rotateZ(1deg) translateY(-8px) scale(1.03);
+    box-shadow: 
+        -25px 40px 75px -10px rgba(0, 0, 0, 0.7),
+        0 20px 45px -5px rgba(37, 99, 235, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+}
+.bento-phone-gloss {
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.22) 48%, transparent 56%);
+    pointer-events: none;
+    z-index: 25;
+}
+.bento-phone-notch {
+    width: 68px;
+    height: 14px;
+    background: #000000;
+    border-radius: 20px;
+    margin: 1px auto 5px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    position: relative;
+    z-index: 20;
+    shrink: 0;
+}
+.bento-notch-camera {
+    width: 5px;
+    height: 5px;
+    background: #1e293b;
+    border-radius: 50%;
+    border: 1px solid #334155;
+}
+.bento-phone-screen {
+    flex: 1;
+    border-radius: 26px;
+    background: #ffffff;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05);
+}
+.bento-tg-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.bento-tg-hero-banner {
+    position: relative;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+    padding: 8px 10px;
+    margin-top: 5px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
 }
 
 @media (max-width: 1024px) {
@@ -5705,57 +5814,92 @@ h1 span {
                     <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 h-full">
                         
                         <!-- Left text -->
-                        <div class="space-y-3 max-w-xs shrink-0">
-                            <h3 class="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight" data-i18n="bentoTgHeader">
+                        <div class="space-y-3.5 max-w-xs shrink-0">
+                            <h3 class="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoTgHeader">
                                 Telegram<br>WebApp
                             </h3>
                             <div>
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-400/15 border border-blue-400/30 text-blue-200 text-xs font-black tracking-wider uppercase shadow-xs" data-i18n="bentoTgPill">
+                                <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoTgPill">
                                     WEBAPP АКТИВЕН
                                 </span>
                             </div>
                         </div>
 
                         <!-- Right visual: 3D Angled Glass Pedestal + Floating 3D Phone -->
-                        <div class="relative flex items-center justify-center w-full max-w-[280px] h-[340px]">
-                            <!-- Angled glass plate pedestal under the phone -->
-                            <div class="absolute w-56 h-64 rounded-3xl bg-blue-600/15 border border-blue-400/40 shadow-2xl backdrop-blur-md transform -rotate-12 skew-y-3 scale-95 pointer-events-none"></div>
+                        <div class="bento-3d-scene">
+                            <!-- 3D Angled Glass Pedestal Plate under Phone -->
+                            <div class="bento-3d-glass-pedestal"></div>
 
-                            <!-- Floating Phone Mockup -->
-                            <div class="relative z-10 w-44 h-[300px] rounded-[32px] bg-slate-950 p-2 shadow-2xl border border-slate-700/80 transform hover:scale-105 transition-transform duration-300 flex flex-col overflow-hidden">
-                                <!-- Phone Dynamic Notch -->
-                                <div class="w-16 h-3 bg-black rounded-full mx-auto mb-1 shrink-0"></div>
+                            <!-- 3D Floating Phone Mockup -->
+                            <div class="bento-3d-phone-mockup">
+                                <!-- Phone Screen Reflection Streak -->
+                                <div class="bento-phone-gloss"></div>
+
+                                <!-- Dynamic Island Notch -->
+                                <div class="bento-phone-notch">
+                                    <span class="bento-notch-camera"></span>
+                                </div>
                                 
-                                <!-- Phone Screen Content -->
-                                <div class="w-full flex-1 rounded-[24px] bg-slate-900 overflow-hidden flex flex-col text-white p-2 space-y-1.5 text-[10px]">
-                                    <!-- Mini Header -->
-                                    <div class="flex items-center justify-between border-b border-white/10 pb-1">
-                                        <div class="flex items-center gap-1">
-                                            <div class="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center font-bold text-[8px]">S</div>
-                                            <span class="font-bold text-[9px] truncate">StoreBox Bot</span>
+                                <!-- Phone Screen Content (Crisp, High-Contrast White Telegram Mini App) -->
+                                <div class="bento-phone-screen text-slate-800">
+                                    <!-- Mini Telegram App Header -->
+                                    <div class="bento-tg-bar">
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="w-3.5 h-3.5 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-[7px]">S</div>
+                                            <span class="font-extrabold text-[9px] text-slate-900 tracking-tight">StoreBox Bot</span>
                                         </div>
-                                        <span class="text-emerald-400 font-bold text-[8px]">● Live</span>
+                                        <span class="text-slate-400 font-bold text-[8px]">•••</span>
                                     </div>
-                                    <!-- Hero Banner -->
-                                    <div class="w-full h-14 rounded-xl bg-gradient-to-r from-blue-700 to-indigo-900 p-1.5 flex flex-col justify-end relative overflow-hidden">
-                                        <div class="font-extrabold text-[10px] text-white">Burgers & Steaks</div>
-                                        <div class="text-[8px] text-blue-200">Chegirma -20%</div>
+
+                                    <!-- Food Hero Banner -->
+                                    <div class="bento-tg-hero-banner text-white">
+                                        <div class="relative z-10">
+                                            <span class="text-[7px] font-black uppercase tracking-wider text-amber-300 bg-black/40 px-1 py-0.5 rounded">Special Offer</span>
+                                            <div class="font-black text-[11px] text-white leading-tight mt-0.5">Burgers & Steaks</div>
+                                            <div class="text-[7.5px] text-white/90 font-medium">Chegirma -20%</div>
+                                        </div>
+                                        <div class="absolute -right-2 -bottom-2 text-3xl filter drop-shadow">🍔</div>
                                     </div>
+
+                                    <!-- Categories -->
+                                    <div class="flex items-center gap-1 overflow-hidden py-1">
+                                        <span class="px-2 py-0.5 rounded-full bg-slate-900 text-white font-extrabold text-[7.5px]">All</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-[7.5px]">Burgers</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-[7.5px]">Steaks</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-[7.5px]">Drinks</span>
+                                    </div>
+
                                     <!-- Product List -->
-                                    <div class="space-y-1 overflow-hidden">
-                                        <div class="bg-white/5 rounded-lg p-1 flex items-center justify-between">
-                                            <span class="truncate font-semibold">Truffle Burger</span>
-                                            <span class="text-[#c8ff6a] font-bold shrink-0">48 000</span>
+                                    <div class="space-y-1.5 flex-1">
+                                        <div class="bg-slate-50 border border-slate-200/90 rounded-xl p-1.5 flex items-center justify-between shadow-xs">
+                                            <div class="flex items-center gap-1.5">
+                                                <div class="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center text-xs">🍔</div>
+                                                <div>
+                                                    <div class="font-extrabold text-[8.5px] text-slate-900 leading-tight">Truffle Burger</div>
+                                                    <div class="text-[8px] font-black text-emerald-600">48 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <div class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-[9px] shadow-sm">+</div>
                                         </div>
-                                        <div class="bg-white/5 rounded-lg p-1 flex items-center justify-between">
-                                            <span class="truncate font-semibold">Ribeye Steak</span>
-                                            <span class="text-[#c8ff6a] font-bold shrink-0">145 000</span>
+
+                                        <div class="bg-slate-50 border border-slate-200/90 rounded-xl p-1.5 flex items-center justify-between shadow-xs">
+                                            <div class="flex items-center gap-1.5">
+                                                <div class="w-6 h-6 rounded-lg bg-rose-100 flex items-center justify-center text-xs">🥩</div>
+                                                <div>
+                                                    <div class="font-extrabold text-[8.5px] text-slate-900 leading-tight">Ribeye Steak</div>
+                                                    <div class="text-[8px] font-black text-emerald-600">145 000 UZS</div>
+                                                </div>
+                                            </div>
+                                            <div class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-[9px] shadow-sm">+</div>
                                         </div>
                                     </div>
-                                    <!-- MainButton -->
+
+                                    <!-- Telegram Mini App Main Button -->
                                     <div class="mt-auto pt-1">
-                                        <div class="w-full py-1 rounded-lg bg-blue-600 text-center font-black text-[9px] text-white shadow-md">
-                                            Savatga (2) • 193 000 UZS
+                                        <div class="w-full py-1.5 rounded-xl bg-blue-600 text-center font-black text-[8.5px] text-white shadow-md flex items-center justify-center gap-1">
+                                            <span>Savatga (2)</span>
+                                            <span>•</span>
+                                            <span>193 000 UZS</span>
                                         </div>
                                     </div>
                                 </div>
@@ -5771,57 +5915,72 @@ h1 span {
                 <article class="bento-mac-card bento-mac-card-2 group">
                     <div class="relative z-10 flex flex-col justify-between h-full space-y-6">
                         
-                        <!-- Top Header with POS Terminal Icon -->
+                        <!-- Top Header with 3D POS Terminal Widget Mockup -->
                         <div class="flex items-start justify-between">
-                            <div class="space-y-2.5">
-                                <h3 class="text-3xl font-black text-white tracking-tight leading-tight" data-i18n="bentoPosHeader">
+                            <div class="space-y-3">
+                                <h3 class="text-3xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoPosHeader">
                                     YES POS<br>Касса
                                 </h3>
                                 <div>
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-400/15 border border-emerald-400/30 text-emerald-200 text-xs font-black tracking-wider uppercase shadow-xs" data-i18n="bentoPosPill">
+                                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoPosPill">
                                         ПЛАТЕЖИ & ФИСКАЛИЗАЦИЯ
                                     </span>
                                 </div>
                             </div>
 
-                            <!-- POS Terminal Illustration Icon in Top Right -->
-                            <div class="w-14 h-11 rounded-2xl bg-emerald-950/90 border border-emerald-400/40 shadow-lg flex items-center justify-center p-2 text-emerald-300 shrink-0">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
-                                </svg>
+                            <!-- 3D POS Terminal Widget Mockup -->
+                            <div class="relative w-16 h-20 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-950 border-2 border-emerald-400/60 shadow-xl flex flex-col p-1.5 items-center justify-between shrink-0 transform rotate-6 hover:rotate-0 transition-transform">
+                                <div class="w-full h-8 rounded-lg bg-emerald-950 border border-emerald-400/60 p-1 flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-[7px] text-emerald-300 font-mono font-bold">
+                                        <span>POS 01</span>
+                                        <span>● ON</span>
+                                    </div>
+                                    <div class="text-[8px] font-mono font-black text-white leading-none">145 000 UZS</div>
+                                </div>
+                                <div class="flex items-center justify-center text-emerald-400">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                                </div>
+                                <div class="w-full flex items-center justify-between px-1">
+                                    <div class="grid grid-cols-3 gap-0.5">
+                                        <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                                        <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                                        <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                                    </div>
+                                    <span class="w-3 h-0.5 bg-emerald-400 rounded-full"></span>
+                                </div>
                             </div>
                         </div>
 
                         <!-- 2 Payment Integration Badges (Exact 1:1 with photo) -->
-                        <div class="space-y-3">
-                            <!-- Row 1: Click Payme (Подключено) & Uzum Bank (Подключено) -->
-                            <div class="bg-black/40 border border-white/10 rounded-2xl p-3 flex items-center justify-between text-xs text-white">
+                        <div class="space-y-3 pt-2">
+                            <!-- Row 1: Click Payme (Подключено ✓) & Uzum Bank (✓) -->
+                            <div class="bg-black/50 border border-white/20 rounded-2xl px-4 py-3 flex items-center justify-between text-xs text-white backdrop-blur-md shadow-lg">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-extrabold tracking-wide">Click Payme</span>
-                                    <span class="text-emerald-400 font-bold flex items-center gap-0.5 text-[11px]">
-                                        Подключено <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <span class="font-extrabold tracking-wide text-sm">Click Payme</span>
+                                    <span class="text-emerald-400 font-extrabold flex items-center gap-1 text-xs">
+                                        Подключено <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="font-extrabold tracking-wide">Uzum Bank</span>
-                                    <span class="text-emerald-400 font-bold flex items-center gap-0.5 text-[11px]">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <span class="font-extrabold tracking-wide text-sm">Uzum Bank</span>
+                                    <span class="text-emerald-400 font-extrabold flex items-center text-xs">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                                     </span>
                                 </div>
                             </div>
 
-                            <!-- Row 2: Click Payme (Подключено) & Активно Активно -->
-                            <div class="bg-black/40 border border-white/10 rounded-2xl p-3 flex items-center justify-between text-xs text-white">
+                            <!-- Row 2: Click Payme (Подключено ✓) & Активно (Активно ✓) -->
+                            <div class="bg-black/50 border border-white/20 rounded-2xl px-4 py-3 flex items-center justify-between text-xs text-white backdrop-blur-md shadow-lg">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-extrabold tracking-wide">Click Payme</span>
-                                    <span class="text-emerald-400 font-bold flex items-center gap-0.5 text-[11px]">
-                                        Подключено <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <span class="font-extrabold tracking-wide text-sm">Click Payme</span>
+                                    <span class="text-emerald-400 font-extrabold flex items-center gap-1 text-xs">
+                                        Подключено <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="font-extrabold text-emerald-400">Активно</span>
-                                    <span class="text-emerald-400 font-bold flex items-center gap-0.5 text-[11px]">
-                                        Активно <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <span class="font-extrabold text-white text-sm">Активно</span>
+                                    <span class="text-emerald-400 font-extrabold flex items-center gap-1 text-xs">
+                                        Активно <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                                     </span>
                                 </div>
                             </div>
@@ -5837,57 +5996,57 @@ h1 span {
                     <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 h-full">
                         
                         <!-- Left text -->
-                        <div class="space-y-3 max-w-xs shrink-0">
-                            <h3 class="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight" data-i18n="bentoCrmHeader">
+                        <div class="space-y-3.5 max-w-xs shrink-0">
+                            <h3 class="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoCrmHeader">
                                 CRM-система
                             </h3>
                             <div>
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-400/15 border border-purple-400/30 text-purple-200 text-xs font-black tracking-wider uppercase shadow-xs" data-i18n="bentoCrmPill">
+                                <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoCrmPill">
                                     УПРАВЛЕНИЕ КЛИЕНТАМИ
                                 </span>
                             </div>
                         </div>
 
-                        <!-- Right visual: Mini Desktop CRM Dashboard Mockup -->
-                        <div class="w-full max-w-sm rounded-2xl bg-slate-900/90 border border-white/15 p-3.5 shadow-2xl backdrop-blur-xl text-white space-y-2.5">
+                        <!-- Right visual: Crisp Light-Themed Mac CRM Dashboard Window -->
+                        <div class="w-full max-w-sm rounded-2xl bg-white border border-slate-200/90 p-4 shadow-2xl text-slate-800 space-y-3">
                             <!-- Window Control Bar -->
-                            <div class="flex items-center justify-between border-b border-white/10 pb-2">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                                    <span class="ml-2 text-[10px] font-mono text-slate-400 font-bold">CRM Dashboard</span>
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-rose-500 shadow-xs"></span>
+                                    <span class="w-3 h-3 rounded-full bg-amber-500 shadow-xs"></span>
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500 shadow-xs"></span>
+                                    <span class="ml-2 text-xs font-bold text-slate-700">CRM Dashboard</span>
                                 </div>
-                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold">PRO</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-extrabold tracking-wider">PRO</span>
                             </div>
 
                             <!-- Customers Mini Row -->
-                            <div class="grid grid-cols-2 gap-2 text-[11px]">
-                                <div class="bg-white/5 rounded-xl p-2 flex items-center gap-2 border border-white/5">
-                                    <div class="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center font-bold text-[9px]">АК</div>
+                            <div class="grid grid-cols-2 gap-2.5 text-xs">
+                                <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center gap-2.5 shadow-xs">
+                                    <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-extrabold text-[11px] shadow-sm">АК</div>
                                     <div class="truncate">
-                                        <div class="font-bold truncate">Азиз К.</div>
-                                        <div class="text-[9px] text-purple-300">VIP клиент</div>
+                                        <div class="font-extrabold text-slate-900 truncate">Азиз К.</div>
+                                        <div class="text-[10px] text-purple-600 font-bold">VIP клиент</div>
                                     </div>
                                 </div>
-                                <div class="bg-white/5 rounded-xl p-2 flex items-center gap-2 border border-white/5">
-                                    <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center font-bold text-[9px]">СБ</div>
+                                <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center gap-2.5 shadow-xs">
+                                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-extrabold text-[11px] shadow-sm">СБ</div>
                                     <div class="truncate">
-                                        <div class="font-bold truncate">Сардор Б.</div>
-                                        <div class="text-[9px] text-blue-300">Постоянный</div>
+                                        <div class="font-extrabold text-slate-900 truncate">Сардор Б.</div>
+                                        <div class="text-[10px] text-blue-600 font-bold">Постоянный</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Key Financial Metrics from photo -->
-                            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
-                                <div>
-                                    <div class="text-[9px] text-slate-400">Выручка сегодня</div>
-                                    <div class="text-xs font-mono font-black text-[#c8ff6a]">758 800 UZS</div>
+                            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                                <div class="bg-emerald-50/70 rounded-xl p-2.5 border border-emerald-100">
+                                    <div class="text-[10px] text-emerald-800 font-bold">Выручка сегодня</div>
+                                    <div class="text-sm font-mono font-black text-emerald-700">758 800 UZS</div>
                                 </div>
-                                <div>
-                                    <div class="text-[9px] text-slate-400">Всего в базе</div>
-                                    <div class="text-xs font-mono font-black text-cyan-300">11 341 000 UZS</div>
+                                <div class="bg-blue-50/70 rounded-xl p-2.5 border border-blue-100">
+                                    <div class="text-[10px] text-blue-800 font-bold">Всего в базе</div>
+                                    <div class="text-sm font-mono font-black text-blue-700">11 341 000 UZS</div>
                                 </div>
                             </div>
                         </div>
@@ -5902,45 +6061,45 @@ h1 span {
                     <div class="relative z-10 flex flex-col justify-between h-full space-y-5">
                         
                         <!-- Top Header -->
-                        <div class="space-y-2.5">
-                            <h3 class="text-3xl font-black text-white tracking-tight leading-tight" data-i18n="bentoAnalyticsHeader">
+                        <div class="space-y-3">
+                            <h3 class="text-3xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoAnalyticsHeader">
                                 Аналитика
                             </h3>
                             <div>
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-200 text-xs font-black tracking-wider uppercase shadow-xs" data-i18n="bentoAnalyticsPill">
+                                <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoAnalyticsPill">
                                     ПРОДАЖИ & ОТЧЕТЫ
                                 </span>
                             </div>
                         </div>
 
                         <!-- Analytics Card Widget with Multi-Bar Chart -->
-                        <div class="bg-black/45 border border-white/10 rounded-2xl p-4 shadow-xl backdrop-blur-xl text-white space-y-3">
+                        <div class="bg-black/50 border border-white/20 rounded-2xl p-4 shadow-xl backdrop-blur-xl text-white space-y-3">
                             <div class="flex items-center justify-between text-xs">
-                                <span class="text-slate-300 font-medium">По результатам week</span>
-                                <span class="text-amber-400 font-bold">&gt;</span>
+                                <span class="text-amber-200 font-extrabold tracking-wide">По результатам week</span>
+                                <span class="text-amber-400 font-black text-sm">&gt;</span>
                             </div>
 
                             <!-- Stats -->
-                            <div class="flex items-center gap-4 text-xs">
+                            <div class="flex items-center gap-6 text-xs">
                                 <div>
-                                    <span class="text-slate-400 text-[10px] block">Прибыль</span>
-                                    <span class="font-black text-emerald-400">+14% ↑</span>
+                                    <span class="text-amber-200/80 text-[11px] block font-medium">Прибыль</span>
+                                    <span class="font-black text-emerald-400 text-base">+14% ↑</span>
                                 </div>
                                 <div>
-                                    <span class="text-slate-400 text-[10px] block">Заказы</span>
-                                    <span class="font-black text-emerald-400">+22% ↑</span>
+                                    <span class="text-amber-200/80 text-[11px] block font-medium">Заказы</span>
+                                    <span class="font-black text-emerald-400 text-base">+22% ↑</span>
                                 </div>
                             </div>
 
                             <!-- Colorful Multi-Bar Chart (Matching photo) -->
-                            <div class="h-20 flex items-end justify-between gap-1.5 pt-2 border-t border-white/10">
-                                <div class="w-full bg-emerald-500/80 rounded-t h-[45%]"></div>
-                                <div class="w-full bg-amber-400/80 rounded-t h-[65%]"></div>
-                                <div class="w-full bg-emerald-500/80 rounded-t h-[35%]"></div>
-                                <div class="w-full bg-[#c8ff6a] rounded-t h-[90%] shadow-lg shadow-[#c8ff6a]/20"></div>
-                                <div class="w-full bg-cyan-400/80 rounded-t h-[55%]"></div>
-                                <div class="w-full bg-amber-400/80 rounded-t h-[75%]"></div>
-                                <div class="w-full bg-[#c8ff6a] rounded-t h-[100%] shadow-lg shadow-[#c8ff6a]/30"></div>
+                            <div class="h-24 flex items-end justify-between gap-2 pt-3 border-t border-white/15">
+                                <div class="w-full bg-emerald-400 rounded-t-lg h-[45%] shadow-md"></div>
+                                <div class="w-full bg-amber-400 rounded-t-lg h-[65%] shadow-md"></div>
+                                <div class="w-full bg-emerald-400 rounded-t-lg h-[35%] shadow-md"></div>
+                                <div class="w-full bg-[#c8ff6a] rounded-t-lg h-[90%] shadow-lg shadow-[#c8ff6a]/40"></div>
+                                <div class="w-full bg-cyan-400 rounded-t-lg h-[55%] shadow-md"></div>
+                                <div class="w-full bg-amber-400 rounded-t-lg h-[75%] shadow-md"></div>
+                                <div class="w-full bg-[#c8ff6a] rounded-t-lg h-[100%] shadow-lg shadow-[#c8ff6a]/50"></div>
                             </div>
                         </div>
 
@@ -5954,12 +6113,12 @@ h1 span {
                     <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 h-full">
                         
                         <!-- Left text -->
-                        <div class="space-y-2.5">
-                            <h3 class="text-3xl font-black text-white tracking-tight" data-i18n="bentoDeliveryHeader">
+                        <div class="space-y-3">
+                            <h3 class="text-3xl font-black text-white tracking-tight drop-shadow-sm" data-i18n="bentoDeliveryHeader">
                                 Быстрая Доставка
                             </h3>
                             <div>
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-400/15 border border-cyan-400/30 text-cyan-200 text-xs font-black tracking-wider uppercase shadow-xs" data-i18n="bentoDeliveryPill">
+                                <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoDeliveryPill">
                                     ЖИВОЙ GPS & ЛОГИСТИКА
                                 </span>
                             </div>
@@ -5967,33 +6126,46 @@ h1 span {
 
                         <!-- Center Status Badge (From photo) -->
                         <div class="flex flex-col items-center justify-center">
-                            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-extrabold text-sm shadow-md">
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <div class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-emerald-500/25 border border-emerald-300/50 text-emerald-200 font-black text-base shadow-lg backdrop-blur-md">
+                                <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
                                 <span data-i18n="bentoDeliveryTime">25-35 мин</span>
                             </div>
-                            <span class="text-xs font-bold text-cyan-200/90 tracking-wide mt-1.5" data-i18n="bentoDeliveryStatus">
+                            <span class="text-xs font-extrabold text-cyan-100 tracking-wide mt-2" data-i18n="bentoDeliveryStatus">
                                 В пути к клиенту
                             </span>
                         </div>
 
-                        <!-- Right Vector Map Widget (From photo) -->
-                        <div class="w-full max-w-sm rounded-2xl bg-slate-900/90 border border-white/20 p-2.5 shadow-2xl backdrop-blur-xl flex items-center gap-3">
-                            <div class="w-24 h-16 rounded-xl bg-slate-950 border border-white/10 relative overflow-hidden flex items-center justify-center shrink-0">
-                                <!-- Mini vector route line -->
-                                <svg class="w-full h-full" viewBox="0 0 100 60" fill="none">
-                                    <path d="M 10 50 L 50 40 L 70 20 L 90 25" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-                                    <circle cx="10" cy="50" r="3" fill="#c8ff6a" />
-                                    <circle cx="90" cy="25" r="3" fill="#f43f5e" />
+                        <!-- Right Vector Map Widget (Clean Light Map from photo) -->
+                        <div class="w-full max-w-md rounded-2xl bg-white border border-slate-200/90 p-3 shadow-2xl text-slate-800 flex items-center gap-3">
+                            <div class="w-28 h-20 rounded-xl bg-slate-100 border border-slate-200 relative overflow-hidden flex items-center justify-center shrink-0">
+                                <!-- Light map grid lines -->
+                                <svg class="w-full h-full" viewBox="0 0 100 70" fill="none">
+                                    <line x1="0" y1="20" x2="100" y2="20" stroke="#cbd5e1" stroke-width="4" />
+                                    <line x1="0" y1="50" x2="100" y2="50" stroke="#cbd5e1" stroke-width="4" />
+                                    <line x1="30" y1="0" x2="30" y2="70" stroke="#cbd5e1" stroke-width="4" />
+                                    <line x1="75" y1="0" x2="75" y2="70" stroke="#cbd5e1" stroke-width="4" />
+                                    
+                                    <!-- Route Path (bright blue) -->
+                                    <path d="M 15 50 L 30 50 L 30 20 L 75 20 L 75 35 L 85 35" stroke="#2563eb" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+                                    <!-- Start pin -->
+                                    <circle cx="15" cy="50" r="3.5" fill="#10b981" />
+                                    <!-- Destination pin -->
+                                    <circle cx="85" cy="35" r="3.5" fill="#ef4444" />
                                 </svg>
-                                <!-- Scooter icon -->
-                                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyan-950 border border-cyan-400 px-1 rounded text-[8px] font-bold text-cyan-200">
-                                    🛵 #402
+                                <!-- Live Courier Chip on Map -->
+                                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 text-white border border-cyan-400 px-1.5 py-0.5 rounded-full text-[8px] font-black shadow-md flex items-center gap-1">
+                                    <span>🛵</span>
+                                    <span>#402</span>
                                 </div>
                             </div>
-                            <div class="truncate text-xs">
-                                <div class="font-extrabold text-white truncate" data-i18n="bentoCourierLabel">Курьер: Фарход М.</div>
-                                <div class="text-[10px] text-slate-400 truncate" data-i18n="bentoCourierDest">Ташкент • ул. Амира Темура</div>
-                                <div class="text-[10px] text-[#c8ff6a] font-bold mt-0.5">Трекинг активен 🟢</div>
+                            <!-- Courier details -->
+                            <div class="truncate text-xs space-y-0.5">
+                                <div class="font-black text-slate-900 text-sm truncate" data-i18n="bentoCourierLabel">Курьер: Фарход М.</div>
+                                <div class="text-[11px] text-slate-500 font-medium truncate" data-i18n="bentoCourierDest">Ташкент • ул. Амира Темура</div>
+                                <div class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span>GPS Трекинг активен</span>
+                                </div>
                             </div>
                         </div>
 
