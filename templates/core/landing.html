@@ -13,6 +13,25 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z' fill='%23211b2e'/%3E%3Cpath d='m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26' fill='none' stroke='%23c8ff6a' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
     <title>StoreBox — конструктор интернет-магазинов</title>
 
+    <!-- Tailwind CSS (with scoped preflight disabled to keep existing design intact) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: '#211b2e',
+              accent: '#c8ff6a',
+            }
+          }
+        },
+        corePlugins: {
+          preflight: false,
+        }
+      }
+    </script>
+
     <style>
 :root {
     --ink: #171321;
@@ -2143,29 +2162,92 @@ h1 span {
     line-height: 1.65;
 }
 
-.feature-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-}
-.feature-card {
+/* =========================================================
+   ULTRA-PREMIUM APPLE / SAAS BENTO GRID STYLES
+   ========================================================= */
+.bento-features-section {
     position: relative;
-    min-height: 295px;
+    padding-block: 70px 90px;
     overflow: hidden;
-    padding: 32px 28px 24px;
-    border-radius: 30px;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.38) 100%);
-    -webkit-backdrop-filter: blur(28px) saturate(190%);
-    backdrop-filter: blur(28px) saturate(190%);
-    border: 1px solid rgba(255, 255, 255, 0.88);
-    box-shadow: 
-        0 20px 40px -10px rgba(15, 23, 42, 0.07),
-        0 6px 14px -3px rgba(15, 23, 42, 0.03),
-        inset 0 2px 2px 0 rgba(255, 255, 255, 0.95),
-        inset 0 -2px 3px 0 rgba(148, 163, 184, 0.12);
-    transition: transform .35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .35s ease, background .35s ease;
+}
+.bento-features-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+    position: relative;
+    z-index: 2;
+}
+.bento-card-luxury {
+    position: relative;
+    border-radius: 32px;
+    padding: 34px 30px;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+}
+.bento-card-luxury:hover {
+    transform: translateY(-6px);
+}
+.bento-card-luxury::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 32px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+.bento-card-tg {
+    grid-column: span 7;
+    background: linear-gradient(145deg, #0b172e 0%, #071020 50%, #030813 100%);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    box-shadow: 0 24px 60px -15px rgba(2, 6, 23, 0.7), inset 0 1px 1px rgba(147, 197, 253, 0.15);
+}
+.bento-card-tg:hover {
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 32px 70px -15px rgba(37, 99, 235, 0.25), inset 0 1px 2px rgba(147, 197, 253, 0.25);
+}
+.bento-card-ai {
+    grid-column: span 5;
+    background: linear-gradient(145deg, #1d0d2e 0%, #130720 50%, #06020c 100%);
+    border: 1px solid rgba(217, 70, 239, 0.25);
+    box-shadow: 0 24px 60px -15px rgba(2, 6, 23, 0.7), inset 0 1px 1px rgba(240, 171, 252, 0.15);
+}
+.bento-card-ai:hover {
+    border-color: rgba(232, 121, 249, 0.5);
+    box-shadow: 0 32px 70px -15px rgba(192, 38, 211, 0.25), inset 0 1px 2px rgba(240, 171, 252, 0.25);
+}
+.bento-card-pos {
+    grid-column: span 5;
+    background: linear-gradient(145deg, #09201a 0%, #051512 50%, #020907 100%);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    box-shadow: 0 24px 60px -15px rgba(2, 6, 23, 0.7), inset 0 1px 1px rgba(110, 231, 183, 0.15);
+}
+.bento-card-pos:hover {
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 32px 70px -15px rgba(16, 185, 129, 0.25), inset 0 1px 2px rgba(110, 231, 183, 0.25);
+}
+.bento-card-delivery {
+    grid-column: span 7;
+    background: linear-gradient(145deg, #111724 0%, #0c101a 50%, #04060b 100%);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    box-shadow: 0 24px 60px -15px rgba(2, 6, 23, 0.7), inset 0 1px 1px rgba(103, 232, 249, 0.15);
+}
+.bento-card-delivery:hover {
+    border-color: rgba(34, 211, 238, 0.5);
+    box-shadow: 0 32px 70px -15px rgba(6, 182, 212, 0.25), inset 0 1px 2px rgba(103, 232, 249, 0.25);
+}
+@media (max-width: 1024px) {
+    .bento-card-tg, .bento-card-ai, .bento-card-pos, .bento-card-delivery {
+        grid-column: span 12;
+    }
 }
 .feature-card:hover {
     transform: translateY(-5px);
@@ -5760,143 +5842,357 @@ h1 span {
         </div>
         </section>
 
-        <!-- Features Section -->
-        <section class="content-section section-shell wow-reveal" id="features">
+        <!-- Features Bento Grid Section (Apple & SaaS Aesthetics) -->
+        <section class="content-section section-shell wow-reveal bento-features-section" id="features">
             <div class="section-heading">
-                <span class="section-kicker" data-i18n="featuresKicker">Всё необходимое</span>
-                <h2 data-i18n="featuresTitle">Один сервис для запуска и управления магазином</h2>
-                <p data-i18n="featuresLead">StoreBox соединяет витрину, Telegram-бота, маркетинг, AI-дизайн, QR-меню и склад в единой экосистеме.</p>
+                <span class="section-kicker" data-i18n="featuresKicker">Возможности платформы</span>
+                <h2 data-i18n="featuresTitle">Экосистема, созданная побеждать в e-commerce</h2>
+                <p data-i18n="featuresLead">Каждый инструмент StoreBox спроектирован для максимальной конверсии: от интерактивного Telegram-магазина до мгновенного ИИ и прозрачной логистики.</p>
             </div>
-            <div class="feature-grid">
-                <!-- 1. Telegram Bot & WebApp -->
-                <article class="feature-card">
-                    <div class="feature-card-top">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21.5 2 2 10.5l8 3.5L13.5 22l3-5.5 5-14.5Z"/>
-                                <path d="m10 14 4.5-4.5"/>
+
+            <!-- Bento Grid 12-Column Layout -->
+            <div class="bento-features-grid">
+                
+                <!-- CARD 1: TELEGRAM WEBAPP 2.0 (Spans 7 cols on Desktop) -->
+                <article class="bento-card-luxury bento-card-tg group" id="bentoCardTg">
+                    <div class="absolute -top-24 -right-24 w-80 h-80 bg-blue-500/15 rounded-full blur-3xl pointer-events-none transition-all duration-500 group-hover:bg-blue-500/25"></div>
+                    
+                    <div class="relative z-10 space-y-3 mb-6">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/25 text-blue-300 text-xs font-black tracking-wide">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-400">
+                                <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
                             </svg>
+                            <span data-i18n="bentoTgBadge">Telegram Mini App 2.0</span>
                         </div>
-                        <div class="card-glass-dots" aria-hidden="true">
-                            <span></span><span></span><span></span>
-                        </div>
+                        <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight" data-i18n="bentoTgTitle">
+                            Полноценный магазин внутри Telegram
+                        </h3>
+                        <p class="text-sm sm:text-base text-slate-300/90 leading-relaxed max-w-xl" data-i18n="bentoTgDesc">
+                            Клиенты выбирают товары, применяют промокоды и оплачивают покупки в мессенджере без переходов на сторонние сайты. Конверсия выше на 43%.
+                        </p>
                     </div>
-                    <h3 data-i18n="featureTelegramTitle">Telegram-бот и WebApp</h3>
-                    <p data-i18n="featureTelegramText">Полноценный магазин прямо внутри Telegram. Ваши клиенты заказывают без выхода из мессенджера, а команда получает заказы в рабочий чат.</p>
-                    <div class="card-glass-footer">
-                        <span class="cfg-meta" data-i18n="featTgMeta">Telegram WebApp · 24/7</span>
-                        <span class="cfg-chip" data-i18n="featTgChip">Мгновенно</span>
+
+                    <!-- TELEGRAM MINI APP MOCKUP FRAME -->
+                    <div class="relative z-10 w-full rounded-2xl bg-slate-900/95 border border-blue-400/20 p-4 shadow-2xl backdrop-blur-xl space-y-3">
+                        
+                        <!-- MiniApp Telegram Header -->
+                        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-0.5 flex items-center justify-center text-white font-black text-xs shadow-md">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                        <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs font-bold text-white tracking-wide" data-i18n="bentoTgBotName">StoreBox Online Shop</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#38bdf8" stroke="none">
+                                            <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </div>
+                                    <span class="text-[10px] text-emerald-400 font-medium" data-i18n="bentoTgBotStatus">bot • онлайн 24/7</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-slate-400 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span class="text-[11px] font-mono text-slate-300">TG MiniApp</span>
+                            </div>
+                        </div>
+
+                        <!-- Catalog Items -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            
+                            <!-- Product 1 -->
+                            <div class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 flex items-center gap-3 transition-colors">
+                                <div class="w-12 h-12 rounded-lg bg-blue-950/80 border border-blue-500/30 flex items-center justify-center text-blue-300 shrink-0">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-xs font-bold text-white truncate" data-i18n="bentoTgProduct1">Беспроводные наушники Pro</h4>
+                                    <p class="text-xs font-black text-[#c8ff6a]" data-i18n="bentoTgPrice1">640 000 UZS</p>
+                                </div>
+                                <button type="button" class="bento-tg-add-btn px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold shrink-0 transition-all active:scale-95 cursor-pointer shadow-xs" data-i18n="bentoTgAdd">
+                                    + В корзину
+                                </button>
+                            </div>
+
+                            <!-- Product 2 -->
+                            <div class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 flex items-center gap-3 transition-colors">
+                                <div class="w-12 h-12 rounded-lg bg-indigo-950/80 border border-indigo-500/30 flex items-center justify-center text-indigo-300 shrink-0">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-xs font-bold text-white truncate" data-i18n="bentoTgProduct2">Смарт-часы Ultra 2 Titanium</h4>
+                                    <p class="text-xs font-black text-[#c8ff6a]" data-i18n="bentoTgPrice2">1 850 000 UZS</p>
+                                </div>
+                                <button type="button" class="bento-tg-add-btn px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold shrink-0 transition-all active:scale-95 cursor-pointer shadow-xs" data-i18n="bentoTgAdd">
+                                    + В корзину
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <!-- Telegram MainButton -->
+                        <div class="pt-1">
+                            <button type="button" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs flex items-center justify-between shadow-lg shadow-blue-600/30 transition-all transform active:scale-[0.99] cursor-pointer">
+                                <span id="bentoTgMainBtnText" data-i18n="bentoTgMainBtn">Оформить заказ (2 товара) • 2 490 000 UZS</span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Live Order Notification Toast inside MiniApp -->
+                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] font-semibold">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-emerald-400 shrink-0">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <path d="m9 12 2 2 4-4"/>
+                            </svg>
+                            <span class="truncate" data-i18n="bentoTgNotify">Новый заказ #4920 успешно оплачен через Telegram WebApp!</span>
+                        </div>
+
                     </div>
                 </article>
 
-                <!-- 2. Marketing & Broadcasts -->
-                <article class="feature-card">
-                    <div class="feature-card-top">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m3 11 18-5v12L3 13v-2Z"/>
-                                <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
-                                <path d="M18 8a5 5 0 0 1 0 8"/>
-                            </svg>
-                        </div>
-                        <div class="card-glass-dots" aria-hidden="true">
-                            <span></span><span></span><span></span>
-                        </div>
-                    </div>
-                    <h3 data-i18n="featureMarketingTitle">Маркетинг и рассылки</h3>
-                    <p data-i18n="featureMarketingText">Создавайте промокоды, управляйте акциями, запускайте рассылки по клиентской базе и размещайте рекламные баннеры для роста среднего чека.</p>
-                    <div class="card-glass-footer">
-                        <span class="cfg-meta" data-i18n="featMktMeta">Маркетинг & CRM</span>
-                        <span class="cfg-chip" data-i18n="featMktChip">Рост чека</span>
-                    </div>
-                </article>
-
-                <!-- 3. AI Design & Showcase -->
-                <article class="feature-card">
-                    <div class="feature-card-top">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- CARD 2: AI CONTENT ENGINE (Spans 5 cols on Desktop) -->
+                <article class="bento-card-luxury bento-card-ai group" id="bentoCardAi">
+                    <div class="absolute -top-24 -left-24 w-80 h-80 bg-fuchsia-500/15 rounded-full blur-3xl pointer-events-none transition-all duration-500 group-hover:bg-fuchsia-500/25"></div>
+                    
+                    <div class="relative z-10 space-y-3 mb-6">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-400/25 text-fuchsia-300 text-xs font-black tracking-wide">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="text-fuchsia-400">
                                 <path d="m12 3-1.9 4.3L5.8 9.2l3.7 3.6-.9 5.2 4.4-2.3 4.4 2.3-.9-5.2 3.7-3.6-4.3-1.9L12 3Z"/>
                             </svg>
+                            <span data-i18n="bentoAiBadge">AI Content Engine</span>
                         </div>
-                        <div class="card-glass-dots" aria-hidden="true">
-                            <span></span><span></span><span></span>
-                        </div>
+                        <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight" data-i18n="bentoAiTitle">
+                            ИИ-генерация товаров и текстов за секунды
+                        </h3>
+                        <p class="text-sm sm:text-base text-slate-300/90 leading-relaxed" data-i18n="bentoAiDesc">
+                            Нейросеть мгновенно формулирует продающие описания, подбирает релевантные теги и оптимизирует SEO-характеристики ваших карточек.
+                        </p>
                     </div>
-                    <h3 data-i18n="featureDesignTitle">AI-Дизайн и темы витрины</h3>
-                    <p data-i18n="featureDesignText">Умная кастомизация оформления: адаптивные карточки товаров, подбор гармоничных палитр, баннеры и собственный логотип без найма дизайнеров.</p>
-                    <div class="card-glass-footer">
-                        <span class="cfg-meta" data-i18n="featDesignMeta">AI-Конструктор</span>
-                        <span class="cfg-chip" data-i18n="featDesignChip">3 шаблона</span>
+
+                    <!-- AI INTERACTION WIDGET -->
+                    <div class="relative z-10 w-full rounded-2xl bg-black/40 border border-fuchsia-500/20 p-4 shadow-xl backdrop-blur-xl space-y-3">
+                        
+                        <!-- Simulated Prompt Input -->
+                        <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-300">
+                            <div class="flex items-center gap-2 truncate">
+                                <span class="w-2 h-2 rounded-full bg-fuchsia-400 animate-ping"></span>
+                                <span class="font-mono text-slate-300 truncate" data-i18n="bentoAiPrompt">Сгенерировать продающее описание для кроссовок Nike...</span>
+                            </div>
+                            <button type="button" id="bentoAiRegenBtn" class="p-1 rounded-lg hover:bg-white/10 text-fuchsia-300 transition-colors shrink-0 cursor-pointer" title="Обновить">
+                                <svg id="bentoAiRegenIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Speed Badge & Accuracy -->
+                        <div class="flex items-center justify-between">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#c8ff6a]/15 border border-[#c8ff6a]/30 text-[#c8ff6a] font-black text-[11px]" data-i18n="bentoAiSpeed">
+                                ⚡ ИИ сгенерировано за 0.8с
+                            </span>
+                            <span class="text-[11px] font-medium text-slate-400" data-i18n="bentoAiAccuracy">
+                                Точность описания: 99.4%
+                            </span>
+                        </div>
+
+                        <!-- Shimmering AI Output Text Box -->
+                        <div id="bentoAiTextBox" class="p-3 rounded-xl bg-fuchsia-950/20 border border-fuchsia-500/30 text-xs text-slate-200 leading-relaxed italic transition-opacity duration-300" data-i18n="bentoAiText">
+                            «Премиальная эко-кожа, фирменная амортизация Air Sole и ультралегкий дышащий текстиль. Идеальны для динамичного ритма Ташкента.»
+                        </div>
+
+                        <!-- Generated SEO Tags -->
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                            <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold text-fuchsia-300" data-i18n="bentoAiTag1">#Кроссовки</span>
+                            <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold text-cyan-300" data-i18n="bentoAiTag2">#Оригинал</span>
+                            <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold text-[#c8ff6a]" data-i18n="bentoAiTag3">#БыстраяДоставка</span>
+                        </div>
+
                     </div>
                 </article>
 
-                <!-- 4. QR-Code Menu & Retail -->
-                <article class="feature-card">
-                    <div class="feature-card-top">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="7" height="7" rx="1.5"/>
-                                <rect x="14" y="3" width="7" height="7" rx="1.5"/>
-                                <rect x="3" y="14" width="7" height="7" rx="1.5"/>
-                                <path d="M14 14h3v3h-3zM17 17h4v4h-4z"/>
+                <!-- CARD 3: YES POS & PAYMENT INTEGRATIONS (Spans 5 cols on Desktop) -->
+                <article class="bento-card-luxury bento-card-pos group" id="bentoCardPos">
+                    <div class="absolute -bottom-20 -left-20 w-80 h-80 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none transition-all duration-500 group-hover:bg-emerald-500/25"></div>
+                    
+                    <div class="relative z-10 space-y-3 mb-6">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/25 text-emerald-300 text-xs font-black tracking-wide">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-400">
+                                <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
                             </svg>
+                            <span data-i18n="bentoPosBadge">YES POS & FinTech Hub</span>
                         </div>
-                        <div class="card-glass-dots" aria-hidden="true">
-                            <span></span><span></span><span></span>
-                        </div>
+                        <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight" data-i18n="bentoPosTitle">
+                            Касса, склад и платежи Узбекистана
+                        </h3>
+                        <p class="text-sm sm:text-base text-slate-300/90 leading-relaxed" data-i18n="bentoPosDesc">
+                            Бесшовная фискализация, автосписание и моментальная синхронизация остатков по всем торговым точкам и кассам YES POS.
+                        </p>
                     </div>
-                    <h3 data-i18n="featureQrTitle">QR-код меню и стойки</h3>
-                    <p data-i18n="featureQrText">Генерация QR-кодов в 1 клик для столов в кафе, ресторанных меню и прикассовых стоек. Гость сканирует и сразу открывает весь каталог со смартфона.</p>
-                    <div class="card-glass-footer">
-                        <span class="cfg-meta" data-i18n="featQrMeta">QR-Меню & Стойки</span>
-                        <span class="cfg-chip" data-i18n="featQrChip">A5 / A6 печать</span>
+
+                    <!-- PAYMENT INTEGRATION CARDS WIDGET -->
+                    <div class="relative z-10 w-full space-y-2.5">
+                        
+                        <!-- Click Provider -->
+                        <div class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-3 flex items-center justify-between transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-[#0088cc]/20 border border-[#0088cc]/40 flex items-center justify-center font-black text-[#0088cc] text-xs">
+                                    CL
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-extrabold text-white" data-i18n="bentoClickTitle">Click Up & QR</h4>
+                                    <p class="text-[10px] text-slate-400" data-i18n="bentoClickDesc">Мгновенная фискализация (0.1с)</p>
+                                </div>
+                            </div>
+                            <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-black">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span data-i18n="bentoActiveStatus">Активно</span>
+                            </span>
+                        </div>
+
+                        <!-- Payme Provider -->
+                        <div class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-3 flex items-center justify-between transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-[#00cccc]/20 border border-[#00cccc]/40 flex items-center justify-center font-black text-[#00cccc] text-xs">
+                                    PM
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-extrabold text-white" data-i18n="bentoPaymeTitle">Payme One-Click</h4>
+                                    <p class="text-[10px] text-slate-400" data-i18n="bentoPaymeDesc">Быстрая оплата картами Uzcard/Humo</p>
+                                </div>
+                            </div>
+                            <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-black">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span data-i18n="bentoActiveStatus">Активно</span>
+                            </span>
+                        </div>
+
+                        <!-- Uzum Bank & Nasiya -->
+                        <div class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-3 flex items-center justify-between transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-[#6f2dbd]/20 border border-[#6f2dbd]/40 flex items-center justify-center font-black text-[#b76eeb] text-xs">
+                                    UZ
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-extrabold text-white" data-i18n="bentoUzumTitle">Uzum Bank & Nasiya</h4>
+                                    <p class="text-[10px] text-slate-400" data-i18n="bentoUzumDesc">Рассрочка 0-0-12 и онлайн-сплит</p>
+                                </div>
+                            </div>
+                            <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-black">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span data-i18n="bentoActiveStatus">Активно</span>
+                            </span>
+                        </div>
+
+                        <!-- Live POS Sync Status -->
+                        <div class="pt-1 flex items-center gap-2 text-[11px] font-mono text-emerald-400/90">
+                            <svg class="w-3 h-3 text-emerald-400 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>
+                            </svg>
+                            <span data-i18n="bentoPosSync">Синхронизация с кассой YES POS: 100% онлайн</span>
+                        </div>
+
                     </div>
                 </article>
 
-                <!-- 5. Import YES POS & Posts -->
-                <article class="feature-card">
-                    <div class="feature-card-top">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                                <path d="M3 3v5h5"/>
-                                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-                                <path d="M16 16h5v5"/>
+                <!-- CARD 4: FAST DELIVERY & LOGISTICS MAP (Spans 7 cols on Desktop) -->
+                <article class="bento-card-luxury bento-card-delivery group" id="bentoCardDelivery">
+                    <div class="absolute top-1/2 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none transition-all duration-500 group-hover:bg-cyan-500/20"></div>
+                    
+                    <div class="relative z-10 space-y-3 mb-6">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/25 text-cyan-300 text-xs font-black tracking-wide">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400">
+                                <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-5l-4-4h-3v10Z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>
                             </svg>
+                            <span data-i18n="bentoLogisticsBadge">Smart Logistics & Routing</span>
                         </div>
-                        <div class="card-glass-dots" aria-hidden="true">
-                            <span></span><span></span><span></span>
-                        </div>
+                        <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight" data-i18n="bentoLogisticsTitle">
+                            Быстрая доставка и живой трекинг на карте
+                        </h3>
+                        <p class="text-sm sm:text-base text-slate-300/90 leading-relaxed max-w-xl" data-i18n="bentoLogisticsDesc">
+                            Автоматическое распределение заказов по курьерам, расчет оптимального маршрута и отображение перемещения в реальном времени.
+                        </p>
                     </div>
-                    <h3 data-i18n="featureImportTitle">Импорт постов и YES POS</h3>
-                    <p data-i18n="featureImportText">Мгновенный перенос товаров из постов соцсетей и бесшовная синхронизация остатков и цен с кассовой системой YES POS за считанные минуты.</p>
-                    <div class="card-glass-footer">
-                        <span class="cfg-meta" data-i18n="featPosMeta">YES POS & Соцсети</span>
-                        <span class="cfg-chip" data-i18n="featPosChip">Синхронизация</span>
+
+                    <!-- VECTOR DARK MAP TRACKING WIDGET -->
+                    <div class="relative z-10 w-full rounded-2xl bg-slate-950/85 border border-cyan-500/20 p-4 shadow-2xl backdrop-blur-xl overflow-hidden">
+                        
+                        <!-- Map Illustration -->
+                        <div class="w-full h-32 sm:h-36 relative rounded-xl bg-[#090d16] border border-white/5 overflow-hidden flex items-center justify-center">
+                            
+                            <!-- Road Grid Lines SVG -->
+                            <svg class="w-full h-full opacity-35" viewBox="0 0 400 150" fill="none">
+                                <path d="M 0 30 Q 150 40 400 20" stroke="#334155" stroke-width="3" />
+                                <path d="M 0 110 Q 200 90 400 130" stroke="#334155" stroke-width="3" />
+                                <path d="M 70 0 L 100 150" stroke="#1e293b" stroke-width="2" />
+                                <path d="M 220 0 L 190 150" stroke="#1e293b" stroke-width="2" />
+                                <path d="M 330 0 L 350 150" stroke="#1e293b" stroke-width="2" />
+                                <!-- Active Delivery Route Glow Line -->
+                                <path d="M 60 110 C 130 110, 160 50, 310 40" stroke="url(#bento-route-grad)" stroke-width="4" stroke-dasharray="6 4" class="animate-pulse" />
+                                <defs>
+                                    <linearGradient id="bento-route-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#00cccc" />
+                                        <stop offset="100%" stop-color="#c8ff6a" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+
+                            <!-- StoreBox Hub Pin -->
+                            <div class="absolute left-6 bottom-3 flex items-center gap-1.5 bg-slate-900/90 border border-slate-700 px-2 py-1 rounded-lg text-[10px] text-slate-300 font-bold shadow-md">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                <span>StoreBox Hub</span>
+                            </div>
+
+                            <!-- Animated Moving Courier Pin -->
+                            <div class="absolute left-[54%] top-[38%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-cyan-950 border border-cyan-400 px-2.5 py-1 rounded-full text-[10px] font-black text-cyan-200 shadow-lg shadow-cyan-500/30 animate-bounce">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>
+                                </svg>
+                                <span>Express #402</span>
+                            </div>
+
+                            <!-- Destination Pin -->
+                            <div class="absolute right-6 top-3 flex items-center gap-1.5 bg-[#c8ff6a]/15 border border-[#c8ff6a]/40 px-2 py-1 rounded-lg text-[10px] text-[#c8ff6a] font-bold shadow-md">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                <span>Toshkent</span>
+                            </div>
+
+                        </div>
+
+                        <!-- Courier Telemetry Details -->
+                        <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <div class="text-xs font-bold text-white" data-i18n="bentoCourierName">Курьер: Фарход М. • Скутер #402</div>
+                                <div class="text-[11px] text-slate-400" data-i18n="bentoCourierStatus">В пути к клиенту • ул. Амира Темура, 42</div>
+                            </div>
+                            <div class="flex flex-col sm:items-end justify-center">
+                                <div class="text-[11px] text-slate-400 font-medium" data-i18n="bentoDeliveryLabel">Расчётное время прибытия:</div>
+                                <div class="text-sm font-black font-mono text-[#c8ff6a] flex items-center gap-1.5">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                    <span id="bentoLiveDeliveryTimer">18 мин 40 сек</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="mt-2.5 w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-gradient-to-r from-cyan-400 to-[#c8ff6a] h-full rounded-full w-[85%] transition-all duration-500"></div>
+                        </div>
+
                     </div>
                 </article>
 
-                <!-- 6. Sales Analytics & 18M UZS -->
-                <article class="feature-card">
-                    <div class="feature-card-top">
-                        <div class="feature-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 3v18h18"/>
-                                <path d="m7 14 4-5 4 4 6-8"/>
-                            </svg>
-                        </div>
-                        <div class="card-glass-dots" aria-hidden="true">
-                            <span></span><span></span><span></span>
-                        </div>
-                    </div>
-                    <h3 data-i18n="featureAnalyticsTitle">Учёт продаж и склад</h3>
-                    <p data-i18n="featureAnalyticsText">Детальный контроль заказов, остатки на складе и финансовая аналитика. Наши магазины уверенно масштабируются и зарабатывают от 18.45 млн сум в месяц.</p>
-                    <div class="card-glass-footer">
-                        <span class="cfg-meta" data-i18n="featAnalyticsMeta">Аналитика & Склад</span>
-                        <span class="cfg-chip" data-i18n="featAnalyticsChip">18.45 млн UZS</span>
-                    </div>
-                </article>
             </div>
         </section>
 
@@ -6345,9 +6641,48 @@ h1 span {
             dashModMarketingTag: "Промокоды & рассылки",
             dashModFinanceTitle: "18 450 000 UZS выручка",
             dashModFinanceTag: "Детальная CRM-аналитика",
-            featuresKicker: "Всё необходимое",
-            featuresTitle: "Один сервис для запуска и управления магазином",
-            featuresLead: "StoreBox соединяет витрину, Telegram-бота, маркетинг, AI-дизайн, QR-меню и склад в единой экосистеме.",
+            featuresKicker: "Возможности платформы",
+            featuresTitle: "Экосистема, созданная побеждать в e-commerce",
+            featuresLead: "Каждый инструмент StoreBox спроектирован для максимальной конверсии: от интерактивного Telegram-магазина до мгновенного ИИ и прозрачной логистики.",
+            bentoTgBadge: "Telegram Mini App 2.0",
+            bentoTgTitle: "Полноценный магазин внутри Telegram",
+            bentoTgDesc: "Клиенты выбирают товары, применяют промокоды и оплачивают покупки в мессенджере без переходов на сторонние сайты. Конверсия выше на 43%.",
+            bentoTgBotName: "StoreBox Online Shop",
+            bentoTgBotStatus: "bot • онлайн 24/7",
+            bentoTgProduct1: "Беспроводные наушники Pro",
+            bentoTgPrice1: "640 000 UZS",
+            bentoTgProduct2: "Смарт-часы Ultra 2 Titanium",
+            bentoTgPrice2: "1 850 000 UZS",
+            bentoTgAdd: "+ В корзину",
+            bentoTgMainBtn: "Оформить заказ (2 товара) • 2 490 000 UZS",
+            bentoTgNotify: "Новый заказ #4920 успешно оплачен через Telegram WebApp!",
+            bentoAiBadge: "AI Content Engine",
+            bentoAiTitle: "ИИ-генерация товаров и текстов за секунды",
+            bentoAiDesc: "Нейросеть мгновенно формулирует продающие описания, подбирает релевантные теги и оптимизирует SEO-характеристики ваших карточек.",
+            bentoAiPrompt: "Сгенерировать продающее описание для кроссовок Nike...",
+            bentoAiSpeed: "⚡ ИИ сгенерировано за 0.8с",
+            bentoAiAccuracy: "Точность описания: 99.4%",
+            bentoAiText: "«Премиальная эко-кожа, фирменная амортизация Air Sole и ультралегкий дышащий текстиль. Идеальны для динамичного ритма Ташкента.»",
+            bentoAiTag1: "#Кроссовки",
+            bentoAiTag2: "#Оригинал",
+            bentoAiTag3: "#БыстраяДоставка",
+            bentoPosBadge: "YES POS & FinTech Hub",
+            bentoPosTitle: "Касса, склад и платежи Узбекистана",
+            bentoPosDesc: "Бесшовная фискализация, автосписание и моментальная синхронизация остатков по всем торговым точкам и кассам YES POS.",
+            bentoClickTitle: "Click Up & QR",
+            bentoClickDesc: "Мгновенная фискализация (0.1с)",
+            bentoPaymeTitle: "Payme One-Click",
+            bentoPaymeDesc: "Быстрая оплата картами Uzcard/Humo",
+            bentoUzumTitle: "Uzum Bank & Nasiya",
+            bentoUzumDesc: "Рассрочка 0-0-12 и онлайн-сплит",
+            bentoActiveStatus: "Активно",
+            bentoPosSync: "Синхронизация с кассой YES POS: 100% онлайн",
+            bentoLogisticsBadge: "Smart Logistics & Routing",
+            bentoLogisticsTitle: "Быстрая доставка и живой трекинг на карте",
+            bentoLogisticsDesc: "Автоматическое распределение заказов по курьерам, расчет оптимального маршрута и отображение перемещения в реальном времени.",
+            bentoCourierName: "Курьер: Фарход М. • Скутер #402",
+            bentoCourierStatus: "В пути к клиенту • ул. Амира Темура, 42",
+            bentoDeliveryLabel: "Расчётное время прибытия:",
             featureTelegramTitle: "Telegram-бот и WebApp",
             featureTelegramText: "Полноценный магазин прямо внутри Telegram. Ваши клиенты заказывают без выхода из мессенджера, а команда получает заказы в рабочий чат.",
             featureMarketingTitle: "Маркетинг и рассылки",
@@ -6697,9 +7032,48 @@ h1 span {
             dashModMarketingTag: "Promokodlar & aksiyalar",
             dashModFinanceTitle: "18 450 000 UZS tushum",
             dashModFinanceTag: "Aniq CRM-hisobotlar",
-            featuresKicker: "Barcha kerakli vositalar",
-            featuresTitle: "Do‘konni ishga tushirish va boshqarish uchun bitta servis",
-            featuresLead: "StoreBox vitrina, Telegram-bot, marketing, AI-dizayn, QR-menyu va omborni yagona ekotizimda birlashtiradi.",
+            featuresKicker: "Platforma imkoniyatlari",
+            featuresTitle: "E-commerce'da g'alaba qozonish uchun ekotizim",
+            featuresLead: "StoreBox-ning har bir vositasi maksimal savdo uchun ishlab chiqilgan: interaktiv Telegram-do'kondan tortib, sun'iy intellekt va tezkor logistikagacha.",
+            bentoTgBadge: "Telegram Mini App 2.0",
+            bentoTgTitle: "Telegram ichidagi to'laqonli internet-do'kon",
+            bentoTgDesc: "Mijozlar tovarlarni tanlaydilar, promokodlarni kiritadilar va messenjerdan chiqmasdan xarid qiladilar. Konversiya 43% ga yuqori.",
+            bentoTgBotName: "StoreBox Online Shop",
+            bentoTgBotStatus: "bot • 24/7 faol",
+            bentoTgProduct1: "Simsiz quloqchinlar Pro",
+            bentoTgPrice1: "640 000 UZS",
+            bentoTgProduct2: "Smart-soat Ultra 2 Titanium",
+            bentoTgPrice2: "1 850 000 UZS",
+            bentoTgAdd: "+ Savatga",
+            bentoTgMainBtn: "Buyurtma berish (2 ta) • 2 490 000 UZS",
+            bentoTgNotify: "Yangi buyurtma #4920 Telegram WebApp orqali muvaffaqiyatli to'landi!",
+            bentoAiBadge: "AI Content Engine",
+            bentoAiTitle: "Tovar va matnlarni bir zumda AI bilan yaratish",
+            bentoAiDesc: "Neyrotarmoq mahsulotlaringiz uchun jozibador tavsiflar yozadi, teglarni tanlaydi va SEO parametrlarini bir necha soniyada moslaydi.",
+            bentoAiPrompt: "Nike krossovkalari uchun sotuvchi matn yozish...",
+            bentoAiSpeed: "⚡ AI tomonidan 0.8 soniyada yaratildi",
+            bentoAiAccuracy: "Tavsif aniqligi: 99.4%",
+            bentoAiText: "«Yuqori sifatli eko-teri, Air Sole qulay yostiqchalari va nafas oluvchi yengil mato. Toshkent shahrining faol hayot tarzi uchun ideal tanlov.»",
+            bentoAiTag1: "#Krossovka",
+            bentoAiTag2: "#Original",
+            bentoAiTag3: "#TezkorYetkazish",
+            bentoPosBadge: "YES POS & FinTech Hub",
+            bentoPosTitle: "Kassa, ombor va O'zbekiston to'lov tizimlari",
+            bentoPosDesc: "Bir zumda fiskallashtirish, avtomatik yechish va barcha savdo nuqtalari hamda YES POS kassalari bilan qoldiqlar sinxronizatsiyasi.",
+            bentoClickTitle: "Click Up & QR",
+            bentoClickDesc: "Tezkor fiskallashtirish (0.1s)",
+            bentoPaymeTitle: "Payme One-Click",
+            bentoPaymeDesc: "Uzcard/Humo orqali bir bosishda to'lov",
+            bentoUzumTitle: "Uzum Bank & Nasiya",
+            bentoUzumDesc: "0-0-12 muddatli to'lov va online split",
+            bentoActiveStatus: "Faol",
+            bentoPosSync: "YES POS kassasi bilan sinxronizatsiya: 100% online",
+            bentoLogisticsBadge: "Smart Logistics & Routing",
+            bentoLogisticsTitle: "Tezkor yetkazish va xaritada jonli kuzatuv",
+            bentoLogisticsDesc: "Buyurtmalarni kuryerlar o'rtasida avtomatik taqsimlash, eng qulay yo'nalishni hisoblash va real vaqt rejimida jonli kuzatish.",
+            bentoCourierName: "Kuryer: Farhod M. • Skuter #402",
+            bentoCourierStatus: "Mijoz tomon yo'lda • Amir Temur ko'chasi, 42",
+            bentoDeliveryLabel: "Yetib borishning taxminiy vaqti:",
             featureTelegramTitle: "Telegram bot va WebApp",
             featureTelegramText: "To'liq Telegram do'kon. Mijozlar messenjerdan chiqmasdan xarid qilishadi, jamoa esa buyurtmalarni ishchi guruhda bir zumda qabul qiladi.",
             featureMarketingTitle: "Marketing va xabarnomalar",
@@ -7820,6 +8194,100 @@ h1 span {
             window.goToPlatformModule(idx);
         });
     });
+
+    // =========================================================
+    // ULTRA-PREMIUM BENTO GRID INTERACTIVE CONTROLLER
+    // =========================================================
+    (function initBentoGrid() {
+        // 1. Live Courier Delivery Countdown
+        let deliveryRemainingSec = 1120; // 18m 40s
+        const timerEl = document.getElementById("bentoLiveDeliveryTimer");
+        
+        function updateTimer() {
+            if (!timerEl) return;
+            const isUz = document.documentElement.lang === "uz";
+            const mins = Math.floor(deliveryRemainingSec / 60);
+            const secs = deliveryRemainingSec % 60;
+            const secStr = secs < 10 ? "0" + secs : secs;
+            timerEl.textContent = isUz 
+                ? `${mins} daq ${secStr} soniya`
+                : `${mins} мин ${secStr} сек`;
+            
+            deliveryRemainingSec = deliveryRemainingSec > 10 ? deliveryRemainingSec - 1 : 1120;
+        }
+        setInterval(updateTimer, 1000);
+        updateTimer();
+
+        // 2. Interactive Telegram Cart Buttons
+        let cartItemsCount = 2;
+        const mainBtnText = document.getElementById("bentoTgMainBtnText");
+        const addBtns = document.querySelectorAll(".bento-tg-add-btn");
+
+        addBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const isUz = document.documentElement.lang === "uz";
+                cartItemsCount += 1;
+                btn.textContent = isUz ? "✓ Savatda" : "✓ В корзине";
+                btn.classList.remove("bg-blue-600", "hover:bg-blue-500");
+                btn.classList.add("bg-emerald-600", "hover:bg-emerald-500");
+                
+                if (mainBtnText) {
+                    mainBtnText.textContent = isUz
+                        ? `Buyurtma berish (${cartItemsCount} ta) • 3 130 000 UZS`
+                        : `Оформить заказ (${cartItemsCount} товара) • 3 130 000 UZS`;
+                }
+
+                setTimeout(() => {
+                    btn.textContent = isUz ? "+ Savatga" : "+ В корзину";
+                    btn.classList.remove("bg-emerald-600", "hover:bg-emerald-500");
+                    btn.classList.add("bg-blue-600", "hover:bg-blue-500");
+                }, 2000);
+            });
+        });
+
+        // 3. AI Generation Simulation
+        const regenBtn = document.getElementById("bentoAiRegenBtn");
+        const regenIcon = document.getElementById("bentoAiRegenIcon");
+        const aiTextBox = document.getElementById("bentoAiTextBox");
+
+        const aiSamplesRu = [
+            "«Премиальная эко-кожа, фирменная амортизация Air Sole и ультралегкий дышащий текстиль. Идеальны для динамичного ритма Ташкента.»",
+            "«Лимитированная серия для ценителей комфорта. Износостойкая подошва, анатомическая стелька и трендовый дизайн 2026 года.»",
+            "«Идеальное сочетание стиля и практичности. Водоотталкивающее покрытие и максимальное сцепление на любых покрытиях города.»"
+        ];
+        const aiSamplesUz = [
+            "«Yuqori sifatli eko-teri, Air Sole qulay yostiqchalari va nafas oluvchi yengil mato. Toshkent shahrining faol hayot tarzi uchun ideal tanlov.»",
+            "«Qulaylikni qadrlovchilar uchun maxsus kolleksiya. Bardoshli taglik, anatomik qolip va 2026-yilning eng urf dizayni.»",
+            "«Uslub va amaliylikning ajoyib uyg'unligi. Suv o'tkazmaydigan qoplama va shahar bo'ylab harakatlanish uchun maksimal qulaylik.»"
+        ];
+        let aiIdx = 0;
+
+        if (regenBtn && aiTextBox) {
+            regenBtn.addEventListener("click", () => {
+                if (regenIcon) regenIcon.classList.add("animate-spin");
+                aiTextBox.style.opacity = "0.3";
+                setTimeout(() => {
+                    aiIdx = (aiIdx + 1) % aiSamplesRu.length;
+                    const isUz = document.documentElement.lang === "uz";
+                    aiTextBox.textContent = isUz ? aiSamplesUz[aiIdx] : aiSamplesRu[aiIdx];
+                    aiTextBox.style.opacity = "1";
+                    if (regenIcon) regenIcon.classList.remove("animate-spin");
+                }, 400);
+            });
+        }
+
+        // 4. Cursor Spotlight Ambient Hover
+        const luxuryCards = document.querySelectorAll(".bento-card-luxury");
+        luxuryCards.forEach((card) => {
+            card.addEventListener("mousemove", (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty("--mouse-x", `${x}px`);
+                card.style.setProperty("--mouse-y", `${y}px`);
+            });
+        });
+    })();
 
     // Initial render
     window.renderPlatformModule("dashboard");
