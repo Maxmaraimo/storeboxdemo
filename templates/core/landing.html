@@ -2170,105 +2170,111 @@ h1 span {
 /* =========================================================
    STOREBOX 2.0 BENTO ECOSYSTEM GRID (1:1 TO MACBOOK REFERENCE)
    ========================================================= */
+/* =========================================================
+   STOREBOX 2.0 BENTO ECOSYSTEM GRID (4-BLOCK MEGA ARCHITECTURE)
+   ========================================================= */
 .bento-macbook-section {
     position: relative;
-    padding-block: 60px 90px;
+    padding-top: 100px;
+    padding-bottom: 90px;
     padding-inline: 24px;
     max-width: 1320px;
     margin: 0 auto;
     width: 100%;
-    scroll-margin-top: 100px;
+    scroll-margin-top: 120px;
 }
-.bento-macbook-grid {
+.bento-4block-grid {
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 26px;
     position: relative;
-    z-index: 2;
+    z-index: 10;
 }
 .bento-mac-card {
     position: relative;
-    border-radius: 36px;
-    padding: 38px 36px;
+    border-radius: 32px;
+    padding: 36px 32px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 .bento-mac-card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-8px) scale(1.01);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
-/* Card 1: Telegram WebApp (Vibrant Cobalt / Sapphire Blue) */
-.bento-mac-card-1 {
-    grid-column: span 7;
-    min-height: 480px;
-    height: 100%;
-    background: linear-gradient(145deg, #1d4ed8 0%, #1e3a8a 45%, #0f172a 100%);
-    border: 1.5px solid rgba(147, 197, 253, 0.45);
-    box-shadow: 0 25px 60px -15px rgba(29, 78, 216, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+/* Card 1: Telegram WebApp (Spans 2 Cols) */
+.bento-block-1 {
+    grid-column: span 2;
+    min-height: 500px;
+    background: linear-gradient(135deg, #081226 0%, #0c1a35 45%, #061e3f 100%);
 }
-.bento-mac-card-1:hover {
-    border-color: rgba(191, 219, 254, 0.8);
-    box-shadow: 0 35px 80px -15px rgba(37, 99, 235, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
+.bento-block-1:hover {
+    box-shadow: 0 35px 70px -15px rgba(2, 132, 199, 0.35);
 }
 
-/* Card 2: YES POS Касса (Vibrant Emerald Green) */
-.bento-mac-card-2 {
-    grid-column: span 5;
-    min-height: 480px;
-    height: 100%;
-    background: linear-gradient(145deg, #059669 0%, #047857 45%, #022c22 100%);
-    border: 1.5px solid rgba(110, 231, 183, 0.45);
-    box-shadow: 0 25px 60px -15px rgba(5, 150, 105, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+/* Card 2: AI Ассистент & CRM (Spans 1 Col) */
+.bento-block-2 {
+    grid-column: span 1;
+    min-height: 500px;
+    background: linear-gradient(135deg, #1f0b35 0%, #150824 45%, #2e0847 100%);
 }
-.bento-mac-card-2:hover {
-    border-color: rgba(167, 243, 208, 0.8);
-    box-shadow: 0 35px 80px -15px rgba(16, 185, 129, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
+.bento-block-2:hover {
+    box-shadow: 0 35px 70px -15px rgba(192, 38, 211, 0.35);
 }
 
-/* Card 3: CRM-система (Vibrant Royal Violet / Indigo) */
-.bento-mac-card-3 {
-    grid-column: span 7;
-    min-height: 480px;
-    height: 100%;
-    background: linear-gradient(145deg, #7c3aed 0%, #5b21b6 45%, #1e1b4b 100%);
-    border: 1.5px solid rgba(216, 180, 254, 0.45);
-    box-shadow: 0 25px 60px -15px rgba(124, 58, 237, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+/* Card 3: YES POS Касса & Платежи (Spans 1 Col) */
+.bento-block-3 {
+    grid-column: span 1;
+    min-height: 500px;
+    background: linear-gradient(135deg, #05231c 0%, #061914 45%, #043227 100%);
 }
-.bento-mac-card-3:hover {
-    border-color: rgba(233, 213, 255, 0.8);
-    box-shadow: 0 35px 80px -15px rgba(139, 92, 246, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
+.bento-block-3:hover {
+    box-shadow: 0 35px 70px -15px rgba(16, 185, 129, 0.35);
 }
 
-/* Card 4: Аналитика (Vibrant Amber / Warm Gold) */
-.bento-mac-card-4 {
-    grid-column: span 5;
-    min-height: 480px;
-    height: 100%;
-    background: linear-gradient(145deg, #d97706 0%, #b45309 45%, #1c1917 100%);
-    border: 1.5px solid rgba(253, 230, 138, 0.45);
-    box-shadow: 0 25px 60px -15px rgba(217, 119, 6, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+/* Card 4: Быстрая Доставка & GPS (Full Width - Spans 4 Cols) */
+.bento-block-4 {
+    grid-column: span 4;
+    min-height: 380px;
+    background: linear-gradient(135deg, #2b1406 0%, #170d06 45%, #3d1c07 100%);
 }
-.bento-mac-card-4:hover {
-    border-color: rgba(254, 240, 138, 0.8);
-    box-shadow: 0 35px 80px -15px rgba(245, 158, 11, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
+.bento-block-4:hover {
+    box-shadow: 0 35px 70px -15px rgba(245, 158, 11, 0.35);
 }
 
-/* Card 5: Быстрая Доставка (Vibrant Ocean Cyan / Teal - Full Width) */
-.bento-mac-card-5 {
-    grid-column: span 12;
-    min-height: 280px;
-    background: linear-gradient(145deg, #0891b2 0%, #0e7490 45%, #083344 100%);
-    border: 1.5px solid rgba(103, 232, 249, 0.45);
-    box-shadow: 0 25px 60px -15px rgba(8, 145, 178, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+@media (max-width: 1024px) {
+    .bento-4block-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .bento-block-1 {
+        grid-column: span 2;
+    }
+    .bento-block-2 {
+        grid-column: span 1;
+    }
+    .bento-block-3 {
+        grid-column: span 1;
+    }
+    .bento-block-4 {
+        grid-column: span 2;
+    }
 }
-.bento-mac-card-5:hover {
-    border-color: rgba(165, 243, 252, 0.8);
-    box-shadow: 0 35px 80px -15px rgba(6, 182, 212, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.6);
+
+@media (max-width: 768px) {
+    .bento-4block-grid {
+        grid-template-columns: 1fr;
+    }
+    .bento-block-1, .bento-block-2, .bento-block-3, .bento-block-4 {
+        grid-column: span 1;
+        min-height: auto;
+    }
 }
 
 /* 3D Artwork Frame & Feature Card Components */
@@ -5825,19 +5831,19 @@ h1 span {
                 </p>
             </div>
 
-            <!-- Bento Grid: Exactly 5 Cards with Real 3D Artworks & Platform Deep-Dives -->
-            <div class="bento-macbook-grid">
+            <!-- Bento Grid: 4-Block Mega Architecture (Shopify/Robosell SaaS Level) -->
+            <div class="bento-4block-grid">
 
                 <!-- ========================================================================= -->
-                <!-- CARD 1: TELEGRAM WEBAPP (Top Left - Spans 7 cols on Desktop) -->
+                <!-- BLOCK 1: TELEGRAM WEBAPP (Top Left Large Card - Spans 2 Cols) -->
                 <!-- ========================================================================= -->
-                <article class="bento-mac-card bento-mac-card-1 group">
-                    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 h-full">
+                <article class="bento-mac-card bento-block-1 group">
+                    <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 h-full">
                         
                         <!-- Left text & platform highlights -->
                         <div class="space-y-4 max-w-sm shrink-0">
                             <div>
-                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoTgPill">
+                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/25 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoTgPill">
                                     <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
                                     WEBAPP АКТИВЕН
                                 </span>
@@ -5847,8 +5853,12 @@ h1 span {
                                 Telegram<br>WebApp
                             </h3>
 
+                            <p class="text-sm sm:text-base text-slate-300 leading-relaxed max-w-md">
+                                Полноценная витрина меню прямо в Telegram. Заказ и мгновенная оплата в 1 клик без перехода на сторонние сайты.
+                            </p>
+
                             <!-- Platform Capabilities Checklist -->
-                            <div class="space-y-2.5 pt-1">
+                            <div class="space-y-2 pt-1">
                                 <div class="bento-feature-item">
                                     <span class="bento-check-dot bg-cyan-400/20 text-cyan-300 border border-cyan-400/40">✓</span>
                                     <span>Полноценная витрина меню прямо в Telegram</span>
@@ -5902,58 +5912,120 @@ h1 span {
                 </article>
 
                 <!-- ========================================================================= -->
-                <!-- CARD 2: YES POS КАССА (Top Right - Spans 5 cols on Desktop) -->
+                <!-- BLOCK 2: AI АССИСТЕНТ & CRM (Center Vertical Card - Spans 1 Col) -->
                 <!-- ========================================================================= -->
-                <article class="bento-mac-card bento-mac-card-2 group">
-                    <div class="relative z-10 flex flex-col justify-between h-full space-y-6">
+                <article class="bento-mac-card bento-block-2 group">
+                    <div class="relative z-10 flex flex-col justify-between h-full space-y-5">
                         
                         <!-- Top Header & Pills -->
                         <div class="space-y-3">
                             <div>
-                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoPosPill">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    ПЛАТЕЖИ & ФИСКАЛИЗАЦИЯ
+                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/25 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoCrmPill">
+                                    <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                                    AI & CRM ИНТЕЛЛЕКТ
                                 </span>
                             </div>
 
-                            <h3 class="text-3xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoPosHeader">
+                            <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoCrmHeader">
+                                AI Ассистент<br>& CRM
+                            </h3>
+
+                            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                                Генерация сочных описаний блюд и товаров за 0.8 сек, умная сегментация базы клиентов.
+                            </p>
+
+                            <!-- Platform Capabilities Checklist -->
+                            <div class="space-y-2 pt-1">
+                                <div class="bento-feature-item">
+                                    <span class="bento-check-dot bg-purple-400/20 text-purple-300 border border-purple-400/40">✓</span>
+                                    <span>Генерация описаний за 0.8 сек</span>
+                                </div>
+                                <div class="bento-feature-item">
+                                    <span class="bento-check-dot bg-purple-400/20 text-purple-300 border border-purple-400/40">✓</span>
+                                    <span>Сегментация: VIP и постоянные</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3D AI Assistant Artwork Stage with Floating Micro-UIs -->
+                        <div class="bento-visual-stage w-full pt-1">
+                            <div class="bento-art-frame aspect-[16/11] w-full max-h-[175px]">
+                                <img src="/static/images/landing/ecosystem/eco_ai_3d.jpg" alt="StoreBox 3D AI Assistant" class="bento-art-img" loading="lazy">
+                            </div>
+                            <!-- Floating Micro-UI 1: AI Prompt Dialogue -->
+                            <div class="bento-floating-card pos-top-left flex items-center gap-2 py-1 px-2.5">
+                                <span class="text-sm">🤖</span>
+                                <div>
+                                    <div class="text-[10px] font-black text-white">AI-Ассистент</div>
+                                    <div class="text-[9px] text-purple-200">«Заказ #4820 подтвержден»</div>
+                                </div>
+                            </div>
+                            <!-- Floating Micro-UI 2: VIP Customer Chip -->
+                            <div class="bento-floating-card pos-bottom-right flex items-center gap-1.5 py-1 px-2.5">
+                                <span class="w-5 h-5 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-200 text-slate-900 font-black text-[10px] flex items-center justify-center">👑</span>
+                                <div>
+                                    <div class="text-[10px] font-black text-white">VIP: Сардор Т.</div>
+                                    <div class="text-[9px] text-[#c8ff6a] font-bold">+38% LTV</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </article>
+
+                <!-- ========================================================================= -->
+                <!-- BLOCK 3: YES POS КАССА & ПЛАТЕЖИ (Right Upper Card - Spans 1 Col) -->
+                <!-- ========================================================================= -->
+                <article class="bento-mac-card bento-block-3 group">
+                    <div class="relative z-10 flex flex-col justify-between h-full space-y-5">
+                        
+                        <!-- Top Header & Pills -->
+                        <div class="space-y-3">
+                            <div>
+                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/25 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoPosPill">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    ФИСКАЛИЗАЦИЯ ПО ОФД
+                                </span>
+                            </div>
+
+                            <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoPosHeader">
                                 YES POS<br>Касса
                             </h3>
 
+                            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                                Моментальный перенос товаров из постов соцсетей, бесшовная синхронизация цен и остатков.
+                            </p>
+
                             <!-- Platform Capabilities Checklist -->
                             <div class="space-y-2 pt-1">
                                 <div class="bento-feature-item">
                                     <span class="bento-check-dot bg-emerald-400/20 text-emerald-300 border border-emerald-400/40">✓</span>
-                                    <span>Фискализация и автоматическая печать чеков</span>
+                                    <span>Фискализация и чеки ОФД</span>
                                 </div>
                                 <div class="bento-feature-item">
                                     <span class="bento-check-dot bg-emerald-400/20 text-emerald-300 border border-emerald-400/40">✓</span>
-                                    <span>0% комиссий StoreBox — фиксированная подписка</span>
-                                </div>
-                                <div class="bento-feature-item">
-                                    <span class="bento-check-dot bg-emerald-400/20 text-emerald-300 border border-emerald-400/40">✓</span>
-                                    <span>Моментальный учет остатков складского учета</span>
+                                    <span>0% комиссий StoreBox</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 3D POS Terminal Artwork & Floating Micro-UIs -->
+                        <!-- 3D POS Terminal Artwork & Floating Integration Micro-UIs -->
                         <div class="bento-visual-stage w-full pt-1">
-                            <div class="bento-art-frame aspect-[16/10] w-full max-h-[185px]">
+                            <div class="bento-art-frame aspect-[16/11] w-full max-h-[175px]">
                                 <img src="/static/images/landing/ecosystem/eco_payments_3d.jpg" alt="StoreBox YES POS 3D Terminal" class="bento-art-img" loading="lazy">
                             </div>
                             <!-- Floating Micro-UI 1: Payment Providers Row -->
-                            <div class="bento-floating-card pos-top-left flex items-center gap-1.5 py-1.5 px-2.5">
-                                <span class="px-2 py-0.5 rounded-lg bg-blue-500/40 text-blue-200 text-[10px] font-black border border-blue-400/40">Click ✓</span>
-                                <span class="px-2 py-0.5 rounded-lg bg-emerald-500/40 text-emerald-200 text-[10px] font-black border border-emerald-400/40">Payme ✓</span>
-                                <span class="px-2 py-0.5 rounded-lg bg-purple-500/40 text-purple-200 text-[10px] font-black border border-purple-400/40">Uzum ✓</span>
+                            <div class="bento-floating-card pos-top-left flex items-center gap-1.5 py-1 px-2">
+                                <span class="px-1.5 py-0.5 rounded-md bg-blue-500/40 text-blue-200 text-[9px] font-black">Click ✓</span>
+                                <span class="px-1.5 py-0.5 rounded-md bg-emerald-500/40 text-emerald-200 text-[9px] font-black">Payme ✓</span>
+                                <span class="px-1.5 py-0.5 rounded-md bg-purple-500/40 text-purple-200 text-[9px] font-black">Uzum ✓</span>
                             </div>
                             <!-- Floating Micro-UI 2: Fiscal Receipt Status -->
-                            <div class="bento-floating-card pos-bottom-right flex items-center gap-2">
-                                <span class="text-base">🧾</span>
+                            <div class="bento-floating-card pos-bottom-right flex items-center gap-1.5 py-1 px-2.5">
+                                <span class="text-sm">🧾</span>
                                 <div>
-                                    <div class="text-[11px] font-black text-white">Чек #8942 напечатан</div>
-                                    <div class="text-[10px] text-emerald-300 font-bold">0.3 сек • ОФД ГНК ✓</div>
+                                    <div class="text-[10px] font-black text-white">Чек #8942 выбит</div>
+                                    <div class="text-[9px] text-emerald-300 font-bold">0.3с • ОФД ГНК ✓</div>
                                 </div>
                             </div>
                         </div>
@@ -5962,190 +6034,40 @@ h1 span {
                 </article>
 
                 <!-- ========================================================================= -->
-                <!-- CARD 3: CRM-СИСТЕМА & GOURMET AI (Middle Left - Spans 7 cols on Desktop) -->
+                <!-- BLOCK 4: БЫСТРАЯ ДОСТАВКА И ЛОГИСТИКА (Wide Lower Card - Spans 4 Cols) -->
                 <!-- ========================================================================= -->
-                <article class="bento-mac-card bento-mac-card-3 group">
-                    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 h-full">
-                        
-                        <!-- Left text & CRM features -->
-                        <div class="space-y-4 max-w-sm shrink-0">
-                            <div>
-                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoCrmPill">
-                                    <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-                                    УПРАВЛЕНИЕ КЛИЕНТАМИ
-                                </span>
-                            </div>
-
-                            <h3 class="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoCrmHeader">
-                                CRM & AI<br>Система
-                            </h3>
-
-                            <!-- Platform Capabilities Checklist -->
-                            <div class="space-y-2.5 pt-1">
-                                <div class="bento-feature-item">
-                                    <span class="bento-check-dot bg-purple-400/20 text-purple-300 border border-purple-400/40">✓</span>
-                                    <span>Полная база клиентов с историей заказов и LTV</span>
-                                </div>
-                                <div class="bento-feature-item">
-                                    <span class="bento-check-dot bg-purple-400/20 text-purple-300 border border-purple-400/40">✓</span>
-                                    <span>AI-генератор сочных описаний блюд за 0.8 сек</span>
-                                </div>
-                                <div class="bento-feature-item">
-                                    <span class="bento-check-dot bg-purple-400/20 text-purple-300 border border-purple-400/40">✓</span>
-                                    <span>Сегментация: VIP, постоянные и ушедшие клиенты</span>
-                                </div>
-                            </div>
-
-                            <!-- Live Metrics -->
-                            <div class="grid grid-cols-2 gap-3 pt-2">
-                                <div class="bg-black/40 border border-white/15 rounded-xl p-2.5 backdrop-blur-md">
-                                    <div class="text-[10px] text-purple-200 font-bold">Выручка сегодня</div>
-                                    <div class="text-xs font-mono font-black text-[#c8ff6a]">758 800 UZS</div>
-                                </div>
-                                <div class="bg-black/40 border border-white/15 rounded-xl p-2.5 backdrop-blur-md">
-                                    <div class="text-[10px] text-purple-200 font-bold">Всего в базе</div>
-                                    <div class="text-xs font-mono font-black text-cyan-300">11 341 000 UZS</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right visual: 3D AI Assistant Artwork Stage with Floating Micro-UIs -->
-                        <div class="w-full max-w-[280px] shrink-0">
-                            <div class="bento-visual-stage">
-                                <div class="bento-art-frame aspect-[3/4] w-full">
-                                    <img src="/static/images/landing/ecosystem/eco_ai_3d.jpg" alt="StoreBox 3D AI Assistant" class="bento-art-img" loading="lazy">
-                                </div>
-                                <!-- Floating Micro-UI 1: AI Prompt Dialogue -->
-                                <div class="bento-floating-card pos-top-left flex items-center gap-2">
-                                    <span class="text-base">🤖</span>
-                                    <div>
-                                        <div class="text-[11px] font-black text-white">AI-Ассистент</div>
-                                        <div class="text-[10px] text-purple-200">«Заказ #4820 подтвержден»</div>
-                                    </div>
-                                </div>
-                                <!-- Floating Micro-UI 2: VIP Customer Chip -->
-                                <div class="bento-floating-card pos-bottom-right flex items-center gap-2">
-                                    <span class="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-200 text-slate-900 font-black text-xs flex items-center justify-center">👑</span>
-                                    <div>
-                                        <div class="text-[11px] font-black text-white">VIP: Сардор Т.</div>
-                                        <div class="text-[10px] text-[#c8ff6a] font-bold">14 покупок • 2.8M UZS</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </article>
-
-                <!-- ========================================================================= -->
-                <!-- CARD 4: АНАЛИТИКА (Middle Right - Spans 5 cols on Desktop) -->
-                <!-- ========================================================================= -->
-                <article class="bento-mac-card bento-mac-card-4 group">
-                    <div class="relative z-10 flex flex-col justify-between h-full space-y-6">
-                        
-                        <!-- Top Header & Pills -->
-                        <div class="space-y-3">
-                            <div>
-                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoAnalyticsPill">
-                                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                                    ПРОДАЖИ & ОТЧЕТЫ
-                                </span>
-                            </div>
-
-                            <h3 class="text-3xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoAnalyticsHeader">
-                                Аналитика<br>Продаж
-                            </h3>
-
-                            <!-- Platform Capabilities Checklist -->
-                            <div class="space-y-2 pt-1">
-                                <div class="bento-feature-item">
-                                    <span class="bento-check-dot bg-amber-400/20 text-amber-300 border border-amber-400/40">✓</span>
-                                    <span>Почасовой график выручки и пиков заказов</span>
-                                </div>
-                                <div class="bento-feature-item">
-                                    <span class="bento-check-dot bg-amber-400/20 text-amber-300 border border-amber-400/40">✓</span>
-                                    <span>ABC-анализ самых прибыльных блюд меню</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Real-time Glass Analytics Dashboard Stage with Floating Badges -->
-                        <div class="bento-visual-stage w-full">
-                            <div class="bg-black/60 border border-white/20 rounded-2xl p-4 shadow-xl backdrop-blur-xl text-white space-y-3 w-full">
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-amber-200 font-extrabold tracking-wide">Динамика продаж недели</span>
-                                    <span class="text-amber-400 font-black text-sm">&gt;</span>
-                                </div>
-
-                                <!-- Stats -->
-                                <div class="flex items-center gap-6 text-xs">
-                                    <div>
-                                        <span class="text-amber-200/80 text-[11px] block font-medium">Прибыль</span>
-                                        <span class="font-black text-emerald-400 text-base">+14% ↑</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-amber-200/80 text-[11px] block font-medium">Заказы</span>
-                                        <span class="font-black text-emerald-400 text-base">+22% ↑</span>
-                                    </div>
-                                    <div class="ml-auto text-right">
-                                        <span class="text-amber-200/80 text-[11px] block font-medium">Средний чек</span>
-                                        <span class="font-black text-[#c8ff6a] text-sm">956 100 UZS</span>
-                                    </div>
-                                </div>
-
-                                <!-- Colorful Multi-Bar Chart -->
-                                <div class="h-24 flex items-end justify-between gap-2 pt-3 border-t border-white/15">
-                                    <div class="w-full bg-emerald-400 rounded-t-lg h-[45%] shadow-md"></div>
-                                    <div class="w-full bg-amber-400 rounded-t-lg h-[65%] shadow-md"></div>
-                                    <div class="w-full bg-emerald-400 rounded-t-lg h-[35%] shadow-md"></div>
-                                    <div class="w-full bg-[#c8ff6a] rounded-t-lg h-[90%] shadow-lg shadow-[#c8ff6a]/40"></div>
-                                    <div class="w-full bg-cyan-400 rounded-t-lg h-[55%] shadow-md"></div>
-                                    <div class="w-full bg-amber-400 rounded-t-lg h-[75%] shadow-md"></div>
-                                    <div class="w-full bg-[#c8ff6a] rounded-t-lg h-[100%] shadow-lg shadow-[#c8ff6a]/50"></div>
-                                </div>
-                            </div>
-
-                            <!-- Floating Micro-UI Chip: Revenue Growth -->
-                            <div class="bento-floating-card pos-top-right flex items-center gap-1.5 py-1.5 px-3">
-                                <span class="text-emerald-400 font-black text-xs">↑ +42.8%</span>
-                                <span class="text-[10px] font-extrabold text-white">Выручка</span>
-                            </div>
-                        </div>
-
-                    </div>
-                </article>
-
-                <!-- ========================================================================= -->
-                <!-- CARD 5: БЫСТРАЯ ДОСТАВКА (Bottom - Full-width 12 cols) -->
-                <!-- ========================================================================= -->
-                <article class="bento-mac-card bento-mac-card-5 group">
+                <article class="bento-mac-card bento-block-4 group">
                     <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 h-full">
                         
                         <!-- Left text & delivery features -->
-                        <div class="space-y-4 max-w-lg shrink-0">
+                        <div class="space-y-4 max-w-xl shrink-0">
                             <div>
-                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoDeliveryPill">
-                                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/25 text-white text-xs font-black tracking-wider uppercase shadow-xs backdrop-blur-md" data-i18n="bentoDeliveryPill">
+                                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
                                     ЖИВОЙ GPS & ЛОГИСТИКА
                                 </span>
                             </div>
 
-                            <h3 class="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-sm" data-i18n="bentoDeliveryHeader">
-                                Быстрая Доставка
+                            <h3 class="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoDeliveryHeader">
+                                Быстрая Доставка & GPS
                             </h3>
+
+                            <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+                                Интеграция с Yandex Go, расчет стоимости по координатам и контроль курьеров на интерактивной карте в реальном времени.
+                            </p>
 
                             <!-- Platform Capabilities Checklist -->
                             <div class="space-y-2 pt-1">
                                 <div class="bento-feature-item">
-                                    <span class="bento-check-dot bg-cyan-400/20 text-cyan-300 border border-cyan-400/40">✓</span>
-                                    <span>Интеграция с Yandex Delivery, Express и собственным штатом</span>
+                                    <span class="bento-check-dot bg-amber-400/20 text-amber-300 border border-amber-400/40">✓</span>
+                                    <span>Интеграция с Yandex Delivery, Express и курьерской службой</span>
                                 </div>
                                 <div class="bento-feature-item">
-                                    <span class="bento-check-dot bg-cyan-400/20 text-cyan-300 border border-cyan-400/40">✓</span>
+                                    <span class="bento-check-dot bg-amber-400/20 text-amber-300 border border-amber-400/40">✓</span>
                                     <span>Клиент видит перемещение курьера на живой карте онлайн</span>
                                 </div>
                                 <div class="bento-feature-item">
-                                    <span class="bento-check-dot bg-cyan-400/20 text-cyan-300 border border-cyan-400/40">✓</span>
+                                    <span class="bento-check-dot bg-amber-400/20 text-amber-300 border border-amber-400/40">✓</span>
                                     <span>Автоматическое назначение ближайшего свободного курьера</span>
                                 </div>
                             </div>
@@ -6156,24 +6078,24 @@ h1 span {
                                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
                                     <span data-i18n="bentoDeliveryTime">25-35 мин</span>
                                 </div>
-                                <span class="text-xs font-extrabold text-cyan-100 tracking-wide" data-i18n="bentoDeliveryStatus">
+                                <span class="text-xs font-extrabold text-amber-200 tracking-wide" data-i18n="bentoDeliveryStatus">
                                     ● В пути к клиенту
                                 </span>
                             </div>
                         </div>
 
                         <!-- Right visual: 3D Logistics Artwork Stage with Multi-layer Micro-UIs -->
-                        <div class="w-full max-w-[340px] shrink-0">
+                        <div class="w-full max-w-[380px] shrink-0">
                             <div class="bento-visual-stage">
-                                <div class="bento-art-frame aspect-[4/3] w-full">
+                                <div class="bento-art-frame aspect-[16/10] w-full">
                                     <img src="/static/images/landing/ecosystem/eco_logistics_3d.jpg" alt="StoreBox 3D Fast Courier Logistics" class="bento-art-img" loading="lazy">
                                 </div>
                                 <!-- Floating Micro-UI 1: Courier Live GPS Radar -->
                                 <div class="bento-floating-card pos-top-left flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
                                     <div>
                                         <div class="text-[11px] font-black text-white">🛵 Курьер в пути</div>
-                                        <div class="text-[10px] text-cyan-200 font-mono">18 мин до двери</div>
+                                        <div class="text-[10px] text-amber-200 font-mono">18 мин до двери</div>
                                     </div>
                                 </div>
                                 <!-- Floating Micro-UI 2: Destination Address Chip -->
