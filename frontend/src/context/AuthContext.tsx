@@ -91,6 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       setUser(null);
       setStore(null);
+      setStores([]);
       setPermissions(null);
     } finally {
       setLoading(false);
@@ -105,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res = await api.post("/auth/login/", credentials);
     setUser(res.data.user);
     setStore(res.data.store);
+    setStores(res.data.stores || []);
     if (res.data.permissions) {
       setPermissions(res.data.permissions);
     }
@@ -118,6 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setUser(null);
       setStore(null);
+      setStores([]);
       setPermissions(null);
     }
   };

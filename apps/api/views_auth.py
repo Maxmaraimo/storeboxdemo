@@ -98,20 +98,34 @@ def login_view(request):
         return Response({"error": "Login yoki parol noto'g'ri"}, status=401)
 
     login(request, user)
+
+    # A Django login intentionally keeps unrelated session data. Store selection,
+    # however, belongs to the previous account and must never cross logins.
+    for key in ("merchant_current_store_id", "selected_store_id", "current_store_subdomain"):
+        request.session.pop(key, None)
+
     store = get_merchant_store(request)
+    stores = Store.objects.filter(owner=user).order_by("id")
+    if store:
+        request.session["merchant_current_store_id"] = store.id
+        request.session["selected_store_id"] = store.id
+        request.session["current_store_subdomain"] = store.subdomain
     perms = get_user_permissions(user, store) if store else None
 
     from apps.orders.models import StoreStaff
     is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists()
 
-    return Response({
+    response = Response({
         "user": UserSerializer(user).data,
         "store": StoreSerializer(store).data if store else None,
+        "stores": StoreSerializer(stores, many=True).data,
         "permissions": perms,
         "is_courier": is_courier,
         "redirect_url": "/dashboard/courier/" if is_courier else None,
         "message": "Muvaffaqiyatli tizimga kirildi"
     })
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -183,6 +197,8 @@ def me_view(request):
         "is_courier": is_courier,
         "redirect_url": "/dashboard/courier/" if is_courier else None,
     })
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -193,7 +209,13 @@ def logout_view(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def switch_store_view(request, store_id):
-    store = Store.objects.filter(id=store_id).first()
+    store = Store.objects.filter(id=store_id, owner=request.user).first()
+    if not store:
+        from apps.orders.models import StoreStaff
+        staff = StoreStaff.objects.filter(
+            store_id=store_id, user=request.user, is_active=True
+        ).select_related("store").first()
+        store = staff.store if staff else None
     if not store:
         return Response({"error": "Dokon topilmadi"}, status=404)
     request.session["selected_store_id"] = store.id
@@ -265,4 +287,3 @@ def create_store_view(request):
         "store": StoreSerializer(store).data,
         "stores": StoreSerializer(all_stores, many=True).data
     }, status=201)
-
