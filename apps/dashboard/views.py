@@ -711,10 +711,32 @@ def login_view(request):
                 return redirect('dashboard:onboarding')
             return redirect('dashboard:home')
         else:
-            error = "Неверный логин (телефон) или пароль / Noto'g'ri telefon raqami yoki parol"
+            error = True
+
+    current_lang = request.GET.get('lang') or request.session.get('lang') or request.COOKIES.get('storebox_lang') or 'ru'
+    if current_lang not in ['uz', 'ru', 'en']:
+        current_lang = 'ru'
+    if request.GET.get('lang'):
+        request.session['lang'] = current_lang
+
+    error_msg = None
+    if error:
+        if current_lang == 'ru':
+            error_msg = "Неверный логин (телефон) или пароль"
+        elif current_lang == 'en':
+            error_msg = "Invalid phone number or password"
+        else:
+            error_msg = "Noto'g'ri telefon raqami yoki parol"
 
     prefill_login = request.GET.get('login', '') or request.POST.get('login', '')
-    return render(request, 'dashboard/auth/login.html', {'error': error, 'prefill_login': prefill_login})
+    response = render(request, 'dashboard/auth/login.html', {
+        'error': error_msg,
+        'prefill_login': prefill_login,
+        'current_lang': current_lang,
+    })
+    if request.GET.get('lang'):
+        response.set_cookie('storebox_lang', current_lang, max_age=31536000)
+    return response
 
 
 def logout_view(request):

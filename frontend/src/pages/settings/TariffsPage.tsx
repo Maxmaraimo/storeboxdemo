@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   BadgePercent,
   Check,
@@ -14,6 +15,9 @@ import {
   RefreshCw,
   Phone,
   HelpCircle,
+  Search,
+  Receipt,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
@@ -55,13 +59,51 @@ interface PendingRequest {
   created_at: string;
 }
 
-export const TariffsPage: React.FC = () => {
+export interface BillingHistoryItem {
+  id: number;
+  plan: string;
+  plan_display: string;
+  period_months: number;
+  days: number;
+  amount: number;
+  payment_method: string;
+  payment_method_display: string;
+  status: "APPROVED" | "PENDING" | "REJECTED" | string;
+  status_display: string;
+  created_at: string;
+  created_at_iso?: string;
+}
+
+interface TariffsPageProps {
+  initialTab?: "plans" | "history";
+}
+
+export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }) => {
   const { t, lang } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState<"plans" | "history">(() => {
+    if (location.pathname.includes("/history") || initialTab === "history") {
+      return "history";
+    }
+    return "plans";
+  });
+
+  useEffect(() => {
+    if (location.pathname.includes("/history")) {
+      setActiveTab("history");
+    } else {
+      setActiveTab("plans");
+    }
+  }, [location.pathname]);
 
   const [loading, setLoading] = useState(true);
   const [storeInfo, setStoreInfo] = useState<StoreBillingInfo | null>(null);
   const [plans, setPlans] = useState<PlanTier[]>([]);
   const [pendingRequest, setPendingRequest] = useState<PendingRequest | null>(null);
+  const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
 
   const [duration, setDuration] = useState<number>(1);
   const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null);
@@ -79,6 +121,7 @@ export const TariffsPage: React.FC = () => {
       setStoreInfo(res.data.store);
       setPlans(res.data.plans || []);
       setPendingRequest(res.data.pending_request || null);
+      setBillingHistory(res.data.billing_history || []);
     } catch (err) {
       console.error("Tariff info fetch error:", err);
     } finally {
@@ -89,6 +132,15 @@ export const TariffsPage: React.FC = () => {
   useEffect(() => {
     fetchTariffInfo();
   }, []);
+
+  const handleTabChange = (tab: "plans" | "history") => {
+    setActiveTab(tab);
+    if (tab === "history") {
+      navigate("/settings/tariffs/history");
+    } else {
+      navigate("/settings/tariffs");
+    }
+  };
 
   const calculateDiscountedPrice = (monthlyPrice: number, months: number) => {
     const raw = monthlyPrice * months;
@@ -163,6 +215,20 @@ export const TariffsPage: React.FC = () => {
   const isExpiringSoon = daysLeft > 0 && daysLeft <= 7;
   const isExpired = storeInfo?.is_expired || daysLeft <= 0;
 
+  const filteredHistory = billingHistory.filter((item) => {
+    if (!historySearch.trim()) return true;
+    const q = historySearch.toLowerCase();
+    return (
+      (item.plan_display && item.plan_display.toLowerCase().includes(q)) ||
+      (item.plan && item.plan.toLowerCase().includes(q)) ||
+      (item.payment_method_display && item.payment_method_display.toLowerCase().includes(q)) ||
+      (item.status_display && item.status_display.toLowerCase().includes(q)) ||
+      (item.created_at && item.created_at.toLowerCase().includes(q)) ||
+      String(item.amount).includes(q) ||
+      String(item.id).includes(q)
+    );
+  });
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header & Title */}
@@ -201,6 +267,46 @@ export const TariffsPage: React.FC = () => {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Tabs Navigation: Tarif rejalari vs To'lovlar tarixi */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl w-fit border border-slate-200/70 dark:border-white/10 shadow-2xs">
+        <button
+          type="button"
+          onClick={() => handleTabChange("plans")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === "plans"
+              ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <Zap className="w-4 h-4" />
+          <span>{lang === "ru" ? "Тарифные планы" : lang === "en" ? "Pricing Plans" : "Tarif rejalari"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange("history")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === "history"
+              ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          <span>{lang === "ru" ? "История тарифов" : lang === "en" ? "Billing History" : "To'lovlar tarixi"}</span>
+          {billingHistory.length > 0 && (
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                activeTab === "history"
+                  ? "bg-[#c8ff6a]/25 text-[#c8ff6a] dark:bg-[#211b2e]/25 dark:text-[#211b2e]"
+                  : "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300"
+              }`}
+            >
+              {billingHistory.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Subscription Status Alert Banner */}
@@ -279,48 +385,51 @@ export const TariffsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Duration Switcher Pills */}
-      <div className="flex flex-col items-center justify-center space-y-3 pt-2">
-        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("select_duration") || "Obuna davrini tanlang:"}</div>
-        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-neutral-800 p-1.5 rounded-2xl text-xs font-bold shadow-inner">
-          <button
-            type="button"
-            onClick={() => setDuration(1)}
-            className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
-              duration === 1 ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            {t("month_1_simple") || (lang === "ru" ? "Месяц" : lang === "en" ? "Month" : "Oy")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setDuration(6)}
-            className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-              duration === 6 ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <span>{t("month_6_simple") || (lang === "ru" ? "6 месяцев" : lang === "en" ? "6 months" : "6 oy")}</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
-              -10%
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setDuration(12)}
-            className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-              duration === 12 ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <span>{t("month_12_simple") || (lang === "ru" ? "12 месяцев" : lang === "en" ? "12 months" : "12 oy")}</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
-              -20%
-            </span>
-          </button>
-        </div>
-      </div>
+      {/* 1. PLANS VIEW */}
+      {activeTab === "plans" && (
+        <>
+          {/* Duration Switcher Pills */}
+          <div className="flex flex-col items-center justify-center space-y-3 pt-2">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("select_duration") || "Obuna davrini tanlang:"}</div>
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-neutral-800 p-1.5 rounded-2xl text-xs font-bold shadow-inner">
+              <button
+                type="button"
+                onClick={() => setDuration(1)}
+                className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
+                  duration === 1 ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                {t("month_1_simple") || (lang === "ru" ? "Месяц" : lang === "en" ? "Month" : "Oy")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDuration(6)}
+                className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+                  duration === 6 ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span>{t("month_6_simple") || (lang === "ru" ? "6 месяцев" : lang === "en" ? "6 months" : "6 oy")}</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
+                  -10%
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDuration(12)}
+                className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+                  duration === 12 ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span>{t("month_12_simple") || (lang === "ru" ? "12 месяцев" : lang === "en" ? "12 months" : "12 oy")}</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
+                  -20%
+                </span>
+              </button>
+            </div>
+          </div>
 
-      {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto pt-2">
+          {/* Plans Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto pt-2">
         {plans.map((p) => {
           const discountPct = calculateDiscountPercent(duration);
           const totalPrice = calculateDiscountedPrice(p.monthly_price, duration);
@@ -482,6 +591,144 @@ export const TariffsPage: React.FC = () => {
           );
         })}
       </div>
+      </>
+      )}
+
+      {/* 2. BILLING HISTORY VIEW */}
+      {activeTab === "history" && (
+        <div className="space-y-4">
+          {/* Top Controls: Search & Stats */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#161b26] p-4 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-xs">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder={
+                  lang === "ru"
+                    ? "Поиск по тарифу, сумме или способу оплаты..."
+                    : lang === "en"
+                    ? "Search by plan, amount or payment method..."
+                    : "Tarif, summa yoki to'lov turi bo'yicha qidirish..."
+                }
+                className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-bold text-slate-500 dark:text-slate-400">
+              <Receipt className="w-4 h-4 text-slate-400" />
+              <span>
+                {lang === "ru"
+                  ? `Всего записей: ${filteredHistory.length}`
+                  : lang === "en"
+                  ? `Total transactions: ${filteredHistory.length}`
+                  : `Jami operatsiyalar: ${filteredHistory.length}`}
+              </span>
+            </div>
+          </div>
+
+          {/* Table Container */}
+          <div className="bg-white dark:bg-[#161b26] rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-white/10 bg-slate-50/60 dark:bg-white/5 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                    <th className="py-3.5 px-5">ID / {lang === "ru" ? "Дата" : lang === "en" ? "Date" : "Sana"}</th>
+                    <th className="py-3.5 px-5">{lang === "ru" ? "Тарифный план" : lang === "en" ? "Pricing Plan" : "Tarif rejasi"}</th>
+                    <th className="py-3.5 px-5">{lang === "ru" ? "Срок действия" : lang === "en" ? "Period" : "Muddati"}</th>
+                    <th className="py-3.5 px-5">{lang === "ru" ? "Способ оплаты" : lang === "en" ? "Payment Method" : "To'lov turi"}</th>
+                    <th className="py-3.5 px-5">{lang === "ru" ? "Сумма" : lang === "en" ? "Amount" : "Summa"}</th>
+                    <th className="py-3.5 px-5 text-right">{lang === "ru" ? "Статус" : lang === "en" ? "Status" : "Holati"}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {filteredHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-14 text-center text-slate-400 dark:text-slate-500">
+                        <Clock className="w-8 h-8 mx-auto mb-2 opacity-35" />
+                        <div className="font-bold">
+                          {lang === "ru"
+                            ? "История платежей пуста"
+                            : lang === "en"
+                            ? "No billing transactions found"
+                            : "To'lovlar tarixi topilmadi"}
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredHistory.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
+                        <td className="py-4 px-5">
+                          <div className="font-bold text-slate-900 dark:text-white">#{item.id}</div>
+                          <div className="text-[11px] text-slate-400 font-normal">{item.created_at}</div>
+                        </td>
+                        <td className="py-4 px-5">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-extrabold ${
+                              item.plan === "PRO" || item.plan === "ENTERPRISE"
+                                ? "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300"
+                                : item.plan === "STANDARD"
+                                ? "bg-[#211b2e] text-[#c8ff6a]"
+                                : "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200"
+                            }`}
+                          >
+                            <Zap className="w-3 h-3" />
+                            {item.plan_display || item.plan}
+                          </span>
+                        </td>
+                        <td className="py-4 px-5">
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            {item.period_months || Math.round(item.days / 30) || 1}{" "}
+                            {lang === "ru" ? "мес." : lang === "en" ? "mo." : "oy"}
+                          </span>
+                          <span className="text-[11px] text-slate-400 ml-1">({item.days} kun)</span>
+                        </td>
+                        <td className="py-4 px-5">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 font-bold text-[11px]">
+                            <CreditCard className="w-3 h-3 text-slate-400" />
+                            {item.payment_method_display || item.payment_method}
+                          </span>
+                        </td>
+                        <td className="py-4 px-5">
+                          <span className="font-bold text-sm text-slate-900 dark:text-white">
+                            {item.amount.toLocaleString()}
+                          </span>
+                          <span className="text-[11px] font-medium text-slate-400 ml-1">UZS</span>
+                        </td>
+                        <td className="py-4 px-5 text-right">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
+                              item.status === "APPROVED"
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/40"
+                                : item.status === "REJECTED"
+                                ? "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/50 dark:border-rose-800/40"
+                                : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/40 animate-pulse"
+                            }`}
+                          >
+                            {item.status === "APPROVED" ? (
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                            ) : item.status === "REJECTED" ? (
+                              <X className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                            ) : (
+                              <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                            )}
+                            {item.status === "APPROVED"
+                              ? (lang === "ru" ? "Одобрено" : lang === "en" ? "Approved" : "Faollashtirilgan")
+                              : item.status === "REJECTED"
+                              ? (lang === "ru" ? "Отклонено" : lang === "en" ? "Rejected" : "Bekor qilingan")
+                              : (lang === "ru" ? "В ожидании" : lang === "en" ? "Pending" : "Ko'rib chiqilmoqda")}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* UPGRADE / PAYMENT MODAL */}
       {selectedPlan && (

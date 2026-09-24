@@ -259,7 +259,15 @@ export const App: React.FC = () => {
                   path="settings/tariffs"
                   element={
                     <PermissionGuard module="settings">
-                      <TariffsPage />
+                      <TariffsPage initialTab="plans" />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/tariffs/history"
+                  element={
+                    <PermissionGuard module="settings">
+                      <TariffsPage initialTab="history" />
                     </PermissionGuard>
                   }
                 />

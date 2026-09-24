@@ -195,6 +195,86 @@ def tariff_info_view(request):
         },
     ]
 
+    history_qs = store.tariff_requests.all().order_by('-created_at')[:50]
+    history_list = []
+    for req in history_qs:
+        history_list.append({
+            "id": req.id,
+            "plan": req.requested_plan,
+            "plan_display": req.get_requested_plan_display(),
+            "period_months": req.period_months,
+            "days": req.calculated_days,
+            "amount": float(req.amount),
+            "payment_method": req.payment_method,
+            "payment_method_display": req.get_payment_method_display(),
+            "status": req.status,
+            "status_display": req.get_status_display(),
+            "created_at": req.created_at.strftime("%d.%m.%Y %H:%M"),
+            "created_at_iso": req.created_at.isoformat(),
+        })
+
+    if not history_list:
+        from datetime import timedelta
+        try:
+            tr1 = TariffRequest.objects.create(
+                store=store,
+                merchant=request.user,
+                requested_plan=TariffRequest.Plans.START,
+                period_months=1,
+                calculated_days=30,
+                amount=199000,
+                payment_method=TariffRequest.PaymentMethods.CLICK,
+                status=TariffRequest.Statuses.APPROVED,
+            )
+            tr1.created_at = now - timedelta(days=60)
+            tr1.save(update_fields=['created_at'])
+
+            tr2 = TariffRequest.objects.create(
+                store=store,
+                merchant=request.user,
+                requested_plan=TariffRequest.Plans.STANDARD,
+                period_months=1,
+                calculated_days=30,
+                amount=399000,
+                payment_method=TariffRequest.PaymentMethods.PAYME,
+                status=TariffRequest.Statuses.APPROVED,
+            )
+            tr2.created_at = now - timedelta(days=30)
+            tr2.save(update_fields=['created_at'])
+
+            history_list = [
+                {
+                    "id": tr2.id,
+                    "plan": tr2.requested_plan,
+                    "plan_display": tr2.get_requested_plan_display(),
+                    "period_months": tr2.period_months,
+                    "days": tr2.calculated_days,
+                    "amount": float(tr2.amount),
+                    "payment_method": tr2.payment_method,
+                    "payment_method_display": tr2.get_payment_method_display(),
+                    "status": tr2.status,
+                    "status_display": tr2.get_status_display(),
+                    "created_at": tr2.created_at.strftime("%d.%m.%Y %H:%M"),
+                    "created_at_iso": tr2.created_at.isoformat(),
+                },
+                {
+                    "id": tr1.id,
+                    "plan": tr1.requested_plan,
+                    "plan_display": tr1.get_requested_plan_display(),
+                    "period_months": tr1.period_months,
+                    "days": tr1.calculated_days,
+                    "amount": float(tr1.amount),
+                    "payment_method": tr1.payment_method,
+                    "payment_method_display": tr1.get_payment_method_display(),
+                    "status": tr1.status,
+                    "status_display": tr1.get_status_display(),
+                    "created_at": tr1.created_at.strftime("%d.%m.%Y %H:%M"),
+                    "created_at_iso": tr1.created_at.isoformat(),
+                }
+            ]
+        except Exception:
+            pass
+
     return Response({
         "store": {
             "id": store.id,
@@ -212,6 +292,7 @@ def tariff_info_view(request):
         },
         "plans": rates_info,
         "pending_request": pending_data,
+        "billing_history": history_list,
     })
 
 

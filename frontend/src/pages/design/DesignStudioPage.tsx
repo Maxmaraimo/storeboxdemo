@@ -538,8 +538,8 @@ export const DesignStudioPage: React.FC = () => {
   const previewUrl = `${storefrontUrl}/?${previewParams.toString()}`;
 
   // Calculate realistic desktop scale
-  const desktopCanvasWidth = 1200;
-  const desktopScale = Math.min(1, Math.max(0.42, (containerWidth - 32) / desktopCanvasWidth));
+  const desktopCanvasWidth = 1080;
+  const desktopScale = Math.min(1, Math.max(0.58, (containerWidth - 32) / desktopCanvasWidth));
 
   return (
     <div className="space-y-5">
@@ -680,7 +680,7 @@ export const DesignStudioPage: React.FC = () => {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         
         {/* LEFT COLUMN: CLEAR TABBED SETTINGS (NO ENDLESS MESSY SCROLL!) */}
-        <div className={`xl:col-span-5 space-y-4 ${mobileTab === "preview" ? "hidden xl:block" : "block"}`}>
+        <div className={`xl:col-span-4 space-y-4 ${mobileTab === "preview" ? "hidden xl:block" : "block"}`}>
           
           {/* STEPPED SEGMENTED TABS */}
           <div className="bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-4 gap-1">
@@ -1219,7 +1219,7 @@ export const DesignStudioPage: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: REALISTIC RESPONSIVE PREVIEW (DESKTOP & MOBILE) */}
-        <div className={`xl:col-span-7 space-y-3 sticky top-4 ${mobileTab === "settings" ? "hidden xl:block" : "block"}`}>
+        <div className={`xl:col-span-8 space-y-3 sticky top-4 ${mobileTab === "settings" ? "hidden xl:block" : "block"}`}>
           
           {/* DEVICE SWITCHER & CONTROLS */}
           <div className="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
@@ -1282,15 +1282,15 @@ export const DesignStudioPage: React.FC = () => {
                   <div className="flex-1 max-w-sm mx-auto bg-slate-900/80 border border-slate-700 rounded-lg px-3 py-0.5 text-[11px] font-mono text-slate-400 truncate text-center">
                     https://{subdomain}.storebox.uz
                   </div>
-                  <span className="text-[10px] font-mono text-slate-400">1200px HD</span>
+                  <span className="text-[10px] font-mono text-slate-400">Desktop HD</span>
                 </div>
 
                 {/* Scaled desktop viewport container */}
-                <div className="w-full h-[620px] bg-slate-100 overflow-hidden flex justify-center items-start relative">
+                <div className="w-full h-[760px] bg-slate-100 overflow-hidden flex justify-center items-start relative">
                   <div
                     style={{
                       width: `${desktopCanvasWidth}px`,
-                      height: `${620 / desktopScale}px`,
+                      height: `${760 / desktopScale}px`,
                       transform: `scale(${desktopScale})`,
                       transformOrigin: "top center"
                     }}

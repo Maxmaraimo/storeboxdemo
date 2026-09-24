@@ -31,7 +31,7 @@ import { useNotifications } from "../../context/NotificationContext";
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { store, t } = useAuth();
+  const { store, t, lang } = useAuth();
   const { newOrdersCount, unreadChatsCount } = useNotifications();
   const storefrontUrl = store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#");
 
@@ -49,14 +49,20 @@ export const Sidebar: React.FC = () => {
     });
   };
 
-  // Accordion open/close state for nested menu items (e.g. staff)
+  // Accordion open/close state for nested menu items (staff & tariffs)
   const [staffAccordionOpen, setStaffAccordionOpen] = useState<boolean>(() => {
     return location.pathname.startsWith("/settings/staff") || location.pathname.startsWith("/settings/roles") || location.pathname.startsWith("/settings/couriers");
+  });
+  const [tariffAccordionOpen, setTariffAccordionOpen] = useState<boolean>(() => {
+    return location.pathname.startsWith("/settings/tariffs");
   });
 
   useEffect(() => {
     if (location.pathname.startsWith("/settings/staff") || location.pathname.startsWith("/settings/roles") || location.pathname.startsWith("/settings/couriers")) {
       setStaffAccordionOpen(true);
+    }
+    if (location.pathname.startsWith("/settings/tariffs")) {
+      setTariffAccordionOpen(true);
     }
   }, [location.pathname]);
 
@@ -117,18 +123,39 @@ export const Sidebar: React.FC = () => {
             badge: null,
             permissionModule: "staff",
             isAccordion: true,
+            accordionKey: "staff",
             subItems: [
-              { path: "/settings/staff", label: "Xodimlar", permissionModule: "staff" },
-              { path: "/settings/staff/roles", label: "Rollar", permissionModule: "roles" },
-              { path: "/settings/staff/couriers", label: "Kuryer", permissionModule: "delivery" },
+              { path: "/settings/staff", label: lang === "ru" ? "Сотрудники" : lang === "en" ? "Staff" : "Xodimlar", permissionModule: "staff" },
+              { path: "/settings/staff/roles", label: lang === "ru" ? "Роли и права" : lang === "en" ? "Roles" : "Rollar", permissionModule: "roles" },
+              { path: "/settings/staff/couriers", label: lang === "ru" ? "Курьеры" : lang === "en" ? "Couriers" : "Kuryer", permissionModule: "delivery" },
             ],
           },
-          { path: "/settings/tariffs", icon: BadgePercent, label: t("tariffs") || "Tarif rejalari", badge: null, permissionModule: "settings" },
+          {
+            path: "/settings/tariffs",
+            icon: BadgePercent,
+            label: t("tariffs") || "Tarif rejalari",
+            badge: null,
+            permissionModule: "settings",
+            isAccordion: true,
+            accordionKey: "tariffs",
+            subItems: [
+              {
+                path: "/settings/tariffs",
+                label: lang === "ru" ? "Тарифные планы" : lang === "en" ? "Pricing Plans" : "Tarif rejalari",
+                permissionModule: "settings",
+              },
+              {
+                path: "/settings/tariffs/history",
+                label: lang === "ru" ? "История тарифов" : lang === "en" ? "Billing History" : "To'lovlar tarixi",
+                permissionModule: "settings",
+              },
+            ],
+          },
           { path: "/settings", icon: Settings, label: t("settings") || "Asosiy sozlamalar", badge: null, permissionModule: "settings" },
         ],
       },
     ],
-    [t, newOrdersCount, unreadChatsCount]
+    [t, lang, newOrdersCount, unreadChatsCount]
   );
 
   const allNavPaths = useMemo(
@@ -246,10 +273,17 @@ export const Sidebar: React.FC = () => {
             )}
 
             {section.items.map((item) => {
+              const isAccordionOpen =
+                item.accordionKey === "tariffs"
+                  ? tariffAccordionOpen
+                  : staffAccordionOpen;
+
               const isItemActive = item.isAccordion
-                ? location.pathname.startsWith("/settings/staff") ||
-                  location.pathname.startsWith("/settings/roles") ||
-                  location.pathname.startsWith("/settings/couriers")
+                ? item.accordionKey === "tariffs"
+                  ? location.pathname.startsWith("/settings/tariffs")
+                  : location.pathname.startsWith("/settings/staff") ||
+                    location.pathname.startsWith("/settings/roles") ||
+                    location.pathname.startsWith("/settings/couriers")
                 : isActive(item.path);
               const Icon = item.icon;
 
@@ -261,9 +295,17 @@ export const Sidebar: React.FC = () => {
                       onClick={() => {
                         if (!isExpanded) {
                           setIsExpanded(true);
-                          setStaffAccordionOpen(true);
+                          if (item.accordionKey === "tariffs") {
+                            setTariffAccordionOpen(true);
+                          } else {
+                            setStaffAccordionOpen(true);
+                          }
                         } else {
-                          setStaffAccordionOpen((prev) => !prev);
+                          if (item.accordionKey === "tariffs") {
+                            setTariffAccordionOpen((prev) => !prev);
+                          } else {
+                            setStaffAccordionOpen((prev) => !prev);
+                          }
                         }
                       }}
                       className={`relative flex items-center rounded-2xl transition-all duration-150 cursor-pointer group select-none ${
@@ -290,7 +332,7 @@ export const Sidebar: React.FC = () => {
                           <span className="truncate flex-1">{item.label}</span>
                           <ChevronRight
                             className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                              staffAccordionOpen
+                              isAccordionOpen
                                 ? "rotate-90 text-[#c8ff6a] dark:text-[#211b2e]"
                                 : "text-neutral-400 group-hover:text-white dark:group-hover:text-[#211b2e]"
                             }`}
@@ -306,7 +348,7 @@ export const Sidebar: React.FC = () => {
                     </div>
 
                     {/* Accordion Subitems */}
-                    {isExpanded && staffAccordionOpen && (
+                    {isExpanded && isAccordionOpen && (
                       <div className="pl-6 pr-1 space-y-1 border-l-2 border-slate-100 dark:border-neutral-800 ml-4 my-1">
                         {item.subItems.map((sub) => {
                           const subActive = location.pathname.replace(/\/+$/, "") === sub.path.replace(/\/+$/, "");

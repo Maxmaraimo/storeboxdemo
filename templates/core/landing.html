@@ -2650,6 +2650,34 @@ h1 span {
     color: var(--muted);
     margin-top: 3px;
 }
+.plan-total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.09);
+    font-size: 12px;
+    color: var(--muted);
+}
+.pricing-card.is-popular .plan-total-row {
+    border-top-color: rgba(33, 27, 46, 0.16);
+    color: var(--ink);
+}
+.plan-total-label {
+    font-weight: 650;
+    color: var(--muted);
+}
+.pricing-card.is-popular .plan-total-label {
+    color: var(--ink);
+    opacity: 0.85;
+}
+.plan-total-val {
+    font-weight: 850;
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--ink);
+}
 .pricing-features {
     list-style: none;
     padding: 0;
@@ -3648,15 +3676,15 @@ h1 span {
     position: relative;
     width: 326px;
     height: 694px;
-    background: #1e1b24;
+    background: #0f1422;
     border-radius: 54px;
     padding: 10px;
-    border: 3.5px solid #d8cec4;
+    border: 3.5px solid #232c3d;
     box-shadow: 
-        36px 52px 105px -20px rgba(45, 32, 25, 0.32),
-        16px 26px 52px -10px rgba(0, 0, 0, 0.14),
-        inset 0 0 0 1.5px rgba(255, 255, 255, 0.8),
-        inset 0 2px 4px rgba(255, 255, 255, 0.5);
+        0 36px 90px -15px rgba(15, 23, 42, 0.32),
+        0 16px 36px -8px rgba(15, 23, 42, 0.18),
+        inset 0 0 0 1.5px rgba(255, 255, 255, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.25);
     transform: rotateY(-6deg) rotateX(4deg);
     transform-style: preserve-3d;
     animation: floatIphoneLevitate 5s ease-in-out infinite;
@@ -3666,7 +3694,7 @@ h1 span {
     animation-play-state: paused;
     transform: rotateY(0deg) rotateX(0deg) translateY(-8px);
     box-shadow: 
-        30px 60px 115px -15px rgba(45, 32, 25, 0.4),
+        0 40px 105px -12px rgba(15, 23, 42, 0.42),
         0 0 0 2px #c8ff6a,
         0 20px 50px rgba(200, 255, 106, 0.25);
 }
@@ -4179,15 +4207,16 @@ h1 span {
    BLOCK 3: STOREBOX 2.0 ECOSYSTEM SHOWCASE (PHOTO 1 FIGMA 3D CARDS)
    ========================================================= */
 .storebox-ecosystem-showcase {
-    background: #ffffff;
-    border-radius: 40px;
-    padding: 90px 36px 85px;
-    margin: 70px auto 90px;
-    max-width: 1340px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 25px 70px rgba(15, 23, 42, 0.05);
+    background: transparent;
+    border-radius: 0;
+    padding: 40px 16px 70px;
+    margin: 40px auto 70px;
+    max-width: 1440px;
+    width: 100%;
+    border: none;
+    box-shadow: none;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     scroll-margin-top: 120px;
 }
 .eco-ambient-glow {
@@ -4249,20 +4278,20 @@ h1 span {
     line-height: 1.5;
 }
 
-/* Outer Rounded Frame (1:1 with Figma on Laptop Photo 1) */
+/* Outer Rounded Frame (Full-width clean presentation) */
 .eco-cards-frame {
-    background: #edf2f9;
-    border-radius: 34px;
-    padding: 20px;
-    border: 1.5px solid rgba(210, 225, 245, 0.9);
-    box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.04);
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
     position: relative;
     z-index: 1;
 }
 .eco-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 20px;
     position: relative;
 }
 
@@ -5903,6 +5932,10 @@ h1 span {
                                 <span class="price-curr">UZS</span>
                             </div>
                             <span class="price-period" data-plan-period="start">в месяц (6 633 / день)</span>
+                            <div class="plan-total-row" data-plan-total-row="start">
+                                <span class="plan-total-label" data-plan-total-label="start">Итого (1 мес.):</span>
+                                <span class="plan-total-val" data-plan-total="start">199 000 UZS</span>
+                            </div>
                         </div>
                         <ul class="pricing-features">
                             <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStartF1">До 1 000 товаров в каталоге</span></li>
@@ -5928,6 +5961,10 @@ h1 span {
                                 <span class="price-curr">UZS</span>
                             </div>
                             <span class="price-period" data-plan-period="standard">в месяц (13 300 / день)</span>
+                            <div class="plan-total-row" data-plan-total-row="standard">
+                                <span class="plan-total-label" data-plan-total-label="standard">Итого (1 мес.):</span>
+                                <span class="plan-total-val" data-plan-total="standard">399 000 UZS</span>
+                            </div>
                         </div>
                         <ul class="pricing-features">
                             <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planStandardF1">Безлимитное количество товаров</span></li>
@@ -5952,6 +5989,10 @@ h1 span {
                                 <span class="price-curr">UZS</span>
                             </div>
                             <span class="price-period" data-plan-period="pro">в месяц (26 633 / день)</span>
+                            <div class="plan-total-row" data-plan-total-row="pro">
+                                <span class="plan-total-label" data-plan-total-label="pro">Итого (1 мес.):</span>
+                                <span class="plan-total-val" data-plan-total="pro">799 000 UZS</span>
+                            </div>
                         </div>
                         <ul class="pricing-features">
                             <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF1">Полный безлимит всех функций</span></li>
@@ -6767,6 +6808,27 @@ h1 span {
         }
     };
 
+    const planTotalPrices = {
+        monthly: {
+            start: "199 000 UZS",
+            standard: "399 000 UZS",
+            pro: "799 000 UZS",
+            enterprise: "799 000 UZS"
+        },
+        semiannual: {
+            start: "1 074 600 UZS",
+            standard: "2 154 600 UZS",
+            pro: "4 314 600 UZS",
+            enterprise: "4 314 600 UZS"
+        },
+        annual: {
+            start: "1 910 400 UZS",
+            standard: "3 830 400 UZS",
+            pro: "7 670 400 UZS",
+            enterprise: "7 670 400 UZS"
+        }
+    };
+
     let currentCycle = "monthly";
 
     function updatePricingPeriods() {
@@ -6785,6 +6847,20 @@ h1 span {
                 if (plan === "start") el.textContent = isUz ? "oyiga (12 oylik to'lovda -20%)" : "в месяц (при оплате за 12 мес -20%)";
                 if (plan === "standard") el.textContent = isUz ? "oyiga (12 oylik to'lovda -20%)" : "в месяц (при оплате за 12 мес -20%)";
                 if (plan === "pro" || plan === "enterprise") el.textContent = isUz ? "oyiga (12 oylik to'lovda -20%)" : "в месяц (при оплате за 12 мес -20%)";
+            }
+        });
+
+        const cycleLabelRu = currentCycle === "monthly" ? "Итого (1 мес.):" : currentCycle === "semiannual" ? "Итого (6 мес.):" : "Итого (12 мес.):";
+        const cycleLabelUz = currentCycle === "monthly" ? "Jami (1 oy):" : currentCycle === "semiannual" ? "Jami (6 oy):" : "Jami (12 oy):";
+
+        document.querySelectorAll("[data-plan-total-label]").forEach((el) => {
+            el.textContent = isUz ? cycleLabelUz : cycleLabelRu;
+        });
+
+        document.querySelectorAll("[data-plan-total]").forEach((el) => {
+            const plan = el.dataset.planTotal;
+            if (planTotalPrices[currentCycle] && planTotalPrices[currentCycle][plan]) {
+                el.textContent = planTotalPrices[currentCycle][plan];
             }
         });
     }
@@ -6817,7 +6893,17 @@ h1 span {
             const bKey = studioCards[currentStepIdx].dataset.badgeKey;
             if (bKey && dictionary[bKey]) studioBadge.textContent = dictionary[bKey];
         }
-        try { localStorage.setItem("storebox-language", language); } catch (_) {}
+        try {
+            localStorage.setItem("storebox-language", language);
+            document.cookie = "storebox_lang=" + language + "; path=/; max-age=31536000; SameSite=Lax";
+        } catch (_) {}
+        document.querySelectorAll('a[href^="/login"], a[href^="/register"]').forEach((a) => {
+            try {
+                const u = new URL(a.href, window.location.origin);
+                u.searchParams.set("lang", language);
+                a.href = u.pathname + u.search + u.hash;
+            } catch (_) {}
+        });
         updatePricingPeriods();
         if (typeof window.renderPlatformModule === "function" && window.platformModuleKeys) {
             window.renderPlatformModule(window.platformModuleKeys[window.currentPlatformModIdx || 0]);
