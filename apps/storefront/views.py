@@ -1073,17 +1073,17 @@ def cart_page_view(request, subdomain=None):
         p.display_name = p.get_name(lang) if hasattr(p, 'get_name') else (getattr(p, f'name_{lang}', None) or getattr(p, 'name_uz', '') or getattr(p, 'name_ru', ''))
 
     # Delivery calculation
-    delivery_fee = store.delivery_price or 0
-    if store.free_delivery_threshold and subtotal >= store.free_delivery_threshold:
-        delivery_fee = 0
+    delivery_fee = float(store.delivery_price or 0)
+    if store.free_delivery_threshold and subtotal >= float(store.free_delivery_threshold):
+        delivery_fee = 0.0
 
-    total = subtotal + (delivery_fee if cart else 0)
+    total = float(subtotal) + (delivery_fee if cart else 0.0)
 
     # Promo discount if any
     promo_code = request.session.get('promo_code')
-    promo_discount = request.session.get('promo_discount', 0)
+    promo_discount = float(request.session.get('promo_discount', 0) or 0)
     if promo_discount:
-        total = max(0, total - promo_discount)
+        total = max(0.0, total - promo_discount)
 
     t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
 

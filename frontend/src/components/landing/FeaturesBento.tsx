@@ -14,7 +14,11 @@ import {
   RefreshCw,
   Bot,
   Smartphone,
-  Check
+  Check,
+  Utensils,
+  FileText,
+  Star,
+  Award
 } from "lucide-react";
 
 interface FeaturesBentoProps {
@@ -42,14 +46,14 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
       card1Add: "+ В корзину",
       card1MainBtn: "Оформить заказ • 150 000 UZS",
       card1Notify: "Заказ #4920 успешно оплачен в Telegram!",
-      card1LivePing: "⚡ Заказ в 2 клика • Оплачено",
+      card1LivePing: "Заказ в 2 клика • Оплачено",
 
       // Card 2: AI Ассистент & CRM
       card2Badge: "AI & CRM ИНТЕЛЛЕКТ",
       card2Title: "AI Ассистент & CRM",
       card2Desc: "Генерация сочных описаний блюд и товаров за 0.8 сек, умная сегментация базы клиентов.",
       card2Prompt: "Создать сочное описание для сочного стейка Ribeye...",
-      card2AiSpeed: "⚡ 0.8с генерация",
+      card2AiSpeed: "0.8с генерация",
       card2Accuracy: "Точность: 99.4%",
       card2AiText: "«Мраморная говядина зернового откорма, обжаренная на открытом огне с ароматным розмарином. Идеальная сочность и дымный аромат премиум-класса.»",
       card2Tag1: "#ПремиумСтейк",
@@ -83,8 +87,8 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
       card4Status: "В пути к клиенту • ул. Амира Темура, 42",
       card4TimerLabel: "Расчётное время прибытия:",
       card4TimerVal: "25-35 мин",
-      card4LiveStatus: "● В пути к клиенту",
-      card4DestBadge: "ул. Амира Темура, 42 • Yandex API ✓"
+      card4LiveStatus: "В пути к клиенту",
+      card4DestBadge: "ул. Амира Темура, 42 • Yandex API"
     },
     uz: {
       kicker: "Platforma imkoniyatlari",
@@ -103,13 +107,13 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
       card1Add: "+ Savatga",
       card1MainBtn: "Buyurtma berish • 150 000 UZS",
       card1Notify: "Buyurtma #4920 Telegram orqali muvaffaqiyatli to'landi!",
-      card1LivePing: "⚡ 2 bosishda buyurtma • To'landi",
+      card1LivePing: "2 bosishda buyurtma • To'landi",
 
       card2Badge: "AI & CRM INTELLEKT",
       card2Title: "AI Assistent & CRM",
       card2Desc: "0.8 soniyada mahsulot va taomlarga sotuvchi tavsiflar yaratish, mijozlar bazasini aqlli segmentlash.",
       card2Prompt: "Ribeye steyki uchun jozibali tavsif yozish...",
-      card2AiSpeed: "⚡ 0.8s generatsiya",
+      card2AiSpeed: "0.8s generatsiya",
       card2Accuracy: "Aniqlik: 99.4%",
       card2AiText: "«Ochiq olovda xushbo'y rozmarin bilan pishirilgan donli bo'rdoqi mol go'shti. Premium darajadagi betakror lazzat va xushbo'y tam.»",
       card2Tag1: "#PremiumSteyk",
@@ -141,8 +145,8 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
       card4Status: "Mijoz tomon yo'lda • Amir Temur ko'chasi, 42",
       card4TimerLabel: "Yetib borishning taxminiy vaqti:",
       card4TimerVal: "25-35 daqiqa",
-      card4LiveStatus: "● Mijoz tomon yo'lda",
-      card4DestBadge: "Amir Temur ko'chasi, 42 • Yandex API ✓"
+      card4LiveStatus: "Mijoz tomon yo'lda",
+      card4DestBadge: "Amir Temur ko'chasi, 42 • Yandex API"
     },
     en: {
       kicker: "Platform Capabilities",
@@ -161,13 +165,13 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
       card1Add: "+ Add to Cart",
       card1MainBtn: "Checkout Now • 150 000 UZS",
       card1Notify: "Order #4920 completed successfully in Telegram!",
-      card1LivePing: "⚡ 2-Click Order • Paid",
+      card1LivePing: "2-Click Order • Paid",
 
       card2Badge: "AI & CRM INTELLIGENCE",
       card2Title: "AI Assistant & CRM",
       card2Desc: "Craft appetizing dish & product descriptions in 0.8s, automated customer database segmentation.",
       card2Prompt: "Write a mouthwatering description for Ribeye Steak...",
-      card2AiSpeed: "⚡ 0.8s generated",
+      card2AiSpeed: "0.8s generated",
       card2Accuracy: "Accuracy: 99.4%",
       card2AiText: "«Grain-fed marbled beef grilled over open flame with fragrant rosemary. The ultimate smoky tenderness and five-star taste experience.»",
       card2Tag1: "#PremiumSteak",
@@ -199,8 +203,8 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
       card4Status: "Out for Delivery • 42 Amir Temur Ave",
       card4TimerLabel: "Estimated Delivery Time:",
       card4TimerVal: "25-35 min",
-      card4LiveStatus: "● In transit to customer",
-      card4DestBadge: "42 Amir Temur Ave • Yandex API ✓"
+      card4LiveStatus: "In transit to customer",
+      card4DestBadge: "42 Amir Temur Ave • Yandex API"
     }
   };
 
@@ -322,8 +326,8 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
                 
                 {/* Product 1 */}
                 <div className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 flex items-center gap-3 transition-colors">
-                  <div className="w-12 h-12 rounded-lg bg-blue-950/80 border border-blue-500/30 flex items-center justify-center text-blue-300 shrink-0 text-xl shadow-inner">
-                    🍔
+                  <div className="w-12 h-12 rounded-lg bg-blue-950/80 border border-blue-500/30 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+                    <Utensils className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-white truncate">{str.card1Product1}</h4>
@@ -340,8 +344,8 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
 
                 {/* Product 2 */}
                 <div className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 flex items-center gap-3 transition-colors">
-                  <div className="w-12 h-12 rounded-lg bg-indigo-950/80 border border-indigo-500/30 flex items-center justify-center text-indigo-300 shrink-0 text-xl shadow-inner">
-                    🍟
+                  <div className="w-12 h-12 rounded-lg bg-indigo-950/80 border border-indigo-500/30 flex items-center justify-center text-sky-400 shrink-0 shadow-inner">
+                    <ShoppingBag className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-white truncate">{str.card1Product2}</h4>
@@ -448,7 +452,10 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
 
             {/* Floating VIP Customer Chip */}
             <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-              <span className="text-slate-300 font-medium">👑 {str.card2VipClient}</span>
+              <div className="flex items-center gap-1.5 text-slate-300 font-medium">
+                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
+                <span>{str.card2VipClient}</span>
+              </div>
               <span className="text-emerald-400 font-black">{str.card2LtvMetric}</span>
             </div>
 
@@ -537,7 +544,7 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
             {/* Floating Fiscal Receipt Status */}
             <div className="p-2 rounded-xl bg-slate-950/70 border border-emerald-400/30 flex items-center justify-between text-xs text-white">
               <span className="flex items-center gap-1.5 font-bold text-emerald-200 text-[11px]">
-                <span>🧾</span>
+                <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span>{str.card3FiscalReceipt}</span>
               </span>
               <span className="text-[#c8ff6a] font-mono text-[10px] font-black">0% сборов</span>
@@ -578,15 +585,21 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
 
             <div className="space-y-2 pt-1">
               <div className="flex items-center gap-2.5 text-xs text-amber-200 font-semibold">
-                <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center justify-center text-[10px] font-black">✓</span>
+                <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center justify-center shrink-0">
+                  <Check className="w-2.5 h-2.5" />
+                </span>
                 <span>{str.card4Item1}</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs text-amber-200 font-semibold">
-                <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center justify-center text-[10px] font-black">✓</span>
+                <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center justify-center shrink-0">
+                  <Check className="w-2.5 h-2.5" />
+                </span>
                 <span>{str.card4Item2}</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs text-amber-200 font-semibold">
-                <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center justify-center text-[10px] font-black">✓</span>
+                <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center justify-center shrink-0">
+                  <Check className="w-2.5 h-2.5" />
+                </span>
                 <span>{str.card4Item3}</span>
               </div>
             </div>
@@ -669,7 +682,10 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
 
             {/* Destination Pill & Live API status */}
             <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-              <span className="text-amber-200 font-bold">📍 {str.card4DestBadge}</span>
+              <span className="flex items-center gap-1 text-amber-200 font-bold">
+                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>{str.card4DestBadge}</span>
+              </span>
               <span className="text-emerald-400 font-black">Yandex Go Active</span>
             </div>
 
