@@ -5,15 +5,23 @@
 {{ t.cart|default:'Savat' }} — {{ store.name }}
 {% endblock %}
 
-{% block content %}
+{% block storefront_body %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10"
      x-data="{
+         cartItems: JSON.parse('{{ cart_json|escapejs }}' || '{}'),
+         cartCount: Number('{{ cart_count|default:0 }}'),
+         subtotal: Number('{{ cart_subtotal|default:0 }}'),
+         deliveryFee: Number('{{ delivery_fee|default:0 }}'),
+         appliedDiscount: Number('{{ promo_discount|default:0 }}'),
+         appliedPromoCode: '{{ promo_code|default:'' }}',
          promoInput: '',
          promoLoading: false,
          promoError: '',
          promoSuccess: '',
-         appliedDiscount: {{ promo_discount|default:0 }},
-         appliedPromoCode: '{{ promo_code|default:'' }}',
+
+         formatMoney(val) {
+             return (Number(val) || 0).toLocaleString() + ' UZS';
+         },
 
          async updateQty(key, newQty) {
              if (newQty < 1) {
@@ -31,7 +39,7 @@
                      this.cartItems = data.cart;
                      this.cartCount = data.cart_count;
                      this.subtotal = data.subtotal;
-                     $dispatch('cart-updated', { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false });
+                     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false } }));
                  }
              } catch (e) {
                  console.error(e);
@@ -50,7 +58,7 @@
                      this.cartItems = data.cart;
                      this.cartCount = data.cart_count;
                      this.subtotal = data.subtotal;
-                     $dispatch('cart-updated', { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false });
+                     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false } }));
                  }
              } catch (e) {
                  console.error(e);
@@ -58,7 +66,8 @@
          },
 
          async clearCart() {
-             if (!confirm('{{ lang|default:"uz" }}' === 'ru' ? 'Очистить всю корзину?' : 'Savatni butunlay tozalaysizmi?')) return;
+             const confirmMsg = '{% if current_lang == "ru" %}Очистить всю корзину?{% elif current_lang == "en" %}Clear all items in cart?{% elif current_lang == "tr" %}Sepetteki tüm ürünleri temizlemek istiyor musunuz?{% else %}Savatni butunlay tozalaysizmi?{% endif %}';
+             if (!confirm(confirmMsg)) return;
              try {
                  const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/clear/{% else %}/cart/clear/{% endif %}', {
                      method: 'POST',
@@ -69,7 +78,7 @@
                      this.cartItems = {};
                      this.cartCount = 0;
                      this.subtotal = 0;
-                     $dispatch('cart-updated', { cart: {}, cart_count: 0, subtotal: 0, openDrawer: false });
+                     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: {}, cart_count: 0, subtotal: 0, openDrawer: false } }));
                  }
              } catch (e) {
                  console.error(e);
@@ -91,28 +100,47 @@
                  if (data.success) {
                      this.appliedDiscount = data.discount;
                      this.appliedPromoCode = this.promoInput.trim().toUpperCase();
-                     this.promoSuccess = data.message || 'Promokod qabul qilindi!';
+                     this.promoSuccess = data.message || '{% if current_lang == "ru" %}Промокод успешно применен!{% elif current_lang == "en" %}Promo code applied!{% elif current_lang == "tr" %}Promosyon kodu uygulandı!{% else %}Promokod qabul qilindi!{% endif %}';
                  } else {
-                     this.promoError = data.error || 'Noto\'g\'ri promokod';
+                     this.promoError = data.error || '{% if current_lang == "ru" %}Неверный промокод{% elif current_lang == "en" %}Invalid promo code{% elif current_lang == "tr" %}Geçersiz promosyon kodu{% else %}Noto\'g\'ri promokod{% endif %}';
                  }
              } catch (e) {
-                 this.promoError = 'Tarmoq xatosi yuz berdi';
+                 this.promoError = '{% if current_lang == "ru" %}Ошибка сети{% elif current_lang == "en" %}Network error{% elif current_lang == "tr" %}Ağ hatası{% else %}Tarmoq xatosi yuz berdi{% endif %}';
              } finally {
                  this.promoLoading = false;
+             }
+         },
+
+         async quickAddToCart(productId) {
+             try {
+                 const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                     body: JSON.stringify({ product_id: productId, quantity: 1 })
+                 });
+                 const data = await res.json();
+                 if (data.success) {
+                     this.cartItems = data.cart;
+                     this.cartCount = data.cart_count;
+                     this.subtotal = data.subtotal;
+                     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false } }));
+                 }
+             } catch (e) {
+                 console.error(e);
              }
          }
      }">
 
     <!-- BREADCRUMBS -->
     <nav class="flex items-center gap-2 text-xs text-slate-400 mb-6 font-medium">
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" class="hover:text-slate-700 transition-colors">
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}" class="hover:text-slate-700 transition-colors">
             {{ t.home|default:'Bosh sahifa' }}
         </a>
         <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
         <span class="text-slate-900 font-bold">{{ t.cart|default:'Savat' }}</span>
     </nav>
 
-    <!-- 1. EMPTY CART STATE (Uzum Market Style) -->
+    <!-- 1. EMPTY CART STATE (Clean, Modern Uzum Market Style) -->
     <div x-show="cartCount === 0" x-cloak class="py-12 sm:py-16 text-center max-w-lg mx-auto">
         <div class="w-32 h-32 mx-auto mb-6 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200/80 shadow-inner">
             <svg class="w-16 h-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,39 +149,41 @@
         </div>
 
         <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {% if lang == 'ru' %}В корзине пока ничего нет{% elif lang == 'en' %}Your cart is currently empty{% else %}Savatingiz hozircha bo'sh{% endif %}
+            {% if current_lang == 'ru' %}В корзине пока ничего нет{% elif current_lang == 'en' %}Your cart is currently empty{% elif current_lang == 'tr' %}Sepetiniz henüz boş{% else %}Savatingiz hozircha bo'sh{% endif %}
         </h1>
         <p class="text-sm text-slate-500 mt-2 max-w-sm mx-auto leading-relaxed">
-            {% if lang == 'ru' %}
+            {% if current_lang == 'ru' %}
             Начните с подборок на главной странице или найдите нужный товар через поиск.
-            {% elif lang == 'en' %}
-            Start from curated collections on homepage or search for your favorite items.
+            {% elif current_lang == 'en' %}
+            Start from curated collections on the homepage or search for your favorite items.
+            {% elif current_lang == 'tr' %}
+            Ana sayfadaki koleksiyonlardan başlayın veya arama yoluyla ürün bulun.
             {% else %}
             Bosh sahifadagi to'plamlardan boshlang yoki kerakli mahsulotni qidiruv orqali toping.
             {% endif %}
         </p>
 
         <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}"
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                class="px-8 py-3.5 rounded-2xl btn-brand text-white font-bold text-sm shadow-lg shadow-brand/20 hover:opacity-95 active:scale-95 transition-all inline-flex items-center gap-2">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                <span>{% if lang == 'ru' %}Перейти на главную{% elif lang == 'en' %}Go to Homepage{% else %}Bosh sahifaga o'tish{% endif %}</span>
+                <span>{% if current_lang == 'ru' %}Перейти на главную{% elif current_lang == 'en' %}Go to Homepage{% elif current_lang == 'tr' %}Ana Sayfaya Dön{% else %}Bosh sahifaga o'tish{% endif %}</span>
             </a>
         </div>
     </div>
 
-    <!-- 2. CART HAS ITEMS: FULL TWO-COLUMN UZUM-MARKET VIEW -->
+    <!-- 2. CART HAS ITEMS: FULL TWO-COLUMN VIEW -->
     <div x-show="cartCount > 0" class="space-y-6">
         <div class="flex items-center justify-between pb-4 border-b border-slate-200">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                     <span>{{ t.cart|default:'Savatingiz' }}</span>
-                    <span class="text-sm font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600" x-text="cartCount + ' ta'"></span>
+                    <span class="text-sm font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600" x-text="cartCount + ' {% if current_lang == 'ru' %}шт.{% elif current_lang == 'en' %}items{% elif current_lang == 'tr' %}adet{% else %}ta{% endif %}'"></span>
                 </h1>
             </div>
             <button type="button" @click="clearCart()" class="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline flex items-center gap-1 cursor-pointer">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                <span>{% if lang == 'ru' %}Очистить корзину{% elif lang == 'en' %}Clear all{% else %}Barchasini tozalash{% endif %}</span>
+                <span>{% if current_lang == 'ru' %}Очистить корзину{% elif current_lang == 'en' %}Clear all{% elif current_lang == 'tr' %}Sepeti temizle{% else %}Barchasini tozalash{% endif %}</span>
             </button>
         </div>
 
@@ -164,13 +194,13 @@
                     <div class="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div class="flex items-center gap-4 min-w-0 flex-1">
                             <!-- Image -->
-                            <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/{% else %}/product/{% endif %}' + item.product_id + '/'" class="shrink-0">
-                                <img :src="item.image || 'https://placehold.co/120x120?text=Tovar'" :alt="item.name" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border border-slate-100 bg-slate-50">
+                            <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/{% else %}/product/{% endif %}' + item.product_id + '/{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}'" class="shrink-0">
+                                <img :src="item.image || item.image_url || 'https://placehold.co/120x120?text=Tovar'" :alt="item.name" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border border-slate-100 bg-slate-50">
                             </a>
 
                             <!-- Title & Specs -->
                             <div class="min-w-0 flex-1">
-                                <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/{% else %}/product/{% endif %}' + item.product_id + '/'"
+                                <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/{% else %}/product/{% endif %}' + item.product_id + '/{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}'"
                                    class="font-bold text-sm sm:text-base text-slate-900 hover:text-brand transition-colors line-clamp-2"
                                    x-text="item.name"></a>
 
@@ -179,7 +209,7 @@
                                 </div>
 
                                 <div class="text-xs text-slate-400 font-mono mt-1">
-                                    <span x-text="formatMoney(item.price)"></span> / dona
+                                    <span x-text="formatMoney(item.unit_price || item.price)"></span> / {% if current_lang == 'ru' %}шт.{% elif current_lang == 'en' %}pcs{% elif current_lang == 'tr' %}adet{% else %}dona{% endif %}
                                 </div>
                             </div>
                         </div>
@@ -201,11 +231,11 @@
 
                             <!-- Total for this item -->
                             <div class="text-right">
-                                <div class="font-black text-sm sm:text-base text-slate-900 whitespace-nowrap" x-text="formatMoney(item.total_price)"></div>
+                                <div class="font-black text-sm sm:text-base text-slate-900 whitespace-nowrap" x-text="formatMoney(item.total_price || ((item.unit_price || item.price) * item.quantity))"></div>
                             </div>
 
                             <!-- Trash Button -->
-                            <button type="button" @click="removeItem(key)" class="text-slate-300 hover:text-rose-600 transition-colors p-1" title="O'chirish">
+                            <button type="button" @click="removeItem(key)" class="text-slate-300 hover:text-rose-600 transition-colors p-1" title="{% if current_lang == 'ru' %}Удалить{% elif current_lang == 'en' %}Remove{% elif current_lang == 'tr' %}Sil{% else %}O'chirish{% endif %}">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -217,19 +247,19 @@
             <div class="lg:col-span-4 sticky top-24 space-y-4">
                 <div class="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-lg space-y-5">
                     <h2 class="text-lg font-black text-slate-900 tracking-tight pb-3 border-b border-slate-100">
-                        {% if lang == 'ru' %}Ваш заказ{% elif lang == 'en' %}Order Summary{% else %}Buyurtmangiz{% endif %}
+                        {% if current_lang == 'ru' %}Ваш заказ{% elif current_lang == 'en' %}Order Summary{% elif current_lang == 'tr' %}Sipariş Özeti{% else %}Buyurtmangiz{% endif %}
                     </h2>
 
                     <div class="space-y-3 text-sm">
                         <div class="flex items-center justify-between text-slate-600">
-                            <span>{% if lang == 'ru' %}Товары{% elif lang == 'en' %}Products{% else %}Mahsulotlar{% endif %} (<span x-text="cartCount"></span>)</span>
+                            <span>{% if current_lang == 'ru' %}Товары{% elif current_lang == 'en' %}Products{% elif current_lang == 'tr' %}Ürünler{% else %}Mahsulotlar{% endif %} (<span x-text="cartCount"></span>)</span>
                             <span class="font-bold text-slate-900" x-text="formatMoney(subtotal)"></span>
                         </div>
 
                         <div class="flex items-center justify-between text-slate-600">
-                            <span>{% if lang == 'ru' %}Доставка{% elif lang == 'en' %}Delivery{% else %}Yetkazib berish{% endif %}</span>
+                            <span>{% if current_lang == 'ru' %}Доставка{% elif current_lang == 'en' %}Delivery{% elif current_lang == 'tr' %}Teslimat{% else %}Yetkazib berish{% endif %}</span>
                             <span class="font-bold" :class="deliveryFee === 0 ? 'text-emerald-600 font-bold' : 'text-slate-900'">
-                                <span x-show="deliveryFee === 0">{% if lang == 'ru' %}Бесплатно{% elif lang == 'en' %}Free{% else %}Tekin{% endif %}</span>
+                                <span x-show="deliveryFee === 0">{% if current_lang == 'ru' %}Бесплатно{% elif current_lang == 'en' %}Free{% elif current_lang == 'tr' %}Ücretsiz{% else %}Tekin{% endif %}</span>
                                 <span x-show="deliveryFee > 0" x-text="formatMoney(deliveryFee)"></span>
                             </span>
                         </div>
@@ -237,15 +267,15 @@
                         <div x-show="appliedDiscount > 0" class="flex items-center justify-between text-emerald-600 font-bold">
                             <span class="flex items-center gap-1">
                                 <i data-lucide="tag" class="w-3.5 h-3.5"></i>
-                                <span>Promokod (<span x-text="appliedPromoCode"></span>)</span>
+                                <span>{% if current_lang == 'ru' %}Промокод{% elif current_lang == 'en' %}Promo code{% elif current_lang == 'tr' %}Promosyon kodu{% else %}Promokod{% endif %} (<span x-text="appliedPromoCode"></span>)</span>
                             </span>
                             <span>-<span x-text="formatMoney(appliedDiscount)"></span></span>
                         </div>
 
                         <div class="pt-3 border-t border-slate-100 flex items-baseline justify-between">
                             <div>
-                                <span class="font-black text-base text-slate-900">{% if lang == 'ru' %}Итого к оплате{% elif lang == 'en' %}Total{% else %}Jami to'lov{% endif %}</span>
-                                <span class="block text-[10px] text-slate-400">QQS bilan birga</span>
+                                <span class="font-black text-base text-slate-900">{% if current_lang == 'ru' %}Итого к оплате{% elif current_lang == 'en' %}Total{% elif current_lang == 'tr' %}Toplam{% else %}Jami to'lov{% endif %}</span>
+                                <span class="block text-[10px] text-slate-400">{% if current_lang == 'ru' %}С учетом налогов{% elif current_lang == 'en' %}VAT included{% elif current_lang == 'tr' %}KDV dahildir{% else %}QQS bilan birga{% endif %}</span>
                             </div>
                             <span class="text-xl sm:text-2xl font-black text-brand"
                                   x-text="formatMoney(Math.max(0, subtotal + deliveryFee - appliedDiscount))"></span>
@@ -255,14 +285,14 @@
                     <!-- Promo Code Box -->
                     <div class="pt-3 border-t border-slate-100 space-y-2">
                         <label class="block text-xs font-bold text-slate-700">
-                            {% if lang == 'ru' %}Промокод{% elif lang == 'en' %}Promo code{% else %}Promokod bormi?{% endif %}
+                            {% if current_lang == 'ru' %}Есть промокод?{% elif current_lang == 'en' %}Have a promo code?{% elif current_lang == 'tr' %}İndirim kuponunuz var mı?{% else %}Promokod bormi?{% endif %}
                         </label>
                         <div class="flex items-center gap-2">
-                            <input type="text" x-model="promoInput" placeholder="Masalan: UZUM10"
+                            <input type="text" x-model="promoInput" placeholder="{% if current_lang == 'ru' %}Например: SALE10{% else %}Masalan: UZUM10{% endif %}"
                                    class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono uppercase focus:ring-2 focus:ring-brand focus:border-brand">
                             <button type="button" @click="applyPromo()" :disabled="promoLoading || !promoInput.trim()"
-                                    class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 disabled:opacity-50 transition-colors">
-                                <span x-show="!promoLoading">{% if lang == 'ru' %}Применить{% elif lang == 'en' %}Apply{% else %}Qo'llash{% endif %}</span>
+                                    class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer">
+                                <span x-show="!promoLoading">{% if current_lang == 'ru' %}Применить{% elif current_lang == 'en' %}Apply{% elif current_lang == 'tr' %}Uygula{% else %}Qo'llash{% endif %}</span>
                                 <span x-show="promoLoading" class="animate-spin">...</span>
                             </button>
                         </div>
@@ -271,9 +301,9 @@
                     </div>
 
                     <!-- Proceed to Checkout Button -->
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/checkout/{% else %}/checkout/{% endif %}"
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/checkout/{% else %}/checkout/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                        class="w-full py-4 rounded-2xl btn-brand text-white font-black text-base shadow-lg shadow-brand/25 hover:opacity-95 active:scale-95 transition-all flex items-center justify-center gap-2">
-                        <span>{% if lang == 'ru' %}Перейти к оформлению{% elif lang == 'en' %}Proceed to Checkout{% else %}Rasmiylashtirishga o'tish{% endif %}</span>
+                        <span>{% if current_lang == 'ru' %}Перейти к оформлению{% elif current_lang == 'en' %}Proceed to Checkout{% elif current_lang == 'tr' %}Ödemeye Geç{% else %}Rasmiylashtirishga o'tish{% endif %}</span>
                         <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </a>
 
@@ -281,11 +311,11 @@
                     <div class="pt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-500 font-medium">
                         <div class="flex items-center gap-1.5">
                             <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-                            <span>100% xavfsiz to'lov</span>
+                            <span>{% if current_lang == 'ru' %}100% безопасная оплата{% elif current_lang == 'en' %}100% Secure Checkout{% elif current_lang == 'tr' %}100% Güvenli Ödeme{% else %}100% xavfsiz to'lov{% endif %}</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <i data-lucide="truck" class="w-4 h-4 text-brand shrink-0"></i>
-                            <span>Tez yetkazib berish</span>
+                            <span>{% if current_lang == 'ru' %}Быстрая доставка{% elif current_lang == 'en' %}Fast delivery{% elif current_lang == 'tr' %}Hızlı teslimat{% else %}Tez yetkazib berish{% endif %}</span>
                         </div>
                     </div>
                 </div>
@@ -293,17 +323,19 @@
         </div>
     </div>
 
-    <!-- 3. RECOMMENDED PRODUCTS (Uzum Market Style Upsell) -->
+    <!-- 3. RECOMMENDED PRODUCTS (Upsell) -->
     {% if recommended_products %}
     <div class="mt-16 pt-10 border-t border-slate-200">
         <div class="flex items-center justify-between mb-6">
             <div>
                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                    {% if lang == 'ru' %}Вам может понравиться{% elif lang == 'en' %}Recommended for you{% else %}Sizga yoqishi mumkin{% endif %}
+                    {% if current_lang == 'ru' %}Вам может понравиться{% elif current_lang == 'en' %}Recommended for you{% elif current_lang == 'tr' %}İlginizi çekebilir{% else %}Sizga yoqishi mumkin{% endif %}
                 </h2>
-                <p class="text-xs text-slate-500 mt-0.5">Xaridoringiz ko'p tanlayotgan tavsiya etilgan tovarlar</p>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    {% if current_lang == 'ru' %}Популярные товары, которые выбирают покупатели{% elif current_lang == 'en' %}Popular products curated for you{% elif current_lang == 'tr' %}Müşterilerin en çok tercih ettiği ürünler{% else %}Xaridoringiz ko'p tanlayotgan tavsiya etilgan tovarlar{% endif %}
+                </p>
             </div>
-            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}"
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
                 <span>{{ t.see_all|default:'Barchasi' }}</span>
                 <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
@@ -314,9 +346,9 @@
             {% for p in recommended_products %}
             <div class="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between p-2.5">
                 <div>
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ p.id }}/{% else %}/product/{{ p.id }}/{% endif %}" class="block aspect-square rounded-xl overflow-hidden bg-slate-50 relative mb-2">
-                        {% if p.primary_image %}
-                        <img src="{{ p.primary_image.url }}" alt="{{ p.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ p.id }}/{% else %}/product/{{ p.id }}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}" class="block aspect-square rounded-xl overflow-hidden bg-slate-50 relative mb-2">
+                        {% if p.primary_image_url %}
+                        <img src="{{ p.primary_image_url }}" alt="{{ p.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                         {% else %}
                         <div class="w-full h-full flex items-center justify-center text-slate-300 font-bold text-xs">
                             StoreBox
@@ -324,7 +356,7 @@
                         {% endif %}
                     </a>
 
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ p.id }}/{% else %}/product/{{ p.id }}/{% endif %}"
+                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ p.id }}/{% else %}/product/{{ p.id }}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                        class="text-xs font-bold text-slate-900 hover:text-brand transition-colors line-clamp-2 leading-tight">
                         {{ p.display_name }}
                     </a>
@@ -338,7 +370,7 @@
                     </div>
                     <button type="button" @click="quickAddToCart({{ p.id }})"
                             class="w-7 h-7 rounded-lg btn-brand text-white flex items-center justify-center hover:opacity-90 active:scale-90 transition-all cursor-pointer shadow-2xs"
-                            title="Savatga qo'shish">
+                            title="{% if current_lang == 'ru' %}Добавить в корзину{% elif current_lang == 'en' %}Add to cart{% elif current_lang == 'tr' %}Sepete Ekle{% else %}Savatga qo'shish{% endif %}">
                         <i data-lucide="plus" class="w-4 h-4"></i>
                     </button>
                 </div>

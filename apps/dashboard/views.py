@@ -138,6 +138,38 @@ def ai_desc_api(request):
     return JsonResponse({'description': desc})
 
 
+def auto_translate_api(request):
+    text = (request.GET.get('text') or request.POST.get('text') or '').strip()
+    if not text:
+        return JsonResponse({'success': False, 'error': 'Matn kiritilmadi'}, status=400)
+
+    from apps.catalog.translations import auto_translate_text, detect_text_language
+    from concurrent.futures import ThreadPoolExecutor
+
+    src_l = detect_text_language(text)
+    translations = {src_l: text}
+
+    def fetch_trans(lang):
+        if lang == src_l:
+            return lang, text
+        return lang, auto_translate_text(text, target_lang=lang, src_lang=src_l)
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(fetch_trans, l) for l in ['uz', 'ru', 'en', 'tr'] if l != src_l]
+        for f in futures:
+            try:
+                l, res = f.result(timeout=6.0)
+                translations[l] = res
+            except Exception:
+                pass
+
+    return JsonResponse({
+        'success': True,
+        'detected_lang': src_l,
+        'translations': translations
+    })
+
+
 def ai_designer_api(request):
     """
     Instant AI Designer API: Generates brand color scheme, card layout,
@@ -1345,6 +1377,7 @@ def product_create_or_edit_view(request, product_id=None):
         name_uz = request.POST.get('name_uz', '').strip()
         name_ru = request.POST.get('name_ru', '').strip()
         name_en = request.POST.get('name_en', '').strip()
+        name_tr = request.POST.get('name_tr', '').strip()
         category_id = request.POST.get('category_id')
         price = request.POST.get('price', '0').replace(' ', '').replace(',', '.')
         old_price = request.POST.get('old_price', '').replace(' ', '').replace(',', '.')
@@ -1354,6 +1387,8 @@ def product_create_or_edit_view(request, product_id=None):
         stock = request.POST.get('stock', '10')
         desc_uz = request.POST.get('desc_uz', '').strip()
         desc_ru = request.POST.get('desc_ru', '').strip()
+        desc_en = request.POST.get('desc_en', '').strip()
+        desc_tr = request.POST.get('desc_tr', '').strip()
 
         ikpu_code = request.POST.get('ikpu_code', '').strip()
         package_code = request.POST.get('package_code', '').strip()
@@ -1361,15 +1396,28 @@ def product_create_or_edit_view(request, product_id=None):
         is_active = request.POST.get('is_active') in ['on', '1', 'true', True]
         is_featured = request.POST.get('is_featured') in ['on', '1', 'true', True]
 
-        if not name_uz or not price:
+        primary_name = name_uz or name_ru or name_en or name_tr or request.POST.get('name', '').strip()
+        if not primary_name or not price:
             error = 'Mahsulot nomi va narxini kiriting'
         else:
+            from apps.catalog.translations import detect_text_language, auto_populate_product_translations
             category = Category.objects.filter(id=category_id, store=store).first() if category_id else None
             clean_price = Decimal(price)
             clean_old_price = Decimal(old_price) if old_price else None
             clean_cost_price = Decimal(cost_price) if cost_price else Decimal('0')
             clean_margin = Decimal(margin) if margin else Decimal('100')
-            slug = slugify(name_uz) or 'product'
+
+            src_l = detect_text_language(primary_name)
+            if src_l == 'ru' and not name_ru:
+                name_ru = primary_name
+            elif src_l == 'uz' and not name_uz:
+                name_uz = primary_name
+            elif src_l == 'en' and not name_en:
+                name_en = primary_name
+            elif src_l == 'tr' and not name_tr:
+                name_tr = primary_name
+
+            slug = slugify(name_uz or name_en or primary_name) or 'product'
 
             if not product:
                 base_slug = slug
@@ -1384,6 +1432,7 @@ def product_create_or_edit_view(request, product_id=None):
                     name_uz=name_uz,
                     name_ru=name_ru,
                     name_en=name_en,
+                    name_tr=name_tr,
                     slug=slug,
                     price=clean_price,
                     old_price=clean_old_price,
@@ -1396,6 +1445,8 @@ def product_create_or_edit_view(request, product_id=None):
                     barcode=barcode,
                     description_uz=desc_uz,
                     description_ru=desc_ru,
+                    description_en=desc_en,
+                    description_tr=desc_tr,
                     is_active=is_active,
                     is_featured=is_featured
                 )
@@ -1403,6 +1454,7 @@ def product_create_or_edit_view(request, product_id=None):
                 product.name_uz = name_uz
                 product.name_ru = name_ru
                 product.name_en = name_en
+                product.name_tr = name_tr
                 product.category = category
                 product.price = clean_price
                 product.old_price = clean_old_price
@@ -1415,9 +1467,14 @@ def product_create_or_edit_view(request, product_id=None):
                 product.barcode = barcode
                 product.description_uz = desc_uz
                 product.description_ru = desc_ru
+                product.description_en = desc_en
+                product.description_tr = desc_tr
                 product.is_active = is_active
                 product.is_featured = is_featured
                 product.save()
+
+            # Ensure all multilingual translations (UZ, RU, EN, TR) are populated
+            auto_populate_product_translations(product, save=True)
 
             # Save uploaded photos
             photos = request.FILES.getlist('photos')

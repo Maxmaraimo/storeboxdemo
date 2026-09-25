@@ -10,13 +10,13 @@
     <!-- Heading -->
     <div>
         <span class="px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-black uppercase tracking-wider">
-            Buyurtma qabul qilindi!
+            {% if lang == 'uz' %}Buyurtma qabul qilindi!{% elif lang == 'en' %}Order accepted!{% elif lang == 'tr' %}Sipariş alındı!{% else %}Заказ принят!{% endif %}
         </span>
         <h2 class="text-3xl font-black text-slate-900 mt-3">
-            Xaridingiz uchun rahmat!
+            {% if lang == 'uz' %}Xaridingiz uchun rahmat!{% elif lang == 'en' %}Thank you for your order!{% elif lang == 'tr' %}Alışverişiniz için teşekkürler!{% else %}Спасибо за ваш заказ!{% endif %}
         </h2>
         <p class="text-slate-500 text-sm mt-1">
-            Buyurtma raqami: <span class="font-mono font-bold text-slate-900">#{{ order.order_number }}</span>
+            {% if lang == 'uz' %}Buyurtma raqami:{% elif lang == 'en' %}Order number:{% elif lang == 'tr' %}Sipariş numarası:{% else %}Номер заказа:{% endif %} <span class="font-mono font-bold text-slate-900">#{{ order.order_number }}</span>
         </p>
     </div>
 
@@ -24,7 +24,7 @@
     <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm text-left space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-                <div class="text-xs text-slate-400 font-semibold">Статус оплаты</div>
+                <div class="text-xs text-slate-400 font-semibold">{% if lang == 'uz' %}To'lov holati{% elif lang == 'en' %}Payment status{% elif lang == 'tr' %}Ödeme durumu{% else %}Статус оплаты{% endif %}</div>
                 <div class="text-sm font-bold text-slate-900 mt-0.5">
                     {{ order.get_payment_method_display }}
                 </div>
@@ -34,12 +34,12 @@
                 {% if order.payment_status == 'PAID' %}
                 <span class="px-3 py-1.5 rounded-xl bg-violet-600 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm">
                     <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                    <span>Оплачено</span>
+                    <span>{% if lang == 'uz' %}To'landi{% elif lang == 'en' %}Paid{% elif lang == 'tr' %}Ödendi{% else %}Оплачено{% endif %}</span>
                 </span>
                 {% else %}
                 <span class="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 font-extrabold text-xs flex items-center gap-1.5">
                     <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-                    <span>Ожидает оплаты</span>
+                    <span>{% if lang == 'uz' %}To'lov kutilmoqda{% elif lang == 'en' %}Pending payment{% elif lang == 'tr' %}Ödeme bekleniyor{% else %}Ожидает оплаты{% endif %}</span>
                 </span>
                 {% endif %}
             </div>
@@ -49,7 +49,7 @@
         {% if order.payment_status != 'PAID' and order.payment_method != 'CASH' and order.payment_method != 'TERMINAL' %}
         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
             <div class="text-xs text-slate-600 font-medium">
-                Для завершения заказа оплатите <b>{{ order.total_amount|floatformat:0 }} UZS</b> через выбранную систему:
+                {% if lang == 'uz' %}Buyurtmani yakunlash uchun <b>{{ order.total_amount|floatformat:0 }} UZS</b> to'lovini amalga oshiring:{% elif lang == 'en' %}Please pay <b>{{ order.total_amount|floatformat:0 }} UZS</b> to complete your order:{% elif lang == 'tr' %}Siparişinizi tamamlamak için <b>{{ order.total_amount|floatformat:0 }} UZS</b> ödeme yapın:{% else %}Для завершения заказа оплатите <b>{{ order.total_amount|floatformat:0 }} UZS</b> через выбранную систему:{% endif %}
             </div>
 
             <div class="flex flex-col sm:flex-row gap-2.5">
@@ -57,7 +57,7 @@
                 <a href="/payments/simulate/{{ order.order_number }}/?gateway={{ order.payment_method }}"
                    class="flex-1 py-3 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-violet-600/20 flex items-center justify-center gap-2">
                     <i data-lucide="zap" class="w-4 h-4"></i>
-                    <span>Оплатить в 1 клик (Тестовый шлюз {{ order.get_payment_method_display }})</span>
+                    <span>{% if lang == 'uz' %}1 bosishda to'lash{% elif lang == 'en' %}Pay in 1 click{% elif lang == 'tr' %}1 tıkla öde{% else %}Оплатить в 1 клик{% endif %} ({{ order.get_payment_method_display }})</span>
                 </a>
             </div>
         </div>
@@ -65,7 +65,7 @@
 
         <!-- Order Items Breakdown -->
         <div class="space-y-3 pt-2">
-            <div class="text-xs font-bold text-slate-700">Состав заказа:</div>
+            <div class="text-xs font-bold text-slate-700">{{ t.ordered_products|default:"Buyurtma tarkibi:" }}</div>
             <div class="divide-y divide-slate-100 text-xs text-slate-600">
                 {% for item in order.items.all %}
                 <div class="flex justify-between py-2">
@@ -80,7 +80,7 @@
             </div>
 
             <div class="pt-3 border-t border-slate-200 flex justify-between items-center text-sm font-black text-slate-900">
-                <span>ИТОГО К ОПЛАТЕ:</span>
+                <span>{{ t.total_payment|default:"JAMI TO'LOV:" }}</span>
                 <span class="text-brand text-lg font-mono">{{ order.total_amount|floatformat:0 }} UZS</span>
             </div>
         </div>
@@ -88,7 +88,7 @@
         <!-- Real-Time Order Status Tracker -->
         <div class="pt-3 border-t border-slate-100 space-y-2">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-700">Buyurtma holati:</span>
+                <span class="text-xs font-bold text-slate-700">{% if lang == 'uz' %}Buyurtma holati:{% elif lang == 'en' %}Order status:{% elif lang == 'tr' %}Sipariş durumu:{% else %}Статус заказа:{% endif %}</span>
                 <span class="px-2.5 py-1 rounded-full text-xs font-black
                     {% if order.status == 'NEW' %}bg-blue-50 text-blue-700 border border-blue-200
                     {% elif order.status == 'PROCESSING' or order.status == 'READY' %}bg-amber-50 text-amber-700 border border-amber-200
@@ -106,7 +106,7 @@
                         <div class="w-6 h-6 rounded-full flex items-center justify-center bg-emerald-500 text-white shadow-xs">
                             <i data-lucide="check" class="w-3.5 h-3.5"></i>
                         </div>
-                        <span class="text-slate-700">Qabul</span>
+                        <span class="text-slate-700">{% if lang == 'uz' %}Qabul{% elif lang == 'en' %}Accepted{% elif lang == 'tr' %}Alındı{% else %}Принят{% endif %}</span>
                     </div>
 
                     <div class="flex-1 h-0.5 mx-1 {% if order.status in 'PROCESSING,READY,IN_DELIVERY,COMPLETED' %}bg-emerald-500{% else %}bg-slate-200{% endif %}"></div>
@@ -115,7 +115,7 @@
                         <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status in 'PROCESSING,READY,IN_DELIVERY,COMPLETED' %}bg-emerald-500 text-white shadow-xs{% else %}bg-slate-200 text-slate-400{% endif %}">
                             <i data-lucide="chef-hat" class="w-3.5 h-3.5"></i>
                         </div>
-                        <span class="text-slate-700">Tayyorlash</span>
+                        <span class="text-slate-700">{% if lang == 'uz' %}Tayyorlash{% elif lang == 'en' %}Preparing{% elif lang == 'tr' %}Hazırlanıyor{% else %}Готовится{% endif %}</span>
                     </div>
 
                     <div class="flex-1 h-0.5 mx-1 {% if order.status in 'IN_DELIVERY,COMPLETED' %}bg-emerald-500{% else %}bg-slate-200{% endif %}"></div>
@@ -124,7 +124,7 @@
                         <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status in 'IN_DELIVERY,COMPLETED' %}bg-emerald-500 text-white shadow-xs{% else %}bg-slate-200 text-slate-400{% endif %}">
                             <i data-lucide="truck" class="w-3.5 h-3.5"></i>
                         </div>
-                        <span class="text-slate-700">Yo'lda</span>
+                        <span class="text-slate-700">{% if lang == 'uz' %}Yo'lda{% elif lang == 'en' %}On the way{% elif lang == 'tr' %}Yolda{% else %}В пути{% endif %}</span>
                     </div>
 
                     <div class="flex-1 h-0.5 mx-1 {% if order.status == 'COMPLETED' %}bg-emerald-500{% else %}bg-slate-200{% endif %}"></div>
@@ -133,7 +133,7 @@
                         <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status == 'COMPLETED' %}bg-emerald-500 text-white shadow-xs{% else %}bg-slate-200 text-slate-400{% endif %}">
                             <i data-lucide="home" class="w-3.5 h-3.5"></i>
                         </div>
-                        <span class="text-slate-700">Yetkazildi</span>
+                        <span class="text-slate-700">{% if lang == 'uz' %}Yetkazildi{% elif lang == 'en' %}Delivered{% elif lang == 'tr' %}Teslim edildi{% else %}Доставлен{% endif %}</span>
                     </div>
                 </div>
             </div>
@@ -141,9 +141,9 @@
 
         <!-- Delivery info -->
         <div class="pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1">
-            <div><b>Доставка:</b> {{ order.get_delivery_method_display }} ({{ order.delivery_city }}{% if order.delivery_address %}, {{ order.delivery_address }}{% endif %})</div>
-            <div><b>Получатель:</b> {{ order.customer_name }} ({{ order.customer_phone }})</div>
-            {% if order.notes %}<div><b>Комментарий:</b> {{ order.notes }}</div>{% endif %}
+            <div><b>{% if lang == 'uz' %}Yetkazish:{% elif lang == 'en' %}Delivery:{% elif lang == 'tr' %}Teslimat:{% else %}Доставка:{% endif %}</b> {{ order.get_delivery_method_display }} ({{ order.delivery_city }}{% if order.delivery_address %}, {{ order.delivery_address }}{% endif %})</div>
+            <div><b>{% if lang == 'uz' %}Qabul qiluvchi:{% elif lang == 'en' %}Recipient:{% elif lang == 'tr' %}Alıcı:{% else %}Получатель:{% endif %}</b> {{ order.customer_name }} ({{ order.customer_phone }})</div>
+            {% if order.notes %}<div><b>{% if lang == 'uz' %}Izoh:{% elif lang == 'en' %}Comment:{% elif lang == 'tr' %}Not:{% else %}Комментарий:{% endif %}</b> {{ order.notes }}</div>{% endif %}
         </div>
 
         <!-- Real-Time Courier GPS Tracking Map for Customer -->

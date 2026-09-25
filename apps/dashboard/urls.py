@@ -48,6 +48,7 @@ urlpatterns = [
     path('api/check-subdomain/', views.check_subdomain_api, name='check_subdomain'),
     path('api/translate/', views.translate_api, name='translate_api'),
     path('api/ai-desc/', views.ai_desc_api, name='ai_desc_api'),
+    path('api/auto-translate/', views.auto_translate_api, name='auto_translate_api'),
     path('api/ai-designer/', views.ai_designer_api, name='ai_designer_api'),
     path('api/ai-apply-niche/', views.ai_apply_niche_api, name='ai_apply_niche_api'),
     path('api/ai-banner-regenerate/', views.ai_banner_regenerate_api, name='ai_banner_regenerate_api'),

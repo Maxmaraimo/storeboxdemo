@@ -66,12 +66,12 @@
                         </div>
                         
                         <h2 class="text-xl sm:text-3xl md:text-4xl lg:text-[40px] font-black tracking-tight text-white leading-[1.14] drop-shadow-sm" data-store-banner-title>
-                            {{ b.title|safe }}
+                            {{ b.display_title|default:b.title|safe }}
                         </h2>
                         
-                        {% if b.subtitle %}
+                        {% if b.display_subtitle or b.subtitle %}
                         <p class="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed drop-shadow-xs max-w-sm sm:max-w-md line-clamp-2" data-store-banner-subtitle>
-                            {{ b.subtitle|safe }}
+                            {{ b.display_subtitle|default:b.subtitle|safe }}
                         </p>
                         {% endif %}
                         
@@ -199,12 +199,12 @@
             <div class="flex items-center gap-2">
                 <h3 class="text-sm font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight">
                     {% if store.theme_template == 'restaurant' %}
-                        🍽️ Taomlar Bo'limlari
+                        🍽️ {{ t.restaurant_sections|default:"Taomlar Bo'limlari" }}
                     {% else %}
                         {{ t.categories|default:"Kategoriyalar" }}
                     {% endif %}
                 </h3>
-                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">{{ categories|length }} ta</span>
+                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">{{ categories|length }} {{ t.items_unit|default:"ta" }}</span>
             </div>
 
             <!-- Desktop Left/Right Carousel Chevrons (Only visible when overflowing) -->
@@ -263,21 +263,21 @@
                     {% if current_category %}
                         {{ current_category.display_name }}
                     {% elif store.theme_template == 'restaurant' %}
-                        🍽️ Taomlar Menyusi
+                        🍽️ {{ t.restaurant_menu|default:"Taomlar Menyusi" }}
                     {% else %}
                         {{ t.popular|default:"Ommabop mahsulotlar" }}
                     {% endif %}
                 </h2>
                 <p class="text-[11px] text-slate-400 font-medium mt-0.5">
                     {% if store.theme_template == 'restaurant' %}
-                        Issiq va yangi tayyorlangan sara taomlar to'plami
+                        {{ t.restaurant_menu_subtitle|default:"Issiq va yangi tayyorlangan sara taomlar to'plami" }}
                     {% else %}
-                        Eng sara va ommabop mahsulotlar to'plami
+                        {{ t.popular_subtitle|default:"Eng sara va ommabop mahsulotlar to'plami" }}
                     {% endif %}
                 </p>
             </div>
             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors">
-                <span>+{{ total_products_count|default:products.count }} ta ko'proq</span>
+                <span>+{{ total_products_count|default:products.count }} {{ t.items_unit|default:"ta" }} {{ t.more|default:"ko'proq" }}</span>
                 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
             </a>
         </div>
@@ -296,7 +296,7 @@
                         {% endif %}
                         {% if not product.is_in_stock %}
                         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-                            <span class="px-2 py-0.5 rounded-full bg-slate-900/95 text-white font-bold text-[9px] shadow-xs">Tugagan</span>
+                            <span class="px-2 py-0.5 rounded-full bg-slate-900/95 text-white font-bold text-[9px] shadow-xs">{{ t.out_of_stock|default:"Tugagan" }}</span>
                         </div>
                         {% elif product.discount_percent %}
                         <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[9px] shadow-2xs">-{{ product.discount_percent }}%</span>
@@ -319,12 +319,12 @@
                             {% if product.is_in_stock %}
                             <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Qoldiq: {{ product.stock }} {{ product.get_unit_display|lower }}
+                                {{ t.in_stock|default:"Mavjud" }}: {{ product.stock }} {{ product.get_unit_display|lower }}
                             </span>
                             {% else %}
                             <span class="text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
                                 <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                Qoldiq: 0 (Tugagan)
+                                {{ t.out_of_stock|default:"Tugagan" }}
                             </span>
                             {% endif %}
                         </div>
@@ -348,7 +348,7 @@
                     </template>
                     {% else %}
                     <span class="px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs border border-slate-200 cursor-not-allowed inline-block">
-                        Tugagan
+                        {{ t.out_of_stock|default:"Tugagan" }}
                     </span>
                     {% endif %}
                 </div>
@@ -391,7 +391,7 @@
 
                     {% if not product.is_in_stock %}
                     <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] rounded-[22px] flex items-center justify-center pointer-events-none">
-                        <span class="px-2.5 py-1 rounded-full bg-slate-900/95 text-white font-bold text-[10px] tracking-wide shadow-md">Tugagan</span>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-900/95 text-white font-bold text-[10px] tracking-wide shadow-md">{{ t.out_of_stock|default:"Tugagan" }}</span>
                     </div>
                     {% endif %}
                 </div>
@@ -434,7 +434,7 @@
                         </template>
                         {% else %}
                         <span class="w-full py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs flex items-center justify-center border border-slate-200 cursor-not-allowed">
-                            Tugagan
+                            {{ t.out_of_stock|default:"Tugagan" }}
                         </span>
                         {% endif %}
                     </div>
@@ -495,7 +495,7 @@
                     {% if not product.is_in_stock %}
                     <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none z-10">
                         <span class="px-2.5 py-1 rounded-full bg-slate-900/95 text-white font-bold text-[10px] tracking-wide shadow-md">
-                            Tugagan
+                            {{ t.out_of_stock|default:"Tugagan" }}
                         </span>
                     </div>
                     {% endif %}
@@ -543,7 +543,7 @@
                             <template x-if="!cartItems['{{ product.id }}_0']">
                                 <button type="button" @click="addToCart({{ product.id }})"
                                         class="w-9 h-9 rounded-full btn-brand flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer"
-                                        title="Savatga qo'shish">
+                                        title="{{ t.add_to_cart|default:'Savatga qo\'shish' }}">
                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                 </button>
                             </template>
@@ -556,7 +556,7 @@
                             </template>
                             {% else %}
                             <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-400 text-[10px] font-bold">
-                                Tugagan
+                                {{ t.out_of_stock|default:"Tugagan" }}
                             </span>
                             {% endif %}
                         </div>
@@ -680,7 +680,7 @@
             },
 
             addToCart(productId) {
-                fetch('/cart/add/', {
+                fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -691,18 +691,14 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        this.cartCount = data.cart_count;
-                        this.cartItems = data.cart;
-                        this.subtotal = data.subtotal;
-                        data.openDrawer = true;
-                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: data }));
+                        window.location.href = '{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != "uz" %}?lang={{ current_lang }}{% endif %}';
                     }
                 });
             },
 
             addToCartWithQty() {
                 if (!this.selectedProduct) return;
-                fetch('/cart/add/', {
+                fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -713,12 +709,8 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        this.cartCount = data.cart_count;
-                        this.cartItems = data.cart;
-                        this.subtotal = data.subtotal;
                         this.selectedProduct = null;
-                        data.openDrawer = true;
-                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: data }));
+                        window.location.href = '{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != "uz" %}?lang={{ current_lang }}{% endif %}';
                     }
                 });
             },

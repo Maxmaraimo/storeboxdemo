@@ -13,6 +13,7 @@ class Category(models.Model):
     name_uz = models.CharField(max_length=100, verbose_name="Kategoriya nomi (O'zbek)")
     name_ru = models.CharField(max_length=100, blank=True, verbose_name='Название (RU)')
     name_en = models.CharField(max_length=100, blank=True, verbose_name='Name (EN)')
+    name_tr = models.CharField(max_length=100, blank=True, verbose_name='Name (TR)')
     slug = models.SlugField(max_length=120, verbose_name='Слаг')
     icon = models.CharField(max_length=50, blank=True, default='utensils')
     image = models.ImageField(upload_to='categories/', blank=True, null=True)
@@ -44,22 +45,44 @@ class Category(models.Model):
     def __str__(self):
         return f"{self.name_uz or self.name_ru} ({self.store.name})"
 
-    def get_name(self, lang='uz'):
-        from apps.catalog.translations import resolve_translation
-        if lang == 'ru' and self.name_ru and self.name_ru.strip().lower() != self.name_uz.strip().lower():
-            return self.name_ru
-        elif lang == 'en' and self.name_en and self.name_en.strip().lower() != self.name_uz.strip().lower():
-            return self.name_en
-        
-        translated = resolve_translation(self.name_uz or self.name_ru, lang=lang)
-        if translated and translated.strip().lower() != (self.name_uz or '').strip().lower():
-            return translated
+    def save(self, *args, **kwargs):
+        from apps.catalog.translations import auto_populate_category_translations
+        auto_populate_category_translations(self, save=False)
+        super().save(*args, **kwargs)
 
-        if lang == 'ru' and self.name_ru:
-            return self.name_ru
-        if lang == 'en' and self.name_en:
-            return self.name_en
-        return translated or self.name_uz or self.name_ru or self.name_en or ''
+    def get_name(self, lang='uz'):
+        import re
+        from apps.catalog.translations import auto_translate_text, detect_text_language
+        lang = (lang or 'uz').lower()
+        attr = f'name_{lang}'
+        val = (getattr(self, attr, None) or '').strip()
+
+        candidates = [self.name_ru, self.name_uz, self.name_en, getattr(self, 'name_tr', None)]
+        source_text = ''
+        for c in candidates:
+            if c and c.strip():
+                source_text = c.strip()
+                break
+
+        if not source_text:
+            return ''
+
+        src_l = detect_text_language(source_text)
+
+        if val:
+            if lang == src_l:
+                return val
+            is_untranslated_cyrillic = bool(re.search(r'[\u0400-\u04FF]', val)) and lang in ['en', 'tr']
+            is_identical_to_src = val.lower() == source_text.lower()
+            if not is_untranslated_cyrillic and not is_identical_to_src:
+                return val
+
+        auto_val = auto_translate_text(source_text, target_lang=lang, src_lang=src_l)
+        if auto_val:
+            setattr(self, attr, auto_val)
+            return auto_val
+
+        return val or source_text
 
 
 class Product(models.Model):
@@ -87,11 +110,13 @@ class Product(models.Model):
     name_uz = models.CharField(max_length=200, verbose_name="Mahsulot nomi (O'zbek)")
     name_ru = models.CharField(max_length=200, blank=True, verbose_name='Название (RU)')
     name_en = models.CharField(max_length=200, blank=True, verbose_name='Name (EN)')
+    name_tr = models.CharField(max_length=200, blank=True, verbose_name='Name (TR)')
     slug = models.SlugField(max_length=220)
 
     description_uz = models.TextField(blank=True, verbose_name="Ta'rif (O'zbek)")
     description_ru = models.TextField(blank=True, verbose_name='Описание (RU)')
     description_en = models.TextField(blank=True, verbose_name='Description (EN)')
+    description_tr = models.TextField(blank=True, verbose_name='Description (TR)')
 
     # Pricing & Warehouse Fields from Video 08:59
     price = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Sotuv narxi (UZS)')
@@ -126,35 +151,117 @@ class Product(models.Model):
     def __str__(self):
         return f"{self.name_uz or self.name_ru} ({self.store.name})"
 
-    def get_name(self, lang='uz'):
-        from apps.catalog.translations import resolve_translation
-        if lang == 'ru' and self.name_ru and self.name_ru.strip().lower() != self.name_uz.strip().lower():
-            return self.name_ru
-        elif lang == 'en' and self.name_en and self.name_en.strip().lower() != self.name_uz.strip().lower():
-            return self.name_en
-        
-        translated = resolve_translation(self.name_uz or self.name_ru, lang=lang)
-        if translated and translated.strip().lower() != (self.name_uz or '').strip().lower():
-            return translated
+    def save(self, *args, **kwargs):
+        from apps.catalog.translations import auto_populate_product_translations
+        auto_populate_product_translations(self, save=False)
+        super().save(*args, **kwargs)
 
-        if lang == 'ru' and self.name_ru:
-            return self.name_ru
-        if lang == 'en' and self.name_en:
-            return self.name_en
-        return translated or self.name_uz or self.name_ru or self.name_en or ''
+    def get_name(self, lang='uz'):
+        import re
+        from apps.catalog.translations import auto_translate_text, detect_text_language
+        lang = (lang or 'uz').lower()
+        attr = f'name_{lang}'
+        val = (getattr(self, attr, None) or '').strip()
+
+        candidates = [self.name_ru, self.name_uz, self.name_en, getattr(self, 'name_tr', None)]
+        source_text = ''
+        for c in candidates:
+            if c and c.strip():
+                source_text = c.strip()
+                break
+
+        if not source_text:
+            return ''
+
+        src_l = detect_text_language(source_text)
+
+        if val:
+            if lang == src_l:
+                return val
+            is_untranslated_cyrillic = bool(re.search(r'[\u0400-\u04FF]', val)) and lang in ['en', 'tr']
+            is_identical_to_src = val.lower() == source_text.lower()
+            if not is_untranslated_cyrillic and not is_identical_to_src:
+                return val
+
+        auto_val = auto_translate_text(source_text, target_lang=lang, src_lang=src_l)
+        if auto_val:
+            setattr(self, attr, auto_val)
+            return auto_val
+
+        return val or source_text
 
     def get_description(self, lang='uz'):
-        if lang == 'ru' and self.description_ru:
-            return self.description_ru
-        elif lang == 'en' and self.description_en:
-            return self.description_en
-        return self.description_uz or self.description_ru or self.description_en or ''
+        import re
+        from apps.catalog.translations import auto_translate_text, detect_text_language
+        lang = (lang or 'uz').lower()
+        attr = f'description_{lang}'
+        val = (getattr(self, attr, None) or '').strip()
+
+        candidates = [self.description_ru, self.description_uz, self.description_en, getattr(self, 'description_tr', None)]
+        source_text = ''
+        for c in candidates:
+            if c and c.strip():
+                source_text = c.strip()
+                break
+
+        if not source_text:
+            return ''
+
+        src_dl = detect_text_language(source_text)
+
+        if val:
+            if lang == src_dl:
+                return val
+            is_untranslated_cyrillic = bool(re.search(r'[\u0400-\u04FF]', val)) and lang in ['en', 'tr']
+            is_identical_to_src = val.lower() == source_text.lower()
+            if not is_untranslated_cyrillic and not is_identical_to_src:
+                return val
+
+        auto_val = auto_translate_text(source_text, target_lang=lang, src_lang=src_dl)
+        if auto_val:
+            setattr(self, attr, auto_val)
+            return auto_val
+
+        return val or source_text
+
+    def get_unit_name(self, lang='uz'):
+        u = (self.unit or '').strip()
+        unit_map = {
+            'Dona': {'ru': 'шт.', 'en': 'pcs', 'tr': 'adet', 'uz': 'dona'},
+            'Kg': {'ru': 'кг', 'en': 'kg', 'tr': 'kg', 'uz': 'kg'},
+            'Gramm': {'ru': 'г', 'en': 'g', 'tr': 'g', 'uz': 'gramm'},
+            'Litr': {'ru': 'л', 'en': 'l', 'tr': 'lt', 'uz': 'litr'},
+            'Metr': {'ru': 'м', 'en': 'm', 'tr': 'm', 'uz': 'metr'},
+            'Santimetr': {'ru': 'см', 'en': 'cm', 'tr': 'cm', 'uz': 'santimetr'},
+            'Porsiya': {'ru': 'порц.', 'en': 'portion', 'tr': 'porsiyon', 'uz': 'porsiya'},
+            'Komplekt': {'ru': 'компл.', 'en': 'set', 'tr': 'set', 'uz': 'komplekt'},
+            'Juft': {'ru': 'пара', 'en': 'pair', 'tr': 'çift', 'uz': 'juft'},
+            'Upakovka': {'ru': 'уп.', 'en': 'pack', 'tr': 'paket', 'uz': 'upakovka'},
+            'Korobka': {'ru': 'кор.', 'en': 'box', 'tr': 'kutu', 'uz': 'korobka'},
+            'Pachka': {'ru': 'пач.', 'en': 'pack', 'tr': 'paket', 'uz': 'pachka'},
+            'Blok': {'ru': 'блок', 'en': 'block', 'tr': 'blok', 'uz': 'blok'},
+            'Milligram': {'ru': 'мг', 'en': 'mg', 'tr': 'mg', 'uz': 'milligram'},
+            'Millilitr': {'ru': 'мл', 'en': 'ml', 'tr': 'ml', 'uz': 'millilitr'},
+        }
+        lang = (lang or 'uz').lower()
+        if u in unit_map and lang in unit_map[u]:
+            return unit_map[u][lang]
+        return self.get_unit_display() or u
 
     @property
     def discount_percent(self):
         if self.old_price and self.old_price > self.price and self.old_price > 0:
             discount = ((self.old_price - self.price) / self.old_price) * 100
             return int(round(discount))
+        return None
+
+    @property
+    def primary_image(self):
+        primary = self.images.filter(is_primary=True).first()
+        if not primary:
+            primary = self.images.first()
+        if primary and primary.image:
+            return primary.image
         return None
 
     @property
@@ -190,6 +297,7 @@ class ProductVariation(models.Model):
     name_uz = models.CharField(max_length=100, verbose_name='Variant (UZ)')
     name_ru = models.CharField(max_length=100, blank=True, verbose_name='Вариант (RU)')
     name_en = models.CharField(max_length=100, blank=True, verbose_name='Option (EN)')
+    name_tr = models.CharField(max_length=100, blank=True, verbose_name='Option (TR)')
     price = models.DecimalField(max_digits=12, decimal_places=2)
     stock = models.IntegerField(default=10)
     is_active = models.BooleanField(default=True)
@@ -202,11 +310,15 @@ class ProductVariation(models.Model):
         return f"{self.product.name_uz or self.product.name_ru} - {self.name_uz}"
 
     def get_name(self, lang='uz'):
+        lang = (lang or 'uz').lower()
         if lang == 'ru' and self.name_ru:
             return self.name_ru
         elif lang == 'en' and self.name_en:
             return self.name_en
-        return self.name_uz or self.name_ru or self.name_en or ''
+        elif lang == 'tr' and getattr(self, 'name_tr', None):
+            return self.name_tr
+        from apps.catalog.translations import auto_translate_text
+        return auto_translate_text(self.name_uz or self.name_ru or '', target_lang=lang) or self.name_uz or ''
 
 
 class YesPosConnection(models.Model):

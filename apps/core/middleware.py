@@ -12,14 +12,24 @@ class SubdomainTenantMiddleware:
         # 1. Language resolution
         query_lang = request.GET.get('lang')
         if query_lang in ['ru', 'uz', 'en', 'tr']:
-            request.session['lang'] = query_lang
-            request.session['_language'] = query_lang
-
-        stored_lang = request.session.get('lang') or request.COOKIES.get('django_language') or request.COOKIES.get('storebox_lang')
-        if stored_lang in ['ru', 'uz', 'en', 'tr']:
-            request.language = stored_lang
+            if hasattr(request, 'session'):
+                request.session['lang'] = query_lang
+                request.session['customer_lang'] = query_lang
+                request.session['_language'] = query_lang
+            request.language = query_lang
         else:
-            request.language = 'uz'
+            stored_lang = None
+            if hasattr(request, 'session'):
+                stored_lang = request.session.get('lang') or request.session.get('customer_lang')
+            if not stored_lang:
+                stored_lang = request.COOKIES.get('storebox_lang') or request.COOKIES.get('django_language')
+            if stored_lang in ['ru', 'uz', 'en', 'tr']:
+                request.language = stored_lang
+                if hasattr(request, 'session'):
+                    request.session['lang'] = stored_lang
+                    request.session['customer_lang'] = stored_lang
+            else:
+                request.language = 'uz'
 
         # 2. Host and subdomain resolution
         host = request.get_host().split(':')[0].lower()
@@ -118,7 +128,9 @@ class SubdomainTenantMiddleware:
                     pass
 
         response = self.get_response(request)
-        if query_lang in ['ru', 'uz', 'en', 'tr']:
-            response.set_cookie('storebox_lang', query_lang, max_age=365*24*3600, path='/')
-            response.set_cookie('django_language', query_lang, max_age=365*24*3600, path='/')
+
+        active_lang = getattr(request, 'language', None) or query_lang
+        if active_lang in ['ru', 'uz', 'en', 'tr']:
+            response.set_cookie('storebox_lang', active_lang, max_age=365*24*3600, path='/')
+            response.set_cookie('django_language', active_lang, max_age=365*24*3600, path='/')
         return response

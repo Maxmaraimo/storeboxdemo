@@ -14,6 +14,9 @@ from apps.payments.models import StorePaymentSetting
 from apps.telegram_bot.services import send_telegram_notification, format_order_telegram_message
 
 
+from apps.catalog.translations import auto_translate_text
+
+
 def get_current_store(request, subdomain=None):
     """Helper to get active store from request.store or subdomain param"""
     store = getattr(request, 'store', None)
@@ -22,18 +25,63 @@ def get_current_store(request, subdomain=None):
     return store
 
 
+def get_storefront_lang(request, store=None):
+    """
+    Get current storefront language from request.
+    Priority:
+    1. GET param ?lang=
+    2. request.language (from middleware)
+    3. request.session['lang'] / request.session['customer_lang']
+    4. Cookies: 'storebox_lang', 'django_language'
+    5. store.default_language
+    6. 'uz'
+    """
+    q_lang = request.GET.get('lang')
+    if q_lang in ['uz', 'ru', 'en', 'tr']:
+        if hasattr(request, 'session'):
+            request.session['lang'] = q_lang
+            request.session['customer_lang'] = q_lang
+        request.language = q_lang
+        return q_lang
+
+    req_lang = getattr(request, 'language', None)
+    if req_lang in ['uz', 'ru', 'en', 'tr']:
+        if hasattr(request, 'session'):
+            request.session['lang'] = req_lang
+            request.session['customer_lang'] = req_lang
+        return req_lang
+
+    s_lang = (
+        (request.session.get('lang') if hasattr(request, 'session') else None) or
+        (request.session.get('customer_lang') if hasattr(request, 'session') else None) or
+        request.COOKIES.get('storebox_lang') or
+        request.COOKIES.get('django_language') or
+        (store.default_language if store else None) or
+        'uz'
+    )
+    if s_lang in ['uz', 'ru', 'en', 'tr']:
+        if hasattr(request, 'session'):
+            request.session['lang'] = s_lang
+            request.session['customer_lang'] = s_lang
+        request.language = s_lang
+        return s_lang
+
+    return 'uz'
+
+
 UI_TRANSLATIONS = {
     'uz': {
         'search_placeholder': "Mahsulotlar va toifalarni qidirish",
-        'favorites': "Sevimmlar",
+        'favorites': "Sevimlilar",
         'cart': "Savat",
         'login': "Kirish",
         'buy': "Sotib olish",
+        'buy_now': "Buyurtma berish",
         'add': "Qo'shish",
         'about_us': "Biz haqimizda",
         'branches': "Do'kon filiallari",
         'delivery_terms': "Yetkazib berish shartlari",
-        'return_terms': "Qaytarish va almashtirish shartlari",
+        'return_terms': "Qaytarish va almashtirish",
         'contact_us': "Biz bilan bog'lanish",
         'empty_products': "Hozircha mahsulotlar mavjud emas",
         'work_hours': "Ish vaqti",
@@ -49,17 +97,108 @@ UI_TRANSLATIONS = {
         'sale': "Aksiya",
         'add_to_cart': "Savatchaga",
         'about_product': "Mahsulot haqida",
-        'seller_chat': "Sotuvchi bilan chat",
-        'home': "Bosh sahifa",
-        'no_reviews': "Sharhlar yo'q",
+        'seller_chat': "Do'kon bilan chat",
+        'home': "Asosiy",
+        'no_reviews': "Sharhlar mavjud emas",
         'view_on_map': "Xaritada ko'rish",
         'our_socials': "Ijtimoiy tarmoqlarimiz",
-        'reviews': "sharh",
+        'reviews': "sharhlar",
         'welcome_back': "Xush kelibsiz,",
-        'categories': "Kategoriyalar",
+        'categories': "Katalog",
         'new_arrivals': "Yangi mahsulotlar",
         'see_all': "Barchasi",
         'similar_products': "O'xshash mahsulotlar",
+        'back': "Orqaga",
+        'clear_cart': "Tozalash",
+        'clear_cart_confirm': "Savatni tozalashni tasdiqlaysizmi?",
+        'total_payment': "Jami to'lov:",
+        'proceed_to_checkout': "To'lovga o'tish",
+        'cart_empty': "Savatingiz hozircha bo'sh",
+        'popular': "Ommabop Mahsulotlar",
+        'popular_subtitle': "Eng sara va ommabop mahsulotlar to'plami",
+        'restaurant_menu': "Taomlar Menyusi",
+        'restaurant_menu_subtitle': "Issiq va yangi tayyorlangan sara taomlar to'plami",
+        'restaurant_sections': "Taomlar Bo'limlari",
+        'more': "ko'proq",
+        'items_unit': "ta",
+        'in_stock': "Mavjud",
+        'out_of_stock': "Tugagan",
+        'not_available_now': "Hozirda sotuvda mavjud emas",
+        'vat_included': "QQS bilan birga",
+        'per_unit': "1 dona uchun",
+        'sku': "Artikul",
+        'choice': "Tanlov:",
+        'fast_delivery_title': "1 kunda yetkazish",
+        'fast_delivery_sub': "Tezkor xarid",
+        'quality_title': "100% Sifat",
+        'quality_sub': "Asl mahsulot",
+        'payment_title': "Qulay to'lov",
+        'payment_sub': "Click, Payme, Naqd",
+        'return_title': "Oson qaytarish",
+        'return_sub': "14 kun ichida",
+        'tab_description': "Tavsif",
+        'tab_specs': "Xususiyatlar",
+        'tab_reviews': "Sharhlar",
+        'tab_delivery': "Yetkazib berish",
+        'unit_measure': "O'lchov birligi:",
+        'barcode': "Shtrix-kod:",
+        'ikpu_code': "IKPU kodi:",
+        'category_label': "Kategoriya:",
+        'order_now': "Buyurtma berish",
+        'quick_buy': "Tezkor xarid",
+        'information': "Ma'lumotlar",
+        'language': "Til",
+        'delivery_address': "Yetkazib berish manzili",
+        'select_delivery_address': "Yetkazib berish manzilini tanlang",
+        'profile': "Profil",
+        'my_orders': "Buyurtmalarim",
+        'enter_phone': "Telefon raqamingizni kiriting",
+        'name': "Ismingiz",
+        'save': "Saqlash",
+        'close': "Yopish",
+        'logout': "Chiqish",
+        'back_to_menu': "Menyuga qaytish",
+        'step_checkout': "2-qadam: To'lov va yetkazish",
+        'ordered_products': "Buyurtma qilinayotgan tovarlar",
+        'edit': "O'zgartirish",
+        'items_count_and_sum': "Tovarlar soni va jami:",
+        'contact_data': "Aloqa ma'lumotlari",
+        'phone_number': "Telefon raqami",
+        'fulfillment_method': "Buyurtmani qabul qilish usuli",
+        'courier_delivery': "Kuryer orqali yetkazish",
+        'to_your_door': "Xaridor eshigigacha",
+        'pickup': "Olib ketish (Samovivoz)",
+        'from_branch': "Filialdan bepul (0 UZS)",
+        'delivery_address_and_map': "Yetkazib berish manzili va xarita",
+        'map_hint': "Xaritadan tanlang, qidiring yoki geolokatsiyani yoqing",
+        'my_location': "Mening joylashuvim",
+        'locating': "Aniqlanmoqda...",
+        'city_region': "Shahar / Viloyat",
+        'search_street_orientir': "Ko'cha yoki mo'ljalni qidirish",
+        'or_select_on_map': "yoki xaritadan tanlang",
+        'street_number': "Ko'cha, uy raqami",
+        'entrance': "Podezd",
+        'floor': "Qavat",
+        'apartment': "Xonadon / Ofis",
+        'intercom': "Domofon kodi",
+        'landmark': "Mo'ljal (orientir)",
+        'delivery_fee_label': "Yetkazib berish narxi:",
+        'free': "Bepul 🎉",
+        'order_comment': "Buyurtmaga izoh (ixtiyoriy)",
+        'order_comment_placeholder': "Domofon, qo'ng'iroq qilish, tezroq...",
+        'payment_method_label': "To'lov usuli",
+        'cash': "Naqd pul",
+        'cash_desc': "Qabul qilinganda to'lov",
+        'terminal': "Kuryerga terminal orqali",
+        'terminal_desc': "Uzcard/Humo karta orqali",
+        'order_summary': "Yakuniy hisob-kitob",
+        'have_promo': "Promokod bormi?",
+        'apply': "Qo'llash",
+        'products_sum': "Tovarlar summasi:",
+        'discount_label': "Promokod bo'yicha chegirma:",
+        'confirm_order': "Buyurtmani tasdiqlash",
+        'active': "Faol",
+        'delivered': "Yetkazildi",
     },
     'ru': {
         'search_placeholder': "Поиск товаров и категорий",
@@ -67,6 +206,7 @@ UI_TRANSLATIONS = {
         'cart': "Корзина",
         'login': "Войти",
         'buy': "Купить",
+        'buy_now': "Заказать сейчас",
         'add': "Добавить",
         'about_us': "О нас",
         'branches': "Филиалы магазина",
@@ -94,24 +234,116 @@ UI_TRANSLATIONS = {
         'our_socials': "Наши соцсети",
         'reviews': "отзывов",
         'welcome_back': "С возвращением,",
-        'categories': "Категории",
+        'categories': "Каталог",
         'new_arrivals': "Новинки",
         'see_all': "Все",
         'similar_products': "Похожие товары",
+        'back': "Назад",
+        'clear_cart': "Очистить",
+        'clear_cart_confirm': "Очистить корзину?",
+        'total_payment': "Итого к оплате:",
+        'proceed_to_checkout': "Перейти к оформлению",
+        'cart_empty': "Ваша корзина пуста",
+        'popular': "Популярные товары",
+        'popular_subtitle': "Подборка лучших и популярных товаров",
+        'restaurant_menu': "Меню ресторана",
+        'restaurant_menu_subtitle': "Горячие и свежие фирменные блюда",
+        'restaurant_sections': "Разделы меню",
+        'more': "ещё",
+        'items_unit': "шт",
+        'in_stock': "В наличии",
+        'out_of_stock': "Нет в наличии",
+        'not_available_now': "Временно недоступно для заказа",
+        'vat_included': "Включая НДС",
+        'per_unit': "за 1 шт",
+        'sku': "Артикул",
+        'choice': "Выбор:",
+        'fast_delivery_title': "Доставка за 1 день",
+        'fast_delivery_sub': "Быстрый заказ",
+        'quality_title': "100% Качество",
+        'quality_sub': "Оригинальный товар",
+        'payment_title': "Удобная оплата",
+        'payment_sub': "Click, Payme, Наличные",
+        'return_title': "Легкий возврат",
+        'return_sub': "В течение 14 дней",
+        'tab_description': "Описание",
+        'tab_specs': "Характеристики",
+        'tab_reviews': "Отзывы",
+        'tab_delivery': "Доставка",
+        'unit_measure': "Единица измерения:",
+        'barcode': "Штрихкод:",
+        'ikpu_code': "Код ИКПУ:",
+        'category_label': "Категория:",
+        'order_now': "Заказать",
+        'quick_buy': "Купить в 1 клик",
+        'information': "Информация",
+        'language': "Язык",
+        'delivery_address': "Адрес доставки",
+        'select_delivery_address': "Выберите адрес доставки",
+        'profile': "Профиль",
+        'my_orders': "Мои заказы",
+        'enter_phone': "Введите номер телефона",
+        'name': "Ваше имя",
+        'save': "Сохранить",
+        'close': "Закрыть",
+        'logout': "Выйти",
+        'back_to_menu': "Вернуться в меню",
+        'step_checkout': "Шаг 2: Доставка и оплата",
+        'ordered_products': "Заказываемые товары",
+        'edit': "Изменить",
+        'items_count_and_sum': "Кол-во товаров и сумма:",
+        'contact_data': "Контактные данные",
+        'phone_number': "Номер телефона",
+        'fulfillment_method': "Способ получения заказа",
+        'courier_delivery': "Курьерская доставка",
+        'to_your_door': "До двери покупателя",
+        'pickup': "Самовывоз",
+        'from_branch': "Из филиала (0 UZS)",
+        'delivery_address_and_map': "Адрес доставки и карта",
+        'map_hint': "Укажите на карте, найдите через поиск или включите геолокацию",
+        'my_location': "Мое местоположение",
+        'locating': "Определение...",
+        'city_region': "Город / Регион",
+        'search_street_orientir': "Поиск улицы или ориентира",
+        'or_select_on_map': "или укажите на карте",
+        'street_number': "Улица, номер дома",
+        'entrance': "Подъезд",
+        'floor': "Этаж",
+        'apartment': "Кв. / Офис",
+        'intercom': "Домофон",
+        'landmark': "Ориентир для курьера",
+        'delivery_fee_label': "Стоимость доставки:",
+        'free': "Бесплатно 🎉",
+        'order_comment': "Комментарий к заказу (необязательно)",
+        'order_comment_placeholder': "Домофон, без лука, позвонить заранее...",
+        'payment_method_label': "Способ оплаты",
+        'cash': "Наличными",
+        'cash_desc': "Оплата при получении",
+        'terminal': "Терминалом курьеру",
+        'terminal_desc': "Картой Uzcard/Humo курьеру",
+        'order_summary': "Итоговый расчет",
+        'have_promo': "Есть промокод?",
+        'apply': "Применить",
+        'products_sum': "Сумма товаров:",
+        'discount_label': "Скидка по промокоду:",
+        'confirm_order': "Подтвердить заказ",
+        'active': "Активные",
+        'delivered': "Доставленные",
     },
     'en': {
         'search_placeholder': "Search products and categories",
         'favorites': "Favorites",
         'cart': "Cart",
-        'login': "Log in",
+        'login': "Login",
         'buy': "Buy",
+        'buy_now': "Order Now",
         'add': "Add",
         'about_us': "About us",
-        'branches': "Store branches",
-        'delivery_terms': "Delivery terms",
-        'return_terms': "Return and exchange policy",
-        'contact_us': "Contact us",
-        'empty_products': "No products available yet",
+        'branches': "Store Branches",
+        'delivery_terms': "Delivery Terms",
+        'return_terms': "Return & Exchange Policy",
+        'contact_us': "Contact Us",
+        'empty_products': "No products found",
         'work_hours': "Working hours",
         'address': "Address",
         'contacts': "Contacts",
@@ -132,24 +364,116 @@ UI_TRANSLATIONS = {
         'our_socials': "Our social media",
         'reviews': "reviews",
         'welcome_back': "Welcome back,",
-        'categories': "Categories",
+        'categories': "Catalog",
         'new_arrivals': "New arrivals",
         'see_all': "See all",
         'similar_products': "Similar products",
+        'back': "Back",
+        'clear_cart': "Clear",
+        'clear_cart_confirm': "Are you sure you want to clear your cart?",
+        'total_payment': "Total payment:",
+        'proceed_to_checkout': "Proceed to Checkout",
+        'cart_empty': "Your cart is currently empty",
+        'popular': "Popular Products",
+        'popular_subtitle': "Selection of top and popular products",
+        'restaurant_menu': "Restaurant Menu",
+        'restaurant_menu_subtitle': "Freshly prepared signature hot dishes",
+        'restaurant_sections': "Menu Sections",
+        'more': "more",
+        'items_unit': "pcs",
+        'in_stock': "In stock",
+        'out_of_stock': "Out of stock",
+        'not_available_now': "Currently unavailable",
+        'vat_included': "VAT included",
+        'per_unit': "per 1 item",
+        'sku': "SKU",
+        'choice': "Choice:",
+        'fast_delivery_title': "1-day delivery",
+        'fast_delivery_sub': "Fast checkout",
+        'quality_title': "100% Quality",
+        'quality_sub': "Original item",
+        'payment_title': "Easy payment",
+        'payment_sub': "Click, Payme, Cash",
+        'return_title': "Easy return",
+        'return_sub': "Within 14 days",
+        'tab_description': "Description",
+        'tab_specs': "Specifications",
+        'tab_reviews': "Reviews",
+        'tab_delivery': "Delivery",
+        'unit_measure': "Unit of measure:",
+        'barcode': "Barcode:",
+        'ikpu_code': "IKPU Code:",
+        'category_label': "Category:",
+        'order_now': "Order Now",
+        'quick_buy': "Quick Buy",
+        'information': "Information",
+        'language': "Language",
+        'delivery_address': "Delivery Address",
+        'select_delivery_address': "Select delivery address",
+        'profile': "Profile",
+        'my_orders': "My Orders",
+        'enter_phone': "Enter your phone number",
+        'name': "Your name",
+        'save': "Save",
+        'close': "Close",
+        'logout': "Log out",
+        'back_to_menu': "Back to menu",
+        'step_checkout': "Step 2: Delivery & Payment",
+        'ordered_products': "Ordered Products",
+        'edit': "Edit",
+        'items_count_and_sum': "Items count & total:",
+        'contact_data': "Contact Details",
+        'phone_number': "Phone Number",
+        'fulfillment_method': "Order Fulfillment Method",
+        'courier_delivery': "Courier Delivery",
+        'to_your_door': "Directly to your door",
+        'pickup': "Self-Pickup",
+        'from_branch': "From store branch (0 UZS)",
+        'delivery_address_and_map': "Delivery Address & Map",
+        'map_hint': "Choose on the map, search street or enable geolocation",
+        'my_location': "My Location",
+        'locating': "Locating...",
+        'city_region': "City / Region",
+        'search_street_orientir': "Search street or landmark",
+        'or_select_on_map': "or select on the map",
+        'street_number': "Street, house number",
+        'entrance': "Entrance",
+        'floor': "Floor",
+        'apartment': "Apt / Office",
+        'intercom': "Intercom code",
+        'landmark': "Landmark for courier",
+        'delivery_fee_label': "Delivery fee:",
+        'free': "Free 🎉",
+        'order_comment': "Order comment (optional)",
+        'order_comment_placeholder': "Intercom code, no onions, call in advance...",
+        'payment_method_label': "Payment Method",
+        'cash': "Cash on delivery",
+        'cash_desc': "Pay upon receiving order",
+        'terminal': "Card to courier (Terminal)",
+        'terminal_desc': "Uzcard/Humo card terminal",
+        'order_summary': "Order Summary",
+        'have_promo': "Have a promo code?",
+        'apply': "Apply",
+        'products_sum': "Items subtotal:",
+        'discount_label': "Promo discount:",
+        'confirm_order': "Confirm Order",
+        'active': "Active",
+        'delivered': "Delivered",
     },
     'tr': {
-        'search_placeholder': "Ürün ve kategori ara",
+        'search_placeholder': "Ürün veya kategori ara",
         'favorites': "Favoriler",
         'cart': "Sepet",
-        'login': "Giriş yap",
-        'buy': "Satın al",
+        'login': "Giriş",
+        'buy': "Satın Al",
+        'buy_now': "Sipariş Ver",
         'add': "Ekle",
         'about_us': "Hakkımızda",
         'branches': "Şubelerimiz",
-        'delivery_terms': "Teslimat şartları",
-        'return_terms': "İade ve değişim şartları",
-        'contact_us': "İletişime geç",
-        'empty_products': "Henüz ürün bulunmuyor",
+        'delivery_terms': "Teslimat Koşulları",
+        'return_terms': "İade ve Değişim",
+        'contact_us': "İletişim",
+        'empty_products': "Henüz ürün eklenmedi",
         'work_hours': "Çalışma saatleri",
         'address': "Adres",
         'contacts': "İletişim",
@@ -161,19 +485,110 @@ UI_TRANSLATIONS = {
         'all': "Tümü",
         'products_count': "ürün",
         'sale': "İndirim",
-        'add_to_cart': "Sepete ekle",
+        'add_to_cart': "Sepete Ekle",
         'about_product': "Ürün hakkında",
-        'seller_chat': "Satıcıyla sohbet",
+        'seller_chat': "Satıcıyla Sohbet",
         'home': "Ana Sayfa",
         'no_reviews': "Yorum yok",
         'view_on_map': "Haritada gör",
         'our_socials': "Sosyal medya hesaplarımız",
         'reviews': "yorum",
         'welcome_back': "Tekrar hoş geldiniz,",
-        'categories': "Kategoriler",
-        'new_arrivals': "Yeni gelenler",
+        'categories': "Katalog",
+        'new_arrivals': "Yeni Gelenler",
         'see_all': "Tümü",
         'similar_products': "Benzer ürünler",
+        'back': "Geri",
+        'clear_cart': "Temizle",
+        'clear_cart_confirm': "Sepeti temizlemek istiyor musunuz?",
+        'total_payment': "Toplam tutar:",
+        'proceed_to_checkout': "Ödemeye Geç",
+        'cart_empty': "Sepetiniz henüz boş",
+        'popular': "Popüler Ürünler",
+        'popular_subtitle': "En iyi ve popüler ürünler seçkisi",
+        'restaurant_menu': "Restoran Menüsü",
+        'restaurant_menu_subtitle': "Taze ve sıcak spesiyal yemekler",
+        'restaurant_sections': "Menü Bölümleri",
+        'more': "daha fazla",
+        'items_unit': "adet",
+        'in_stock': "Stokta var",
+        'out_of_stock': "Tükendi",
+        'not_available_now': "Şu anda satışta değil",
+        'vat_included': "KDV dahil",
+        'per_unit': "1 adet için",
+        'sku': "Ürün Kodu",
+        'choice': "Seçim:",
+        'fast_delivery_title': "1 günde teslimat",
+        'fast_delivery_sub': "Hızlı sipariş",
+        'quality_title': "%100 Kalite",
+        'quality_sub': "Orijinal ürün",
+        'payment_title': "Kolay ödeme",
+        'payment_sub': "Click, Payme, Nakit",
+        'return_title': "Kolay iade",
+        'return_sub': "14 gün içinde",
+        'tab_description': "Açıklama",
+        'tab_specs': "Özellikler",
+        'tab_reviews': "Yorumlar",
+        'tab_delivery': "Teslimat",
+        'unit_measure': "Birim:",
+        'barcode': "Barkod:",
+        'ikpu_code': "İKPU Kodu:",
+        'category_label': "Kategori:",
+        'order_now': "Sipariş ver",
+        'quick_buy': "Hemen Al",
+        'information': "Bilgiler",
+        'language': "Dil",
+        'delivery_address': "Teslimat Adresi",
+        'select_delivery_address': "Teslimat adresini seçin",
+        'profile': "Profil",
+        'my_orders': "Siparişlerim",
+        'enter_phone': "Telefon numaranızı girin",
+        'name': "Adınız",
+        'save': "Kaydet",
+        'close': "Kapat",
+        'logout': "Çıkış Yap",
+        'back_to_menu': "Menüye dön",
+        'step_checkout': "2. Adım: Teslimat ve Ödeme",
+        'ordered_products': "Sipariş Edilen Ürünler",
+        'edit': "Değiştir",
+        'items_count_and_sum': "Ürün adedi ve toplam:",
+        'contact_data': "İletişim Bilgileri",
+        'phone_number': "Telefon Numarası",
+        'fulfillment_method': "Sipariş Teslim Alma Yöntemi",
+        'courier_delivery': "Kurye ile Teslimat",
+        'to_your_door': "Kapınıza kadar",
+        'pickup': "Gel Al (Şubeden)",
+        'from_branch': "Şubeden teslim al (0 UZS)",
+        'delivery_address_and_map': "Teslimat Adresi ve Harita",
+        'map_hint': "Haritadan seçin, sokak arayın veya konumu açın",
+        'my_location': "Konumum",
+        'locating': "Belirleniyor...",
+        'city_region': "Şehir / Bölge",
+        'search_street_orientir': "Sokak veya bilinen yer ara",
+        'or_select_on_map': "veya haritadan seçin",
+        'street_number': "Sokak, bina no",
+        'entrance': "Bina Girişi",
+        'floor': "Kat",
+        'apartment': "Daire / Ofis",
+        'intercom': "Diyafon kodu",
+        'landmark': "Kurye için tarif",
+        'delivery_fee_label': "Teslimat ücreti:",
+        'free': "Ücretsiz 🎉",
+        'order_comment': "Sipariş notu (isteğe bağlı)",
+        'order_comment_placeholder': "Diyafon kodu, soğansız olsun, önceden arayın...",
+        'payment_method_label': "Ödeme Yöntemi",
+        'cash': "Kapıda Nakit",
+        'cash_desc': "Teslim alırken nakit ödeme",
+        'terminal': "Kuryeye Kartla",
+        'terminal_desc': "Uzcard/Humo kart terminali",
+        'order_summary': "Sipariş Özeti",
+        'have_promo': "Promosyon kodunuz var mı?",
+        'apply': "Uygula",
+        'products_sum': "Ürünler tutarı:",
+        'discount_label': "Promosyon indirimi:",
+        'confirm_order': "Siparişi Onayla",
+        'active': "Aktif",
+        'delivered': "Teslim Edildi",
     }
 }
 
@@ -192,14 +607,7 @@ def storefront_home_view(request, subdomain=None):
             return landing_view(request)
         raise Http404('Магазин не найден')
 
-    query_lang = request.GET.get('lang')
-    if query_lang in ['uz', 'ru', 'en', 'tr']:
-        lang = query_lang
-    else:
-        lang = getattr(request, 'language', store.default_language or 'uz')
-    if lang not in ['uz', 'ru', 'en', 'tr']:
-        lang = 'uz'
-
+    lang = get_storefront_lang(request, store)
     store._current_lang = lang
 
     categories = Category.objects.filter(store=store, is_active=True).order_by('sort_order', 'id')
@@ -405,9 +813,16 @@ def storefront_home_view(request, subdomain=None):
     for p in products:
         p.display_name = p.get_name(lang) if hasattr(p, 'get_name') else (getattr(p, f'name_{lang}', None) or getattr(p, 'name_uz', '') or getattr(p, 'name_ru', ''))
         p.display_description = p.get_description(lang) if hasattr(p, 'get_description') else (getattr(p, f'description_{lang}', None) or getattr(p, 'description_uz', '') or getattr(p, 'description_ru', ''))
+        p.display_unit = p.get_unit_name(lang) if hasattr(p, 'get_unit_name') else (p.get_unit_display() if hasattr(p, 'get_unit_display') else '')
 
     for c in categories:
         c.display_name = c.get_name(lang) if hasattr(c, 'get_name') else (getattr(c, f'name_{lang}', None) or getattr(c, 'name_uz', '') or getattr(c, 'name_ru', ''))
+
+    for b in banners:
+        b_title = getattr(b, f'title_{lang}', None) or b.title
+        b_sub = getattr(b, f'subtitle_{lang}', None) or b.subtitle
+        b.display_title = auto_translate_text(b_title, target_lang=lang) if b_title else ''
+        b.display_subtitle = auto_translate_text(b_sub, target_lang=lang) if b_sub else ''
 
     cart = request.session.get('cart', {}) if hasattr(request, 'session') else {}
     cart_count = sum(item.get('quantity', 1) for item in cart.values())
@@ -545,6 +960,8 @@ def cart_add_view(request, subdomain=None):
     if item_key in cart:
         cart[item_key]['quantity'] += quantity
         cart[item_key]['total_price'] = cart[item_key]['quantity'] * unit_price
+        cart[item_key]['price'] = unit_price
+        cart[item_key]['unit_price'] = unit_price
     else:
         cart[item_key] = {
             'product_id': product.id,
@@ -552,6 +969,7 @@ def cart_add_view(request, subdomain=None):
             'name': name,
             'variation_name': var_name,
             'unit_price': unit_price,
+            'price': unit_price,
             'quantity': quantity,
             'total_price': quantity * unit_price,
             'image': product.primary_image_url or '',
@@ -584,18 +1002,36 @@ def cart_update_view(request, subdomain=None):
 
     item_key = data.get('item_key')
     action = data.get('action') # 'increase', 'decrease', 'remove'
+    quantity = data.get('quantity')
 
     cart = request.session.get('cart', {})
     if item_key in cart:
-        if action == 'increase':
+        unit_p = float(cart[item_key].get('unit_price') or cart[item_key].get('price') or 0)
+        if quantity is not None:
+            try:
+                qty = int(quantity)
+                if qty <= 0:
+                    del cart[item_key]
+                else:
+                    cart[item_key]['quantity'] = qty
+                    cart[item_key]['unit_price'] = unit_p
+                    cart[item_key]['price'] = unit_p
+                    cart[item_key]['total_price'] = qty * unit_p
+            except (ValueError, TypeError):
+                pass
+        elif action in ['increase', 'increment']:
             cart[item_key]['quantity'] += 1
-            cart[item_key]['total_price'] = cart[item_key]['quantity'] * cart[item_key]['unit_price']
-        elif action == 'decrease':
+            cart[item_key]['unit_price'] = unit_p
+            cart[item_key]['price'] = unit_p
+            cart[item_key]['total_price'] = cart[item_key]['quantity'] * unit_p
+        elif action in ['decrease', 'decrement']:
             cart[item_key]['quantity'] -= 1
             if cart[item_key]['quantity'] <= 0:
                 del cart[item_key]
             else:
-                cart[item_key]['total_price'] = cart[item_key]['quantity'] * cart[item_key]['unit_price']
+                cart[item_key]['unit_price'] = unit_p
+                cart[item_key]['price'] = unit_p
+                cart[item_key]['total_price'] = cart[item_key]['quantity'] * unit_p
         elif action == 'remove':
             del cart[item_key]
 
@@ -665,7 +1101,9 @@ def checkout_view(request, subdomain=None):
     error = None
 
     pay_settings, _ = StorePaymentSetting.objects.get_or_create(store=store)
-    lang = getattr(request, 'language', 'ru')
+    lang = get_storefront_lang(request, store)
+    store._current_lang = lang
+    t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
 
     # Calculate default delivery fee
     if subtotal >= store.free_delivery_threshold:
@@ -846,6 +1284,8 @@ def checkout_view(request, subdomain=None):
         'branches': branches,
         'error': error,
         'lang': lang,
+        'current_lang': lang,
+        't': t,
         'is_tma': is_tma,
         'saved_phone': saved_phone,
         'saved_name': saved_name
@@ -857,12 +1297,18 @@ def order_success_view(request, order_number, subdomain=None):
     order = get_object_or_404(Order, order_number=order_number)
     store = order.store
     pay_settings, _ = StorePaymentSetting.objects.get_or_create(store=store)
+    lang = get_storefront_lang(request, store)
+    store._current_lang = lang
+    t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
 
     return render(request, 'storefront/order_success.html', {
         'order': order,
         'store': store,
         'pay_settings': pay_settings,
-        'is_just_paid': request.GET.get('paid') == '1'
+        'is_just_paid': request.GET.get('paid') == '1',
+        'lang': lang,
+        'current_lang': lang,
+        't': t,
     })
 
 
@@ -1053,14 +1499,7 @@ def cart_page_view(request, subdomain=None):
     if not store:
         raise Http404("Do'kon topilmadi")
 
-    query_lang = request.GET.get('lang')
-    if query_lang in ['uz', 'ru', 'en', 'tr']:
-        lang = query_lang
-    else:
-        lang = getattr(request, 'language', store.default_language or 'uz')
-    if lang not in ['uz', 'ru', 'en', 'tr']:
-        lang = 'uz'
-
+    lang = get_storefront_lang(request, store)
     store._current_lang = lang
 
     cart = request.session.get('cart', {})
@@ -1092,6 +1531,7 @@ def cart_page_view(request, subdomain=None):
         'cart': cart,
         'cart_count': cart_count,
         'cart_subtotal': subtotal,
+        'subtotal': subtotal,
         'cart_json': json.dumps(cart),
         'delivery_fee': delivery_fee,
         'total': total,
@@ -1117,18 +1557,12 @@ def product_detail_page_view(request, product_id, subdomain=None):
         raise Http404("Магазин не найден")
 
     product = get_object_or_404(Product, id=product_id, store=store, is_active=True)
-    query_lang = request.GET.get('lang')
-    if query_lang in ['uz', 'ru', 'en', 'tr']:
-        lang = query_lang
-    else:
-        lang = getattr(request, 'language', store.default_language or 'uz')
-    if lang not in ['uz', 'ru', 'en', 'tr']:
-        lang = 'uz'
-
+    lang = get_storefront_lang(request, store)
     store._current_lang = lang
 
     product.display_name = product.get_name(lang) if hasattr(product, 'get_name') else (getattr(product, f'name_{lang}', None) or getattr(product, 'name_uz', '') or getattr(product, 'name_ru', ''))
     product.display_description = product.get_description(lang) if hasattr(product, 'get_description') else (getattr(product, f'description_{lang}', None) or getattr(product, 'description_uz', '') or getattr(product, 'description_ru', ''))
+    product.display_unit = product.get_unit_name(lang) if hasattr(product, 'get_unit_name') else (product.get_unit_display() if hasattr(product, 'get_unit_display') else '')
 
     # Cart context
     cart = request.session.get('cart', {})
@@ -1158,6 +1592,14 @@ def product_detail_page_view(request, product_id, subdomain=None):
 
     for rp in related_products:
         rp.display_name = rp.get_name(lang) if hasattr(rp, 'get_name') else (getattr(rp, f'name_{lang}', None) or getattr(rp, 'name_uz', '') or getattr(rp, 'name_ru', ''))
+        rp.display_unit = rp.get_unit_name(lang) if hasattr(rp, 'get_unit_name') else (rp.get_unit_display() if hasattr(rp, 'get_unit_display') else '')
+
+    if product.category:
+        product.category.display_name = product.category.get_name(lang) if hasattr(product.category, 'get_name') else (getattr(product.category, f'name_{lang}', None) or getattr(product.category, 'name_uz', ''))
+
+    variations = list(product.variations.filter(is_active=True))
+    for v in variations:
+        v.display_name = v.get_name(lang) if hasattr(v, 'get_name') else (getattr(v, f'name_{lang}', None) or getattr(v, 'name_uz', ''))
 
     # Payment & branches settings
     pay_settings, _ = StorePaymentSetting.objects.get_or_create(store=store)
@@ -1204,7 +1646,7 @@ def product_detail_page_view(request, product_id, subdomain=None):
         'store': store,
         'product': product,
         'related_products': related_products,
-        'variations': product.variations.filter(is_active=True),
+        'variations': variations,
         'images': product.images.all(),
         'in_cart_qty': in_cart_qty,
         'cart': cart,
@@ -1325,7 +1767,8 @@ def customer_profile_page_view(request, subdomain=None):
     subtotal = sum(item.get('total_price', 0) for item in cart.values())
 
     # Translations & Lang
-    current_lang = request.GET.get('lang') or request.session.get('customer_lang') or 'uz'
+    current_lang = get_storefront_lang(request, store)
+    store._current_lang = current_lang
     t = UI_TRANSLATIONS.get(current_lang, UI_TRANSLATIONS['uz'])
 
     context = {
@@ -1340,6 +1783,7 @@ def customer_profile_page_view(request, subdomain=None):
         'cart_subtotal': subtotal,
         'cart_json': json.dumps(cart),
         'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
+        'lang': current_lang,
         'current_lang': current_lang,
         't': t,
     }
