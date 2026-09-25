@@ -167,7 +167,7 @@ def tariff_info_view(request):
             "desc": "Katta biznes, restoranlar va savdo tarmoqlari uchun",
             "features": [
                 "Cheksiz mahsulotlar soni",
-                "YES POS kassasi bilan integratsiya",
+                "POS kassa bilan integratsiya",
                 "Ijtimoiy tarmoq postlaridan import",
                 "Stollar uchun QR-menyu",
                 "Kengaytirilgan moliyaviy analitika",

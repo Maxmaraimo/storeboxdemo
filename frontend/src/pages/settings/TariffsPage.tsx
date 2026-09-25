@@ -294,7 +294,7 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>{lang === "ru" ? "История тарифов" : lang === "en" ? "Billing History" : "To'lovlar tarixi"}</span>
+          <span>{lang === "ru" ? "История платежей" : lang === "en" ? "Payment History" : "To'lovlar tarixi"}</span>
           {billingHistory.length > 0 && (
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
@@ -451,9 +451,12 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
             "Cheksiz tovarlar": { ru: "Безлимитное количество товаров", en: "Unlimited products", uz: "Cheksiz mahsulotlar soni" },
             "Cheksiz tovarlar soni": { ru: "Безлимитное количество товаров", en: "Unlimited products", uz: "Cheksiz mahsulotlar soni" },
             "AI Dizayn Studio": { ru: "AI-дизайн и темы оформления", en: "AI Design Studio", uz: "AI Dizayn Studio" },
-            "YES POS integratsiyasi": { ru: "Интеграция с YES POS кассой", en: "YES POS integration", uz: "YES POS kassasi bilan integratsiya" },
-            "YES POS kassa bilan integratsiya": { ru: "Интеграция с YES POS кассой", en: "YES POS integration", uz: "YES POS kassasi bilan integratsiya" },
-            "YES POS kassasi bilan integratsiya": { ru: "Интеграция с YES POS кассой", en: "YES POS integration", uz: "YES POS kassasi bilan integratsiya" },
+            "YES POS integratsiyasi": { ru: "Интеграция с POS кассой", en: "POS integration", uz: "POS kassa bilan integratsiya" },
+            "YES POS kassa bilan integratsiya": { ru: "Интеграция с POS кассой", en: "POS integration", uz: "POS kassa bilan integratsiya" },
+            "YES POS kassasi bilan integratsiya": { ru: "Интеграция с POS кассой", en: "POS integration", uz: "POS kassa bilan integratsiya" },
+            "POS kassa bilan integratsiya": { ru: "Интеграция с POS кассой", en: "POS integration", uz: "POS kassa bilan integratsiya" },
+            "POS kassasi bilan integratsiya": { ru: "Интеграция с POS кассой", en: "POS integration", uz: "POS kassa bilan integratsiya" },
+            "POS integratsiyasi": { ru: "Интеграция с POS кассой", en: "POS integration", uz: "POS kassa bilan integratsiya" },
             "Ijtimoiy tarmoq postlaridan import": { ru: "Импорт товаров из постов соцсетей", en: "Social media post import", uz: "Ijtimoiy tarmoq postlaridan import" },
             "ClickSuperApp": { ru: "Индивидуальные интеграции по API", en: "Click SuperApp integration", uz: "ClickSuperApp" },
             "Stollar uchun QR-menyu": { ru: "QR-меню для столиков заведения", en: "Table QR menu", uz: "Stollar uchun QR-menyu" },

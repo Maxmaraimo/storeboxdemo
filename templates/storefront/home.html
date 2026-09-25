@@ -1,7 +1,7 @@
 {% extends 'storefront/base_storefront.html' %}
 
 {% block storefront_body %}
-<div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8" x-data="homeCatalog()">
+<div class="max-w-6xl mx-auto px-3 sm:px-6 py-3.5 sm:py-6 space-y-4 sm:space-y-8" x-data="homeCatalog()">
 
     <!-- BANNERS SLIDER (Dynamic multi-banner carousel with auto-play, touch swipe & navigation) -->
     {% if banners %}
@@ -50,36 +50,36 @@
          @touchend="handleTouchEnd($event)">
         
         <!-- Slides Track Card Container -->
-        <div class="relative rounded-[28px] sm:rounded-[36px] overflow-hidden shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-slate-900/10">
+        <div class="relative rounded-[20px] sm:rounded-[36px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-slate-900/10">
             <div id="bannerTrack" class="bannerTrack flex transition-transform duration-500 ease-out"
                  :style="`transform: translateX(-${slide * 100}%);`">
                 {% for b in banners %}
-                <div class="w-full shrink-0 relative px-6 py-8 sm:px-10 sm:py-12 md:px-14 md:py-14 text-white min-h-[220px] sm:min-h-[260px] md:min-h-[300px] flex items-center justify-between overflow-hidden"
+                <div class="w-full shrink-0 relative px-4 py-5 sm:px-10 sm:py-12 md:px-14 md:py-14 text-white min-h-[160px] sm:min-h-[260px] md:min-h-[300px] flex items-center justify-between overflow-hidden"
                      data-store-banner-container
                      style="{% if b.display_image_url or b.image or b.image_url %}background: linear-gradient(90deg, #090d16 0%, rgba(9, 13, 22, 0.92) 42%, rgba(9, 13, 22, 0.45) 72%, rgba(9, 13, 22, 0.15) 100%), url('{% if b.display_image_url %}{{ b.display_image_url|safe }}{% elif b.image %}{{ b.image.url|safe }}{% else %}{{ b.image_url|safe }}{% endif %}') center right / cover no-repeat;{% else %}background: linear-gradient(135deg, {% if store.primary_color %}{{ store.primary_color }}{% else %}#0f172a{% endif %} 0%, #1e293b 50%, #090d16 100%);{% endif %}">
                     
                     <!-- Left: Typography & Magnetic Glass CTA -->
-                    <div class="max-w-md lg:max-w-xl space-y-3.5 z-10">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/12 text-white/90 backdrop-blur-md border border-white/20 text-[10.5px] font-bold uppercase tracking-wider shadow-2xs">
+                    <div class="max-w-md lg:max-w-xl space-y-2 sm:space-y-3.5 z-10">
+                        <div class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/12 text-white/90 backdrop-blur-md border border-white/20 text-[9.5px] sm:text-[10.5px] font-bold uppercase tracking-wider shadow-2xs">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                             <span>{{ store.name }}</span>
                         </div>
                         
-                        <h2 class="text-xl sm:text-3xl md:text-4xl lg:text-[40px] font-black tracking-tight text-white leading-[1.14] drop-shadow-sm" data-store-banner-title>
+                        <h2 class="text-base sm:text-3xl md:text-4xl lg:text-[40px] font-black tracking-tight text-white leading-[1.18] drop-shadow-sm line-clamp-2" data-store-banner-title>
                             {{ b.display_title|default:b.title|safe }}
                         </h2>
                         
                         {% if b.display_subtitle or b.subtitle %}
-                        <p class="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed drop-shadow-xs max-w-sm sm:max-w-md line-clamp-2" data-store-banner-subtitle>
+                        <p class="text-[11px] sm:text-sm text-slate-300 font-normal leading-snug drop-shadow-xs max-w-xs sm:max-w-md line-clamp-1 sm:line-clamp-2" data-store-banner-subtitle>
                             {{ b.display_subtitle|default:b.subtitle|safe }}
                         </p>
                         {% endif %}
                         
-                        <div class="pt-1.5">
+                        <div class="pt-1">
                             <a href="{% if b.link and b.link != '/' %}{{ b.link }}{% else %}#productsSection{% endif %}"
-                               class="inline-flex items-center gap-2.5 px-5 py-2.5 sm:px-6 sm:py-3 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-bold text-xs sm:text-sm shadow-[0_4px_20px_rgba(255,255,255,0.25)] transition-all duration-200 active:scale-95 cursor-pointer group/cta">
+                               class="inline-flex items-center gap-1.5 sm:gap-2.5 px-3.5 py-1.5 sm:px-6 sm:py-3 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-bold text-[11px] sm:text-sm shadow-[0_4px_20px_rgba(255,255,255,0.25)] transition-all duration-200 active:scale-95 cursor-pointer group/cta">
                                 <span>{{ t.buy_now|default:"Buyurtma berish" }}</span>
-                                <i data-lucide="arrow-right" class="w-4 h-4 group-hover/cta:translate-x-1 transition-transform"></i>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/cta:translate-x-1 transition-transform"></i>
                             </a>
                         </div>
                     </div>
@@ -221,14 +221,14 @@
         <!-- SQUIRCLE PHOTO CAROUSEL: Centered if few/not overflowing, scrollable from start if overflowing -->
         <div x-ref="catSlider"
              :class="isOverflowing ? 'justify-start' : 'justify-center'"
-             class="flex items-start gap-3 sm:gap-4 overflow-x-auto no-scrollbar py-2 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth transition-all duration-200">
+             class="flex items-start gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-1.5 -mx-3 px-3 sm:mx-0 sm:px-0 scroll-smooth transition-all duration-200">
             <!-- All Categories ('Barchasi') Squircle Card -->
             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if request.GET.preview %}?preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% if request.GET.template %}&template={{ request.GET.template }}{% endif %}{% elif request.GET.template %}?template={{ request.GET.template }}{% endif %}"
-               class="shrink-0 w-[82px] sm:w-[92px] flex flex-col items-center gap-1.5 group cursor-pointer text-center">
-                <div class="w-[66px] h-[66px] sm:w-[74px] sm:h-[74px] rounded-[22px] sm:rounded-[26px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if not current_category %}active-category-pill{% else %}bg-white text-slate-700 border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
-                    <i data-lucide="layout-grid" class="w-6 h-6 sm:w-7 sm:h-7"></i>
+               class="shrink-0 w-[64px] sm:w-[92px] flex flex-col items-center gap-1 group cursor-pointer text-center">
+                <div class="w-[52px] h-[52px] sm:w-[74px] sm:h-[74px] rounded-[18px] sm:rounded-[26px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if not current_category %}active-category-pill{% else %}bg-white text-slate-700 border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
+                    <i data-lucide="layout-grid" class="w-5 h-5 sm:w-7 sm:h-7"></i>
                 </div>
-                <span class="text-[11px] sm:text-xs font-semibold leading-[13px] h-7 flex items-center justify-center text-center px-0.5 {% if not current_category %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
+                <span class="text-[10.5px] sm:text-xs font-semibold leading-[12px] sm:leading-[13px] h-6 sm:h-7 flex items-center justify-center text-center px-0.5 {% if not current_category %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
                     {{ t.all|default:"Barchasi" }}
                 </span>
             </a>
@@ -236,17 +236,17 @@
             <!-- Each Category as a Squircle Photo Card -->
             {% for cat in categories %}
             <a href="?cat={{ cat.slug }}{% if request.GET.preview %}&preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% if request.GET.template %}&template={{ request.GET.template }}{% endif %}{% elif request.GET.template %}?template={{ request.GET.template }}&cat={{ cat.slug }}{% endif %}"
-               class="shrink-0 w-[82px] sm:w-[92px] flex flex-col items-center gap-1.5 group cursor-pointer text-center">
-                <div class="w-[66px] h-[66px] sm:w-[74px] sm:h-[74px] rounded-[22px] sm:rounded-[26px] overflow-hidden relative transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if current_category.id == cat.id or current_category.slug == cat.slug %}active-category-pill{% else %}border-slate-200/80 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
+               class="shrink-0 w-[64px] sm:w-[92px] flex flex-col items-center gap-1 group cursor-pointer text-center">
+                <div class="w-[52px] h-[52px] sm:w-[74px] sm:h-[74px] rounded-[18px] sm:rounded-[26px] overflow-hidden relative transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if current_category.id == cat.id or current_category.slug == cat.slug %}active-category-pill{% else %}border-slate-200/80 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
                     {% if cat.primary_image_url %}
                     <img src="{{ cat.primary_image_url }}" alt="{{ cat.display_name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                     {% else %}
                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400">
-                        <i data-lucide="tag" class="w-6 h-6"></i>
+                        <i data-lucide="tag" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                     </div>
                     {% endif %}
                 </div>
-                <span class="text-[11px] sm:text-xs font-semibold leading-[13px] h-7 flex items-center justify-center text-center px-0.5 line-clamp-2 {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
+                <span class="text-[10.5px] sm:text-xs font-semibold leading-[12px] sm:leading-[13px] h-6 sm:h-7 flex items-center justify-center text-center px-0.5 line-clamp-2 {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
                     {{ cat.display_name }}
                 </span>
             </a>
@@ -363,77 +363,77 @@
 
         {% elif effective_card_style == 'minimal' %}
         <!-- 2. MINIMAL (Ramsiz, toza / Pure Frameless Editorial Grid) -->
-        <div class="storebox-tpl-boutique storebox-tpl-minimal grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+        <div class="storebox-tpl-boutique storebox-tpl-minimal grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-6">
             {% for product in products %}
             <div class="group flex flex-col justify-between bg-transparent border-0 shadow-none p-0 relative">
                 <!-- Pure Frameless Product Image -->
-                <div class="relative w-full aspect-[4/5] sm:aspect-square bg-slate-100/80 rounded-[22px] overflow-hidden mb-2.5 group-hover:opacity-95 transition-all">
+                <div class="relative w-full aspect-square bg-slate-100/80 rounded-[18px] sm:rounded-[22px] overflow-hidden mb-2 group-hover:opacity-95 transition-all">
                     <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="block w-full h-full">
                         {% if product.primary_image_url %}
                         <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
                         {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-slate-300"><i data-lucide="image" class="w-10 h-10"></i></div>
+                        <div class="w-full h-full flex items-center justify-center text-slate-300"><i data-lucide="image" class="w-8 h-8 sm:w-10 sm:h-10"></i></div>
                         {% endif %}
                     </a>
                     <!-- Minimal Floating Badges -->
                     {% if product.discount_percent and product.is_in_stock %}
-                    <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[9px] tracking-wider uppercase shadow-xs">-{{ product.discount_percent }}%</span>
+                    <span class="absolute top-2 left-2 px-1.5 sm:px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[8px] sm:text-[9px] tracking-wider uppercase shadow-xs">-{{ product.discount_percent }}%</span>
                     {% elif product.is_featured and product.is_in_stock %}
-                    <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full btn-brand text-white font-bold text-[9px] tracking-widest uppercase shadow-2xs">Xit</span>
+                    <span class="absolute top-2 left-2 px-1.5 sm:px-2 py-0.5 rounded-full btn-brand text-white font-bold text-[8px] sm:text-[9px] tracking-widest uppercase shadow-2xs">Xit</span>
                     {% endif %}
 
                     <!-- Wishlist Heart -->
                     <button type="button" @click.stop="toggleWishlist({{ product.id }})"
-                            class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-xs text-slate-400 hover:text-rose-500 transition-all active:scale-90 cursor-pointer"
+                            class="absolute top-2 right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-xs text-slate-400 hover:text-rose-500 transition-all active:scale-90 cursor-pointer"
                             aria-label="Sevimliga qo'shish">
-                        <i data-lucide="heart" class="w-4 h-4" :class="isInWishlist({{ product.id }}) ? 'fill-rose-500 text-rose-500' : ''"></i>
+                        <i data-lucide="heart" class="w-3.5 h-3.5 sm:w-4 sm:h-4" :class="isInWishlist({{ product.id }}) ? 'fill-rose-500 text-rose-500' : ''"></i>
                     </button>
 
                     {% if not product.is_in_stock %}
-                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] rounded-[22px] flex items-center justify-center pointer-events-none">
-                        <span class="px-2.5 py-1 rounded-full bg-slate-900/95 text-white font-bold text-[10px] tracking-wide shadow-md">{{ t.out_of_stock|default:"Tugagan" }}</span>
+                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] rounded-[18px] sm:rounded-[22px] flex items-center justify-center pointer-events-none">
+                        <span class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-slate-900/95 text-white font-bold text-[9px] sm:text-[10px] tracking-wide shadow-md">{{ t.out_of_stock|default:"Tugagan" }}</span>
                     </div>
                     {% endif %}
                 </div>
 
                 <!-- Minimal Product Info -->
                 <div class="space-y-1">
-                    <div class="text-[10px] uppercase font-bold tracking-wider text-slate-400 truncate">{{ product.category.display_name|default:store.name }}</div>
+                    <div class="text-[9.5px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-400 truncate">{{ product.category.display_name|default:store.name }}</div>
                     <h3 class="font-semibold text-xs sm:text-sm text-slate-900 line-clamp-1 group-hover:text-brand transition-colors">
                         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}">{{ product.display_name }}</a>
                     </h3>
                     <div class="flex items-baseline justify-between pt-0.5">
-                        <div class="flex items-baseline gap-2">
+                        <div class="flex items-baseline gap-1.5 sm:gap-2">
                             <span class="text-xs sm:text-sm font-black text-slate-900 font-mono tracking-tight">{{ product.price|floatformat:0 }} UZS</span>
                             {% if product.old_price %}
-                            <span class="text-[10px] text-slate-400 line-through">{{ product.old_price|floatformat:0 }}</span>
+                            <span class="text-[9.5px] sm:text-[10px] text-slate-400 line-through">{{ product.old_price|floatformat:0 }}</span>
                             {% endif %}
                         </div>
-                        <div class="flex items-center gap-0.5 text-[10px] font-bold text-amber-500">
+                        <div class="flex items-center gap-0.5 text-[9.5px] sm:text-[10px] font-bold text-amber-500">
                             <i data-lucide="star" class="w-3 h-3 fill-amber-400 text-amber-400"></i>
                             <span>{{ product.rating|default:"4.9" }}</span>
                         </div>
                     </div>
 
                     <!-- Minimal Direct Action Button -->
-                    <div class="pt-1.5">
+                    <div class="pt-1 sm:pt-1.5">
                         {% if product.is_in_stock %}
                         <template x-if="!cartItems['{{ product.id }}_0']">
                             <button type="button" @click="addToCart({{ product.id }})"
-                                    class="w-full py-2.5 rounded-xl btn-brand-soft hover:btn-brand font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer">
-                                <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                                    class="w-full py-1.5 sm:py-2.5 rounded-xl btn-brand-soft hover:btn-brand font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer">
+                                <i data-lucide="shopping-bag" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
                                 <span>{{ t.buy|default:"Sotib olish" }}</span>
                             </button>
                         </template>
                         <template x-if="cartItems['{{ product.id }}_0']">
-                            <div class="flex items-center justify-between border border-brand/30 bg-brand/10 text-brand rounded-xl p-1">
-                                <button type="button" @click="updateCart('{{ product.id }}_0', 'decrease')" class="w-7 h-7 rounded-lg bg-white shadow-xs font-black text-xs flex items-center justify-center cursor-pointer">-</button>
+                            <div class="flex items-center justify-between border border-brand/30 bg-brand/10 text-brand rounded-xl p-0.5 sm:p-1">
+                                <button type="button" @click="updateCart('{{ product.id }}_0', 'decrease')" class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white shadow-xs font-black text-xs flex items-center justify-center cursor-pointer">-</button>
                                 <span class="text-xs font-mono font-bold px-1 text-slate-900" x-text="cartItems['{{ product.id }}_0'].quantity"></span>
-                                <button type="button" @click="updateCart('{{ product.id }}_0', 'increase')" class="w-7 h-7 rounded-lg bg-white shadow-xs font-black text-xs flex items-center justify-center cursor-pointer">+</button>
+                                <button type="button" @click="updateCart('{{ product.id }}_0', 'increase')" class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white shadow-xs font-black text-xs flex items-center justify-center cursor-pointer">+</button>
                             </div>
                         </template>
                         {% else %}
-                        <span class="w-full py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs flex items-center justify-center border border-slate-200 cursor-not-allowed">
+                        <span class="w-full py-1.5 sm:py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-[11px] sm:text-xs flex items-center justify-center border border-slate-200 cursor-not-allowed">
                             {{ t.out_of_stock|default:"Tugagan" }}
                         </span>
                         {% endif %}
@@ -450,36 +450,36 @@
 
         {% else %}
         <!-- 3. ZAMONAVIY / UNIVERSAL (Modern Elegant Store Card Grid) -->
-        <div class="storebox-tpl-universal grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 sm:gap-6">
+        <div class="storebox-tpl-universal grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-6">
             {% for product in products %}
-            <div class="bg-white rounded-[24px] sm:rounded-[28px] border border-slate-200/80 overflow-hidden flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] hover:border-slate-300 transition-all duration-300 group relative">
+            <div class="bg-white rounded-[18px] sm:rounded-[28px] border border-slate-200/80 overflow-hidden flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] hover:border-slate-300 transition-all duration-300 group relative">
                 
                 <!-- Card Top: Aspect-ratio Image Container with Floating Badges & Wishlist -->
-                <div class="relative w-full aspect-[4/3] sm:aspect-square bg-slate-50 overflow-hidden shrink-0">
+                <div class="relative w-full aspect-square bg-slate-50 overflow-hidden shrink-0">
                     <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"
                        class="block w-full h-full">
                         {% if product.primary_image_url %}
                         <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
                         {% else %}
                         <div class="w-full h-full flex items-center justify-center text-slate-300">
-                            <i data-lucide="image" class="w-10 h-10"></i>
+                            <i data-lucide="image" class="w-8 h-8 sm:w-10 sm:h-10"></i>
                         </div>
                         {% endif %}
                     </a>
 
                     <!-- Top Left Badges: Discount / Xit / Top -->
-                    <div class="absolute top-2.5 left-2.5 flex items-center gap-1 z-10 pointer-events-none">
+                    <div class="absolute top-2 left-2 flex items-center gap-1 z-10 pointer-events-none">
                         {% if product.discount_percent and product.is_in_stock %}
-                        <span class="px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[9px] tracking-wider uppercase shadow-xs">
+                        <span class="px-1.5 sm:px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[8px] sm:text-[9px] tracking-wider uppercase shadow-xs">
                             -{{ product.discount_percent }}%
                         </span>
                         {% endif %}
                         {% if product.is_featured and product.is_in_stock %}
-                        <span class="px-2 py-0.5 rounded-full btn-brand text-white font-black text-[9px] tracking-wider uppercase shadow-2xs">
-                            XIT TOVAR
+                        <span class="px-1.5 sm:px-2 py-0.5 rounded-full btn-brand text-white font-black text-[8px] sm:text-[9px] tracking-wider uppercase shadow-2xs">
+                            XIT
                         </span>
                         {% elif not product.discount_percent and product.is_in_stock %}
-                        <span class="px-2 py-0.5 rounded-full bg-slate-900/85 backdrop-blur-xs text-white font-black text-[9px] tracking-wider uppercase shadow-xs">
+                        <span class="px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-900/85 backdrop-blur-xs text-white font-black text-[8px] sm:text-[9px] tracking-wider uppercase shadow-xs">
                             TOP
                         </span>
                         {% endif %}
@@ -487,14 +487,14 @@
 
                     <!-- Top Right Wishlist Button -->
                     <button type="button" @click.stop="toggleWishlist({{ product.id }})"
-                            class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md hover:bg-white flex items-center justify-center shadow-xs text-slate-400 hover:text-rose-500 transition-all active:scale-90 cursor-pointer z-10"
+                            class="absolute top-2 right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/95 backdrop-blur-md hover:bg-white flex items-center justify-center shadow-xs text-slate-400 hover:text-rose-500 transition-all active:scale-90 cursor-pointer z-10"
                             aria-label="Sevimliga qo'shish">
-                        <i data-lucide="heart" class="w-4 h-4" :class="isInWishlist({{ product.id }}) ? 'fill-rose-500 text-rose-500' : ''"></i>
+                        <i data-lucide="heart" class="w-3.5 h-3.5 sm:w-4 sm:h-4" :class="isInWishlist({{ product.id }}) ? 'fill-rose-500 text-rose-500' : ''"></i>
                     </button>
 
                     {% if not product.is_in_stock %}
                     <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none z-10">
-                        <span class="px-2.5 py-1 rounded-full bg-slate-900/95 text-white font-bold text-[10px] tracking-wide shadow-md">
+                        <span class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-slate-900/95 text-white font-bold text-[9px] sm:text-[10px] tracking-wide shadow-md">
                             {{ t.out_of_stock|default:"Tugagan" }}
                         </span>
                     </div>
@@ -502,37 +502,37 @@
                 </div>
 
                 <!-- Card Body Info & Purchase Action -->
-                <div class="p-3 sm:p-4 flex flex-col justify-between flex-1">
-                    <div class="space-y-1">
-                        <div class="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                <div class="p-2.5 sm:p-4 flex flex-col justify-between flex-1">
+                    <div class="space-y-0.5 sm:space-y-1">
+                        <div class="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-400 font-medium">
                             <span class="truncate">{{ product.category.display_name|default:store.name }}</span>
                             {% if product.unit %}
-                            <span class="shrink-0 px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 font-semibold">{{ product.get_unit_display|lower }}</span>
+                            <span class="shrink-0 px-1 py-0.2 rounded bg-slate-100 text-slate-500 font-semibold text-[8.5px] sm:text-[10px]">{{ product.get_unit_display|lower }}</span>
                             {% endif %}
                         </div>
 
-                        <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-2 min-h-[2.25rem] group-hover:text-brand transition-colors leading-snug">
+                        <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1 sm:line-clamp-2 group-hover:text-brand transition-colors leading-snug">
                             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}">
                                 {{ product.display_name }}
                             </a>
                         </h3>
 
                         <!-- Star Rating -->
-                        <div class="flex items-center gap-1 text-[11px] font-bold text-amber-500 pt-0.5">
-                            <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                        <div class="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-amber-500 pt-0.5">
+                            <i data-lucide="star" class="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-amber-400 text-amber-400"></i>
                             <span>{{ product.rating|default:"4.9" }}</span>
                             <span class="text-slate-400 font-normal">({{ product.reviews_count|default:"12" }})</span>
                         </div>
                     </div>
 
                     <!-- Card Bottom Row: Price & Brand Circular Plus Button -->
-                    <div class="flex items-center justify-between pt-3 mt-3 border-t border-slate-100/80">
+                    <div class="flex items-center justify-between pt-2 sm:pt-3 mt-2 sm:mt-3 border-t border-slate-100/80">
                         <div>
                             <div class="text-xs sm:text-sm font-black text-slate-900 font-mono tracking-tight leading-none">
                                 {{ product.price|floatformat:0 }} UZS
                             </div>
                             {% if product.old_price %}
-                            <div class="text-[10px] text-slate-400 line-through mt-0.5">
+                            <div class="text-[9.5px] sm:text-[10px] text-slate-400 line-through mt-0.5">
                                 {{ product.old_price|floatformat:0 }}
                             </div>
                             {% endif %}
@@ -542,20 +542,20 @@
                             {% if product.is_in_stock %}
                             <template x-if="!cartItems['{{ product.id }}_0']">
                                 <button type="button" @click="addToCart({{ product.id }})"
-                                        class="w-9 h-9 rounded-full btn-brand flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer"
+                                        class="w-7 h-7 sm:w-9 sm:h-9 rounded-full btn-brand flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer"
                                         title="{{ t.add_to_cart|default:'Savatga qo\'shish' }}">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <i data-lucide="plus" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
                                 </button>
                             </template>
                             <template x-if="cartItems['{{ product.id }}_0']">
-                                <div class="flex items-center btn-brand rounded-full px-2 py-1 gap-1 text-xs font-bold shadow-md">
-                                    <button type="button" @click="updateCart('{{ product.id }}_0', 'decrease')" class="w-5 h-5 flex items-center justify-center text-white/80 hover:text-white cursor-pointer">-</button>
+                                <div class="flex items-center btn-brand rounded-full px-1.5 sm:px-2 py-0.5 sm:py-1 gap-1 text-xs font-bold shadow-md">
+                                    <button type="button" @click="updateCart('{{ product.id }}_0', 'decrease')" class="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-white/80 hover:text-white cursor-pointer">-</button>
                                     <span x-text="cartItems['{{ product.id }}_0'].quantity" class="px-0.5 text-xs font-mono font-bold text-white"></span>
-                                    <button type="button" @click="updateCart('{{ product.id }}_0', 'increase')" class="w-5 h-5 flex items-center justify-center text-white/80 hover:text-white cursor-pointer">+</button>
+                                    <button type="button" @click="updateCart('{{ product.id }}_0', 'increase')" class="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-white/80 hover:text-white cursor-pointer">+</button>
                                 </div>
                             </template>
                             {% else %}
-                            <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-400 text-[10px] font-bold">
+                            <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400 font-bold text-[9px] sm:text-xs border border-slate-200 cursor-not-allowed inline-block">
                                 {{ t.out_of_stock|default:"Tugagan" }}
                             </span>
                             {% endif %}

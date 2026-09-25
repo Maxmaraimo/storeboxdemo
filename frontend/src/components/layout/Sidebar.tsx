@@ -146,7 +146,7 @@ export const Sidebar: React.FC = () => {
               },
               {
                 path: "/settings/tariffs/history",
-                label: lang === "ru" ? "История тарифов" : lang === "en" ? "Billing History" : "To'lovlar tarixi",
+                label: lang === "ru" ? "История платежей" : lang === "en" ? "Payment History" : "To'lovlar tarixi",
                 permissionModule: "settings",
               },
             ],

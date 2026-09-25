@@ -213,7 +213,7 @@ export const Header: React.FC = () => {
     periodOptions.find((p) => p.id === selectedPeriod)?.label || t("today") || "Bugun";
 
   return (
-    <header className="h-16 bg-white/75 dark:bg-[#12141a] backdrop-blur-2xl border border-white/85 dark:border-white/10 rounded-[28px] shadow-[0_16px_40px_-12px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] px-4 sm:px-6 flex items-center justify-between sticky top-4 z-50 transition-colors duration-300 gap-3">
+    <header className="h-16 bg-white/75 dark:bg-[#12141a] backdrop-blur-2xl border border-white/85 dark:border-white/10 rounded-[28px] shadow-[0_16px_40px_-12px_rgba(15,23,42,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)] px-4 sm:px-6 flex items-center justify-between relative z-20 transition-colors duration-300 gap-3">
       {/* 1. LEFT: SEARCH PILL */}
       <div className="flex items-center gap-3 flex-1 max-w-md">
         <div className="relative w-full">

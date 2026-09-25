@@ -1308,23 +1308,56 @@ export const DesignStudioPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              /* REALISTIC IPHONE FRAME */
-              <div className="flex justify-center py-2 bg-slate-100/60 rounded-2xl border border-slate-200">
-                <div className="w-[360px] h-[640px] bg-slate-950 rounded-[48px] p-3 shadow-2xl ring-4 ring-slate-800 relative flex flex-col">
-                  {/* Dynamic Island */}
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-20 flex items-center justify-end px-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-800"></span>
-                  </div>
-                  {/* Phone screen */}
-                  <div className="w-full h-full rounded-[38px] overflow-hidden bg-white relative">
+              /* REALISTIC LUXURY IPHONE 16 PRO FRAME */
+              <div className="flex justify-center py-4 bg-slate-100/70 rounded-2xl border border-slate-200">
+                <div className="w-[385px] max-w-[95vw] h-[780px] bg-[#0f1422] rounded-[52px] p-[10px] shadow-[0_30px_90px_-15px_rgba(15,23,42,0.45),0_0_0_1px_rgba(255,255,255,0.15)] border-[3.5px] border-[#222c3e] relative flex flex-col">
+                  {/* Side Buttons */}
+                  <div className="absolute -left-[5px] top-[140px] w-[3.5px] h-[48px] bg-slate-500 rounded-l-xs shadow-sm" />
+                  <div className="absolute -left-[5px] top-[198px] w-[3.5px] h-[48px] bg-slate-500 rounded-l-xs shadow-sm" />
+                  <div className="absolute -right-[5px] top-[160px] w-[3.5px] h-[64px] bg-slate-500 rounded-r-xs shadow-sm" />
+
+                  {/* Phone screen container */}
+                  <div className="w-full h-full rounded-[42px] overflow-hidden bg-white relative flex flex-col">
+                    {/* iOS Status Bar */}
+                    <div className="h-[40px] px-5 pt-1.5 bg-white flex items-center justify-between text-xs font-semibold text-slate-900 shrink-0 select-none relative z-30">
+                      <span className="font-bold text-xs tracking-tight">9:41</span>
+
+                      {/* Dynamic Island */}
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[88px] h-[22px] bg-black rounded-full flex items-center justify-end px-2 gap-1.5 shadow-sm">
+                        <span className="w-2 h-2 rounded-full bg-[#0b111e] border border-slate-800"></span>
+                        <span className="w-1 h-1 rounded-full bg-slate-800"></span>
+                      </div>
+
+                      {/* Status Indicators */}
+                      <div className="flex items-center gap-1.5 text-slate-900">
+                        <span className="text-[10px] font-black tracking-tight">5G</span>
+                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                          <path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98C20.93 5.9 16.69 4 12 4zm0 3.5c3.78 0 7.21 1.5 9.74 3.96L12 19.34 2.26 11.46C4.79 9 8.22 7.5 12 7.5z"/>
+                        </svg>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] font-bold">100%</span>
+                          <div className="w-[19px] h-[10px] border border-slate-900 rounded-[2.5px] p-[1px] relative flex items-center">
+                            <div className="w-full h-full bg-emerald-600 rounded-[1px]"></div>
+                            <div className="absolute -right-[3px] top-[2px] w-[1.5px] h-[4px] bg-slate-900 rounded-r-xs"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Iframe Viewport */}
                     <iframe
                       ref={iframeRef}
                       key={`mobile-${previewKey}-${themeTemplate}-${cardStyle}`}
                       src={previewUrl}
                       onLoad={sendThemeMessage}
                       title="Storefront Mobile Preview"
-                      className="w-full h-full border-0"
+                      className="w-full flex-1 border-0"
                     />
+
+                    {/* iOS Home Indicator */}
+                    <div className="h-4 bg-white flex items-center justify-center shrink-0">
+                      <div className="w-28 h-1 bg-slate-900/80 rounded-full"></div>
+                    </div>
                   </div>
                 </div>
               </div>

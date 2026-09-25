@@ -12,10 +12,15 @@ def get_merchant_store(request):
     user = request.user
     if not user.is_authenticated:
         return None
-    session = getattr(request, "session", {})
-    store_id = None
-    if hasattr(session, "get"):
-        store_id = session.get("merchant_current_store_id") or session.get("selected_store_id")
+    
+    # Priority: explicit request header or query param, then session
+    store_id = request.headers.get("X-Store-Id") or request.GET.get("store_id")
+    if not store_id and hasattr(request, "data") and isinstance(request.data, dict):
+        store_id = request.data.get("store_id")
+    if not store_id:
+        session = getattr(request, "session", {})
+        if hasattr(session, "get"):
+            store_id = session.get("merchant_current_store_id") or session.get("selected_store_id")
     if store_id:
         store = Store.objects.filter(id=store_id, owner=user).first()
         if not store:
