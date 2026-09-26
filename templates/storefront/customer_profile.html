@@ -339,8 +339,8 @@
                                 {% if item.product and item.product.primary_image_url %}
                                 <img src="{{ item.product.primary_image_url }}" alt="{{ item.product_name }}" class="w-full h-full object-cover">
                                 {% else %}
-                                <div class="w-full h-full flex items-center justify-center text-slate-400 font-bold text-xs">
-                                    🛍
+                                <div class="w-full h-full flex items-center justify-center text-slate-300">
+                                    <i data-lucide="package" class="w-5 h-5"></i>
                                 </div>
                                 {% endif %}
                             </div>
@@ -494,7 +494,9 @@
                                     <img :src="p.image" :alt="p.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                 </template>
                                 <template x-if="!p.image">
-                                    <div class="w-full h-full flex items-center justify-center text-slate-300 text-2xl">🛍</div>
+                                    <div class="w-full h-full flex items-center justify-center text-slate-300">
+                                        <i data-lucide="package" class="w-8 h-8"></i>
+                                    </div>
                                 </template>
                                 <span x-show="p.discount_percent" class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[10px]" x-text="'-' + p.discount_percent + '%'"></span>
                             </div>

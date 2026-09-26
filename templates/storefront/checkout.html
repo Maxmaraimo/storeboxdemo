@@ -12,9 +12,9 @@
 {% block storefront_body %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-6" x-data="checkoutApp()">
     <div class="mb-6 flex items-center justify-between">
-        <a href="/store/{{ store.subdomain }}/{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            <span>{{ t.back_to_menu|default:"Menyuga qaytish" }}</span>
+            <span>{{ t.cart|default:"Savatga qaytish" }}</span>
         </a>
         <span class="text-xs font-bold text-slate-400">{{ t.step_checkout|default:"2-qadam: To'lov va yetkazish" }}</span>
     </div>
@@ -32,6 +32,7 @@
         <input type="hidden" name="is_tma" :value="tgUserId ? '1' : '0'">
         <input type="hidden" name="delivery_lat" x-model="deliveryLat">
         <input type="hidden" name="delivery_lng" x-model="deliveryLng">
+        <input type="hidden" name="cutlery_count" x-model="cutleryCount">
 
         <!-- 0. Ordered Products Overview -->
         <div class="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3.5">
@@ -40,9 +41,9 @@
                     <i data-lucide="shopping-bag" class="w-4 h-4 text-brand"></i>
                     <h3>{{ t.ordered_products|default:"Buyurtma qilinayotgan tovarlar" }}</h3>
                 </div>
-                <button type="button" @click="cartDrawerOpen = true" class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}" class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
                     <span>{{ t.edit|default:"O'zgartirish" }}</span>
-                </button>
+                </a>
             </div>
 
             <div class="divide-y divide-slate-100">
@@ -139,7 +140,7 @@
                         <div class="relative shrink-0">
                             <button type="button" @click="countryDropdownOpen = !countryDropdownOpen"
                                     class="h-full px-3 py-3 flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200/70 rounded-l-xl border-r border-slate-200 text-xs font-bold text-slate-800 transition-colors">
-                                <span class="text-base leading-none" x-text="selectedCountry.flag"></span>
+                                <span class="px-1.5 py-0.5 rounded bg-slate-200/80 text-[10px] font-black text-slate-800 font-mono tracking-wider" x-text="selectedCountry.flag"></span>
                                 <span class="font-mono text-xs" x-text="selectedCountry.dialCode"></span>
                                 <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
                             </button>
@@ -151,7 +152,7 @@
                                     <button type="button" @click="selectCountry(c)"
                                             class="w-full px-3 py-2 rounded-xl text-left text-xs font-bold flex items-center gap-2 hover:bg-violet-50 transition-colors"
                                             :class="selectedCountry.id === c.id ? 'bg-violet-50 text-brand' : 'text-slate-700'">
-                                        <span class="text-base" x-text="c.flag"></span>
+                                        <span class="px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-black text-slate-700 font-mono tracking-wider" x-text="c.flag"></span>
                                         <span class="flex-1 truncate" x-text="c.nameRu || c.name"></span>
                                         <span class="font-mono text-[11px] text-slate-400" x-text="c.dialCode"></span>
                                     </button>
@@ -243,21 +244,21 @@
                         <div class="relative">
                             <select x-model="activeCity" @change="selectCity($event.target.value)"
                                     class="w-full pl-3 pr-8 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-brand focus:bg-white transition-all appearance-none cursor-pointer">
-                                <option value="tashkent">📍 Toshkent / Ташкент</option>
-                                <option value="samarkand">📍 Samarqand / Самарканд</option>
-                                <option value="bukhara">📍 Buxoro / Бухара</option>
-                                <option value="andijan">📍 Andijon / Андижан</option>
-                                <option value="namangan">📍 Namangan / Наманган</option>
-                                <option value="fergana">📍 Farg'ona / Фергана</option>
-                                <option value="kokand">📍 Qo'qon / Коканд</option>
-                                <option value="qarshi">📍 Qarshi / Карши</option>
-                                <option value="urgench">📍 Urganch / Ургенч</option>
-                                <option value="khiva">📍 Xiva / Хива</option>
-                                <option value="nukus">📍 Nukus / Нукус</option>
-                                <option value="navoiy">📍 Navoiy / Навои</option>
-                                <option value="jizzakh">📍 Jizzax / Джизак</option>
-                                <option value="termez">📍 Termiz / Термез</option>
-                                <option value="gulistan">📍 Guliston / Гулистан</option>
+                                <option value="tashkent">Toshkent / Ташкент</option>
+                                <option value="samarkand">Samarqand / Самарканд</option>
+                                <option value="bukhara">Buxoro / Бухара</option>
+                                <option value="andijan">Andijon / Андижан</option>
+                                <option value="namangan">Namangan / Наманган</option>
+                                <option value="fergana">Farg'ona / Фергана</option>
+                                <option value="kokand">Qo'qon / Коканд</option>
+                                <option value="qarshi">Qarshi / Карши</option>
+                                <option value="urgench">Urganch / Ургенч</option>
+                                <option value="khiva">Xiva / Хива</option>
+                                <option value="nukus">Nukus / Нукус</option>
+                                <option value="navoiy">Navoiy / Навои</option>
+                                <option value="jizzakh">Jizzax / Джизак</option>
+                                <option value="termez">Termiz / Термез</option>
+                                <option value="gulistan">Guliston / Гулистан</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
                                 <i data-lucide="chevron-down" class="w-4 h-4"></i>
@@ -310,7 +311,7 @@
                 <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
                     <div id="checkoutDeliveryMap" class="w-full h-56 sm:h-64 bg-slate-100"></div>
                     <div class="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-semibold text-slate-700 shadow-xs border border-slate-200/60 flex items-center gap-1.5">
-                        <span>💡</span>
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i>
                         <span>{% if lang == 'uz' %}Xaritani bosib yoki markerni surib uyingizni belgilang{% elif lang == 'en' %}Click the map or drag the marker to your house{% elif lang == 'tr' %}Haritaya tıklayın veya pini evinize sürükleyin{% else %}Нажмите на карту или перетащите маркер к вашему дому{% endif %}</span>
                     </div>
                 </div>
@@ -380,7 +381,7 @@
 
                 <div class="text-[11px] p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                     <span class="text-slate-600">{{ t.delivery_fee_label|default:"Yetkazib berish narxi:" }}</span>
-                    <span class="font-bold text-slate-900" x-text="deliveryFee === 0 ? '{{ t.free|default:"Bepul 🎉" }}' : (deliveryFee.toLocaleString() + ' UZS')"></span>
+                    <span class="font-bold text-slate-900" x-text="deliveryFee === 0 ? '{{ t.free|default:"Bepul (0 UZS)" }}' : (deliveryFee.toLocaleString() + ' UZS')"></span>
                 </div>
             </div>
 
@@ -410,7 +411,7 @@
 
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t.order_comment|default:"Buyurtmaga izoh (ixtiyoriy)" }}</label>
-                <input type="text" name="notes" placeholder="{{ t.order_comment_placeholder|default:'Domofon, qo\'ng\'iroq qilish...' }}"
+                <input type="text" name="notes" x-model="orderNotes" placeholder="{{ t.order_comment_placeholder|default:'Domofon, qo\'ng\'iroq qilish...' }}"
                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
             </div>
         </div>
@@ -591,6 +592,8 @@
 
         return {
             customerName: '{{ saved_name|escapejs }}' || localStorage.getItem('sb_cust_name_{{ store.id }}') || '',
+            orderNotes: sessionStorage.getItem('cart_restaurant_comment') || '',
+            cutleryCount: Number(sessionStorage.getItem('cart_cutlery_count')) || 0,
             
             // Country and Phone Mask State
             selectedCountry: {
@@ -599,7 +602,7 @@
                 nameRu: "Узбекистан",
                 dialCode: '+998',
                 code: '998',
-                flag: '🇺🇿',
+                flag: 'UZ',
                 digits: 9,
                 placeholder: '(90) 123-45-67',
                 format(d) {
@@ -619,7 +622,7 @@
                     nameRu: "Узбекистан",
                     dialCode: '+998',
                     code: '998',
-                    flag: '🇺🇿',
+                    flag: 'UZ',
                     digits: 9,
                     placeholder: '(90) 123-45-67',
                     format(d) {
@@ -638,7 +641,7 @@
                     nameRu: "Россия",
                     dialCode: '+7',
                     code: '7',
-                    flag: '🇷🇺',
+                    flag: 'RU',
                     digits: 10,
                     placeholder: '(912) 345-67-89',
                     format(d) {
@@ -657,7 +660,7 @@
                     nameRu: "Казахстан",
                     dialCode: '+7',
                     code: '7',
-                    flag: '🇰🇿',
+                    flag: 'KZ',
                     digits: 10,
                     placeholder: '(777) 123-45-67',
                     format(d) {
@@ -676,7 +679,7 @@
                     nameRu: "Кыргызстан",
                     dialCode: '+996',
                     code: '996',
-                    flag: '🇰🇬',
+                    flag: 'KG',
                     digits: 9,
                     placeholder: '(555) 12-34-56',
                     format(d) {
@@ -695,7 +698,7 @@
                     nameRu: "Таджикистан",
                     dialCode: '+992',
                     code: '992',
-                    flag: '🇹🇯',
+                    flag: 'TJ',
                     digits: 9,
                     placeholder: '(90) 123-45-67',
                     format(d) {
@@ -714,7 +717,7 @@
                     nameRu: "Турция",
                     dialCode: '+90',
                     code: '90',
-                    flag: '🇹🇷',
+                    flag: 'TR',
                     digits: 10,
                     placeholder: '(555) 123 45 67',
                     format(d) {
@@ -917,7 +920,7 @@
                 }
                 if (this.deliveryMarker) {
                     this.deliveryMarker.setLatLng([city.lat, city.lng]);
-                    this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${city.name}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${city.defaultAddress}</div>`).openPopup();
+                    this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">${city.name}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${city.defaultAddress}</div>`).openPopup();
                 }
                 this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
             },
@@ -944,7 +947,7 @@
                 }).addTo(this.deliveryMap);
 
                 this.deliveryMarker = L.marker([lat, lng], { draggable: true }).addTo(this.deliveryMap);
-                this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 {% if lang == 'uz' %}Yetkazib berish nuqtasi{% else %}Точка доставки{% endif %}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${this.deliveryStreet || '{% if lang == 'uz' %}Xaritadan tanlang{% else %}Выберите на карте{% endif %}'}</div>`);
+                this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">{% if lang == 'uz' %}Yetkazib berish nuqtasi{% else %}Точка доставки{% endif %}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${this.deliveryStreet || '{% if lang == 'uz' %}Xaritadan tanlang{% else %}Выберите на карте{% endif %}'}</div>`);
 
                 this.deliveryMarker.on('dragend', (e) => {
                     const pos = e.target.getLatLng();
@@ -1032,7 +1035,7 @@
                 if (this.deliveryMap && this.deliveryMarker) {
                     this.deliveryMap.flyTo([this.deliveryLat, this.deliveryLng], 17, { animate: true, duration: 1 });
                     this.deliveryMarker.setLatLng([this.deliveryLat, this.deliveryLng]);
-                    this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${res.name || 'Yetkazish manzili'}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${res.display_name}</div>`).openPopup();
+                    this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">${res.name || 'Yetkazish manzili'}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${res.display_name}</div>`).openPopup();
                 }
                 this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
             },
@@ -1140,7 +1143,7 @@
                 this.mapSearch = address;
                 this.isReverseGeocoding = false;
                 if (this.deliveryMarker) {
-                    this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">📍 ${title}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${address}</div>`).openPopup();
+                    this.deliveryMarker.bindPopup(`<div style="font-size:12px;font-weight:bold;color:#0f172a;">${title}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">${address}</div>`).openPopup();
                 }
                 this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
             },
@@ -1215,7 +1218,7 @@
                                     attribution: '© Google Maps'
                                 }).addTo(this.branchMap);
                                 const m = L.marker([bLat, bLng]).addTo(this.branchMap);
-                                m.bindPopup("<div style='font-size:12px;font-weight:bold;'>🏪 {{ branches.first.name|default:store.name|escapejs }}</div><div style='font-size:11px;color:#666;'>{{ branches.first.address|default:store.address|escapejs }}</div>");
+                                m.bindPopup("<div style='font-size:12px;font-weight:bold;'>" + "{{ branches.first.name|default:store.name|escapejs }}" + "</div><div style='font-size:11px;color:#666;'>{{ branches.first.address|default:store.address|escapejs }}</div>");
                             } else if (this.branchMap) {
                                 setTimeout(() => { this.branchMap.invalidateSize(); }, 200);
                             }

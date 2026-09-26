@@ -1344,10 +1344,10 @@ def checkout_view(request, subdomain=None):
     for p in recommended_products:
         p.display_name = p.get_name(lang) if hasattr(p, 'get_name') else (getattr(p, f'name_{lang}', None) or getattr(p, 'name_uz', '') or getattr(p, 'name_ru', ''))
 
-    if request.method == 'GET':
+    if not cart:
         return redirect(f'/store/{store.subdomain}/cart/' if store and store.subdomain else '/cart/')
 
-    return render(request, 'storefront/cart.html', {
+    return render(request, 'storefront/checkout.html', {
         'store': store,
         'cart': cart,
         'cart_count': sum(item.get('quantity', 1) for item in cart.values()),

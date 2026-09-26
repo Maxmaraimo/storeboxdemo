@@ -197,9 +197,10 @@
     x-init="$nextTick(() => { checkOverflow(); }); window.addEventListener('resize', () => checkOverflow());">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <h3 class="text-sm font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight">
+                <h3 class="text-sm font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight flex items-center gap-1.5">
                     {% if store.theme_template == 'restaurant' %}
-                        🍽️ {{ t.restaurant_sections|default:"Taomlar Bo'limlari" }}
+                        <i data-lucide="utensils" class="w-4 h-4 text-amber-500"></i>
+                        <span>{{ t.restaurant_sections|default:"Taomlar Bo'limlari" }}</span>
                     {% else %}
                         {{ t.categories|default:"Kategoriyalar" }}
                     {% endif %}
@@ -263,7 +264,7 @@
                     {% if current_category %}
                         {{ current_category.display_name }}
                     {% elif store.theme_template == 'restaurant' %}
-                        🍽️ {{ t.restaurant_menu|default:"Taomlar Menyusi" }}
+                        <span class="inline-flex items-center gap-1.5"><i data-lucide="utensils" class="w-4 h-4 text-amber-500"></i><span>{{ t.restaurant_menu|default:"Taomlar Menyusi" }}</span></span>
                     {% else %}
                         {{ t.popular|default:"Ommabop mahsulotlar" }}
                     {% endif %}
@@ -438,9 +439,9 @@
                     <div class="text-[11px] text-slate-400 truncate font-normal">
                         {{ product.display_description|striptags|truncatewords:4|default:product.category.display_name }}
                     </div>
-                    <!-- Rating (Thumbs up style like EVOS) -->
+                    <!-- Rating (clean star badge) -->
                     <div class="flex items-center gap-1 text-[11px] font-bold text-slate-700 pt-0.5">
-                        <span class="text-xs">👍</span>
+                        <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
                         <span>{{ product.rating|default:"4.8" }}</span>
                         <span class="text-slate-400 font-normal">({{ product.reviews_count|default:"12" }})</span>
                     </div>
@@ -681,10 +682,12 @@
         <!-- Left: Delivery Tier Scale (Matching Frame 9, 13, 17) -->
         <div class="pointer-events-auto bg-[#FDFBF7]/95 backdrop-blur-xl border border-amber-200/90 rounded-2xl sm:rounded-full px-3.5 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.1)] flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3 text-xs max-w-[240px] sm:max-w-none">
             <div class="flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shrink-0">🛵</span>
+                <span class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0">
+                    <i data-lucide="bike" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+                </span>
                 <div class="flex items-center gap-1.5 font-bold">
                     <span :class="deliveryFee === 0 ? 'text-emerald-600 font-black' : 'text-amber-900'"
-                          x-text="deliveryFee === 0 ? '{% if current_lang == 'ru' %}0 сум (Бесплатно! 🎉){% else %}0 UZS (Bepul! 🎉){% endif %}' : formatMoney(deliveryFee)"></span>
+                          x-text="deliveryFee === 0 ? '{% if current_lang == 'ru' %}0 сум (Бесплатно){% else %}0 UZS (Bepul){% endif %}' : formatMoney(deliveryFee)"></span>
                 </div>
             </div>
             <!-- Progress Line -->
