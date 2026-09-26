@@ -1,384 +1,1203 @@
 {% extends 'storefront/base_storefront.html' %}
-{% load static %}
+{% load static l10n %}
 
 {% block title %}
-{{ t.cart|default:'Savat' }} — {{ store.name }}
+{{ t.cart|default:'Корзина' }} — {{ store.name }}
+{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet Maps for Courier / Branch location -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  /* Custom scrollbar for horizontal add-to-order carousel */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
 {% endblock %}
 
 {% block storefront_body %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10"
-     x-data="{
-         cartItems: JSON.parse('{{ cart_json|escapejs }}' || '{}'),
-         cartCount: Number('{{ cart_count|default:0 }}'),
-         subtotal: Number('{{ cart_subtotal|default:0 }}'),
-         deliveryFee: Number('{{ delivery_fee|default:0 }}'),
-         appliedDiscount: Number('{{ promo_discount|default:0 }}'),
-         appliedPromoCode: '{{ promo_code|default:'' }}',
-         promoInput: '',
-         promoLoading: false,
-         promoError: '',
-         promoSuccess: '',
+<div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-32 lg:pb-12"
+     x-data="yandexCartApp()">
 
-         formatMoney(val) {
-             return (Number(val) || 0).toLocaleString() + ' UZS';
-         },
-
-         async updateQty(key, newQty) {
-             if (newQty < 1) {
-                 this.removeItem(key);
-                 return;
-             }
-             try {
-                 const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/update/{% else %}/cart/update/{% endif %}', {
-                     method: 'POST',
-                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                     body: JSON.stringify({ item_key: key, quantity: newQty })
-                 });
-                 const data = await res.json();
-                 if (data.success) {
-                     this.cartItems = data.cart;
-                     this.cartCount = data.cart_count;
-                     this.subtotal = data.subtotal;
-                     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false } }));
-                 }
-             } catch (e) {
-                 console.error(e);
-             }
-         },
-
-         async removeItem(key) {
-             try {
-                 const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/update/{% else %}/cart/update/{% endif %}', {
-                     method: 'POST',
-                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                     body: JSON.stringify({ item_key: key, quantity: 0 })
-                 });
-                 const data = await res.json();
-                 if (data.success) {
-                     this.cartItems = data.cart;
-                     this.cartCount = data.cart_count;
-                     this.subtotal = data.subtotal;
-                     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false } }));
-                 }
-             } catch (e) {
-                 console.error(e);
-             }
-         },
-
-         async clearCart() {
-             const confirmMsg = '{% if current_lang == "ru" %}Очистить всю корзину?{% elif current_lang == "en" %}Clear all items in cart?{% elif current_lang == "tr" %}Sepetteki tüm ürünleri temizlemek istiyor musunuz?{% else %}Savatni butunlay tozalaysizmi?{% endif %}';
-             if (!confirm(confirmMsg)) return;
-             try {
-                 const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/clear/{% else %}/cart/clear/{% endif %}', {
-                     method: 'POST',
-                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
-                 });
-                 const data = await res.json();
-                 if (data.success) {
-                     this.cartItems = {};
-                     this.cartCount = 0;
-                     this.subtotal = 0;
-                     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: {}, cart_count: 0, subtotal: 0, openDrawer: false } }));
-                 }
-             } catch (e) {
-                 console.error(e);
-             }
-         },
-
-         async applyPromo() {
-             if (!this.promoInput.trim()) return;
-             this.promoLoading = true;
-             this.promoError = '';
-             this.promoSuccess = '';
-             try {
-                 const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/apply-promo/{% else %}/cart/apply-promo/{% endif %}', {
-                     method: 'POST',
-                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                     body: JSON.stringify({ promo_code: this.promoInput.trim() })
-                 });
-                 const data = await res.json();
-                 if (data.success) {
-                     this.appliedDiscount = data.discount;
-                     this.appliedPromoCode = this.promoInput.trim().toUpperCase();
-                     this.promoSuccess = data.message || '{% if current_lang == "ru" %}Промокод успешно применен!{% elif current_lang == "en" %}Promo code applied!{% elif current_lang == "tr" %}Promosyon kodu uygulandı!{% else %}Promokod qabul qilindi!{% endif %}';
-                 } else {
-                     this.promoError = data.error || '{% if current_lang == "ru" %}Неверный промокод{% elif current_lang == "en" %}Invalid promo code{% elif current_lang == "tr" %}Geçersiz promosyon kodu{% else %}Noto\'g\'ri promokod{% endif %}';
-                 }
-             } catch (e) {
-                 this.promoError = '{% if current_lang == "ru" %}Ошибка сети{% elif current_lang == "en" %}Network error{% elif current_lang == "tr" %}Ağ hatası{% else %}Tarmoq xatosi yuz berdi{% endif %}';
-             } finally {
-                 this.promoLoading = false;
-             }
-         },
-
-         async quickAddToCart(productId) {
-             try {
-                 const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}', {
-                     method: 'POST',
-                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                     body: JSON.stringify({ product_id: productId, quantity: 1 })
-                 });
-                 const data = await res.json();
-                 if (data.success) {
-                     this.cartItems = data.cart;
-                     this.cartCount = data.cart_count;
-                     this.subtotal = data.subtotal;
-                     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false } }));
-                 }
-             } catch (e) {
-                 console.error(e);
-             }
-         }
-     }">
-
-    <!-- BREADCRUMBS -->
-    <nav class="flex items-center gap-2 text-xs text-slate-400 mb-6 font-medium">
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}" class="hover:text-slate-700 transition-colors">
-            {{ t.home|default:'Bosh sahifa' }}
+    <!-- YANDEX EATS TOP APP BAR (Matching Frame 11 & 19) -->
+    <div class="mb-4 sm:mb-6 flex items-center justify-between py-1 border-b border-slate-200/80">
+        <!-- Close button (goes back to store) -->
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+           class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+           aria-label="{% if current_lang == 'ru' %}Назад в меню{% else %}Menyuga qaytish{% endif %}">
+            <i data-lucide="x" class="w-5 h-5"></i>
         </a>
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-        <span class="text-slate-900 font-bold">{{ t.cart|default:'Savat' }}</span>
-    </nav>
 
-    <!-- 1. EMPTY CART STATE (Clean, Modern Uzum Market Style) -->
-    <div x-show="cartCount === 0" x-cloak class="py-12 sm:py-16 text-center max-w-lg mx-auto">
-        <div class="w-32 h-32 mx-auto mb-6 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200/80 shadow-inner">
-            <svg class="w-16 h-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
+        <!-- Store Name & Estimated Delivery Time -->
+        <div class="text-center">
+            <h1 class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">{{ store.name }}</h1>
+            <div class="text-xs text-slate-500 font-medium">
+                <span class="font-extrabold text-slate-800" x-text="formatMoney(subtotal)"></span> · 15-25 {% if current_lang == 'ru' %}минут{% elif current_lang == 'en' %}min{% elif current_lang == 'tr' %}dk{% else %}daqiqa{% endif %}
+            </div>
         </div>
 
-        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {% if current_lang == 'ru' %}В корзине пока ничего нет{% elif current_lang == 'en' %}Your cart is currently empty{% elif current_lang == 'tr' %}Sepetiniz henüz boş{% else %}Savatingiz hozircha bo'sh{% endif %}
-        </h1>
-        <p class="text-sm text-slate-500 mt-2 max-w-sm mx-auto leading-relaxed">
-            {% if current_lang == 'ru' %}
-            Начните с подборок на главной странице или найдите нужный товар через поиск.
-            {% elif current_lang == 'en' %}
-            Start from curated collections on the homepage or search for your favorite items.
-            {% elif current_lang == 'tr' %}
-            Ana sayfadaki koleksiyonlardan başlayın veya arama yoluyla ürün bulun.
-            {% else %}
-            Bosh sahifadagi to'plamlardan boshlang yoki kerakli mahsulotni qidiruv orqali toping.
-            {% endif %}
-        </p>
-
-        <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-               class="px-8 py-3.5 rounded-2xl btn-brand text-white font-bold text-sm shadow-lg shadow-brand/20 hover:opacity-95 active:scale-95 transition-all inline-flex items-center gap-2">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                <span>{% if current_lang == 'ru' %}Перейти на главную{% elif current_lang == 'en' %}Go to Homepage{% elif current_lang == 'tr' %}Ana Sayfaya Dön{% else %}Bosh sahifaga o'tish{% endif %}</span>
-            </a>
-        </div>
+        <!-- Clear Cart Trash Icon (Triggers iOS Action Sheet) -->
+        <button type="button" @click="clearSheetOpen = true"
+                class="w-9 h-9 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
+                title="{% if current_lang == 'ru' %}Очистить корзину{% else %}Savatni tozalash{% endif %}">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
     </div>
 
-    <!-- 2. CART HAS ITEMS: FULL TWO-COLUMN VIEW -->
-    <div x-show="cartCount > 0" class="space-y-6">
-        <div class="flex items-center justify-between pb-4 border-b border-slate-200">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                    <span>{{ t.cart|default:'Savatingiz' }}</span>
-                    <span class="text-sm font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600" x-text="cartCount + ' {% if current_lang == 'ru' %}шт.{% elif current_lang == 'en' %}items{% elif current_lang == 'tr' %}adet{% else %}ta{% endif %}'"></span>
-                </h1>
-            </div>
-            <button type="button" @click="clearCart()" class="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline flex items-center gap-1 cursor-pointer">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                <span>{% if current_lang == 'ru' %}Очистить корзину{% elif current_lang == 'en' %}Clear all{% elif current_lang == 'tr' %}Sepeti temizle{% else %}Barchasini tozalash{% endif %}</span>
-            </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <!-- Left: Cart Items List (8 cols) -->
-            <div class="lg:col-span-8 space-y-4">
-                <template x-for="(item, key) in cartItems" :key="key">
-                    <div class="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div class="flex items-center gap-4 min-w-0 flex-1">
-                            <!-- Image -->
-                            <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/{% else %}/product/{% endif %}' + item.product_id + '/{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}'" class="shrink-0">
-                                <img :src="item.image || item.image_url || 'https://placehold.co/120x120?text=Tovar'" :alt="item.name" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border border-slate-100 bg-slate-50">
-                            </a>
-
-                            <!-- Title & Specs -->
-                            <div class="min-w-0 flex-1">
-                                <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/{% else %}/product/{% endif %}' + item.product_id + '/{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}'"
-                                   class="font-bold text-sm sm:text-base text-slate-900 hover:text-brand transition-colors line-clamp-2"
-                                   x-text="item.name"></a>
-
-                                <div x-show="item.variation_name" class="text-xs text-slate-500 font-medium mt-0.5">
-                                    <span x-text="item.variation_name"></span>
-                                </div>
-
-                                <div class="text-xs text-slate-400 font-mono mt-1">
-                                    <span x-text="formatMoney(item.unit_price || item.price)"></span> / {% if current_lang == 'ru' %}шт.{% elif current_lang == 'en' %}pcs{% elif current_lang == 'tr' %}adet{% else %}dona{% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Actions: Counter + Total + Remove -->
-                        <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-0 border-slate-100">
-                            <!-- Quantity Counter -->
-                            <div class="flex items-center rounded-xl border border-slate-200 bg-slate-50/80 p-0.5 shadow-2xs">
-                                <button type="button" @click="updateQty(key, item.quantity - 1)"
-                                        class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 flex items-center justify-center font-bold text-slate-700 shadow-2xs cursor-pointer active:scale-90 transition-transform">
-                                    -
-                                </button>
-                                <span class="w-9 text-center font-black text-xs text-slate-900 font-mono" x-text="item.quantity"></span>
-                                <button type="button" @click="updateQty(key, item.quantity + 1)"
-                                        class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 flex items-center justify-center font-bold text-slate-700 shadow-2xs cursor-pointer active:scale-90 transition-transform">
-                                    +
-                                </button>
-                            </div>
-
-                            <!-- Total for this item -->
-                            <div class="text-right">
-                                <div class="font-black text-sm sm:text-base text-slate-900 whitespace-nowrap" x-text="formatMoney(item.total_price || ((item.unit_price || item.price) * item.quantity))"></div>
-                            </div>
-
-                            <!-- Trash Button -->
-                            <button type="button" @click="removeItem(key)" class="text-slate-300 hover:text-rose-600 transition-colors p-1" title="{% if current_lang == 'ru' %}Удалить{% elif current_lang == 'en' %}Remove{% elif current_lang == 'tr' %}Sil{% else %}O'chirish{% endif %}">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-
-            <!-- Right: Order Summary Sidebar (4 cols) -->
-            <div class="lg:col-span-4 sticky top-24 space-y-4">
-                <div class="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-lg space-y-5">
-                    <h2 class="text-lg font-black text-slate-900 tracking-tight pb-3 border-b border-slate-100">
-                        {% if current_lang == 'ru' %}Ваш заказ{% elif current_lang == 'en' %}Order Summary{% elif current_lang == 'tr' %}Sipariş Özeti{% else %}Buyurtmangiz{% endif %}
-                    </h2>
-
-                    <div class="space-y-3 text-sm">
-                        <div class="flex items-center justify-between text-slate-600">
-                            <span>{% if current_lang == 'ru' %}Товары{% elif current_lang == 'en' %}Products{% elif current_lang == 'tr' %}Ürünler{% else %}Mahsulotlar{% endif %} (<span x-text="cartCount"></span>)</span>
-                            <span class="font-bold text-slate-900" x-text="formatMoney(subtotal)"></span>
-                        </div>
-
-                        <div class="flex items-center justify-between text-slate-600">
-                            <span>{% if current_lang == 'ru' %}Доставка{% elif current_lang == 'en' %}Delivery{% elif current_lang == 'tr' %}Teslimat{% else %}Yetkazib berish{% endif %}</span>
-                            <span class="font-bold" :class="deliveryFee === 0 ? 'text-emerald-600 font-bold' : 'text-slate-900'">
-                                <span x-show="deliveryFee === 0">{% if current_lang == 'ru' %}Бесплатно{% elif current_lang == 'en' %}Free{% elif current_lang == 'tr' %}Ücretsiz{% else %}Tekin{% endif %}</span>
-                                <span x-show="deliveryFee > 0" x-text="formatMoney(deliveryFee)"></span>
-                            </span>
-                        </div>
-
-                        <div x-show="appliedDiscount > 0" class="flex items-center justify-between text-emerald-600 font-bold">
-                            <span class="flex items-center gap-1">
-                                <i data-lucide="tag" class="w-3.5 h-3.5"></i>
-                                <span>{% if current_lang == 'ru' %}Промокод{% elif current_lang == 'en' %}Promo code{% elif current_lang == 'tr' %}Promosyon kodu{% else %}Promokod{% endif %} (<span x-text="appliedPromoCode"></span>)</span>
-                            </span>
-                            <span>-<span x-text="formatMoney(appliedDiscount)"></span></span>
-                        </div>
-
-                        <div class="pt-3 border-t border-slate-100 flex items-baseline justify-between">
-                            <div>
-                                <span class="font-black text-base text-slate-900">{% if current_lang == 'ru' %}Итого к оплате{% elif current_lang == 'en' %}Total{% elif current_lang == 'tr' %}Toplam{% else %}Jami to'lov{% endif %}</span>
-                                <span class="block text-[10px] text-slate-400">{% if current_lang == 'ru' %}С учетом налогов{% elif current_lang == 'en' %}VAT included{% elif current_lang == 'tr' %}KDV dahildir{% else %}QQS bilan birga{% endif %}</span>
-                            </div>
-                            <span class="text-xl sm:text-2xl font-black text-brand"
-                                  x-text="formatMoney(Math.max(0, subtotal + deliveryFee - appliedDiscount))"></span>
-                        </div>
-                    </div>
-
-                    <!-- Promo Code Box -->
-                    <div class="pt-3 border-t border-slate-100 space-y-2">
-                        <label class="block text-xs font-bold text-slate-700">
-                            {% if current_lang == 'ru' %}Есть промокод?{% elif current_lang == 'en' %}Have a promo code?{% elif current_lang == 'tr' %}İndirim kuponunuz var mı?{% else %}Promokod bormi?{% endif %}
-                        </label>
-                        <div class="flex items-center gap-2">
-                            <input type="text" x-model="promoInput" placeholder="{% if current_lang == 'ru' %}Например: SALE10{% else %}Masalan: UZUM10{% endif %}"
-                                   class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono uppercase focus:ring-2 focus:ring-brand focus:border-brand">
-                            <button type="button" @click="applyPromo()" :disabled="promoLoading || !promoInput.trim()"
-                                    class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer">
-                                <span x-show="!promoLoading">{% if current_lang == 'ru' %}Применить{% elif current_lang == 'en' %}Apply{% elif current_lang == 'tr' %}Uygula{% else %}Qo'llash{% endif %}</span>
-                                <span x-show="promoLoading" class="animate-spin">...</span>
-                            </button>
-                        </div>
-                        <div x-show="promoError" x-text="promoError" class="text-xs text-rose-600 font-medium"></div>
-                        <div x-show="promoSuccess" x-text="promoSuccess" class="text-xs text-emerald-600 font-bold"></div>
-                    </div>
-
-                    <!-- Proceed to Checkout Button -->
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/checkout/{% else %}/checkout/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-                       class="w-full py-4 rounded-2xl btn-brand text-white font-black text-base shadow-lg shadow-brand/25 hover:opacity-95 active:scale-95 transition-all flex items-center justify-center gap-2">
-                        <span>{% if current_lang == 'ru' %}Перейти к оформлению{% elif current_lang == 'en' %}Proceed to Checkout{% elif current_lang == 'tr' %}Ödemeye Geç{% else %}Rasmiylashtirishga o'tish{% endif %}</span>
-                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                    </a>
-
-                    <!-- Trust Badges -->
-                    <div class="pt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-500 font-medium">
-                        <div class="flex items-center gap-1.5">
-                            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-                            <span>{% if current_lang == 'ru' %}100% безопасная оплата{% elif current_lang == 'en' %}100% Secure Checkout{% elif current_lang == 'tr' %}100% Güvenli Ödeme{% else %}100% xavfsiz to'lov{% endif %}</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <i data-lucide="truck" class="w-4 h-4 text-brand shrink-0"></i>
-                            <span>{% if current_lang == 'ru' %}Быстрая доставка{% elif current_lang == 'en' %}Fast delivery{% elif current_lang == 'tr' %}Hızlı teslimat{% else %}Tez yetkazib berish{% endif %}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. RECOMMENDED PRODUCTS (Upsell) -->
-    {% if recommended_products %}
-    <div class="mt-16 pt-10 border-t border-slate-200">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                    {% if current_lang == 'ru' %}Вам может понравиться{% elif current_lang == 'en' %}Recommended for you{% elif current_lang == 'tr' %}İlginizi çekebilir{% else %}Sizga yoqishi mumkin{% endif %}
-                </h2>
-                <p class="text-xs text-slate-500 mt-0.5">
-                    {% if current_lang == 'ru' %}Популярные товары, которые выбирают покупатели{% elif current_lang == 'en' %}Popular products curated for you{% elif current_lang == 'tr' %}Müşterilerin en çok tercih ettiği ürünler{% else %}Xaridoringiz ko'p tanlayotgan tavsiya etilgan tovarlar{% endif %}
-                </p>
-            </div>
-            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-               class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
-                <span>{{ t.see_all|default:'Barchasi' }}</span>
-                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-            </a>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
-            {% for p in recommended_products %}
-            <div class="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between p-2.5">
-                <div>
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ p.id }}/{% else %}/product/{{ p.id }}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}" class="block aspect-square rounded-xl overflow-hidden bg-slate-50 relative mb-2">
-                        {% if p.primary_image_url %}
-                        <img src="{{ p.primary_image_url }}" alt="{{ p.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                        {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-slate-300 font-bold text-xs">
-                            StoreBox
-                        </div>
-                        {% endif %}
-                    </a>
-
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ p.id }}/{% else %}/product/{{ p.id }}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-                       class="text-xs font-bold text-slate-900 hover:text-brand transition-colors line-clamp-2 leading-tight">
-                        {{ p.display_name }}
-                    </a>
-                </div>
-
-                <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <div>
-                        <div class="text-xs font-black text-slate-900 font-mono">
-                            {{ p.price|floatformat:0 }} UZS
-                        </div>
-                    </div>
-                    <button type="button" @click="quickAddToCart({{ p.id }})"
-                            class="w-7 h-7 rounded-lg btn-brand text-white flex items-center justify-center hover:opacity-90 active:scale-90 transition-all cursor-pointer shadow-2xs"
-                            title="{% if current_lang == 'ru' %}Добавить в корзину{% elif current_lang == 'en' %}Add to cart{% elif current_lang == 'tr' %}Sepete Ekle{% else %}Savatga qo'shish{% endif %}">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+    <!-- GLOBAL ERROR NOTIFICATION IF ANY -->
+    {% if error %}
+    <div class="mb-4 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2">
+        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+        <span>{{ error }}</span>
     </div>
     {% endif %}
 
+    <!-- 1. EMPTY CART STATE (Yandex Eats Style) -->
+    <div x-show="cartCount === 0" x-cloak class="py-16 sm:py-24 text-center max-w-md mx-auto">
+        <div class="w-24 h-24 mx-auto mb-5 rounded-3xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 shadow-inner">
+            <i data-lucide="shopping-bag" class="w-12 h-12 stroke-[1.5]"></i>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            {% if current_lang == 'ru' %}В корзине пока пусто{% elif current_lang == 'en' %}Your cart is empty{% elif current_lang == 'tr' %}Sepetiniz henüz boş{% else %}Savatingiz hozircha bo'sh{% endif %}
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+            {% if current_lang == 'ru' %}
+            Выберите вкусные блюда и напитки в меню заведения, чтобы сделать заказ.
+            {% elif current_lang == 'en' %}
+            Explore delicious meals and drinks from our menu to place an order.
+            {% elif current_lang == 'tr' %}
+            Sipariş vermek için menüden lezzetli ürünleri seçin.
+            {% else %}
+            Buyurtma berish uchun taomnoma va ichimliklardan tanlang.
+            {% endif %}
+        </p>
+        <div class="mt-6">
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+               class="px-7 py-3.5 rounded-full bg-[#FEE500] hover:bg-[#FADC00] text-slate-950 font-black text-xs sm:text-sm shadow-md transition-all inline-flex items-center gap-2 cursor-pointer">
+                <i data-lucide="utensils" class="w-4 h-4"></i>
+                <span>{% if current_lang == 'ru' %}Перейти в меню{% elif current_lang == 'en' %}Explore Menu{% elif current_lang == 'tr' %}Menüye Git{% else %}Menyuga o'tish{% endif %}</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 2. CART HAS ITEMS -->
+    <div x-show="cartCount > 0">
+        <form method="POST" id="yandexCartForm" @submit="validateAndSubmit($event)">
+            {% csrf_token %}
+            <input type="hidden" name="telegram_user_id" x-model="tgUserId">
+            <input type="hidden" name="is_tma" :value="tgUserId ? '1' : '0'">
+            <input type="hidden" name="delivery_method" x-model="deliveryMethod">
+            <input type="hidden" name="delivery_city" x-model="deliveryCity">
+            <input type="hidden" name="delivery_street" x-model="deliveryStreet">
+            <input type="hidden" name="delivery_entrance" x-model="deliveryEntrance">
+            <input type="hidden" name="delivery_floor" x-model="deliveryFloor">
+            <input type="hidden" name="delivery_apartment" x-model="deliveryApartment">
+            <input type="hidden" name="delivery_domofon" x-model="deliveryDomofon">
+            <input type="hidden" name="delivery_landmark" x-model="deliveryLandmark">
+            <input type="hidden" name="delivery_address" :value="computedFullAddress">
+            <input type="hidden" name="delivery_lat" x-model="deliveryLat">
+            <input type="hidden" name="delivery_lng" x-model="deliveryLng">
+            <input type="hidden" name="branch_id" x-model="selectedBranchId">
+            <input type="hidden" name="customer_name" x-model="customerName">
+            <input type="hidden" name="customer_phone" :value="fullPhoneNumber">
+            <input type="hidden" name="payment_method" x-model="paymentMethod">
+            <input type="hidden" name="promo_code" x-model="appliedPromoCode">
+            <input type="hidden" name="cutlery_count" x-model="cutleryCount">
+            <input type="hidden" name="leave_at_door" :value="leaveAtDoor ? '1' : '0'">
+            <input type="hidden" name="restaurant_notes" x-model="restaurantComment">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+                <!-- LEFT COLUMN (8 cols): Order flow -->
+                <div class="lg:col-span-8 space-y-4 sm:space-y-5">
+
+                    <!-- -------------------------------------------------------- -->
+                    <!-- 1. SEGMENTED SWITCHER: DELIVERY vs PICKUP (Yandex Eats)  -->
+                    <!-- -------------------------------------------------------- -->
+                    <div class="bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl">
+                            <button type="button" @click="deliveryMethod = 'COURIER'"
+                                    class="py-2.5 px-3 rounded-lg text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                    :class="deliveryMethod === 'COURIER' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'">
+                                <span class="text-sm">🛵</span>
+                                <span>{% if current_lang == 'ru' %}Доставка (25-35 мин){% elif current_lang == 'en' %}Delivery (25-35 min){% elif current_lang == 'tr' %}Teslimat (25-35 dk){% else %}Yetkazish (25-35 daq){% endif %}</span>
+                            </button>
+                            <button type="button" @click="deliveryMethod = 'PICKUP'"
+                                    class="py-2.5 px-3 rounded-lg text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                    :class="deliveryMethod === 'PICKUP' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'">
+                                <span class="text-sm">🛍️</span>
+                                <span>{% if current_lang == 'ru' %}Самовывоз (15 мин){% elif current_lang == 'en' %}Pickup (15 min){% elif current_lang == 'tr' %}Gel-Al (15 dk){% else %}Olib ketish (15 daq){% endif %}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- -------------------------------------------------------- -->
+                    <!-- 2. DELIVERY ADDRESS CARD (When Courier is selected)      -->
+                    <!-- -------------------------------------------------------- -->
+                    <div x-show="deliveryMethod === 'COURIER'" x-cloak
+                         class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-brand"></i>
+                                <span>{% if current_lang == 'ru' %}Куда доставить{% elif current_lang == 'en' %}Delivery Address{% elif current_lang == 'tr' %}Teslimat Adresi{% else %}Yetkazib berish manzili{% endif %}</span>
+                            </div>
+                            <button type="button" @click="locateMe()"
+                                    class="text-[11px] font-bold text-brand hover:text-brand-dark bg-brand/10 hover:bg-brand/15 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors">
+                                <i data-lucide="crosshair" class="w-3 h-3" :class="isLocating ? 'animate-spin' : ''"></i>
+                                <span x-text="isLocating ? '{% if current_lang == 'ru' %}Поиск...{% else %}Aniqlanmoqda...{% endif %}' : '{% if current_lang == 'ru' %}Моё местоположение{% else %}Mening joylashuvim{% endif %}'"></span>
+                            </button>
+                        </div>
+
+                        <!-- City & Street input -->
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                            <div class="sm:col-span-4">
+                                <select x-model="activeCity" @change="selectCity($event.target.value)"
+                                        class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-brand">
+                                    <option value="tashkent">📍 Toshkent / Ташкент</option>
+                                    <option value="samarkand">📍 Samarqand / Самарканд</option>
+                                    <option value="bukhara">📍 Buxoro / Бухара</option>
+                                    <option value="andijan">📍 Andijon / Андижан</option>
+                                    <option value="namangan">📍 Namangan / Наманган</option>
+                                    <option value="fergana">📍 Farg'ona / Фергана</option>
+                                    <option value="kokand">📍 Qo'qon / Коканд</option>
+                                    <option value="qarshi">📍 Qarshi / Карши</option>
+                                    <option value="urgench">📍 Urganch / Ургенч</option>
+                                    <option value="khiva">📍 Xiva / Хива</option>
+                                    <option value="nukus">📍 Nukus / Нукус</option>
+                                    <option value="navoiy">📍 Navoiy / Навои</option>
+                                    <option value="jizzakh">📍 Jizzax / Джизак</option>
+                                    <option value="termez">📍 Termiz / Термез</option>
+                                    <option value="gulistan">📍 Guliston / Гулистан</option>
+                                </select>
+                            </div>
+                            <div class="sm:col-span-8 relative">
+                                <input type="text" x-model="deliveryStreet"
+                                       placeholder="{% if current_lang == 'ru' %}Улица, дом (например: Чиланзар 9, д. 12){% else %}Ko'cha, uy raqami (masalan: Chilonzor 9, 12-uy){% endif %}"
+                                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                            </div>
+                        </div>
+
+                        <!-- 4-column quick fields: Apt, Entrance, Floor, Intercom -->
+                        <div class="grid grid-cols-4 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">{% if current_lang == 'ru' %}Кв./Офис{% else %}Xonadon{% endif %}</label>
+                                <input type="text" x-model="deliveryApartment" placeholder="42"
+                                       class="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">{% if current_lang == 'ru' %}Подъезд{% else %}Podezd{% endif %}</label>
+                                <input type="text" x-model="deliveryEntrance" placeholder="2"
+                                       class="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">{% if current_lang == 'ru' %}Этаж{% else %}Qavat{% endif %}</label>
+                                <input type="text" x-model="deliveryFloor" placeholder="4"
+                                       class="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">{% if current_lang == 'ru' %}Домофон{% else %}Domofon{% endif %}</label>
+                                <input type="text" x-model="deliveryDomofon" placeholder="42K"
+                                       class="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
+                            </div>
+                        </div>
+
+                        <!-- Comment / Landmark & Leave at Door toggle -->
+                        <div class="pt-1 space-y-2.5">
+                            <input type="text" x-model="deliveryLandmark"
+                                   placeholder="{% if current_lang == 'ru' %}Ориентир или комментарий курьеру (шлагбаум, желтые ворота...){% else %}Mo'ljal yoki kuryerga izoh (sariq darvoza, shlagbaum...){% endif %}"
+                                   class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand">
+
+                            <!-- Signature Yandex Eats Toggle: Leave at door -->
+                            <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/70 transition-colors">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">🚪</span>
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-800">{% if current_lang == 'ru' %}Оставить у двери{% elif current_lang == 'en' %}Leave at my door{% elif current_lang == 'tr' %}Kapıya bırakın{% else %}Eshik oldida qoldiring{% endif %}</div>
+                                        <div class="text-[10px] text-slate-400">{% if current_lang == 'ru' %}Курьер оставит заказ у двери и позвонит{% else %}Kuryer eshik oldida qoldirib qo'ng'iroq qiladi{% endif %}</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" x-model="leaveAtDoor" class="w-4 h-4 rounded text-brand focus:ring-brand">
+                            </label>
+                        </div>
+
+                        <!-- Delivery Progress Banner (Yandex Eats free delivery progress) -->
+                        <div class="p-3 rounded-2xl bg-amber-50/80 border border-amber-200/70 text-amber-900 text-xs">
+                            <div class="flex items-center justify-between font-bold mb-1">
+                                <span class="flex items-center gap-1.5">
+                                    <span>🚚</span>
+                                    <span x-text="deliveryFee === 0 ? '{% if current_lang == 'ru' %}Бесплатная доставка! 🎉{% else %}Yetkazib berish bepul! 🎉{% endif %}' : '{% if current_lang == 'ru' %}Стоимость доставки:{% else %}Yetkazish narxi:{% endif %} ' + formatMoney(deliveryFee)"></span>
+                                </span>
+                                <span x-show="freeThreshold > 0 && subtotal < freeThreshold" class="text-[11px] text-amber-700">
+                                    {% if current_lang == 'ru' %}Еще{% else %}Yana{% endif %} <span class="font-extrabold" x-text="formatMoney(freeThreshold - subtotal)"></span> {% if current_lang == 'ru' %}до 0 UZS{% else %}0 UZS gacha{% endif %}
+                                </span>
+                            </div>
+                            <div x-show="freeThreshold > 0" class="w-full bg-amber-200/70 h-1.5 rounded-full overflow-hidden mt-1.5">
+                                <div class="bg-amber-500 h-full rounded-full transition-all duration-300"
+                                     :style="'width: ' + Math.min(100, Math.round((subtotal / freeThreshold) * 100)) + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- -------------------------------------------------------- -->
+                    <!-- 2B. PICKUP BRANCH CARD (When Pickup is selected)         -->
+                    <!-- -------------------------------------------------------- -->
+                    <div x-show="deliveryMethod === 'PICKUP'" x-cloak
+                         class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                        <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
+                            <i data-lucide="store" class="w-4 h-4 text-brand"></i>
+                            <span>{% if current_lang == 'ru' %}Пункт самовывоза{% elif current_lang == 'en' %}Pickup Branch{% elif current_lang == 'tr' %}Teslim Alma Şubesi{% else %}Olib ketish filiali{% endif %}</span>
+                        </div>
+
+                        <div class="space-y-2">
+                            {% for b in branches %}
+                            <label class="p-3.5 rounded-2xl border cursor-pointer flex items-start gap-3 transition-all"
+                                   :class="selectedBranchId == {{ b.id }} ? 'border-brand bg-brand/5' : 'border-slate-200 hover:bg-slate-50'">
+                                <input type="radio" name="temp_branch" value="{{ b.id }}" x-model="selectedBranchId" class="mt-0.5 text-brand focus:ring-brand">
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-black text-xs text-slate-900">{{ b.name }}</div>
+                                    <div class="text-[11px] text-slate-500 mt-0.5">{{ b.address }}</div>
+                                    <div class="text-[10px] text-emerald-600 font-bold mt-1">{% if current_lang == 'ru' %}Готовность через 15-20 мин · Бесплатно (0 UZS){% else %}15-20 daqiqada tayyor · Bepul (0 UZS){% endif %}</div>
+                                </div>
+                            </label>
+                            {% empty %}
+                            <div class="p-3.5 rounded-2xl border border-brand bg-brand/5 flex items-start gap-3">
+                                <div class="w-2 h-2 rounded-full bg-brand mt-1.5 shrink-0"></div>
+                                <div>
+                                    <div class="font-black text-xs text-slate-900">{{ store.name }}</div>
+                                    <div class="text-[11px] text-slate-500 mt-0.5">{{ store.address|default:'Главный филиал ресторана' }}</div>
+                                    <div class="text-[10px] text-emerald-600 font-bold mt-1">{% if current_lang == 'ru' %}Готовность через 15-20 мин · Бесплатно (0 UZS){% else %}15-20 daqiqada tayyor · Bepul (0 UZS){% endif %}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- -------------------------------------------------------- -->
+                    <!-- 3. CART ITEMS LIST (Yandex Eats Dish Cards)              -->
+                    <!-- -------------------------------------------------------- -->
+                    <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                            <span class="text-xs font-black text-slate-900 uppercase tracking-wider">
+                                {% if current_lang == 'ru' %}Состав заказа{% elif current_lang == 'en' %}Order Items{% elif current_lang == 'tr' %}Sipariş İçeriği{% else %}Buyurtma tarkibi{% endif %}
+                            </span>
+                            <span class="text-xs font-bold text-slate-400" x-text="cartCount + ' {% if current_lang == 'ru' %}поз.{% else %}ta{% endif %}'"></span>
+                        </div>
+
+                        <div class="divide-y divide-slate-100">
+                            <template x-for="(item, key) in cartItems" :key="key">
+                                <div class="py-3 sm:py-3.5 flex items-center justify-between gap-3 sm:gap-4">
+                                    <!-- Dish photo -->
+                                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden shrink-0 bg-slate-50 border border-slate-100">
+                                        <img :src="item.image || item.image_url || 'https://placehold.co/120x120?text=Food'"
+                                             :alt="item.name" class="w-full h-full object-cover">
+                                    </div>
+
+                                    <!-- Dish title & price -->
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-extrabold text-xs sm:text-sm text-slate-900 leading-snug line-clamp-2" x-text="item.name"></h4>
+                                        <div x-show="item.variation_name" class="text-[11px] text-slate-500 font-medium mt-0.5">
+                                            <span x-text="item.variation_name"></span>
+                                        </div>
+                                        <div class="text-[11px] text-slate-400 font-mono mt-0.5">
+                                            <span x-text="formatMoney(item.unit_price || item.price)"></span> / {% if current_lang == 'ru' %}шт.{% else %}dona{% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Stepper and item total -->
+                                    <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
+                                        <!-- Yandex Eats Stepper -->
+                                        <div class="flex items-center bg-slate-100 rounded-xl p-0.5 shadow-2xs">
+                                            <button type="button" @click="updateQty(key, (Number(item.quantity) || 1) - 1)"
+                                                    class="w-7 h-7 rounded-lg bg-white hover:bg-slate-200/80 active:scale-90 flex items-center justify-center font-bold text-slate-800 shadow-2xs transition-transform cursor-pointer">
+                                                -
+                                            </button>
+                                            <span class="w-7 text-center font-black text-xs text-slate-900 font-mono" x-text="item.quantity"></span>
+                                            <button type="button" @click="updateQty(key, (Number(item.quantity) || 1) + 1)"
+                                                    class="w-7 h-7 rounded-lg bg-white hover:bg-slate-200/80 active:scale-90 flex items-center justify-center font-bold text-slate-800 shadow-2xs transition-transform cursor-pointer">
+                                                +
+                                            </button>
+                                        </div>
+
+                                        <!-- Price -->
+                                        <div class="w-20 sm:w-24 text-right">
+                                            <span class="font-black text-xs sm:text-sm text-slate-900 font-mono whitespace-nowrap"
+                                                  x-text="formatMoney(item.total_price || ((item.unit_price || item.price) * item.quantity))"></span>
+                                        </div>
+
+                                        <!-- Delete icon -->
+                                        <button type="button" @click="removeItem(key)"
+                                                class="text-slate-300 hover:text-rose-500 p-1 transition-colors cursor-pointer"
+                                                title="{% if current_lang == 'ru' %}Удалить{% else %}O'chirish{% endif %}">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- ---------------------------------------------------- -->
+                        <!-- 4. SIGNATURE YANDEX EATS: TWO PILLS (Frame 11)      -->
+                        <!-- ---------------------------------------------------- -->
+                        <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <!-- Left: Cutleries Pill -->
+                            <div class="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">🍴</span>
+                                    <div class="text-xs font-bold text-slate-800">
+                                        {% if current_lang == 'ru' %}Приборы{% elif current_lang == 'en' %}Cutleries{% elif current_lang == 'tr' %}Çatal-bıçak{% else %}Asboblar{% endif %}
+                                    </div>
+                                </div>
+                                <div class="flex items-center bg-white rounded-xl p-0.5 shadow-2xs border border-slate-200/60">
+                                    <button type="button" @click="cutleryCount = Math.max(0, cutleryCount - 1)"
+                                            class="w-7 h-7 rounded-lg hover:bg-slate-100 active:scale-90 flex items-center justify-center font-bold text-slate-700 cursor-pointer">
+                                        −
+                                    </button>
+                                    <span class="w-6 text-center font-black text-xs text-slate-900 font-mono" x-text="cutleryCount"></span>
+                                    <button type="button" @click="cutleryCount = Math.min(10, cutleryCount + 1)"
+                                            class="w-7 h-7 rounded-lg hover:bg-slate-100 active:scale-90 flex items-center justify-center font-bold text-slate-700 cursor-pointer">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Right: Restaurant Comment Pill -->
+                            <div class="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between cursor-pointer hover:bg-slate-100/70 transition-colors"
+                                 @click="commentOpen = !commentOpen">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">💬</span>
+                                    <span class="text-xs font-bold text-slate-800 truncate">
+                                        {% if current_lang == 'ru' %}Комментарий ресторану{% elif current_lang == 'en' %}Note to restaurant{% elif current_lang == 'tr' %}Restoran notu{% else %}Restoranga izoh{% endif %}
+                                    </span>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                                   :class="commentOpen ? 'rotate-90' : ''"></i>
+                            </div>
+                        </div>
+
+                        <!-- Expanding Restaurant Comment Textarea -->
+                        <div x-show="commentOpen" x-cloak class="pt-2">
+                            <textarea x-model="restaurantComment" rows="2"
+                                      placeholder="{% if current_lang == 'ru' %}Пожелания к заказу: без лука, соус отдельно, пожарить сильнее...{% else %}Buyurtmaga izoh: piyozsiz, sous alohida bo'lsin...{% endif %}"
+                                      class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-brand focus:bg-white transition-all"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- -------------------------------------------------------- -->
+                    <!-- 5. "ЧТО-ТО ЕЩЁ?" 3-COLUMN COMPACT GRID (Frame 11 & 17)   -->
+                    <!-- -------------------------------------------------------- -->
+                    {% if recommended_products %}
+                    <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                                {% if current_lang == 'ru' %}Что-то ещё?{% elif current_lang == 'en' %}Anything else?{% elif current_lang == 'tr' %}Başka bir şey?{% else %}Yana biror narsa?{% endif %}
+                            </h3>
+                            <span class="text-[10px] text-slate-400 font-bold">{% if current_lang == 'ru' %}В 1 клик{% else %}1 bosishda{% endif %}</span>
+                        </div>
+
+                        <!-- 3-Column Compact Grid matching Frame 11 -->
+                        <div class="grid grid-cols-3 gap-2 sm:gap-3.5">
+                            {% for p in recommended_products|slice:":6" %}
+                            <div class="bg-white rounded-2xl border border-slate-100 p-1.5 flex flex-col justify-between group">
+                                <div>
+                                    <!-- Photo container with round white + button in corner -->
+                                    <div class="aspect-square w-full rounded-xl overflow-hidden bg-[#F4F4F6] relative mb-1.5">
+                                        {% if p.primary_image_url %}
+                                        <img src="{{ p.primary_image_url }}" alt="{{ p.display_name }}"
+                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                        {% else %}
+                                        <div class="w-full h-full flex items-center justify-center text-slate-300 font-bold text-xs">Food</div>
+                                        {% endif %}
+
+                                        <!-- Round White Plus Button in corner -->
+                                        <button type="button" @click="quickAddToCart({{ p.id }})"
+                                                class="absolute bottom-1.5 right-1.5 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white hover:bg-slate-100 shadow-[0_2px_6px_rgba(0,0,0,0.18)] flex items-center justify-center text-slate-900 active:scale-90 transition-transform cursor-pointer"
+                                                title="{% if current_lang == 'ru' %}Добавить{% else %}Qo'shish{% endif %}">
+                                            <i data-lucide="plus" class="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Price in Bold -->
+                                    <div class="font-extrabold text-xs sm:text-sm text-slate-950 font-mono leading-tight">
+                                        {{ p.price|floatformat:0 }} {% if current_lang == 'ru' %}сум{% else %}UZS{% endif %}
+                                    </div>
+                                    <!-- Title -->
+                                    <h4 class="font-semibold text-[11px] sm:text-xs text-slate-900 line-clamp-1 leading-snug mt-0.5">
+                                        {{ p.display_name }}
+                                    </h4>
+                                    <!-- Specs -->
+                                    <div class="text-[10px] text-slate-400 line-clamp-1 font-normal mt-0.5">
+                                        {{ p.display_description|striptags|truncatewords:2|default:"25 г" }}
+                                    </div>
+                                </div>
+
+                                <!-- Rating -->
+                                <div class="flex items-center gap-0.5 text-[9.5px] sm:text-[10px] font-bold text-slate-700 pt-1 mt-1 border-t border-slate-100">
+                                    <span class="text-[10px]">👍</span>
+                                    <span>{{ p.rating|default:"86%" }}</span>
+                                    <span class="text-slate-400 font-normal">({{ p.reviews_count|default:"19" }})</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- -------------------------------------------------------- -->
+                    <!-- 6. PAYMENT METHODS SELECTOR (Yandex Eats Authentic)      -->
+                    <!-- -------------------------------------------------------- -->
+                    <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3.5">
+                        <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
+                            <i data-lucide="credit-card" class="w-4 h-4 text-brand"></i>
+                            <span>{% if current_lang == 'ru' %}Способ оплаты{% elif current_lang == 'en' %}Payment Method{% elif current_lang == 'tr' %}Ödeme Yöntemi{% else %}To'lov usuli{% endif %}</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {% if pay_settings.click_enabled %}
+                            <label class="p-3 rounded-2xl border cursor-pointer transition-all flex items-center gap-3"
+                                   :class="paymentMethod === 'CLICK' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200 hover:bg-slate-50'">
+                                <input type="radio" name="payment_method_radio" value="CLICK" x-model="paymentMethod" class="sr-only">
+                                <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0">C</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-black text-xs text-slate-900">Click Shop</div>
+                                    <div class="text-[10px] text-slate-500">Uzcard / Humo онлайн</div>
+                                </div>
+                                <div class="w-4 h-4 rounded-full border flex items-center justify-center"
+                                     :class="paymentMethod === 'CLICK' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                    <div x-show="paymentMethod === 'CLICK'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                </div>
+                            </label>
+                            {% endif %}
+
+                            {% if pay_settings.payme_enabled %}
+                            <label class="p-3 rounded-2xl border cursor-pointer transition-all flex items-center gap-3"
+                                   :class="paymentMethod === 'PAYME' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200 hover:bg-slate-50'">
+                                <input type="radio" name="payment_method_radio" value="PAYME" x-model="paymentMethod" class="sr-only">
+                                <div class="w-8 h-8 rounded-xl bg-teal-500 text-white font-black text-xs flex items-center justify-center shrink-0">P</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-black text-xs text-slate-900">Payme</div>
+                                    <div class="text-[10px] text-slate-500">{% if current_lang == 'ru' %}Оплата картой / в приложении{% else %}Ilova orqali to'lov{% endif %}</div>
+                                </div>
+                                <div class="w-4 h-4 rounded-full border flex items-center justify-center"
+                                     :class="paymentMethod === 'PAYME' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                    <div x-show="paymentMethod === 'PAYME'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                </div>
+                            </label>
+                            {% endif %}
+
+                            {% if pay_settings.uzum_enabled %}
+                            <label class="p-3 rounded-2xl border cursor-pointer transition-all flex items-center gap-3"
+                                   :class="paymentMethod === 'UZUM' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200 hover:bg-slate-50'">
+                                <input type="radio" name="payment_method_radio" value="UZUM" x-model="paymentMethod" class="sr-only">
+                                <div class="w-8 h-8 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">U</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-black text-xs text-slate-900">Uzum Pay</div>
+                                    <div class="text-[10px] text-slate-500">{% if current_lang == 'ru' %}Быстрая оплата в 1 клик{% else %}Tezkor to'lov Uzum{% endif %}</div>
+                                </div>
+                                <div class="w-4 h-4 rounded-full border flex items-center justify-center"
+                                     :class="paymentMethod === 'UZUM' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                    <div x-show="paymentMethod === 'UZUM'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                </div>
+                            </label>
+                            {% endif %}
+
+                            {% if pay_settings.multicard_enabled %}
+                            <label class="p-3 rounded-2xl border cursor-pointer transition-all flex items-center gap-3"
+                                   :class="paymentMethod === 'MULTICARD' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200 hover:bg-slate-50'">
+                                <input type="radio" name="payment_method_radio" value="MULTICARD" x-model="paymentMethod" class="sr-only">
+                                <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center shrink-0">M</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-black text-xs text-slate-900">Multicard</div>
+                                    <div class="text-[10px] text-slate-500">Uzcard, Humo, Visa, MC</div>
+                                </div>
+                                <div class="w-4 h-4 rounded-full border flex items-center justify-center"
+                                     :class="paymentMethod === 'MULTICARD' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                    <div x-show="paymentMethod === 'MULTICARD'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                </div>
+                            </label>
+                            {% endif %}
+
+                            {% if pay_settings.cash_on_delivery_enabled %}
+                            <label class="p-3 rounded-2xl border cursor-pointer transition-all flex items-center gap-3"
+                                   :class="paymentMethod === 'CASH' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200 hover:bg-slate-50'">
+                                <input type="radio" name="payment_method_radio" value="CASH" x-model="paymentMethod" class="sr-only">
+                                <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                    <i data-lucide="banknote" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-black text-xs text-slate-900">{% if current_lang == 'ru' %}Наличными курьеру{% else %}Naqd pulda{% endif %}</div>
+                                    <div class="text-[10px] text-slate-500">{% if current_lang == 'ru' %}При получении заказа{% else %}Qabul qilinganda to'lov{% endif %}</div>
+                                </div>
+                                <div class="w-4 h-4 rounded-full border flex items-center justify-center"
+                                     :class="paymentMethod === 'CASH' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                    <div x-show="paymentMethod === 'CASH'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                </div>
+                            </label>
+                            {% endif %}
+
+                            {% if pay_settings.terminal_on_delivery_enabled %}
+                            <label class="p-3 rounded-2xl border cursor-pointer transition-all flex items-center gap-3"
+                                   :class="paymentMethod === 'TERMINAL' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200 hover:bg-slate-50'">
+                                <input type="radio" name="payment_method_radio" value="TERMINAL" x-model="paymentMethod" class="sr-only">
+                                <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                                    <i data-lucide="credit-card" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-black text-xs text-slate-900">{% if current_lang == 'ru' %}Картой курьеру (терминал){% else %}Kuryerga terminal orqali{% endif %}</div>
+                                    <div class="text-[10px] text-slate-500">Uzcard / Humo</div>
+                                </div>
+                                <div class="w-4 h-4 rounded-full border flex items-center justify-center"
+                                     :class="paymentMethod === 'TERMINAL' ? 'border-brand bg-brand' : 'border-slate-300'">
+                                    <div x-show="paymentMethod === 'TERMINAL'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                </div>
+                            </label>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- -------------------------------------------------------- -->
+                    <!-- 7. RECIPIENT CONTACTS                                    -->
+                    <!-- -------------------------------------------------------- -->
+                    <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3.5">
+                        <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
+                            <i data-lucide="user" class="w-4 h-4 text-brand"></i>
+                            <span>{% if current_lang == 'ru' %}Контактные данные{% elif current_lang == 'en' %}Contact Details{% elif current_lang == 'tr' %}İletişim Bilgileri{% else %}Qabul qiluvchi ma'lumotlari{% endif %}</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                    {% if current_lang == 'ru' %}Ваше имя{% else %}Ismingiz{% endif %} <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="text" x-model="customerName" required
+                                       placeholder="{% if current_lang == 'ru' %}Алишер{% else %}Alisher{% endif %}"
+                                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                                    <span>{% if current_lang == 'ru' %}Номер телефона{% else %}Telefon raqami{% endif %} <span class="text-rose-500">*</span></span>
+                                    <span class="text-[10px] text-slate-400 font-normal" x-text="selectedCountry.nameRu || selectedCountry.name"></span>
+                                </label>
+
+                                <!-- Country Selector & Phone Mask Input -->
+                                <div class="relative flex rounded-xl bg-slate-50 border border-slate-200 focus-within:border-brand focus-within:bg-white transition-all overflow-visible"
+                                     :class="phoneError ? 'border-rose-400 ring-2 ring-rose-400/20' : ''">
+                                    <div class="relative shrink-0">
+                                        <button type="button" @click="countryDropdownOpen = !countryDropdownOpen"
+                                                class="h-full px-2.5 py-2 flex items-center gap-1 bg-slate-100 hover:bg-slate-200/70 rounded-l-xl border-r border-slate-200 text-xs font-bold text-slate-800 transition-colors">
+                                            <span class="text-sm leading-none" x-text="selectedCountry.flag"></span>
+                                            <span class="font-mono text-xs" x-text="selectedCountry.dialCode"></span>
+                                            <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+                                        </button>
+
+                                        <!-- Country Dropdown -->
+                                        <div x-show="countryDropdownOpen" @click.away="countryDropdownOpen = false" x-cloak
+                                             class="absolute left-0 top-full mt-1.5 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-1.5 max-h-56 overflow-y-auto space-y-0.5">
+                                            <template x-for="c in countries" :key="c.id">
+                                                <button type="button" @click="selectCountry(c)"
+                                                        class="w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-bold flex items-center gap-2 hover:bg-amber-50 transition-colors"
+                                                        :class="selectedCountry.id === c.id ? 'bg-amber-50 text-brand' : 'text-slate-700'">
+                                                    <span class="text-sm" x-text="c.flag"></span>
+                                                    <span class="flex-1 truncate text-xs" x-text="c.nameRu || c.name"></span>
+                                                    <span class="font-mono text-[10px] text-slate-400" x-text="c.dialCode"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <input type="tel"
+                                           x-ref="phoneInput"
+                                           :value="formattedPhone"
+                                           @input="onPhoneInput($event)"
+                                           required
+                                           :placeholder="selectedCountry.placeholder"
+                                           class="flex-1 px-3 py-2.5 bg-transparent text-slate-900 text-xs font-mono font-bold focus:outline-none placeholder:text-slate-300">
+
+                                    <div class="flex items-center pr-3 pointer-events-none" x-show="isPhoneComplete">
+                                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+                                    </div>
+                                </div>
+                                <p x-show="phoneError" x-text="phoneError" class="text-[10px] text-rose-500 font-bold mt-1"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN (4 cols): Order Summary Sidebar (Desktop) -->
+                <div class="lg:col-span-4 sticky top-20 space-y-4">
+                    <div class="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-lg space-y-4">
+                        <h3 class="text-base font-black text-slate-900 tracking-tight pb-2 border-b border-slate-100 flex items-center justify-between">
+                            <span>{% if current_lang == 'ru' %}Детали заказа{% elif current_lang == 'en' %}Order Details{% elif current_lang == 'tr' %}Sipariş Detayları{% else %}Buyurtma tafsilotlari{% endif %}</span>
+                            <span class="text-xs font-bold text-slate-400" x-text="cartCount + ' {% if current_lang == 'ru' %}поз.{% else %}ta{% endif %}'"></span>
+                        </h3>
+
+                        <!-- Promo Code Accordion / Input -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-slate-700">
+                                {% if current_lang == 'ru' %}Промокод на скидку{% else %}Chegirma promokodi{% endif %}
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="text" x-model="promoInput" placeholder="PROMO2026"
+                                       class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono uppercase focus:ring-2 focus:ring-brand focus:border-brand">
+                                <button type="button" @click="applyPromo()" :disabled="promoLoading || !promoInput.trim()"
+                                        class="px-3.5 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer">
+                                    <span x-show="!promoLoading">{% if current_lang == 'ru' %}Применить{% else %}Qo'llash{% endif %}</span>
+                                    <span x-show="promoLoading" class="animate-spin">...</span>
+                                </button>
+                            </div>
+                            <div x-show="promoError" x-text="promoError" class="text-[11px] text-rose-600 font-medium"></div>
+                            <div x-show="promoSuccess" x-text="promoSuccess" class="text-[11px] text-emerald-600 font-bold"></div>
+                        </div>
+
+                        <!-- Calculation Breakdown -->
+                        <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span>{% if current_lang == 'ru' %}Стоимость блюд{% else %}Taomlar narxi{% endif %} (<span x-text="cartCount"></span>):</span>
+                                <span class="font-bold text-slate-900 font-mono" x-text="formatMoney(subtotal)"></span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span>{% if current_lang == 'ru' %}Доставка{% else %}Yetkazish{% endif %}:</span>
+                                <span class="font-bold font-mono" :class="deliveryFee === 0 ? 'text-emerald-600 font-extrabold' : 'text-slate-900'">
+                                    <span x-show="deliveryFee === 0">{% if current_lang == 'ru' %}Бесплатно 🎉{% else %}Bepul 🎉{% endif %}</span>
+                                    <span x-show="deliveryFee > 0" x-text="formatMoney(deliveryFee)"></span>
+                                </span>
+                            </div>
+
+                            <div x-show="appliedDiscount > 0" class="flex items-center justify-between text-emerald-600 font-bold">
+                                <span>{% if current_lang == 'ru' %}Скидка{% else %}Chegirma{% endif %} (<span x-text="appliedPromoCode"></span>):</span>
+                                <span class="font-mono">-<span x-text="formatMoney(appliedDiscount)"></span></span>
+                            </div>
+
+                            <div class="pt-3 border-t border-slate-200 flex items-baseline justify-between">
+                                <div>
+                                    <span class="font-black text-sm sm:text-base text-slate-900">{% if current_lang == 'ru' %}Итого к оплате{% else %}Jami to'lov{% endif %}</span>
+                                    <span class="block text-[10px] text-slate-400">{% if current_lang == 'ru' %}С учетом налогов и сборов{% else %}QQS bilan birga{% endif %}</span>
+                                </div>
+                                <span class="text-xl sm:text-2xl font-black text-brand font-mono" x-text="formatMoney(total)"></span>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Submit Button (Yandex Eats Bright Yellow) -->
+                        <div class="pt-2 hidden lg:block">
+                            <button type="submit"
+                                    class="w-full py-4 rounded-2xl bg-[#FEE500] hover:bg-[#FADC00] text-slate-950 font-black text-sm sm:text-base shadow-xl shadow-yellow-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-yellow-300/40">
+                                <span x-text="submitButtonText"></span>
+                                <div class="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-950 stroke-[2.5]"></i>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Guarantee Badges -->
+                        <div class="pt-1 grid grid-cols-2 gap-2 text-[10.5px] text-slate-400 font-medium">
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+                                <span>{% if current_lang == 'ru' %}Безопасная оплата{% else %}Xavfsiz to'lov{% endif %}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="truck" class="w-4 h-4 text-brand shrink-0"></i>
+                                <span>{% if current_lang == 'ru' %}Быстрая доставка{% else %}Tez yetkazish{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 8. STICKY BOTTOM ACTION BAR (MOBILE / TABLET YANDEX EATS)    -->
+            <!-- ============================================================ -->
+            <div class="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 p-3 z-40 shadow-[0_-8px_25px_rgba(0,0,0,0.08)] space-y-2">
+                <!-- Delivery Tier Progress Bar right above the button (Frames 11 & 17) -->
+                <div class="bg-[#FDFBF7] border border-amber-200/90 rounded-xl px-3 py-1.5 flex items-center justify-between text-[11px] font-bold">
+                    <span class="flex items-center gap-1.5 text-amber-900">
+                        <span>🛵</span>
+                        <span x-text="deliveryFee === 0 ? '{% if current_lang == 'ru' %}Бесплатная доставка! 🎉{% else %}Yetkazish bepul! 🎉{% endif %}' : formatMoney(deliveryFee)"></span>
+                    </span>
+                    <span class="text-[10px] text-slate-500" x-show="freeThreshold > 0 && subtotal < freeThreshold">
+                        {% if current_lang == 'ru' %}Еще{% else %}Yana{% endif %} <span class="font-extrabold text-slate-900" x-text="formatMoney(freeThreshold - subtotal)"></span> {% if current_lang == 'ru' %}и доставка 0 сум{% else %}va bepul{% endif %}
+                    </span>
+                </div>
+
+                <div class="max-w-md mx-auto">
+                    <!-- Bright Yellow Pill Button -->
+                    <button type="submit"
+                            class="w-full py-3.5 px-5 rounded-full bg-[#FEE500] hover:bg-[#FADC00] text-slate-950 font-black text-sm sm:text-base shadow-lg shadow-yellow-500/25 active:scale-[0.98] transition-all flex items-center justify-between cursor-pointer border border-yellow-300/40">
+                        <span class="truncate pr-2 font-black" x-text="submitButtonText"></span>
+                        <div class="flex items-center gap-1.5 shrink-0 font-mono">
+                            <span class="text-sm font-extrabold" x-text="formatMoney(total)"></span>
+                            <div class="w-5 h-5 rounded-full bg-black/10 flex items-center justify-center">
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-950 stroke-[2.5]"></i>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 9. iOS NATIVE ACTION SHEET FOR CLEAR CART (Frame 19)         -->
+    <!-- ============================================================ -->
+    <div x-show="clearSheetOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-950/50 backdrop-blur-xs transition-opacity"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div @click.away="clearSheetOpen = false"
+             class="w-full max-w-sm space-y-2 animate-in slide-in-from-bottom-6 duration-200">
+            <!-- Option 1: Red text "Очистить корзину" -->
+            <button type="button" @click="confirmClearCart()"
+                    class="w-full py-4 rounded-2xl bg-white/95 backdrop-blur-md text-rose-600 font-bold text-base sm:text-lg text-center shadow-lg active:bg-rose-50 transition-colors cursor-pointer">
+                {% if current_lang == 'ru' %}Очистить корзину{% elif current_lang == 'en' %}Clear Cart{% elif current_lang == 'tr' %}Sepeti Temizle{% else %}Savatni tozalash{% endif %}
+            </button>
+            <!-- Option 2: Blue text "Отмена" -->
+            <button type="button" @click="clearSheetOpen = false"
+                    class="w-full py-4 rounded-2xl bg-white text-[#007AFF] font-bold text-base sm:text-lg text-center shadow-lg active:bg-slate-50 transition-colors cursor-pointer">
+                {% if current_lang == 'ru' %}Отмена{% elif current_lang == 'en' %}Cancel{% elif current_lang == 'tr' %}İptal{% else %}Bekor qilish{% endif %}
+            </button>
+        </div>
+    </div>
+
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function yandexCartApp() {
+    const rawCart = JSON.parse('{{ cart_json|escapejs }}' || '{}');
+    
+    return {
+        cartItems: rawCart,
+        deliveryMethod: 'COURIER',
+        paymentMethod: '{{ pay_settings.click_enabled|yesno:"CLICK,CASH" }}',
+        cutleryCount: 1,
+        leaveAtDoor: false,
+        clearSheetOpen: false,
+        commentOpen: false,
+        restaurantComment: '',
+        
+        // Cities and Address
+        activeCity: 'tashkent',
+        deliveryCity: 'Ташкент',
+        deliveryStreet: '',
+        deliveryEntrance: '',
+        deliveryFloor: '',
+        deliveryApartment: '',
+        deliveryDomofon: '',
+        deliveryLandmark: '',
+        deliveryLat: 41.2995,
+        deliveryLng: 69.2401,
+        isLocating: false,
+        selectedBranchId: {% if branches.first %}{{ branches.first.id }}{% else %}null{% endif %},
+
+        // Phone & Countries
+        customerName: '{{ saved_name|escapejs }}' || localStorage.getItem('sb_cust_name_{{ store.id }}') || '',
+        selectedCountry: {
+            id: 'uz',
+            name: "O'zbekiston",
+            nameRu: "Узбекистан",
+            dialCode: '+998',
+            code: '998',
+            flag: '🇺🇿',
+            digits: 9,
+            placeholder: '(90) 123-45-67',
+            format(d) {
+                let res = '';
+                if (d.length > 0) res += '(' + d.slice(0, 2);
+                if (d.length >= 2) res += ') ';
+                if (d.length > 2) res += d.slice(2, 5);
+                if (d.length > 5) res += '-' + d.slice(5, 7);
+                if (d.length > 7) res += '-' + d.slice(7, 9);
+                return res;
+            }
+        },
+        countries: [
+            {
+                id: 'uz', name: "O'zbekiston", nameRu: "Узбекистан", dialCode: '+998', code: '998', flag: '🇺🇿', digits: 9, placeholder: '(90) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 2);
+                    if (d.length >= 2) res += ') ';
+                    if (d.length > 2) res += d.slice(2, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 7);
+                    if (d.length > 7) res += '-' + d.slice(7, 9);
+                    return res;
+                }
+            },
+            {
+                id: 'ru', name: "Rossiya", nameRu: "Россия", dialCode: '+7', code: '7', flag: '🇷🇺', digits: 10, placeholder: '(912) 345-67-89',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 8);
+                    if (d.length > 8) res += '-' + d.slice(8, 10);
+                    return res;
+                }
+            },
+            {
+                id: 'kz', name: "Qozog'iston", nameRu: "Казахстан", dialCode: '+7', code: '7', flag: '🇰🇿', digits: 10, placeholder: '(777) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 8);
+                    if (d.length > 8) res += '-' + d.slice(8, 10);
+                    return res;
+                }
+            },
+            {
+                id: 'kg', name: "Qirg'iziston", nameRu: "Кыргызстан", dialCode: '+996', code: '996', flag: '🇰🇬', digits: 9, placeholder: '(555) 12-34-56',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 7);
+                    if (d.length > 7) res += '-' + d.slice(7, 9);
+                    return res;
+                }
+            },
+            {
+                id: 'tj', name: "Tojikiston", nameRu: "Таджикистан", dialCode: '+992', code: '992', flag: '🇹🇯', digits: 9, placeholder: '(90) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 2);
+                    if (d.length >= 2) res += ') ';
+                    if (d.length > 2) res += d.slice(2, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 7);
+                    if (d.length > 7) res += '-' + d.slice(7, 9);
+                    return res;
+                }
+            },
+            {
+                id: 'tr', name: "Turkiya", nameRu: "Турция", dialCode: '+90', code: '90', flag: '🇹🇷', digits: 10, placeholder: '(555) 123 45 67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += ' ' + d.slice(6, 8);
+                    if (d.length > 8) res += ' ' + d.slice(8, 10);
+                    return res;
+                }
+            }
+        ],
+        countryDropdownOpen: false,
+        rawPhoneDigits: '',
+        phoneError: '',
+
+        // Delivery thresholds
+        baseDeliveryFee: Number('{{ delivery_price|default:0|unlocalize }}') || 0,
+        freeThreshold: Number('{{ free_delivery_threshold|default:0|unlocalize }}') || 0,
+
+        // Promo
+        promoInput: '',
+        appliedPromoCode: '{{ promo_code|default:'' }}',
+        appliedDiscount: Number('{{ promo_discount|default:0|unlocalize }}') || 0,
+        promoLoading: false,
+        promoError: '',
+        promoSuccess: '',
+
+        tgUserId: null,
+
+        init() {
+            // Restore phone
+            const savedPhone = '{{ saved_phone|escapejs }}' || localStorage.getItem('sb_cust_phone_{{ store.id }}') || '';
+            if (savedPhone) {
+                const cleaned = savedPhone.replace(/\D/g, '');
+                for (const c of this.countries) {
+                    if (cleaned.startsWith(c.code)) {
+                        this.selectedCountry = c;
+                        this.rawPhoneDigits = cleaned.slice(c.code.length, c.code.length + c.digits);
+                        break;
+                    }
+                }
+                if (!this.rawPhoneDigits && cleaned.length >= 9) {
+                    this.rawPhoneDigits = cleaned.slice(-9);
+                }
+            }
+
+            // Telegram Mini App detection
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+                this.tgUserId = tgUser.id;
+                if (!this.customerName) {
+                    this.customerName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
+                }
+            }
+        },
+
+        // Bulletproof dynamic getters: NO NaN, NO 0 UZS bug!
+        get subtotal() {
+            return Object.values(this.cartItems).reduce((sum, item) => {
+                const price = Number(item.unit_price || item.price || 0);
+                const qty = Number(item.quantity || 0);
+                const lineTotal = Number(item.total_price) || (price * qty);
+                return sum + lineTotal;
+            }, 0);
+        },
+
+        get cartCount() {
+            return Object.values(this.cartItems).reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+        },
+
+        get deliveryFee() {
+            if (this.deliveryMethod === 'PICKUP') return 0;
+            if (this.freeThreshold > 0 && this.subtotal >= this.freeThreshold) return 0;
+            return this.baseDeliveryFee;
+        },
+
+        get total() {
+            return Math.max(0, this.subtotal + this.deliveryFee - this.appliedDiscount);
+        },
+
+        get formattedPhone() {
+            return this.selectedCountry.format(this.rawPhoneDigits);
+        },
+
+        get fullPhoneNumber() {
+            if (!this.rawPhoneDigits) return '';
+            return this.selectedCountry.dialCode + this.rawPhoneDigits;
+        },
+
+        get isPhoneComplete() {
+            return this.rawPhoneDigits.length === this.selectedCountry.digits;
+        },
+
+        get computedFullAddress() {
+            if (this.deliveryMethod === 'PICKUP') {
+                return '{% if current_lang == "ru" %}Самовывоз из ресторана{% else %}Filialdan olib ketish{% endif %}';
+            }
+            let addr = (this.deliveryStreet || '').trim();
+            const parts = [];
+            if (this.deliveryEntrance) parts.push('podezd ' + this.deliveryEntrance);
+            if (this.deliveryFloor) parts.push('etaj ' + this.deliveryFloor);
+            if (this.deliveryApartment) parts.push('kv. ' + this.deliveryApartment);
+            if (this.deliveryDomofon) parts.push('domofon: ' + this.deliveryDomofon);
+            if (this.deliveryLandmark) parts.push("mo'ljal: " + this.deliveryLandmark);
+            if (parts.length > 0) {
+                addr = addr ? `${addr} (${parts.join(', ')})` : parts.join(', ');
+            }
+            return addr || this.deliveryCity;
+        },
+
+        get submitButtonText() {
+            const isRu = '{{ current_lang }}' === 'ru';
+            if (this.paymentMethod === 'CLICK') {
+                return isRu ? 'Оплатить через Click' : "Click orqali to'lash";
+            } else if (this.paymentMethod === 'PAYME') {
+                return isRu ? 'Оплатить через Payme' : "Payme orqali to'lash";
+            } else if (this.paymentMethod === 'UZUM') {
+                return isRu ? 'Оплатить через Uzum Pay' : "Uzum Pay orqali to'lash";
+            } else if (this.paymentMethod === 'MULTICARD') {
+                return isRu ? 'Оплатить картой' : "Karta orqali to'lash";
+            } else if (this.paymentMethod === 'TERMINAL') {
+                return isRu ? 'Заказать (терминал курьеру)' : "Buyurtma berish (terminal)";
+            }
+            return isRu ? 'Оформить заказ' : "Buyurtmani tasdiqlash";
+        },
+
+        formatMoney(val) {
+            const num = Math.round(Number(val) || 0);
+            return num.toLocaleString('ru-RU') + ' UZS';
+        },
+
+        selectCountry(c) {
+            this.selectedCountry = c;
+            this.rawPhoneDigits = '';
+            this.phoneError = '';
+            this.countryDropdownOpen = false;
+            this.$nextTick(() => {
+                if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+            });
+        },
+
+        onPhoneInput(e) {
+            let val = e.target.value;
+            let digits = val.replace(/\D/g, '');
+            if (digits.startsWith(this.selectedCountry.code)) {
+                digits = digits.slice(this.selectedCountry.code.length);
+            }
+            this.rawPhoneDigits = digits.slice(0, this.selectedCountry.digits);
+            e.target.value = this.formattedPhone;
+            this.phoneError = '';
+        },
+
+        selectCity(cityKey) {
+            const map = {
+                tashkent: 'Ташкент', samarkand: 'Самарканд', bukhara: 'Бухара',
+                andijan: 'Андижан', namangan: 'Наманган', fergana: 'Фергана',
+                kokand: 'Коканд', qarshi: 'Карши', urgench: 'Ургенч',
+                khiva: 'Хива', nukus: 'Нукус', navoiy: 'Навои',
+                jizzakh: 'Джизак', termez: 'Термез', gulistan: 'Гулистан'
+            };
+            this.deliveryCity = map[cityKey] || 'Ташкент';
+        },
+
+        locateMe() {
+            if (!navigator.geolocation) {
+                alert('{% if current_lang == "ru" %}Геолокация не поддерживается вашим браузером{% else %}Geolokatsiya brauzeringizda qo\'llab-quvvatlanmaydi{% endif %}');
+                return;
+            }
+            this.isLocating = true;
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    this.isLocating = false;
+                    this.deliveryLat = pos.coords.latitude;
+                    this.deliveryLng = pos.coords.longitude;
+                    if (!this.deliveryStreet) {
+                        this.deliveryStreet = `📍 Координаты: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+                    }
+                },
+                (err) => {
+                    this.isLocating = false;
+                    alert('{% if current_lang == "ru" %}Не удалось определить локацию. Пожалуйста, введите адрес вручную.{% else %}Joylashuvni aniqlab bo\'lmadi. Manzilni qo\'lda kiriting.{% endif %}');
+                },
+                { timeout: 10000, enableHighAccuracy: true }
+            );
+        },
+
+        async updateQty(key, newQty) {
+            if (newQty < 1) {
+                this.removeItem(key);
+                return;
+            }
+            try {
+                const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/update/{% else %}/cart/update/{% endif %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ item_key: key, quantity: newQty })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.cartItems = data.cart;
+                    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false } }));
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        async removeItem(key) {
+            try {
+                const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/update/{% else %}/cart/update/{% endif %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ item_key: key, quantity: 0 })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.cartItems = data.cart;
+                    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false } }));
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        clearCart() {
+            this.clearSheetOpen = true;
+        },
+
+        async confirmClearCart() {
+            this.clearSheetOpen = false;
+            try {
+                const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/clear/{% else %}/cart/clear/{% endif %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.cartItems = {};
+                    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: {}, cart_count: 0, subtotal: 0, openDrawer: false } }));
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        async quickAddToCart(productId) {
+            try {
+                const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ product_id: productId, quantity: 1 })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.cartItems = data.cart;
+                    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data.cart, cart_count: data.cart_count, subtotal: data.subtotal, openDrawer: false } }));
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        async applyPromo() {
+            if (!this.promoInput.trim()) return;
+            this.promoLoading = true;
+            this.promoError = '';
+            this.promoSuccess = '';
+            try {
+                const res = await fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/cart/apply-promo/{% else %}/cart/apply-promo/{% endif %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ promo_code: this.promoInput.trim() })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.appliedDiscount = Number(data.discount) || 0;
+                    this.appliedPromoCode = this.promoInput.trim().toUpperCase();
+                    this.promoSuccess = data.message || '{% if current_lang == "ru" %}Промокод успешно применен!{% else %}Promokod qabul qilindi!{% endif %}';
+                } else {
+                    this.promoError = data.error || '{% if current_lang == "ru" %}Неверный промокод{% else %}Noto\'g\'ri promokod{% endif %}';
+                }
+            } catch (e) {
+                this.promoError = '{% if current_lang == "ru" %}Ошибка сети{% else %}Tarmoq xatosi yuz berdi{% endif %}';
+            } finally {
+                this.promoLoading = false;
+            }
+        },
+
+        validateAndSubmit(e) {
+            if (!this.customerName.trim()) {
+                e.preventDefault();
+                alert('{% if current_lang == "ru" %}Пожалуйста, укажите ваше имя{% else %}Iltimos, ismingizni kiriting{% endif %}');
+                return false;
+            }
+
+            if (!this.isPhoneComplete) {
+                e.preventDefault();
+                this.phoneError = '{% if current_lang == "ru" %}Пожалуйста, введите полный номер телефона{% else %}Iltimos, to\'liq telefon raqamini kiriting{% endif %}';
+                if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+                return false;
+            }
+
+            if (this.deliveryMethod === 'COURIER' && !this.deliveryStreet.trim()) {
+                e.preventDefault();
+                alert('{% if current_lang == "ru" %}Пожалуйста, укажите адрес доставки (улицу и номер дома){% else %}Iltimos, yetkazib berish manzilini (ko\'cha va uy raqamini) kiriting{% endif %}');
+                return false;
+            }
+
+            // Save to local storage for future seamless orders
+            try {
+                localStorage.setItem('sb_cust_name_{{ store.id }}', this.customerName.trim());
+                localStorage.setItem('sb_cust_phone_{{ store.id }}', this.fullPhoneNumber);
+            } catch (err) {}
+
+            return true;
+        }
+    };
+}
+</script>
 {% endblock %}

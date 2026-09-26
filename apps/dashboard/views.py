@@ -2274,10 +2274,16 @@ def settings_payments_view(request):
         if 'uzum_merchant_id' in request.POST:
             pay_settings.uzum_merchant_id = request.POST.get('uzum_merchant_id', '').strip()
             pay_settings.uzum_secret_key = request.POST.get('uzum_secret_key', '').strip()
-        if 'click_enabled' in request.POST or 'cash_on_delivery_enabled' in request.POST:
+        if 'multicard_app_id' in request.POST:
+            pay_settings.multicard_app_id = request.POST.get('multicard_app_id', '').strip()
+            pay_settings.multicard_secret = request.POST.get('multicard_secret', '').strip()
+            pay_settings.multicard_store_id = request.POST.get('multicard_store_id', '').strip()
+            pay_settings.multicard_test_mode = request.POST.get('multicard_test_mode') == 'on'
+        if 'click_enabled' in request.POST or 'cash_on_delivery_enabled' in request.POST or 'multicard_enabled' in request.POST:
             pay_settings.click_enabled = request.POST.get('click_enabled') == 'on'
             pay_settings.payme_enabled = request.POST.get('payme_enabled') == 'on'
             pay_settings.uzum_enabled = request.POST.get('uzum_enabled') == 'on'
+            pay_settings.multicard_enabled = request.POST.get('multicard_enabled') == 'on'
             pay_settings.cash_on_delivery_enabled = request.POST.get('cash_on_delivery_enabled') == 'on'
             pay_settings.terminal_on_delivery_enabled = request.POST.get('terminal_on_delivery_enabled') == 'on'
         pay_settings.save()
@@ -2504,6 +2510,8 @@ def toggle_payment_api(request):
         pay_settings.payme_enabled = enabled
     elif gateway == 'uzum':
         pay_settings.uzum_enabled = enabled
+    elif gateway == 'multicard':
+        pay_settings.multicard_enabled = enabled
     elif gateway == 'cash':
         pay_settings.cash_on_delivery_enabled = enabled
     elif gateway == 'terminal':

@@ -99,7 +99,29 @@
             </div>
         </div>
 
-        <!-- 5. Terminal -->
+        <!-- 5. Multicard Gateway -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-sm">
+                    MC
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="configModal = 'multicard'" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100" title="{{ t.nav_settings }}">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                    </button>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" :checked="multicardEnabled" @change="toggleGateway('multicard', $event.target.checked)" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm text-slate-900">Multicard</h3>
+                <p class="text-xs text-slate-400 mt-1">Uzcard, Humo, Visa, Mastercard, PaymeGo, ClickPass</p>
+            </div>
+        </div>
+
+        <!-- 6. Terminal -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
             <div class="flex items-center justify-between">
                 <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
@@ -116,7 +138,7 @@
             </div>
         </div>
 
-        <!-- 6. StoreBox Pay -->
+        <!-- 7. StoreBox Pay -->
         <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
             <div class="flex items-center justify-between">
                 <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-brand flex items-center justify-center font-black text-xs">
@@ -196,6 +218,38 @@
                     </button>
                 </div>
             </form>
+
+            <!-- Multicard Form -->
+            <form method="POST" x-show="configModal === 'multicard'" class="space-y-4 text-xs">
+                {% csrf_token %}
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Multicard Application ID</label>
+                    <input type="text" name="multicard_app_id" value="{{ payment_settings.multicard_app_id|default:'rhmt_test' }}" placeholder="rhmt_test" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Multicard Secret Key</label>
+                    <input type="password" name="multicard_secret" value="{{ payment_settings.multicard_secret|default:'Pw18axeBFo8V7NamKHXX' }}" placeholder="••••••••••••" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5">Multicard Store ID (Касса)</label>
+                    <input type="text" name="multicard_store_id" value="{{ payment_settings.multicard_store_id|default:'6' }}" placeholder="6" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                </div>
+                <div class="flex items-center gap-2 pt-1 bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
+                    <input type="checkbox" id="mc_test_mode" name="multicard_test_mode" {% if payment_settings.multicard_test_mode %}checked{% endif %} class="rounded text-brand focus:ring-brand">
+                    <label for="mc_test_mode" class="font-bold text-slate-700 text-xs cursor-pointer">
+                        Тестовый стенд (https://dev-mesh.multicard.uz/)
+                    </label>
+                </div>
+                <div class="text-[11px] text-slate-400 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                    Callback URL для ЛК Multicard: <br>
+                    <span class="font-mono text-slate-700 font-bold select-all">https://ваш-домен/payments/multicard/callback/</span>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" class="w-full py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow-xs">
+                        {{ t.save_btn }}
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -207,6 +261,7 @@
             clickEnabled: {% if payment_settings.click_enabled %}true{% else %}false{% endif %},
             paymeEnabled: {% if payment_settings.payme_enabled %}true{% else %}false{% endif %},
             uzumEnabled: {% if payment_settings.uzum_enabled %}true{% else %}false{% endif %},
+            multicardEnabled: {% if payment_settings.multicard_enabled %}true{% else %}false{% endif %},
             cashEnabled: {% if payment_settings.cash_on_delivery_enabled %}true{% else %}false{% endif %},
             terminalEnabled: {% if payment_settings.terminal_on_delivery_enabled %}true{% else %}false{% endif %},
 

@@ -27,6 +27,13 @@ class StorePaymentSetting(models.Model):
     uzum_merchant_id = models.CharField(max_length=60, blank=True, default='TEST_UZUM_ID', verbose_name='Uzum Merchant ID')
     uzum_secret_key = models.CharField(max_length=100, blank=True, default='TEST_SECRET_KEY', verbose_name='Uzum Secret Key')
 
+    # Multicard
+    multicard_enabled = models.BooleanField(default=True, verbose_name='Включить Multicard')
+    multicard_app_id = models.CharField(max_length=100, blank=True, default='rhmt_test', verbose_name='Multicard Application ID')
+    multicard_secret = models.CharField(max_length=120, blank=True, default='Pw18axeBFo8V7NamKHXX', verbose_name='Multicard Secret Key')
+    multicard_store_id = models.CharField(max_length=60, blank=True, default='6', verbose_name='Multicard Store ID')
+    multicard_test_mode = models.BooleanField(default=True, verbose_name='Multicard Тестовый режим')
+
     # Cash / Terminal
     cash_on_delivery_enabled = models.BooleanField(default=True, verbose_name='Наличными при получении')
     terminal_on_delivery_enabled = models.BooleanField(default=True, verbose_name='Картой курьеру (терминал)')
@@ -48,6 +55,7 @@ class PaymentTransaction(models.Model):
         CLICK = 'CLICK', 'Click'
         PAYME = 'PAYME', 'Payme'
         UZUM = 'UZUM', 'Uzum Pay'
+        MULTICARD = 'MULTICARD', 'Multicard'
         SIMULATOR = 'SIMULATOR', 'Тестовый симулятор'
 
     class States(models.TextChoices):

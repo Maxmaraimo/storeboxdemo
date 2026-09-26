@@ -53,11 +53,37 @@
             </div>
 
             <div class="flex flex-col sm:flex-row gap-2.5">
+                {% if order.payment_method == 'MULTICARD' %}
+                <a href="/payments/multicard/checkout/{{ order.order_number }}/"
+                   class="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2">
+                    <i data-lucide="credit-card" class="w-4 h-4"></i>
+                    <span>{% if lang == 'uz' %}Karta orqali to'lash (Multicard){% elif lang == 'en' %}Pay by card (Multicard){% else %}Оплатить картой (Multicard){% endif %}</span>
+                </a>
+                {% elif order.payment_method == 'CLICK' and payment_url %}
+                <a href="{{ payment_url }}" target="_blank"
+                   class="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2">
+                    <span class="w-5 h-5 rounded-lg bg-white text-blue-600 font-black text-xs flex items-center justify-center">C</span>
+                    <span>{% if lang == 'uz' %}Click orqali to'lash{% elif lang == 'en' %}Pay with Click{% else %}Оплатить через Click{% endif %}</span>
+                </a>
+                {% elif order.payment_method == 'PAYME' and payment_url %}
+                <a href="{{ payment_url }}" target="_blank"
+                   class="flex-1 py-3 px-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-bold text-xs text-center transition-all shadow-md shadow-teal-500/20 flex items-center justify-center gap-2">
+                    <span class="w-5 h-5 rounded-lg bg-white text-teal-600 font-black text-xs flex items-center justify-center">P</span>
+                    <span>{% if lang == 'uz' %}Payme orqali to'lash{% elif lang == 'en' %}Pay with Payme{% else %}Оплатить через Payme{% endif %}</span>
+                </a>
+                {% elif order.payment_method == 'UZUM' and payment_url %}
+                <a href="{{ payment_url }}" target="_blank"
+                   class="flex-1 py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-purple-600/20 flex items-center justify-center gap-2">
+                    <span class="w-5 h-5 rounded-lg bg-white text-purple-600 font-black text-xs flex items-center justify-center">U</span>
+                    <span>{% if lang == 'uz' %}Uzum Pay orqali to'lash{% elif lang == 'en' %}Pay with Uzum Pay{% else %}Оплатить через Uzum Pay{% endif %}</span>
+                </a>
+                {% endif %}
+
                 <!-- Sandbox Simulator Button (Critical for Demos & Testing!) -->
                 <a href="/payments/simulate/{{ order.order_number }}/?gateway={{ order.payment_method }}"
                    class="flex-1 py-3 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-violet-600/20 flex items-center justify-center gap-2">
-                    <i data-lucide="zap" class="w-4 h-4"></i>
-                    <span>{% if lang == 'uz' %}1 bosishda to'lash{% elif lang == 'en' %}Pay in 1 click{% elif lang == 'tr' %}1 tıkla öde{% else %}Оплатить в 1 клик{% endif %} ({{ order.get_payment_method_display }})</span>
+                    <i data-lucide="zap" class="w-4 h-4 text-amber-300"></i>
+                    <span>{% if lang == 'uz' %}1 bosishda to'lash (Demo){% elif lang == 'en' %}Pay in 1 click (Demo){% elif lang == 'tr' %}1 tıkla öde{% else %}Оплатить в 1 клик (Тест){% endif %}</span>
                 </a>
             </div>
         </div>

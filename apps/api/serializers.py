@@ -354,5 +354,7 @@ class StorePaymentSettingSerializer(serializers.ModelSerializer):
             "cash_on_delivery_enabled", "terminal_on_delivery_enabled",
             "payme_enabled", "payme_merchant_id",
             "click_enabled", "click_service_id", "click_merchant_id",
-            "uzum_enabled"
+            "uzum_enabled",
+            "multicard_enabled", "multicard_app_id", "multicard_secret",
+            "multicard_store_id", "multicard_test_mode"
         ]

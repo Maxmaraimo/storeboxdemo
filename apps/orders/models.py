@@ -91,6 +91,7 @@ class Order(models.Model):
         CLICK = 'CLICK', 'Click'
         PAYME = 'PAYME', 'Payme'
         UZUM = 'UZUM', 'Uzum Pay'
+        MULTICARD = 'MULTICARD', 'Multicard'
         CASH = 'CASH', 'Наличными при получении'
         TERMINAL = 'TERMINAL', 'Картой курьеру (терминал)'
 

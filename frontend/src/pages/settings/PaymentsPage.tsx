@@ -16,6 +16,11 @@ export const PaymentsPage: React.FC = () => {
   const [clickServiceId, setClickServiceId] = useState("");
   const [clickMerchantId, setClickMerchantId] = useState("");
   const [uzumEnabled, setUzumEnabled] = useState(false);
+  const [multicardEnabled, setMulticardEnabled] = useState(false);
+  const [multicardAppId, setMulticardAppId] = useState("rhmt_test");
+  const [multicardSecret, setMulticardSecret] = useState("Pw18axeBFo8V7NamKHXX");
+  const [multicardStoreId, setMulticardStoreId] = useState("6");
+  const [multicardTestMode, setMulticardTestMode] = useState(true);
   const [successMsg, setSuccessMsg] = useState("");
 
   const { data, isLoading } = useQuery({
@@ -36,6 +41,11 @@ export const PaymentsPage: React.FC = () => {
       setClickServiceId(data.click_service_id || "");
       setClickMerchantId(data.click_merchant_id || "");
       setUzumEnabled(data.uzum_enabled ?? false);
+      setMulticardEnabled(data.multicard_enabled ?? false);
+      setMulticardAppId(data.multicard_app_id || "rhmt_test");
+      setMulticardSecret(data.multicard_secret || "Pw18axeBFo8V7NamKHXX");
+      setMulticardStoreId(data.multicard_store_id || "6");
+      setMulticardTestMode(data.multicard_test_mode ?? true);
     }
   }, [data]);
 
@@ -51,6 +61,11 @@ export const PaymentsPage: React.FC = () => {
         click_service_id: clickServiceId,
         click_merchant_id: clickMerchantId,
         uzum_enabled: uzumEnabled,
+        multicard_enabled: multicardEnabled,
+        multicard_app_id: multicardAppId,
+        multicard_secret: multicardSecret,
+        multicard_store_id: multicardStoreId,
+        multicard_test_mode: multicardTestMode,
       };
       return (await api.post("/settings/payments/", payload)).data;
     },
@@ -237,6 +252,76 @@ export const PaymentsPage: React.FC = () => {
           >
             {uzumEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
           </button>
+        </div>
+
+        {/* MULTICARD */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 md:col-span-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-black text-xs shadow-xs">
+                MC
+              </div>
+              <div>
+                <h2 className="text-xs font-black text-slate-900">Multicard Payment Gateway</h2>
+                <p className="text-[11px] text-slate-500">{t("multicard_desc") || "Uzcard, Humo, Visa, Mastercard, PaymeGo, ClickPass to'lovlari"}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMulticardEnabled(!multicardEnabled)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                multicardEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+              }`}
+            >
+              {multicardEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
+            </button>
+          </div>
+          {multicardEnabled && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Application ID</label>
+                <input
+                  type="text"
+                  value={multicardAppId}
+                  onChange={(e) => setMulticardAppId(e.target.value)}
+                  placeholder="rhmt_test"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-brand"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Secret Key</label>
+                <input
+                  type="password"
+                  value={multicardSecret}
+                  onChange={(e) => setMulticardSecret(e.target.value)}
+                  placeholder="Pw18axeBFo8V7NamKHXX"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-brand"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Store ID</label>
+                <input
+                  type="text"
+                  value={multicardStoreId}
+                  onChange={(e) => setMulticardStoreId(e.target.value)}
+                  placeholder="6"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-brand"
+                />
+              </div>
+              <div className="flex items-center gap-2 pt-5">
+                <input
+                  type="checkbox"
+                  id="mcTestMode"
+                  checked={multicardTestMode}
+                  onChange={(e) => setMulticardTestMode(e.target.checked)}
+                  className="rounded border-slate-300 text-brand focus:ring-brand"
+                />
+                <label htmlFor="mcTestMode" className="text-xs font-bold text-slate-700 cursor-pointer">
+                  Test / Dev rejimi (dev-mesh.multicard.uz)
+                </label>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

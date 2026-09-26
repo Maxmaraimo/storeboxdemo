@@ -188,3 +188,98 @@ class PaymentGatewaysTests(TestCase):
 
         payme_url = PaymentService.get_payment_url(self.order, 'PAYME')
         self.assertIn('checkout.paycom.uz', payme_url)
+
+    def test_multicard_provider_registration(self):
+        from apps.payments.services import PaymentService, MulticardProvider
+
+        mc = PaymentService.get_provider(self.store, 'MULTICARD')
+        self.assertIsInstance(mc, MulticardProvider)
+        self.assertEqual(mc.app_id, 'rhmt_test')
+        self.assertEqual(mc.secret, 'Pw18axeBFo8V7NamKHXX')
+        self.assertEqual(mc.store_id, '6')
+
+        # Test OFD builder
+        OrderItem.objects.create(
+            order=self.order,
+            product_name='Тестовый бургер',
+            quantity=2,
+            unit_price=Decimal('25000'),
+            total_price=Decimal('50000')
+        )
+        ofd = mc.build_ofd(self.order)
+        self.assertGreaterEqual(len(ofd), 1)
+        self.assertEqual(ofd[0]['name'], 'Тестовый бургер')
+        self.assertEqual(ofd[0]['price'], 2500000) # tiyin
+
+    def test_multicard_callback_success(self):
+        # Callback payload from Multicard
+        payload = {
+            'store_id': 6,
+            'amount': 6500000,
+            'invoice_id': self.order.order_number,
+            'status': 'success',
+            'uuid': '83e73262-b626-11f0-af7c-005056b4367d',
+            'sign': 'test_signature'
+        }
+        res = self.client.post(
+            '/payments/multicard/callback/',
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.json().get('success'))
+
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.payment_status, Order.PaymentStatuses.PAID)
+        self.assertEqual(self.order.payment_method, Order.PaymentMethods.MULTICARD)
+
+        # Check transaction created
+        tx = PaymentTransaction.objects.filter(order=self.order, provider=PaymentTransaction.Providers.MULTICARD).first()
+        self.assertIsNotNone(tx)
+        self.assertEqual(tx.state, PaymentTransaction.States.COMPLETED)
+
+    def test_multicard_card_payment_and_otp_flow(self):
+        # 1. Initiate card payment with test card
+        card_payload = {
+            'order_number': self.order.order_number,
+            'card_pan': '8600533364098829',
+            'expiry': '06/28'
+        }
+        res1 = self.client.post(
+            '/payments/multicard/pay-card/',
+            data=json.dumps(card_payload),
+            content_type='application/json'
+        )
+        self.assertEqual(res1.status_code, 200)
+        data1 = res1.json()
+        self.assertTrue(data1.get('success'))
+        uuid = data1.get('uuid')
+        self.assertIsNotNone(uuid)
+
+        # 2. Confirm OTP with test OTP
+        otp_payload = {
+            'order_number': self.order.order_number,
+            'uuid': uuid,
+            'otp': '112233'
+        }
+        res2 = self.client.post(
+            '/payments/multicard/confirm-otp/',
+            data=json.dumps(otp_payload),
+            content_type='application/json'
+        )
+        self.assertEqual(res2.status_code, 200)
+        data2 = res2.json()
+        self.assertTrue(data2.get('success'))
+        self.assertIn('/success/?paid=1', data2.get('redirect_url', ''))
+
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.payment_status, Order.PaymentStatuses.PAID)
+        self.assertEqual(self.order.payment_method, Order.PaymentMethods.MULTICARD)
+
+    def test_multicard_checkout_page(self):
+        res = self.client.get(f'/payments/multicard/checkout/{self.order.order_number}/')
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'Multicard')
+        self.assertContains(res, self.order.order_number)
+        self.assertContains(res, '8600 5333 6409 8829')
+

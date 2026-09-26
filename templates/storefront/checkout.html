@@ -459,6 +459,18 @@
                 </label>
                 {% endif %}
 
+                {% if pay_settings.multicard_enabled %}
+                <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all"
+                       :class="paymentMethod === 'MULTICARD' ? 'border-brand bg-brand/5' : 'border-slate-200'">
+                    <input type="radio" name="payment_method" value="MULTICARD" x-model="paymentMethod" class="sr-only">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-black text-[11px] flex items-center justify-center">M</div>
+                    <div>
+                        <div class="font-bold text-xs text-slate-900">Multicard</div>
+                        <div class="text-[10px] text-slate-500">Uzcard, Humo, Visa, MC, OTP</div>
+                    </div>
+                </label>
+                {% endif %}
+
                 <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all"
                        :class="paymentMethod === 'CASH' ? 'border-brand bg-brand/5' : 'border-slate-200'">
                     <input type="radio" name="payment_method" value="CASH" x-model="paymentMethod" class="sr-only">
@@ -478,6 +490,41 @@
                         <div class="text-[10px] text-slate-500">{{ t.terminal_desc|default:"Uzcard/Humo karta orqali" }}</div>
                     </div>
                 </label>
+
+                <!-- Interactive Payment Action Indicator -->
+                <div class="col-span-full pt-1">
+                    <div x-show="paymentMethod === 'CLICK'" class="p-3.5 rounded-2xl bg-blue-50/90 border border-blue-200/80 text-blue-900 text-xs flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0">C</div>
+                        <div>
+                            <span class="font-bold">Click Shop:</span>
+                            <span class="text-blue-800">{% if lang == 'uz' %}Buyurtmani tasdiqlaganingizdan so'ng to'lov uchun Click ilovasi (yoki my.click.uz) ochiladi.{% elif lang == 'en' %}After confirming the order, you will be redirected to Click (my.click.uz) to complete payment.{% else %}После подтверждения заказа откроется оплата через приложение Click (my.click.uz).{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <div x-show="paymentMethod === 'MULTICARD'" class="p-3.5 rounded-2xl bg-indigo-50/90 border border-indigo-200/80 text-indigo-900 text-xs flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center shrink-0">M</div>
+                        <div>
+                            <span class="font-bold">Multicard:</span>
+                            <span class="text-indigo-800">{% if lang == 'uz' %}Buyurtmani tasdiqlaganingizdan so'ng karta va SMS OTP orqali to'lov oynasi ochiladi.{% elif lang == 'en' %}After confirming, the card payment window with SMS OTP verification will open.{% else %}После подтверждения заказа откроется защищенная страница оплаты картой с SMS-кодом.{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <div x-show="paymentMethod === 'PAYME'" class="p-3.5 rounded-2xl bg-teal-50/90 border border-teal-200/80 text-teal-900 text-xs flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-teal-500 text-white font-black text-xs flex items-center justify-center shrink-0">P</div>
+                        <div>
+                            <span class="font-bold">Payme:</span>
+                            <span class="text-teal-800">{% if lang == 'uz' %}Buyurtmani tasdiqlaganingizdan so'ng Payme to'lov sahifasiga yo'naltirilasiz.{% elif lang == 'en' %}After confirming the order, you will be redirected to Payme.{% else %}После подтверждения заказа откроется оплата через Payme.{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <div x-show="paymentMethod === 'UZUM'" class="p-3.5 rounded-2xl bg-purple-50/90 border border-purple-200/80 text-purple-900 text-xs flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">U</div>
+                        <div>
+                            <span class="font-bold">Uzum Pay:</span>
+                            <span class="text-purple-800">{% if lang == 'uz' %}Buyurtmani tasdiqlaganingizdan so'ng Uzum Pay to'lov tizimi ochiladi.{% elif lang == 'en' %}After confirming the order, Uzum Pay gateway will open.{% else %}После подтверждения заказа откроется платежный шлюз Uzum Pay.{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -521,8 +568,8 @@
             <!-- Submit Order Button -->
             <button type="submit"
                     class="w-full mt-4 py-4 rounded-2xl bg-brand hover-bg-brand text-white font-black text-sm sm:text-base transition-all shadow-xl shadow-brand/30 flex items-center justify-center gap-2 active:scale-[0.98]">
-                <span>{{ t.confirm_order|default:"Buyurtmani tasdiqlash" }}</span>
-                <i data-lucide="check" class="w-5 h-5"></i>
+                <span x-text="paymentMethod === 'CLICK' ? '{% if lang == 'uz' %}Buyurtmani tasdiqlash va Click orqali to\'lash{% elif lang == 'en' %}Confirm Order & Pay via Click{% else %}Подтвердить заказ и оплатить через Click{% endif %}' : (paymentMethod === 'MULTICARD' ? '{% if lang == 'uz' %}Buyurtmani tasdiqlash va Multicard orqali to\'lash{% elif lang == 'en' %}Confirm Order & Pay via Multicard{% else %}Подтвердить заказ и оплатить через Multicard{% endif %}' : (paymentMethod === 'PAYME' ? '{% if lang == 'uz' %}Buyurtmani tasdiqlash va Payme orqali to\'lash{% elif lang == 'en' %}Confirm Order & Pay via Payme{% else %}Подтвердить заказ и оплатить через Payme{% endif %}' : (paymentMethod === 'UZUM' ? '{% if lang == 'uz' %}Buyurtmani tasdiqlash va Uzum orqali to\'lash{% elif lang == 'en' %}Confirm Order & Pay via Uzum{% else %}Подтвердить заказ и оплатить через Uzum{% endif %}' : '{{ t.confirm_order|default:"Buyurtmani tasdiqlash" }}')))"></span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
             </button>
         </div>
     </form>

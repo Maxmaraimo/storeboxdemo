@@ -1,0 +1,356 @@
+{% extends "storefront/base_storefront.html" %}
+{% load static %}
+
+{% block title %}Оплата заказа #{{ order.order_number }} — Multicard{% endblock %}
+
+{% block storefront_body %}
+<div class="min-h-screen bg-slate-50/70 py-8 sm:py-12 px-4 sm:px-6" x-data="multicardCheckout()">
+    <div class="max-w-xl mx-auto space-y-6">
+
+        <!-- Top Header & Back -->
+        <div class="flex items-center justify-between">
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/order/{{ order.order_number }}/success/{% else %}/order/{{ order.order_number }}/success/{% endif %}"
+               class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Вернуться к заказу</span>
+            </a>
+            <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/60 text-indigo-700 text-[11px] font-bold">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>Multicard Secured</span>
+            </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-200/40 overflow-hidden">
+            <!-- Header Banner -->
+            <div class="bg-gradient-to-r from-indigo-700 via-indigo-600 to-purple-700 p-6 text-white relative">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs uppercase font-extrabold tracking-wider text-indigo-200">Платежный шлюз Multicard</div>
+                        <h1 class="text-2xl font-black mt-1">Оплата заказа #{{ order.order_number }}</h1>
+                        <p class="text-xs text-indigo-100/90 mt-0.5">{{ store.name }}</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[11px] text-indigo-200 uppercase font-bold">К оплате</div>
+                        <div class="text-2xl sm:text-3xl font-black font-mono tracking-tight">{{ order.total_amount|floatformat:0 }} <span class="text-sm font-sans font-bold">UZS</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 sm:p-8 space-y-6">
+                <!-- Test Credentials Banner (If Test Mode Enabled) -->
+                {% if settings.multicard_test_mode or True %}
+                <div class="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-amber-900 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold flex items-center gap-1.5 text-amber-800">
+                            <i data-lucide="flask-conical" class="w-4 h-4 text-amber-600"></i>
+                            Тестовый стенд Multicard (dev-mesh)
+                        </span>
+                        <button type="button" @click="fillTestData()"
+                                class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition-colors shadow-xs">
+                            Заполнить тест-карту
+                        </button>
+                    </div>
+                    <div class="text-[11px] font-mono text-slate-700 bg-white/80 p-2 rounded-xl border border-amber-200/50 flex flex-wrap gap-x-4 gap-y-1">
+                        <span>Карта: <b>8600 5333 6409 8829</b></span>
+                        <span>Срок: <b>06/28</b></span>
+                        <span>Код OTP: <b>112233</b></span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Tabs: Card Direct vs Invoice Redirect -->
+                <div class="flex rounded-2xl bg-slate-100 p-1 text-xs font-bold">
+                    <button type="button"
+                            @click="tab = 'card'"
+                            :class="tab === 'card' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                            class="flex-1 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5">
+                        <i data-lucide="credit-card" class="w-4 h-4"></i>
+                        <span>Оплата картой (онлайн)</span>
+                    </button>
+                    <button type="button"
+                            @click="tab = 'invoice'"
+                            :class="tab === 'invoice' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                            class="flex-1 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        <span>Страница Multicard (Инвойс)</span>
+                    </button>
+                </div>
+
+                <!-- TAB 1: Direct Card Payment -->
+                <div x-show="tab === 'card'" class="space-y-4">
+                    <form @submit.prevent="submitCardPayment()" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Номер карты</label>
+                            <div class="relative">
+                                <input type="text"
+                                       x-model="pan"
+                                       @input="formatPan()"
+                                       placeholder="8600 0000 0000 0000"
+                                       maxlength="19"
+                                       inputmode="numeric"
+                                       class="w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-sm font-mono tracking-wider font-bold transition-all outline-hidden">
+                                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                                    <i data-lucide="credit-card" class="w-5 h-5"></i>
+                                </div>
+                                <div class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-slate-400" x-text="cardBrand"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Срок действия</label>
+                                <input type="text"
+                                       x-model="expiry"
+                                       @input="formatExpiry()"
+                                       placeholder="MM/YY"
+                                       maxlength="5"
+                                       inputmode="numeric"
+                                       class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-sm font-mono font-bold text-center transition-all outline-hidden">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">Владелец карты</label>
+                                <input type="text"
+                                       x-model="cardholder"
+                                       placeholder="Имя Фамилия"
+                                       class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-sm font-bold transition-all outline-hidden">
+                            </div>
+                        </div>
+
+                        <div x-show="errorMessage" x-text="errorMessage" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium"></div>
+
+                        <button type="submit"
+                                :disabled="isLoading || pan.length < 16"
+                                class="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-extrabold text-sm transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 cursor-pointer">
+                            <template x-if="isLoading">
+                                <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            </template>
+                            <template x-if="!isLoading">
+                                <span class="flex items-center gap-2">
+                                    <i data-lucide="lock" class="w-4 h-4"></i>
+                                    <span>Оплатить {{ order.total_amount|floatformat:0 }} UZS</span>
+                                </span>
+                            </template>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- TAB 2: Multicard Invoice Redirect -->
+                <div x-show="tab === 'invoice'" class="space-y-4">
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
+                        <div class="font-bold text-slate-800">Перенаправление на страницу Multicard</div>
+                        <p>Вы перейдёте на защищённый чекаут платёжного шлюза Multicard, где можно оплатить заказ через PaymeGo, ClickPass, QR-код или банковские карты.</p>
+                    </div>
+
+                    <a href="/payments/simulate/{{ order.order_number }}/?gateway=MULTICARD"
+                       class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-sm transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2">
+                        <span>Перейти к оплате инвойса Multicard</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
+                <!-- Order Items Summary -->
+                <div class="pt-4 border-t border-slate-100 text-xs text-slate-500 space-y-2">
+                    <div class="flex justify-between font-bold text-slate-700">
+                        <span>Заказ:</span>
+                        <span>#{{ order.order_number }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Клиент:</span>
+                        <span class="font-medium text-slate-800">{{ order.customer_name }} ({{ order.customer_phone }})</span>
+                    </div>
+                    {% if order.delivery_address %}
+                    <div class="flex justify-between">
+                        <span>Доставка:</span>
+                        <span class="font-medium text-slate-800 text-right">{{ order.delivery_address }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Footer -->
+        <div class="text-center text-[11px] text-slate-400 space-y-1">
+            <div class="flex items-center justify-center gap-3">
+                <span>Uzcard</span>
+                <span>•</span>
+                <span>Humo</span>
+                <span>•</span>
+                <span>Visa</span>
+                <span>•</span>
+                <span>Mastercard</span>
+            </div>
+            <p>Платежи обрабатываются через шлюз Multicard с соблюдением стандарта безопасности PCI DSS.</p>
+        </div>
+    </div>
+
+    <!-- OTP VERIFICATION MODAL -->
+    <div x-show="showOtpModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="showOtpModal = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl space-y-5 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+                <i data-lucide="message-square" class="w-7 h-7"></i>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-black text-slate-900">Подтверждение SMS</h3>
+                <p class="text-xs text-slate-500 mt-1" x-text="otpMessage || 'Введите 6-значный код подтверждения из SMS'"></p>
+            </div>
+
+            <!-- OTP Input -->
+            <div class="space-y-3">
+                <input type="text"
+                       x-model="otpCode"
+                       maxlength="6"
+                       inputmode="numeric"
+                       placeholder="••••••"
+                       class="w-full text-center text-2xl font-mono font-black tracking-widest py-3 px-4 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 outline-hidden">
+
+                <div x-show="otpError" x-text="otpError" class="text-xs text-rose-600 font-bold"></div>
+
+                <!-- Test OTP quick fill button -->
+                <button type="button" @click="otpCode = '112233'"
+                        class="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold underline cursor-pointer">
+                    Вставить тестовый OTP: 112233
+                </button>
+            </div>
+
+            <div class="flex gap-2.5">
+                <button type="button" @click="showOtpModal = false"
+                        class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">
+                    Отмена
+                </button>
+                <button type="button"
+                        @click="confirmOtp()"
+                        :disabled="isOtpLoading || otpCode.length < 4"
+                        class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20">
+                    <template x-if="isOtpLoading">
+                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    </template>
+                    <template x-if="!isOtpLoading">
+                        <span>Подтвердить</span>
+                    </template>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function multicardCheckout() {
+        return {
+            tab: 'card',
+            pan: '',
+            expiry: '',
+            cardholder: '{{ order.customer_name|default:"Покупатель" }}',
+            cardBrand: '',
+            isLoading: false,
+            errorMessage: '',
+            showOtpModal: false,
+            otpMessage: '',
+            paymentUuid: '',
+            otpCode: '',
+            isOtpLoading: false,
+            otpError: '',
+
+            fillTestData() {
+                this.pan = '8600 5333 6409 8829';
+                this.expiry = '06/28';
+                this.cardholder = 'TEST USER';
+                this.cardBrand = 'Uzcard';
+            },
+
+            formatPan() {
+                let v = this.pan.replace(/\D/g, '').substring(0, 16);
+                let parts = [];
+                for (let i = 0; i < v.length; i += 4) {
+                    parts.push(v.substring(i, i + 4));
+                }
+                this.pan = parts.join(' ');
+
+                if (v.startsWith('8600') || v.startsWith('5614')) this.cardBrand = 'Uzcard';
+                else if (v.startsWith('9860')) this.cardBrand = 'Humo';
+                else if (v.startsWith('4')) this.cardBrand = 'Visa';
+                else if (v.startsWith('5')) this.cardBrand = 'Mastercard';
+                else this.cardBrand = '';
+            },
+
+            formatExpiry() {
+                let v = this.expiry.replace(/\D/g, '').substring(0, 4);
+                if (v.length >= 2) {
+                    this.expiry = v.substring(0, 2) + '/' + v.substring(2);
+                } else {
+                    this.expiry = v;
+                }
+            },
+
+            submitCardPayment() {
+                this.isLoading = true;
+                this.errorMessage = '';
+
+                fetch('/payments/multicard/pay-card/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        order_number: '{{ order.order_number }}',
+                        card_pan: this.pan,
+                        expiry: this.expiry
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.isLoading = false;
+                    if (data.success) {
+                        if (data.redirect_url) {
+                            window.location.href = data.redirect_url;
+                        } else if (data.requires_otp || data.uuid) {
+                            this.paymentUuid = data.uuid;
+                            this.otpMessage = data.message || 'Введите 6-значный SMS-код подтверждения';
+                            this.showOtpModal = true;
+                        }
+                    } else {
+                        this.errorMessage = data.error || 'Ошибка при проведении платежа';
+                    }
+                })
+                .catch(err => {
+                    this.isLoading = false;
+                    this.errorMessage = 'Ошибка сети. Попробуйте еще раз.';
+                });
+            },
+
+            confirmOtp() {
+                this.isOtpLoading = true;
+                this.otpError = '';
+
+                fetch('/payments/multicard/confirm-otp/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        order_number: '{{ order.order_number }}',
+                        uuid: this.paymentUuid,
+                        otp: this.otpCode
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.isOtpLoading = false;
+                    if (data.success && data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        this.otpError = data.error || 'Неверный код подтверждения';
+                    }
+                })
+                .catch(err => {
+                    this.isOtpLoading = false;
+                    this.otpError = 'Ошибка сети при подтверждении OTP.';
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

@@ -11,6 +11,7 @@ from apps.stores.models import Store, Branch
 from apps.catalog.models import Category, Product, ProductVariation
 from apps.orders.models import Order, OrderItem, PromoCode, Customer, ChatMessage
 from apps.payments.models import StorePaymentSetting
+from apps.payments.services import PaymentService
 from apps.telegram_bot.services import send_telegram_notification, format_order_telegram_message
 
 
@@ -814,6 +815,8 @@ def storefront_home_view(request, subdomain=None):
         p.display_name = p.get_name(lang) if hasattr(p, 'get_name') else (getattr(p, f'name_{lang}', None) or getattr(p, 'name_uz', '') or getattr(p, 'name_ru', ''))
         p.display_description = p.get_description(lang) if hasattr(p, 'get_description') else (getattr(p, f'description_{lang}', None) or getattr(p, 'description_uz', '') or getattr(p, 'description_ru', ''))
         p.display_unit = p.get_unit_name(lang) if hasattr(p, 'get_unit_name') else (p.get_unit_display() if hasattr(p, 'get_unit_display') else '')
+        if getattr(p, 'category', None):
+            p.category.display_name = p.category.get_name(lang) if hasattr(p.category, 'get_name') else (getattr(p.category, f'name_{lang}', None) or getattr(p.category, 'name_uz', '') or getattr(p.category, 'name_ru', ''))
 
     for c in categories:
         c.display_name = c.get_name(lang) if hasattr(c, 'get_name') else (getattr(c, f'name_{lang}', None) or getattr(c, 'name_uz', '') or getattr(c, 'name_ru', ''))
@@ -827,6 +830,12 @@ def storefront_home_view(request, subdomain=None):
     cart = request.session.get('cart', {}) if hasattr(request, 'session') else {}
     cart_count = sum(item.get('quantity', 1) for item in cart.values())
     subtotal = sum(item.get('total_price', 0) for item in cart.values())
+
+    delivery_price = float(store.delivery_price or 0)
+    free_threshold = float(store.free_delivery_threshold or 0)
+    delivery_fee = delivery_price
+    if free_threshold and subtotal >= free_threshold:
+        delivery_fee = 0.0
 
     t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
     context = {
@@ -848,6 +857,10 @@ def storefront_home_view(request, subdomain=None):
         'cart_count': cart_count,
         'cart_subtotal': subtotal,
         'cart_json': json.dumps(cart),
+        'delivery_price': delivery_price,
+        'free_delivery_threshold': free_threshold,
+        'default_delivery_fee': delivery_fee,
+        'delivery_fee': delivery_fee,
     }
     return render(request, 'storefront/home.html', context)
 
@@ -1138,6 +1151,24 @@ def checkout_view(request, subdomain=None):
 
         payment_method = request.POST.get('payment_method', Order.PaymentMethods.CASH)
         notes = request.POST.get('notes', '').strip()
+        cutlery_count = request.POST.get('cutlery_count')
+        leave_at_door = request.POST.get('leave_at_door') == '1'
+        note_tags = []
+        if cutlery_count:
+            try:
+                c_num = int(cutlery_count)
+                if c_num > 0:
+                    note_tags.append(f"Приборы: {c_num} шт.")
+                else:
+                    note_tags.append("Без приборов")
+            except Exception:
+                pass
+        if leave_at_door:
+            note_tags.append("Оставить у двери")
+        if note_tags:
+            tag_str = f"[{', '.join(note_tags)}]"
+            notes = f"{tag_str} {notes}".strip()
+
         promo_code_str = request.POST.get('promo_code', '').strip().upper()
         telegram_user_id = request.POST.get('telegram_user_id')
 
@@ -1265,6 +1296,42 @@ def checkout_view(request, subdomain=None):
             tg_message = format_order_telegram_message(order)
             send_telegram_notification(store, tg_message)
 
+            if payment_method == 'MULTICARD':
+                try:
+                    success_rel = f'/store/{store.subdomain}/order/{order.order_number}/success/?paid=1' if store and store.subdomain else f'/order/{order.order_number}/success/?paid=1'
+                    return_url = request.build_absolute_uri(success_rel)
+                    p = PaymentService.get_provider(store, 'MULTICARD')
+                    inv = p.create_invoice(order, return_url=return_url)
+                    if inv.get('success') and inv.get('checkout_url'):
+                        return redirect(inv['checkout_url'])
+                except Exception:
+                    pass
+                return redirect(f'/payments/multicard/checkout/{order.order_number}/')
+            elif payment_method == 'CLICK':
+                try:
+                    if not pay_settings.click_service_id or str(pay_settings.click_service_id).startswith('TEST_'):
+                        return redirect(f'/payments/simulate/{order.order_number}/?gateway=CLICK')
+                    success_rel = f'/store/{store.subdomain}/order/{order.order_number}/success/?paid=1' if store and store.subdomain else f'/order/{order.order_number}/success/?paid=1'
+                    return_url = request.build_absolute_uri(success_rel)
+                    click_url = PaymentService.get_payment_url(order, 'CLICK', return_url=return_url)
+                    if click_url:
+                        return redirect(click_url)
+                except Exception:
+                    pass
+            elif payment_method == 'PAYME':
+                try:
+                    if not pay_settings.payme_merchant_id or str(pay_settings.payme_merchant_id).startswith('TEST_'):
+                        return redirect(f'/payments/simulate/{order.order_number}/?gateway=PAYME')
+                    success_rel = f'/store/{store.subdomain}/order/{order.order_number}/success/?paid=1' if store and store.subdomain else f'/order/{order.order_number}/success/?paid=1'
+                    return_url = request.build_absolute_uri(success_rel)
+                    payme_url = PaymentService.get_payment_url(order, 'PAYME', return_url=return_url)
+                    if payme_url:
+                        return redirect(payme_url)
+                except Exception:
+                    pass
+            elif payment_method == 'UZUM':
+                return redirect(f'/payments/simulate/{order.order_number}/?gateway=UZUM')
+
             if store and store.subdomain:
                 return redirect(f'/store/{store.subdomain}/order/{order.order_number}/success/')
             return redirect(f'/order/{order.order_number}/success/')
@@ -1273,13 +1340,25 @@ def checkout_view(request, subdomain=None):
     branches = store.branches.filter(is_active=True)
     saved_phone = request.session.get('customer_phone', '')
     saved_name = request.session.get('customer_name', '')
-    return render(request, 'storefront/checkout.html', {
+    recommended_products = Product.objects.filter(store=store, is_active=True).order_by('-is_featured', '-rating', '-id')[:12]
+    for p in recommended_products:
+        p.display_name = p.get_name(lang) if hasattr(p, 'get_name') else (getattr(p, f'name_{lang}', None) or getattr(p, 'name_uz', '') or getattr(p, 'name_ru', ''))
+
+    if request.method == 'GET':
+        return redirect(f'/store/{store.subdomain}/cart/' if store and store.subdomain else '/cart/')
+
+    return render(request, 'storefront/cart.html', {
         'store': store,
         'cart': cart,
-        'subtotal': subtotal,
-        'delivery_price': store.delivery_price,
-        'free_delivery_threshold': store.free_delivery_threshold,
-        'default_delivery_fee': default_delivery_fee,
+        'cart_count': sum(item.get('quantity', 1) for item in cart.values()),
+        'cart_subtotal': float(subtotal),
+        'subtotal': float(subtotal),
+        'cart_json': json.dumps(cart),
+        'delivery_price': float(store.delivery_price or 0),
+        'free_delivery_threshold': float(store.free_delivery_threshold or 0),
+        'default_delivery_fee': float(default_delivery_fee),
+        'delivery_fee': float(default_delivery_fee),
+        'total': float(subtotal) + float(default_delivery_fee),
         'pay_settings': pay_settings,
         'branches': branches,
         'error': error,
@@ -1288,7 +1367,10 @@ def checkout_view(request, subdomain=None):
         't': t,
         'is_tma': is_tma,
         'saved_phone': saved_phone,
-        'saved_name': saved_name
+        'saved_name': saved_name,
+        'recommended_products': recommended_products,
+        'promo_code': request.session.get('promo_code', ''),
+        'promo_discount': float(request.session.get('promo_discount', 0) or 0),
     })
 
 
@@ -1301,15 +1383,31 @@ def order_success_view(request, order_number, subdomain=None):
     store._current_lang = lang
     t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
 
+    payment_url = None
+    if order.payment_status != Order.PaymentStatuses.PAID:
+        try:
+            return_url = request.build_absolute_uri(request.path + '?paid=1')
+            if order.payment_method in PaymentService.PROVIDERS:
+                payment_url = PaymentService.get_payment_url(order, order.payment_method, return_url=return_url)
+        except Exception:
+            pass
+
     return render(request, 'storefront/order_success.html', {
         'order': order,
         'store': store,
         'pay_settings': pay_settings,
+        'payment_url': payment_url,
         'is_just_paid': request.GET.get('paid') == '1',
         'lang': lang,
         'current_lang': lang,
         't': t,
     })
+
+
+@xframe_options_exempt
+def multicard_pay_redirect_view(request, order_number, subdomain=None):
+    from apps.payments.views import multicard_checkout_page_view
+    return multicard_checkout_page_view(request, order_number)
 
 
 @csrf_exempt
@@ -1499,12 +1597,15 @@ def cart_page_view(request, subdomain=None):
     if not store:
         raise Http404("Do'kon topilmadi")
 
+    if request.method == 'POST':
+        return checkout_view(request, subdomain)
+
     lang = get_storefront_lang(request, store)
     store._current_lang = lang
 
     cart = request.session.get('cart', {})
     cart_count = sum(item.get('quantity', 1) for item in cart.values())
-    subtotal = sum(item.get('total_price', 0) for item in cart.values())
+    subtotal = float(sum(item.get('total_price', 0) for item in cart.values()))
 
     # Recommended products for cart upsell & empty state
     recommended_products = Product.objects.filter(store=store, is_active=True).order_by('-is_featured', '-rating', '-id')[:12]
@@ -1512,19 +1613,25 @@ def cart_page_view(request, subdomain=None):
         p.display_name = p.get_name(lang) if hasattr(p, 'get_name') else (getattr(p, f'name_{lang}', None) or getattr(p, 'name_uz', '') or getattr(p, 'name_ru', ''))
 
     # Delivery calculation
-    delivery_fee = float(store.delivery_price or 0)
-    if store.free_delivery_threshold and subtotal >= float(store.free_delivery_threshold):
+    delivery_price = float(store.delivery_price or 0)
+    free_threshold = float(store.free_delivery_threshold or 0)
+    delivery_fee = delivery_price
+    if free_threshold and subtotal >= free_threshold:
         delivery_fee = 0.0
 
     total = float(subtotal) + (delivery_fee if cart else 0.0)
 
     # Promo discount if any
-    promo_code = request.session.get('promo_code')
+    promo_code = request.session.get('promo_code', '')
     promo_discount = float(request.session.get('promo_discount', 0) or 0)
     if promo_discount:
         total = max(0.0, total - promo_discount)
 
     t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
+    pay_settings, _ = StorePaymentSetting.objects.get_or_create(store=store)
+    branches = store.branches.filter(is_active=True)
+    saved_phone = request.session.get('customer_phone', '')
+    saved_name = request.session.get('customer_name', '')
 
     context = {
         'store': store,
@@ -1533,15 +1640,22 @@ def cart_page_view(request, subdomain=None):
         'cart_subtotal': subtotal,
         'subtotal': subtotal,
         'cart_json': json.dumps(cart),
+        'delivery_price': delivery_price,
+        'free_delivery_threshold': free_threshold,
+        'default_delivery_fee': delivery_fee,
         'delivery_fee': delivery_fee,
         'total': total,
         'promo_code': promo_code,
         'promo_discount': promo_discount,
         'recommended_products': recommended_products,
+        'pay_settings': pay_settings,
+        'branches': branches,
+        'saved_phone': saved_phone,
+        'saved_name': saved_name,
         'lang': lang,
         'current_lang': lang,
         't': t,
-        'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
+        'is_tma': bool(request.GET.get('tma') == '1' or request.session.get('telegram_user_id') or getattr(request, 'is_tma', False)),
     }
     return render(request, 'storefront/cart.html', context)
 

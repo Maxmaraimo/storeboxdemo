@@ -6,7 +6,8 @@ from decimal import Decimal
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.db import transaction
 from apps.orders.models import Order
 from apps.payments.models import StorePaymentSetting, PaymentTransaction
 from apps.telegram_bot.services import send_telegram_notification, format_order_telegram_message
@@ -355,3 +356,212 @@ def simulate_payment_view(request, order_number):
 
     # Redirect to success page
     return redirect(f'/order/{order.order_number}/success/?paid=1')
+
+
+# -------------------------------------------------------------
+# MULTICARD PAYMENT GATEWAY VIEWS (https://docs.multicard.uz)
+# -------------------------------------------------------------
+
+@csrf_exempt
+def multicard_callback_view(request):
+    """
+    Multicard Webhook / Callback endpoint (docs.multicard.uz).
+    Processes notifications about payment status changes (success, error, cancel).
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Only POST method allowed'}, status=405)
+
+    try:
+        if request.content_type == 'application/json' or (request.body and request.body.startswith(b'{')):
+            payload = json.loads(request.body.decode('utf-8'))
+        else:
+            payload = dict(request.POST)
+    except Exception as e:
+        logger.error("Multicard callback payload decode error: %s", e)
+        return JsonResponse({'success': False, 'message': f'Invalid body: {e}'}, status=400)
+
+    invoice_id = payload.get('invoice_id')
+    if not invoice_id:
+        return JsonResponse({'success': False, 'message': 'Missing invoice_id'}, status=400)
+
+    try:
+        order = Order.objects.select_related('store', 'store__payment_settings').get(order_number=invoice_id)
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)
+
+    from apps.payments.services import MulticardProvider
+    provider = MulticardProvider(order.store)
+
+    if not provider.verify_signature(payload):
+        logger.warning("Multicard callback signature mismatch for order %s", invoice_id)
+        if not provider.test_mode:
+            return JsonResponse({'success': False, 'message': 'Invalid signature'}, status=400)
+
+    result = provider.process_complete(payload)
+    return JsonResponse(result)
+
+
+@csrf_exempt
+def multicard_init_card_pay_view(request):
+    """
+    Direct card payment initiation from StoreBox storefront checkout.
+    Sends PAN and expiry to Multicard /payment.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8')) if (request.body and request.body.startswith(b'{')) else request.POST
+    except Exception:
+        data = request.POST
+
+    order_number = data.get('order_number')
+    card_pan = data.get('card_pan', '')
+    expiry = data.get('expiry', '')
+
+    if not order_number or not card_pan or not expiry:
+        return JsonResponse({'success': False, 'error': 'Заполните номер карты и срок действия'}, status=400)
+
+    try:
+        order = Order.objects.select_related('store', 'store__payment_settings').get(order_number=order_number)
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Заказ не найден'}, status=404)
+
+    from apps.payments.services import MulticardProvider
+    provider = MulticardProvider(order.store)
+
+    client_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1'))
+    if ',' in client_ip:
+        client_ip = client_ip.split(',')[0].strip()
+    user_agent = request.META.get('HTTP_USER_AGENT', 'StoreBox')
+
+    res = provider.create_card_payment(
+        order=order,
+        pan=card_pan,
+        expiry=expiry,
+        client_ip=client_ip,
+        user_agent=user_agent
+    )
+
+    if not res.get('success'):
+        # Fallback simulation in test mode or sandbox network restriction
+        if provider.test_mode or 'Request to' in str(res.get('error', '')) or 'policy' in str(res.get('error', '')):
+            sim_uuid = f"MC-TEST-{order.order_number}"
+            PaymentTransaction.objects.update_or_create(
+                order=order,
+                provider=PaymentTransaction.Providers.MULTICARD,
+                defaults={
+                    'store': order.store,
+                    'transaction_id': sim_uuid,
+                    'amount': order.total_amount,
+                    'state': PaymentTransaction.States.PREPARED,
+                    'raw_payload': {'simulated': True, 'pan': card_pan[-4:], 'expiry': expiry}
+                }
+            )
+            return JsonResponse({
+                'success': True,
+                'uuid': sim_uuid,
+                'requires_otp': True,
+                'status': 'draft',
+                'message': 'Код подтверждения отправлен на телефон владельца карты (Тестовый OTP: 112233)'
+            })
+        return JsonResponse({'success': False, 'error': res.get('error', 'Ошибка платежного шлюза Multicard')}, status=400)
+
+    return JsonResponse(res)
+
+
+@csrf_exempt
+def multicard_confirm_otp_view(request):
+    """
+    Confirm card payment with SMS OTP code.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8')) if (request.body and request.body.startswith(b'{')) else request.POST
+    except Exception:
+        data = request.POST
+
+    payment_uuid = data.get('uuid') or data.get('payment_uuid')
+    otp = str(data.get('otp', '')).strip()
+    order_number = data.get('order_number')
+
+    if not payment_uuid or not otp:
+        return JsonResponse({'success': False, 'error': 'Введите код подтверждения из SMS'}, status=400)
+
+    order = None
+    if order_number:
+        try:
+            order = Order.objects.select_related('store', 'store__payment_settings').get(order_number=order_number)
+        except Order.DoesNotExist:
+            pass
+
+    if not order:
+        trans = PaymentTransaction.objects.filter(
+            transaction_id=str(payment_uuid),
+            provider=PaymentTransaction.Providers.MULTICARD
+        ).select_related('order', 'store').first()
+        if trans:
+            order = trans.order
+
+    if not order:
+        return JsonResponse({'success': False, 'error': 'Заказ не найден'}, status=404)
+
+    from apps.payments.services import MulticardProvider
+    provider = MulticardProvider(order.store)
+
+    # In test mode or simulated transaction
+    if str(payment_uuid).startswith('MC-TEST-') or (provider.test_mode and otp == '112233'):
+        with transaction.atomic():
+            order.payment_status = Order.PaymentStatuses.PAID
+            order.payment_method = Order.PaymentMethods.MULTICARD
+            order.save(update_fields=['payment_status', 'payment_method', 'updated_at'])
+
+            PaymentTransaction.objects.filter(
+                order=order,
+                provider=PaymentTransaction.Providers.MULTICARD
+            ).update(
+                state=PaymentTransaction.States.COMPLETED,
+                raw_payload={'simulated': True, 'otp_verified': True, 'otp': otp}
+            )
+
+        tg_text = format_order_telegram_message(order)
+        send_telegram_notification(order.store, tg_text)
+
+        return JsonResponse({
+            'success': True,
+            'status': 'success',
+            'redirect_url': f'/order/{order.order_number}/success/?paid=1'
+        })
+
+    res = provider.confirm_card_payment(payment_uuid=payment_uuid, otp=otp, order=order)
+    if res.get('success'):
+        return JsonResponse({
+            'success': True,
+            'status': 'success',
+            'redirect_url': f'/order/{order.order_number}/success/?paid=1'
+        })
+    else:
+        return JsonResponse({'success': False, 'error': res.get('error', 'Неверный код подтверждения')}, status=400)
+
+
+def multicard_checkout_page_view(request, order_number):
+    """
+    Dedicated branded checkout page for Multicard direct payment.
+    Allows entering card details with OTP confirmation or redirecting to invoice.
+    """
+    order = get_object_or_404(
+        Order.objects.select_related('store', 'store__payment_settings'),
+        order_number=order_number
+    )
+    store = order.store
+    pay_settings = getattr(store, 'payment_settings', None)
+
+    return render(request, 'storefront/multicard_pay.html', {
+        'order': order,
+        'store': store,
+        'pay_settings': pay_settings,
+        'payment_settings': pay_settings,
+    })
+

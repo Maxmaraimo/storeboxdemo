@@ -21,6 +21,8 @@ urlpatterns = [
     path('store/<slug:subdomain>/checkout/', views.checkout_view, name='store_checkout'),
     path('order/<str:order_number>/success/', views.order_success_view, name='order_success'),
     path('store/<slug:subdomain>/order/<str:order_number>/success/', views.order_success_view, name='store_order_success'),
+    path('order/<str:order_number>/pay-multicard/', views.multicard_pay_redirect_view, name='multicard_pay'),
+    path('store/<slug:subdomain>/order/<str:order_number>/pay-multicard/', views.multicard_pay_redirect_view, name='store_multicard_pay'),
     path('api/order/<str:order_number>/live-tracking/', views.order_live_tracking_api, name='order_live_tracking_api'),
     path('store/<slug:subdomain>/api/order/<str:order_number>/live-tracking/', views.order_live_tracking_api, name='store_order_live_tracking_api'),
 
