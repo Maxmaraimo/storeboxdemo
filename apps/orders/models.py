@@ -278,7 +278,10 @@ class OrderItem(models.Model):
         verbose_name='Вариант'
     )
     product_name = models.CharField(max_length=200, verbose_name='Название товара (снапшот)')
-    variation_name = models.CharField(max_length=100, blank=True, verbose_name='Вариант (снапшот)')
+    variation_name = models.TextField(blank=True, verbose_name='Вариант (снапшот)')
+    custom_options = models.JSONField(default=dict, blank=True, null=True, verbose_name='Опции конструктора (JSON)')
+    custom_summary = models.TextField(blank=True, default='', verbose_name='Описание сборки')
+    custom_image_url = models.CharField(max_length=500, blank=True, default='', verbose_name='URL кастомного фото')
     unit_price = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Цена за единицу (UZS)')
     quantity = models.PositiveIntegerField(default=1, verbose_name='Количество')
     total_price = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Итого (UZS)')

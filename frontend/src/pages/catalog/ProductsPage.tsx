@@ -6,7 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Product, Category } from "../../types";
 
 export const ProductsPage: React.FC = () => {
-  const { t, lang, hasPermission } = useAuth();
+  const { t, lang, hasPermission, store } = useAuth();
   const canEditProduct = hasPermission("products", "edit");
   const canDeleteProduct = hasPermission("products", "delete");
   const queryClient = useQueryClient();
@@ -94,7 +94,7 @@ export const ProductsPage: React.FC = () => {
   };
 
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ["products", selectedCategory, search],
+    queryKey: ["products", store?.id, selectedCategory, search],
     queryFn: async () => {
       let url = `/products/?q=${encodeURIComponent(search)}`;
       if (selectedCategory) url += `&category=${selectedCategory}`;
@@ -104,10 +104,20 @@ export const ProductsPage: React.FC = () => {
   });
 
   const { data: categoriesData } = useQuery({
-    queryKey: ["categories"],
+    queryKey: ["categories", store?.id],
     queryFn: async () => {
       const res = await api.get("/categories/");
       return res.data as { categories: Category[]; total: number };
+    },
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
+      const res = await api.patch(`/products/${id}/`, { is_active });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 
@@ -302,6 +312,10 @@ export const ProductsPage: React.FC = () => {
                       <img
                         src={p.primary_image_url}
                         alt=""
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/static/images/placeholder.svg";
+                        }}
                         className="w-12 h-12 rounded-xl object-cover border border-slate-100 shrink-0"
                       />
                     ) : (
@@ -343,17 +357,39 @@ export const ProductsPage: React.FC = () => {
                   <td className="py-3.5 px-4 text-slate-500">{t("unit_pcs") || p.unit || "dona"}</td>
 
                   <td className="py-3.5 px-4">
-                    {p.stock === 0 ? (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
-                        {t("out_of_stock") || "Tugagan"}
-                      </span>
-                    ) : p.is_active ? (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
-                        {t("in_stock") || "Sotuvda"}
-                      </span>
+                    {canEditProduct ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleStatusMutation.mutate({ id: p.id, is_active: !p.is_active })}
+                        disabled={toggleStatusMutation.isPending}
+                        title={p.is_active ? "В стоп-лист (выключить)" : "Включить (в наличии)"}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all active:scale-95 shadow-2xs border ${
+                          p.is_active
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 hover:bg-emerald-100/80"
+                            : "bg-rose-50 text-rose-700 border-rose-200/80 hover:bg-rose-100/80"
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${p.is_active ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`}></span>
+                        <span>
+                          {p.is_active
+                            ? (lang === "ru" ? "В наличии" : lang === "uz" ? "Sotuvda" : "In Stock")
+                            : (lang === "ru" ? "Стоп-лист" : lang === "uz" ? "Stop-list" : "Stop-list")}
+                        </span>
+                      </button>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
-                        {t("out_of_stock") || "Nofaol"}
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                          p.is_active
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-rose-50 text-rose-700 border-rose-200"
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${p.is_active ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                        <span>
+                          {p.is_active
+                            ? (lang === "ru" ? "В наличии" : "Sotuvda")
+                            : (lang === "ru" ? "Стоп-лист" : "Stop-list")}
+                        </span>
                       </span>
                     )}
                   </td>

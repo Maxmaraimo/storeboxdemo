@@ -79,48 +79,65 @@
         <!-- LEFT COLUMN: CART ITEMS, OPTIONS & UPSELL (8 cols) -->
         <div class="lg:col-span-7 xl:col-span-8 space-y-5">
 
-            <!-- CART ITEMS CARD -->
-            <div class="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <!-- CART ITEMS CARD (Collapsible Accordion) -->
+            <div class="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/80 shadow-xs space-y-3">
+                <button type="button" @click="itemsExpanded = !itemsExpanded"
+                        class="w-full flex items-center justify-between pb-3 border-b border-slate-100 cursor-pointer select-none text-left group">
                     <div class="flex items-center gap-2 text-slate-900 font-black text-sm sm:text-base">
-                        <i data-lucide="shopping-bag" class="w-4 h-4 text-amber-500"></i>
-                        <span>{% if current_lang == 'ru' %}Товары в заказе{% elif current_lang == 'en' %}Order Items{% else %}Buyurtmadagi tovarlar{% endif %}</span>
+                        <i data-lucide="shopping-bag" class="w-4 h-4 text-brand"></i>
+                        <span>{% if current_lang == 'ru' %}Товары в заказе{% elif current_lang == 'en' %}Order items{% elif current_lang == 'tr' %}Siparişteki ürünler{% else %}Buyurtmadagi tovarlar{% endif %}</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition-transform duration-200"
+                           :class="itemsExpanded ? 'rotate-180' : ''"></i>
                     </div>
-                    <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold" x-text="cartCount + ' ta'"></span>
-                </div>
+                    <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold font-mono" x-text="formattedItemsCount"></span>
+                </button>
 
                 <!-- ITEMS LIST -->
-                <div class="divide-y divide-slate-100">
+                <div x-show="itemsExpanded" x-collapse class="divide-y divide-slate-100 pt-1">
                     <template x-for="(item, key) in cartItems" :key="key">
-                        <div class="py-3.5 sm:py-4 flex items-center justify-between gap-3 sm:gap-4">
-                            <!-- Left: Product Photo & Title -->
-                            <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
-                                    <img :src="item.image || item.image_url || 'https://placehold.co/160x160?text=Food'"
-                                         :alt="item.name" class="w-full h-full object-cover">
-                                </div>
+                        <div class="py-3 sm:py-3.5 flex items-center justify-between gap-3">
+                            <!-- Left: Product Photo & Title (Clickable) -->
+                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                                <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/' + item.product_id + '/{% else %}/product/' + item.product_id + '/{% endif %}'"
+                                   :class="(item.variation_name && item.variation_name.includes('•')) ? 'w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-500/10 p-1 shrink-0 border border-amber-200 flex items-center justify-center' : 'w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100'"
+                                   class="hover:opacity-90 transition-opacity block">
+                                    <img :src="item.image || item.image_url || 'https://placehold.co/160x160?text=Product'"
+                                         :alt="item.name"
+                                         :class="(item.variation_name && item.variation_name.includes('•')) ? 'w-full h-full object-contain filter drop-shadow-sm' : 'w-full h-full object-cover'">
+                                </a>
                                 <div class="min-w-0 flex-1">
-                                    <h3 class="font-bold text-xs sm:text-sm text-slate-900 leading-snug line-clamp-2" x-text="item.name"></h3>
+                                    <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/' + item.product_id + '/{% else %}/product/' + item.product_id + '/{% endif %}'"
+                                       class="font-bold text-xs sm:text-sm text-slate-900 leading-snug hover:text-brand transition-colors block"
+                                       x-text="item.name"></a>
                                     <div x-show="item.variation_name" class="text-[11px] text-slate-500 font-medium mt-0.5">
-                                        <span x-text="item.variation_name"></span>
+                                        <template x-if="item.variation_name && item.variation_name.includes('•')">
+                                            <div class="flex flex-wrap gap-1 mt-1 max-w-sm sm:max-w-md">
+                                                <template x-for="(part, idx) in item.variation_name.split('•')" :key="idx">
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-slate-700 border border-amber-200 shadow-2xs" x-text="part.trim()"></span>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template x-if="!item.variation_name || !item.variation_name.includes('•')">
+                                            <span class="line-clamp-1" x-text="item.variation_name"></span>
+                                        </template>
                                     </div>
-                                    <div class="text-[11px] sm:text-xs text-slate-400 font-mono mt-0.5">
+                                    <div class="text-[11px] text-slate-400 font-mono mt-0.5">
                                         <span x-text="formatMoney(item.unit_price || item.price)"></span> / {% if current_lang == 'ru' %}шт.{% else %}dona{% endif %}
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Right: Stepper and Line Total -->
-                            <div class="flex items-center gap-3 sm:gap-4 shrink-0">
-                                <!-- Stepper Pill (Wizzi / Yandex Eats style) -->
-                                <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-100/90 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full border border-slate-200/60 shadow-2xs">
+                            <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
+                                <!-- Stepper Pill -->
+                                <div class="flex items-center gap-1 sm:gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200/60 shadow-2xs">
                                     <button type="button" @click="updateCart(key, 'decrease')"
-                                            class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer text-xs font-black shadow-xs active:scale-95">
+                                            class="w-6 h-6 rounded-full bg-white hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer text-xs font-black shadow-xs active:scale-95">
                                         -
                                     </button>
-                                    <span class="w-5 sm:w-6 text-center text-xs sm:text-sm font-black text-slate-900 font-mono" x-text="item.quantity"></span>
+                                    <span class="w-5 text-center text-xs sm:text-sm font-black text-slate-900 font-mono" x-text="item.quantity"></span>
                                     <button type="button" @click="updateCart(key, 'increase')"
-                                            class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer text-xs font-black shadow-xs active:scale-95">
+                                            class="w-6 h-6 rounded-full bg-white hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer text-xs font-black shadow-xs active:scale-95">
                                         +
                                     </button>
                                 </div>
@@ -220,9 +237,18 @@
                             </div>
                             {% endif %}
 
+                            <!-- In-cart indicator badge -->
+                            <div x-show="cartItems && (cartItems[{{ rec.id }}] || cartItems['{{ rec.id }}'])"
+                                 x-cloak
+                                 class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-brand text-white font-mono font-black text-[10px] flex items-center gap-1 shadow-xs">
+                                <span>✓</span>
+                                <span x-text="(cartItems[{{ rec.id }}] || cartItems['{{ rec.id }}'])?.quantity || 1"></span>
+                            </div>
+
                             <!-- Quick Add Button with Lucide Plus -->
                             <button type="button" @click="quickAdd({{ rec.id }})"
-                                    class="absolute bottom-1.5 right-1.5 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white hover:bg-slate-50 text-slate-900 shadow-[0_2px_8px_rgba(0,0,0,0.15)] flex items-center justify-center active:scale-90 transition-all cursor-pointer border border-slate-100"
+                                    :class="cartItems && (cartItems[{{ rec.id }}] || cartItems['{{ rec.id }}']) ? 'bg-brand text-white border-brand shadow-brand/30' : 'bg-white hover:bg-slate-50 text-slate-900 border-slate-100'"
+                                    class="absolute bottom-1.5 right-1.5 w-6 h-6 sm:w-7 sm:h-7 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.15)] flex items-center justify-center active:scale-90 transition-all cursor-pointer border"
                                     aria-label="Add to cart">
                                 <i data-lucide="plus" class="w-3.5 h-3.5 stroke-[2.5]"></i>
                             </button>
@@ -325,7 +351,7 @@
 
                 <!-- DESKTOP CTA BUTTON -->
                 <button type="button" @click="proceedToCheckout()"
-                        class="hidden lg:flex w-full py-4 rounded-2xl bg-[#FEE500] hover:bg-[#FADC00] active:scale-[0.98] text-slate-950 font-black text-sm tracking-wide shadow-[0_6px_20px_rgba(254,229,0,0.45)] items-center justify-center gap-2 transition-all cursor-pointer border border-yellow-300/40">
+                        class="hidden lg:flex w-full py-4 rounded-2xl bg-brand hover:brightness-95 active:scale-[0.98] text-white font-black text-sm tracking-wide shadow-xl shadow-brand/25 items-center justify-center gap-2 transition-all cursor-pointer border border-white/20">
                     <span>{% if current_lang == 'ru' %}Перейти к оформлению{% elif current_lang == 'en' %}Proceed to Checkout{% elif current_lang == 'tr' %}Siparişi Tamamla{% else %}Rasmiylashtirishga o'tish{% endif %}</span>
                     <i data-lucide="arrow-right" class="w-4 h-4 stroke-[2.5]"></i>
                 </button>
@@ -334,20 +360,20 @@
 
     </div>
 
-    <!-- MOBILE STICKY BOTTOM BAR (Wizzi benchmark: native, compact, comfortable) -->
+    <!-- MOBILE STICKY BOTTOM BAR (Always visible, matching store theme) -->
     <div x-show="cartCount > 0"
-         class="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 p-3 sm:p-4 z-40 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+         class="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 p-3 sm:p-4 z-50 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
         <div class="max-w-md mx-auto flex items-center justify-between gap-3">
             <div>
                 <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                    {% if current_lang == 'ru' %}Итого{% else %}Jami{% endif %}
+                    {% if current_lang == 'ru' %}Итого к оплате{% else %}Jami to'lov{% endif %}
                 </div>
                 <div class="text-base sm:text-lg font-black text-slate-900 font-mono leading-none mt-0.5"
                      x-text="formatMoney(finalTotal)"></div>
             </div>
 
             <button type="button" @click="proceedToCheckout()"
-                    class="flex-1 py-3.5 px-5 rounded-full bg-[#FEE500] hover:bg-[#FADC00] active:scale-95 text-slate-950 font-black text-xs sm:text-sm tracking-tight shadow-[0_4px_16px_rgba(254,229,0,0.5)] flex items-center justify-center gap-2 transition-all cursor-pointer border border-yellow-300/40">
+                    class="flex-1 py-3.5 px-5 rounded-2xl bg-brand hover:brightness-95 active:scale-95 text-white font-black text-xs sm:text-sm tracking-tight shadow-lg shadow-brand/30 flex items-center justify-center gap-2 transition-all cursor-pointer border border-white/20">
                 <span>{% if current_lang == 'ru' %}Оформить заказ{% elif current_lang == 'en' %}Checkout{% elif current_lang == 'tr' %}Sipariş Ver{% else %}Rasmiylashtirish{% endif %}</span>
                 <i data-lucide="arrow-right" class="w-4 h-4 stroke-[2.5]"></i>
             </button>
@@ -398,6 +424,7 @@ function storeboxCartApp() {
         commentOpen: false,
         restaurantComment: sessionStorage.getItem('cart_restaurant_comment') || '',
         clearSheetOpen: false,
+        itemsExpanded: true,
         promoInput: '{{ promo_code|default:"" }}',
         appliedPromoCode: '{{ promo_code|default:"" }}',
         promoDiscount: Number('{{ promo_discount|default:0 }}') || 0,
@@ -407,6 +434,28 @@ function storeboxCartApp() {
         get cartCount() {
             if (!this.cartItems) return 0;
             return Object.values(this.cartItems).reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+        },
+
+        get formattedItemsCount() {
+            const count = this.cartCount;
+            const lang = '{{ current_lang|default:"uz" }}';
+            if (lang === 'ru') {
+                const mod10 = count % 10;
+                const mod100 = count % 100;
+                let word = 'товаров';
+                if (mod10 === 1 && mod100 !== 11) {
+                    word = 'товар';
+                } else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+                    word = 'товара';
+                }
+                return `${count} ${word}`;
+            } else if (lang === 'en') {
+                return `${count} ${count === 1 ? 'item' : 'items'}`;
+            } else if (lang === 'tr') {
+                return `${count} ürün`;
+            } else {
+                return `${count} ta mahsulot`;
+            }
         },
 
         get cartSubtotal() {

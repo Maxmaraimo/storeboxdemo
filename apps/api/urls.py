@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.dashboard import views as old_views
-from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations, views_telegram, views_yespos
+from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations, views_telegram, views_yespos, views_constructor
 
 app_name = "api_v1"
 
@@ -44,6 +44,13 @@ urlpatterns = [
 
     # Warehouse
     path("warehouse/adjust-stock/", views_catalog.warehouse_stock_adjust_view, name="warehouse_stock_adjust"),
+
+    # Product Constructor API
+    path("constructor/", views_constructor.constructor_list_view, name="constructor_list"),
+    path("constructor/preset/", views_constructor.constructor_load_preset_view, name="constructor_load_preset"),
+    path("constructor/<int:product_id>/", views_constructor.constructor_detail_view, name="constructor_detail"),
+    path("constructor/<int:product_id>/save/", views_constructor.constructor_save_view, name="constructor_save"),
+    path("constructor/storefront/<int:product_id>/", views_constructor.constructor_storefront_get_view, name="constructor_storefront_get"),
 
     # Promo Codes CRUD
     path("promocodes/", views_operations.promocodes_list_create_view, name="promocodes_list_create"),

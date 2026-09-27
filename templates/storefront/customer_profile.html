@@ -2,28 +2,157 @@
 {% load humanize %}
 
 {% block storefront_body %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6"
+<div class="max-w-xl mx-auto px-3 sm:px-4 py-2 sm:py-4 space-y-4 pb-28"
      x-data="{
-        activeTab: (new URLSearchParams(window.location.search).get('tab')) || 'orders',
+        activeView: (new URLSearchParams(window.location.search).get('tab')) || 'menu',
         activeFilter: 'all',
         reorderingId: null,
+        languageDropdownOpen: false,
         profileWishlistProducts: [],
         isLoadingProfileWishlist: false,
+        copiedOrderNumber: null,
+        expandedOrders: {},
+
+        // Phone Input & Country Selector State
+        selectedCountry: {
+            id: 'uz',
+            name: 'O\'zbekiston',
+            dialCode: '+998',
+            code: '998',
+            digits: 9,
+            placeholder: '(90) 123-45-67',
+            format(d) {
+                let res = '';
+                if (d.length > 0) res += '(' + d.slice(0, 2);
+                if (d.length >= 2) res += ') ';
+                if (d.length > 2) res += d.slice(2, 5);
+                if (d.length > 5) res += '-' + d.slice(5, 7);
+                if (d.length > 7) res += '-' + d.slice(7, 9);
+                return res;
+            }
+        },
+        countries: [
+            {
+                id: 'uz',
+                name: 'O\'zbekiston',
+                flag: '🇺🇿',
+                dialCode: '+998',
+                code: '998',
+                digits: 9,
+                placeholder: '(90) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 2);
+                    if (d.length >= 2) res += ') ';
+                    if (d.length > 2) res += d.slice(2, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 7);
+                    if (d.length > 7) res += '-' + d.slice(7, 9);
+                    return res;
+                }
+            },
+            {
+                id: 'ru',
+                name: 'Россия',
+                flag: '🇷🇺',
+                dialCode: '+7',
+                code: '7',
+                digits: 10,
+                placeholder: '(912) 345-67-89',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 8);
+                    if (d.length > 8) res += '-' + d.slice(8, 10);
+                    return res;
+                }
+            },
+            {
+                id: 'kz',
+                name: 'Казахстан',
+                flag: '🇰🇿',
+                dialCode: '+7',
+                code: '7',
+                digits: 10,
+                placeholder: '(777) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 8);
+                    if (d.length > 8) res += '-' + d.slice(8, 10);
+                    return res;
+                }
+            }
+        ],
+        countryPickerOpen: false,
+        rawPhoneDigits: '',
+        nameInput: '',
+
+        get formattedPhone() {
+            return this.selectedCountry.format(this.rawPhoneDigits);
+        },
+
+        get fullPhoneNumber() {
+            if (!this.rawPhoneDigits) return '';
+            return this.selectedCountry.dialCode + this.rawPhoneDigits;
+        },
+
+        onPhoneInput(e) {
+            let val = e.target.value;
+            let digits = val.replace(/\D/g, '');
+            if (digits.startsWith(this.selectedCountry.code)) {
+                digits = digits.slice(this.selectedCountry.code.length);
+            }
+            this.rawPhoneDigits = digits.slice(0, this.selectedCountry.digits);
+            e.target.value = this.formattedPhone;
+        },
+
+        selectCountry(c) {
+            this.selectedCountry = c;
+            this.rawPhoneDigits = '';
+            this.countryPickerOpen = false;
+        },
+
+        copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.copiedOrderNumber = text;
+                setTimeout(() => {
+                    if (this.copiedOrderNumber === text) {
+                        this.copiedOrderNumber = null;
+                    }
+                }, 2000);
+            });
+        },
+
+        toggleOrderDetails(orderId) {
+            this.expandedOrders[orderId] = !this.expandedOrders[orderId];
+        },
 
         init() {
-            if (this.activeTab === 'wishlist') {
+            if (this.activeView === 'wishlist') {
                 this.loadProfileWishlist();
             }
-            this.$watch('activeTab', (val) => {
+            this.$watch('activeView', (val) => {
                 if (val === 'wishlist') {
                     this.loadProfileWishlist();
                 }
                 const url = new URL(window.location);
-                url.searchParams.set('tab', val);
+                if (val === 'menu') {
+                    url.searchParams.delete('tab');
+                } else {
+                    url.searchParams.set('tab', val);
+                }
                 window.history.replaceState({}, '', url);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.$nextTick(() => {
+                    if (window.lucide) window.lucide.createIcons();
+                });
             });
             this.$watch('wishlist.length', () => {
-                if (this.activeTab === 'wishlist') {
+                if (this.activeView === 'wishlist') {
                     this.loadProfileWishlist();
                 }
             });
@@ -55,6 +184,10 @@
             this.profileWishlistProducts = this.profileWishlistProducts.filter(p => p.id !== productId);
         },
 
+        openChatModal() {
+            window.dispatchEvent(new CustomEvent('open-store-chat'));
+        },
+
         reorder(orderNumber) {
             this.reorderingId = orderNumber;
             fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/api/order/' + orderNumber + '/reorder/{% else %}/api/order/' + orderNumber + '/reorder/{% endif %}', {
@@ -74,448 +207,586 @@
         }
      }">
 
-    <!-- BREADCRUMBS -->
-    <nav class="flex items-center gap-2 text-xs font-bold text-slate-400">
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}" class="hover:text-brand flex items-center gap-1 transition-colors">
-            <i data-lucide="home" class="w-3.5 h-3.5"></i>
-            <span>{{ t.home|default:"Bosh sahifa" }}</span>
-        </a>
-        <span class="text-slate-300">/</span>
-        <span class="text-slate-700">{{ t.profile|default:"Mijoz kabineti" }}</span>
-    </nav>
+    <!-- ========================================================================= -->
+    <!-- CASE A: GUEST USER — MODERN CLEAN SIGN-IN                                -->
+    <!-- ========================================================================= -->
+    {% if not customer_phone %}
+    <div class="space-y-4 animate-in fade-in duration-300">
+        
+        <!-- Top Gradient Banner -->
+        <div class="bg-gradient-to-b from-brand to-brand/90 rounded-3xl p-6 sm:p-8 text-white text-center shadow-lg shadow-brand/20 relative overflow-hidden">
+            <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <i data-lucide="user" class="w-8 h-8 text-white stroke-[2.2]"></i>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                {% if current_lang == 'uz' %}Profilga kirish{% elif current_lang == 'en' %}Sign in to Profile{% elif current_lang == 'tr' %}Profile Giriş Yap{% else %}Вход в профиль{% endif %}
+            </h1>
+            <p class="text-xs text-white/80 max-w-sm mx-auto mt-1 leading-relaxed">
+                {% if current_lang == 'uz' %}
+                Buyurtmalarni onlayn kuzatish, xaridlar tarixi va sevimli mahsulotlarni saqlash uchun telefon raqamingizni kiriting.
+                {% elif current_lang == 'en' %}
+                Enter your phone number to track orders and view your purchase history.
+                {% elif current_lang == 'tr' %}
+                Siparişleri takip etmek ve geçmişinizi görmek için telefon numaranızı girin.
+                {% else %}
+                Введите номер телефона для отслеживания заказов и просмотра истории покупок.
+                {% endif %}
+            </p>
+        </div>
 
-    <!-- CUSTOMER PROFILE HEADER CARD -->
-    <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-7 shadow-xs">
-        {% if customer_phone %}
-        <!-- LOGGED IN USER -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-brand text-white flex items-center justify-center font-black text-xl sm:text-2xl shadow-md shadow-brand/20 shrink-0">
-                    {{ customer_name|slice:":1"|upper }}
-                </div>
+        <!-- Clean Form Card -->
+        <div class="bg-white rounded-3xl border border-slate-100 p-6 sm:p-7 shadow-xs space-y-4">
+            <form method="POST" action="" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="login">
+                <input type="hidden" name="phone" :value="fullPhoneNumber || rawPhoneDigits">
+
+                <!-- Phone Input with Country Selector -->
                 <div>
-                    <h1 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight">{{ customer_name }}</h1>
-                    <p class="text-xs font-mono font-bold text-slate-500 mt-0.5">{{ customer_phone }}</p>
-                    <div class="flex flex-wrap items-center gap-2 mt-2">
-                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-black">
-                            {% if lang == 'uz' %}Faol mijoz{% elif lang == 'en' %}Active customer{% elif lang == 'tr' %}Aktif müşteri{% else %}Активный клиент{% endif %}
-                        </span>
-                        {% if customer.bonus_balance %}
-                        <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-black flex items-center gap-1">
-                            <i data-lucide="gift" class="w-3.5 h-3.5"></i>
-                            <span>{{ customer.bonus_balance|floatformat:0|intcomma }} UZS keshbek</span>
-                        </span>
-                        {% endif %}
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        <i data-lucide="phone" class="w-3.5 h-3.5 text-brand"></i>
+                        <span>{% if current_lang == 'uz' %}Telefon raqami *{% elif current_lang == 'en' %}Phone number *{% elif current_lang == 'tr' %}Telefon numarası *{% else %}Номер телефона *{% endif %}</span>
+                    </label>
+
+                    <div class="flex items-center rounded-2xl bg-slate-50 border border-slate-200 focus-within:border-brand focus-within:bg-white focus-within:ring-2 focus-within:ring-brand/10 transition-all overflow-hidden relative">
+                        <!-- Country trigger -->
+                        <div class="relative">
+                            <button type="button" @click="countryPickerOpen = !countryPickerOpen"
+                                    class="flex items-center gap-1 px-3 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors border-r border-slate-200 shrink-0">
+                                <span class="text-base leading-none" x-text="selectedCountry.flag || '🇺🇿'"></span>
+                                <span class="font-mono text-xs" x-text="selectedCountry.dialCode"></span>
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                            </button>
+
+                            <!-- Country dropdown -->
+                            <div x-show="countryPickerOpen" @click.away="countryPickerOpen = false" x-cloak
+                                 class="absolute left-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 py-1 divide-y divide-slate-100">
+                                <template x-for="c in countries" :key="c.id">
+                                    <div @click="selectCountry(c)"
+                                         class="px-3 py-2 text-xs flex items-center gap-2 hover:bg-slate-50 cursor-pointer font-semibold text-slate-700">
+                                        <span x-text="c.flag"></span>
+                                        <span x-text="c.name" class="flex-1"></span>
+                                        <span class="font-mono text-slate-400" x-text="c.dialCode"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Masked input -->
+                        <input type="tel" @input="onPhoneInput($event)" required
+                               :placeholder="selectedCountry.placeholder"
+                               class="flex-1 px-3 py-3 bg-transparent text-xs font-mono font-bold text-slate-900 focus:outline-none placeholder:text-slate-400">
                     </div>
                 </div>
-            </div>
 
-            <!-- Stats & Logout -->
-            <div class="flex items-center gap-2.5 self-start sm:self-auto">
-                <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-                    <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">{{ t.my_orders|default:"Buyurtmalar" }}</div>
-                    <div class="text-base font-black font-mono text-slate-900">{{ orders_count }} {{ t.items_unit|default:"ta" }}</div>
-                </div>
-
-                <form method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="logout">
-                    <button type="submit" class="px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-rose-600 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">{{ t.logout|default:"Chiqish" }}</span>
-                    </button>
-                </form>
-            </div>
-        </div>
-        {% else %}
-        <!-- GUEST WELCOME CARD -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-5">
-            <div class="flex items-center gap-4 text-left">
-                <div class="w-14 h-14 rounded-2xl bg-brand/10 text-brand flex items-center justify-center font-bold shrink-0">
-                    <i data-lucide="user" class="w-7 h-7"></i>
-                </div>
+                <!-- Customer Name (Optional) -->
                 <div>
-                    <h2 class="text-base sm:text-lg font-black text-slate-900">{{ t.welcome_back|default:"Xush kelibsiz!" }}</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">{% if lang == 'uz' %}Buyurtmalaringizni kuzatish va saqlangan sevimli mahsulotlaringizni boshqarish paneli.{% elif lang == 'en' %}Track your order status and manage your saved wishlist items.{% elif lang == 'tr' %}Siparişlerinizi takip edin ve favori ürünlerinizi yönetin.{% else %}Отслеживание статуса заказов и управление избранными товарами.{% endif %}</p>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        <i data-lucide="user" class="w-3.5 h-3.5 text-brand"></i>
+                        <span>{% if current_lang == 'uz' %}Ismingiz (ixtiyoriy){% elif current_lang == 'en' %}Your name (optional){% elif current_lang == 'tr' %}Adınız (isteğe bağlı){% else %}Ваше имя (необязательно){% endif %}</span>
+                    </label>
+                    <input type="text" name="name" x-model="nameInput"
+                           placeholder="{% if current_lang == 'uz' %}Masalan: Azizbek{% else %}Например: Азиз{% endif %}"
+                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all placeholder:text-slate-400">
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit"
+                        class="w-full py-3.5 rounded-2xl bg-brand hover:brightness-95 text-white font-bold text-sm shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <span>{% if current_lang == 'uz' %}Kirish{% elif current_lang == 'en' %}Sign in{% elif current_lang == 'tr' %}Giriş Yap{% else %}Войти{% endif %}</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+    {% endif %}
+
+    <!-- ========================================================================= -->
+    <!-- CASE B: LOGGED IN USER — UZUM MARKET BENCHMARK STYLE                      -->
+    <!-- ========================================================================= -->
+    {% if customer_phone %}
+
+    <!-- --------------------------------------------------------------------- -->
+    <!-- 1. PROFILE HOME / MENU VIEW (Strictly matching media_1790500832351.jpg) -->
+    <!-- --------------------------------------------------------------------- -->
+    <div x-show="activeView === 'menu'" class="space-y-3 animate-in fade-in duration-200">
+        
+        <!-- HEADER IN STORE BRAND COLOR (media_1790500832351.jpg) -->
+        <div class="bg-gradient-to-b from-brand to-brand/90 rounded-3xl p-5 sm:p-6 text-white shadow-md shadow-brand/15 relative overflow-hidden">
+            
+            <!-- Top bar: Centered Title 'Profil' + Settings Gear on right -->
+            <div class="flex items-center justify-between pb-4">
+                <div class="w-7"></div>
+                <h1 class="text-base sm:text-lg font-bold tracking-tight text-white text-center">
+                    {% if current_lang == 'uz' %}Profil{% elif current_lang == 'en' %}Profile{% elif current_lang == 'tr' %}Profil{% else %}Профиль{% endif %}
+                </h1>
+                <button type="button" @click="activeView = 'info'" 
+                        class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                        title="Sozlamalar va ma'lumotlar">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- User Information Row: Avatar + Name + Phone -->
+            <div class="flex items-center gap-4 pt-1">
+                <!-- Circular White Avatar with Brand Silhouette -->
+                <div class="relative shrink-0">
+                    <div class="w-16 h-16 rounded-full bg-white flex flex-col items-center justify-center shadow-md relative overflow-hidden">
+                        <i data-lucide="user" class="w-9 h-9 text-brand fill-brand"></i>
+                        <span class="text-[8px] font-bold text-brand -mt-1 leading-none">To'g'rilash</span>
+                    </div>
+                </div>
+
+                <!-- Customer Details -->
+                <div class="min-w-0">
+                    <h2 class="text-lg sm:text-xl font-bold tracking-tight text-white truncate leading-snug">
+                        {{ customer_name }}
+                    </h2>
+                    <p class="text-xs sm:text-sm text-white/80 font-medium font-mono mt-0.5">
+                        {{ customer_phone }}
+                    </p>
                 </div>
             </div>
 
-            <button type="button" @click="loginModalOpen = true"
-                    class="px-5 py-2.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all flex items-center gap-2 shrink-0">
-                <i data-lucide="log-in" class="w-4 h-4"></i>
-                <span>{{ t.login|default:"Kabinetga kirish" }}</span>
-            </button>
+        </div>
+
+        <!-- FLOATING ACTIVE ORDER CARD (media_1790500832351.jpg) -->
+        {% if first_active_order %}
+        <div @click="activeView = 'orders'; activeFilter = 'active'"
+             class="bg-white rounded-2xl p-4 shadow-[0_4px_16px_rgba(0,0,0,0.06)] border border-slate-100 flex items-center justify-between gap-3 cursor-pointer active:scale-[0.99] transition-all hover:border-slate-200">
+            <div class="min-w-0 space-y-1.5">
+                <div class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
+                    Buyurtma №{{ first_active_order.order_number }}
+                </div>
+                
+                <!-- Status Pill (Sky Blue pill from Uzum screenshot) -->
+                <div>
+                    {% if first_active_order.status == 'NEW' %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
+                        QABUL QILINDI
+                    </span>
+                    {% elif first_active_order.status == 'IN_DELIVERY' %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
+                        YETKAZIB BERILYAPTI
+                    </span>
+                    {% else %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
+                        YIG'ILYAPTI
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Product Thumbnail on the right -->
+            <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
+                {% with item=first_active_order.items.first %}
+                    {% if item and item.product and item.product.primary_image_url %}
+                    <img src="{{ item.product.primary_image_url }}" alt="{{ item.product_name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <i data-lucide="package" class="w-6 h-6 text-slate-300"></i>
+                    {% endif %}
+                {% endwith %}
+            </div>
         </div>
         {% endif %}
-    </div>
 
-    <!-- MAIN SEGMENTED NAVIGATION TABS -->
-    <div class="bg-slate-100 p-1.5 rounded-2xl flex items-center gap-1 overflow-x-auto scrollbar-none shadow-2xs">
-        <!-- 1. Mening buyurtmalarim -->
-        <button type="button" @click="activeTab = 'orders'"
-                :class="activeTab === 'orders' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
-                class="flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
-            <i data-lucide="package" class="w-4 h-4"></i>
-            <span>{{ t.my_orders|default:"Buyurtmalarim" }}</span>
-            {% if orders_count > 0 %}
-            <span class="px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[10px] font-mono">{{ orders_count }}</span>
-            {% endif %}
-        </button>
+        <!-- UZUM MARKET BENCHMARK STYLE LIST MENU (media_1790500832351.jpg) -->
+        <div class="bg-white rounded-2xl sm:rounded-3xl border border-slate-100/90 shadow-xs divide-y divide-slate-100 overflow-hidden">
+            
+            <!-- Row 1: Buyurtmalarim (My Orders) -->
+            <button type="button" @click="activeView = 'orders'; activeFilter = 'all'"
+                    class="w-full px-4 py-3.5 hover:bg-slate-50 transition-colors flex items-center justify-between gap-3 text-left group">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-slate-800 stroke-[1.8] shrink-0"></i>
+                    <span class="text-sm font-semibold text-slate-800">
+                        {{ t.my_orders|default:"Buyurtmalarim" }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    {% if orders_count > 0 %}
+                    <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold font-mono">{{ orders_count }}</span>
+                    {% endif %}
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+                </div>
+            </button>
 
-        <!-- 2. Sevimlilar (Wishlist) -->
-        <button type="button" @click="activeTab = 'wishlist'"
-                :class="activeTab === 'wishlist' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
-                class="flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
-            <i data-lucide="heart" class="w-4 h-4" :class="wishlist.length > 0 ? 'fill-rose-500 text-rose-500' : ''"></i>
-            <span>{{ t.favorites|default:"Sevimlilar" }}</span>
-            <span x-show="wishlist.length > 0" x-cloak class="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-mono" x-text="wishlist.length"></span>
-        </button>
+            <!-- Row 2: Sevimlilar (Wishlist) -->
+            <button type="button" @click="activeView = 'wishlist'"
+                    class="w-full px-4 py-3.5 hover:bg-slate-50 transition-colors flex items-center justify-between gap-3 text-left group">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <i data-lucide="heart" class="w-5 h-5 text-slate-800 stroke-[1.8] shrink-0"></i>
+                    <span class="text-sm font-semibold text-slate-800">
+                        {{ t.favorites|default:"Sevimlilar" }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span x-show="wishlist.length > 0" x-cloak class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs font-bold font-mono" x-text="wishlist.length"></span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+                </div>
+            </button>
 
-        <!-- 3. Do'kon bilan chat -->
-        <button type="button" @click="activeTab = 'chat'"
-                :class="activeTab === 'chat' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
-                class="flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
-            <div class="relative">
-                <i data-lucide="message-circle" class="w-4 h-4"></i>
-                <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            </div>
-            <span>{{ t.seller_chat|default:"Do'kon bilan chat" }}</span>
-        </button>
+            <!-- Row 3: Do'kon bilan chat (Chat with Store) -->
+            <button type="button" @click="openChatModal(); window.dispatchEvent(new CustomEvent('open-store-chat'))"
+                    class="w-full px-4 py-3.5 hover:bg-slate-50 transition-colors flex items-center justify-between gap-3 text-left group">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <i data-lucide="message-circle" class="w-5 h-5 text-slate-800 stroke-[1.8] shrink-0"></i>
+                    <span class="text-sm font-semibold text-slate-800">
+                        {{ t.seller_chat|default:"Do'kon bilan chat" }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+                </div>
+            </button>
 
-        <!-- 4. Sozlamalar & Yordam -->
-        <button type="button" @click="activeTab = 'info'"
-                :class="activeTab === 'info' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
-                class="flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
-            <i data-lucide="info" class="w-4 h-4"></i>
-            <span>{{ t.information|default:"Ma'lumotlar" }}</span>
-        </button>
-    </div>
+            <!-- Row 4: Ma'lumotlar va yetkazib berish (Store Info & Delivery) -->
+            <button type="button" @click="activeView = 'info'"
+                    class="w-full px-4 py-3.5 hover:bg-slate-50 transition-colors flex items-center justify-between gap-3 text-left group">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <i data-lucide="info" class="w-5 h-5 text-slate-800 stroke-[1.8] shrink-0"></i>
+                    <span class="text-sm font-semibold text-slate-800">
+                        {{ t.information|default:"Ma'lumotlar va yetkazib berish" }}
+                    </span>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+            </button>
 
-    <!-- ============================================================= -->
-    <!-- TAB 1: MENING BUYURTMALARIM (ORDERS)                          -->
-    <!-- ============================================================= -->
-    <div x-show="activeTab === 'orders'" x-cloak class="space-y-4 animate-in fade-in duration-200">
-        {% if customer_phone %}
-        <!-- Header & Status Filter Pills -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <!-- Row 5: Ilova tili (Language) -->
             <div>
-                <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">{% if lang == 'uz' %}Buyurtmalar tarixi{% elif lang == 'en' %}Order history{% elif lang == 'tr' %}Sipariş geçmişi{% else %}История заказов{% endif %}</h2>
-                <p class="text-xs text-slate-500 mt-0.5">{% if lang == 'uz' %}Barcha buyurtmalaringiz holatini kuzatib boring{% elif lang == 'en' %}Track the status of all your orders{% elif lang == 'tr' %}Tüm siparişlerinizin durumunu takip edin{% else %}Отслеживайте статус всех ваших заказов{% endif %}</p>
+                <button type="button" @click="languageDropdownOpen = !languageDropdownOpen"
+                        class="w-full px-4 py-3.5 hover:bg-slate-50 transition-colors flex items-center justify-between gap-3 text-left group">
+                    <div class="flex items-center gap-3.5 min-w-0">
+                        <i data-lucide="globe" class="w-5 h-5 text-slate-800 stroke-[1.8] shrink-0"></i>
+                        <span class="text-sm font-semibold text-slate-800">
+                            {{ t.language|default:"Ilova tili" }}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-xs font-bold text-slate-400 uppercase font-mono">{{ current_lang }}</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform" :class="languageDropdownOpen ? 'rotate-180' : ''"></i>
+                    </div>
+                </button>
+
+                <!-- Language options -->
+                <div x-show="languageDropdownOpen" x-collapse x-cloak class="px-4 pb-3 pt-1">
+                    <div class="grid grid-cols-2 gap-2 p-2 rounded-2xl bg-slate-50 border border-slate-100">
+                        <a href="?lang=uz" @click.prevent="switchStoreLanguage('uz', $event)" 
+                           class="p-2.5 rounded-xl text-center text-xs font-bold transition-all {% if current_lang == 'uz' %}bg-brand text-white shadow-2xs{% else %}bg-white border border-slate-200 text-slate-700 hover:border-brand/40{% endif %}">
+                            🇺🇿 O'zbekcha
+                        </a>
+                        <a href="?lang=ru" @click.prevent="switchStoreLanguage('ru', $event)" 
+                           class="p-2.5 rounded-xl text-center text-xs font-bold transition-all {% if current_lang == 'ru' %}bg-brand text-white shadow-2xs{% else %}bg-white border border-slate-200 text-slate-700 hover:border-brand/40{% endif %}">
+                            🇷🇺 Русский
+                        </a>
+                        <a href="?lang=en" @click.prevent="switchStoreLanguage('en', $event)" 
+                           class="p-2.5 rounded-xl text-center text-xs font-bold transition-all {% if current_lang == 'en' %}bg-brand text-white shadow-2xs{% else %}bg-white border border-slate-200 text-slate-700 hover:border-brand/40{% endif %}">
+                            🇬🇧 English
+                        </a>
+                        <a href="?lang=tr" @click.prevent="switchStoreLanguage('tr', $event)" 
+                           class="p-2.5 rounded-xl text-center text-xs font-bold transition-all {% if current_lang == 'tr' %}bg-brand text-white shadow-2xs{% else %}bg-white border border-slate-200 text-slate-700 hover:border-brand/40{% endif %}">
+                            🇹🇷 Türkçe
+                        </a>
+                    </div>
+                </div>
             </div>
 
-            <!-- Filters -->
-            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold self-start">
-                <button type="button" @click="activeFilter = 'all'" 
-                        :class="activeFilter === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
-                        class="px-3 py-1.5 rounded-xl transition-all">
-                    {{ t.all|default:"Barchasi" }} ({{ orders_count }})
+            <!-- Row 6: Profildan chiqish (Logout) -->
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="logout">
+                <button type="submit"
+                        class="w-full px-4 py-3.5 hover:bg-rose-50/40 transition-colors flex items-center justify-between gap-3 text-left group">
+                    <div class="flex items-center gap-3.5 min-w-0">
+                        <i data-lucide="log-out" class="w-5 h-5 text-rose-500 stroke-[1.8] shrink-0"></i>
+                        <span class="text-sm font-semibold text-rose-600">
+                            {{ t.logout|default:"Profildan chiqish" }}
+                        </span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-rose-400 group-hover:translate-x-0.5 transition-transform"></i>
                 </button>
-                <button type="button" @click="activeFilter = 'active'" 
-                        :class="activeFilter === 'active' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
-                        class="px-3 py-1.5 rounded-xl transition-all">
-                    {{ t.active|default:"Faol" }}
-                </button>
-                <button type="button" @click="activeFilter = 'delivered'" 
-                        :class="activeFilter === 'delivered' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
-                        class="px-3 py-1.5 rounded-xl transition-all">
-                    {{ t.delivered|default:"Yetkazildi" }}
-                </button>
-            </div>
+            </form>
+
         </div>
 
-        <!-- Orders List -->
-        <div class="space-y-4">
+    </div>
+
+    <!-- --------------------------------------------------------------------- -->
+    <!-- 2. ORDERS VIEW (Strictly matching media_1790500839089.jpg)             -->
+    <!-- --------------------------------------------------------------------- -->
+    <div x-show="activeView === 'orders'" x-cloak class="space-y-3 animate-in fade-in duration-200">
+        
+        <!-- Header with Back Arrow and Centered Title -->
+        <div class="flex items-center justify-between pb-1">
+            <button type="button" @click="activeView = 'menu'"
+                    class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-800 transition-colors">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <h1 class="text-base font-bold text-slate-900 tracking-tight text-center">
+                {{ t.my_orders|default:"Buyurtmalarim" }}
+            </h1>
+            <div class="w-8"></div>
+        </div>
+
+        <!-- 2 Tabs: Faollar & Barchasi (media_1790500839089.jpg) -->
+        <div class="flex border-b border-slate-200 text-sm font-bold">
+            <button type="button" @click="activeFilter = 'active'"
+                    :class="activeFilter === 'active' ? 'border-b-2 border-brand text-brand' : 'text-slate-500 hover:text-slate-800'"
+                    class="flex-1 py-2.5 text-center transition-colors">
+                {{ t.active|default:"Faollar" }}
+            </button>
+            <button type="button" @click="activeFilter = 'all'"
+                    :class="activeFilter === 'all' ? 'border-b-2 border-brand text-brand' : 'text-slate-500 hover:text-slate-800'"
+                    class="flex-1 py-2.5 text-center transition-colors">
+                {{ t.all|default:"Barchasi" }}
+            </button>
+        </div>
+
+        <!-- Orders Cards List -->
+        <div class="space-y-4 pt-1">
             {% for order in orders %}
-            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4 transition-all hover:border-slate-300"
+            <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-100/90 space-y-3 transition-all"
                  x-show="activeFilter === 'all' || 
-                         (activeFilter === 'active' && ['NEW', 'ACCEPTED', 'COOKING', 'READY', 'IN_DELIVERY'].includes('{{ order.status }}')) ||
-                         (activeFilter === 'delivered' && '{{ order.status }}' === 'DELIVERED')"
+                         (activeFilter === 'active' && ['NEW', 'ACCEPTED', 'COOKING', 'READY', 'IN_DELIVERY'].includes('{{ order.status }}'))"
                  x-transition>
                 
-                <!-- Order Top Bar -->
-                <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                    <div class="flex items-center gap-2">
-                        <span class="font-black text-sm text-slate-900 font-mono">#{{ order.order_number }}</span>
-                        <span class="text-xs text-slate-400">• {{ order.created_at|date:"d.m.Y, H:i" }}</span>
-                    </div>
+                <!-- Status Pill (Cyan / Sky) -->
+                <div>
+                    {% if order.status == 'NEW' %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
+                        QABUL QILINDI
+                    </span>
+                    {% elif order.status == 'IN_DELIVERY' %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
+                        YETKAZIB BERILYAPTI
+                    </span>
+                    {% elif order.status == 'DELIVERED' or order.status == 'COMPLETED' %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-wide uppercase">
+                        YETKAZILDI
+                    </span>
+                    {% elif order.status == 'CANCELLED' %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-bold tracking-wide uppercase">
+                        BEKOR QILINDI
+                    </span>
+                    {% else %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
+                        YIG'ILYAPTI
+                    </span>
+                    {% endif %}
+                </div>
 
-                    <!-- Status Pill with visual colors -->
-                    <div>
-                        {% if order.status == 'NEW' %}
-                        <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-black flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                            <span>Yangi qabul qilindi</span>
+                <!-- Order Number + Copy Icon (media_1790500839089.jpg) -->
+                <div class="space-y-0.5">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-sm font-bold text-slate-900 tracking-tight">Buyurtma №{{ order.order_number }}</span>
+                        <button type="button" @click="copyToClipboard('{{ order.order_number }}')" 
+                                class="text-brand hover:text-brand-dark p-0.5 rounded transition-colors"
+                                title="Nusxalash">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                        <span x-show="copiedOrderNumber === '{{ order.order_number }}'" x-cloak class="text-[10px] text-emerald-600 font-bold animate-pulse">
+                            Nusxalandi!
                         </span>
-                        {% elif order.status == 'ACCEPTED' or order.status == 'COOKING' or order.status == 'READY' %}
-                        <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-black flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                            <span>Tayyorlanmoqda</span>
-                        </span>
-                        {% elif order.status == 'IN_DELIVERY' %}
-                        <span class="px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-xs font-black flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
-                            <span>Yo'lda (Kuryerda)</span>
-                        </span>
-                        {% elif order.status == 'DELIVERED' or order.status == 'COMPLETED' %}
-                        <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black flex items-center gap-1.5">
-                            <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                            <span>Yetkazildi</span>
-                        </span>
-                        {% elif order.status == 'CANCELLED' %}
-                        <span class="px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-black">
-                            Bekor qilindi
-                        </span>
-                        {% else %}
-                        <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-black">
-                            {{ order.get_status_display }}
-                        </span>
-                        {% endif %}
+                    </div>
+                    <div class="text-xs text-slate-400">
+                        {{ order.created_at|date:"d-M Y, H:i" }}
                     </div>
                 </div>
 
-                <!-- Visual Status Progress Stepper -->
-                <div class="py-2 px-1">
-                    <div class="flex items-center justify-between relative text-[10px] font-bold">
-                        <div class="flex flex-col items-center gap-1 z-10">
-                            <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status != 'CANCELLED' %}bg-emerald-500 text-white{% else %}bg-slate-200 text-slate-400{% endif %}">
-                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                            </div>
-                            <span class="text-slate-700">Qabul</span>
-                        </div>
+                <!-- Delivery Estimation -->
+                <div class="text-xs font-bold text-slate-900">
+                    {% if order.status in 'DELIVERED,COMPLETED' %}
+                    Yetkazilgan sana: {{ order.created_at|date:"d-M Y" }}
+                    {% else %}
+                    Kutilayotgan yetkazish: Bugun
+                    {% endif %}
+                </div>
 
-                        <div class="flex-1 h-0.5 mx-1 {% if order.status in 'ACCEPTED,COOKING,READY,IN_DELIVERY,DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500{% else %}bg-slate-200{% endif %}"></div>
-
-                        <div class="flex flex-col items-center gap-1 z-10">
-                            <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status in 'ACCEPTED,COOKING,READY,IN_DELIVERY,DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500 text-white{% else %}bg-slate-200 text-slate-400{% endif %}">
-                                <i data-lucide="chef-hat" class="w-3.5 h-3.5"></i>
-                            </div>
-                            <span class="text-slate-700">Tayyorlash</span>
-                        </div>
-
-                        <div class="flex-1 h-0.5 mx-1 {% if order.status in 'IN_DELIVERY,DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500{% else %}bg-slate-200{% endif %}"></div>
-
-                        <div class="flex flex-col items-center gap-1 z-10">
-                            <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status in 'IN_DELIVERY,DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500 text-white{% else %}bg-slate-200 text-slate-400{% endif %}">
-                                <i data-lucide="truck" class="w-3.5 h-3.5"></i>
-                            </div>
-                            <span class="text-slate-700">Yo'lda</span>
-                        </div>
-
-                        <div class="flex-1 h-0.5 mx-1 {% if order.status in 'DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500{% else %}bg-slate-200{% endif %}"></div>
-
-                        <div class="flex flex-col items-center gap-1 z-10">
-                            <div class="w-6 h-6 rounded-full flex items-center justify-center {% if order.status in 'DELIVERED,COMPLETED' and order.status != 'CANCELLED' %}bg-emerald-500 text-white{% else %}bg-slate-200 text-slate-400{% endif %}">
-                                <i data-lucide="home" class="w-3.5 h-3.5"></i>
-                            </div>
-                            <span class="text-slate-700">Yetkazildi</span>
-                        </div>
+                <!-- Product Thumbnail + Summary Line -->
+                <div class="flex items-center gap-3">
+                    <div class="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+                        {% with item=order.items.first %}
+                            {% if item and item.product and item.product.primary_image_url %}
+                            <img src="{{ item.product.primary_image_url }}" alt="{{ item.product_name }}" class="w-full h-full object-cover">
+                            {% else %}
+                            <i data-lucide="package" class="w-7 h-7 text-slate-300"></i>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    <div class="text-xs text-slate-600 font-medium">
+                        {{ order.items.count }} ta tovar · {{ order.total_amount|floatformat:0|intcomma }} so'm
                     </div>
                 </div>
 
-                <!-- Order Delivery & Payment Info -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
-                    <div class="flex items-start gap-2.5">
-                        <i data-lucide="map-pin" class="w-4 h-4 text-brand shrink-0 mt-0.5"></i>
+                <!-- Destination Details -->
+                <div class="text-xs space-y-1 pt-1 border-t border-slate-100">
+                    <div class="font-bold text-slate-900">
+                        {% if order.delivery_address %}Topshirish manzili{% else %}Topshirish punkti{% endif %}
+                    </div>
+                    <div class="text-slate-600">
+                        {{ order.delivery_city }}, {{ order.delivery_address|default:"Filialdan olib ketish" }}
+                    </div>
+                </div>
+
+                <!-- Working hours -->
+                <div class="text-xs flex items-center justify-between text-slate-600 pt-1">
+                    <span class="font-bold text-slate-900">Ish tartibi</span>
+                    <span>Du - Ya 09:00 - 22:00</span>
+                </div>
+
+                <!-- Recipient -->
+                <div class="text-xs space-y-0.5 pt-1 border-t border-slate-100">
+                    <div class="font-bold text-slate-900">Buyurtmani qabul qiluvchi</div>
+                    <div class="text-slate-700">{{ customer_name }}</div>
+                    <div class="text-slate-500 font-mono">{{ customer_phone }}</div>
+                </div>
+
+                <!-- Total Amount & Batafsil Toggle -->
+                <div class="pt-2 border-t border-slate-100">
+                    <div class="flex items-center justify-between">
                         <div>
-                            <span class="text-slate-400 block text-[11px]">Yetkazib berish manzili:</span>
-                            <span class="font-bold text-slate-800">{{ order.delivery_city }}, {{ order.delivery_address|default:"Filialdan olib ketish" }}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-2.5">
-                        <i data-lucide="credit-card" class="w-4 h-4 text-brand shrink-0 mt-0.5"></i>
-                        <div>
-                            <span class="text-slate-400 block text-[11px]">To'lov usuli:</span>
-                            <span class="font-bold text-slate-800">{{ order.get_payment_method_display }} ({{ order.get_payment_status_display }})</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Order Items Breakdown -->
-                <div class="space-y-2 pt-1 border-t border-slate-100">
-                    {% for item in order.items.all %}
-                    <div class="flex items-center justify-between py-1.5 text-xs">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 overflow-hidden shrink-0">
-                                {% if item.product and item.product.primary_image_url %}
-                                <img src="{{ item.product.primary_image_url }}" alt="{{ item.product_name }}" class="w-full h-full object-cover">
-                                {% else %}
-                                <div class="w-full h-full flex items-center justify-center text-slate-300">
-                                    <i data-lucide="package" class="w-5 h-5"></i>
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <span class="font-bold text-slate-900 block">{{ item.product_name }}</span>
-                                {% if item.variation_name %}
-                                <span class="text-[11px] text-slate-400 block">{{ item.variation_name }}</span>
-                                {% endif %}
+                            <span class="text-xs font-bold text-slate-900">Jami</span>
+                            <div class="text-sm font-bold text-slate-900 font-mono">
+                                {{ order.total_amount|floatformat:0|intcomma }} so'm
                             </div>
                         </div>
-                        <div class="text-right">
-                            <div class="font-mono font-bold text-slate-900">{{ item.total_price|floatformat:0|intcomma }} UZS</div>
-                            <div class="text-[11px] text-slate-400">{{ item.quantity }} dona × {{ item.unit_price|floatformat:0|intcomma }} UZS</div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <!-- Order Total & Actions -->
-                <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-xs text-slate-400">Jami to'lov:</span>
-                        <span class="text-lg font-black font-mono text-brand">{{ order.total_amount|floatformat:0|intcomma }} UZS</span>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <button type="button" 
-                                @click="reorder('{{ order.order_number }}')"
-                                :disabled="reorderingId === '{{ order.order_number }}'"
-                                class="px-4 py-2.5 rounded-2xl bg-brand/10 hover:bg-brand text-brand hover:text-white font-black text-xs flex items-center gap-1.5 transition-all shadow-2xs">
-                            <i data-lucide="rotate-cw" class="w-3.5 h-3.5" :class="reorderingId === '{{ order.order_number }}' ? 'animate-spin' : ''"></i>
-                            <span x-text="reorderingId === '{{ order.order_number }}' ? 'Tayyorlanmoqda...' : 'Qayta buyurtma berish'">Qayta buyurtma berish</span>
+                        <button type="button" @click="toggleOrderDetails('{{ order.id }}')"
+                                class="text-xs font-semibold text-brand flex items-center gap-1">
+                            <span>Batafsil</span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="expandedOrders['{{ order.id }}'] ? 'rotate-180' : ''"></i>
                         </button>
                     </div>
+
+                    <!-- Expandable items list -->
+                    <div x-show="expandedOrders['{{ order.id }}']" x-collapse x-cloak class="mt-2.5 pt-2 border-t border-slate-100 space-y-2">
+                        {% for item in order.items.all %}
+                        <div class="flex items-center justify-between text-xs py-1">
+                            <span class="text-slate-800 font-medium">{{ item.product_name }} × {{ item.quantity }}</span>
+                            <span class="font-mono font-bold text-slate-900">{{ item.total_price|floatformat:0|intcomma }} so'm</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Action Button: Reorder (media_1790500839089.jpg) -->
+                <div class="pt-2 flex items-center justify-end gap-2">
+                    <button type="button" 
+                            @click="reorder('{{ order.order_number }}')"
+                            :disabled="reorderingId === '{{ order.order_number }}'"
+                            class="text-xs font-bold text-brand hover:text-brand-dark px-3 py-1.5 rounded-lg border border-brand/20 hover:bg-brand/5 transition-colors flex items-center gap-1.5">
+                        <i data-lucide="rotate-cw" class="w-3.5 h-3.5" :class="reorderingId === '{{ order.order_number }}' ? 'animate-spin' : ''"></i>
+                        <span x-text="reorderingId === '{{ order.order_number }}' ? '...' : '{% if current_lang == "uz" %}Qayta buyurtma berish{% else %}Повторить заказ{% endif %}'"></span>
+                    </button>
                 </div>
 
             </div>
             {% empty %}
-            <!-- EMPTY ORDERS STATE -->
-            <div class="bg-white rounded-3xl border border-slate-200/80 p-12 text-center space-y-4 shadow-xs">
-                <div class="w-16 h-16 rounded-3xl bg-slate-50 text-slate-300 mx-auto flex items-center justify-center">
-                    <i data-lucide="package" class="w-8 h-8"></i>
+            <!-- Empty state -->
+            <div class="bg-white rounded-3xl border border-slate-100 p-8 text-center space-y-3 shadow-xs">
+                <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                    <i data-lucide="package" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h3 class="font-black text-base text-slate-900">Sizda hali buyurtmalar mavjud emas</h3>
-                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Katalogimizdagi sara mahsulotlardan tanlang va birinchi buyurtmangizni amalga oshiring!</p>
+                    <h3 class="font-bold text-sm text-slate-900">{% if current_lang == 'uz' %}Buyurtmalar mavjud emas{% else %}Заказов пока нет{% endif %}</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">{% if current_lang == 'uz' %}Siz bergan buyurtmalar bu yerda aks etadi{% else %}Оформленные заказы будут отображаться здесь{% endif %}</p>
                 </div>
-                <div>
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" 
-                       class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
-                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-                        <span>Katalogga o'tish</span>
-                    </a>
-                </div>
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" 
+                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand text-white font-bold text-xs shadow-md shadow-brand/20">
+                    <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                    <span>{% if current_lang == 'uz' %}Menyuga o'tish{% else %}Перейти в меню{% endif %}</span>
+                </a>
             </div>
             {% endfor %}
         </div>
-        {% else %}
-        <!-- GUEST LOGIN PROMPT FOR ORDERS -->
-        <div class="bg-white rounded-3xl border border-slate-200/80 p-8 text-center space-y-4 shadow-xs max-w-md mx-auto">
-            <div class="w-14 h-14 rounded-2xl bg-brand/10 text-brand mx-auto flex items-center justify-center">
-                <i data-lucide="package-search" class="w-7 h-7"></i>
-            </div>
-            <div>
-                <h3 class="font-black text-base text-slate-900">Buyurtmalaringizni ko'rish</h3>
-                <p class="text-xs text-slate-500 mt-1">Buyurtmalar tarixi va yetkazib berish holatini ko'rish uchun telefon raqamingizni kiriting.</p>
-            </div>
-            <form method="POST" class="space-y-3 text-left">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="login">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Telefon raqam *</label>
-                    <input type="tel" name="phone" required placeholder="+998 90 123 45 67" 
-                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Ismingiz</label>
-                    <input type="text" name="name" placeholder="Masalan: Jamshid" 
-                           class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
-                </div>
-                <button type="submit" class="w-full py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
-                    Kirish va buyurtmalarni ko'rish
-                </button>
-            </form>
-        </div>
-        {% endif %}
+
     </div>
 
-    <!-- ============================================================= -->
-    <!-- TAB 2: SEVIMLILAR / ИЗБРАННЫЕ (WISHLIST)                      -->
-    <!-- ============================================================= -->
-    <div x-show="activeTab === 'wishlist'" x-cloak class="space-y-4 animate-in fade-in duration-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                    <span>Sevimlilar ro'yxati</span>
-                    <span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs font-mono font-bold" x-text="wishlist.length + ' ta'"></span>
-                </h2>
-                <p class="text-xs text-slate-500 mt-0.5">Siz saqlab qo'ygan mahsulotlar to'plami</p>
-            </div>
+    <!-- --------------------------------------------------------------------- -->
+    <!-- 3. WISHLIST VIEW                                                      -->
+    <!-- --------------------------------------------------------------------- -->
+    <div x-show="activeView === 'wishlist'" x-cloak class="space-y-3 animate-in fade-in duration-200">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-1">
+            <button type="button" @click="activeView = 'menu'"
+                    class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-800 transition-colors">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <h1 class="text-base font-bold text-slate-900 tracking-tight text-center">
+                {{ t.favorites|default:"Sevimlilar" }}
+            </h1>
+            <div class="w-8"></div>
         </div>
 
-        <!-- Wishlist Loading -->
+        <!-- Wishlist Loading Skeleton -->
         <template x-if="isLoadingProfileWishlist">
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            <div class="grid grid-cols-2 gap-3">
                 <template x-for="i in 4" :key="i">
-                    <div class="bg-white rounded-3xl p-3 border border-slate-200/80 space-y-2.5 animate-pulse">
-                        <div class="aspect-square rounded-2xl bg-slate-100"></div>
-                        <div class="h-3.5 bg-slate-100 rounded-md w-3/4"></div>
-                        <div class="h-4 bg-slate-100 rounded-md w-1/2"></div>
+                    <div class="bg-white rounded-2xl p-3 border border-slate-100 space-y-2 animate-pulse">
+                        <div class="aspect-square rounded-xl bg-slate-100"></div>
+                        <div class="h-3 bg-slate-100 rounded w-3/4"></div>
+                        <div class="h-3.5 bg-slate-100 rounded w-1/2"></div>
                     </div>
                 </template>
             </div>
         </template>
 
-        <!-- Wishlist Empty State -->
+        <!-- Empty Wishlist -->
         <template x-if="!isLoadingProfileWishlist && wishlist.length === 0">
-            <div class="bg-white rounded-3xl border border-slate-200/80 p-12 text-center space-y-4 shadow-xs">
-                <div class="w-16 h-16 rounded-3xl bg-rose-50 text-rose-400 mx-auto flex items-center justify-center">
-                    <i data-lucide="heart" class="w-8 h-8"></i>
+            <div class="bg-white rounded-3xl border border-slate-100 p-8 text-center space-y-3 shadow-xs">
+                <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-400 mx-auto flex items-center justify-center">
+                    <i data-lucide="heart" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h3 class="font-black text-base text-slate-900">Hozircha sevimli mahsulotlar yo'q</h3>
-                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Yoqqan mahsulotlaringizdagi yurakchani (❤️) bosib, ularni bu yerda saqlab qo'yishingiz mumkin.</p>
+                    <h3 class="font-bold text-sm text-slate-900">{% if current_lang == 'uz' %}Sevimli mahsulotlar yo'q{% else %}В избранном пока пусто{% endif %}</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">{% if current_lang == 'uz' %}Yoqqan mahsulotlaringizdagi yurakchani bosing{% else %}Нажимайте сердечко на карточке блюда, чтобы сохранить{% endif %}</p>
                 </div>
-                <div>
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" 
-                       class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
-                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-                        <span>Mahsulotlarni ko'rish</span>
-                    </a>
-                </div>
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}" 
+                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand text-white font-bold text-xs shadow-md shadow-brand/20">
+                    <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                    <span>{% if current_lang == 'uz' %}Katalogga o'tish{% else %}Перейти в меню{% endif %}</span>
+                </a>
             </div>
         </template>
 
-        <!-- Wishlist Grid -->
+        <!-- Wishlist Items Grid -->
         <template x-if="!isLoadingProfileWishlist && wishlist.length > 0">
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            <div class="grid grid-cols-2 gap-3">
                 <template x-for="p in profileWishlistProducts" :key="p.id">
-                    <div class="bg-white rounded-3xl border border-slate-200/80 p-3 shadow-xs flex flex-col justify-between group hover:border-slate-300 transition-all relative">
+                    <div class="bg-white rounded-2xl border border-slate-100 p-2.5 shadow-2xs flex flex-col justify-between group hover:border-slate-200 transition-all relative">
                         <!-- Remove button -->
                         <button type="button" @click="removeProfileWishlist(p.id)"
-                                class="absolute top-4 right-4 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md text-rose-500 shadow-xs flex items-center justify-center active:scale-90 transition-transform">
-                            <i data-lucide="heart" class="w-4 h-4 fill-rose-500 text-rose-500"></i>
+                                class="absolute top-3.5 right-3.5 z-10 w-6 h-6 rounded-full bg-white/90 backdrop-blur-md text-rose-500 shadow-2xs flex items-center justify-center active:scale-90 transition-transform">
+                            <i data-lucide="heart" class="w-3.5 h-3.5 fill-rose-500 text-rose-500"></i>
                         </button>
 
                         <a :href="p.url" class="block">
                             <!-- Image -->
-                            <div class="aspect-square rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden relative mb-2.5">
+                            <div class="aspect-square rounded-xl bg-slate-50 border border-slate-100 overflow-hidden relative mb-2">
                                 <template x-if="p.image">
                                     <img :src="p.image" :alt="p.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                 </template>
                                 <template x-if="!p.image">
                                     <div class="w-full h-full flex items-center justify-center text-slate-300">
-                                        <i data-lucide="package" class="w-8 h-8"></i>
+                                        <i data-lucide="package" class="w-6 h-6"></i>
                                     </div>
                                 </template>
-                                <span x-show="p.discount_percent" class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[10px]" x-text="'-' + p.discount_percent + '%'"></span>
                             </div>
 
                             <!-- Details -->
-                            <h4 class="font-bold text-xs text-slate-900 group-hover:text-brand line-clamp-2" x-text="p.name"></h4>
-                            <div class="mt-1 flex items-baseline gap-1.5">
-                                <span class="font-mono font-black text-xs text-slate-900" x-text="p.price.toLocaleString() + ' UZS'"></span>
-                                <span x-show="p.old_price" class="line-through text-[10px] text-slate-400 font-mono" x-text="p.old_price ? p.old_price.toLocaleString() : ''"></span>
+                            <h4 class="font-bold text-xs text-slate-900 group-hover:text-brand line-clamp-1" x-text="p.name"></h4>
+                            <div class="mt-1 flex items-baseline gap-1">
+                                <span class="font-mono font-bold text-xs text-slate-900" x-text="p.price.toLocaleString() + ' UZS'"></span>
                             </div>
                         </a>
 
-                        <!-- Action button -->
-                        <div class="pt-3 mt-2 border-t border-slate-100">
+                        <!-- Add to Cart -->
+                        <div class="pt-2 mt-1.5 border-t border-slate-100">
                             <button type="button" @click="addToCart(p.id)"
                                     :disabled="!p.in_stock"
-                                    class="w-full py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all disabled:opacity-50">
-                                <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
-                                <span>Savatga</span>
+                                    class="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-[11px] font-bold flex items-center justify-center gap-1 shadow-2xs active:scale-95 transition-all disabled:opacity-50">
+                                <i data-lucide="shopping-bag" class="w-3 h-3"></i>
+                                <span>{% if current_lang == 'uz' %}Savatga{% else %}В корзину{% endif %}</span>
                             </button>
                         </div>
                     </div>
@@ -524,90 +795,67 @@
         </template>
     </div>
 
-    <!-- ============================================================= -->
-    <!-- TAB 3: DO'KON BILAN CHAT (LIVE SELLER CHAT)                   -->
-    <!-- ============================================================= -->
-    <div x-show="activeTab === 'chat'" x-cloak class="space-y-4 animate-in fade-in duration-200">
-        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs text-center space-y-4 max-w-lg mx-auto">
-            <div class="relative w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center shadow-xs">
-                <i data-lucide="message-circle" class="w-8 h-8"></i>
-                <span class="absolute top-2 right-2 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white animate-ping"></span>
-                <span class="absolute top-2 right-2 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white"></span>
-            </div>
-
-            <div>
-                <h3 class="font-black text-lg text-slate-900">Do'kon sotuvchisi bilan jonli aloqa</h3>
-                <p class="text-xs text-slate-500 mt-1">Mahsulotlar mavjudligi, yetkazib berish muddati yoki o'lchamlar bo'yicha savollaringiz bormi? Bemalol yozing!</p>
-            </div>
-
-            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-left text-xs space-y-2">
-                <div class="flex items-center gap-2 text-slate-700 font-bold">
-                    <i data-lucide="clock" class="w-4 h-4 text-emerald-600"></i>
-                    <span>Javob berish vaqti: 2-5 daqiqa</span>
-                </div>
-                <div class="flex items-center gap-2 text-slate-700 font-bold">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
-                    <span>To'g'ridan-to'g'ri boshqaruv paneliga yetkaziladi</span>
-                </div>
-            </div>
-
-            <button type="button" @click="openChatModal()"
-                    class="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-2">
-                <i data-lucide="send" class="w-4 h-4"></i>
-                <span>Xabar yozish (Chatni ochish)</span>
+    <!-- --------------------------------------------------------------------- -->
+    <!-- 4. STORE INFO & CONTACTS VIEW                                         -->
+    <!-- --------------------------------------------------------------------- -->
+    <div x-show="activeView === 'info'" x-cloak class="space-y-3 animate-in fade-in duration-200">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-1">
+            <button type="button" @click="activeView = 'menu'"
+                    class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-800 transition-colors">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
             </button>
+            <h1 class="text-base font-bold text-slate-900 tracking-tight text-center">
+                {{ t.information|default:"Ma'lumotlar va yetkazib berish" }}
+            </h1>
+            <div class="w-8"></div>
+        </div>
+
+        <!-- Delivery info -->
+        <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs space-y-1.5">
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-900">
+                <i data-lucide="truck" class="w-4 h-4 text-brand"></i>
+                <span>{{ t.delivery_terms|default:"Yetkazib berish shartlari" }}</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">
+                {% if current_lang == 'uz' %}
+                Buyurtmalarni tezkor kuryerlik yetkazib berish xizmati orqali to'g'ridan-to'g'ri manzilingizgacha yetkazamiz. Shuningdek eng yaqin filialdan bepul olib ketishingiz (samovivoz) mumkin.
+                {% else %}
+                Быстрая курьерская доставка прямо к вашей двери. Также доступен бесплатный самовывоз из ближайшего филиала.
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Phone contact -->
+        {% if store.phone %}
+        <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <i data-lucide="phone" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ t.contacts|default:"Telefon raqam" }}</div>
+                    <a href="tel:{{ store.phone }}" class="text-xs font-bold font-mono text-slate-900 hover:text-brand">{{ store.phone }}</a>
+                </div>
+            </div>
+            <a href="tel:{{ store.phone }}" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center gap-1 shadow-2xs">
+                <i data-lucide="phone-call" class="w-3.5 h-3.5"></i>
+                <span>{% if current_lang == 'uz' %}Qo'ng'iroq{% else %}Позвонить{% endif %}</span>
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Address -->
+        <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs space-y-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-900">
+                <i data-lucide="map-pin" class="w-4 h-4 text-brand"></i>
+                <span>{{ t.address|default:"Do'kon manzili" }}</span>
+            </div>
+            <p class="text-xs text-slate-600 font-semibold">{{ store.address|default:"Samarqand shahar, Registon ko'chasi" }}</p>
         </div>
     </div>
 
-    <!-- ============================================================= -->
-    <!-- TAB 4: MA'LUMOTLAR & YORDAM (INFO & SETTINGS)                 -->
-    <!-- ============================================================= -->
-    <div x-show="activeTab === 'info'" x-cloak class="space-y-4 animate-in fade-in duration-200">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- Delivery Info -->
-            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-2">
-                <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <i data-lucide="truck" class="w-5 h-5"></i>
-                </div>
-                <h4 class="font-black text-sm text-slate-900">{{ t.delivery_terms|default:"Yetkazib berish shartlari" }}</h4>
-                <p class="text-xs text-slate-500">{% if lang == 'uz' %}Shahar bo'ylab tezkor kuryerlik yetkazib berish xizmati mavjud.{% elif lang == 'en' %}Fast courier delivery across the city available.{% elif lang == 'tr' %}Şehir genelinde hızlı kurye teslimatı mevcuttur.{% else %}Быстрая курьерская доставка по всему городу.{% endif %}</p>
-            </div>
-
-            <!-- Return Policy -->
-            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-2">
-                <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
-                </div>
-                <h4 class="font-black text-sm text-slate-900">{{ t.return_terms|default:"Qaytarish va almashtirish" }}</h4>
-                <p class="text-xs text-slate-500">{% if lang == 'uz' %}Mahsulot sifatiga kafolat beriladi. Zarurat tug'ilganda 24 soat ichida almashtirib beriladi.{% elif lang == 'en' %}Product quality is guaranteed. Exchange within 24 hours if needed.{% elif lang == 'tr' %}Ürün kalitesi garantilidir. Gerekirse 24 saat içinde değişim yapılır.{% else %}Гарантия качества товара. При необходимости обмен в течение 24 часов.{% endif %}</p>
-            </div>
-
-            <!-- Contacts -->
-            {% if store.phone %}
-            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-2">
-                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <i data-lucide="phone" class="w-5 h-5"></i>
-                </div>
-                <h4 class="font-black text-sm text-slate-900">{{ t.contacts|default:"Aloqa markazi" }}</h4>
-                <a href="tel:{{ store.phone }}" class="text-xs font-bold font-mono text-brand block hover:underline">{{ store.phone }}</a>
-            </div>
-            {% endif %}
-
-            <!-- Language -->
-            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-2">
-                <div class="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                    <i data-lucide="globe" class="w-5 h-5"></i>
-                </div>
-                <h4 class="font-black text-sm text-slate-900">{{ t.language|default:"Tilni tanlash" }}</h4>
-                <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                    <a href="?lang=uz" @click.prevent="switchStoreLanguage('uz', $event)" class="px-3 py-1.5 rounded-xl border text-xs font-bold transition-all {% if current_lang == 'uz' %}bg-brand text-white border-brand shadow-xs{% else %}bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100{% endif %}">O'zbekcha</a>
-                    <a href="?lang=ru" @click.prevent="switchStoreLanguage('ru', $event)" class="px-3 py-1.5 rounded-xl border text-xs font-bold transition-all {% if current_lang == 'ru' %}bg-brand text-white border-brand shadow-xs{% else %}bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100{% endif %}">Русский</a>
-                    <a href="?lang=en" @click.prevent="switchStoreLanguage('en', $event)" class="px-3 py-1.5 rounded-xl border text-xs font-bold transition-all {% if current_lang == 'en' %}bg-brand text-white border-brand shadow-xs{% else %}bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100{% endif %}">English</a>
-                    <a href="?lang=tr" @click.prevent="switchStoreLanguage('tr', $event)" class="px-3 py-1.5 rounded-xl border text-xs font-bold transition-all {% if current_lang == 'tr' %}bg-brand text-white border-brand shadow-xs{% else %}bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100{% endif %}">Türkçe</a>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% endif %}
 
 </div>
 {% endblock %}

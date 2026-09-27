@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block storefront_body %}
-<div class="max-w-3xl mx-auto px-4 sm:px-6 pt-6" x-data="checkoutApp()">
+<div class="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-28 lg:pb-12" x-data="checkoutApp()">
     <div class="mb-6 flex items-center justify-between">
         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
@@ -34,26 +34,59 @@
         <input type="hidden" name="delivery_lng" x-model="deliveryLng">
         <input type="hidden" name="cutlery_count" x-model="cutleryCount">
 
-        <!-- 0. Ordered Products Overview -->
-        <div class="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3.5">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
-                    <i data-lucide="shopping-bag" class="w-4 h-4 text-brand"></i>
-                    <h3>{{ t.ordered_products|default:"Buyurtma qilinayotgan tovarlar" }}</h3>
-                </div>
-                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}" class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
+        <!-- 0. Ordered Products Overview (Uzum / Yandex Style with Mini Thumbnails) -->
+        <div class="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3"
+             x-data="{ itemsOpen: false }">
+            <div class="flex items-center justify-between gap-3">
+                <button type="button" @click="itemsOpen = !itemsOpen"
+                        class="flex items-center gap-3 text-left text-slate-900 font-black text-sm select-none cursor-pointer group min-w-0 flex-1">
+                    <div class="w-9 h-9 rounded-2xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
+                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="truncate">{% if lang == 'uz' %}Buyurtma tarkibi{% elif lang == 'en' %}Order contents{% elif lang == 'tr' %}Sipariş içeriği{% else %}Состав заказа{% endif %}</span>
+                            <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-mono font-bold shrink-0">
+                                {% if cart %}{{ cart|length }}{% else %}<span x-text="Object.keys(cartItems).length"></span>{% endif %} {% if lang == 'uz' %}ta mahsulot{% elif lang == 'en' %}items{% else %}товаров{% endif %}
+                            </span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition-transform duration-200 shrink-0"
+                               :class="itemsOpen ? 'rotate-180' : ''"></i>
+                        </div>
+                        
+                        <!-- Mini Thumbnails Row when collapsed -->
+                        <div class="flex items-center gap-1.5 mt-1.5 overflow-hidden" x-show="!itemsOpen">
+                            {% if cart %}
+                                {% for key, item in cart.items|slice:":5" %}
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden border border-slate-200/60 shrink-0 relative">
+                                    {% if item.image or item.image_url %}
+                                    <img src="{{ item.image|default:item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                    <div class="w-full h-full flex items-center justify-center text-slate-400 text-[10px] font-bold">#</div>
+                                    {% endif %}
+                                    {% if item.quantity > 1 %}
+                                    <span class="absolute bottom-0 right-0 bg-slate-900 text-white text-[8px] font-mono px-0.5 rounded-tl font-black">×{{ item.quantity }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                            <span class="text-xs font-black text-slate-900 font-mono ml-1">{{ subtotal|floatformat:0 }} UZS</span>
+                        </div>
+                    </div>
+                </button>
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}" class="text-xs font-bold text-brand hover:underline flex items-center gap-1 shrink-0 px-2.5 py-1.5 rounded-xl hover:bg-slate-50 transition-colors">
+                    <i data-lucide="pencil" class="w-3 h-3"></i>
                     <span>{{ t.edit|default:"O'zgartirish" }}</span>
                 </a>
             </div>
 
-            <div class="divide-y divide-slate-100">
+            <div x-show="itemsOpen" x-collapse x-cloak class="divide-y divide-slate-100 pt-2 border-t border-slate-100">
                 {% if cart %}
                     {% for key, item in cart.items %}
                     <div class="py-2.5 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200/60">
+                            <div class="w-12 h-12 rounded-xl {% if '•' in item.variation_name %}bg-amber-500/10 p-0.5 border border-amber-200{% else %}bg-slate-100 overflow-hidden border border-slate-200/60{% endif %} shrink-0 flex items-center justify-center">
                                 {% if item.image or item.image_url %}
-                                <img src="{{ item.image|default:item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                                <img src="{{ item.image|default:item.image_url }}" alt="{{ item.name }}" class="w-full h-full {% if '•' in item.variation_name %}object-contain filter drop-shadow-sm{% else %}object-cover{% endif %}" onerror="this.style.display='none'">
                                 {% else %}
                                 <div class="w-full h-full flex items-center justify-center text-slate-400">
                                     <i data-lucide="package" class="w-5 h-5"></i>
@@ -63,7 +96,17 @@
                             <div class="min-w-0">
                                 <h4 class="font-bold text-xs text-slate-900 truncate">{{ item.name }}</h4>
                                 {% if item.variation_name %}
-                                <p class="text-[11px] text-slate-400">{{ item.variation_name }}</p>
+                                    {% if '•' in item.variation_name %}
+                                    <div class="flex flex-wrap gap-1 mt-0.5 max-w-xs">
+                                        {% for part in item.variation_name.split|default:item.variation_name %}
+                                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-50 text-slate-700 border border-amber-200">
+                                            {{ part.strip }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <p class="text-[11px] text-slate-400">{{ item.variation_name }}</p>
+                                    {% endif %}
                                 {% endif %}
                                 <p class="text-[11px] text-slate-500 font-mono mt-0.5">
                                     {{ item.quantity }} x {{ item.unit_price|floatformat:0 }} UZS
@@ -82,7 +125,7 @@
                             <div class="flex items-center gap-3 min-w-0">
                                 <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200/60">
                                     <template x-if="item.image || item.image_url">
-                                        <img :src="item.image || item.image_url" class="w-full h-full object-cover">
+                                        <img :src="item.image || item.image_url" class="w-full h-full object-cover" onerror="this.style.display='none'">
                                     </template>
                                     <template x-if="!item.image && !item.image_url">
                                         <div class="w-full h-full flex items-center justify-center text-slate-400">
@@ -102,11 +145,11 @@
                         </div>
                     </template>
                 {% endif %}
-            </div>
 
-            <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600">
-                <span>{{ t.items_count_and_sum|default:"Tovarlar soni va jami:" }}</span>
-                <span class="font-black text-slate-900 font-mono">{{ subtotal|floatformat:0 }} UZS</span>
+                <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600">
+                    <span>{{ t.items_count_and_sum|default:"Tovarlar soni va jami:" }}</span>
+                    <span class="font-black text-slate-900 font-mono">{{ subtotal|floatformat:0 }} UZS</span>
+                </div>
             </div>
         </div>
 
@@ -215,162 +258,199 @@
                 </label>
             </div>
 
-            <!-- Case A: Courier Address with Yandex-Style Interactive Map -->
-            <div x-show="deliveryMethod === 'COURIER'" class="space-y-4 pt-2">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-800">
-                            {{ t.delivery_address_and_map|default:"Yetkazib berish manzili va xarita" }} *
-                        </label>
-                        <p class="text-[11px] text-slate-400">
-                            {{ t.map_hint|default:"Xaritadan tanlang, qidiring yoki geolokatsiyani yoqing" }}
-                        </p>
-                    </div>
-                    <button type="button" @click="locateMe()"
-                            class="flex items-center gap-1.5 text-xs font-bold text-brand hover:text-brand-dark transition-colors px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 shadow-2xs">
-                        <i data-lucide="crosshair" class="w-3.5 h-3.5" :class="isLocating ? 'animate-spin' : ''"></i>
-                        <span x-text="isLocating ? '{{ t.locating|default:"Aniqlanmoqda..." }}' : '{{ t.my_location|default:"Mening joylashuvim" }}'"></span>
-                    </button>
-                </div>
-
-                <!-- City Selector & Address Search Controls Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
-                    <!-- City Dropdown (4 cols) -->
-                    <div class="sm:col-span-4">
-                        <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                            <i data-lucide="building-2" class="w-3.5 h-3.5 text-brand"></i>
-                            <span>{{ t.city_region|default:"Shahar / Viloyat" }}</span>
-                        </label>
-                        <div class="relative">
-                            <select x-model="activeCity" @change="selectCity($event.target.value)"
-                                    class="w-full pl-3 pr-8 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-brand focus:bg-white transition-all appearance-none cursor-pointer">
-                                <option value="tashkent">Toshkent / Ташкент</option>
-                                <option value="samarkand">Samarqand / Самарканд</option>
-                                <option value="bukhara">Buxoro / Бухара</option>
-                                <option value="andijan">Andijon / Андижан</option>
-                                <option value="namangan">Namangan / Наманган</option>
-                                <option value="fergana">Farg'ona / Фергана</option>
-                                <option value="kokand">Qo'qon / Коканд</option>
-                                <option value="qarshi">Qarshi / Карши</option>
-                                <option value="urgench">Urganch / Ургенч</option>
-                                <option value="khiva">Xiva / Хива</option>
-                                <option value="nukus">Nukus / Нукус</option>
-                                <option value="navoiy">Navoiy / Навои</option>
-                                <option value="jizzakh">Jizzax / Джизак</option>
-                                <option value="termez">Termiz / Термез</option>
-                                <option value="gulistan">Guliston / Гулистан</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
-                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+            <!-- Case A: Courier Address with Compact Address Card & Expandable Map -->
+            <div x-show="deliveryMethod === 'COURIER'" class="space-y-3 pt-2">
+                <!-- Compact Address Action Card -->
+                <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 transition-all space-y-2.5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-2.5 min-w-0 flex-1 cursor-pointer" @click="toggleMap()">
+                            <div class="w-8 h-8 rounded-xl bg-violet-100 text-brand flex items-center justify-center shrink-0 mt-0.5">
+                                <i data-lucide="map-pin" class="w-4 h-4"></i>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Search Map with Live Autocomplete Dropdown (8 cols, z-50) -->
-                    <div class="sm:col-span-8 relative z-50">
-                        <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
-                            <span class="flex items-center gap-1.5">
-                                <i data-lucide="search" class="w-3.5 h-3.5 text-brand"></i>
-                                <span>{{ t.search_street_orientir|default:"Ko'cha yoki mo'ljalni qidirish" }}</span>
-                            </span>
-                            <span class="text-[10px] text-slate-400 font-normal">{{ t.or_select_on_map|default:"yoki xaritadan tanlang" }}</span>
-                        </label>
-                        <div class="relative flex items-center">
-                            <i data-lucide="map-pin" class="w-4 h-4 text-brand absolute left-3.5 pointer-events-none"></i>
-                            <input type="text" id="checkoutSearchInput" x-model="mapSearch" @input.debounce.250ms="searchAddress()"
-                                   placeholder="{% if lang == 'uz' %}Masalan: Registon, Beruniy, Mirzo Ulug'bek...{% elif lang == 'en' %}e.g. Broadway, Central St...{% elif lang == 'tr' %}Örn: Atatürk Caddesi...{% else %}Например: Регистан, Беруни, Мирзо Улугбек...{% endif %}"
-                                   class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand focus:bg-white transition-all">
-                            <div x-show="isSearchingMap" class="absolute right-3.5">
-                                <i data-lucide="loader-2" class="w-4 h-4 text-brand animate-spin"></i>
-                            </div>
-                            <button type="button" x-show="mapSearch && !isSearchingMap" @click="mapSearch = ''; searchResults = []"
-                                    class="absolute right-3 text-slate-400 hover:text-slate-600 font-bold text-sm">×</button>
-                        </div>
-
-                    <!-- Autocomplete Suggestions Dropdown -->
-                    <div id="checkoutMapSuggestions" x-show="searchResults.length > 0" @click.away="searchResults = []" x-cloak
-                         class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-100">
-                        <template x-for="res in searchResults" :key="res.lat + '_' + res.lng + '_' + res.display_name">
-                            <div @click="selectSearchResult(res)" data-action="select-loc"
-                                 class="p-3 text-xs hover:bg-violet-50/70 cursor-pointer flex items-start gap-3 transition-colors group">
-                                <div class="w-7 h-7 rounded-lg bg-violet-100 text-brand flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-brand group-hover:text-white transition-colors">
-                                    <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            <div class="min-w-0">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    {{ t.delivery_address_label|default:"Yetkazib berish manzili" }}
                                 </div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="font-bold text-slate-900 group-hover:text-brand transition-colors" x-text="res.name || res.display_name"></div>
-                                    <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1" x-text="res.display_name"></div>
+                                <div class="text-xs font-black text-slate-900 truncate mt-0.5"
+                                     x-text="deliveryStreet || '{% if lang == 'uz' %}Xaritadan yoki qidiruvdan tanlang{% elif lang == 'en' %}Select on map or search{% elif lang == 'tr' %}Haritadan veya aramadan seçin{% else %}Укажите адрес на карте или в поиске{% endif %}'">
                                 </div>
-                                <span class="text-[10px] font-bold text-slate-400 shrink-0 self-center" x-text="res.city || ''"></span>
+                                <div class="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1.5" x-show="deliveryLat && deliveryLng">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span x-text="deliveryCity || 'O\'zbekiston'"></span>
+                                    <span x-show="isReverseGeocoding" class="text-amber-600 font-bold animate-pulse">({{ t.locating|default:"aniqlanmoqda..." }})</span>
+                                </div>
                             </div>
-                        </template>
-                    </div>
-                </div>
-            </div>
+                        </div>
 
-                <!-- Leaflet Interactive Map -->
-                <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
-                    <div id="checkoutDeliveryMap" class="w-full h-56 sm:h-64 bg-slate-100"></div>
-                    <div class="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-semibold text-slate-700 shadow-xs border border-slate-200/60 flex items-center gap-1.5">
-                        <i data-lucide="info" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i>
-                        <span>{% if lang == 'uz' %}Xaritani bosib yoki markerni surib uyingizni belgilang{% elif lang == 'en' %}Click the map or drag the marker to your house{% elif lang == 'tr' %}Haritaya tıklayın veya pini evinize sürükleyin{% else %}Нажмите на карту или перетащите маркер к вашему дому{% endif %}</span>
-                    </div>
-                </div>
+                        <!-- Quick Action Buttons -->
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <!-- Locate Me -->
+                            <button type="button" @click="locateMe()"
+                                    title="{{ t.my_location|default:'Mening joylashuvim' }}"
+                                    class="p-2 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-violet-50 hover:border-violet-300 text-slate-700 hover:text-brand transition-all flex items-center gap-1 text-xs font-bold shadow-2xs">
+                                <i data-lucide="crosshair" class="w-3.5 h-3.5 text-brand" :class="isLocating ? 'animate-spin' : ''"></i>
+                                <span class="hidden sm:inline" x-text="isLocating ? '{{ t.locating|default:"..." }}' : '{{ t.my_location|default:"Mening joyim" }}'"></span>
+                            </button>
 
-                <!-- Selected Address Confirmation Badge -->
-                <div class="p-3 rounded-xl bg-violet-50/80 border border-violet-200/80 flex items-center justify-between text-xs transition-all">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <i data-lucide="check-circle-2" class="w-4 h-4 text-violet-600 shrink-0" :class="isReverseGeocoding ? 'animate-pulse text-amber-500' : ''"></i>
-                        <span class="text-slate-700 truncate">
-                            {% if lang == 'uz' %}Tanlangan manzil:{% elif lang == 'en' %}Selected address:{% elif lang == 'tr' %}Seçilen adres:{% else %}Выбранный адрес:{% endif %}
-                            <strong class="text-slate-900 ml-1" x-text="deliveryStreet || '{% if lang == 'uz' %}Xaritadan tanlang{% elif lang == 'en' %}Select on map{% elif lang == 'tr' %}Haritadan seçin{% else %}Выберите на карте{% endif %}'"></strong>
-                        </span>
-                    </div>
-                    <div class="flex items-center gap-1 shrink-0 ml-2">
-                        <span x-show="isReverseGeocoding" class="text-[10px] font-bold text-amber-600 animate-pulse">{{ t.locating|default:"Aniqlanmoqda..." }}</span>
-                        <span class="font-mono text-[10px] text-slate-400" x-show="deliveryLat && deliveryLng" x-text="Number(deliveryLat).toFixed(4) + ', ' + Number(deliveryLng).toFixed(4)"></span>
+                            <!-- Toggle Map -->
+                            <button type="button" @click="toggleMap()"
+                                    class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-2xs"
+                                    :class="mapExpanded ? 'bg-brand text-white' : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300'">
+                                <i data-lucide="map" class="w-3.5 h-3.5"></i>
+                                <span x-text="mapExpanded ? '{% if lang == 'uz' %}Xaritani yopish{% else %}Скрыть карту{% endif %}' : '{% if lang == 'uz' %}Xaritada{% else %}На карте{% endif %}'"></span>
+                                <i data-lucide="chevron-down" class="w-3 h-3 transition-transform" :class="mapExpanded ? 'rotate-180' : ''"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Structured Apartment / House Details -->
-                <div class="space-y-3 pt-1">
+                <!-- Expandable Map & Search Box -->
+                <div x-show="mapExpanded" x-collapse x-cloak class="space-y-3 pt-1">
+                    <!-- City Selector & Address Search Controls Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                        <!-- City Dropdown (4 cols) -->
+                        <div class="sm:col-span-4">
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                                <i data-lucide="building-2" class="w-3.5 h-3.5 text-brand"></i>
+                                <span>{{ t.city_region|default:"Shahar / Viloyat" }}</span>
+                            </label>
+                            <div class="relative">
+                                <select x-model="activeCity" @change="selectCity($event.target.value)"
+                                        class="w-full pl-3 pr-8 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-brand focus:bg-white transition-all appearance-none cursor-pointer">
+                                    <option value="tashkent">Toshkent / Ташкент</option>
+                                    <option value="samarkand">Samarqand / Самарканд</option>
+                                    <option value="bukhara">Buxoro / Бухара</option>
+                                    <option value="andijan">Andijon / Андижан</option>
+                                    <option value="namangan">Namangan / Наманган</option>
+                                    <option value="fergana">Farg'ona / Фергана</option>
+                                    <option value="kokand">Qo'qon / Коканд</option>
+                                    <option value="qarshi">Qarshi / Карши</option>
+                                    <option value="urgench">Urganch / Ургенч</option>
+                                    <option value="khiva">Xiva / Хива</option>
+                                    <option value="nukus">Nukus / Нукус</option>
+                                    <option value="navoiy">Navoiy / Навои</option>
+                                    <option value="jizzakh">Jizzax / Джизак</option>
+                                    <option value="termez">Termiz / Термез</option>
+                                    <option value="gulistan">Guliston / Гулистан</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Map with Live Autocomplete Dropdown (8 cols, z-50) -->
+                        <div class="sm:col-span-8 relative z-50">
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                                <span class="flex items-center gap-1.5">
+                                    <i data-lucide="search" class="w-3.5 h-3.5 text-brand"></i>
+                                    <span>{{ t.search_street_orientir|default:"Ko'cha yoki mo'ljalni qidirish" }}</span>
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-normal">{{ t.or_select_on_map|default:"yoki xaritadan tanlang" }}</span>
+                            </label>
+                            <div class="relative flex items-center">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-brand absolute left-3.5 pointer-events-none"></i>
+                                <input type="text" id="checkoutSearchInput" x-model="mapSearch" @input.debounce.250ms="searchAddress()"
+                                       placeholder="{% if lang == 'uz' %}Masalan: Registon, Beruniy, Mirzo Ulug'bek...{% elif lang == 'en' %}e.g. Broadway, Central St...{% elif lang == 'tr' %}Örn: Atatürk Caddesi...{% else %}Например: Регистан, Беруни, Мирзо Улугбек...{% endif %}"
+                                       class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand focus:bg-white transition-all">
+                                <div x-show="isSearchingMap" class="absolute right-3.5">
+                                    <i data-lucide="loader-2" class="w-4 h-4 text-brand animate-spin"></i>
+                                </div>
+                                <button type="button" x-show="mapSearch && !isSearchingMap" @click="mapSearch = ''; searchResults = []"
+                                        class="absolute right-3 text-slate-400 hover:text-slate-600 font-bold text-sm">×</button>
+                            </div>
+
+                            <!-- Autocomplete Suggestions Dropdown -->
+                            <div id="checkoutMapSuggestions" x-show="searchResults.length > 0" @click.away="searchResults = []" x-cloak
+                                 class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-100">
+                                <template x-for="res in searchResults" :key="res.lat + '_' + res.lng + '_' + res.display_name">
+                                    <div @click="selectSearchResult(res)" data-action="select-loc"
+                                         class="p-3 text-xs hover:bg-violet-50/70 cursor-pointer flex items-start gap-3 transition-colors group">
+                                        <div class="w-7 h-7 rounded-lg bg-violet-100 text-brand flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-brand group-hover:text-white transition-colors">
+                                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="font-bold text-slate-900 group-hover:text-brand transition-colors" x-text="res.name || res.display_name"></div>
+                                            <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1" x-text="res.display_name"></div>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-slate-400 shrink-0 self-center" x-text="res.city || ''"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leaflet Interactive Map -->
+                    <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
+                        <div id="checkoutDeliveryMap" class="w-full h-52 sm:h-64 bg-slate-100"></div>
+                        <div class="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-semibold text-slate-700 shadow-xs border border-slate-200/60 flex items-center gap-1.5">
+                            <i data-lucide="info" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i>
+                            <span>{% if lang == 'uz' %}Xaritani bosib yoki markerni surib uyingizni belgilang{% elif lang == 'en' %}Click the map or drag the marker to your house{% elif lang == 'tr' %}Haritaya tıklayın veya pini evinize sürükleyin{% else %}Нажмите на карту или перетащите маркер к вашему дому{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <!-- Map Done Button -->
+                    <div class="flex justify-end">
+                        <button type="button" @click="mapExpanded = false"
+                                class="px-4 py-1.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-black transition-colors flex items-center gap-1">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                            <span>{% if lang == 'uz' %}Manzilni tasdiqlash{% else %}Готово{% endif %}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Structured Address Inputs: Street & Number -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">
+                        {{ t.street_number|default:"Ko'cha, uy raqami" }} *
+                    </label>
+                    <input type="text" name="delivery_street" id="checkoutDeliveryStreet" x-model="deliveryStreet" required
+                           placeholder="{% if lang == 'uz' %}Masalan: Beruniy ko'chasi, 12-uy{% elif lang == 'en' %}e.g. 12 Main St{% elif lang == 'tr' %}Örn: Atatürk Cad. No 12{% else %}Например: ул. Беруни, д. 12{% endif %}"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                </div>
+
+                <!-- Yandex Eats Style 4-Grid: Entrance, Floor, Apt, Intercom -->
+                <div class="grid grid-cols-4 gap-2">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">
-                            {{ t.street_number|default:"Ko'cha, uy raqami" }} *
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5 truncate">
+                            {% if lang == 'uz' %}Podezd{% elif lang == 'en' %}Entrance{% elif lang == 'tr' %}Giriş{% else %}Подъезд{% endif %}
                         </label>
-                        <input type="text" name="delivery_street" id="checkoutDeliveryStreet" x-model="deliveryStreet" required
-                               placeholder="{% if lang == 'uz' %}Masalan: Beruniy ko'chasi, 12-uy{% elif lang == 'en' %}e.g. 12 Main St{% elif lang == 'tr' %}Örn: Atatürk Cad. No 12{% else %}Например: ул. Беруни, д. 12{% endif %}"
-                               class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                        <input type="text" name="delivery_entrance" x-model="deliveryEntrance"
+                               placeholder="1"
+                               class="w-full px-2.5 py-2 text-center rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
                     </div>
-
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">{{ t.entrance|default:"Podezd" }}</label>
-                            <input type="text" name="delivery_entrance" x-model="deliveryEntrance" placeholder="1"
-                                   class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">{{ t.floor|default:"Qavat" }}</label>
-                            <input type="text" name="delivery_floor" x-model="deliveryFloor" placeholder="4"
-                                   class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">{{ t.apartment|default:"Xonadon / Ofis" }}</label>
-                            <input type="text" name="delivery_apartment" x-model="deliveryApartment" placeholder="42"
-                                   class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">{{ t.intercom|default:"Domofon kodi" }}</label>
-                            <input type="text" name="delivery_domofon" x-model="deliveryDomofon" placeholder="42K"
-                                   class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-center focus:outline-none focus:border-brand">
-                        </div>
-                    </div>
-
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">{{ t.landmark|default:"Mo'ljal (orientir)" }}</label>
-                        <input type="text" name="delivery_landmark" x-model="deliveryLandmark"
-                               placeholder="{% if lang == 'uz' %}Masalan: Korzinka yonida, sariq darvoza{% elif lang == 'en' %}e.g. Near supermarket, yellow gate{% elif lang == 'tr' %}Örn: Marketin yanı, sarı kapı{% else %}Например: рядом с Korzinka, желтые ворота{% endif %}"
-                               class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5 truncate">
+                            {% if lang == 'uz' %}Qavat{% elif lang == 'en' %}Floor{% elif lang == 'tr' %}Kat{% else %}Этаж{% endif %}
+                        </label>
+                        <input type="text" name="delivery_floor" x-model="deliveryFloor"
+                               placeholder="4"
+                               class="w-full px-2.5 py-2 text-center rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
                     </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5 truncate">
+                            {% if lang == 'uz' %}Kvartira{% elif lang == 'en' %}Apt{% elif lang == 'tr' %}Daire{% else %}Кв./Офис{% endif %}
+                        </label>
+                        <input type="text" name="delivery_apartment" x-model="deliveryApartment"
+                               placeholder="18"
+                               class="w-full px-2.5 py-2 text-center rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5 truncate">
+                            {% if lang == 'uz' %}Domofon{% elif lang == 'en' %}Code{% elif lang == 'tr' %}Diafon{% else %}Домофон{% endif %}
+                        </label>
+                        <input type="text" name="delivery_domofon" x-model="deliveryDomofon"
+                               placeholder="18K"
+                               class="w-full px-2.5 py-2 text-center rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
+                    </div>
+                </div>
+
+                <!-- Landmark -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">{{ t.landmark|default:"Mo'ljal (orientir)" }}</label>
+                    <input type="text" name="delivery_landmark" x-model="deliveryLandmark"
+                           placeholder="{% if lang == 'uz' %}Masalan: Korzinka yonida, sariq darvoza{% elif lang == 'en' %}e.g. Near supermarket, yellow gate{% elif lang == 'tr' %}Örn: Marketin yanı, sarı kapı{% else %}Например: рядом с Korzinka, желтые ворота{% endif %}"
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
                 </div>
 
                 <!-- Hidden combined delivery address for backward compatibility -->
@@ -424,11 +504,24 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <!-- Cash -->
+                <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all"
+                       :class="paymentMethod === 'CASH' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200'">
+                    <input type="radio" name="payment_method" value="CASH" x-model="paymentMethod" class="sr-only">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="banknote" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-xs text-slate-900">{{ t.cash|default:"Naqd pul" }}</div>
+                        <div class="text-[10px] text-slate-500">{{ t.cash_desc|default:"Qabul qilinganda to'lov" }}</div>
+                    </div>
+                </label>
+
                 {% if pay_settings.click_enabled %}
                 <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all"
-                       :class="paymentMethod === 'CLICK' ? 'border-brand bg-brand/5' : 'border-slate-200'">
+                       :class="paymentMethod === 'CLICK' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200'">
                     <input type="radio" name="payment_method" value="CLICK" x-model="paymentMethod" class="sr-only">
-                    <div class="w-7 h-7 rounded-lg bg-blue-600 text-white font-black text-[11px] flex items-center justify-center">C</div>
+                    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">C</div>
                     <div>
                         <div class="font-bold text-xs text-slate-900">Click Shop</div>
                         <div class="text-[10px] text-slate-500">Uzcard / Humo онлайн</div>
@@ -438,9 +531,9 @@
 
                 {% if pay_settings.payme_enabled %}
                 <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all"
-                       :class="paymentMethod === 'PAYME' ? 'border-brand bg-brand/5' : 'border-slate-200'">
+                       :class="paymentMethod === 'PAYME' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200'">
                     <input type="radio" name="payment_method" value="PAYME" x-model="paymentMethod" class="sr-only">
-                    <div class="w-7 h-7 rounded-lg bg-teal-500 text-white font-black text-[11px] flex items-center justify-center">P</div>
+                    <div class="w-8 h-8 rounded-xl bg-teal-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">P</div>
                     <div>
                         <div class="font-bold text-xs text-slate-900">Payme</div>
                         <div class="text-[10px] text-slate-500">{% if lang == 'uz' %}Ilova orqali to'lov{% elif lang == 'en' %}Pay via app{% elif lang == 'tr' %}Uygulama ile ödeme{% else %}Оплата через приложение{% endif %}</div>
@@ -448,81 +541,52 @@
                 </label>
                 {% endif %}
 
-                {% if pay_settings.uzum_enabled %}
-                <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all"
-                       :class="paymentMethod === 'UZUM' ? 'border-brand bg-brand/5' : 'border-slate-200'">
-                    <input type="radio" name="payment_method" value="UZUM" x-model="paymentMethod" class="sr-only">
-                    <div class="w-7 h-7 rounded-lg bg-purple-600 text-white font-black text-[11px] flex items-center justify-center">U</div>
-                    <div>
-                        <div class="font-bold text-xs text-slate-900">Uzum Pay</div>
-                        <div class="text-[10px] text-slate-500">{% if lang == 'uz' %}Tezkor to'lov Uzum{% elif lang == 'en' %}Fast Uzum payment{% elif lang == 'tr' %}Hızlı Uzum ödeme{% else %}Быстрая оплата Uzum{% endif %}</div>
-                    </div>
-                </label>
-                {% endif %}
-
                 {% if pay_settings.multicard_enabled %}
                 <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all"
-                       :class="paymentMethod === 'MULTICARD' ? 'border-brand bg-brand/5' : 'border-slate-200'">
+                       :class="paymentMethod === 'MULTICARD' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200'">
                     <input type="radio" name="payment_method" value="MULTICARD" x-model="paymentMethod" class="sr-only">
-                    <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-black text-[11px] flex items-center justify-center">M</div>
+                    <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">M</div>
                     <div>
                         <div class="font-bold text-xs text-slate-900">Multicard</div>
-                        <div class="text-[10px] text-slate-500">Uzcard, Humo, Visa, MC, OTP</div>
+                        <div class="text-[10px] text-slate-500">Uzcard, Humo, Visa, MC</div>
                     </div>
                 </label>
                 {% endif %}
 
                 <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all"
-                       :class="paymentMethod === 'CASH' ? 'border-brand bg-brand/5' : 'border-slate-200'">
-                    <input type="radio" name="payment_method" value="CASH" x-model="paymentMethod" class="sr-only">
-                    <i data-lucide="banknote" class="w-6 h-6 text-emerald-600"></i>
-                    <div>
-                        <div class="font-bold text-xs text-slate-900">{{ t.cash|default:"Naqd pul" }}</div>
-                        <div class="text-[10px] text-slate-500">{{ t.cash_desc|default:"Qabul qilinganda to'lov" }}</div>
-                    </div>
-                </label>
-
-                <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all"
-                       :class="paymentMethod === 'TERMINAL' ? 'border-brand bg-brand/5' : 'border-slate-200'">
+                       :class="paymentMethod === 'TERMINAL' ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200'">
                     <input type="radio" name="payment_method" value="TERMINAL" x-model="paymentMethod" class="sr-only">
-                    <i data-lucide="credit-card" class="w-6 h-6 text-blue-600"></i>
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="credit-card" class="w-5 h-5"></i>
+                    </div>
                     <div>
                         <div class="font-bold text-xs text-slate-900">{{ t.terminal|default:"Kuryerga terminal orqali" }}</div>
                         <div class="text-[10px] text-slate-500">{{ t.terminal_desc|default:"Uzcard/Humo karta orqali" }}</div>
                     </div>
                 </label>
+            </div>
 
-                <!-- Interactive Payment Action Indicator -->
-                <div class="col-span-full pt-1">
-                    <div x-show="paymentMethod === 'CLICK'" class="p-3.5 rounded-2xl bg-blue-50/90 border border-blue-200/80 text-blue-900 text-xs flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0">C</div>
-                        <div>
-                            <span class="font-bold">Click Shop:</span>
-                            <span class="text-blue-800">{% if lang == 'uz' %}Buyurtmani tasdiqlaganingizdan so'ng to'lov uchun Click ilovasi (yoki my.click.uz) ochiladi.{% elif lang == 'en' %}After confirming the order, you will be redirected to Click (my.click.uz) to complete payment.{% else %}После подтверждения заказа откроется оплата через приложение Click (my.click.uz).{% endif %}</span>
+            <!-- Cash Change Option -->
+            <div x-show="paymentMethod === 'CASH'" x-collapse x-cloak class="pt-2">
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                    <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
+                        <input type="checkbox" x-model="needChange" class="w-4 h-4 rounded text-brand focus:ring-brand">
+                        <span>{% if lang == 'uz' %}Qaytim kerakmi?{% elif lang == 'en' %}Need change?{% elif lang == 'tr' %}Para üstü gerekiyor mu?{% else %}Нужна сдача?{% endif %}</span>
+                    </label>
+
+                    <div x-show="needChange" x-collapse x-cloak class="space-y-2 pt-1">
+                        <div class="text-[11px] text-slate-500">
+                            {% if lang == 'uz' %}Qaysi kupyuradan qaytim tayyorlab kelinsin?{% elif lang == 'en' %}From what amount do you need change?{% elif lang == 'tr' %}Hangi tutardan para üstü hazırlansın?{% else %}С какой купюры подготовить сдачу курьеру?{% endif %}
                         </div>
-                    </div>
-
-                    <div x-show="paymentMethod === 'MULTICARD'" class="p-3.5 rounded-2xl bg-indigo-50/90 border border-indigo-200/80 text-indigo-900 text-xs flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center shrink-0">M</div>
-                        <div>
-                            <span class="font-bold">Multicard:</span>
-                            <span class="text-indigo-800">{% if lang == 'uz' %}Buyurtmani tasdiqlaganingizdan so'ng karta va SMS OTP orqali to'lov oynasi ochiladi.{% elif lang == 'en' %}After confirming, the card payment window with SMS OTP verification will open.{% else %}После подтверждения заказа откроется защищенная страница оплаты картой с SMS-кодом.{% endif %}</span>
+                        <div class="flex items-center gap-2">
+                            <input type="text" name="change_from" x-model="changeFrom"
+                                   placeholder="{% if lang == 'uz' %}Masalan: 100 000 UZS{% else %}Например: 100 000 UZS{% endif %}"
+                                   class="flex-1 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand">
                         </div>
-                    </div>
-
-                    <div x-show="paymentMethod === 'PAYME'" class="p-3.5 rounded-2xl bg-teal-50/90 border border-teal-200/80 text-teal-900 text-xs flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-teal-500 text-white font-black text-xs flex items-center justify-center shrink-0">P</div>
-                        <div>
-                            <span class="font-bold">Payme:</span>
-                            <span class="text-teal-800">{% if lang == 'uz' %}Buyurtmani tasdiqlaganingizdan so'ng Payme to'lov sahifasiga yo'naltirilasiz.{% elif lang == 'en' %}After confirming the order, you will be redirected to Payme.{% else %}После подтверждения заказа откроется оплата через Payme.{% endif %}</span>
-                        </div>
-                    </div>
-
-                    <div x-show="paymentMethod === 'UZUM'" class="p-3.5 rounded-2xl bg-purple-50/90 border border-purple-200/80 text-purple-900 text-xs flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">U</div>
-                        <div>
-                            <span class="font-bold">Uzum Pay:</span>
-                            <span class="text-purple-800">{% if lang == 'uz' %}Buyurtmani tasdiqlaganingizdan so'ng Uzum Pay to'lov tizimi ochiladi.{% elif lang == 'en' %}After confirming the order, Uzum Pay gateway will open.{% else %}После подтверждения заказа откроется платежный шлюз Uzum Pay.{% endif %}</span>
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                            <button type="button" @click="changeFrom = '50 000 UZS'" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-brand text-[11px] font-bold text-slate-700">50 000</button>
+                            <button type="button" @click="changeFrom = '100 000 UZS'" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-brand text-[11px] font-bold text-slate-700">100 000</button>
+                            <button type="button" @click="changeFrom = '200 000 UZS'" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-brand text-[11px] font-bold text-slate-700">200 000</button>
                         </div>
                     </div>
                 </div>
@@ -568,12 +632,27 @@
 
             <!-- Submit Order Button -->
             <button type="submit"
-                    class="w-full mt-4 py-4 rounded-2xl bg-brand hover-bg-brand text-white font-black text-sm sm:text-base transition-all shadow-xl shadow-brand/30 flex items-center justify-center gap-2 active:scale-[0.98]">
-                <span x-text="paymentMethod === 'CLICK' ? '{% if lang == 'uz' %}Buyurtmani tasdiqlash va Click orqali to\'lash{% elif lang == 'en' %}Confirm Order & Pay via Click{% else %}Подтвердить заказ и оплатить через Click{% endif %}' : (paymentMethod === 'MULTICARD' ? '{% if lang == 'uz' %}Buyurtmani tasdiqlash va Multicard orqali to\'lash{% elif lang == 'en' %}Confirm Order & Pay via Multicard{% else %}Подтвердить заказ и оплатить через Multicard{% endif %}' : (paymentMethod === 'PAYME' ? '{% if lang == 'uz' %}Buyurtmani tasdiqlash va Payme orqali to\'lash{% elif lang == 'en' %}Confirm Order & Pay via Payme{% else %}Подтвердить заказ и оплатить через Payme{% endif %}' : (paymentMethod === 'UZUM' ? '{% if lang == 'uz' %}Buyurtmani tasdiqlash va Uzum orqali to\'lash{% elif lang == 'en' %}Confirm Order & Pay via Uzum{% else %}Подтвердить заказ и оплатить через Uzum{% endif %}' : '{{ t.confirm_order|default:"Buyurtmani tasdiqlash" }}')))"></span>
+                    class="w-full mt-4 py-4 rounded-2xl bg-brand hover:brightness-95 text-white font-black text-sm sm:text-base transition-all shadow-xl shadow-brand/30 flex items-center justify-center gap-2 active:scale-[0.98]">
+                <span>{{ t.confirm_order|default:"Buyurtmani tasdiqlash" }}</span>
                 <i data-lucide="arrow-right" class="w-5 h-5"></i>
             </button>
         </div>
     </form>
+
+    <!-- Mobile Sticky Checkout Bottom Dock -->
+    <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-4 py-3 z-50 lg:hidden shadow-[0_-8px_24px_rgba(0,0,0,0.06)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div class="flex items-center justify-between gap-3 max-w-lg mx-auto">
+            <div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ t.total_payment|default:"Jami to'lov" }}</div>
+                <div class="text-base font-black text-slate-900 leading-tight" x-text="calculateTotal().toLocaleString() + ' UZS'"></div>
+            </div>
+            <button type="button" @click="document.getElementById('checkoutForm').requestSubmit()"
+                    class="flex-1 py-3 px-5 rounded-2xl bg-brand text-white font-bold text-sm shadow-lg shadow-brand/25 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                <span x-text="paymentMethod === 'CLICK' || paymentMethod === 'PAYME' || paymentMethod === 'UZUM' || paymentMethod === 'MULTICARD' ? '{% if lang == 'uz' %}To\'lash{% else %}Оплатить{% endif %}' : '{{ t.confirm_order|default:"Buyurtma berish" }}'"></span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -768,6 +847,9 @@
             deliveryApartment: '',
             deliveryDomofon: '',
             deliveryLandmark: '',
+            mapExpanded: false,
+            needChange: false,
+            changeFrom: '',
             isReverseGeocoding: false,
             mapSearch: '',
             searchResults: [],
@@ -777,6 +859,18 @@
             deliveryMarker: null,
             branchMap: null,
             tgUserId: null,
+
+            toggleMap() {
+                this.mapExpanded = !this.mapExpanded;
+                if (this.mapExpanded) {
+                    this.$nextTick(() => {
+                        this.initDeliveryMap();
+                        setTimeout(() => {
+                            if (this.deliveryMap) this.deliveryMap.invalidateSize();
+                        }, 200);
+                    });
+                }
+            },
 
             get computedFullAddress() {
                 let addr = (this.deliveryStreet || '').trim();

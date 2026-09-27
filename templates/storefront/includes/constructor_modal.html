@@ -1,0 +1,188 @@
+<!-- ============================================================= -->
+<!-- INTERACTIVE STOREFRONT PRODUCT CONSTRUCTOR MODAL             -->
+<!-- ============================================================= -->
+<div x-show="constructorModalOpen"
+     x-cloak
+     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in"
+     @click.self="closeConstructorModal()"
+     @keydown.escape.window="closeConstructorModal()">
+
+    <div class="w-full sm:max-w-xl bg-white rounded-t-[32px] sm:rounded-3xl shadow-2xl border border-slate-200/80 max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-slide-up">
+        
+        <!-- MODAL HEADER -->
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/80 shrink-0">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200/80 overflow-hidden shrink-0 shadow-2xs">
+                    <template x-if="constructorProduct?.image">
+                        <img :src="constructorProduct.image" :alt="constructorProduct.name" class="w-full h-full object-cover">
+                    </template>
+                    <template x-if="!constructorProduct?.image">
+                        <div class="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100">
+                            <i data-lucide="package" class="w-6 h-6"></i>
+                        </div>
+                    </template>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            {% if current_lang == 'uz' %}Konstruktor{% elif current_lang == 'en' %}Custom{% else %}Конструктор{% endif %}
+                        </span>
+                        <h3 class="font-black text-sm text-slate-900 truncate" x-text="constructorProduct?.name || ''"></h3>
+                    </div>
+                    <div class="text-xs text-slate-500 font-semibold mt-0.5">
+                        {% if current_lang == 'uz' %}Asosiy narx:{% elif current_lang == 'en' %}Base price:{% else %}Базовая цена:{% endif %}{" "}
+                        <span class="font-mono font-bold text-slate-900" x-text="formatMoney(constructorBasePrice)"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button"
+                    @click="closeConstructorModal()"
+                    class="w-9 h-9 rounded-full bg-white hover:bg-slate-200/80 border border-slate-200/80 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer shrink-0">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- VALIDATION WARNING -->
+        <div x-show="constructorWarning"
+             x-cloak
+             class="px-5 py-2.5 bg-rose-50 border-b border-rose-200/80 text-rose-700 text-xs font-bold flex items-center gap-2 animate-pulse shrink-0">
+            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+            <span x-text="constructorWarning"></span>
+        </div>
+
+        <!-- MODAL BODY (SCROLLABLE) -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+            
+            <!-- Loading state -->
+            <div x-show="constructorLoading" class="py-12 text-center text-slate-400 text-xs">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-600"></i>
+                <span>{% if current_lang == 'uz' %}Konstruktor yuklanmoqda...{% else %}Загрузка конструктора...{% endif %}</span>
+            </div>
+
+            <!-- Loaded content -->
+            <div x-show="!constructorLoading" class="space-y-6">
+                <!-- Description -->
+                <div x-show="constructorProduct?.description" class="text-xs text-slate-500 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100" x-text="constructorProduct?.description"></div>
+
+                <!-- Groups Loop -->
+                <template x-for="(group, gIdx) in constructorGroups" :key="group.id">
+                    <div class="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                        <!-- Group Header -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-slate-900 text-white text-[11px] font-black flex items-center justify-center" x-text="gIdx + 1"></span>
+                                <h4 class="font-bold text-xs sm:text-sm text-slate-900" x-text="group.title"></h4>
+                            </div>
+
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                  :class="group.is_required ? 'bg-amber-50 text-amber-700 border border-amber-200/70' : 'bg-slate-100 text-slate-500'">
+                                <span x-show="group.is_required && group.group_type === 'SINGLE'">
+                                    {% if current_lang == 'uz' %}1 ta tanlang (majburiy){% else %}Выберите 1 (обязательно){% endif %}
+                                </span>
+                                <span x-show="group.group_type === 'MULTIPLE'">
+                                    <span x-text="'{% if current_lang == 'uz' %}Maksimum{% else %}До{% endif %} ' + group.max_allowed"></span>
+                                </span>
+                                <span x-show="group.group_type === 'QUANTITY'">
+                                    {% if current_lang == 'uz' %}Soni bo'yicha{% else %}По количеству{% endif %}
+                                </span>
+                            </span>
+                        </div>
+
+                        <!-- CASE 1: SINGLE (Radio Card Grid) -->
+                        <div x-show="group.group_type === 'SINGLE'" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            <template x-for="item in group.items" :key="item.id">
+                                <button type="button"
+                                        @click="selectSingleItem(group.id, item)"
+                                        class="p-3 rounded-xl border text-left transition-all flex items-center justify-between gap-2 cursor-pointer select-none"
+                                        :class="constructorSelections[group.id] === item.id ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200 bg-white hover:border-slate-300'">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors"
+                                             :class="constructorSelections[group.id] === item.id ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white'">
+                                            <div x-show="constructorSelections[group.id] === item.id" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                        </div>
+                                        <span class="font-bold text-xs text-slate-900 truncate" x-text="item.title"></span>
+                                    </div>
+                                    <span class="text-xs font-mono font-bold shrink-0"
+                                          :class="constructorSelections[group.id] === item.id ? 'text-brand' : 'text-slate-500'">
+                                        <span x-text="item.price > 0 ? ('+' + formatMoney(item.price)) : (item.price < 0 ? formatMoney(item.price) : '{% if current_lang == 'uz' %}0 UZS{% else %}0 сум{% endif %}')"></span>
+                                    </span>
+                                </button>
+                            </template>
+                        </div>
+
+                        <!-- CASE 2: MULTIPLE (Checkbox Card Grid) -->
+                        <div x-show="group.group_type === 'MULTIPLE'" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            <template x-for="item in group.items" :key="item.id">
+                                <button type="button"
+                                        @click="toggleMultipleItem(group.id, item, group.max_allowed)"
+                                        class="p-3 rounded-xl border text-left transition-all flex items-center justify-between gap-2 cursor-pointer select-none"
+                                        :class="isMultipleSelected(group.id, item.id) ? 'border-brand bg-brand/5 shadow-2xs' : 'border-slate-200 bg-white hover:border-slate-300'">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-colors"
+                                             :class="isMultipleSelected(group.id, item.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white'">
+                                            <i x-show="isMultipleSelected(group.id, item.id)" data-lucide="check" class="w-3 h-3 stroke-[3]"></i>
+                                        </div>
+                                        <span class="font-bold text-xs text-slate-900 truncate" x-text="item.title"></span>
+                                    </div>
+                                    <span class="text-xs font-mono font-bold shrink-0"
+                                          :class="isMultipleSelected(group.id, item.id) ? 'text-brand' : 'text-slate-500'">
+                                        <span x-text="item.price > 0 ? ('+' + formatMoney(item.price)) : '{% if current_lang == 'uz' %}0 UZS{% else %}0 сум{% endif %}'"></span>
+                                    </span>
+                                </button>
+                            </template>
+                        </div>
+
+                        <!-- CASE 3: QUANTITY (Counter Row Item List) -->
+                        <div x-show="group.group_type === 'QUANTITY'" class="space-y-2 pt-1">
+                            <template x-for="item in group.items" :key="item.id">
+                                <div class="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-3 shadow-2xs">
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-xs text-slate-900 truncate" x-text="item.title"></div>
+                                        <div class="text-[11px] font-mono text-slate-500">
+                                            +<span x-text="formatMoney(item.price)"></span> {% if current_lang == 'uz' %}dona uchun{% else %}за шт.{% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <button type="button"
+                                                @click="adjustItemQty(group.id, item.id, -1, group.max_allowed)"
+                                                class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center active:scale-90 transition-transform">
+                                            -
+                                        </button>
+                                        <span class="w-6 text-center font-mono font-black text-xs text-slate-900"
+                                              x-text="getItemQty(group.id, item.id)"></span>
+                                        <button type="button"
+                                                @click="adjustItemQty(group.id, item.id, 1, group.max_allowed)"
+                                                class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-sm flex items-center justify-center active:scale-90 transition-transform">
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- STICKY ACTION FOOTER (TOTAL CALCULATION & SUBMIT TO CART) -->
+        <div class="p-4 sm:p-5 border-t border-slate-200/80 bg-white shrink-0 flex items-center justify-between gap-4 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div class="min-w-0">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    {% if current_lang == 'uz' %}Yakuniy narx{% elif current_lang == 'en' %}Total price{% else %}Итоговая цена{% endif %}
+                </div>
+                <div class="text-lg sm:text-xl font-black text-slate-950 font-mono tracking-tight leading-tight" x-text="formatMoney(constructorTotalPrice)"></div>
+                <div class="text-[10px] text-slate-500 font-medium truncate max-w-[200px] sm:max-w-xs mt-0.5" x-text="constructorSummary"></div>
+            </div>
+
+            <button type="button"
+                    @click="addConstructorToCart()"
+                    :disabled="constructorLoading"
+                    class="flex-1 max-w-xs py-3.5 px-5 rounded-2xl bg-brand hover:brightness-95 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xl shadow-brand/25 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                <span>{% if current_lang == 'uz' %}Savatga qo'shish{% else %}Добавить в корзину{% endif %}</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+</div>

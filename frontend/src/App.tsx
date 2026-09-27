@@ -9,6 +9,7 @@ import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { OrdersPage } from "./pages/orders/OrdersPage";
 import { OrderDetailPage } from "./pages/orders/OrderDetailPage";
 import { ProductsPage } from "./pages/catalog/ProductsPage";
+import { ConstructorPage } from "./pages/catalog/ConstructorPage";
 import { CategoriesPage } from "./pages/catalog/CategoriesPage";
 import { CustomersPage } from "./pages/customers/CustomersPage";
 import { YesPosPage } from "./pages/yespos/YesPosPage";
@@ -31,15 +32,7 @@ import { PaymentsPage } from "./pages/settings/PaymentsPage";
 import { RoboMarketPage } from "./pages/settings/RoboMarketPage";
 
 import { ShieldAlert } from "lucide-react";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 30, // 30 seconds cache
-    },
-  },
-});
+import { queryClient } from "./queryClient";
 
 const PermissionGuard: React.FC<{ module: string; children: React.ReactNode }> = ({
   module,
@@ -107,6 +100,14 @@ export const App: React.FC = () => {
                   element={
                     <PermissionGuard module="products">
                       <ProductsPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="constructor"
+                  element={
+                    <PermissionGuard module="products">
+                      <ConstructorPage />
                     </PermissionGuard>
                   }
                 />

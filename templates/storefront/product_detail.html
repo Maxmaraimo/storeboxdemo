@@ -662,7 +662,7 @@
                 <div class="p-3 sm:p-4 flex flex-col justify-between flex-1">
                     <div class="space-y-1">
                         <div class="flex items-center justify-between text-[10px] text-slate-400 font-medium">
-                            <span class="truncate">{{ rp.category.display_name|default:store.name }}</span>
+                            <span class="truncate">{% if rp.category %}{{ rp.category.display_name|default:store.name }}{% else %}{{ store.name }}{% endif %}</span>
                             {% if rp.unit %}
                             <span class="shrink-0 px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 font-semibold">{{ rp.get_unit_display|lower }}</span>
                             {% endif %}

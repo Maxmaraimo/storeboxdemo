@@ -21,6 +21,10 @@ export interface Store {
 export interface OrderItem {
   id: number;
   product_name: string;
+  variation_name?: string | null;
+  custom_options?: any;
+  custom_summary?: string;
+  custom_image_url?: string | null;
   quantity: number;
   unit_price: string;
   total_price: string;

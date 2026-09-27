@@ -962,31 +962,57 @@ def cart_add_view(request, subdomain=None):
     if variation_id:
         variation = product.variations.filter(id=variation_id, is_active=True).first()
 
-    cart = request.session.get('cart', {})
-    item_key = f"{product.id}_{variation.id if variation else 0}"
-
-    unit_price = float(variation.price if variation else product.price)
     lang = getattr(request, 'language', 'ru')
     name = product.get_name(lang)
-    var_name = variation.get_name(lang) if variation else ''
+
+    cart = request.session.get('cart', {})
+    custom_options = data.get('custom_options')
+    custom_summary = (data.get('custom_summary') or '').strip()
+    custom_price = data.get('custom_price')
+
+    custom_image_url = ''
+    if custom_summary or custom_options:
+        import hashlib
+        config_hash = hashlib.md5((custom_summary + str(custom_price)).encode()).hexdigest()[:8]
+        item_key = f"{product.id}_c_{config_hash}"
+        unit_price = float(custom_price) if custom_price is not None else float(product.price)
+        var_name = custom_summary
+        try:
+            from apps.orders.burger_image_service import render_custom_burger_image
+            custom_image_url = render_custom_burger_image(custom_options)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Burger image render error: %s", e)
+    else:
+        item_key = f"{product.id}_{variation.id if variation else 0}"
+        unit_price = float(variation.price if variation else product.price)
+        var_name = variation.get_name(lang) if variation else ''
 
     if item_key in cart:
         cart[item_key]['quantity'] += quantity
         cart[item_key]['total_price'] = cart[item_key]['quantity'] * unit_price
         cart[item_key]['price'] = unit_price
         cart[item_key]['unit_price'] = unit_price
+        if custom_image_url:
+            cart[item_key]['image'] = custom_image_url
+            cart[item_key]['image_url'] = custom_image_url
+            cart[item_key]['custom_image_url'] = custom_image_url
     else:
+        img_to_use = custom_image_url or (product.primary_image_url or '')
         cart[item_key] = {
             'product_id': product.id,
             'variation_id': variation.id if variation else None,
             'name': name,
             'variation_name': var_name,
+            'custom_summary': custom_summary,
+            'custom_options': custom_options or {},
+            'custom_image_url': custom_image_url,
             'unit_price': unit_price,
             'price': unit_price,
             'quantity': quantity,
             'total_price': quantity * unit_price,
-            'image': product.primary_image_url or '',
-            'image_url': product.primary_image_url or '',
+            'image': img_to_use,
+            'image_url': img_to_use,
         }
 
     request.session['cart'] = cart
@@ -1165,6 +1191,9 @@ def checkout_view(request, subdomain=None):
                 pass
         if leave_at_door:
             note_tags.append("Оставить у двери")
+        change_from = request.POST.get('change_from', '').strip()
+        if change_from:
+            note_tags.append(f"Сдача с {change_from}")
         if note_tags:
             tag_str = f"[{', '.join(note_tags)}]"
             notes = f"{tag_str} {notes}".strip()
@@ -1267,12 +1296,25 @@ def checkout_view(request, subdomain=None):
                 product = Product.objects.filter(id=p_id).first()
                 variation = ProductVariation.objects.filter(id=v_id).first() if v_id else None
 
+                custom_opts = item.get('custom_options') or {}
+                custom_sum = item.get('custom_summary') or item.get('variation_name') or ''
+                custom_img = item.get('custom_image_url') or ''
+                if not custom_img and (custom_opts or custom_sum):
+                    try:
+                        from apps.orders.burger_image_service import render_custom_burger_image
+                        custom_img = render_custom_burger_image(custom_opts)
+                    except Exception:
+                        pass
+
                 OrderItem.objects.create(
                     order=order,
                     product=product,
                     variation=variation,
                     product_name=item.get('name', 'Товар'),
                     variation_name=item.get('variation_name', ''),
+                    custom_options=custom_opts,
+                    custom_summary=custom_sum,
+                    custom_image_url=custom_img,
                     unit_price=u_price,
                     quantity=qty,
                     total_price=t_price
@@ -1639,7 +1681,7 @@ def cart_page_view(request, subdomain=None):
         'cart_count': cart_count,
         'cart_subtotal': subtotal,
         'subtotal': subtotal,
-        'cart_json': json.dumps(cart),
+        'cart_json': json.dumps(cart, ensure_ascii=False),
         'delivery_price': delivery_price,
         'free_delivery_threshold': free_threshold,
         'default_delivery_fee': delivery_fee,
@@ -1844,22 +1886,36 @@ def customer_profile_page_view(request, subdomain=None):
             phone = request.POST.get('phone', '').strip()
             name = request.POST.get('name', '').strip()
             if phone:
-                request.session['customer_phone'] = phone
+                phone_digits = ''.join(c for c in phone if c.isdigit())
+                clean_phone = phone
+                if len(phone_digits) >= 9:
+                    clean_phone = '+998' + phone_digits[-9:]
+                elif phone.startswith('+'):
+                    clean_phone = phone
+                    
+                request.session['customer_phone'] = clean_phone
                 if name:
                     request.session['customer_name'] = name
                 request.session.modified = True
-                customer, _ = Customer.objects.get_or_create(
-                    store=store,
-                    phone=phone,
-                    defaults={'name': name or 'Xaridor'}
-                )
-                if name and not customer.name:
+                
+                customer = Customer.objects.filter(
+                    Q(store=store) & (Q(phone=clean_phone) | (Q(phone__endswith=phone_digits[-9:]) if len(phone_digits) >= 9 else Q(phone=clean_phone)))
+                ).first()
+                if not customer:
+                    customer = Customer.objects.create(
+                        store=store,
+                        phone=clean_phone,
+                        name=name or 'Xaridor'
+                    )
+                elif name and (not customer.name or customer.name == 'Xaridor'):
                     customer.name = name
                     customer.save(update_fields=['name'])
+            return redirect(request.path)
         elif action == 'logout':
             request.session.pop('customer_phone', None)
             request.session.pop('customer_name', None)
             request.session.modified = True
+            return redirect(request.path)
 
     customer_phone = request.session.get('customer_phone')
     customer_name = request.session.get('customer_name')
@@ -1867,13 +1923,20 @@ def customer_profile_page_view(request, subdomain=None):
     orders = []
 
     if customer_phone:
-        customer = Customer.objects.filter(store=store, phone=customer_phone).first()
+        phone_digits = ''.join(c for c in customer_phone if c.isdigit())
+        customer = Customer.objects.filter(
+            Q(store=store) & (Q(phone=customer_phone) | (Q(phone__endswith=phone_digits[-9:]) if len(phone_digits) >= 9 else Q(phone=customer_phone)))
+        ).first()
         if customer:
-            orders = Order.objects.filter(store=store, customer=customer).prefetch_related('items').order_by('-created_at')
+            orders = Order.objects.filter(
+                Q(store=store) & (Q(customer=customer) | Q(customer_phone=customer.phone) | Q(customer_phone=customer_phone))
+            ).prefetch_related('items').order_by('-created_at')
             if not customer_name:
                 customer_name = customer.name
         else:
-            orders = Order.objects.filter(store=store, customer_phone=customer_phone).prefetch_related('items').order_by('-created_at')
+            orders = Order.objects.filter(
+                Q(store=store) & (Q(customer_phone=customer_phone) | (Q(customer_phone__endswith=phone_digits[-9:]) if len(phone_digits) >= 9 else Q(customer_phone=customer_phone)))
+            ).prefetch_related('items').order_by('-created_at')
 
     # Cart context
     cart = request.session.get('cart', {})
@@ -1885,6 +1948,8 @@ def customer_profile_page_view(request, subdomain=None):
     store._current_lang = current_lang
     t = UI_TRANSLATIONS.get(current_lang, UI_TRANSLATIONS['uz'])
 
+    active_orders = [o for o in orders if o.status in ['NEW', 'ACCEPTED', 'COOKING', 'READY', 'IN_DELIVERY']]
+
     context = {
         'store': store,
         'customer': customer,
@@ -1892,6 +1957,8 @@ def customer_profile_page_view(request, subdomain=None):
         'customer_name': customer_name or 'Xaridor',
         'orders': orders,
         'orders_count': len(orders),
+        'active_orders': active_orders,
+        'first_active_order': active_orders[0] if active_orders else None,
         'cart': cart,
         'cart_count': cart_count,
         'cart_subtotal': subtotal,
@@ -2041,5 +2108,139 @@ def storefront_get_chat_messages_api(request, subdomain=None):
     ]
 
     return JsonResponse({'messages': data})
+
+
+def storefront_constructor_view(request, subdomain=None):
+    """Interactive 3D / Layered Food & Burger Constructor for customers"""
+    store = get_current_store(request, subdomain)
+    if not store:
+        raise Http404("Магазин не найден")
+
+    # Find constructor product (by explicit product_id, or burger constructor, or first active)
+    product_id = request.GET.get('product_id') or request.GET.get('p')
+    product = None
+    if product_id:
+        product = Product.objects.filter(
+            store=store,
+            id=product_id,
+            has_constructor=True,
+            is_active=True
+        ).prefetch_related('constructor_groups__items').first()
+
+    if not product:
+        product = Product.objects.filter(
+            store=store,
+            has_constructor=True,
+            is_active=True
+        ).filter(
+            Q(name_ru__icontains='бургер') | Q(name_uz__icontains='burger') | Q(name_en__icontains='burger')
+        ).prefetch_related('constructor_groups__items').first()
+
+    if not product:
+        product = Product.objects.filter(
+            store=store,
+            has_constructor=True,
+            is_active=True
+        ).prefetch_related('constructor_groups__items').first()
+
+    # If no constructor product exists yet, auto-create from burger preset
+    if not product:
+        from apps.api.views_constructor import PRESETS
+        from apps.catalog.models import ConstructorGroup, ConstructorItem
+        preset = PRESETS.get('burger')
+        if preset:
+            product = Product.objects.create(
+                store=store,
+                name_uz=preset['name_uz'],
+                name_ru=preset['name_ru'],
+                name_en=preset['name_en'],
+                price=Decimal(preset['price']),
+                has_constructor=True,
+                is_active=True,
+                description_uz=preset['description_uz'],
+                description_ru=preset['description_ru'],
+                primary_image_url=preset['image_url'],
+            )
+            for g_data in preset['groups']:
+                grp = ConstructorGroup.objects.create(
+                    product=product,
+                    name_ru=g_data['name_ru'],
+                    name_uz=g_data['name_uz'],
+                    group_type=g_data['group_type'],
+                    is_required=g_data['is_required'],
+                    min_required=g_data['min_required'],
+                    max_allowed=g_data['max_allowed'],
+                    sort_order=g_data['sort_order'],
+                )
+                for item_data in g_data['items']:
+                    ConstructorItem.objects.create(
+                        group=grp,
+                        name_ru=item_data['name_ru'],
+                        name_uz=item_data['name_uz'],
+                        price=Decimal(item_data['price']),
+                        is_default=item_data.get('is_default', False),
+                    )
+
+    groups_data = []
+    if product:
+        for g in product.constructor_groups.filter(is_active=True).order_by('sort_order', 'id'):
+            groups_data.append({
+                'id': g.id,
+                'name_ru': g.name_ru or g.name_uz,
+                'name_uz': g.name_uz,
+                'name_en': g.name_en or g.name_uz,
+                'group_type': g.group_type,
+                'is_required': g.is_required,
+                'min_required': g.min_required,
+                'max_allowed': g.max_allowed,
+                'sort_order': g.sort_order,
+                'items': [
+                    {
+                        'id': it.id,
+                        'name_ru': it.name_ru or it.name_uz,
+                        'name_uz': it.name_uz,
+                        'name_en': it.name_en or it.name_uz,
+                        'price': float(it.price),
+                        'image_url': it.image_url,
+                        'icon': it.icon,
+                        'is_default': it.is_default,
+                    }
+                    for it in g.items.filter(is_active=True).order_by('sort_order', 'id')
+                ]
+            })
+
+    # Cart context
+    cart = request.session.get('cart', {})
+    cart_count = sum(item.get('quantity', 1) for item in cart.values())
+    subtotal = sum(item.get('total_price', 0) for item in cart.values())
+
+    current_lang = get_storefront_lang(request, store)
+    store._current_lang = current_lang
+    t = UI_TRANSLATIONS.get(current_lang, UI_TRANSLATIONS['uz'])
+
+    constructor_config = {
+        'base_price': int(product.price) if product else 25000,
+        'product_id': product.id if product else 0,
+        'product_name': product.name_ru or product.name_uz if product else 'Бургер',
+        'groups': groups_data,
+        'cart_add_url': f'/store/{store.subdomain}/cart/add/' if store.subdomain else '/cart/add/',
+        'cart_url': f'/store/{store.subdomain}/cart/' if store.subdomain else '/cart/',
+    }
+
+    context = {
+        'store': store,
+        'product': product,
+        'groups_data': groups_data,
+        'constructor_config_json': json.dumps(constructor_config, ensure_ascii=False),
+        'cart': cart,
+        'cart_count': cart_count,
+        'cart_subtotal': subtotal,
+        'cart_json': json.dumps(cart, ensure_ascii=False),
+        'current_lang': current_lang,
+        'lang': current_lang,
+        't': t,
+    }
+    return render(request, 'storefront/constructor.html', context)
+
 
 

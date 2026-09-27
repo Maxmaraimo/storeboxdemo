@@ -267,6 +267,13 @@
 
                     <!-- RIGHT CONTROLS: Clean Mobile Header (Lang + Cart) & Desktop Controls -->
                     <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                        <!-- 🍔 3D Burger Constructor Button (Desktop) -->
+                        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+                           class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold transition-all shadow-2xs group active:scale-95">
+                            <span class="text-base group-hover:scale-110 transition-transform">🍔</span>
+                            <span>{% if current_lang == 'ru' %}Конструктор Бургера{% elif current_lang == 'en' %}Burger Builder{% else %}Burger Konstruktor{% endif %}</span>
+                        </a>
+
                         <!-- Wishlist (Sevimlilar - Desktop Only) -->
                         <button type="button" @click="openWishlist()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 relative text-xs font-bold text-slate-700 transition-all">
                             <i data-lucide="heart" class="w-4 h-4 text-slate-500" :class="wishlist.length > 0 ? 'text-rose-500 fill-rose-500' : ''"></i>
@@ -1238,50 +1245,72 @@
     </div>
 
     <!-- ============================================================= -->
-    <!-- 5-TAB MOBILE BOTTOM BAR (Modern E-Commerce Tactile Navigation)  -->
+    <!-- 4-TAB MOBILE BOTTOM BAR (Uzum / Telegram Modern Style)        -->
+    <!-- Hidden on Checkout to provide clean space for sticky action buttons -->
     <!-- ============================================================= -->
-    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-2xl border-t border-slate-900/[0.06] px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
-        <!-- 1. Bosh sahifa (Home) -->
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}?lang={{ current_lang }}"
-           class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-900 active:scale-95 transition-all">
-            <i data-lucide="home" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold tracking-tight">{{ t.home|default:'Asosiy' }}</span>
-        </a>
+    <!-- ============================================================= -->
+    <!-- FLOATING GLASS DOCK (iOS / Telegram Island Style - Compact Frosted Glass) -->
+    <!-- ============================================================= -->
+    {% if request.resolver_match.url_name not in 'checkout,store_checkout,order_success,store_order_success,multicard_pay,store_multicard_pay' and not hide_bottom_nav %}
+    <div class="sm:hidden fixed bottom-3 inset-x-0 z-40 pointer-events-none px-3 pb-[env(safe-area-inset-bottom)]">
+        <div class="flex items-center justify-center gap-2 max-w-[320px] mx-auto pointer-events-auto">
+            
+            <!-- MAIN PILL CAPSULE DOCK -->
+            <nav class="flex-1 bg-white/75 backdrop-blur-xl border border-white/60 shadow-[0_8px_24px_rgba(0,0,0,0.08)] rounded-full px-1.5 py-1 flex items-center justify-around">
+                {% with url=request.resolver_match.url_name %}
+                
+                <!-- 1. Home -->
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+                   title="{{ t.home|default:'Главная' }}"
+                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if url in 'home,store_home' and not request.GET.cat %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
+                    <i data-lucide="home" class="w-4.5 h-4.5 {% if url in 'home,store_home' and not request.GET.cat %}stroke-[2.2]{% else %}stroke-[1.8]{% endif %}"></i>
+                </a>
 
-        <!-- 2. Katalog (Categories) -->
-        <button type="button" @click="sideDrawerOpen = true"
-                class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-slate-900 active:scale-95 transition-all">
-            <i data-lucide="layout-grid" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold tracking-tight">{{ t.categories|default:'Katalog' }}</span>
-        </button>
+                <!-- 2. Catalog / Categories Drawer -->
+                <button type="button" @click="sideDrawerOpen = true"
+                        title="{{ t.categories|default:'Каталог' }}"
+                        class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none text-slate-700 hover:text-slate-900 hover:bg-black/5">
+                    <i data-lucide="layout-grid" class="w-4.5 h-4.5 stroke-[1.8]"></i>
+                </button>
 
-        <!-- 3. Sevimlilar (Wishlist with live counter badge) -->
-        <button type="button" @click="openWishlist()"
-                class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-rose-600 active:scale-95 transition-all relative">
-            <div class="relative">
-                <i data-lucide="heart" class="w-5 h-5" :class="wishlist.length > 0 ? 'fill-rose-500 text-rose-500' : ''"></i>
-                <span x-show="wishlist.length > 0" x-cloak class="absolute -top-1.5 -right-2 px-1 min-w-[15px] h-3.5 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs" x-text="wishlist.length"></span>
-            </div>
-            <span class="text-[10px] font-bold tracking-tight" :class="wishlist.length > 0 ? 'text-rose-600' : ''">{{ t.favorites|default:'Sevimlilar' }}</span>
-        </button>
+                <!-- 3. Burger Constructor (Build Your Own Burger) -->
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+                   title="{% if current_lang == 'ru' %}Конструктор бургера{% elif current_lang == 'en' %}Burger Builder{% else %}Burger konstruktor{% endif %}"
+                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if 'constructor' in url %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
+                    <svg class="w-4.5 h-4.5 {% if 'constructor' in url %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 11h16a1 1 0 0 0 1-1C20.5 5.5 16.7 3 12 3S3.5 5.5 3 10a1 1 0 0 0 1 1z"></path>
+                        <path d="M5 14h14"></path>
+                        <path d="M4 17h16a2 2 0 0 1 2 2 1 1 0 0 1-1 1H3a1 1 0 0 1-1-1 2 2 0 0 1 2-2z"></path>
+                    </svg>
+                </a>
 
-        <!-- 4. Savat (Cart) -->
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-           class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-slate-900 active:scale-95 transition-all relative">
-            <div class="relative">
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                <span x-show="cartCount > 0" x-cloak class="absolute -top-1.5 -right-2 px-1 min-w-[15px] h-3.5 rounded-full bg-slate-900 text-white text-[9px] font-black flex items-center justify-center shadow-xs" x-text="cartCount">0</span>
-            </div>
-            <span class="text-[10px] font-bold tracking-tight">{{ t.cart|default:'Savat' }}</span>
-        </a>
+                <!-- 4. Cart (with dynamic count badge) -->
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+                   title="{{ t.cart|default:'Корзина' }}"
+                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if url in 'cart_page,store_cart_page' %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
+                    <i data-lucide="shopping-bag" class="w-4.5 h-4.5 {% if url in 'cart_page,store_cart_page' %}stroke-[2.2]{% else %}stroke-[1.8]{% endif %}"></i>
+                    <span x-show="cartCount > 0" x-cloak
+                          class="absolute -top-0.5 -right-0.5 px-1 min-w-[15px] h-[15px] rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs ring-1.5 ring-white"
+                          x-text="cartCount"></span>
+                </a>
 
-        <!-- 5. Profil (User Profile & Orders) -->
-        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}?lang={{ current_lang }}"
-           class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-brand active:scale-95 transition-all">
-            <i data-lucide="user" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold tracking-tight">{{ t.profile|default:'Profil' }}</span>
-        </a>
-    </nav>
+                {% endwith %}
+            </nav>
+
+            <!-- DETACHED CIRCULAR PROFILE BUTTON -->
+            {% with url=request.resolver_match.url_name %}
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+               title="{{ t.profile|default:'Профиль' }}"
+               class="w-11 h-11 rounded-full bg-white/75 backdrop-blur-xl border border-white/60 shadow-[0_8px_24px_rgba(0,0,0,0.08)] flex items-center justify-center shrink-0 transition-all active:scale-90 select-none">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center {% if 'profile' in url or 'order' in url %}bg-brand text-white shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200/80{% endif %}">
+                    <i data-lucide="user" class="w-4.5 h-4.5 {% if 'profile' in url or 'order' in url %}stroke-[2.2]{% else %}stroke-[2]{% endif %}"></i>
+                </div>
+            </a>
+            {% endwith %}
+
+        </div>
+    </div>
+    {% endif %}
 
     <!-- MOBILE FULL-SCREEN / SLIDE-DOWN SEARCH MODAL -->
     <div x-show="searchModalOpen" x-cloak class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex flex-col justify-start p-4">

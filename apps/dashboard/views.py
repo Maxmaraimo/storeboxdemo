@@ -3871,20 +3871,29 @@ def yespos_catalog_api(request):
     })
 
 
+_FALLBACK_PRODUCT_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" fill="none">'
+    '<rect width="200" height="200" fill="#F1F5F9" rx="16"/>'
+    '<path d="M60 135L85 105L102 122L125 92L150 135H60Z" fill="#CBD5E1"/>'
+    '<circle cx="80" cy="75" r="10" fill="#CBD5E1"/>'
+    '</svg>'
+)
+
+
 def yespos_image_proxy(request):
     """Proxy product images with disk caching and circuit breaker to protect YES POS from floods"""
     raw_path = request.GET.get('path', '').strip()
     if not raw_path or '..' in raw_path:
-        return HttpResponseNotFound('Invalid image path')
+        return HttpResponse(_FALLBACK_PRODUCT_SVG, content_type='image/svg+xml')
 
     clean_path = raw_path.lstrip('/')
     if not clean_path or clean_path.lower().startswith('parent_'):
-        return HttpResponseNotFound('Empty or invalid image')
+        return HttpResponse(_FALLBACK_PRODUCT_SVG, content_type='image/svg+xml')
 
     path_hash = hashlib.md5(clean_path.encode()).hexdigest()
     failed_key = f"yp_failed_img_{path_hash}"
     if cache.get(failed_key) or cache.get('yp_media_host_down'):
-        return HttpResponseNotFound('Image unavailable')
+        return HttpResponse(_FALLBACK_PRODUCT_SVG, content_type='image/svg+xml')
 
     cache_dir = os.path.join(settings.MEDIA_ROOT, 'yespos_cache')
     os.makedirs(cache_dir, exist_ok=True)
@@ -3905,7 +3914,7 @@ def yespos_image_proxy(request):
     client = YesPosClient()
     remote_url = client.get_remote_image_url(clean_path)
     if not remote_url:
-        return HttpResponseNotFound('Invalid image URL')
+        return HttpResponse(_FALLBACK_PRODUCT_SVG, content_type='image/svg+xml')
 
     try:
         from apps.catalog.yespos_client import get_yespos_session
@@ -3936,7 +3945,7 @@ def yespos_image_proxy(request):
         cache.set('yp_media_host_down', True, 3600)
         cache.set(failed_key, True, 86400)
 
-    return HttpResponseNotFound('Image not found')
+    return HttpResponse(_FALLBACK_PRODUCT_SVG, content_type='image/svg+xml')
 
 
 @login_required

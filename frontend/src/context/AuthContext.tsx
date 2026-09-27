@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { api, initCsrf } from "../api/client";
 import { User, Store, UserPermissions } from "../types";
 import { Language, getTranslation } from "../i18n/translations";
+import { queryClient } from "../queryClient";
 
 interface AuthContextType {
   user: User | null;
@@ -128,6 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const switchStore = async (id: number) => {
     const res = await api.post(`/auth/switch-store/${id}/`);
     setStore(res.data.store);
+    queryClient.clear();
     await refreshMe();
   };
 

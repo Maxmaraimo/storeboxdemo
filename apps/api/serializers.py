@@ -141,12 +141,32 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_image = serializers.SerializerMethodField()
+    custom_options = serializers.JSONField(read_only=True)
+    custom_summary = serializers.CharField(read_only=True)
+    custom_image_url = serializers.CharField(read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ["id", "product_name", "quantity", "unit_price", "total_price", "product_image"]
+        fields = [
+            "id", "product_name", "variation_name", "quantity",
+            "unit_price", "total_price", "product_image",
+            "custom_options", "custom_summary", "custom_image_url"
+        ]
 
     def get_product_image(self, obj):
+        if obj.custom_image_url:
+            return obj.custom_image_url
+        if obj.custom_options or (obj.variation_name and "•" in obj.variation_name):
+            try:
+                from apps.orders.burger_image_service import render_custom_burger_image
+                opts = obj.custom_options or {"summary": obj.variation_name}
+                url = render_custom_burger_image(opts)
+                if url:
+                    obj.custom_image_url = url
+                    obj.save(update_fields=["custom_image_url"])
+                    return url
+            except Exception:
+                pass
         if obj.product and obj.product.primary_image_url:
             return obj.product.primary_image_url
         return None

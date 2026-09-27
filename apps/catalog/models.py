@@ -138,6 +138,7 @@ class Product(models.Model):
     track_stock = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
+    has_constructor = models.BooleanField(default=False, verbose_name='Конструктор товара')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -380,3 +381,97 @@ class ProductReview(models.Model):
 
     def __str__(self):
         return f"{self.author_name} ({self.rating}★) - {self.product.name_uz}"
+
+
+class ConstructorGroup(models.Model):
+    class GroupTypes(models.TextChoices):
+        SINGLE = 'SINGLE', 'Один выбор (Radio)'
+        MULTIPLE = 'MULTIPLE', 'Несколько вариантов (Checkbox)'
+        QUANTITY = 'QUANTITY', 'Количество (Счетчик шт.)'
+
+    store = models.ForeignKey(
+        Store,
+        on_delete=models.CASCADE,
+        related_name='constructor_groups',
+        verbose_name='Магазин'
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='constructor_groups',
+        null=True,
+        blank=True,
+        verbose_name='Товар (основа конструктора)'
+    )
+    name_uz = models.CharField(max_length=150, verbose_name="Guruh nomi (UZ)")
+    name_ru = models.CharField(max_length=150, blank=True, verbose_name="Название группы (RU)")
+    name_en = models.CharField(max_length=150, blank=True, verbose_name="Group name (EN)")
+    group_type = models.CharField(
+        max_length=20,
+        choices=GroupTypes.choices,
+        default=GroupTypes.SINGLE,
+        verbose_name='Тип выбора'
+    )
+    min_required = models.PositiveIntegerField(default=0, verbose_name='Мин. количество для выбора')
+    max_allowed = models.PositiveIntegerField(default=1, verbose_name='Макс. количество для выбора')
+    is_required = models.BooleanField(default=False, verbose_name='Обязательный выбор')
+    sort_order = models.PositiveIntegerField(default=0, verbose_name='Порядок сортировки')
+    is_active = models.BooleanField(default=True, verbose_name='Активен')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Группа опций конструктора'
+        verbose_name_plural = 'Группы опций конструктора'
+        ordering = ['sort_order', 'id']
+
+    def __str__(self):
+        return f"{self.name_ru or self.name_uz} ({self.store.name})"
+
+    def get_name(self, lang='uz'):
+        lang = (lang or 'uz').lower()
+        if lang == 'ru' and self.name_ru:
+            return self.name_ru
+        if lang == 'en' and self.name_en:
+            return self.name_en
+        return self.name_uz or self.name_ru or ''
+
+
+class ConstructorItem(models.Model):
+    group = models.ForeignKey(
+        ConstructorGroup,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name='Группа конструктора'
+    )
+    name_uz = models.CharField(max_length=150, verbose_name="Element nomi (UZ)")
+    name_ru = models.CharField(max_length=150, blank=True, verbose_name="Название элемента (RU)")
+    name_en = models.CharField(max_length=150, blank=True, verbose_name="Item name (EN)")
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name='Добавочная цена (UZS)'
+    )
+    image_url = models.URLField(max_length=500, blank=True, default='', verbose_name='URL изображения')
+    icon = models.CharField(max_length=50, blank=True, default='', verbose_name='Иконка')
+    is_default = models.BooleanField(default=False, verbose_name='Выбран по умолчанию')
+    is_active = models.BooleanField(default=True, verbose_name='В наличии / Активен')
+    sort_order = models.PositiveIntegerField(default=0, verbose_name='Порядок сортировки')
+
+    class Meta:
+        verbose_name = 'Элемент конструктора'
+        verbose_name_plural = 'Элементы конструктора'
+        ordering = ['sort_order', 'id']
+
+    def __str__(self):
+        return f"{self.name_ru or self.name_uz} (+{self.price:,.0f} UZS)"
+
+    def get_name(self, lang='uz'):
+        lang = (lang or 'uz').lower()
+        if lang == 'ru' and self.name_ru:
+            return self.name_ru
+        if lang == 'en' and self.name_en:
+            return self.name_en
+        return self.name_uz or self.name_ru or ''

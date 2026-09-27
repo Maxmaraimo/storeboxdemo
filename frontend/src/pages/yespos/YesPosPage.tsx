@@ -635,6 +635,10 @@ export const YesPosPage: React.FC = () => {
                             <img
                               src={prod.image}
                               alt={prod.name}
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = "/static/images/placeholder.svg";
+                              }}
                               className="w-10 h-10 rounded-lg object-cover border border-slate-100 shrink-0"
                             />
                           ) : (

@@ -15,6 +15,7 @@ import {
   Sparkles,
   QrCode,
   Monitor,
+  Wand2,
   Store as StoreIcon,
   CreditCard,
   Truck,
@@ -93,6 +94,7 @@ export const Sidebar: React.FC = () => {
         title: t("catalog_section") || "Mahsulotlar & Ombor",
         items: [
           { path: "/products", icon: Package, label: t("all_products") || "Barcha mahsulotlar", badge: null, permissionModule: "products" },
+          { path: "/constructor", icon: Wand2, label: lang === "ru" ? "Конструктор" : lang === "uz" ? "Konstruktor" : "Constructor", badge: "NEW", permissionModule: "products" },
           { path: "/categories", icon: FolderTree, label: t("categories") || "Kategoriyalar", badge: null, permissionModule: "categories" },
           { path: "/discounts", icon: Tag, label: t("discounts") || "Chegirmalar", badge: null, permissionModule: "discounts" },
           { path: "/ikpu", icon: Barcode, label: t("ikpu") || "IKPU kodlari", badge: null, permissionModule: "ikpu" },

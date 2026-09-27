@@ -79,10 +79,14 @@ def format_order_telegram_message(order):
     store_name = order.store.name
     items_text = []
     for item in order.items.all():
-        var_suffix = f' ({item.variation_name})' if item.variation_name else ''
-        items_text.append(
-            f'• <b>{item.product_name}{var_suffix}</b> x{item.quantity} — {int(item.total_price):,} UZS'
-        )
+        if item.variation_name:
+            items_text.append(
+                f'• <b>{item.product_name}</b> x{item.quantity} — {int(item.total_price):,} UZS\n  🍔 <i>Tarkibi / Состав: {item.variation_name}</i>'
+            )
+        else:
+            items_text.append(
+                f'• <b>{item.product_name}</b> x{item.quantity} — {int(item.total_price):,} UZS'
+            )
 
     items_block = '\n'.join(items_text) if items_text else '• (Bo\'sh)'
 

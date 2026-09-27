@@ -18,7 +18,9 @@ import {
   User,
   CreditCard,
   Layers,
-  Save
+  Save,
+  Eye,
+  X
 } from "lucide-react";
 import { api } from "../../api/client";
 import { Order } from "../../types";
@@ -35,6 +37,7 @@ export const OrderDetailPage: React.FC = () => {
   const [courierVal, setCourierVal] = useState<string>("");
   const [notifyTelegram, setNotifyTelegram] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const { data: order, isLoading, error } = useQuery<Order>({
     queryKey: ["order", id],
@@ -239,40 +242,234 @@ export const OrderDetailPage: React.FC = () => {
 
             {/* Items List */}
             <div className="divide-y divide-slate-100 dark:divide-white/5">
-              {order.items?.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="py-3.5 flex items-center justify-between gap-4 first:pt-0 last:pb-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 text-center font-mono text-xs font-bold text-slate-400">
-                      {index + 1}
-                    </span>
-                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-sm shrink-0 overflow-hidden border border-slate-200/60 dark:border-white/10">
-                      {item.product_image ? (
-                        <img
-                          src={item.product_image}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <ShoppingBag className="w-5 h-5 text-slate-400" />
-                      )}
+              {order.items?.map((item, index) => {
+                const isCustom = Boolean(
+                  item.custom_image_url ||
+                  (item.custom_options && Object.keys(item.custom_options).length > 0) ||
+                  (item.variation_name && item.variation_name.includes("•")) ||
+                  (item.product_name && item.product_name.includes("Конструктор"))
+                );
+                const opts = item.custom_options || {};
+                const hasStructuredOpts = Boolean(
+                  opts.bun ||
+                  (opts.patties && opts.patties.length > 0) ||
+                  (opts.cheeses && opts.cheeses.length > 0) ||
+                  (opts.toppings && opts.toppings.length > 0) ||
+                  (opts.sauces && opts.sauces.length > 0)
+                );
+
+                if (isCustom) {
+                  return (
+                    <div
+                      key={item.id}
+                      className="py-4 bg-gradient-to-r from-amber-500/[0.06] via-orange-500/[0.02] to-transparent dark:from-amber-500/[0.08] border-l-4 border-l-amber-500 pl-3 sm:pl-4 pr-2 space-y-3 rounded-r-2xl my-2"
+                    >
+                      <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4 flex-1">
+                          <span className="w-5 text-center font-mono text-xs font-bold text-slate-400 mt-2 shrink-0">
+                            {index + 1}
+                          </span>
+
+                          {/* Realistic Composite Burger Photo */}
+                          <div
+                            onClick={() => item.product_image && setPreviewImage(item.product_image)}
+                            className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-amber-500/10 dark:bg-zinc-800 border-2 border-amber-300/80 dark:border-amber-500/30 p-1 flex flex-col items-center justify-center shrink-0 overflow-hidden relative group cursor-pointer shadow-xs hover:border-amber-400 transition-colors"
+                            title="Нажмите для просмотра фото бургера"
+                          >
+                            {item.product_image ? (
+                              <img
+                                src={item.product_image}
+                                alt="Собранный бургер"
+                                className="w-full h-full object-contain filter drop-shadow-md group-hover:scale-105 transition-transform duration-200"
+                              />
+                            ) : (
+                              <span className="text-3xl">🍔</span>
+                            )}
+                            <span className="absolute bottom-1 inset-x-1 bg-black/75 backdrop-blur-xs text-white text-[8px] font-bold py-0.5 rounded text-center opacity-90 group-hover:opacity-100 flex items-center justify-center gap-0.5">
+                              <Eye className="w-2.5 h-2.5" /> Фото заказа
+                            </span>
+                          </div>
+
+                          {/* Item Info & Ingredients */}
+                          <div className="space-y-2 flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">
+                                {item.product_name}
+                              </span>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white shadow-2xs">
+                                🍔 Кастомная сборка
+                              </span>
+                            </div>
+
+                            {/* Structured Ingredients List */}
+                            {hasStructuredOpts ? (
+                              <div className="bg-white/90 dark:bg-zinc-800/90 rounded-xl p-2.5 border border-amber-200/80 dark:border-amber-800/40 space-y-1.5 text-xs shadow-2xs">
+                                {opts.bun && (
+                                  <div className="flex items-center justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
+                                    <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                                      <span>🍞</span>
+                                      <span>Булочка:</span>
+                                      <span className="font-semibold text-amber-700 dark:text-amber-400">{opts.bun.name}</span>
+                                    </div>
+                                    <span className="font-mono text-[10px] text-slate-500 shrink-0">
+                                      {opts.bun.price > 0 ? `+${Number(opts.bun.price).toLocaleString()} UZS` : 'включено'}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {opts.patties && opts.patties.length > 0 && (
+                                  <div className="flex items-start justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
+                                    <div className="flex items-start gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                                      <span>🥩</span>
+                                      <span>Котлеты:</span>
+                                      <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                        {opts.patties.map((p: any, pIdx: number) => (
+                                          <span key={pIdx} className="bg-amber-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-amber-200/60 dark:border-white/10">
+                                            {p.count > 1 ? `${p.count}× ` : ''}{p.name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
+                                      {opts.patties.reduce((sum: number, p: any) => sum + (p.total_price || 0), 0) > 0
+                                        ? `+${Number(opts.patties.reduce((sum: number, p: any) => sum + (p.total_price || 0), 0)).toLocaleString()} UZS`
+                                        : 'включено'}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {opts.cheeses && opts.cheeses.length > 0 && (
+                                  <div className="flex items-start justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
+                                    <div className="flex items-start gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                                      <span>🧀</span>
+                                      <span>Сыр:</span>
+                                      <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                        {opts.cheeses.map((c: any, cIdx: number) => (
+                                          <span key={cIdx} className="bg-amber-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-amber-200/60 dark:border-white/10">
+                                            {c.count > 1 ? `${c.count}× ` : ''}{c.name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
+                                      +{Number(opts.cheeses.reduce((sum: number, c: any) => sum + (c.total_price || 0), 0)).toLocaleString()} UZS
+                                    </span>
+                                  </div>
+                                )}
+
+                                {opts.toppings && opts.toppings.length > 0 && (
+                                  <div className="flex items-start justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
+                                    <div className="flex items-start gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                                      <span>🥬</span>
+                                      <span>Начинка:</span>
+                                      <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                        {opts.toppings.map((t: any, tIdx: number) => (
+                                          <span key={tIdx} className="bg-emerald-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-white/10">
+                                            {t.count > 1 ? `${t.count}× ` : ''}{t.name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
+                                      +{Number(opts.toppings.reduce((sum: number, t: any) => sum + (t.total_price || 0), 0)).toLocaleString()} UZS
+                                    </span>
+                                  </div>
+                                )}
+
+                                {opts.sauces && opts.sauces.length > 0 && (
+                                  <div className="flex items-start justify-between text-[11px]">
+                                    <div className="flex items-start gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                                      <span>🥫</span>
+                                      <span>Соусы:</span>
+                                      <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                        {opts.sauces.map((s: any, sIdx: number) => (
+                                          <span key={sIdx} className="bg-rose-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-rose-200/60 dark:border-white/10">
+                                            {s.name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
+                                      {opts.sauces.reduce((sum: number, s: any) => sum + (s.total_price || 0), 0) > 0
+                                        ? `+${Number(opts.sauces.reduce((sum: number, s: any) => sum + (s.total_price || 0), 0)).toLocaleString()} UZS`
+                                        : 'включено'}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            ) : item.variation_name ? (
+                              <div className="bg-white/90 dark:bg-zinc-800/90 rounded-xl p-2.5 border border-amber-200/80 dark:border-amber-800/40 space-y-1.5 text-xs shadow-2xs">
+                                <div className="flex items-center gap-1.5 text-[10px] font-black text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+                                  <span>🍔</span>
+                                  <span>Состав бургера:</span>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {item.variation_name.split("•").map((part, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-zinc-700 text-slate-800 dark:text-slate-200 border border-amber-200 dark:border-amber-800/60 shadow-2xs"
+                                    >
+                                      {part.trim()}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
+
+                            <div className="text-xs text-slate-500 font-mono font-bold">
+                              {item.quantity} шт. × {Number(item.unit_price).toLocaleString()} UZS
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="font-black text-slate-900 dark:text-white text-base sm:text-lg whitespace-nowrap self-end sm:self-center font-mono">
+                          {Number(item.total_price).toLocaleString()} UZS
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-bold text-slate-900 dark:text-white text-sm">
-                        {item.product_name}
+                  );
+                }
+
+                return (
+                  <div
+                    key={item.id}
+                    className="py-3.5 flex items-center justify-between gap-4 first:pt-0 last:pb-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-6 text-center font-mono text-xs font-bold text-slate-400">
+                        {index + 1}
+                      </span>
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-sm shrink-0 overflow-hidden border border-slate-200/60 dark:border-white/10">
+                        {item.product_image ? (
+                          <img
+                            src={item.product_image}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ShoppingBag className="w-5 h-5 text-slate-400" />
+                        )}
                       </div>
-                      <div className="text-xs text-slate-400 font-mono mt-0.5">
-                        {Number(item.unit_price).toLocaleString()} UZS × {item.quantity}
+                      <div>
+                        <div className="font-bold text-slate-900 dark:text-white text-sm">
+                          {item.product_name}
+                        </div>
+                        {item.variation_name && (
+                          <div className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5 line-clamp-2">
+                            {item.variation_name}
+                          </div>
+                        )}
+                        <div className="text-xs text-slate-400 font-mono mt-1">
+                          {Number(item.unit_price).toLocaleString()} UZS × {item.quantity}
+                        </div>
                       </div>
+                    </div>
+                    <div className="font-mono font-black text-slate-900 dark:text-white text-sm sm:text-base whitespace-nowrap">
+                      {Number(item.total_price).toLocaleString()} UZS
                     </div>
                   </div>
-                  <div className="font-mono font-black text-slate-900 dark:text-white text-sm sm:text-base whitespace-nowrap">
-                    {Number(item.total_price).toLocaleString()} UZS
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {(!order.items || order.items.length === 0) && (
                 <div className="py-8 text-center text-xs text-slate-400">
                   {t("no_items") || "Mahsulotlar mavjud emas"}
@@ -623,6 +820,42 @@ export const OrderDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* BURGER PHOTO PREVIEW LIGHTBOX */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs cursor-zoom-out animate-in fade-in duration-150"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl p-5 sm:p-6 shadow-2xl border border-white/20 flex flex-col items-center gap-4 cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between w-full border-b border-slate-100 dark:border-white/10 pb-3">
+              <div className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+                <span>🍔</span>
+                <span>Реальное фото собранного бургера</span>
+              </div>
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="w-72 h-72 sm:w-80 sm:h-80 flex items-center justify-center p-3 bg-gradient-to-b from-amber-500/5 to-amber-500/15 rounded-2xl border border-amber-200/60 dark:border-amber-500/20">
+              <img
+                src={previewImage}
+                alt="Burger Preview"
+                className="w-full h-full object-contain filter drop-shadow-2xl"
+              />
+            </div>
+            <div className="text-center text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Точный внешний вид кастомного бургера с учетом всех выбранных булочек, слоев котлет, плавленых сыров, топпингов и соусов.
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
