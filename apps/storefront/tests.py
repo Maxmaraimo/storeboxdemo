@@ -87,3 +87,15 @@ class StorefrontTemplateAndCarouselTests(TestCase):
         self.assertContains(res, '20% chegirma')
         self.assertContains(res, 'Bepul yetkazish')
         self.assertContains(res, 'bannerIndicators')
+
+    def test_constructor_page_creates_burger_preset_when_store_has_none(self):
+        self.assertFalse(self.store.products.filter(has_constructor=True).exists())
+
+        res = self.client.get(f'/store/{self.store.subdomain}/constructor/')
+
+        self.assertEqual(res.status_code, 200)
+        product = self.store.products.get(has_constructor=True)
+        self.assertTrue(product.slug)
+        self.assertTrue(product.image_url)
+        self.assertTrue(product.constructor_groups.exists())
+        self.assertFalse(product.constructor_groups.exclude(store=self.store).exists())

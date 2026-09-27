@@ -4,8 +4,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.text import slugify
 
 from apps.stores.models import Store, Branch
 from apps.catalog.models import Category, Product, ProductVariation
@@ -2149,37 +2151,49 @@ def storefront_constructor_view(request, subdomain=None):
         from apps.catalog.models import ConstructorGroup, ConstructorItem
         preset = PRESETS.get('burger')
         if preset:
-            product = Product.objects.create(
-                store=store,
-                name_uz=preset['name_uz'],
-                name_ru=preset['name_ru'],
-                name_en=preset['name_en'],
-                price=Decimal(preset['price']),
-                has_constructor=True,
-                is_active=True,
-                description_uz=preset['description_uz'],
-                description_ru=preset['description_ru'],
-                primary_image_url=preset['image_url'],
-            )
-            for g_data in preset['groups']:
-                grp = ConstructorGroup.objects.create(
-                    product=product,
-                    name_ru=g_data['name_ru'],
-                    name_uz=g_data['name_uz'],
-                    group_type=g_data['group_type'],
-                    is_required=g_data['is_required'],
-                    min_required=g_data['min_required'],
-                    max_allowed=g_data['max_allowed'],
-                    sort_order=g_data['sort_order'],
+            slug_base = slugify(preset['name_en']) or 'burger-constructor'
+            product_slug = slug_base
+            suffix = 1
+            while Product.objects.filter(store=store, slug=product_slug).exists():
+                product_slug = f'{slug_base}-{suffix}'
+                suffix += 1
+
+            with transaction.atomic():
+                product = Product.objects.create(
+                    store=store,
+                    name_uz=preset['name_uz'],
+                    name_ru=preset['name_ru'],
+                    name_en=preset['name_en'],
+                    slug=product_slug,
+                    price=Decimal(str(preset['price'])),
+                    stock=100,
+                    has_constructor=True,
+                    is_active=True,
+                    description_uz=preset['description_uz'],
+                    description_ru=preset['description_ru'],
+                    image_url=preset['image_url'],
                 )
-                for item_data in g_data['items']:
-                    ConstructorItem.objects.create(
-                        group=grp,
-                        name_ru=item_data['name_ru'],
-                        name_uz=item_data['name_uz'],
-                        price=Decimal(item_data['price']),
-                        is_default=item_data.get('is_default', False),
+                for g_data in preset['groups']:
+                    grp = ConstructorGroup.objects.create(
+                        store=store,
+                        product=product,
+                        name_ru=g_data['name_ru'],
+                        name_uz=g_data['name_uz'],
+                        group_type=g_data['group_type'],
+                        is_required=g_data['is_required'],
+                        min_required=g_data['min_required'],
+                        max_allowed=g_data['max_allowed'],
+                        sort_order=g_data['sort_order'],
                     )
+                    for item_index, item_data in enumerate(g_data['items'], start=1):
+                        ConstructorItem.objects.create(
+                            group=grp,
+                            name_ru=item_data['name_ru'],
+                            name_uz=item_data['name_uz'],
+                            price=Decimal(str(item_data['price'])),
+                            is_default=item_data.get('is_default', False),
+                            sort_order=item_index,
+                        )
 
     groups_data = []
     if product:
@@ -2241,6 +2255,4 @@ def storefront_constructor_view(request, subdomain=None):
         't': t,
     }
     return render(request, 'storefront/constructor.html', context)
-
-
 
