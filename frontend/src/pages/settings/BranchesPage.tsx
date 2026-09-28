@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   MapPin,
@@ -21,7 +22,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Search,
-  Loader2
+  Loader2,
+  Maximize2,
+  Copy,
+  ChevronRight
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -151,6 +155,7 @@ interface SearchResultItem {
 
 export const BranchesPage: React.FC = () => {
   const { t } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
@@ -158,6 +163,8 @@ export const BranchesPage: React.FC = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<BranchItem | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<BranchItem | null>(null);
+  const [copiedCoords, setCopiedCoords] = useState(false);
 
   const [formName, setFormName] = useState("");
   const [formAddress, setFormAddress] = useState("");
@@ -474,6 +481,20 @@ export const BranchesPage: React.FC = () => {
 
   const branches = data?.branches || [];
 
+  // Keep selected branch in sync with live data
+  useEffect(() => {
+    if (selectedBranch && data?.branches) {
+      const updated = data.branches.find((b) => b.id === selectedBranch.id);
+      if (updated) setSelectedBranch(updated);
+    }
+  }, [data?.branches]);
+
+  const handleCopyCoords = (lat: string | number, lng: string | number) => {
+    navigator.clipboard.writeText(`${lat}, ${lng}`);
+    setCopiedCoords(true);
+    setTimeout(() => setCopiedCoords(false), 2000);
+  };
+
   const pickerPosition = useMemo<[number, number]>(() => {
     const lat = parseFloat(formLat);
     const lng = parseFloat(formLng);
@@ -659,42 +680,70 @@ export const BranchesPage: React.FC = () => {
             return (
               <div
                 key={b.id}
-                className={`bg-white rounded-3xl border ${
-                  isAccepting ? "border-slate-200/90 shadow-xs" : "border-slate-200/60 opacity-90"
-                } p-5 space-y-4 transition-all hover:shadow-md flex flex-col justify-between`}
+                onClick={() => setSelectedBranch(b)}
+                className="group relative bg-white dark:bg-[#151824] rounded-[28px] border border-slate-200/90 dark:border-white/10 p-5 space-y-4 transition-all duration-200 hover:shadow-xl hover:border-[#211b2e]/30 dark:hover:border-[#c8ff6a]/40 cursor-pointer flex flex-col justify-between"
               >
-                <div className="space-y-3">
-                  {/* Card Header */}
+                <div className="space-y-3.5">
+                  {/* Card Header: Title + Status Pill + Actions */}
                   <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-1.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span
-                          className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                            isAccepting ? "bg-emerald-500" : "bg-rose-500"
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                            isAccepting
+                              ? "bg-emerald-50 text-emerald-800 border border-emerald-200/80"
+                              : "bg-slate-100 text-slate-600 border border-slate-200"
                           }`}
-                        />
-                        <h2 className="text-sm font-black text-slate-900 line-clamp-1">{b.name}</h2>
-                      </div>
-                      {b.is_main && (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30">
-                          {t("is_main_branch") || "Asosiy filial"}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isAccepting ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+                            }`}
+                          />
+                          <span>{isAccepting ? (t("branch_open_status") || "Ochiq") : (t("branch_closed_status") || "Yopiq")}</span>
                         </span>
-                      )}
+
+                        {b.is_main && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#211b2e] text-[#c8ff6a] border border-[#c8ff6a]/30 shadow-2xs">
+                            ★ {t("is_main_branch") || "Asosiy"}
+                          </span>
+                        )}
+                      </div>
+
+                      <h2 className="text-base font-black text-slate-900 dark:text-white line-clamp-1 group-hover:text-[#211b2e] dark:group-hover:text-[#c8ff6a] transition-colors">
+                        {b.name}
+                      </h2>
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    {/* Top-Right Quick Action Icons */}
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button
+                        type="button"
+                        title={t("branch_view_full") || "To'liq ko'rish"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedBranch(b);
+                        }}
+                        className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
                       <button
                         type="button"
                         title={t("edit_branch_btn") || "Tahrirlash"}
-                        onClick={() => openEditModal(b)}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(b);
+                        }}
+                        className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         type="button"
                         title={t("delete") || "O'chirish"}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (confirm(`'${b.name}' filialini o'chirishni tasdiqlaysizmi?`)) {
                             deleteMutation.mutate(b.id);
                           }
@@ -706,47 +755,56 @@ export const BranchesPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Status Toggle Banner in StoreBox Brand Style */}
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-[#211b2e]/[0.03] dark:bg-white/5 border border-[#211b2e]/10 dark:border-white/10">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`w-2.5 h-2.5 rounded-full ${
-                          isAccepting ? "bg-[#c8ff6a] ring-4 ring-[#c8ff6a]/30 animate-pulse" : "bg-slate-300 dark:bg-zinc-600"
-                        }`}
-                      />
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                        {isAccepting ? (t("branch_open") || "Ochiq (Buyurtma olinmoqda)") : (t("branch_closed") || "Yopiq")}
-                      </span>
+                  {/* Status Toggle Row (Apple/Linear iOS Switch Style) */}
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10">
+                    <div className="min-w-0 pr-2">
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <span>{isAccepting ? (t("branch_open_status") || "Ochiq") : (t("branch_closed_status") || "Yopiq")}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                        {isAccepting
+                          ? (t("branch_orders_accepting_hint") || "Buyurtmalar qabul qilinmoqda")
+                          : (t("branch_orders_paused_hint") || "Buyurtmalar to'xtatilgan")}
+                      </div>
                     </div>
+
+                    {/* Interactive iOS / Linear Toggle Switch */}
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         toggleOrdersMutation.mutate({
                           id: b.id,
                           is_accepting_orders: !isAccepting,
-                        })
-                      }
-                      className={`px-3 py-1.5 rounded-xl text-[11px] font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-xs ${
-                        isAccepting
-                          ? "bg-[#211b2e] hover:bg-black text-[#c8ff6a] border border-[#c8ff6a]/30"
-                          : "bg-[#c8ff6a] hover:bg-[#b8f553] text-[#211b2e] border border-[#211b2e]/20"
+                        });
+                      }}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        isAccepting ? "bg-[#211b2e] dark:bg-[#c8ff6a]" : "bg-slate-300 dark:bg-zinc-700"
                       }`}
+                      title={isAccepting ? (t("branch_action_close") || "Yopish") : (t("branch_action_open") || "Ochish")}
                     >
-                      <Power className="w-3.5 h-3.5" />
-                      <span>{isAccepting ? (t("branch_closed") || "Yopish") : (t("branch_open") || "Ochish")}</span>
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-[#211b2e] shadow-md ring-0 transition duration-200 ease-in-out ${
+                          isAccepting ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
                     </button>
                   </div>
 
                   {/* Location & Contact Info */}
-                  <div className="space-y-1.5 text-xs text-slate-600">
+                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                      <span className="leading-snug">{b.address}</span>
+                      <span className="line-clamp-2 leading-relaxed">{b.address}</span>
                     </div>
                     {b.phone && (
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                        <a href={`tel:${b.phone}`} className="font-mono hover:text-brand font-semibold">
+                        <a
+                          href={`tel:${b.phone}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="font-mono font-bold hover:text-brand"
+                        >
                           {b.phone}
                         </a>
                       </div>
@@ -761,11 +819,12 @@ export const BranchesPage: React.FC = () => {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setMapTarget([Number(b.latitude), Number(b.longitude)]);
                             setViewMode("map");
                           }}
-                          className="text-[10px] text-[#211b2e] dark:text-[#c8ff6a] font-bold bg-[#211b2e]/5 dark:bg-white/10 hover:bg-[#211b2e]/10 px-2 py-0.5 rounded-md inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          className="text-[10px] text-[#211b2e] dark:text-[#c8ff6a] font-bold bg-[#211b2e]/5 dark:bg-white/10 hover:bg-[#211b2e]/10 px-2.5 py-1 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
                         >
                           <span>{t("branch_pick_on_map") || "Xaritada ko'rish"}</span>
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -774,7 +833,7 @@ export const BranchesPage: React.FC = () => {
                     ) : (
                       <div className="text-[10px] text-amber-600 font-semibold bg-amber-50 p-1.5 rounded-lg flex items-center gap-1">
                         <AlertCircle className="w-3 h-3 shrink-0" />
-                        <span>Koordinata belgilanmagan (avto-yo'naltirish ishlamaydi)</span>
+                        <span>Koordinata belgilanmagan</span>
                       </div>
                     )}
                   </div>
@@ -789,7 +848,9 @@ export const BranchesPage: React.FC = () => {
                       {b.orders_count !== undefined && (
                         <span className="inline-flex items-center gap-1 font-bold text-[#211b2e] bg-[#c8ff6a] px-2 py-0.5 rounded-md text-[10px]">
                           <ShoppingBag className="w-2.5 h-2.5" />
-                          <span>{b.orders_count} buyurtma</span>
+                          <span>
+                            {b.orders_count} {t("orders_count_label") || "buyurtma"}
+                          </span>
                         </span>
                       )}
                     </div>
@@ -801,6 +862,12 @@ export const BranchesPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Card Footer: Clickable hint */}
+                <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] font-bold text-slate-500 group-hover:text-[#211b2e] dark:group-hover:text-[#c8ff6a] transition-colors">
+                  <span>{t("branch_view_full") || "To'liq ko'rish"}</span>
+                  <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
             );
           })}
@@ -810,6 +877,273 @@ export const BranchesPage: React.FC = () => {
               {t("no_items") || "Hozircha filiallar mavjud emas. Yangi filial qo'shing."}
             </div>
           )}
+        </div>
+      )}
+
+      {/* FULL VIEW DETAIL MODAL */}
+      {selectedBranch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
+          <div className="bg-white dark:bg-[#12141a] rounded-[32px] max-w-2xl w-full p-5 sm:p-7 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 my-8 border border-slate-200/80 dark:border-white/10">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shadow-md border border-white/10 shrink-0">
+                  <Building2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                      {selectedBranch.name}
+                    </h3>
+                    {selectedBranch.is_main && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#211b2e] text-[#c8ff6a] border border-[#c8ff6a]/30">
+                        ★ {t("is_main_branch") || "Asosiy"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        selectedBranch.is_accepting_orders !== false
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200/80"
+                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          selectedBranch.is_accepting_orders !== false ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+                        }`}
+                      />
+                      <span>
+                        {selectedBranch.is_accepting_orders !== false
+                          ? (t("branch_open_status") || "Ochiq")
+                          : (t("branch_closed_status") || "Yopiq")}
+                      </span>
+                    </span>
+
+                    {/* Toggle inside modal */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newStatus = selectedBranch.is_accepting_orders === false;
+                        toggleOrdersMutation.mutate({ id: selectedBranch.id, is_accepting_orders: newStatus });
+                        setSelectedBranch({ ...selectedBranch, is_accepting_orders: newStatus });
+                      }}
+                      className="text-xs font-bold text-slate-500 hover:text-slate-900 underline cursor-pointer"
+                    >
+                      {selectedBranch.is_accepting_orders !== false
+                        ? (t("branch_action_close") || "Yopish")
+                        : (t("branch_action_open") || "Ochish")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const b = selectedBranch;
+                    setSelectedBranch(null);
+                    openEditModal(b);
+                  }}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                  title={t("edit_branch_btn") || "Tahrirlash"}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedBranch(null)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Interactive Full Map View of Branch */}
+            {selectedBranch.latitude && selectedBranch.longitude && (
+              <div className="space-y-2">
+                <div className="w-full h-64 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative shadow-inner z-0">
+                  <MapContainer
+                    center={[Number(selectedBranch.latitude), Number(selectedBranch.longitude)]}
+                    zoom={16}
+                    style={{ width: "100%", height: "100%" }}
+                    scrollWheelZoom={true}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <Marker
+                      position={[Number(selectedBranch.latitude), Number(selectedBranch.longitude)]}
+                      icon={createBranchMarkerIcon(
+                        selectedBranch.is_accepting_orders !== false,
+                        Boolean(selectedBranch.is_main)
+                      )}
+                    >
+                      <Popup>
+                        <div className="font-bold text-xs p-1">{selectedBranch.name}</div>
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+
+                {/* Map Action Links */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10">
+                      {Number(selectedBranch.latitude).toFixed(5)}, {Number(selectedBranch.longitude).toFixed(5)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyCoords(selectedBranch.latitude!, selectedBranch.longitude!)}
+                      className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-1 border border-slate-200 dark:border-white/10 transition-colors cursor-pointer"
+                    >
+                      {copiedCoords ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedCoords ? (t("copied") || "Nusxalandi!") : (t("copy_coords") || "Nusxalash")}</span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`https://yandex.uz/maps/?pt=${selectedBranch.longitude},${selectedBranch.latitude}&z=16&l=map`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1 transition-colors"
+                    >
+                      <span>{t("open_in_yandex") || "Yandex Xarita"}</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},${selectedBranch.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 flex items-center gap-1 transition-colors"
+                    >
+                      <span>{t("open_in_google") || "Google Maps"}</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4 Details Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              {/* Box 1: Address */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-1">
+                <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                  <span>{t("branch_address_label") || "Manzil"}</span>
+                </div>
+                <div className="text-xs font-extrabold text-slate-900 dark:text-white leading-relaxed">
+                  {selectedBranch.address}
+                </div>
+                <div className="text-[10px] text-emerald-600 font-semibold pt-0.5">
+                  ⚡️ {t("branch_auto_routed_notice") || "Eng yaqin buyurtmalar shu yerga yo'naltiriladi"}
+                </div>
+              </div>
+
+              {/* Box 2: Contacts */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-1">
+                <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>{t("branch_phone_label") || "Telefon"}</span>
+                </div>
+                {selectedBranch.phone ? (
+                  <div className="flex items-center justify-between pt-0.5">
+                    <a
+                      href={`tel:${selectedBranch.phone}`}
+                      className="text-xs font-mono font-black text-slate-900 dark:text-white hover:underline"
+                    >
+                      {selectedBranch.phone}
+                    </a>
+                    <a
+                      href={`tel:${selectedBranch.phone}`}
+                      className="px-2 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] text-[10px] font-bold"
+                    >
+                      {t("call_customer") || "Qo'ng'iroq"}
+                    </a>
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400 italic">Telefon kiritilmagan</div>
+                )}
+              </div>
+
+              {/* Box 3: Manager Credentials */}
+              <div className="p-4 rounded-2xl bg-[#211b2e] text-white space-y-1.5 border border-white/10 shadow-xs">
+                <div className="text-[10px] uppercase font-black tracking-wider text-[#c8ff6a] flex items-center gap-1">
+                  <User className="w-3.5 h-3.5 text-[#c8ff6a]" />
+                  <span>{t("branch_login_title") || "Filial kirish hisobi"}</span>
+                </div>
+                <div className="flex items-center justify-between pt-0.5">
+                  <span className="text-neutral-300 text-[11px]">{t("branch_login_label") || "Login"}:</span>
+                  <span className="font-mono font-bold text-[#c8ff6a] bg-white/10 px-2.5 py-0.5 rounded-md border border-white/10 text-xs">
+                    {selectedBranch.manager_username || (selectedBranch as any).manager_user?.username || "—"}
+                  </span>
+                </div>
+                <div className="text-[10px] text-neutral-400">
+                  {t("branch_restricted_badge") || "Menejer faqat shu filial buyurtmalarini ko'radi"}
+                </div>
+              </div>
+
+              {/* Box 4: Orders Statistics */}
+              <div className="p-4 rounded-2xl bg-[#211b2e] text-white space-y-1.5 border border-white/10 shadow-xs">
+                <div className="text-[10px] uppercase font-black tracking-wider text-[#c8ff6a] flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <ShoppingBag className="w-3.5 h-3.5 text-[#c8ff6a]" />
+                    <span>{t("orders") || "Buyurtmalar"}</span>
+                  </div>
+                  <span className="bg-[#c8ff6a] text-[#211b2e] text-[10px] font-black px-2 py-0.5 rounded-md">
+                    {selectedBranch.orders_count || 0} ta
+                  </span>
+                </div>
+                <div className="text-xs text-neutral-300">
+                  Ushbu filialga biriktirilgan jami buyurtmalar soni
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/orders?branch=${selectedBranch.id}`)}
+                  className="w-full text-center py-1.5 mt-1 rounded-xl bg-white/10 hover:bg-white/20 text-[#c8ff6a] text-xs font-bold transition-colors cursor-pointer"
+                >
+                  {t("branch_orders_btn") || "Buyurtmalarni ko'rish →"}
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => setSelectedBranch(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer"
+              >
+                {t("cancel") || "Yopish"}
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const b = selectedBranch;
+                    setSelectedBranch(null);
+                    openEditModal(b);
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-900 dark:text-white transition-colors cursor-pointer"
+                >
+                  {t("edit_branch_btn") || "Tahrirlash"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/orders?branch=${selectedBranch.id}`)}
+                  className="px-5 py-2.5 bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 rounded-xl text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+                >
+                  {t("branch_orders_btn") || "Buyurtmalar ro'yxati"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
