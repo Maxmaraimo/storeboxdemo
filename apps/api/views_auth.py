@@ -314,3 +314,125 @@ def create_store_view(request):
         "store": StoreSerializer(store).data,
         "stores": StoreSerializer(all_stores, many=True).data
     }, status=201)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def sms_send_code_view(request):
+    """
+    Sends a 4-digit verification code via Eskiz.uz SMS Gateway.
+    Body: { phone: "+998 90 123 45 67", purpose: "MERCHANT_REGISTER" | "MERCHANT_LOGIN" }
+    """
+    from apps.core.sms_service import send_verification_sms
+
+    phone = (request.data.get("phone") or "").strip()
+    purpose = (request.data.get("purpose") or "MERCHANT_REGISTER").strip().upper()
+
+    if not phone:
+        return Response({"error": "Iltimos, telefon raqamini kiriting"}, status=400)
+
+    result = send_verification_sms(phone, purpose=purpose)
+    if not result.get("success"):
+        return Response(result, status=400)
+
+    return Response(result, status=200)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def sms_verify_code_view(request):
+    """
+    Verifies 4-digit SMS code and logs in or creates merchant account.
+    Body: {
+      phone: "+998901234567",
+      code: "1234",
+      purpose: "MERCHANT_REGISTER" | "MERCHANT_LOGIN",
+      password: "optional_password",
+      email: "optional_email"
+    }
+    """
+    import random
+    import re
+    from apps.core.sms_service import verify_sms_code, normalize_phone_number
+    from apps.accounts.models import User
+    from django.db.models import Q
+
+    phone = (request.data.get("phone") or "").strip()
+    code = (request.data.get("code") or "").strip()
+    purpose = (request.data.get("purpose") or "MERCHANT_REGISTER").strip().upper()
+    password = (request.data.get("password") or "").strip()
+    email = (request.data.get("email") or "").strip()
+
+    normalized_phone = normalize_phone_number(phone)
+    if not normalized_phone:
+        return Response({"error": "Iltimos, telefon raqamini to'liq kiriting"}, status=400)
+
+    clean_digits = re.sub(r"\D", "", normalized_phone)
+
+    # 1. Verify SMS code with anti-spam check
+    is_valid, msg = verify_sms_code(normalized_phone, code, purpose=purpose)
+    if not is_valid:
+        return Response({"error": msg}, status=400)
+
+    # 2. Check if user already exists
+    user = User.objects.filter(
+        Q(username=clean_digits) |
+        Q(phone=normalized_phone) |
+        Q(phone=phone) |
+        (Q(phone__endswith=clean_digits[-9:]) if len(clean_digits) >= 9 else Q(pk__in=[]))
+    ).first()
+
+    if not user:
+        auto_pwd = password or f"sb_{clean_digits[-4:]}_{random.randint(100, 999)}"
+        user = User.objects.create_user(
+            username=clean_digits,
+            email=email,
+            phone=normalized_phone,
+            password=auto_pwd,
+            role=User.Roles.MERCHANT,
+        )
+    elif password:
+        user.set_password(password)
+        user.save(update_fields=["password"])
+
+    # 3. Log in to session
+    login(request, user)
+
+    for key in ("merchant_current_store_id", "selected_store_id", "current_store_subdomain"):
+        request.session.pop(key, None)
+
+    store = get_merchant_store(request)
+    stores = Store.objects.filter(owner=user).order_by("id")
+    if store:
+        request.session["merchant_current_store_id"] = store.id
+        request.session["selected_store_id"] = store.id
+        request.session["current_store_subdomain"] = store.subdomain
+    perms = get_user_permissions(user, store) if store else None
+
+    from apps.orders.models import StoreStaff
+    from apps.stores.models import Branch
+    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists()
+
+    user_branch = None
+    if store:
+        user_branch = Branch.objects.filter(store=store, manager_user=user).first()
+        if not user_branch:
+            staff_profile = StoreStaff.objects.filter(store=store, user=user, is_active=True).first()
+            if staff_profile and staff_profile.branch:
+                user_branch = staff_profile.branch
+
+    response = Response({
+        "success": True,
+        "user": UserSerializer(user).data,
+        "store": StoreSerializer(store).data if store else None,
+        "stores": StoreSerializer(stores, many=True).data,
+        "permissions": perms,
+        "is_courier": is_courier,
+        "branch": BranchSerializer(user_branch).data if user_branch else None,
+        "is_branch_user": bool(user_branch),
+        "redirect_url": "/dashboard/courier/" if is_courier else None,
+        "message": "Muvaffaqiyatli tasdiqlandi va tizimga kirildi",
+    })
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
+

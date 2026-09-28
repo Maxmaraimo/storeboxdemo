@@ -17,6 +17,7 @@ interface AuthContextType {
   t: (key: string) => string;
   loading: boolean;
   login: (data: any) => Promise<any>;
+  loginWithSms: (phone: string, code: string, password?: string) => Promise<any>;
   logout: () => Promise<void>;
   switchStore: (id: number) => Promise<void>;
   createStore: (data: { name: string; subdomain?: string; business_type?: string }) => Promise<any>;
@@ -127,6 +128,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return res.data;
   };
 
+  const loginWithSms = async (phone: string, code: string, password?: string) => {
+    const res = await api.post("/auth/sms/verify-code/", {
+      phone,
+      code,
+      password: password || undefined,
+      purpose: "MERCHANT_LOGIN",
+    });
+    setUser(res.data.user);
+    setStore(res.data.store);
+    setStores(res.data.stores || []);
+    if (res.data.branch) {
+      setBranch(res.data.branch);
+      setIsBranchUser(Boolean(res.data.is_branch_user));
+    }
+    if (res.data.permissions) {
+      setPermissions(res.data.permissions);
+    }
+    await refreshMe();
+    return res.data;
+  };
+
   const logout = async () => {
     try {
       await api.post("/auth/logout/");
@@ -172,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         t,
         loading,
         login,
+        loginWithSms,
         logout,
         switchStore,
         createStore,

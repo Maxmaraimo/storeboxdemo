@@ -209,6 +209,64 @@
                 </div>
             </div>
 
+            <!-- SMS Verification Section -->
+            <div class="p-4 rounded-2xl bg-slate-50/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#211b2e] dark:text-[#c8ff6a]"></i>
+                        <span>SMS orqali tasdiqlash</span>
+                    </span>
+                    <template x-if="smsCooldown > 0">
+                        <span class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <i data-lucide="clock" class="w-3 h-3 text-[#211b2e] dark:text-[#c8ff6a]"></i>
+                            <span x-text="smsCooldown + ' soniya'"></span>
+                        </span>
+                    </template>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="key-round" class="w-4 h-4"></i>
+                        </div>
+                        <input type="text" 
+                               inputmode="numeric" 
+                               maxlength="4" 
+                               x-model="smsCode" 
+                               placeholder="4 xonali kod" 
+                               class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 text-xs sm:text-sm font-mono font-extrabold tracking-widest text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] focus:ring-2 focus:ring-[#211b2e]/10">
+                    </div>
+                    <button type="button" 
+                            @click="sendSmsCode()" 
+                            :disabled="isSendingSms || smsCooldown > 0 || !isComplete"
+                            class="px-4 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] disabled:opacity-40 disabled:pointer-events-none text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-[#211b2e]/20 cursor-pointer shrink-0">
+                        <template x-if="isSendingSms">
+                            <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-[#c8ff6a]"></i>
+                        </template>
+                        <template x-if="!isSendingSms">
+                            <i data-lucide="send" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
+                        </template>
+                        <span x-text="smsCooldown > 0 ? (smsCooldown + 's') : (smsSent ? 'Qayta yuborish' : 'SMS kod olish')"></span>
+                    </button>
+                </div>
+
+                <template x-if="smsStatusMessage">
+                    <div class="text-[11px] font-medium flex items-center gap-1.5"
+                         :class="smsStatusType === 'error' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-[#c8ff6a]'">
+                        <i :data-lucide="smsStatusType === 'error' ? 'alert-circle' : 'check-circle-2'" class="w-3.5 h-3.5 shrink-0"></i>
+                        <span x-text="smsStatusMessage"></span>
+                    </div>
+                </template>
+                
+                <template x-if="devCode">
+                    <div class="p-2.5 rounded-xl bg-[#c8ff6a]/15 border border-[#c8ff6a]/30 text-[11px] text-slate-800 dark:text-[#c8ff6a] flex items-center justify-between font-mono">
+                        <span>Test kodi: <b class="font-extrabold text-sm" x-text="devCode"></b></span>
+                        <button type="button" @click="smsCode = devCode" class="text-[10px] underline font-bold cursor-pointer hover:text-black">Kodni kiritish</button>
+                    </div>
+                </template>
+            </div>
+            <input type="hidden" name="sms_code" :value="smsCode">
+
             <!-- 2. EMAIL (OPTIONAL) -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Email (ixtiyoriy)</label>
@@ -294,6 +352,15 @@ function phoneRegister() {
         password: '',
         passwordConfirm: '',
         showPassword: false,
+
+        smsCode: '',
+        smsSent: false,
+        isSendingSms: false,
+        smsCooldown: 0,
+        smsCountdownTimer: null,
+        smsStatusMessage: '',
+        smsStatusType: '',
+        devCode: '',
 
         countries: [
             {
@@ -642,6 +709,74 @@ function phoneRegister() {
             }
         },
 
+        startSmsTimer(seconds = 60) {
+            this.smsCooldown = seconds;
+            if (this.smsCountdownTimer) clearInterval(this.smsCountdownTimer);
+            this.smsCountdownTimer = setInterval(() => {
+                if (this.smsCooldown > 1) {
+                    this.smsCooldown--;
+                } else {
+                    this.smsCooldown = 0;
+                    clearInterval(this.smsCountdownTimer);
+                    this.smsCountdownTimer = null;
+                }
+            }, 1000);
+        },
+
+        async sendSmsCode() {
+            if (this.isSendingSms || this.smsCooldown > 0) return;
+            this.validateInput();
+            if (this.phoneError || !this.isComplete) {
+                this.phoneError = `Iltimos, telefon raqamini to'liq kiriting (${this.selectedCountry.digits} ta raqam)`;
+                if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+                return;
+            }
+
+            this.isSendingSms = true;
+            this.smsStatusMessage = '';
+            this.phoneError = '';
+
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                const response = await fetch('/dashboard/api/auth/send-code/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        phone: this.fullPhoneNumber,
+                        purpose: 'MERCHANT_REGISTER'
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    this.smsSent = true;
+                    this.smsStatusType = 'success';
+                    this.smsStatusMessage = data.message || "Tasdiqlash kodi telefoningizga yuborildi!";
+                    if (data.dev_code) {
+                        this.devCode = data.dev_code;
+                    }
+                    this.startSmsTimer(data.cooldown || 60);
+                } else {
+                    this.smsStatusType = 'error';
+                    this.smsStatusMessage = data.error || "SMS yuborishda xatolik yuz berdi";
+                    if (data.cooldown) {
+                        this.startSmsTimer(data.cooldown);
+                    }
+                }
+            } catch (err) {
+                this.smsStatusType = 'error';
+                this.smsStatusMessage = "Server bilan aloqa uzildi. Iltimos qaytadan urinib ko'ring.";
+            } finally {
+                this.isSendingSms = false;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            }
+        },
+
         handleSubmit(e) {
             this.phoneError = '';
             let raw = this.rawDigits;
@@ -661,6 +796,15 @@ function phoneRegister() {
                 e.preventDefault();
                 this.phoneError = `Iltimos, telefon raqamini to'liq kiriting (${this.selectedCountry.digits} ta raqam bo'lishi kerak)`;
                 if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
+                return;
+            }
+
+            if (!this.smsCode || this.smsCode.trim().length !== 4) {
+                e.preventDefault();
+                this.phoneError = "Iltimos, SMS orqali yuborilgan 4 xonali tasdiqlash kodini kiriting";
+                if (!this.smsSent) {
+                    this.sendSmsCode();
+                }
                 return;
             }
 
@@ -684,6 +828,10 @@ function phoneRegister() {
             const countryField = e.target.querySelector('input[name="country_code"]');
             if (countryField) {
                 countryField.value = this.selectedCountry.id;
+            }
+            const smsField = e.target.querySelector('input[name="sms_code"]');
+            if (smsField) {
+                smsField.value = this.smsCode;
             }
         }
     }

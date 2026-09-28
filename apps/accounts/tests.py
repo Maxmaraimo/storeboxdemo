@@ -93,3 +93,48 @@ class AuthAndRegistrationTests(TestCase):
         )
         self.assertEqual(reg_res.status_code, 201)
         self.assertTrue(User.objects.filter(username='998971112233').exists())
+
+    def test_sms_send_and_verify_flow(self):
+        """Verify Eskiz SMS code generation, cooldown, and verification endpoints."""
+        c = Client()
+        phone = "+998905554433"
+
+        # 1. Send SMS code
+        send_res = c.post(
+            '/api/v1/auth/sms/send-code/',
+            json.dumps({'phone': phone, 'purpose': 'MERCHANT_LOGIN'}),
+            content_type='application/json'
+        )
+        self.assertEqual(send_res.status_code, 200)
+        send_data = send_res.json()
+        self.assertTrue(send_data.get('success'))
+        self.assertIn('cooldown', send_data)
+        code = send_data.get('dev_code')
+        self.assertTrue(code and len(code) == 4)
+
+        # 2. Test cooldown anti-spam blocks immediate duplicate send
+        dup_res = c.post(
+            '/api/v1/auth/sms/send-code/',
+            json.dumps({'phone': phone, 'purpose': 'MERCHANT_LOGIN'}),
+            content_type='application/json'
+        )
+        self.assertIn(dup_res.status_code, [400, 429])
+        self.assertFalse(dup_res.json().get('success'))
+
+        # 3. Test wrong code fails
+        wrong_res = c.post(
+            '/api/v1/auth/sms/verify-code/',
+            json.dumps({'phone': phone, 'code': '0000', 'purpose': 'MERCHANT_LOGIN'}),
+            content_type='application/json'
+        )
+        self.assertEqual(wrong_res.status_code, 400)
+
+        # 4. Test valid code succeeds and creates/logs in user
+        verify_res = c.post(
+            '/api/v1/auth/sms/verify-code/',
+            json.dumps({'phone': phone, 'code': code, 'purpose': 'MERCHANT_LOGIN'}),
+            content_type='application/json'
+        )
+        self.assertEqual(verify_res.status_code, 200)
+        self.assertTrue(verify_res.json().get('success'))
+        self.assertTrue(User.objects.filter(phone=phone).exists())

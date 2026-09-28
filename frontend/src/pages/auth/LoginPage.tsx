@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Phone, ArrowRight, User, ChevronDown, CheckCircle } from "lucide-react";
+import { Lock, Phone, ArrowRight, User, ChevronDown, CheckCircle, ShieldCheck, KeyRound, Clock, Loader2, Send } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/client";
 
 interface CountryInfo {
   id: string;
@@ -22,10 +23,13 @@ const COUNTRIES: CountryInfo[] = [
 ];
 
 export const LoginPage: React.FC = () => {
-  const { login, user, permissions } = useAuth();
+  const { login, loginWithSms, user, permissions } = useAuth();
   const navigate = useNavigate();
 
-  // Login Mode: 'phone' or 'login'
+  // Auth Method: 'sms' (Eskiz SMS authorization) or 'password'
+  const [authMethod, setAuthMethod] = useState<"sms" | "password">("sms");
+
+  // In password mode: 'phone' or 'login'
   const [loginMode, setLoginMode] = useState<"phone" | "login">("phone");
 
   // Phone input state
@@ -33,9 +37,16 @@ export const LoginPage: React.FC = () => {
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [phoneDigits, setPhoneDigits] = useState("900000001");
 
+  // SMS Verification state
+  const [smsCode, setSmsCode] = useState("");
+  const [smsSent, setSmsSent] = useState(false);
+  const [smsLoading, setSmsLoading] = useState(false);
+  const [smsCooldown, setSmsCooldown] = useState(0);
+  const [devCode, setDevCode] = useState("");
+  const [statusMsg, setStatusMsg] = useState("");
+
   // Username mode state
   const [usernameInput, setUsernameInput] = useState("");
-
   const [password, setPassword] = useState("admin123");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -49,6 +60,15 @@ export const LoginPage: React.FC = () => {
       }
     }
   }, [user, permissions, navigate]);
+
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (smsCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setSmsCooldown((prev) => (prev > 1 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [smsCooldown]);
 
   // Format phone digits according to country
   const formatPhone = (digits: string, country: CountryInfo): string => {
@@ -72,28 +92,104 @@ export const LoginPage: React.FC = () => {
     let raw = e.target.value;
     let digits = raw.replace(/\D/g, "");
 
-    // If pasted full dial code
     if (digits.startsWith(selectedCountry.code)) {
       digits = digits.slice(selectedCountry.code.length);
     }
-    // Limit to max digits for country
     digits = digits.slice(0, selectedCountry.digits);
     setPhoneDigits(digits);
   };
 
+  const getFullPhoneNumber = (): string => {
+    return `${selectedCountry.dialCode}${phoneDigits}`;
+  };
+
   const getFullUsername = (): string => {
     if (loginMode === "phone") {
-      return `${selectedCountry.dialCode}${phoneDigits}`;
+      return getFullPhoneNumber();
     }
     return usernameInput.trim();
   };
 
   const isPhoneComplete = phoneDigits.length === selectedCountry.digits;
 
+  // Send SMS verification code via Eskiz
+  const handleSendSms = async () => {
+    if (smsLoading || smsCooldown > 0) return;
+    if (!isPhoneComplete) {
+      setError(`Telefon raqamini to'liq kiriting (${phoneDigits.length}/${selectedCountry.digits} raqam)`);
+      return;
+    }
+    setError("");
+    setStatusMsg("");
+    setSmsLoading(true);
+
+    try {
+      const fullPhone = getFullPhoneNumber();
+      const res = await api.post("/auth/sms/send-code/", {
+        phone: fullPhone,
+        purpose: "MERCHANT_LOGIN",
+      });
+
+      if (res.data?.success) {
+        setSmsSent(true);
+        setStatusMsg(res.data.message || "Tasdiqlash kodi yuborildi!");
+        if (res.data.dev_code) {
+          setDevCode(res.data.dev_code);
+        }
+        setSmsCooldown(res.data.cooldown || 60);
+      } else {
+        setError(res.data?.error || "SMS yuborishda xatolik yuz berdi");
+        if (res.data?.cooldown) {
+          setSmsCooldown(res.data.cooldown);
+        }
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.error || "SMS yuborishda xatolik yuz berdi");
+      if (err?.response?.data?.cooldown) {
+        setSmsCooldown(err.response.data.cooldown);
+      }
+    } finally {
+      setSmsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setStatusMsg("");
 
+    // --- Scenario A: SMS-based Auth ---
+    if (authMethod === "sms") {
+      if (!isPhoneComplete) {
+        setError(`Telefon raqamini to'liq kiriting (${phoneDigits.length}/${selectedCountry.digits} raqam)`);
+        return;
+      }
+      if (!smsCode || smsCode.trim().length !== 4) {
+        setError("Iltimos, 4 xonali SMS tasdiqlash kodini kiriting");
+        if (!smsSent) {
+          handleSendSms();
+        }
+        return;
+      }
+
+      setSubmitting(true);
+      try {
+        const fullPhone = getFullPhoneNumber();
+        const data = await loginWithSms(fullPhone, smsCode.trim());
+        if (data?.is_courier || data?.redirect_url) {
+          window.location.href = data.redirect_url || "/dashboard/courier/";
+          return;
+        }
+        navigate("/");
+      } catch (err: any) {
+        setError(err?.response?.data?.error || "Tasdiqlash kodida xatolik");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // --- Scenario B: Password-based Auth ---
     if (loginMode === "phone" && !isPhoneComplete) {
       setError(`Telefon raqamini to'liq kiriting (${phoneDigits.length}/${selectedCountry.digits} raqam)`);
       return;
@@ -122,7 +218,7 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white/80 dark:bg-[#161b26]/80 backdrop-blur-2xl rounded-3xl border border-white/90 dark:border-white/10 p-8 max-w-md w-full shadow-[0_20px_50px_-15px_rgba(15,23,42,0.1),inset_0_1.5px_2px_rgba(255,255,255,0.95)] space-y-6">
+      <div className="bg-white/80 dark:bg-[#161b26]/80 backdrop-blur-2xl rounded-3xl border border-white/90 dark:border-white/10 p-7 sm:p-9 max-w-md w-full shadow-[0_20px_50px_-15px_rgba(15,23,42,0.1),inset_0_1.5px_2px_rgba(255,255,255,0.95)] space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-flex w-12 h-12 rounded-2xl bg-[#211b2e] border border-white/10 items-center justify-center shadow-lg shadow-[#211b2e]/25 mx-auto">
             <svg viewBox="0 0 32 32" className="w-7 h-7 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
@@ -138,55 +234,63 @@ export const LoginPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Tab switch: Phone number or Login/Email */}
+        {/* Primary Auth Method: SMS Code vs Password */}
         <div className="p-1 rounded-2xl bg-slate-100 dark:bg-white/5 flex gap-1 text-xs font-bold">
           <button
             type="button"
-            onClick={() => { setLoginMode("phone"); setError(""); }}
-            className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              loginMode === "phone"
-                ? "bg-[#211b2e] text-white shadow-md shadow-[#211b2e]/25 font-bold"
+            onClick={() => { setAuthMethod("sms"); setError(""); setStatusMsg(""); }}
+            className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              authMethod === "sms"
+                ? "bg-[#211b2e] text-[#c8ff6a] shadow-md shadow-[#211b2e]/25 font-bold"
                 : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <Phone className="w-3.5 h-3.5" />
-            <span>Telefon raqam</span>
+            <ShieldCheck className="w-4 h-4 text-[#c8ff6a]" />
+            <span>SMS orqali kirish</span>
           </button>
           <button
             type="button"
-            onClick={() => { setLoginMode("login"); setError(""); }}
-            className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              loginMode === "login"
+            onClick={() => { setAuthMethod("password"); setError(""); setStatusMsg(""); }}
+            className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              authMethod === "password"
                 ? "bg-[#211b2e] text-white shadow-md shadow-[#211b2e]/25 font-bold"
                 : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <User className="w-3.5 h-3.5" />
-            <span>Login / Email</span>
+            <Lock className="w-3.5 h-3.5" />
+            <span>Parol bilan</span>
           </button>
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+          <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-300 text-xs font-bold">
             {error}
           </div>
         )}
 
+        {statusMsg && (
+          <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 shrink-0 text-emerald-500" />
+            <span>{statusMsg}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          {loginMode === "phone" ? (
+          {/* PHONE INPUT FOR SMS OR PHONE PASSWORD MODE */}
+          {(authMethod === "sms" || loginMode === "phone") && (
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
                 <span>Telefon raqamingiz</span>
                 <span className="text-[11px] text-slate-400 font-normal">{selectedCountry.name}</span>
               </label>
 
-              <div className="relative flex rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus-within:border-brand focus-within:bg-white dark:focus-within:bg-white/10 transition-all">
+              <div className="relative flex rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus-within:border-[#211b2e] dark:focus-within:border-[#c8ff6a] focus-within:ring-2 focus-within:ring-[#211b2e]/10 transition-all">
                 {/* Country dropdown trigger */}
                 <div className="relative shrink-0">
                   <button
                     type="button"
                     onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
-                    className="h-full px-3 py-2.5 flex items-center gap-1.5 bg-slate-100/80 dark:bg-white/5 hover:bg-slate-200/70 rounded-l-xl border-r border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-white transition-colors"
+                    className="h-full px-3 py-2.5 flex items-center gap-1.5 bg-slate-100/80 dark:bg-white/5 hover:bg-slate-200/70 rounded-l-xl border-r border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-white transition-colors cursor-pointer"
                   >
                     <span className="text-base leading-none">{selectedCountry.flag}</span>
                     <span className="text-xs font-semibold">{selectedCountry.dialCode}</span>
@@ -205,9 +309,9 @@ export const LoginPage: React.FC = () => {
                             setPhoneDigits("");
                             setCountryDropdownOpen(false);
                           }}
-                          className={`w-full px-3 py-2 rounded-xl text-left text-xs font-bold flex items-center gap-2 transition-colors ${
+                          className={`w-full px-3 py-2 rounded-xl text-left text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer ${
                             selectedCountry.id === c.id
-                              ? "bg-brand/10 text-brand"
+                              ? "bg-[#211b2e] text-[#c8ff6a]"
                               : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
                           }`}
                         >
@@ -220,7 +324,7 @@ export const LoginPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Formatted phone input with strict digit limits */}
+                {/* Formatted phone input */}
                 <input
                   type="tel"
                   required
@@ -237,7 +341,10 @@ export const LoginPage: React.FC = () => {
                 )}
               </div>
             </div>
-          ) : (
+          )}
+
+          {/* IF PASSWORD MODE & USERNAME SELECTED */}
+          {authMethod === "password" && loginMode === "login" && (
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 Login yoki Email
@@ -249,37 +356,124 @@ export const LoginPage: React.FC = () => {
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
                   placeholder="admin yoki info@store.uz"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand focus:bg-white transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] transition-all"
                 />
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               </div>
             </div>
           )}
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Parol</label>
-            <div className="relative">
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand focus:bg-white transition-all"
-              />
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-            </div>
-          </div>
+          {/* IF AUTH METHOD IS SMS: CODE INPUT AND RESEND BUTTON */}
+          {authMethod === "sms" && (
+            <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-[#211b2e] dark:text-[#c8ff6a]" />
+                  <span>SMS tasdiqlash kodi</span>
+                </label>
+                {smsCooldown > 0 && (
+                  <span className="text-[11px] font-mono font-bold text-slate-500 flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-[#211b2e] dark:text-[#c8ff6a]" />
+                    <span>{smsCooldown}s</span>
+                  </span>
+                )}
+              </div>
 
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={smsCode}
+                    onChange={(e) => setSmsCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    placeholder="4 xonali kod"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 text-sm font-mono font-extrabold tracking-widest text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a]"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSendSms}
+                  disabled={smsLoading || smsCooldown > 0 || !isPhoneComplete}
+                  className="px-4 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] disabled:opacity-40 disabled:pointer-events-none text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-[#211b2e]/20 cursor-pointer shrink-0"
+                >
+                  {smsLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#c8ff6a]" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5 text-[#c8ff6a]" />
+                  )}
+                  <span>
+                    {smsCooldown > 0
+                      ? `${smsCooldown}s`
+                      : smsSent
+                      ? "Qayta yuborish"
+                      : "SMS kod olish"}
+                  </span>
+                </button>
+              </div>
+
+              {devCode && (
+                <div className="p-2 rounded-xl bg-[#c8ff6a]/15 border border-[#c8ff6a]/30 text-[11px] text-slate-800 dark:text-[#c8ff6a] flex items-center justify-between font-mono">
+                  <span>Test kodi: <b className="font-extrabold text-sm">{devCode}</b></span>
+                  <button
+                    type="button"
+                    onClick={() => setSmsCode(devCode)}
+                    className="text-[10px] underline font-bold cursor-pointer hover:text-black"
+                  >
+                    Kodni kiritish
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* IF AUTH METHOD IS PASSWORD: PASSWORD INPUT & TOGGLE */}
+          {authMethod === "password" && (
+            <>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setLoginMode(loginMode === "phone" ? "login" : "phone")}
+                  className="text-[11px] font-bold text-slate-600 dark:text-[#c8ff6a] hover:underline cursor-pointer"
+                >
+                  {loginMode === "phone" ? "Login / Email orqali kirish" : "Telefon orqali kirish"}
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Parol</label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] transition-all"
+                  />
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={submitting}
             className="w-full py-3.5 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-white font-bold text-xs shadow-lg shadow-[#211b2e]/25 flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-50 cursor-pointer border border-white/10"
           >
-            <span>{submitting ? "Tekshirilmoqda..." : "Kirish"}</span>
-            <ArrowRight className="w-4 h-4 text-[#10b981]" />
+            <span>{submitting ? "Tekshirilmoqda..." : "Tizimga kirish"}</span>
+            <ArrowRight className="w-4 h-4 text-[#c8ff6a]" />
           </button>
         </form>
+
+        <div className="pt-4 border-t border-slate-100 dark:border-white/10 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
+          Hali do'koningiz yo'qmi?
+          <a href="/dashboard/register/" className="font-bold text-[#211b2e] dark:text-[#c8ff6a] hover:underline ml-1">
+            Ro'yxatdan o'tish
+          </a>
+        </div>
       </div>
     </div>
   );

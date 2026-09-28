@@ -448,10 +448,18 @@
     <div x-show="loginModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
         <div @click.away="loginModalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl space-y-4">
             <div class="flex items-center justify-between">
-                <h3 class="font-black text-sm sm:text-base text-slate-900">Telefon raqamingizni kiriting</h3>
-                <button type="button" @click="loginModalOpen = false" class="text-slate-400 hover:text-slate-600">×</button>
+                <h3 class="font-black text-sm sm:text-base text-slate-900" x-text="loginStep === 1 ? 'Telefon raqamingizni kiriting' : 'SMS kodni kiriting'">Telefon raqamingizni kiriting</h3>
+                <button type="button" @click="loginModalOpen = false" class="text-slate-400 hover:text-slate-600 text-lg">×</button>
             </div>
 
+            <template x-if="customerSmsError">
+                <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                    <span x-text="customerSmsError"></span>
+                </div>
+            </template>
+
+            <!-- Step 1: Phone input -->
             <div x-show="loginStep === 1" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Telefon raqami</label>
@@ -459,20 +467,63 @@
                         <span class="text-xs font-bold text-slate-500">UZ</span>
                         <input type="tel" x-model="customerPhoneInput" placeholder="+998 90 123 45 67" class="bg-transparent text-xs font-mono font-bold w-full focus:outline-none">
                     </div>
-                    <span class="text-[10px] text-slate-400 block mt-1">Tizimga kirish orqali siz maxfiylik siyosatiga rozilik bildirasiz</span>
+                    <span class="text-[10px] text-slate-400 block mt-1">Telefoningizga Eskiz orqali 4 xonali tasdiqlash kodi yuboriladi</span>
                 </div>
-                <button type="button" @click="proceedToNameStep()" class="w-full py-3 rounded-xl bg-brand text-white font-black text-xs shadow-md shadow-brand/20">
-                    Kirish
+                <button type="button" @click="sendCustomerSmsCode()"
+                        :disabled="customerSmsLoading"
+                        class="w-full py-3 rounded-xl bg-brand text-white font-black text-xs shadow-md shadow-brand/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+                    <template x-if="customerSmsLoading">
+                        <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                    </template>
+                    <span>SMS kod olish</span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                 </button>
             </div>
 
+            <!-- Step 2: SMS Code & Name input -->
             <div x-show="loginStep === 2" class="space-y-4" x-cloak>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Raqam: <b class="text-slate-800 font-mono" x-text="customerPhoneInput"></b></span>
+                    <button type="button" @click="loginStep = 1" class="text-brand font-bold hover:underline">O'zgartirish</button>
+                </div>
+
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Ism va familiya</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold text-slate-600">4 xonali SMS kod</label>
+                        <template x-if="customerSmsCooldown > 0">
+                            <span class="text-[11px] font-mono text-slate-400" x-text="customerSmsCooldown + 's'"></span>
+                        </template>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" inputmode="numeric" maxlength="4" x-model="customerSmsCode" placeholder="0000"
+                               class="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono font-black tracking-widest text-center focus:outline-none focus:border-brand">
+                        <button type="button" @click="sendCustomerSmsCode()"
+                                :disabled="customerSmsLoading || customerSmsCooldown > 0"
+                                class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold disabled:opacity-40 shrink-0">
+                            <span x-text="customerSmsCooldown > 0 ? (customerSmsCooldown + 's') : 'Qayta'"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <template x-if="customerSmsDevCode">
+                    <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 flex items-center justify-between font-mono">
+                        <span>Test kodi: <b x-text="customerSmsDevCode"></b></span>
+                        <button type="button" @click="customerSmsCode = customerSmsDevCode" class="underline font-bold">Kiritish</button>
+                    </div>
+                </template>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Ism va familiya (ixtiyoriy)</label>
                     <input type="text" x-model="customerNameInput" placeholder="Ismingizni kiriting" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
                 </div>
-                <button type="button" @click="finishCustomerLogin()" class="w-full py-3 rounded-xl bg-brand text-white font-black text-xs shadow-md shadow-brand/20">
-                    Saqlash va kirish
+
+                <button type="button" @click="verifyCustomerSmsCode()"
+                        :disabled="customerSmsLoading"
+                        class="w-full py-3 rounded-xl bg-brand text-white font-black text-xs shadow-md shadow-brand/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+                    <template x-if="customerSmsLoading">
+                        <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                    </template>
+                    <span>Tasdiqlash va kirish</span>
                 </button>
             </div>
         </div>
@@ -508,20 +559,61 @@
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                         <div>
                             <h4 class="font-black text-sm text-slate-900">Xush kelibsiz!</h4>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Buyurtmalaringizni ko'rish va xarid qilish uchun telefoningizni kiriting:</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Buyurtmalaringizni ko'rish va profilga kirish uchun SMS kod orqali kiring:</p>
                         </div>
+
+                        <template x-if="customerSmsError">
+                            <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold">
+                                <span x-text="customerSmsError"></span>
+                            </div>
+                        </template>
+
                         <div class="space-y-2.5">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-600 mb-1">Telefon raqami *</label>
                                 <input type="tel" x-model="customerPhoneInput" placeholder="+998 90 123 45 67" class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand">
                             </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-600 mb-1">Ismingiz</label>
-                                <input type="text" x-model="customerNameInput" placeholder="Ismingizni kiriting" class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
-                            </div>
-                            <button type="button" @click="loginCustomer()" class="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all">
-                                Kirish
-                            </button>
+
+                            <template x-if="customerSmsSent">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block text-[10px] font-bold text-slate-600">SMS kod (4 xonali) *</label>
+                                        <template x-if="customerSmsCooldown > 0">
+                                            <span class="text-[10px] font-mono text-slate-400" x-text="customerSmsCooldown + 's'"></span>
+                                        </template>
+                                    </div>
+                                    <input type="text" inputmode="numeric" maxlength="4" x-model="customerSmsCode" placeholder="0000" class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono font-black tracking-widest text-center focus:outline-none focus:border-brand">
+                                </div>
+                            </template>
+
+                            <template x-if="customerSmsDevCode">
+                                <div class="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 flex items-center justify-between font-mono">
+                                    <span>Kod: <b x-text="customerSmsDevCode"></b></span>
+                                    <button type="button" @click="customerSmsCode = customerSmsDevCode" class="underline font-bold">Kiritish</button>
+                                </div>
+                            </template>
+
+                            <template x-if="!customerSmsSent">
+                                <button type="button" @click="sendCustomerSmsCode()"
+                                        :disabled="customerSmsLoading"
+                                        class="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50">
+                                    <template x-if="customerSmsLoading">
+                                        <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                                    </template>
+                                    <span>SMS kod olish</span>
+                                </button>
+                            </template>
+
+                            <template x-if="customerSmsSent">
+                                <button type="button" @click="verifyCustomerSmsCode()"
+                                        :disabled="customerSmsLoading"
+                                        class="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-black text-xs shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50">
+                                    <template x-if="customerSmsLoading">
+                                        <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                                    </template>
+                                    <span>Tasdiqlash va kirish</span>
+                                </button>
+                            </template>
                         </div>
                     </div>
                 </template>
@@ -1468,6 +1560,13 @@
                 loginStep: 1,
                 customerPhoneInput: initialPhone || '+998 ',
                 customerNameInput: initialName || '',
+                customerSmsCode: '',
+                customerSmsSent: false,
+                customerSmsLoading: false,
+                customerSmsCooldown: 0,
+                customerSmsDevCode: '',
+                customerSmsError: '',
+                customerSmsTimer: null,
                 profileDrawerOpen: false,
                 sideDrawerOpen: false,
                 cartDrawerOpen: false,
@@ -1684,6 +1783,104 @@
                         .catch(() => {
                             this.isLoadingOrders = false;
                         });
+                },
+
+                startCustomerSmsTimer(sec = 60) {
+                    this.customerSmsCooldown = sec;
+                    if (this.customerSmsTimer) clearInterval(this.customerSmsTimer);
+                    this.customerSmsTimer = setInterval(() => {
+                        if (this.customerSmsCooldown > 1) {
+                            this.customerSmsCooldown--;
+                        } else {
+                            this.customerSmsCooldown = 0;
+                            clearInterval(this.customerSmsTimer);
+                            this.customerSmsTimer = null;
+                        }
+                    }, 1000);
+                },
+
+                sendCustomerSmsCode() {
+                    if (this.customerSmsLoading || this.customerSmsCooldown > 0) return;
+                    const phone = (this.customerPhoneInput || '').trim();
+                    if (!phone || phone.replace(/\D/g, '').length < 9) {
+                        this.customerSmsError = "Iltimos, to'liq telefon raqamini kiriting";
+                        return;
+                    }
+                    this.customerSmsLoading = true;
+                    this.customerSmsError = '';
+                    
+                    fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/api/customer/send-code/{% else %}/api/customer/send-code/{% endif %}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify({ phone: phone })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.customerSmsSent = true;
+                            if (data.dev_code) {
+                                this.customerSmsDevCode = data.dev_code;
+                            }
+                            this.startCustomerSmsTimer(data.cooldown || 60);
+                            this.loginStep = 2;
+                        } else {
+                            this.customerSmsError = data.error || "SMS yuborishda xatolik";
+                            if (data.cooldown) {
+                                this.startCustomerSmsTimer(data.cooldown);
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        this.customerSmsError = "Server bilan aloqa uzildi";
+                    })
+                    .finally(() => {
+                        this.customerSmsLoading = false;
+                        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                    });
+                },
+
+                verifyCustomerSmsCode() {
+                    if (this.customerSmsLoading) return;
+                    const phone = (this.customerPhoneInput || '').trim();
+                    const code = (this.customerSmsCode || '').trim();
+                    if (!code || code.length !== 4) {
+                        this.customerSmsError = "Iltimos, 4 xonali tasdiqlash kodini kiriting";
+                        return;
+                    }
+                    this.customerSmsLoading = true;
+                    this.customerSmsError = '';
+
+                    fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/api/customer/verify-code/{% else %}/api/customer/verify-code/{% endif %}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify({
+                            phone: phone,
+                            code: code,
+                            name: this.customerNameInput
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.customerLoggedIn = true;
+                            this.customerPhone = data.customer.phone;
+                            this.customerName = data.customer.name;
+                            this.ordersCount = data.customer.orders_count || 0;
+                            localStorage.setItem('sb_cust_phone_{{ store.id }}', this.customerPhone);
+                            localStorage.setItem('sb_cust_name_{{ store.id }}', this.customerName);
+                            this.loginModalOpen = false;
+                            this.profileDrawerOpen = false;
+                            this.fetchOrders();
+                        } else {
+                            this.customerSmsError = data.error || "Noto'g'ri tasdiqlash kodi";
+                        }
+                    })
+                    .catch(() => {
+                        this.customerSmsError = "Server bilan aloqa uzildi";
+                    })
+                    .finally(() => {
+                        this.customerSmsLoading = false;
+                    });
                 },
 
                 loginCustomer() {

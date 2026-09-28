@@ -49,6 +49,10 @@ urlpatterns = [
     path('store/<slug:subdomain>/api/order/<str:order_number>/reorder/', views.reorder_api, name='store_reorder_api'),
 
     # Customer Profile & Orders API
+    path('api/customer/send-code/', views.customer_send_code_api, name='customer_send_code_api'),
+    path('store/<slug:subdomain>/api/customer/send-code/', views.customer_send_code_api, name='store_customer_send_code_api'),
+    path('api/customer/verify-code/', views.customer_verify_code_api, name='customer_verify_code_api'),
+    path('store/<slug:subdomain>/api/customer/verify-code/', views.customer_verify_code_api, name='store_customer_verify_code_api'),
     path('api/customer/login/', views.customer_login_api, name='customer_login_api'),
     path('store/<slug:subdomain>/api/customer/login/', views.customer_login_api, name='store_customer_login_api'),
     path('api/customer/orders/', views.customer_orders_api, name='customer_orders_api'),

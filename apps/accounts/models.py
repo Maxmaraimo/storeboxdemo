@@ -36,3 +36,54 @@ class User(AbstractUser):
     @property
     def is_platform_admin(self):
         return self.role == self.Roles.SUPERADMIN or self.is_superuser
+
+
+class PhoneVerification(models.Model):
+    class Purposes(models.TextChoices):
+        MERCHANT_REGISTER = 'MERCHANT_REGISTER', 'Регистрация продавца'
+        MERCHANT_LOGIN = 'MERCHANT_LOGIN', 'Вход продавца'
+        CUSTOMER_AUTH = 'CUSTOMER_AUTH', 'Авторизация покупателя'
+
+    phone = models.CharField(
+        max_length=32,
+        db_index=True,
+        verbose_name="Номер телефона (+998...)"
+    )
+    code = models.CharField(
+        max_length=8,
+        verbose_name="Код подтверждения"
+    )
+    purpose = models.CharField(
+        max_length=32,
+        choices=Purposes.choices,
+        default=Purposes.MERCHANT_REGISTER,
+        db_index=True,
+        verbose_name="Цель отправки"
+    )
+    is_verified = models.BooleanField(
+        default=False,
+        db_index=True,
+        verbose_name="Подтвержден"
+    )
+    attempts = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name="Неудачные попытки ввода"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        verbose_name="Дата создания"
+    )
+    expires_at = models.DateTimeField(
+        db_index=True,
+        verbose_name="Срок действия"
+    )
+
+    class Meta:
+        verbose_name = "SMS-подтверждение"
+        verbose_name_plural = "SMS-подтверждения"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.phone} - {self.code} ({self.purpose})"
+

@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -244,3 +245,11 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_NAME = 'csrftoken'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Eskiz.uz SMS Gateway Configuration
+ESKIZ_EMAIL = os.environ.get('ESKIZ_EMAIL', 'filtobex3@gmail.com')
+ESKIZ_PASSWORD = os.environ.get('ESKIZ_PASSWORD', 'MbPlBKpGyqCeg2W6wcqZdkqiq6Nvv8ojnc7nHaIh')
+ESKIZ_FROM = os.environ.get('ESKIZ_FROM', '4546')
+ESKIZ_API_URL = os.environ.get('ESKIZ_API_URL', 'https://notify.eskiz.uz/api')
+ESKIZ_TEST_MODE = os.environ.get('ESKIZ_TEST_MODE', 'False') == 'True' or ('test' in sys.argv)
+

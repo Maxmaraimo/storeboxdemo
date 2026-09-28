@@ -11,6 +11,7 @@ from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth import login, logout, authenticate
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_POST, require_http_methods
 from django.middleware.csrf import get_token
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -603,26 +604,37 @@ def register_view(request):
             if matching_user:
                 user_already_registered = True
                 error = "Ushbu telefon raqamiga ega foydalanuvchi allaqachon ro'yxatdan o'tgan. Iltimos, tizimga kiring."
-            elif not password:
-                error = 'Iltimos, maxfiy parolni kiriting'
-            elif password != password_confirm:
-                error = 'Parollar bir-biriga mos kelmadi'
-            elif len(password) < 6:
-                error = "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
             else:
-                user = User.objects.create_user(
-                    username=username,
-                    email=email,
-                    phone=normalized_phone,
-                    password=password,
-                    role=User.Roles.MERCHANT
-                )
-                login(request, user)
-                if plan:
-                    request.session['selected_plan'] = plan
-                if duration:
-                    request.session['selected_duration'] = duration
-                return redirect('dashboard:onboarding')
+                sms_code = request.POST.get('sms_code', '').strip()
+                if sms_code:
+                    from apps.core.sms_service import verify_sms_code
+                    is_valid, msg = verify_sms_code(normalized_phone, sms_code, purpose='MERCHANT_REGISTER')
+                    if not is_valid:
+                        error = msg
+                elif not getattr(settings, 'DEBUG', False) and not getattr(settings, 'ESKIZ_TEST_MODE', False):
+                    error = "Iltimos, SMS orqali yuborilgan 4 xonali tasdiqlash kodini kiriting"
+
+            if not error:
+                if not password:
+                    error = 'Iltimos, maxfiy parolni kiriting'
+                elif password != password_confirm:
+                    error = 'Parollar bir-biriga mos kelmadi'
+                elif len(password) < 6:
+                    error = "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
+                else:
+                    user = User.objects.create_user(
+                        username=username,
+                        email=email,
+                        phone=normalized_phone,
+                        password=password,
+                        role=User.Roles.MERCHANT
+                    )
+                    login(request, user)
+                    if plan:
+                        request.session['selected_plan'] = plan
+                    if duration:
+                        request.session['selected_duration'] = duration
+                    return redirect('dashboard:onboarding')
 
     plan_labels = {
         'start': 'Start (300 000 UZS)',
@@ -641,6 +653,26 @@ def register_view(request):
         'submitted_phone': request.POST.get('phone', ''),
         'submitted_email': request.POST.get('email', '')
     })
+
+
+@require_POST
+def dashboard_sms_send_code_api(request):
+    """AJAX endpoint for sending Eskiz SMS verification code during registration."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else request.POST
+    except Exception:
+        data = request.POST
+
+    phone = (data.get('phone') or '').strip()
+    purpose = (data.get('purpose') or 'MERCHANT_REGISTER').strip()
+
+    if not phone:
+        return JsonResponse({'success': False, 'error': "Iltimos, telefon raqamini kiriting"}, status=400)
+
+    from apps.core.sms_service import send_verification_sms
+    res = send_verification_sms(phone, purpose=purpose)
+    status_code = 200 if res.get('success') else 400
+    return JsonResponse(res, status=status_code)
 
 
 def dev_login_view(request):

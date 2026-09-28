@@ -1523,6 +1523,90 @@ def order_live_tracking_api(request, order_number, subdomain=None):
 # -----------------------------------------------------------------
 
 @csrf_exempt
+def customer_send_code_api(request, subdomain=None):
+    """Send 4-digit SMS verification code via Eskiz.uz to customer"""
+    store = get_current_store(request, subdomain)
+    if not store:
+        return JsonResponse({'success': False, 'error': 'Do\'kon topilmadi'}, status=404)
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8')) if request.body else request.POST
+        except Exception:
+            data = request.POST
+
+        phone = (data.get('phone') or '').strip()
+        if not phone:
+            return JsonResponse({'success': False, 'error': 'Telefon raqamini kiriting'}, status=400)
+
+        from apps.core.sms_service import send_verification_sms
+        result = send_verification_sms(phone, purpose='CUSTOMER_AUTH')
+        status_code = 200 if result.get('success') else 400
+        return JsonResponse(result, status=status_code)
+
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def customer_verify_code_api(request, subdomain=None):
+    """Verify 4-digit SMS code and authenticate customer into storefront session"""
+    store = get_current_store(request, subdomain)
+    if not store:
+        return JsonResponse({'success': False, 'error': 'Do\'kon topilmadi'}, status=404)
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8')) if request.body else request.POST
+        except Exception:
+            data = request.POST
+
+        phone = (data.get('phone') or '').strip()
+        code = (data.get('code') or '').strip()
+        name = (data.get('name') or '').strip()
+
+        if not phone:
+            return JsonResponse({'success': False, 'error': 'Telefon raqamini kiriting'}, status=400)
+        if not code:
+            return JsonResponse({'success': False, 'error': 'Tasdiqlash kodini kiriting'}, status=400)
+
+        from apps.core.sms_service import verify_sms_code, normalize_phone_number
+        normalized_phone = normalize_phone_number(phone)
+        is_valid, msg = verify_sms_code(normalized_phone, code, purpose='CUSTOMER_AUTH')
+        if not is_valid:
+            return JsonResponse({'success': False, 'error': msg}, status=400)
+
+        customer, created = Customer.objects.get_or_create(
+            store=store,
+            phone=normalized_phone,
+            defaults={'name': name or 'Xaridor'}
+        )
+        if name and customer.name != name:
+            customer.name = name
+            customer.save(update_fields=['name'])
+
+        request.session['customer_phone'] = normalized_phone
+        request.session['customer_name'] = customer.name
+        request.session.modified = True
+
+        orders = Order.objects.filter(store=store).filter(
+            Q(customer_phone=phone) | Q(customer_phone=normalized_phone) | Q(customer=customer)
+        )
+        return JsonResponse({
+            'success': True,
+            'customer': {
+                'id': customer.id,
+                'name': customer.name,
+                'phone': customer.phone,
+                'orders_count': orders.count(),
+                'bonus_balance': customer.bonus_balance
+            },
+            'message': 'Muvaffaqiyatli tizimga kirildi'
+        })
+
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
 def customer_login_api(request, subdomain=None):
     """Log in customer by phone number, create/fetch CRM record and session"""
     store = get_current_store(request, subdomain)
