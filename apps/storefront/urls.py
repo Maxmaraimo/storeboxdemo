@@ -65,4 +65,10 @@ urlpatterns = [
     path('store/<slug:subdomain>/api/chat/send/', views.storefront_send_chat_api, name='store_send_chat_api'),
     path('api/chat/messages/', views.storefront_get_chat_messages_api, name='storefront_get_chat_messages_api'),
     path('store/<slug:subdomain>/api/chat/messages/', views.storefront_get_chat_messages_api, name='store_get_chat_messages_api'),
+
+    # Checkout SMS Verification API (Eskiz.uz)
+    path('api/checkout/send-code/', views.checkout_send_code_api, name='checkout_send_code_api'),
+    path('store/<slug:subdomain>/api/checkout/send-code/', views.checkout_send_code_api, name='store_checkout_send_code_api'),
+    path('api/checkout/verify-code/', views.checkout_verify_code_api, name='checkout_verify_code_api'),
+    path('store/<slug:subdomain>/api/checkout/verify-code/', views.checkout_verify_code_api, name='store_checkout_verify_code_api'),
 ]

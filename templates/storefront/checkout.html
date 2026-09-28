@@ -7,6 +7,16 @@
 <!-- Leaflet Maps CSS & JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+.animate-shake {
+  animation: shake 0.35s ease-in-out;
+}
+</style>
 {% endblock %}
 
 {% block storefront_body %}
@@ -219,11 +229,98 @@
                         </div>
                     </div>
 
-                    <!-- Hidden Full Phone Input for Form Submit -->
+                    <!-- Hidden Full Phone & SMS Code Input for Form Submit -->
                     <input type="hidden" name="customer_phone" :value="fullPhoneNumber">
+                    <input type="hidden" name="sms_code" :value="joinedSmsCode">
 
                     <!-- Phone Error Message -->
                     <p x-show="phoneError" x-text="phoneError" class="text-[11px] text-rose-500 font-bold mt-1"></p>
+                </div>
+
+                <!-- SMS Verification Section (Eskiz.uz Gateway - Template 92326) -->
+                <div class="sm:col-span-2 pt-2 border-t border-slate-100">
+                    <!-- 1. Verified State Badge -->
+                    <div x-show="isPhoneVerified" class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-between gap-3 text-emerald-800">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-black">{% if lang == 'uz' %}Telefon raqami tasdiqlangan{% elif lang == 'en' %}Phone number verified{% elif lang == 'tr' %}Telefon doğrulandı{% else %}Номер телефона подтвержден{% endif %}</div>
+                                <div class="text-[11px] font-semibold text-emerald-600 font-mono" x-text="fullPhoneNumber"></div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">OK</span>
+                    </div>
+
+                    <!-- 2. Unverified State / Trigger Button & OTP Inputs -->
+                    <div x-show="!isPhoneVerified" class="space-y-3">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 rounded-xl bg-violet-100 text-brand flex items-center justify-center shrink-0">
+                                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-xs font-black text-slate-800">
+                                        {% if lang == 'uz' %}SMS orqali tasdiqlash{% elif lang == 'en' %}SMS Verification{% elif lang == 'tr' %}SMS Doğrulama{% else %}SMS-подтверждение номера{% endif %}
+                                    </div>
+                                    <div class="text-[11px] text-slate-500 truncate">
+                                        {% if lang == 'uz' %}Buyurtma uchun raqamga 4 xonali kod yuboriladi{% elif lang == 'en' %}A 4-digit code will be sent to your phone{% elif lang == 'tr' %}Telefonunuza 4 haneli kod gönderilecektir{% else %}На ваш номер будет отправлен 4-значный код{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button"
+                                    @click="sendSmsCode()"
+                                    :disabled="!isPhoneComplete || smsCooldown > 0 || smsLoading"
+                                    class="px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 shrink-0"
+                                    :class="(!isPhoneComplete || smsCooldown > 0 || smsLoading) ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-brand hover:brightness-95 text-white shadow-xs cursor-pointer active:scale-95'">
+                                <span x-show="smsLoading" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                <span x-show="!smsLoading && smsCooldown > 0" class="font-mono text-xs" x-text="smsCooldown + 's'"></span>
+                                <span x-show="!smsLoading && smsCooldown === 0">
+                                    <template x-if="smsSent">
+                                        <span>{% if lang == 'uz' %}Kodni qayta yuborish{% elif lang == 'en' %}Resend code{% elif lang == 'tr' %}Tekrar gönder{% else %}Отправить повторно{% endif %}</span>
+                                    </template>
+                                    <template x-if="!smsSent">
+                                        <span>{% if lang == 'uz' %}SMS-kod olish{% elif lang == 'en' %}Get SMS code{% elif lang == 'tr' %}Kod al{% else %}Получить SMS-код{% endif %}</span>
+                                    </template>
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- 4-digit Telegram-style OTP Input (Auto-focuses & advances) -->
+                        <div x-show="smsSent && !isPhoneVerified" x-cloak class="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-700">
+                                    {% if lang == 'uz' %}SMS orqali kelgan 4 xonali kodni kiriting:{% elif lang == 'en' %}Enter the 4-digit code sent via SMS:{% elif lang == 'tr' %}SMS ile gelen 4 haneli kodu girin:{% else %}Введите 4-значный код из SMS:{% endif %}
+                                </span>
+                                <span x-show="smsCooldown > 0" class="text-[11px] font-mono font-bold text-slate-400">
+                                    <span x-text="smsCooldown"></span>s
+                                </span>
+                            </div>
+
+                            <!-- 4 Digit Boxes -->
+                            <div class="flex items-center justify-center gap-3">
+                                <template x-for="(digit, idx) in smsCodeDigits" :key="idx">
+                                    <input type="text"
+                                           inputmode="numeric"
+                                           pattern="[0-9]*"
+                                           maxlength="1"
+                                           :id="'otpInput_' + idx"
+                                           :value="digit"
+                                           @input="onOtpInput($event, idx)"
+                                           @keydown="onOtpKeydown($event, idx)"
+                                           @paste="onOtpPaste($event)"
+                                           class="w-12 h-14 rounded-2xl text-center text-xl font-black font-mono border-2 transition-all focus:outline-none"
+                                           :class="otpInputClass(idx)">
+                                </template>
+                            </div>
+
+                            <!-- Error & Info Messages -->
+                            <p x-show="smsError" x-text="smsError" class="text-xs text-center font-bold text-rose-500 animate-shake"></p>
+                            <p x-show="smsSuccess" x-text="smsSuccess" class="text-xs text-center font-bold text-emerald-600"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -669,7 +766,7 @@
             <!-- Submit Order Button -->
             <button type="submit"
                     class="w-full mt-4 py-4 rounded-2xl bg-brand hover:brightness-95 text-white font-black text-sm sm:text-base transition-all shadow-xl shadow-brand/30 flex items-center justify-center gap-2 active:scale-[0.98]">
-                <span>{{ t.confirm_order|default:"Buyurtmani tasdiqlash" }}</span>
+                <span x-text="!isPhoneVerified ? '{% if lang == 'uz' %}SMS-kod orqali tasdiqlash{% elif lang == 'en' %}Verify with SMS code{% elif lang == 'tr' %}SMS ile doğrula{% else %}Подтвердить номер по SMS{% endif %}' : '{{ t.confirm_order|default:"Buyurtmani tasdiqlash" }}'"></span>
                 <i data-lucide="arrow-right" class="w-5 h-5"></i>
             </button>
         </div>
@@ -684,7 +781,7 @@
             </div>
             <button type="button" @click="document.getElementById('checkoutForm').requestSubmit()"
                     class="flex-1 py-3 px-5 rounded-2xl bg-brand text-white font-bold text-sm shadow-lg shadow-brand/25 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                <span x-text="paymentMethod === 'CLICK' || paymentMethod === 'PAYME' || paymentMethod === 'UZUM' || paymentMethod === 'MULTICARD' ? '{% if lang == 'uz' %}To\'lash{% else %}Оплатить{% endif %}' : '{{ t.confirm_order|default:"Buyurtma berish" }}'"></span>
+                <span x-text="!isPhoneVerified ? '{% if lang == 'uz' %}SMS tasdiqlash{% elif lang == 'en' %}Verify SMS{% else %}SMS-подтверждение{% endif %}' : (paymentMethod === 'CLICK' || paymentMethod === 'PAYME' || paymentMethod === 'UZUM' || paymentMethod === 'MULTICARD' ? '{% if lang == 'uz' %}To\'lash{% else %}Оплатить{% endif %}' : '{{ t.confirm_order|default:"Buyurtma berish" }}')"></span>
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
         </div>
@@ -850,6 +947,181 @@
             rawPhoneDigits: '',
             phoneError: '',
 
+            // SMS Verification State (Eskiz.uz Gateway - Template 92326)
+            isPhoneVerified: {{ is_phone_verified|yesno:"true,false" }},
+            smsSent: false,
+            smsLoading: false,
+            smsCooldown: 0,
+            smsTimerInterval: null,
+            smsCodeDigits: ['', '', '', ''],
+            smsError: '',
+            smsSuccess: '',
+            otpStatus: 'idle', // 'idle' | 'success' | 'error' | 'verifying'
+
+            get joinedSmsCode() {
+                return this.smsCodeDigits.join('');
+            },
+
+            otpInputClass(idx) {
+                if (this.isPhoneVerified || this.otpStatus === 'success') {
+                    return 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20';
+                }
+                if (this.otpStatus === 'error') {
+                    return 'border-rose-400 bg-rose-50 text-rose-700 ring-2 ring-rose-400/20 animate-shake';
+                }
+                if (this.smsCodeDigits[idx]) {
+                    return 'border-slate-800 bg-white text-slate-900';
+                }
+                return 'border-slate-200 bg-slate-50 text-slate-900 focus:border-brand focus:bg-white';
+            },
+
+            sendSmsCode() {
+                if (!this.isPhoneComplete || this.smsCooldown > 0 || this.smsLoading) return;
+                this.smsLoading = true;
+                this.smsError = '';
+                this.smsSuccess = '';
+                this.otpStatus = 'idle';
+                this.smsCodeDigits = ['', '', '', ''];
+
+                const sendUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/checkout/send-code/{% else %}/api/checkout/send-code/{% endif %}';
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+                fetch(sendUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ phone: this.fullPhoneNumber })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.smsLoading = false;
+                    if (data.success) {
+                        this.smsSent = true;
+                        this.startSmsCooldown(data.cooldown || 60);
+                        this.$nextTick(() => {
+                            const el = document.getElementById('otpInput_0');
+                            if (el) el.focus();
+                        });
+                    } else {
+                        this.smsError = data.error || 'SMS yuborishda xatolik yuz berdi';
+                        if (data.cooldown) {
+                            this.startSmsCooldown(data.cooldown);
+                        }
+                    }
+                })
+                .catch(err => {
+                    this.smsLoading = false;
+                    this.smsError = 'Aloqa xatosi. Iltimos, qayta urinib ko\'ring';
+                });
+            },
+
+            startSmsCooldown(sec) {
+                if (this.smsTimerInterval) clearInterval(this.smsTimerInterval);
+                this.smsCooldown = sec;
+                this.smsTimerInterval = setInterval(() => {
+                    if (this.smsCooldown > 0) {
+                        this.smsCooldown--;
+                    } else {
+                        clearInterval(this.smsTimerInterval);
+                        this.smsTimerInterval = null;
+                    }
+                }, 1000);
+            },
+
+            onOtpInput(e, idx) {
+                const val = e.target.value.replace(/\D/g, '');
+                if (val.length > 0) {
+                    this.smsCodeDigits[idx] = val.slice(-1);
+                    e.target.value = this.smsCodeDigits[idx];
+                    this.smsError = '';
+                    this.otpStatus = 'idle';
+                    if (idx < 3) {
+                        const next = document.getElementById('otpInput_' + (idx + 1));
+                        if (next) next.focus();
+                    } else {
+                        this.verifySmsCode();
+                    }
+                } else {
+                    this.smsCodeDigits[idx] = '';
+                }
+            },
+
+            onOtpKeydown(e, idx) {
+                if (e.key === 'Backspace') {
+                    if (!this.smsCodeDigits[idx] && idx > 0) {
+                        const prev = document.getElementById('otpInput_' + (idx - 1));
+                        if (prev) {
+                            prev.focus();
+                            this.smsCodeDigits[idx - 1] = '';
+                        }
+                    } else {
+                        this.smsCodeDigits[idx] = '';
+                    }
+                }
+            },
+
+            onOtpPaste(e) {
+                e.preventDefault();
+                const pasteData = (e.clipboardData || window.clipboardData).getData('text') || '';
+                const digits = pasteData.replace(/\D/g, '').slice(0, 4);
+                if (digits) {
+                    for (let i = 0; i < 4; i++) {
+                        this.smsCodeDigits[i] = digits[i] || '';
+                        const el = document.getElementById('otpInput_' + i);
+                        if (el) el.value = this.smsCodeDigits[i];
+                    }
+                    if (digits.length === 4) {
+                        const lastEl = document.getElementById('otpInput_3');
+                        if (lastEl) lastEl.focus();
+                        this.verifySmsCode();
+                    } else {
+                        const nextEl = document.getElementById('otpInput_' + digits.length);
+                        if (nextEl) nextEl.focus();
+                    }
+                }
+            },
+
+            verifySmsCode() {
+                const code = this.joinedSmsCode;
+                if (code.length < 4) return;
+                this.otpStatus = 'verifying';
+                this.smsError = '';
+                const verifyUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/checkout/verify-code/{% else %}/api/checkout/verify-code/{% endif %}';
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+                fetch(verifyUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ phone: this.fullPhoneNumber, code: code })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.verified) {
+                        this.otpStatus = 'success';
+                        this.isPhoneVerified = true;
+                        this.smsSuccess = data.message || 'Telefon raqami muvaffaqiyatli tasdiqlandi!';
+                        this.smsError = '';
+                        if (this.smsTimerInterval) {
+                            clearInterval(this.smsTimerInterval);
+                            this.smsTimerInterval = null;
+                        }
+                    } else {
+                        this.otpStatus = 'error';
+                        this.smsError = data.error || 'Tasdiqlash kodi noto\'g\'ri';
+                        this.smsSuccess = '';
+                    }
+                })
+                .catch(err => {
+                    this.otpStatus = 'error';
+                    this.smsError = 'Aloqa xatosi. Qayta urinib ko\'ring';
+                });
+            },
+
             get formattedPhone() {
                 return this.selectedCountry.format(this.rawPhoneDigits);
             },
@@ -985,6 +1257,12 @@
                 this.selectedCountry = c;
                 this.rawPhoneDigits = '';
                 this.phoneError = '';
+                this.isPhoneVerified = false;
+                this.smsSent = false;
+                this.smsCodeDigits = ['', '', '', ''];
+                this.otpStatus = 'idle';
+                this.smsError = '';
+                this.smsSuccess = '';
                 this.countryDropdownOpen = false;
                 this.$nextTick(() => {
                     if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
@@ -998,9 +1276,18 @@
                 if (digits.startsWith(this.selectedCountry.code)) {
                     digits = digits.slice(this.selectedCountry.code.length);
                 }
+                const oldDigits = this.rawPhoneDigits;
                 this.rawPhoneDigits = digits.slice(0, this.selectedCountry.digits);
                 e.target.value = this.formattedPhone;
                 this.phoneError = '';
+                if (oldDigits !== this.rawPhoneDigits) {
+                    this.isPhoneVerified = false;
+                    this.smsSent = false;
+                    this.smsCodeDigits = ['', '', '', ''];
+                    this.otpStatus = 'idle';
+                    this.smsError = '';
+                    this.smsSuccess = '';
+                }
             },
 
             initPhone() {
@@ -1031,6 +1318,17 @@
                     this.phoneError = `{% if lang == "uz" %}Telefon raqamini to'liq kiriting (${this.selectedCountry.digits} ta raqam){% else %}Пожалуйста, введите полный номер телефона (${this.selectedCountry.digits} цифр){% endif %}`;
                     if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
                     e.preventDefault();
+                    return false;
+                }
+                if (!this.isPhoneVerified) {
+                    alert('{% if lang == "uz" %}Iltimos, avval telefon raqamingizni SMS-kod orqali tasdiqlang{% else %}Пожалуйста, подтвердите ваш номер телефона через SMS-код{% endif %}');
+                    e.preventDefault();
+                    if (!this.smsSent) {
+                        this.sendSmsCode();
+                    } else {
+                        const el = document.getElementById('otpInput_0');
+                        if (el) el.focus();
+                    }
                     return false;
                 }
                 if (this.deliveryMethod === 'COURIER' && (!this.deliveryStreet || !this.deliveryStreet.trim())) {

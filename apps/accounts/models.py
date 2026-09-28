@@ -87,3 +87,50 @@ class PhoneVerification(models.Model):
     def __str__(self):
         return f"{self.phone} - {self.code} ({self.purpose})"
 
+
+class SMSVerification(models.Model):
+    """Temporary SMS verification codes for customer checkout & auth."""
+    phone_number = models.CharField(
+        max_length=32,
+        db_index=True,
+        verbose_name="Номер телефона (+998...)"
+    )
+    code = models.CharField(
+        max_length=8,
+        verbose_name="Код подтверждения"
+    )
+    created_at = models.DateTimeField(
+        default=models.functions.Now,
+        db_index=True,
+        verbose_name="Дата создания"
+    )
+    is_verified = models.BooleanField(
+        default=False,
+        db_index=True,
+        verbose_name="Подтвержден"
+    )
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="Срок действия"
+    )
+    attempts = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name="Неудачные попытки ввода"
+    )
+
+    class Meta:
+        verbose_name = "SMS-верификация"
+        verbose_name_plural = "SMS-верификации"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.phone_number} - {self.code} (verified={self.is_verified})"
+
+    def is_expired(self):
+        from django.utils import timezone
+        if not self.expires_at:
+            return False
+        return timezone.now() > self.expires_at
+

@@ -70,7 +70,7 @@ class EskizSMSService:
 
         return None
 
-    def send_sms(self, phone: str, message: str) -> dict:
+    def send_sms(self, phone: str, message: str, template_id: int | None = None) -> dict:
         """Send an SMS via Eskiz.uz gateway with auto token refresh on 401."""
         clean_phone = format_for_eskiz(phone)
         if not clean_phone or len(clean_phone) < 9:
@@ -83,6 +83,8 @@ class EskizSMSService:
             "message": message,
             "from": self.sender_from,
         }
+        if template_id:
+            payload["template_id"] = template_id
 
         # 1. Attempt sending with token if available
         if token:
@@ -136,6 +138,142 @@ class EskizSMSService:
 
 # Singleton service instance
 sms_service = EskizSMSService()
+
+
+def send_sms_via_eskiz(phone: str, code: str) -> dict:
+    """Send verification code via Eskiz API using approved template 92326."""
+    message = f"StoreBox: Vash kod podtverjdeniya: {code}"
+    return sms_service.send_sms(phone=phone, message=message, template_id=92326)
+
+
+def send_checkout_sms_code(phone: str) -> dict:
+    """Generate and send 4-digit SMS verification code for checkout flow with rate limiting."""
+    from apps.accounts.models import SMSVerification
+
+    normalized_phone = normalize_phone_number(phone)
+    if not normalized_phone or len(normalized_phone) < 12:
+        return {"success": False, "error": "Iltimos, to'liq telefon raqamini kiriting (+998 ...)"}
+
+    now = timezone.now()
+
+    # 1. Anti-spam: 60-second cooldown check
+    recent = SMSVerification.objects.filter(
+        phone_number=normalized_phone,
+        created_at__gte=now - timedelta(seconds=RESEND_COOLDOWN_SECONDS),
+    ).order_by("-created_at").first()
+
+    if recent:
+        elapsed = (now - recent.created_at).total_seconds()
+        remaining = max(1, int(RESEND_COOLDOWN_SECONDS - elapsed))
+        return {
+            "success": False,
+            "cooldown": remaining,
+            "error": f"Kodni qayta so'rash uchun {remaining} soniya kuting",
+        }
+
+    # 2. Generate random 4-digit code
+    code = f"{random.randint(1000, 9999)}"
+    expires_at = now + timedelta(minutes=CODE_EXPIRATION_MINUTES)
+
+    # 3. Update or create SMSVerification record (overwriting old code/time as requested)
+    SMSVerification.objects.update_or_create(
+        phone_number=normalized_phone,
+        defaults={
+            "code": code,
+            "is_verified": False,
+            "created_at": now,
+            "expires_at": expires_at,
+            "attempts": 0,
+        }
+    )
+
+    # 4. Dispatch via Eskiz API with approved template 92326
+    res = send_sms_via_eskiz(normalized_phone, code)
+
+    return {
+        "success": True,
+        "cooldown": RESEND_COOLDOWN_SECONDS,
+        "phone": normalized_phone,
+        "message": "Tasdiqlash kodi telefoningizga SMS orqali yuborildi",
+        "eskiz_res": res,
+    }
+
+
+def verify_checkout_sms_code(phone: str, code: str) -> tuple[bool, str]:
+    """Verify input code against SMSVerification records for checkout."""
+    from apps.accounts.models import SMSVerification
+
+    normalized_phone = normalize_phone_number(phone)
+    clean_code = (code or "").strip()
+
+    if not normalized_phone:
+        return False, "Telefon raqami kiritilmagan"
+    if not clean_code or len(clean_code) < 4:
+        return False, "4 xonali tasdiqlash kodini to'liq kiriting"
+
+    now = timezone.now()
+    record = SMSVerification.objects.filter(phone_number=normalized_phone).order_by("-created_at").first()
+
+    if not record:
+        return False, "Tasdiqlash kodi topilmadi. Yangi kod so'rang."
+
+    if record.is_expired():
+        return False, "Tasdiqlash kodi muddati o'tgan. Yangi kod so'rang."
+
+    # If code was already verified recently within valid expiration window
+    if record.is_verified and record.code == clean_code:
+        return True, "Kod muvaffaqiyatli tasdiqlangan"
+
+    if record.attempts >= 5:
+        return False, "Ushbu kod uchun urinishlar soni tugadi. Yangi kod so'rang."
+
+    if record.code != clean_code:
+        record.attempts += 1
+        record.save(update_fields=["attempts"])
+        remaining_attempts = max(0, 5 - record.attempts)
+        return False, f"Tasdiqlash kodi noto'g'ri. Qolgan urinishlar: {remaining_attempts}"
+
+    record.is_verified = True
+    record.save(update_fields=["is_verified"])
+    return True, "Kod muvaffaqiyatli tasdiqlandi"
+
+
+def get_or_create_customer_user(phone: str, name: str = ""):
+    """Seamlessly retrieve or create a customer User account and return user."""
+    from apps.accounts.models import User
+    import uuid
+    from django.db.models import Q
+
+    normalized_phone = normalize_phone_number(phone)
+    clean_digits = format_for_eskiz(normalized_phone)
+
+    # 1. Try finding existing user by phone
+    user = User.objects.filter(phone=normalized_phone).first()
+    if not user and clean_digits:
+        user = User.objects.filter(Q(phone=clean_digits) | Q(username=f"cust_{clean_digits}")).first()
+
+    if not user:
+        # Generate unique username
+        username = f"cust_{clean_digits}" if clean_digits else f"cust_{uuid.uuid4().hex[:8]}"
+        base_username = username
+        idx = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}_{idx}"
+            idx += 1
+
+        user = User.objects.create_user(
+            username=username,
+            phone=normalized_phone,
+            role=User.Roles.CUSTOMER,
+            first_name=name or "Xaridor",
+        )
+        user.set_unusable_password()
+        user.save()
+    elif name and not user.first_name:
+        user.first_name = name
+        user.save(update_fields=["first_name"])
+
+    return user
 
 
 def send_verification_sms(phone: str, purpose: str = "MERCHANT_REGISTER") -> dict:

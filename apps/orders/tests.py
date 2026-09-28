@@ -1,12 +1,14 @@
 from decimal import Decimal
+from datetime import timedelta
 from unittest.mock import patch
 from django.test import TestCase, Client
 from django.utils import timezone
-from apps.accounts.models import User
+from apps.accounts.models import User, SMSVerification
 from apps.stores.models import Store
 from apps.catalog.models import Category, Product
 from apps.orders.models import Order, OrderItem, Customer, PromoCode
 from apps.payments.models import StorePaymentSetting, PaymentTransaction
+from apps.core.sms_service import normalize_phone_number
 
 
 class OrderWorkflowEndToEndTests(TestCase):
@@ -88,6 +90,16 @@ class OrderWorkflowEndToEndTests(TestCase):
             'notes': 'Iltimos, tezroq yetkazing'
         }
 
+        from apps.accounts.models import SMSVerification
+        from apps.core.sms_service import normalize_phone_number
+        from datetime import timedelta
+        SMSVerification.objects.create(
+            phone_number=normalize_phone_number('+998 90 777 88 99'),
+            code='1234',
+            is_verified=True,
+            expires_at=timezone.now() + timedelta(minutes=5)
+        )
+
         res = self.client.post(f'/store/{self.store.subdomain}/checkout/', data=post_data)
         self.assertEqual(res.status_code, 302)
 
@@ -141,6 +153,12 @@ class OrderWorkflowEndToEndTests(TestCase):
                 'payment_method': Order.PaymentMethods.CASH,
                 'promo_code': 'DISCOUNT10'
             }
+            SMSVerification.objects.create(
+                phone_number=normalize_phone_number('+998 91 123 45 67'),
+                code='1234',
+                is_verified=True,
+                expires_at=timezone.now() + timedelta(minutes=5)
+            )
             res = self.client.post(f'/store/{self.store.subdomain}/checkout/', data=post_data)
             self.assertEqual(res.status_code, 302)
 

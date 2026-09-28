@@ -1,3 +1,4 @@
+from datetime import timedelta
 import json
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
@@ -8,6 +9,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
+from django.contrib.auth import login
 
 from apps.stores.models import Store, Branch
 from apps.catalog.models import Category, Product, ProductVariation
@@ -1202,9 +1204,38 @@ def checkout_view(request, subdomain=None):
 
         promo_code_str = request.POST.get('promo_code', '').strip().upper()
         telegram_user_id = request.POST.get('telegram_user_id')
+        sms_code = request.POST.get('sms_code', '').strip()
+
+        from apps.core.sms_service import normalize_phone_number, verify_checkout_sms_code, get_or_create_customer_user
+        from apps.accounts.models import SMSVerification
+
+        normalized_phone = normalize_phone_number(customer_phone)
+
+        # Phone verification validation
+        phone_verified = False
+        if request.user.is_authenticated and getattr(request.user, 'phone', None):
+            if normalize_phone_number(request.user.phone) == normalized_phone:
+                phone_verified = True
+
+        if not phone_verified and normalized_phone:
+            active_verif = SMSVerification.objects.filter(
+                phone_number=normalized_phone,
+                is_verified=True,
+                created_at__gte=timezone.now() - timedelta(minutes=30)
+            ).first()
+            if active_verif:
+                phone_verified = True
+            elif sms_code:
+                valid_code, code_msg = verify_checkout_sms_code(normalized_phone, sms_code)
+                if valid_code:
+                    phone_verified = True
+                else:
+                    error = code_msg
 
         if not customer_name or not customer_phone:
             error = 'Пожалуйста, укажите ваше имя и номер телефона'
+        elif not phone_verified and not error:
+            error = 'Пожалуйста, подтвердите ваш номер телефона через SMS-код'
         elif delivery_method == Order.DeliveryMethods.COURIER and not delivery_address:
             error = 'Пожалуйста, укажите адрес доставки на карте или в поле ввода'
         else:
@@ -1233,7 +1264,6 @@ def checkout_view(request, subdomain=None):
             total_amount = max(Decimal('0'), subtotal - discount_amount + delivery_fee)
 
             # Detect source: Telegram Mini App vs Web
-            # Only genuine Telegram users (with non-empty telegram_user_id) are marked as TMA; all web browser visits are WEB
             telegram_user_id = request.POST.get('telegram_user_id')
             is_from_telegram = bool(
                 telegram_user_id and str(telegram_user_id).strip() not in ['', 'None', 'null', 'undefined', '0']
@@ -1277,12 +1307,22 @@ def checkout_view(request, subdomain=None):
                 source=source
             )
 
+            # Seamless customer user account creation and login
+            customer_user = get_or_create_customer_user(normalized_phone or customer_phone, customer_name)
+            if not request.user.is_authenticated:
+                customer_user.backend = 'django.contrib.auth.backends.ModelBackend'
+                login(request, customer_user)
+
             # Update or create Customer CRM record
-            customer, _ = Customer.objects.get_or_create(
-                store=store,
-                phone=customer_phone,
-                defaults={'name': customer_name}
-            )
+            customer = Customer.objects.filter(store=store).filter(
+                Q(phone=customer_phone) | Q(phone=normalized_phone)
+            ).first()
+            if not customer:
+                customer = Customer.objects.create(
+                    store=store,
+                    phone=customer_phone,
+                    name=customer_name
+                )
             customer.name = customer_name
             customer.orders_count += 1
             customer.total_spent += total_amount
@@ -1354,38 +1394,44 @@ def checkout_view(request, subdomain=None):
                     p = PaymentService.get_provider(store, 'MULTICARD')
                     inv = p.create_invoice(order, return_url=return_url)
                     if inv.get('success') and inv.get('checkout_url'):
-                        return redirect(inv['checkout_url'])
+                        dest_url = inv['checkout_url']
+                    else:
+                        dest_url = f'/payments/multicard/checkout/{order.order_number}/'
                 except Exception:
-                    pass
-                return redirect(f'/payments/multicard/checkout/{order.order_number}/')
+                    dest_url = f'/payments/multicard/checkout/{order.order_number}/'
             elif payment_method == 'CLICK':
                 try:
                     if not pay_settings.click_service_id or str(pay_settings.click_service_id).startswith('TEST_'):
-                        return redirect(f'/payments/simulate/{order.order_number}/?gateway=CLICK')
-                    success_rel = f'/store/{store.subdomain}/order/{order.order_number}/success/?paid=1' if store and store.subdomain else f'/order/{order.order_number}/success/?paid=1'
-                    return_url = request.build_absolute_uri(success_rel)
-                    click_url = PaymentService.get_payment_url(order, 'CLICK', return_url=return_url)
-                    if click_url:
-                        return redirect(click_url)
+                        dest_url = f'/payments/simulate/{order.order_number}/?gateway=CLICK'
+                    else:
+                        success_rel = f'/store/{store.subdomain}/order/{order.order_number}/success/?paid=1' if store and store.subdomain else f'/order/{order.order_number}/success/?paid=1'
+                        return_url = request.build_absolute_uri(success_rel)
+                        click_url = PaymentService.get_payment_url(order, 'CLICK', return_url=return_url)
+                        dest_url = click_url or f'/payments/simulate/{order.order_number}/?gateway=CLICK'
                 except Exception:
-                    pass
+                    dest_url = f'/payments/simulate/{order.order_number}/?gateway=CLICK'
             elif payment_method == 'PAYME':
                 try:
                     if not pay_settings.payme_merchant_id or str(pay_settings.payme_merchant_id).startswith('TEST_'):
-                        return redirect(f'/payments/simulate/{order.order_number}/?gateway=PAYME')
-                    success_rel = f'/store/{store.subdomain}/order/{order.order_number}/success/?paid=1' if store and store.subdomain else f'/order/{order.order_number}/success/?paid=1'
-                    return_url = request.build_absolute_uri(success_rel)
-                    payme_url = PaymentService.get_payment_url(order, 'PAYME', return_url=return_url)
-                    if payme_url:
-                        return redirect(payme_url)
+                        dest_url = f'/payments/simulate/{order.order_number}/?gateway=PAYME'
+                    else:
+                        success_rel = f'/store/{store.subdomain}/order/{order.order_number}/success/?paid=1' if store and store.subdomain else f'/order/{order.order_number}/success/?paid=1'
+                        return_url = request.build_absolute_uri(success_rel)
+                        payme_url = PaymentService.get_payment_url(order, 'PAYME', return_url=return_url)
+                        dest_url = payme_url or f'/payments/simulate/{order.order_number}/?gateway=PAYME'
                 except Exception:
-                    pass
+                    dest_url = f'/payments/simulate/{order.order_number}/?gateway=PAYME'
             elif payment_method == 'UZUM':
-                return redirect(f'/payments/simulate/{order.order_number}/?gateway=UZUM')
+                dest_url = f'/payments/simulate/{order.order_number}/?gateway=UZUM'
+            else:
+                dest_url = f'/store/{store.subdomain}/order/{order.order_number}/success/' if store and store.subdomain else f'/order/{order.order_number}/success/'
 
-            if store and store.subdomain:
-                return redirect(f'/store/{store.subdomain}/order/{order.order_number}/success/')
-            return redirect(f'/order/{order.order_number}/success/')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('format') == 'json' or request.content_type == 'application/json':
+                return JsonResponse({'success': True, 'redirect_url': dest_url, 'order_number': order.order_number})
+            return redirect(dest_url)
+
+        if error and (request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('format') == 'json' or request.content_type == 'application/json'):
+            return JsonResponse({'success': False, 'error': error}, status=400)
 
     is_tma = bool(request.GET.get('tma') == '1' or request.session.get('telegram_user_id'))
     branches = store.branches.filter(is_active=True).order_by('-is_accepting_orders', '-is_main', 'id')
@@ -1406,6 +1452,19 @@ def checkout_view(request, subdomain=None):
 
     saved_phone = request.session.get('customer_phone', '')
     saved_name = request.session.get('customer_name', '')
+    if request.user.is_authenticated and getattr(request.user, 'phone', None):
+        saved_phone = saved_phone or request.user.phone
+        saved_name = saved_name or request.user.get_full_name() or request.user.first_name
+
+    from apps.core.sms_service import normalize_phone_number
+    from apps.accounts.models import SMSVerification
+    norm_phone = normalize_phone_number(saved_phone) if saved_phone else ''
+    is_phone_verified = False
+    if request.user.is_authenticated and getattr(request.user, 'phone', None):
+        is_phone_verified = True
+    elif norm_phone and SMSVerification.objects.filter(phone_number=norm_phone, is_verified=True, created_at__gte=timezone.now() - timedelta(minutes=30)).exists():
+        is_phone_verified = True
+
     recommended_products = Product.objects.filter(store=store, is_active=True).order_by('-is_featured', '-rating', '-id')[:12]
     for p in recommended_products:
         p.display_name = p.get_name(lang) if hasattr(p, 'get_name') else (getattr(p, f'name_{lang}', None) or getattr(p, 'name_uz', '') or getattr(p, 'name_ru', ''))
@@ -1435,6 +1494,7 @@ def checkout_view(request, subdomain=None):
         'is_tma': is_tma,
         'saved_phone': saved_phone,
         'saved_name': saved_name,
+        'is_phone_verified': is_phone_verified,
         'recommended_products': recommended_products,
         'promo_code': request.session.get('promo_code', ''),
         'promo_discount': float(request.session.get('promo_discount', 0) or 0),
@@ -1516,6 +1576,73 @@ def order_live_tracking_api(request, order_number, subdomain=None):
         'dest_lng': dest_lng,
         'courier': courier_data
     })
+
+
+# -----------------------------------------------------------------
+# CHECKOUT SMS VERIFICATION API (Eskiz.uz Gateway - Template 92326)
+# -----------------------------------------------------------------
+
+@csrf_exempt
+def checkout_send_code_api(request, subdomain=None):
+    """Send 4-digit SMS verification code to customer during checkout via Eskiz API."""
+    store = get_current_store(request, subdomain)
+    if not store:
+        return JsonResponse({'success': False, 'error': 'Do\'kon topilmadi'}, status=404)
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8')) if request.body else request.POST
+        except Exception:
+            data = request.POST
+
+        phone = (data.get('phone') or '').strip()
+        if not phone:
+            return JsonResponse({'success': False, 'error': 'Telefon raqamini kiriting'}, status=400)
+
+        from apps.core.sms_service import send_checkout_sms_code
+        result = send_checkout_sms_code(phone)
+        status_code = 200 if result.get('success') else 400
+        return JsonResponse(result, status=status_code)
+
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def checkout_verify_code_api(request, subdomain=None):
+    """Verify customer's 4-digit SMS code during checkout."""
+    store = get_current_store(request, subdomain)
+    if not store:
+        return JsonResponse({'success': False, 'error': 'Do\'kon topilmadi'}, status=404)
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8')) if request.body else request.POST
+        except Exception:
+            data = request.POST
+
+        phone = (data.get('phone') or '').strip()
+        code = (data.get('code') or '').strip()
+
+        if not phone:
+            return JsonResponse({'success': False, 'error': 'Telefon raqamini kiriting'}, status=400)
+        if not code:
+            return JsonResponse({'success': False, 'error': 'Tasdiqlash kodini kiriting'}, status=400)
+
+        from apps.core.sms_service import verify_checkout_sms_code, normalize_phone_number
+        normalized_phone = normalize_phone_number(phone)
+        is_valid, msg = verify_checkout_sms_code(normalized_phone, code)
+
+        if not is_valid:
+            return JsonResponse({'success': False, 'error': msg}, status=400)
+
+        return JsonResponse({
+            'success': True,
+            'verified': True,
+            'phone': normalized_phone,
+            'message': msg
+        })
+
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
 
 
 # -----------------------------------------------------------------
