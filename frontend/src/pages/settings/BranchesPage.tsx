@@ -28,7 +28,9 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  Sparkles
+  Sparkles,
+  Clock,
+  Calendar
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -183,6 +185,65 @@ export const formatUzPhone = (value: string): string => {
   return res;
 };
 
+export const DAYS_OF_WEEK = [
+  { key: "mon", labelKey: "day_mon", shortUz: "Dush", shortRu: "Пн", shortEn: "Mon" },
+  { key: "tue", labelKey: "day_tue", shortUz: "Sesh", shortRu: "Вт", shortEn: "Tue" },
+  { key: "wed", labelKey: "day_wed", shortUz: "Chor", shortRu: "Ср", shortEn: "Wed" },
+  { key: "thu", labelKey: "day_thu", shortUz: "Pay", shortRu: "Чт", shortEn: "Thu" },
+  { key: "fri", labelKey: "day_fri", shortUz: "Jum", shortRu: "Пт", shortEn: "Fri" },
+  { key: "sat", labelKey: "day_sat", shortUz: "Shan", shortRu: "Сб", shortEn: "Sat" },
+  { key: "sun", labelKey: "day_sun", shortUz: "Yak", shortRu: "Вс", shortEn: "Sun" },
+];
+
+export const DEFAULT_WEEKLY_SCHEDULE: Record<string, { open: string; close: string; closed: boolean }> = {
+  mon: { open: "09:00", close: "23:00", closed: false },
+  tue: { open: "09:00", close: "23:00", closed: false },
+  wed: { open: "09:00", close: "23:00", closed: false },
+  thu: { open: "09:00", close: "23:00", closed: false },
+  fri: { open: "09:00", close: "23:00", closed: false },
+  sat: { open: "09:00", close: "23:00", closed: false },
+  sun: { open: "09:00", close: "23:00", closed: false },
+};
+
+export const getTodayScheduleSummary = (
+  b: BranchItem,
+  t: (key: string) => string
+): { text: string; isOpenNow: boolean; isDayOff: boolean } => {
+  const weekdayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const todayKey = weekdayKeys[new Date().getDay()];
+  const sched = b.working_schedule;
+
+  if (b.is_accepting_orders === false) {
+    return { text: t("branch_closed_status") || "Yopiq", isOpenNow: false, isDayOff: false };
+  }
+
+  if (sched && sched[todayKey]) {
+    const day = sched[todayKey];
+    if (day.closed) {
+      return { text: t("day_off") || "Dam olish kuni", isOpenNow: false, isDayOff: true };
+    }
+    const now = new Date();
+    const [openH, openM] = (day.open || "09:00").split(":").map(Number);
+    const [closeH, closeM] = (day.close || "23:00").split(":").map(Number);
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const openMin = openH * 60 + (openM || 0);
+    const closeMin = closeH * 60 + (closeM || 0);
+    const isOpenNow = nowMin >= openMin && nowMin <= closeMin;
+
+    return {
+      text: `${day.open} — ${day.close}`,
+      isOpenNow,
+      isDayOff: false,
+    };
+  }
+
+  return {
+    text: b.working_hours || "09:00 — 23:00",
+    isOpenNow: true,
+    isDayOff: false,
+  };
+};
+
 export const BranchesPage: React.FC = () => {
   const { t } = useAuth();
   const navigate = useNavigate();
@@ -208,6 +269,10 @@ export const BranchesPage: React.FC = () => {
   const [formManagerPassword, setFormManagerPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [usePhoneAsLogin, setUsePhoneAsLogin] = useState(true);
+  const [scheduleMode, setScheduleMode] = useState<"daily" | "247" | "custom">("daily");
+  const [dailyOpenTime, setDailyOpenTime] = useState("09:00");
+  const [dailyCloseTime, setDailyCloseTime] = useState("23:00");
+  const [weeklySchedule, setWeeklySchedule] = useState<Record<string, { open: string; close: string; closed: boolean }>>({ ...DEFAULT_WEEKLY_SCHEDULE });
   const [formError, setFormError] = useState("");
   const [isLocating, setIsLocating] = useState(false);
 
@@ -246,12 +311,43 @@ export const BranchesPage: React.FC = () => {
         throw new Error(t("branch_password_error") || "Filial akkaunti uchun parol kamida 4 belgidan iborat bo'lishi kerak");
       }
 
+      let workingHoursStr = "";
+      let workingSchedObj: Record<string, { open: string; close: string; closed: boolean }> = {};
+
+      if (scheduleMode === "247") {
+        workingHoursStr = "24/7";
+        DAYS_OF_WEEK.forEach((d) => {
+          workingSchedObj[d.key] = { open: "00:00", close: "23:59", closed: false };
+        });
+      } else if (scheduleMode === "daily") {
+        workingHoursStr = `${dailyOpenTime} — ${dailyCloseTime}`;
+        DAYS_OF_WEEK.forEach((d) => {
+          workingSchedObj[d.key] = { open: dailyOpenTime, close: dailyCloseTime, closed: false };
+        });
+      } else {
+        workingSchedObj = { ...weeklySchedule };
+        const openDays = DAYS_OF_WEEK.filter((d) => !weeklySchedule[d.key]?.closed);
+        if (openDays.length === 0) {
+          workingHoursStr = t("day_off") || "Dam olish";
+        } else if (openDays.length === 7) {
+          const first = weeklySchedule.mon;
+          const allSame = DAYS_OF_WEEK.every(
+            (d) => weeklySchedule[d.key]?.open === first.open && weeklySchedule[d.key]?.close === first.close
+          );
+          workingHoursStr = allSame ? `${first.open} — ${first.close}` : "Har xil vaqtda";
+        } else {
+          workingHoursStr = openDays.map((d) => d.shortUz).join(", ");
+        }
+      }
+
       const payload: any = {
         name: formName.trim(),
         address: formAddress.trim(),
         phone: formPhone.trim(),
         latitude: latNum,
         longitude: lngNum,
+        working_hours: workingHoursStr,
+        working_schedule: workingSchedObj,
         is_main: formIsMain,
         is_accepting_orders: formIsAcceptingOrders,
       };
@@ -452,6 +548,10 @@ export const BranchesPage: React.FC = () => {
     setFormManagerPassword("");
     setUsePhoneAsLogin(true);
     setShowPassword(false);
+    setScheduleMode("daily");
+    setDailyOpenTime("09:00");
+    setDailyCloseTime("23:00");
+    setWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE);
     setFormError("");
     setSearchResults([]);
     setShowResultsDropdown(false);
@@ -479,6 +579,60 @@ export const BranchesPage: React.FC = () => {
     setMapPickerZoom(16);
     setFormIsMain(Boolean(b.is_main));
     setFormIsAcceptingOrders(b.is_accepting_orders !== false);
+
+    // Populate Working Schedule
+    if (b.working_schedule && Object.keys(b.working_schedule).length > 0) {
+      const sched = { ...DEFAULT_WEEKLY_SCHEDULE, ...b.working_schedule };
+      setWeeklySchedule(sched);
+      const is247 = DAYS_OF_WEEK.every((d) => {
+        const s = sched[d.key];
+        return s && !s.closed && s.open === "00:00" && (s.close === "23:59" || s.close === "24:00");
+      });
+      if (is247 || b.working_hours === "24/7") {
+        setScheduleMode("247");
+      } else {
+        const first = sched.mon;
+        const allSame = first && !first.closed && DAYS_OF_WEEK.every((d) => {
+          const s = sched[d.key];
+          return s && !s.closed && s.open === first.open && s.close === first.close;
+        });
+        if (allSame) {
+          setScheduleMode("daily");
+          setDailyOpenTime(first.open || "09:00");
+          setDailyCloseTime(first.close || "23:00");
+        } else {
+          setScheduleMode("custom");
+        }
+      }
+    } else if (b.working_hours) {
+      if (b.working_hours === "24/7") {
+        setScheduleMode("247");
+      } else {
+        const parts = b.working_hours.split(/[—\-–]/);
+        if (parts.length === 2 && parts[0].trim().includes(":") && parts[1].trim().includes(":")) {
+          const op = parts[0].trim();
+          const cl = parts[1].trim();
+          setScheduleMode("daily");
+          setDailyOpenTime(op);
+          setDailyCloseTime(cl);
+          const newSched: Record<string, { open: string; close: string; closed: boolean }> = {};
+          DAYS_OF_WEEK.forEach((d) => {
+            newSched[d.key] = { open: op, close: cl, closed: false };
+          });
+          setWeeklySchedule(newSched);
+        } else {
+          setScheduleMode("daily");
+          setDailyOpenTime("09:00");
+          setDailyCloseTime("23:00");
+          setWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE);
+        }
+      }
+    } else {
+      setScheduleMode("daily");
+      setDailyOpenTime("09:00");
+      setDailyCloseTime("23:00");
+      setWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE);
+    }
 
     const uname = b.manager_username || "";
     setFormManagerUsername(uname);
@@ -728,46 +882,78 @@ export const BranchesPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {branches.map((b) => {
             const isAccepting = b.is_accepting_orders !== false;
+            const todaySched = getTodayScheduleSummary(b, t);
+            const isCurrentlyOpen = b.is_currently_open !== false && todaySched.isOpenNow;
             return (
               <div
                 key={b.id}
                 onClick={() => setSelectedBranch(b)}
-                className="group relative bg-white dark:bg-[#151824] rounded-[28px] border border-slate-200/90 dark:border-white/10 p-5 space-y-4 transition-all duration-200 hover:shadow-xl hover:border-[#211b2e]/30 dark:hover:border-[#c8ff6a]/40 cursor-pointer flex flex-col justify-between"
+                className="group relative bg-white dark:bg-[#151824] rounded-[26px] border border-slate-200/90 dark:border-white/10 p-5 space-y-3.5 transition-all duration-200 hover:shadow-xl hover:border-[#211b2e]/30 dark:hover:border-[#c8ff6a]/40 cursor-pointer flex flex-col justify-between"
               >
-                <div className="space-y-3.5">
-                  {/* Card Header: Title + Status Pill + Actions */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1.5 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
+                <div className="space-y-3">
+                  {/* Card Top: Status Pill + Actions & Switch */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight ${
+                          !isAccepting
+                            ? "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10"
+                            : !isCurrentlyOpen
+                            ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80"
+                            : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80"
+                        }`}
+                      >
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                            isAccepting
-                              ? "bg-emerald-50 text-emerald-800 border border-emerald-200/80"
-                              : "bg-slate-100 text-slate-600 border border-slate-200"
+                          className={`w-2 h-2 rounded-full ${
+                            !isAccepting
+                              ? "bg-slate-400"
+                              : !isCurrentlyOpen
+                              ? "bg-amber-500"
+                              : "bg-emerald-500 animate-pulse"
                           }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              isAccepting ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
-                            }`}
-                          />
-                          <span>{isAccepting ? (t("branch_open_status") || "Ochiq") : (t("branch_closed_status") || "Yopiq")}</span>
+                        />
+                        <span>
+                          {!isAccepting
+                            ? (t("branch_closed_status") || "Yopiq")
+                            : !isCurrentlyOpen
+                            ? (t("branch_now_closed") || "Hozir yopiq")
+                            : (t("branch_open_status") || "Ochiq")}
                         </span>
+                      </span>
 
-                        {b.is_main && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#211b2e] text-[#c8ff6a] border border-[#c8ff6a]/30 shadow-2xs">
-                            ★ {t("is_main_branch") || "Asosiy"}
-                          </span>
-                        )}
-                      </div>
-
-                      <h2 className="text-base font-black text-slate-900 dark:text-white line-clamp-1 group-hover:text-[#211b2e] dark:group-hover:text-[#c8ff6a] transition-colors">
-                        {b.name}
-                      </h2>
+                      {b.is_main && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-[#211b2e] text-[#c8ff6a] border border-[#c8ff6a]/30 shadow-2xs">
+                          ★ {t("is_main_branch") || "Asosiy"}
+                        </span>
+                      )}
                     </div>
 
-                    {/* Top-Right Quick Action Icons */}
-                    <div className="flex items-center gap-0.5 shrink-0">
+                    {/* Top-Right: iOS Toggle Switch + Action Buttons */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Interactive iOS Switch */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleOrdersMutation.mutate({
+                            id: b.id,
+                            is_accepting_orders: !isAccepting,
+                          });
+                        }}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          isAccepting ? "bg-[#211b2e] dark:bg-[#c8ff6a]" : "bg-slate-300 dark:bg-zinc-700"
+                        }`}
+                        title={isAccepting ? (t("branch_action_close") || "Yopish") : (t("branch_action_open") || "Ochish")}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-[#211b2e] shadow-md ring-0 transition duration-200 ease-in-out ${
+                            isAccepting ? "translate-x-4" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+
+                      <div className="h-4 w-[1px] bg-slate-200 dark:bg-white/10 mx-0.5" />
+
                       <button
                         type="button"
                         title={t("branch_view_full") || "To'liq ko'rish"}
@@ -775,9 +961,9 @@ export const BranchesPage: React.FC = () => {
                           e.stopPropagation();
                           setSelectedBranch(b);
                         }}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
                       >
-                        <Maximize2 className="w-4 h-4" />
+                        <Maximize2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
@@ -786,9 +972,9 @@ export const BranchesPage: React.FC = () => {
                           e.stopPropagation();
                           openEditModal(b);
                         }}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
@@ -799,51 +985,30 @@ export const BranchesPage: React.FC = () => {
                             deleteMutation.mutate(b.id);
                           }
                         }}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                        className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
 
-                  {/* Status Toggle Row (Apple/Linear iOS Switch Style) */}
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10">
-                    <div className="min-w-0 pr-2">
-                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                        <span>{isAccepting ? (t("branch_open_status") || "Ochiq") : (t("branch_closed_status") || "Yopiq")}</span>
-                      </div>
-                      <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                        {isAccepting
-                          ? (t("branch_orders_accepting_hint") || "Buyurtmalar qabul qilinmoqda")
-                          : (t("branch_orders_paused_hint") || "Buyurtmalar to'xtatilgan")}
-                      </div>
-                    </div>
+                  {/* Branch Name */}
+                  <div>
+                    <h2 className="text-base font-black text-slate-900 dark:text-white line-clamp-1 group-hover:text-[#211b2e] dark:group-hover:text-[#c8ff6a] transition-colors">
+                      {b.name}
+                    </h2>
+                  </div>
 
-                    {/* Interactive iOS / Linear Toggle Switch */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleOrdersMutation.mutate({
-                          id: b.id,
-                          is_accepting_orders: !isAccepting,
-                        });
-                      }}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        isAccepting ? "bg-[#211b2e] dark:bg-[#c8ff6a]" : "bg-slate-300 dark:bg-zinc-700"
-                      }`}
-                      title={isAccepting ? (t("branch_action_close") || "Yopish") : (t("branch_action_open") || "Ochish")}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-[#211b2e] shadow-md ring-0 transition duration-200 ease-in-out ${
-                          isAccepting ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
+                  {/* Working Hours Badge */}
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-xs">
+                    <Clock className="w-3.5 h-3.5 text-[#211b2e] dark:text-[#c8ff6a] shrink-0" />
+                    <span className="font-semibold text-slate-700 dark:text-slate-200 line-clamp-1">
+                      {t("today_schedule") || "Bugun"}: {todaySched.text}
+                    </span>
                   </div>
 
                   {/* Location & Contact Info */}
-                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 pt-0.5">
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                       <span className="line-clamp-2 leading-relaxed">{b.address}</span>
@@ -861,9 +1026,9 @@ export const BranchesPage: React.FC = () => {
                       </div>
                     )}
                     {b.latitude && b.longitude ? (
-                      <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center justify-between pt-0.5">
                         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-                          <Compass className="w-3.5 h-3.5 text-emerald-500" />
+                          <Compass className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                           <span>
                             {Number(b.latitude).toFixed(4)}, {Number(b.longitude).toFixed(4)}
                           </span>
@@ -875,14 +1040,14 @@ export const BranchesPage: React.FC = () => {
                             setMapTarget([Number(b.latitude), Number(b.longitude)]);
                             setViewMode("map");
                           }}
-                          className="text-[10px] text-[#211b2e] dark:text-[#c8ff6a] font-bold bg-[#211b2e]/5 dark:bg-white/10 hover:bg-[#211b2e]/10 px-2.5 py-1 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          className="text-[10px] text-[#211b2e] dark:text-[#c8ff6a] font-bold bg-[#211b2e]/5 dark:bg-white/10 hover:bg-[#211b2e]/10 px-2 py-1 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
                         >
-                          <span>{t("branch_pick_on_map") || "Xaritada ko'rish"}</span>
+                          <span>{t("branch_pick_on_map") || "Xaritada"}</span>
                           <ExternalLink className="w-2.5 h-2.5" />
                         </button>
                       </div>
                     ) : (
-                      <div className="text-[10px] text-amber-600 font-semibold bg-amber-50 p-1.5 rounded-lg flex items-center gap-1">
+                      <div className="text-[10px] text-amber-600 font-semibold bg-amber-50 dark:bg-amber-950/30 p-1.5 rounded-lg flex items-center gap-1">
                         <AlertCircle className="w-3 h-3 shrink-0" />
                         <span>Koordinata belgilanmagan</span>
                       </div>
@@ -890,11 +1055,11 @@ export const BranchesPage: React.FC = () => {
                   </div>
 
                   {/* Manager Login Info Box in StoreBox Brand Style */}
-                  <div className="p-3.5 rounded-2xl bg-[#211b2e] text-white space-y-2 border border-white/10 shadow-xs text-xs">
+                  <div className="p-3 rounded-2xl bg-[#211b2e] text-white space-y-1.5 border border-white/10 shadow-xs text-xs">
                     <div className="flex items-center justify-between text-[10px] uppercase font-black tracking-wider text-[#c8ff6a]">
                       <div className="flex items-center gap-1.5">
                         <Key className="w-3.5 h-3.5 text-[#c8ff6a]" />
-                        <span>{t("branch_login_title") || "Filial kirish hisobi"}</span>
+                        <span>{t("branch_login_title") || "Filial hisobi"}</span>
                       </div>
                       {b.orders_count !== undefined && (
                         <span className="inline-flex items-center gap-1 font-bold text-[#211b2e] bg-[#c8ff6a] px-2 py-0.5 rounded-md text-[10px]">
@@ -907,7 +1072,7 @@ export const BranchesPage: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between pt-0.5">
                       <span className="text-neutral-300 text-[11px]">{t("branch_login_label") || "Login"}:</span>
-                      <span className="font-mono font-bold text-[#c8ff6a] bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 text-xs">
+                      <span className="font-mono font-bold text-[#c8ff6a] bg-white/10 px-2 py-0.5 rounded-lg border border-white/10 text-xs">
                         {b.manager_username ? (formatUzPhone(b.manager_username) || b.manager_username) : (b as any).manager_user?.username ? (formatUzPhone((b as any).manager_user?.username) || (b as any).manager_user?.username) : "—"}
                       </span>
                     </div>
@@ -915,7 +1080,7 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 {/* Card Footer: Clickable hint */}
-                <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] font-bold text-slate-500 group-hover:text-[#211b2e] dark:group-hover:text-[#c8ff6a] transition-colors">
+                <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] font-bold text-slate-500 group-hover:text-[#211b2e] dark:group-hover:text-[#c8ff6a] transition-colors">
                   <span>{t("branch_view_full") || "To'liq ko'rish"}</span>
                   <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -1148,7 +1313,7 @@ export const BranchesPage: React.FC = () => {
                     <span>{t("orders") || "Buyurtmalar"}</span>
                   </div>
                   <span className="bg-[#c8ff6a] text-[#211b2e] text-[10px] font-black px-2 py-0.5 rounded-md">
-                    {selectedBranch.orders_count || 0} ta
+                    {selectedBranch.orders_count || 0} {t("orders_count_label") || "buyurtma"}
                   </span>
                 </div>
                 <div className="text-xs text-neutral-300">
@@ -1161,6 +1326,63 @@ export const BranchesPage: React.FC = () => {
                 >
                   {t("branch_orders_btn") || "Buyurtmalarni ko'rish →"}
                 </button>
+              </div>
+            </div>
+
+            {/* Box 5: Full 7-Day Working Schedule */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#211b2e] dark:text-[#c8ff6a]" />
+                  <span>{t("branch_schedule_title") || "Haftalik ish jadvali (Dush — Yak)"}</span>
+                </div>
+                <div className="text-[11px] font-bold text-[#211b2e] dark:text-[#c8ff6a]">
+                  {selectedBranch.working_hours || "09:00 — 23:00"}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-1.5 pt-1">
+                {DAYS_OF_WEEK.map((d) => {
+                  const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+                  const todayKey = dayNames[new Date().getDay()];
+                  const isToday = d.key === todayKey;
+                  const daySched = selectedBranch.working_schedule?.[d.key];
+                  const isClosed = daySched ? daySched.closed : false;
+                  const timeText = daySched
+                    ? isClosed
+                      ? (t("day_off") || "Dam olish")
+                      : `${daySched.open} - ${daySched.close}`
+                    : selectedBranch.working_hours || "09:00 - 23:00";
+
+                  return (
+                    <div
+                      key={d.key}
+                      className={`p-2 rounded-xl text-center flex flex-col items-center justify-center transition-all ${
+                        isToday
+                          ? "bg-[#211b2e] text-[#c8ff6a] shadow-xs ring-1 ring-[#c8ff6a]/50"
+                          : "bg-white dark:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/10"
+                      }`}
+                    >
+                      <div className="text-[10px] font-black uppercase tracking-wider">
+                        {t(d.labelKey) || d.shortUz}
+                      </div>
+                      <div
+                        className={`text-[10px] font-bold mt-1 ${
+                          isClosed
+                            ? isToday ? "text-rose-300" : "text-rose-500"
+                            : isToday ? "text-[#c8ff6a]" : "text-slate-900 dark:text-white"
+                        }`}
+                      >
+                        {timeText}
+                      </div>
+                      {isToday && (
+                        <span className="text-[8px] uppercase tracking-widest font-black opacity-80 mt-0.5">
+                          {t("today_schedule") || "Bugun"}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -1387,6 +1609,204 @@ export const BranchesPage: React.FC = () => {
                     {t("branch_phone_hint") || "Faqat raqamlar kiritiladi, mijozlar va buyurtmalar uchun aloqa raqami"}
                   </p>
                 </div>
+              </div>
+
+              {/* Section: Working Schedule (Ish vaqti / График работы) */}
+              <div className="space-y-3 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-[#211b2e]" />
+                      <span>{t("working_hours_label") || "Ish vaqti (Dush — Yak)"}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Faqat shu vaqtlarda filial ochiq bo'ladi va yangi buyurtmalarni qabul qiladi
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3 Preset Mode Tabs */}
+                <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/80">
+                  <button
+                    type="button"
+                    onClick={() => setScheduleMode("daily")}
+                    className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      scheduleMode === "daily"
+                        ? "bg-white text-slate-900 shadow-2xs"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span className="truncate">{t("working_hours_preset_daily") || "Har kuni"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScheduleMode("247")}
+                    className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      scheduleMode === "247"
+                        ? "bg-[#211b2e] text-[#c8ff6a] shadow-2xs"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span className="truncate">{t("working_hours_preset_247") || "24/7"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScheduleMode("custom")}
+                    className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      scheduleMode === "custom"
+                        ? "bg-white text-slate-900 shadow-2xs"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span className="truncate">{t("working_hours_custom_days") || "Kunlar bo'yicha"}</span>
+                  </button>
+                </div>
+
+                {/* Mode 1: Daily */}
+                {scheduleMode === "daily" && (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          {t("open_time") || "Ochilish vaqti"}
+                        </label>
+                        <input
+                          type="time"
+                          value={dailyOpenTime}
+                          onChange={(e) => setDailyOpenTime(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold font-mono text-slate-900 focus:outline-none focus:border-[#211b2e]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          {t("close_time") || "Yopilish vaqti"}
+                        </label>
+                        <input
+                          type="time"
+                          value={dailyCloseTime}
+                          onChange={(e) => setDailyCloseTime(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold font-mono text-slate-900 focus:outline-none focus:border-[#211b2e]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      <span className="text-[10px] text-slate-400 font-semibold mr-1">Shablonlar:</span>
+                      {[
+                        { label: "08:00 — 22:00", open: "08:00", close: "22:00" },
+                        { label: "09:00 — 23:00", open: "09:00", close: "23:00" },
+                        { label: "10:00 — 00:00", open: "10:00", close: "00:00" },
+                        { label: "10:00 — 02:00", open: "10:00", close: "02:00" },
+                      ].map((p, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setDailyOpenTime(p.open);
+                            setDailyCloseTime(p.close);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors cursor-pointer ${
+                            dailyOpenTime === p.open && dailyCloseTime === p.close
+                              ? "bg-[#211b2e] text-[#c8ff6a]"
+                              : "bg-white text-slate-600 hover:bg-slate-200/70 border border-slate-200"
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mode 2: 24/7 */}
+                {scheduleMode === "247" && (
+                  <div className="p-3.5 rounded-2xl bg-[#211b2e] text-[#c8ff6a] border border-[#c8ff6a]/20 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-[#c8ff6a]/15 text-[#c8ff6a] flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-black text-white">24/7 Kechayu-kunduz rejim</div>
+                      <div className="text-[11px] text-neutral-300 mt-0.5">
+                        Filial haftaning barcha 7 kunida to'xtovsiz ishlaydi va har qanday vaqtda buyurtmalarni qabul qiladi
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mode 3: Custom by Day */}
+                {scheduleMode === "custom" && (
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 max-h-60 overflow-y-auto">
+                    {DAYS_OF_WEEK.map((d) => {
+                      const cur = weeklySchedule[d.key] || { open: "09:00", close: "23:00", closed: false };
+                      return (
+                        <div
+                          key={d.key}
+                          className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/70 gap-2 text-xs"
+                        >
+                          <div className="flex items-center gap-2 min-w-[110px]">
+                            <input
+                              type="checkbox"
+                              id={`day_check_${d.key}`}
+                              checked={!cur.closed}
+                              onChange={(e) => {
+                                const isClosed = !e.target.checked;
+                                setWeeklySchedule((prev) => ({
+                                  ...prev,
+                                  [d.key]: { ...prev[d.key], closed: isClosed },
+                                }));
+                              }}
+                              className="w-4 h-4 rounded text-[#211b2e] focus:ring-[#211b2e] cursor-pointer"
+                            />
+                            <label
+                              htmlFor={`day_check_${d.key}`}
+                              className="font-bold text-slate-800 cursor-pointer select-none"
+                            >
+                              {t(d.labelKey) || d.shortUz}
+                            </label>
+                          </div>
+
+                          {!cur.closed ? (
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <input
+                                type="time"
+                                value={cur.open}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setWeeklySchedule((prev) => ({
+                                    ...prev,
+                                    [d.key]: { ...prev[d.key], open: val },
+                                  }));
+                                }}
+                                className="px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono font-bold text-slate-900 focus:outline-none focus:border-[#211b2e]"
+                              />
+                              <span className="text-slate-400 font-bold text-[10px]">—</span>
+                              <input
+                                type="time"
+                                value={cur.close}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setWeeklySchedule((prev) => ({
+                                    ...prev,
+                                    [d.key]: { ...prev[d.key], close: val },
+                                  }));
+                                }}
+                                className="px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono font-bold text-slate-900 focus:outline-none focus:border-[#211b2e]"
+                              />
+                            </div>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 font-bold text-[10px] border border-rose-200/80">
+                              {t("day_off") || "Dam olish kuni"}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Section 2: Interactive Map Picker & Coordinates */}

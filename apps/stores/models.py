@@ -533,7 +533,8 @@ class Branch(models.Model):
     latitude = models.FloatField(default=41.2995, verbose_name='Lat')
     longitude = models.FloatField(default=69.2401, verbose_name='Lng')
     phone = models.CharField(max_length=30, blank=True, verbose_name='Telefon')
-    working_hours = models.CharField(max_length=100, default='09:00 - 23:59')
+    working_hours = models.CharField(max_length=100, default='09:00 - 23:59', verbose_name='Ish vaqti matni')
+    working_schedule = models.JSONField(default=dict, blank=True, verbose_name='Grafik (Dush-Yak)')
     is_main = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True, verbose_name='Активен')
     is_accepting_orders = models.BooleanField(default=True, verbose_name='Принимает заказы онлайн')
@@ -547,6 +548,43 @@ class Branch(models.Model):
     )
     manager_username = models.CharField(max_length=100, blank=True, default='', verbose_name='Логин филиала')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_currently_open(self, lang='uz'):
+        """Checks if branch is open based on is_accepting_orders, is_active, and working_schedule."""
+        if not self.is_active or not self.is_accepting_orders:
+            lbl = "Yopiq" if lang == 'uz' else "Закрыто" if lang == 'ru' else "Closed"
+            return False, lbl
+
+        schedule = self.working_schedule or {}
+        if not schedule:
+            lbl = "Ochiq" if lang == 'uz' else "Открыто" if lang == 'ru' else "Open"
+            return True, lbl
+
+        now = timezone.localtime(timezone.now())
+        weekday_keys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+        today_key = weekday_keys[now.weekday()]
+        day_info = schedule.get(today_key)
+
+        if not day_info:
+            return True, "Ochiq" if lang == 'uz' else "Открыто" if lang == 'ru' else "Open"
+
+        if day_info.get('closed'):
+            return False, "Dam olish kuni" if lang == 'uz' else "Выходной" if lang == 'ru' else "Day off"
+
+        try:
+            open_time = datetime.datetime.strptime(day_info.get('open', '00:00'), '%H:%M').time()
+            close_time = datetime.datetime.strptime(day_info.get('close', '23:59'), '%H:%M').time()
+            cur_time = now.time()
+            if open_time <= cur_time <= close_time:
+                close_str = day_info.get('close', '23:59')
+                if lang == 'uz':
+                    return True, f"Ochiq ({close_str} gacha)"
+                elif lang == 'ru':
+                    return True, f"Открыто (до {close_str})"
+                return True, f"Open (until {close_str})"
+            return False, "Hozir yopiq" if lang == 'uz' else "Сейчас закрыто" if lang == 'ru' else "Closed now"
+        except Exception:
+            return True, "Ochiq" if lang == 'uz' else "Открыто" if lang == 'ru' else "Open"
 
     class Meta:
         verbose_name = 'Филиал'

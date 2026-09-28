@@ -51,13 +51,14 @@ def find_optimal_branch(store, lat=None, lng=None, preferred_branch_id=None):
         except (ValueError, TypeError):
             pass
 
-    # Open branches taking orders
-    open_branches = list(all_branches.filter(is_active=True, is_accepting_orders=True))
+    # Open branches taking orders and currently within schedule
+    active_accepting = list(all_branches.filter(is_active=True, is_accepting_orders=True))
+    open_branches = [b for b in active_accepting if b.is_currently_open()[0]]
 
-    # If no open branches, fallback to any active branch, then any branch
-    candidate_branches = open_branches if open_branches else list(all_branches.filter(is_active=True))
+    # If no branch is currently within working hours, fallback to active accepting branches, then any active branch
+    candidate_branches = open_branches if open_branches else active_accepting
     if not candidate_branches:
-        candidate_branches = list(all_branches)
+        candidate_branches = list(all_branches.filter(is_active=True)) or list(all_branches)
 
     if not candidate_branches:
         return None, None

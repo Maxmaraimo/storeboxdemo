@@ -288,15 +288,26 @@ class BranchSerializer(serializers.ModelSerializer):
     manager_name = serializers.SerializerMethodField()
     manager_phone = serializers.SerializerMethodField()
     orders_count = serializers.SerializerMethodField()
+    is_currently_open = serializers.SerializerMethodField()
+    open_status_text = serializers.SerializerMethodField()
 
     class Meta:
         model = Branch
         fields = [
             "id", "name", "address", "phone", "latitude", "longitude",
-            "working_hours", "is_main", "is_active", "is_accepting_orders",
+            "working_hours", "working_schedule", "is_main", "is_active", "is_accepting_orders",
+            "is_currently_open", "open_status_text",
             "manager_user_id", "manager_username", "manager_name", "manager_phone",
             "orders_count", "created_at"
         ]
+
+    def get_is_currently_open(self, obj):
+        return obj.is_currently_open()[0]
+
+    def get_open_status_text(self, obj):
+        request = self.context.get('request')
+        lang = getattr(request, 'LANGUAGE_CODE', 'uz') if request else 'uz'
+        return obj.is_currently_open(lang=lang)[1]
 
     def get_manager_name(self, obj):
         if obj.manager_user:

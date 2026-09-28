@@ -19,6 +19,14 @@ export interface Store {
   logo_url?: string | null;
 }
 
+export interface BranchDaySchedule {
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
+export type BranchSchedule = Record<string, BranchDaySchedule>;
+
 export interface BranchItem {
   id: number;
   name: string;
@@ -27,6 +35,9 @@ export interface BranchItem {
   latitude?: number;
   longitude?: number;
   working_hours?: string;
+  working_schedule?: BranchSchedule;
+  is_currently_open?: boolean;
+  open_status_text?: string;
   is_main: boolean;
   is_active: boolean;
   is_accepting_orders?: boolean;
