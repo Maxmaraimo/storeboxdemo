@@ -19,7 +19,9 @@ import {
   LayoutGrid,
   Crosshair,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Search,
+  Loader2
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -64,7 +66,7 @@ const createBranchMarkerIcon = (isAccepting: boolean, isMain: boolean) =>
 const pickerPinIcon = L.divIcon({
   className: "custom-picker-pin",
   html: `<div style="position: relative; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(245, 158, 11, 0.35); animation: pulse 1.8s infinite;"></div>
+    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(200, 255, 106, 0.45); animation: pulse 1.8s infinite;"></div>
     <div style="width: 42px; height: 42px; border-radius: 50%; background: #211b2e; border: 3px solid #c8ff6a; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 22px rgba(0,0,0,0.4);">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8ff6a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
@@ -76,16 +78,17 @@ const pickerPinIcon = L.divIcon({
   iconAnchor: [21, 42],
 });
 
-// Interactive Map Picker Component for Modal
+// Interactive Map Picker Component for Modal with fly-to zoom
 const MapPickerEvents: React.FC<{
   position: [number, number];
+  targetZoom?: number;
   onPositionChange: (lat: number, lng: number) => void;
-}> = ({ position, onPositionChange }) => {
+}> = ({ position, targetZoom, onPositionChange }) => {
   const map = useMap();
 
   useEffect(() => {
-    map.setView(position, map.getZoom(), { animate: true });
-  }, [position, map]);
+    map.setView(position, targetZoom || Math.max(map.getZoom(), 15), { animate: true });
+  }, [position, targetZoom, map]);
 
   useMapEvents({
     click(e) {
@@ -139,6 +142,13 @@ const MapAutoFitter: React.FC<{ branches: BranchItem[]; centerTarget?: [number, 
   return null;
 };
 
+interface SearchResultItem {
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+}
+
 export const BranchesPage: React.FC = () => {
   const { t } = useAuth();
   const queryClient = useQueryClient();
@@ -154,12 +164,22 @@ export const BranchesPage: React.FC = () => {
   const [formPhone, setFormPhone] = useState("");
   const [formLat, setFormLat] = useState<string>("39.6843");
   const [formLng, setFormLng] = useState<string>("66.9272");
+  const [mapPickerZoom, setMapPickerZoom] = useState<number>(14);
   const [formIsMain, setFormIsMain] = useState(false);
   const [formIsAcceptingOrders, setFormIsAcceptingOrders] = useState(true);
   const [formManagerUsername, setFormManagerUsername] = useState("");
   const [formManagerPassword, setFormManagerPassword] = useState("");
   const [formError, setFormError] = useState("");
   const [isLocating, setIsLocating] = useState(false);
+
+  // Address search and geocoding states
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
+  const [showResultsDropdown, setShowResultsDropdown] = useState(false);
+  const [detectedAddress, setDetectedAddress] = useState("");
+  const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  const [searchFeedback, setSearchFeedback] = useState("");
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["branches"],
@@ -229,6 +249,147 @@ export const BranchesPage: React.FC = () => {
     },
   });
 
+  // Geocoding: search location by text (Photon API + Nominatim fallback)
+  const searchLocation = async (query: string, autoSelectTop = false) => {
+    const q = query.trim();
+    if (!q || q.length < 2) return;
+    setIsSearchingLocation(true);
+    setSearchFeedback("");
+
+    try {
+      let items: SearchResultItem[] = [];
+
+      // 1. First attempt: Photon API (Fast OSM search with POI support)
+      try {
+        const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=39.6542&lon=66.9597&limit=6`;
+        const pRes = await fetch(photonUrl);
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          if (pData?.features && pData.features.length > 0) {
+            items = pData.features.map((f: any) => {
+              const p = f.properties || {};
+              const streetPart = p.street ? `${p.street}${p.housenumber ? ' ' + p.housenumber : ''}` : '';
+              const fullAddress = [p.name, streetPart, p.city, p.country]
+                .filter(Boolean)
+                .filter((val, i, arr) => arr.indexOf(val) === i)
+                .join(", ");
+              return {
+                name: p.name || streetPart || p.city || q,
+                address: fullAddress || q,
+                lat: f.geometry.coordinates[1],
+                lng: f.geometry.coordinates[0],
+              };
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("Photon search error:", e);
+      }
+
+      // 2. Fallback attempt: OpenStreetMap Nominatim
+      if (items.length === 0) {
+        try {
+          const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&countrycodes=uz`;
+          const nRes = await fetch(nomUrl);
+          if (nRes.ok) {
+            const nData = await nRes.json();
+            if (Array.isArray(nData) && nData.length > 0) {
+              items = nData.map((item: any) => ({
+                name: item.name || item.display_name.split(",")[0],
+                address: item.display_name,
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lon),
+              }));
+            }
+          }
+        } catch (e) {
+          console.warn("Nominatim search error:", e);
+        }
+      }
+
+      setSearchResults(items);
+      if (items.length > 0) {
+        setShowResultsDropdown(true);
+        if (autoSelectTop) {
+          const top = items[0];
+          setFormLat(top.lat.toFixed(6));
+          setFormLng(top.lng.toFixed(6));
+          setMapPickerZoom(16);
+          setFormAddress(top.address || top.name);
+          setShowResultsDropdown(false);
+          setSearchFeedback(`📍 ${top.name}`);
+        }
+      } else {
+        setShowResultsDropdown(false);
+        setSearchFeedback(t("no_location_found") || "Bunday joy topilmadi. Nuqtani xaritadan tanlang");
+      }
+    } catch (err: any) {
+      console.error("Geocoding failed:", err);
+      setSearchFeedback("Qidirishda xatolik yuz berdi");
+    } finally {
+      setIsSearchingLocation(false);
+    }
+  };
+
+  const handleAddressTyping = (val: string) => {
+    setFormAddress(val);
+    setSearchFeedback("");
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    if (val.trim().length >= 3) {
+      typingTimeoutRef.current = setTimeout(() => {
+        searchLocation(val, false);
+      }, 500);
+    } else {
+      setSearchResults([]);
+      setShowResultsDropdown(false);
+    }
+  };
+
+  const selectSearchResult = (item: SearchResultItem) => {
+    setFormLat(item.lat.toFixed(6));
+    setFormLng(item.lng.toFixed(6));
+    setMapPickerZoom(16);
+    setFormAddress(item.address || item.name);
+    setShowResultsDropdown(false);
+    setSearchFeedback(`📍 ${item.name}`);
+  };
+
+  // Reverse Geocoding: get street name from coordinates
+  const reverseGeocode = async (lat: number, lng: number) => {
+    setIsReverseGeocoding(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.address) {
+          const parts = [
+            data.address.amenity || data.address.shop || data.address.building || data.name,
+            data.address.road ? `${data.address.road}${data.address.house_number ? ' ' + data.address.house_number : ''}` : '',
+            data.address.city || data.address.town || data.address.county,
+          ].filter(Boolean);
+          const text = parts.join(", ") || data.display_name;
+          if (text) {
+            setDetectedAddress(text);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Reverse geocode error:", err);
+    } finally {
+      setIsReverseGeocoding(false);
+    }
+  };
+
+  const handlePickerPositionChange = (lat: number, lng: number) => {
+    setFormLat(lat.toFixed(6));
+    setFormLng(lng.toFixed(6));
+    reverseGeocode(lat, lng);
+  };
+
   const openCreateModal = () => {
     setEditingBranch(null);
     setFormName("");
@@ -236,11 +397,16 @@ export const BranchesPage: React.FC = () => {
     setFormPhone("");
     setFormLat("39.6843");
     setFormLng("66.9272");
+    setMapPickerZoom(14);
     setFormIsMain(false);
     setFormIsAcceptingOrders(true);
     setFormManagerUsername("");
     setFormManagerPassword("");
     setFormError("");
+    setSearchResults([]);
+    setShowResultsDropdown(false);
+    setDetectedAddress("");
+    setSearchFeedback("");
     setModalOpen(true);
   };
 
@@ -249,21 +415,26 @@ export const BranchesPage: React.FC = () => {
     setFormName(b.name || "");
     setFormAddress(b.address || "");
     setFormPhone(b.phone || "");
-    setFormLat(
+    const latStr =
       b.latitude !== null && b.latitude !== undefined && !isNaN(Number(b.latitude))
         ? String(b.latitude)
-        : "39.6843"
-    );
-    setFormLng(
+        : "39.6843";
+    const lngStr =
       b.longitude !== null && b.longitude !== undefined && !isNaN(Number(b.longitude))
         ? String(b.longitude)
-        : "66.9272"
-    );
+        : "66.9272";
+    setFormLat(latStr);
+    setFormLng(lngStr);
+    setMapPickerZoom(16);
     setFormIsMain(Boolean(b.is_main));
     setFormIsAcceptingOrders(b.is_accepting_orders !== false);
     setFormManagerUsername(b.manager_username || "");
     setFormManagerPassword("");
     setFormError("");
+    setSearchResults([]);
+    setShowResultsDropdown(false);
+    setDetectedAddress("");
+    setSearchFeedback("");
     setModalOpen(true);
   };
 
@@ -271,6 +442,10 @@ export const BranchesPage: React.FC = () => {
     setModalOpen(false);
     setEditingBranch(null);
     setFormError("");
+    setSearchResults([]);
+    setShowResultsDropdown(false);
+    setDetectedAddress("");
+    setSearchFeedback("");
   };
 
   const handleLocateMe = () => {
@@ -282,8 +457,12 @@ export const BranchesPage: React.FC = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setIsLocating(false);
-        setFormLat(pos.coords.latitude.toFixed(6));
-        setFormLng(pos.coords.longitude.toFixed(6));
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setFormLat(lat.toFixed(6));
+        setFormLng(lng.toFixed(6));
+        setMapPickerZoom(16);
+        reverseGeocode(lat, lng);
       },
       (err) => {
         setIsLocating(false);
@@ -527,15 +706,15 @@ export const BranchesPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Status Toggle Banner */}
-                  <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-200/60">
+                  {/* Status Toggle Banner in StoreBox Brand Style */}
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-[#211b2e]/[0.03] dark:bg-white/5 border border-[#211b2e]/10 dark:border-white/10">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`w-2 h-2 rounded-full ${
-                          isAccepting ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          isAccepting ? "bg-[#c8ff6a] ring-4 ring-[#c8ff6a]/30 animate-pulse" : "bg-slate-300 dark:bg-zinc-600"
                         }`}
                       />
-                      <span className="text-xs font-bold text-slate-700">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                         {isAccepting ? (t("branch_open") || "Ochiq (Buyurtma olinmoqda)") : (t("branch_closed") || "Yopiq")}
                       </span>
                     </div>
@@ -547,13 +726,13 @@ export const BranchesPage: React.FC = () => {
                           is_accepting_orders: !isAccepting,
                         })
                       }
-                      className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-xs ${
                         isAccepting
-                          ? "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
-                          : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
+                          ? "bg-[#211b2e] hover:bg-black text-[#c8ff6a] border border-[#c8ff6a]/30"
+                          : "bg-[#c8ff6a] hover:bg-[#b8f553] text-[#211b2e] border border-[#211b2e]/20"
                       }`}
                     >
-                      <Power className="w-3 h-3" />
+                      <Power className="w-3.5 h-3.5" />
                       <span>{isAccepting ? (t("branch_closed") || "Yopish") : (t("branch_open") || "Ochish")}</span>
                     </button>
                   </div>
@@ -575,7 +754,7 @@ export const BranchesPage: React.FC = () => {
                     {b.latitude && b.longitude ? (
                       <div className="flex items-center justify-between pt-1">
                         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-                          <Compass className="w-3.5 h-3.5 text-blue-500" />
+                          <Compass className="w-3.5 h-3.5 text-emerald-500" />
                           <span>
                             {Number(b.latitude).toFixed(4)}, {Number(b.longitude).toFixed(4)}
                           </span>
@@ -586,7 +765,7 @@ export const BranchesPage: React.FC = () => {
                             setMapTarget([Number(b.latitude), Number(b.longitude)]);
                             setViewMode("map");
                           }}
-                          className="text-[10px] text-blue-600 font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer"
+                          className="text-[10px] text-[#211b2e] dark:text-[#c8ff6a] font-bold bg-[#211b2e]/5 dark:bg-white/10 hover:bg-[#211b2e]/10 px-2 py-0.5 rounded-md inline-flex items-center gap-1 transition-colors cursor-pointer"
                         >
                           <span>{t("branch_pick_on_map") || "Xaritada ko'rish"}</span>
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -600,23 +779,23 @@ export const BranchesPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Manager Login Info Box */}
-                  <div className="p-3 rounded-2xl bg-amber-50/60 border border-amber-200/60 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between text-[10px] uppercase font-black tracking-wider text-amber-800">
-                      <div className="flex items-center gap-1">
-                        <User className="w-3 h-3 text-amber-600" />
+                  {/* Manager Login Info Box in StoreBox Brand Style */}
+                  <div className="p-3.5 rounded-2xl bg-[#211b2e] text-white space-y-2 border border-white/10 shadow-xs text-xs">
+                    <div className="flex items-center justify-between text-[10px] uppercase font-black tracking-wider text-[#c8ff6a]">
+                      <div className="flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-[#c8ff6a]" />
                         <span>{t("branch_login_title") || "Filial kirish hisobi"}</span>
                       </div>
                       {b.orders_count !== undefined && (
-                        <span className="inline-flex items-center gap-1 font-bold text-amber-900 bg-amber-200/70 px-1.5 py-0.5 rounded-md">
+                        <span className="inline-flex items-center gap-1 font-bold text-[#211b2e] bg-[#c8ff6a] px-2 py-0.5 rounded-md text-[10px]">
                           <ShoppingBag className="w-2.5 h-2.5" />
                           <span>{b.orders_count} buyurtma</span>
                         </span>
                       )}
                     </div>
                     <div className="flex items-center justify-between pt-0.5">
-                      <span className="text-slate-500 text-[11px]">{t("branch_login_label") || "Login"}:</span>
-                      <span className="font-mono font-bold text-slate-800 bg-white px-2 py-0.5 rounded-md border border-slate-200/70">
+                      <span className="text-neutral-300 text-[11px]">{t("branch_login_label") || "Login"}:</span>
+                      <span className="font-mono font-bold text-[#c8ff6a] bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 text-xs">
                         {b.manager_username || (b as any).manager_user?.username || "—"}
                       </span>
                     </div>
@@ -634,13 +813,15 @@ export const BranchesPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL (CREATE / EDIT) WITH INTERACTIVE MAP PICKER */}
+      {/* MODAL (CREATE / EDIT) WITH INTERACTIVE ADDRESS SEARCH & MAP PICKER */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 my-8">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 my-8 border border-slate-200/80">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-amber-500" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shadow-xs border border-white/10">
+                  <Building2 className="w-4 h-4" />
+                </div>
                 <h3 className="text-base font-black text-slate-900">
                   {editingBranch
                     ? (t("edit_branch_btn") || "Filialni tahrirlash")
@@ -677,21 +858,116 @@ export const BranchesPage: React.FC = () => {
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="Burger & Co. — Samarqand Vokzal"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-[#211b2e]"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {t("branch_address_label") || "Manzil"} *
-                  </label>
-                  <input
-                    type="text"
-                    value={formAddress}
-                    onChange={(e) => setFormAddress(e.target.value)}
-                    placeholder="Samarqand sh., Rudakiy ko'chasi 45"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                  />
+                {/* ADDRESS WITH REAL-TIME MAP SEARCH & AUTOCOMPLETE */}
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      {t("branch_address_label") || "Manzil"} *
+                    </label>
+                    <span className="text-[10px] text-slate-400">
+                      {t("location_search_hint") || "Manzil yoki joy nomini kiriting"}
+                    </span>
+                  </div>
+
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      value={formAddress}
+                      onChange={(e) => handleAddressTyping(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          searchLocation(formAddress, true);
+                        }
+                      }}
+                      placeholder="Burger & Co., Samarqand v., Rudakiy ko'chasi 45"
+                      className="w-full pl-3.5 pr-28 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-[#211b2e]"
+                    />
+
+                    {/* Quick Search and Clear Action Buttons inside input */}
+                    <div className="absolute right-1.5 flex items-center gap-1">
+                      {formAddress && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormAddress("");
+                            setSearchResults([]);
+                            setShowResultsDropdown(false);
+                            setSearchFeedback("");
+                          }}
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => searchLocation(formAddress, true)}
+                        disabled={isSearchingLocation}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#211b2e] text-[#c8ff6a] hover:bg-black text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                        title={t("search_on_map") || "Xaritadan qidirish"}
+                      >
+                        {isSearchingLocation ? (
+                          <Loader2 className="w-3 h-3 text-[#c8ff6a] animate-spin" />
+                        ) : (
+                          <Search className="w-3 h-3 text-[#c8ff6a]" />
+                        )}
+                        <span>{t("search_on_map") || "Qidirish"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Search Feedback / Error */}
+                  {searchFeedback && (
+                    <div className="text-[10px] font-semibold text-emerald-600 mt-1">
+                      {searchFeedback}
+                    </div>
+                  )}
+
+                  {/* Autocomplete Suggestions Dropdown */}
+                  {showResultsDropdown && searchResults.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                      <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                        <span>Topilgan joylar ({searchResults.length})</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowResultsDropdown(false)}
+                          className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="max-h-52 overflow-y-auto">
+                        {searchResults.map((res, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => selectSearchResult(res)}
+                            className="w-full text-left px-3.5 py-2.5 hover:bg-[#211b2e]/5 flex items-start gap-2.5 transition-colors cursor-pointer group"
+                          >
+                            <div className="w-7 h-7 rounded-xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                              <MapPin className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-bold text-slate-900 line-clamp-1 group-hover:text-[#211b2e]">
+                                {res.name}
+                              </div>
+                              <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                                {res.address}
+                              </div>
+                              <div className="text-[9px] font-mono text-slate-400 mt-0.5">
+                                {res.lat.toFixed(4)}, {res.lng.toFixed(4)}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -703,7 +979,7 @@ export const BranchesPage: React.FC = () => {
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
                     placeholder="+998 90 123 45 67"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold font-mono focus:outline-none focus:border-brand"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold font-mono focus:outline-none focus:border-[#211b2e]"
                   />
                 </div>
               </div>
@@ -724,7 +1000,7 @@ export const BranchesPage: React.FC = () => {
                     type="button"
                     onClick={handleLocateMe}
                     disabled={isLocating}
-                    className="px-2.5 py-1 rounded-xl bg-violet-50 hover:bg-violet-100 text-brand text-[11px] font-bold border border-violet-200/80 flex items-center gap-1 transition-colors cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-xl bg-[#211b2e] text-[#c8ff6a] hover:bg-black text-[11px] font-bold border border-white/10 flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                   >
                     <Crosshair className={`w-3.5 h-3.5 ${isLocating ? "animate-spin" : ""}`} />
                     <span>{t("locate_me") || "Joylashuvim"}</span>
@@ -735,7 +1011,7 @@ export const BranchesPage: React.FC = () => {
                 <div className="w-full h-56 rounded-2xl overflow-hidden border border-slate-200 relative shadow-inner z-0">
                   <MapContainer
                     center={pickerPosition}
-                    zoom={14}
+                    zoom={mapPickerZoom}
                     style={{ width: "100%", height: "100%" }}
                     scrollWheelZoom={true}
                   >
@@ -745,19 +1021,37 @@ export const BranchesPage: React.FC = () => {
                     />
                     <MapPickerEvents
                       position={pickerPosition}
-                      onPositionChange={(lat, lng) => {
-                        setFormLat(lat.toFixed(6));
-                        setFormLng(lng.toFixed(6));
-                      }}
+                      targetZoom={mapPickerZoom}
+                      onPositionChange={handlePickerPositionChange}
                     />
                   </MapContainer>
-                  <div className="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-700 shadow-xs border border-slate-200/80 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <div className="absolute bottom-2 left-2 z-[400] bg-[#211b2e]/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold text-[#c8ff6a] shadow-xs border border-white/10 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-[#c8ff6a]" />
                     <span>
                       {parseFloat(formLat).toFixed(4)}, {parseFloat(formLng).toFixed(4)}
                     </span>
                   </div>
                 </div>
+
+                {/* Detected reverse-geocoded address prompt */}
+                {detectedAddress && (
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#211b2e]/[0.04] border border-[#211b2e]/10 text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-700 min-w-0 pr-2">
+                      <MapPin className="w-3.5 h-3.5 text-[#211b2e] shrink-0" />
+                      <span className="truncate text-[11px] font-medium">{detectedAddress}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormAddress(detectedAddress);
+                        setSearchFeedback(`📍 ${detectedAddress}`);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-[#211b2e] text-[#c8ff6a] hover:bg-black text-[10px] font-bold shrink-0 transition-colors cursor-pointer"
+                    >
+                      {t("use_this_address") || "Manzilni qo'yish"}
+                    </button>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
@@ -768,7 +1062,7 @@ export const BranchesPage: React.FC = () => {
                       value={formLat}
                       onChange={(e) => setFormLat(e.target.value)}
                       placeholder="39.6843"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-semibold focus:outline-none focus:border-brand"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-semibold focus:outline-none focus:border-[#211b2e]"
                     />
                   </div>
                   <div>
@@ -779,7 +1073,7 @@ export const BranchesPage: React.FC = () => {
                       value={formLng}
                       onChange={(e) => setFormLng(e.target.value)}
                       placeholder="66.9272"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-semibold focus:outline-none focus:border-brand"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-semibold focus:outline-none focus:border-[#211b2e]"
                     />
                   </div>
                 </div>
@@ -804,7 +1098,7 @@ export const BranchesPage: React.FC = () => {
                     value={formManagerUsername}
                     onChange={(e) => setFormManagerUsername(e.target.value)}
                     placeholder="branch_vokzal yoki +998901234567"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-[#211b2e]"
                   />
                 </div>
                 <div>
@@ -820,7 +1114,7 @@ export const BranchesPage: React.FC = () => {
                         ? t("branch_password_hint") || "O'zgartirmaslik uchun bo'sh qoldiring"
                         : "••••••••"
                     }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-[#211b2e]"
                   />
                   {editingBranch && (
                     <span className="text-[10px] text-slate-400 mt-1 block">
@@ -838,7 +1132,7 @@ export const BranchesPage: React.FC = () => {
                     id="is_accepting_orders"
                     checked={formIsAcceptingOrders}
                     onChange={(e) => setFormIsAcceptingOrders(e.target.checked)}
-                    className="w-4 h-4 rounded-md text-brand focus:ring-brand"
+                    className="w-4 h-4 rounded-md text-[#211b2e] focus:ring-[#211b2e]"
                   />
                   <label htmlFor="is_accepting_orders" className="text-xs font-bold text-slate-700 cursor-pointer">
                     {t("branch_toggle_orders") || "Buyurtmalarni qabul qilish (Ochiq)"}
@@ -851,7 +1145,7 @@ export const BranchesPage: React.FC = () => {
                     id="is_main_branch"
                     checked={formIsMain}
                     onChange={(e) => setFormIsMain(e.target.checked)}
-                    className="w-4 h-4 rounded-md text-brand focus:ring-brand"
+                    className="w-4 h-4 rounded-md text-[#211b2e] focus:ring-[#211b2e]"
                   />
                   <label htmlFor="is_main_branch" className="text-xs font-bold text-slate-700 cursor-pointer">
                     {t("is_main_branch") || "Asosiy filial sifatida belgilash"}
@@ -864,9 +1158,9 @@ export const BranchesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
-                {t("btn_cancel") || "Bekor qilish"}
+                {t("cancel") || "Bekor qilish"}
               </button>
               <button
                 type="button"

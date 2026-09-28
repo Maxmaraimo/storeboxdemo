@@ -213,45 +213,34 @@ export const Sidebar: React.FC = () => {
           {isExpanded ? (
             <Link
               to="/"
-              className="flex items-center gap-2.5 group overflow-hidden min-w-0"
-              title={store?.name || "StoreBox Dashboard"}
+              className="flex items-center gap-2.5 group overflow-hidden"
+              title="StoreBox Dashboard"
             >
-              {store?.logo_url ? (
-                <div className="w-10 h-10 rounded-2xl bg-white dark:bg-zinc-800 flex items-center justify-center p-1 shadow-md border border-slate-200/80 dark:border-white/10 shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
-                  <img src={store.logo_url} alt={store.name} className="w-full h-full object-contain" />
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-2xl bg-[#211b2e] flex items-center justify-center shadow-lg shadow-[#211b2e]/25 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
-                  <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
-                    <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
-                    <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
-                  </svg>
-                </div>
-              )}
+              {/* StoreBox Official Brand Cube Logo */}
+              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] flex items-center justify-center shadow-lg shadow-[#211b2e]/25 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
+                <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
+                  <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
+                  <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
+                </svg>
+              </div>
 
-              <div className="text-left truncate min-w-0">
-                <div className="text-[16px] font-[850] tracking-[-0.5px] text-neutral-900 dark:text-white leading-tight truncate">
-                  {store?.name || "StoreBox"}
+              <div className="text-left truncate">
+                <div className="text-[17px] font-[850] tracking-[-0.6px] text-neutral-900 dark:text-white leading-none">
+                  StoreBox
                 </div>
-                <div className="text-[9px] font-bold text-neutral-400 mt-0.5 tracking-wider uppercase truncate">
-                  {store?.business_category || "STUDIO 2.0"}
+                <div className="text-[9px] font-bold text-neutral-400 mt-1 tracking-wider">
+                  STUDIO 2.0
                 </div>
               </div>
             </Link>
           ) : (
-            <Link to="/" title={store?.name || "StoreBox"} className="group">
-              {store?.logo_url ? (
-                <div className="w-9 h-9 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center p-1 shadow-md border border-slate-200 dark:border-white/10 group-hover:scale-105 transition-transform overflow-hidden">
-                  <img src={store.logo_url} alt={store.name} className="w-full h-full object-contain" />
-                </div>
-              ) : (
-                <div className="w-9 h-9 rounded-xl bg-[#211b2e] flex items-center justify-center shadow-md border border-white/10 group-hover:scale-105 transition-transform">
-                  <svg viewBox="0 0 32 32" className="w-5 h-5 stroke-[#c8ff6a] fill-none stroke-[1.8]">
-                    <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
-                    <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
-                  </svg>
-                </div>
-              )}
+            <Link to="/" title="StoreBox" className="group">
+              <div className="w-9 h-9 rounded-xl bg-[#211b2e] flex items-center justify-center shadow-md border border-white/10 group-hover:scale-105 transition-transform">
+                <svg viewBox="0 0 32 32" className="w-5 h-5 stroke-[#c8ff6a] fill-none stroke-[1.8]">
+                  <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
+                  <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
+                </svg>
+              </div>
             </Link>
           )}
 
