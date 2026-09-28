@@ -108,10 +108,20 @@ def format_order_telegram_message(order):
 
     src_label = '📱 Telegram Mini App' if order.source == 'TMA' else '🌐 Veb-sayt'
 
+    branch_line = ''
+    if order.branch:
+        branch_line = f"\n🏢 <b>Filial:</b> <b>{order.branch.name}</b>"
+        if order.branch.address:
+            branch_line += f"\n📍 <b>Filial manzili:</b> {order.branch.address}"
+        if order.branch.phone:
+            branch_line += f"\n📞 <b>Filial tel:</b> <code>{order.branch.phone}</code>"
+        branch_line += "\n"
+
     msg = (
         f"🔔 <b>YANGI BUYURTMA #{order.order_number}</b>\n"
         f"🏪 <b>Do'kon:</b> {store_name}\n"
-        f"📍 <b>Manba:</b> {src_label}\n\n"
+        f"📍 <b>Manba:</b> {src_label}\n"
+        f"{branch_line}\n"
         f"👤 <b>Xaridor:</b> {order.customer_name}\n"
         f"📞 <b>Telefon:</b> <code>{order.customer_phone}</code>\n\n"
         f"🚚 <b>Yetkazib berish:</b> {delivery_title}\n"

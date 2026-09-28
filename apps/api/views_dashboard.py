@@ -6,7 +6,8 @@ from django.db.models.functions import TruncDate
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from apps.orders.models import Order, OrderItem, Customer, ChatMessage
+from apps.orders.models import Order, OrderItem, Customer, ChatMessage, StoreStaff
+from apps.stores.models import Branch
 from .views_auth import get_merchant_store
 
 MONTH_NAMES_UZ_SHORT = ["", "Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"]
@@ -463,7 +464,19 @@ def dashboard_notifications_view(request):
             "notifications": []
         })
 
-    new_orders_qs = Order.objects.filter(store=store, status=Order.OrderStatuses.NEW).order_by("-created_at")
+    user = request.user
+    user_branch = None
+    if user.is_authenticated:
+        user_branch = Branch.objects.filter(store=store, manager_user=user).first()
+        if not user_branch:
+            staff_profile = StoreStaff.objects.filter(store=store, user=user, is_active=True).first()
+            if staff_profile and staff_profile.branch:
+                user_branch = staff_profile.branch
+
+    new_orders_qs = Order.objects.filter(store=store, status=Order.OrderStatuses.NEW)
+    if user_branch:
+        new_orders_qs = new_orders_qs.filter(branch=user_branch)
+    new_orders_qs = new_orders_qs.order_by("-created_at")
     new_orders_count = new_orders_qs.count()
 
     unread_chats_qs = ChatMessage.objects.filter(
@@ -482,13 +495,16 @@ def dashboard_notifications_view(request):
 
     notifications = []
     for o in new_orders_qs[:10]:
+        branch_tag = f" • 🏢 {o.branch.name}" if o.branch else ""
         notifications.append({
             "id": f"order_{o.id}",
             "type": "order",
-            "title": f"Yangi buyurtma #{o.order_number}",
-            "body": f"{o.customer_name or 'Mijoz'} - {float(o.total_amount):,.0f} so'm",
+            "title": f"Yangi buyurtma #{o.order_number}" + (f" ({o.branch.name})" if o.branch else ""),
+            "body": f"{o.customer_name or 'Mijoz'} - {float(o.total_amount):,.0f} so'm{branch_tag}",
             "created_at": o.created_at.isoformat(),
-            "url": "/orders",
+            "url": f"/orders?branch={o.branch.id}" if o.branch else "/orders",
+            "branch_id": o.branch.id if o.branch else None,
+            "branch_name": o.branch.name if o.branch else None,
             "is_read": False,
         })
 

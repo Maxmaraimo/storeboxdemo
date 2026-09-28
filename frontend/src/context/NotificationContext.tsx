@@ -31,6 +31,29 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+const playOrderChime = () => {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+    osc.frequency.setValueAtTime(587.33, now); // D5
+    osc.frequency.setValueAtTime(880, now + 0.12); // A5
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc.start(now);
+    osc.stop(now + 0.5);
+  } catch (e) {
+    // Autoplay restrictions or audio context not ready
+  }
+};
+
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [data, setData] = useState<NotificationData>({
@@ -40,13 +63,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     notifications: [],
   });
   const [isLoading, setIsLoading] = useState(false);
+  const prevOrdersCountRef = React.useRef<number | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     try {
       const res = await api.get<NotificationData>("/dashboard/notifications/");
+      const newOrders = res.data.new_orders_count || 0;
+
+      if (prevOrdersCountRef.current !== null && newOrders > prevOrdersCountRef.current) {
+        playOrderChime();
+      }
+      prevOrdersCountRef.current = newOrders;
+
       setData({
-        new_orders_count: res.data.new_orders_count || 0,
+        new_orders_count: newOrders,
         unread_chats_count: res.data.unread_chats_count || 0,
         total_unread: res.data.total_unread || 0,
         notifications: res.data.notifications || [],

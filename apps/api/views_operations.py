@@ -110,15 +110,27 @@ def branches_list_create_view(request):
 
         manager_user = None
         if manager_username and manager_password:
+            if len(manager_password) < 4:
+                return Response({"error": "Parol kamida 4 belgidan iborat bo'lishi kerak"}, status=400)
+
             clean_digits = ''.join(c for c in manager_username if c.isdigit())
             username_to_use = clean_digits if len(clean_digits) >= 7 else manager_username
             formatted_phone = phone or (f"+{clean_digits}" if clean_digits else "")
 
-            manager_user = User.objects.filter(username=username_to_use).first()
-            if not manager_user and formatted_phone:
-                manager_user = User.objects.filter(phone=formatted_phone).first()
-
-            if not manager_user:
+            existing_user = User.objects.filter(username=username_to_use).first()
+            if existing_user:
+                if existing_user == request.user:
+                    return Response({"error": "Ushbu login do'kon egasi hisobiga tegishli. Filial uchun boshqa login tanlang."}, status=400)
+                # Check if this user belongs to this store staff
+                is_staff_here = StoreStaff.objects.filter(store=store, user=existing_user).exists()
+                if not is_staff_here:
+                    return Response({"error": "Ushbu login boshqa foydalanuvchi tomonidan band. Boshqa login tanlang."}, status=400)
+                manager_user = existing_user
+                manager_user.set_password(manager_password)
+                if formatted_phone and not manager_user.phone:
+                    manager_user.phone = formatted_phone
+                manager_user.save()
+            else:
                 manager_user = User.objects.create_user(
                     username=username_to_use,
                     phone=formatted_phone,
@@ -126,15 +138,13 @@ def branches_list_create_view(request):
                     first_name=name,
                     role=User.Roles.MERCHANT
                 )
-            else:
-                manager_user.set_password(manager_password)
-                if formatted_phone:
-                    manager_user.phone = formatted_phone
-                manager_user.save()
 
         serializer = BranchSerializer(data=data)
         if serializer.is_valid():
             branch = serializer.save(store=store)
+            if manager_username and not branch.manager_username:
+                branch.manager_username = manager_username
+                branch.save(update_fields=["manager_username"])
             if manager_user:
                 branch.manager_user = manager_user
                 branch.manager_username = manager_user.username
@@ -191,13 +201,22 @@ def branch_detail_update_delete_view(request, pk):
             manager_username = str(data.get("manager_username") or data.get("login") or "").strip()
             manager_password = str(data.get("manager_password") or data.get("password") or "").strip()
 
+            if manager_password and len(manager_password) < 4:
+                return Response({"error": "Parol kamida 4 belgidan iborat bo'lishi kerak"}, status=400)
+
             mgr_user = updated.manager_user
             if manager_password:
                 if not mgr_user and manager_username:
                     clean_digits = ''.join(c for c in manager_username if c.isdigit())
                     uname = clean_digits if len(clean_digits) >= 7 else manager_username
-                    mgr_user = User.objects.filter(username=uname).first()
-                    if not mgr_user:
+                    existing_user = User.objects.filter(username=uname).first()
+                    if existing_user and existing_user == request.user:
+                        return Response({"error": "Ushbu login do'kon egasi hisobiga tegishli. Boshqa login tanlang."}, status=400)
+                    if existing_user:
+                        mgr_user = existing_user
+                        mgr_user.set_password(manager_password)
+                        mgr_user.save()
+                    else:
                         mgr_user = User.objects.create_user(
                             username=uname,
                             phone=updated.phone,
@@ -205,9 +224,6 @@ def branch_detail_update_delete_view(request, pk):
                             first_name=updated.name,
                             role=User.Roles.MERCHANT
                         )
-                    else:
-                        mgr_user.set_password(manager_password)
-                        mgr_user.save()
                     updated.manager_user = mgr_user
                     updated.manager_username = mgr_user.username
                     updated.save(update_fields=["manager_user", "manager_username"])
@@ -218,12 +234,12 @@ def branch_detail_update_delete_view(request, pk):
                         updated.manager_username = manager_username
                         updated.save(update_fields=["manager_username"])
                     mgr_user.save()
-            elif manager_username and mgr_user:
-                if mgr_user.username != manager_username:
+            elif manager_username:
+                updated.manager_username = manager_username
+                updated.save(update_fields=["manager_username"])
+                if mgr_user and mgr_user.username != manager_username:
                     mgr_user.username = manager_username
                     mgr_user.save(update_fields=["username"])
-                    updated.manager_username = manager_username
-                    updated.save(update_fields=["manager_username"])
 
             if mgr_user:
                 staff_rec, _ = StoreStaff.objects.get_or_create(

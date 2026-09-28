@@ -25,7 +25,10 @@ import {
   Loader2,
   Maximize2,
   Copy,
-  ChevronRight
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Sparkles
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -153,6 +156,33 @@ interface SearchResultItem {
   lng: number;
 }
 
+// Uzbekistan phone formatter: strictly numbers only, formats as +998 (XX) XXX-XX-XX
+export const formatUzPhone = (value: string): string => {
+  if (!value) return "";
+  const digitsOnly = value.replace(/\D/g, "");
+  let digits = digitsOnly;
+  if (digits.startsWith("998")) {
+    digits = digits.slice(3);
+  }
+  digits = digits.slice(0, 9);
+  if (!digits) return "";
+
+  let res = "+998";
+  if (digits.length > 0) {
+    res += ` (${digits.slice(0, 2)}`;
+  }
+  if (digits.length >= 2) {
+    res += `) ${digits.slice(2, 5)}`;
+  }
+  if (digits.length >= 5) {
+    res += `-${digits.slice(5, 7)}`;
+  }
+  if (digits.length >= 7) {
+    res += `-${digits.slice(7, 9)}`;
+  }
+  return res;
+};
+
 export const BranchesPage: React.FC = () => {
   const { t } = useAuth();
   const navigate = useNavigate();
@@ -176,6 +206,8 @@ export const BranchesPage: React.FC = () => {
   const [formIsAcceptingOrders, setFormIsAcceptingOrders] = useState(true);
   const [formManagerUsername, setFormManagerUsername] = useState("");
   const [formManagerPassword, setFormManagerPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [usePhoneAsLogin, setUsePhoneAsLogin] = useState(true);
   const [formError, setFormError] = useState("");
   const [isLocating, setIsLocating] = useState(false);
 
@@ -205,6 +237,15 @@ export const BranchesPage: React.FC = () => {
       const latNum = formLat.trim() ? parseFloat(formLat.trim()) : null;
       const lngNum = formLng.trim() ? parseFloat(formLng.trim()) : null;
 
+      let finalLogin = formManagerUsername.trim();
+      if (usePhoneAsLogin) {
+        finalLogin = formPhone.trim();
+      }
+
+      if (!editingBranch && finalLogin && (!formManagerPassword || formManagerPassword.length < 4)) {
+        throw new Error(t("branch_password_error") || "Filial akkaunti uchun parol kamida 4 belgidan iborat bo'lishi kerak");
+      }
+
       const payload: any = {
         name: formName.trim(),
         address: formAddress.trim(),
@@ -215,8 +256,8 @@ export const BranchesPage: React.FC = () => {
         is_accepting_orders: formIsAcceptingOrders,
       };
 
-      if (formManagerUsername.trim()) {
-        payload.manager_username = formManagerUsername.trim();
+      if (finalLogin) {
+        payload.manager_username = finalLogin;
       }
       if (formManagerPassword.trim()) {
         payload.manager_password = formManagerPassword.trim();
@@ -409,6 +450,8 @@ export const BranchesPage: React.FC = () => {
     setFormIsAcceptingOrders(true);
     setFormManagerUsername("");
     setFormManagerPassword("");
+    setUsePhoneAsLogin(true);
+    setShowPassword(false);
     setFormError("");
     setSearchResults([]);
     setShowResultsDropdown(false);
@@ -421,7 +464,8 @@ export const BranchesPage: React.FC = () => {
     setEditingBranch(b);
     setFormName(b.name || "");
     setFormAddress(b.address || "");
-    setFormPhone(b.phone || "");
+    const formattedPhone = b.phone ? formatUzPhone(b.phone) : "";
+    setFormPhone(formattedPhone);
     const latStr =
       b.latitude !== null && b.latitude !== undefined && !isNaN(Number(b.latitude))
         ? String(b.latitude)
@@ -435,8 +479,15 @@ export const BranchesPage: React.FC = () => {
     setMapPickerZoom(16);
     setFormIsMain(Boolean(b.is_main));
     setFormIsAcceptingOrders(b.is_accepting_orders !== false);
-    setFormManagerUsername(b.manager_username || "");
+
+    const uname = b.manager_username || "";
+    setFormManagerUsername(uname);
+    const cleanPhoneDigits = (b.phone || "").replace(/\D/g, "");
+    const cleanUnameDigits = uname.replace(/\D/g, "");
+    const isSamePhone = Boolean(uname && (uname === b.phone || (cleanPhoneDigits && cleanUnameDigits === cleanPhoneDigits)));
+    setUsePhoneAsLogin(isSamePhone || !uname);
     setFormManagerPassword("");
+    setShowPassword(false);
     setFormError("");
     setSearchResults([]);
     setShowResultsDropdown(false);
@@ -799,13 +850,13 @@ export const BranchesPage: React.FC = () => {
                     </div>
                     {b.phone && (
                       <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                        <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
                         <a
                           href={`tel:${b.phone}`}
                           onClick={(e) => e.stopPropagation()}
                           className="font-mono font-bold hover:text-brand"
                         >
-                          {b.phone}
+                          {formatUzPhone(b.phone) || b.phone}
                         </a>
                       </div>
                     )}
@@ -842,7 +893,7 @@ export const BranchesPage: React.FC = () => {
                   <div className="p-3.5 rounded-2xl bg-[#211b2e] text-white space-y-2 border border-white/10 shadow-xs text-xs">
                     <div className="flex items-center justify-between text-[10px] uppercase font-black tracking-wider text-[#c8ff6a]">
                       <div className="flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-[#c8ff6a]" />
+                        <Key className="w-3.5 h-3.5 text-[#c8ff6a]" />
                         <span>{t("branch_login_title") || "Filial kirish hisobi"}</span>
                       </div>
                       {b.orders_count !== undefined && (
@@ -857,7 +908,7 @@ export const BranchesPage: React.FC = () => {
                     <div className="flex items-center justify-between pt-0.5">
                       <span className="text-neutral-300 text-[11px]">{t("branch_login_label") || "Login"}:</span>
                       <span className="font-mono font-bold text-[#c8ff6a] bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 text-xs">
-                        {b.manager_username || (b as any).manager_user?.username || "—"}
+                        {b.manager_username ? (formatUzPhone(b.manager_username) || b.manager_username) : (b as any).manager_user?.username ? (formatUzPhone((b as any).manager_user?.username) || (b as any).manager_user?.username) : "—"}
                       </span>
                     </div>
                   </div>
@@ -1058,7 +1109,7 @@ export const BranchesPage: React.FC = () => {
                       href={`tel:${selectedBranch.phone}`}
                       className="text-xs font-mono font-black text-slate-900 dark:text-white hover:underline"
                     >
-                      {selectedBranch.phone}
+                      {formatUzPhone(selectedBranch.phone) || selectedBranch.phone}
                     </a>
                     <a
                       href={`tel:${selectedBranch.phone}`}
@@ -1075,13 +1126,13 @@ export const BranchesPage: React.FC = () => {
               {/* Box 3: Manager Credentials */}
               <div className="p-4 rounded-2xl bg-[#211b2e] text-white space-y-1.5 border border-white/10 shadow-xs">
                 <div className="text-[10px] uppercase font-black tracking-wider text-[#c8ff6a] flex items-center gap-1">
-                  <User className="w-3.5 h-3.5 text-[#c8ff6a]" />
+                  <Key className="w-3.5 h-3.5 text-[#c8ff6a]" />
                   <span>{t("branch_login_title") || "Filial kirish hisobi"}</span>
                 </div>
                 <div className="flex items-center justify-between pt-0.5">
                   <span className="text-neutral-300 text-[11px]">{t("branch_login_label") || "Login"}:</span>
                   <span className="font-mono font-bold text-[#c8ff6a] bg-white/10 px-2.5 py-0.5 rounded-md border border-white/10 text-xs">
-                    {selectedBranch.manager_username || (selectedBranch as any).manager_user?.username || "—"}
+                    {selectedBranch.manager_username ? (formatUzPhone(selectedBranch.manager_username) || selectedBranch.manager_username) : (selectedBranch as any).manager_user?.username ? (formatUzPhone((selectedBranch as any).manager_user?.username) || (selectedBranch as any).manager_user?.username) : "—"}
                   </span>
                 </div>
                 <div className="text-[10px] text-neutral-400">
@@ -1305,16 +1356,36 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {t("branch_phone_label") || "Telefon raqami"}
-                  </label>
-                  <input
-                    type="text"
-                    value={formPhone}
-                    onChange={(e) => setFormPhone(e.target.value)}
-                    placeholder="+998 90 123 45 67"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold font-mono focus:outline-none focus:border-[#211b2e]"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      {t("branch_phone_label") || "Telefon raqami"}
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      +998 (XX) XXX-XX-XX
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                      <Phone className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      value={formPhone}
+                      onChange={(e) => {
+                        const formatted = formatUzPhone(e.target.value);
+                        setFormPhone(formatted);
+                        if (usePhoneAsLogin) {
+                          setFormManagerUsername(formatted);
+                        }
+                      }}
+                      placeholder="+998 (90) 123-45-67"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold font-mono text-slate-900 focus:outline-none focus:border-[#211b2e] focus:bg-white transition-colors"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {t("branch_phone_hint") || "Faqat raqamlar kiritiladi, mijozlar va buyurtmalar uchun aloqa raqami"}
+                  </p>
                 </div>
               </div>
 
@@ -1417,44 +1488,116 @@ export const BranchesPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Section 3: Manager Credentials */}
-              <div className="space-y-3 pt-3 border-t border-slate-100">
-                <div className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{t("branch_login_title") || "Filial xodimi / Menejer hisobi"}</span>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {t("branch_login_label") || "Login (Foydalanuvchi nomi)"}
-                  </label>
-                  <input
-                    type="text"
-                    value={formManagerUsername}
-                    onChange={(e) => setFormManagerUsername(e.target.value)}
-                    placeholder="branch_vokzal yoki +998901234567"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-[#211b2e]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {t("branch_password_label") || "Parol"}
-                  </label>
-                  <input
-                    type="password"
-                    value={formManagerPassword}
-                    onChange={(e) => setFormManagerPassword(e.target.value)}
-                    placeholder={
-                      editingBranch
-                        ? t("branch_password_hint") || "O'zgartirmaslik uchun bo'sh qoldiring"
-                        : "••••••••"
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-[#211b2e]"
-                  />
-                  {editingBranch && (
-                    <span className="text-[10px] text-slate-400 mt-1 block">
-                      {t("branch_password_hint") || "O'zgartirmaslik uchun bo'sh qoldiring"}
-                    </span>
-                  )}
+              {/* Section 3: Manager Credentials (StoreBox Purple/Lime Card) */}
+              <div className="pt-3 border-t border-slate-100">
+                <div className="p-4 rounded-2xl bg-[#211b2e] text-white space-y-3.5 border border-white/10 shadow-xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-[11px] font-black uppercase tracking-wider text-[#c8ff6a] flex items-center gap-1.5">
+                        <Key className="w-3.5 h-3.5 text-[#c8ff6a]" />
+                        <span>{t("branch_login_title") || "Filial kirish hisobi (Dashboard)"}</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-300 mt-0.5 leading-relaxed">
+                        {t("branch_login_desc") ||
+                          "Menejer ushbu login va parol bilan tizimga kirib, faqat o'z filialining buyurtmalarini ko'radi"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Option: Use branch phone as login */}
+                  <div className="flex items-center gap-2 pt-0.5 pb-0.5">
+                    <input
+                      type="checkbox"
+                      id="use_phone_as_login"
+                      checked={usePhoneAsLogin}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setUsePhoneAsLogin(checked);
+                        if (checked && formPhone) {
+                          setFormManagerUsername(formPhone);
+                        }
+                      }}
+                      className="w-4 h-4 rounded text-[#c8ff6a] focus:ring-[#c8ff6a] accent-[#c8ff6a] cursor-pointer"
+                    />
+                    <label
+                      htmlFor="use_phone_as_login"
+                      className="text-xs font-bold text-[#c8ff6a] cursor-pointer select-none"
+                    >
+                      {t("use_phone_as_login_label") || "Filial telefonini login sifatida ishlatish"}
+                    </label>
+                  </div>
+
+                  {/* Login input */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-300 mb-1">
+                      {t("branch_login_label") || "Login (Foydalanuvchi nomi)"} *
+                    </label>
+                    <input
+                      type="text"
+                      disabled={usePhoneAsLogin}
+                      value={usePhoneAsLogin ? (formPhone || t("branch_phone_label") || "Filial telefoni") : formManagerUsername}
+                      onChange={(e) => setFormManagerUsername(e.target.value.trim())}
+                      placeholder={usePhoneAsLogin ? "+998 (90) 123-45-67" : "filial_vokzal"}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono font-bold transition-all focus:outline-none ${
+                        usePhoneAsLogin
+                          ? "bg-white/10 border-white/10 text-neutral-300 cursor-not-allowed opacity-90"
+                          : "bg-white/15 border-[#c8ff6a]/40 text-white focus:border-[#c8ff6a] focus:bg-white/20"
+                      }`}
+                    />
+                    {usePhoneAsLogin && (
+                      <span className="text-[10px] text-neutral-400 mt-1 block">
+                        💡 {t("login_synced_with_phone_hint") || "Login yuqoridagi filial telefoni bilan avtomatik bog'langan"}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Password input with show/hide and generator */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-bold text-neutral-300">
+                        {t("branch_password_label") || "Parol"} *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const randPin = String(Math.floor(100000 + Math.random() * 900000));
+                          setFormManagerPassword(randPin);
+                          setShowPassword(true);
+                        }}
+                        className="text-[10px] font-bold text-[#c8ff6a] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Sparkles className="w-3 h-3 text-[#c8ff6a]" />
+                        <span>{t("generate_pin") || "PIN generatsiya"}</span>
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={formManagerPassword}
+                        onChange={(e) => setFormManagerPassword(e.target.value)}
+                        placeholder={
+                          editingBranch
+                            ? (t("branch_password_hint") || "O'zgartirmaslik uchun bo'sh qoldiring")
+                            : "Masalan: 123456 yoki yangi parol"
+                        }
+                        className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-white/15 border border-white/20 text-xs font-mono font-bold text-white placeholder:text-neutral-400 focus:outline-none focus:border-[#c8ff6a]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                        title={showPassword ? "Yashirish" : "Ko'rsatish"}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {editingBranch && (
+                      <span className="text-[10px] text-neutral-400 mt-1 block">
+                        {t("branch_password_hint") || "O'zgartirmaslik uchun bo'sh qoldiring"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 

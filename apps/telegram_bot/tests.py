@@ -55,9 +55,10 @@ class TelegramBotServicesTests(TestCase):
         success, msg = get_bot_info('')
         self.assertFalse(success)
 
-    @patch('requests.get')
+    @patch('apps.telegram_bot.services._HTTP_SESSION.get')
     def test_get_bot_info_success(self, mock_get):
         mock_resp = MagicMock()
+        mock_resp.status_code = 200
         mock_resp.json.return_value = {
             'ok': True,
             'result': {'id': 123456, 'is_bot': True, 'first_name': 'TestShopBot', 'username': 'testshop_bot'}
@@ -73,9 +74,10 @@ class TelegramBotServicesTests(TestCase):
         success, msg = send_telegram_notification(empty_store, 'Hello')
         self.assertFalse(success)
 
-    @patch('requests.post')
+    @patch('apps.telegram_bot.services._HTTP_SESSION.post')
     def test_send_telegram_notification_success(self, mock_post):
         mock_resp = MagicMock()
+        mock_resp.status_code = 200
         mock_resp.json.return_value = {'ok': True, 'result': {'message_id': 55}}
         mock_post.return_value = mock_resp
 
