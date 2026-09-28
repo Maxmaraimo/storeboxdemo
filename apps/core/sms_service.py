@@ -219,12 +219,16 @@ def verify_sms_code(phone: str, code: str, purpose: str = "MERCHANT_REGISTER") -
     record = PhoneVerification.objects.filter(
         phone=normalized_phone,
         purpose=purpose,
-        is_verified=False,
         expires_at__gte=now,
     ).order_by("-created_at").first()
 
     if not record:
         return False, "Kod muddati tugagan yoki mavjud emas. Yangi kod so'rang."
+
+    if record.is_verified:
+        if record.code == clean_code:
+            return True, "Kod muvaffaqiyatli tasdiqlandi"
+        return False, "Tasdiqlash kodi noto'g'ri"
 
     if record.attempts >= 5:
         return False, "Ushbu kod uchun urinishlar soni tugadi. Yangi kod so'rang."

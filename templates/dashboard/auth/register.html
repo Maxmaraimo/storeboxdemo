@@ -19,6 +19,14 @@
         -webkit-box-shadow: 0 0 0 30px #161b26 inset !important;
         -webkit-text-fill-color: #ffffff !important;
     }
+    @keyframes otpShake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+    .animate-otp-shake {
+        animation: otpShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
 </style>
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
      style="background: radial-gradient(130% 90% at 50% 0%, #ffffff 0%, #edf2f8 35%, #e1e9f3 70%, #d4dfea 100%) fixed;"
@@ -209,14 +217,25 @@
                 </div>
             </div>
 
-            <!-- SMS Verification Section -->
-            <div class="p-4 rounded-2xl bg-slate-50/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-3">
+            <!-- SMS Verification Section (Telegram-style OTP) -->
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-50/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-3.5 transition-all"
+                 :class="{
+                     'border-emerald-500/50 bg-emerald-50/30 dark:bg-emerald-950/10': isCodeVerified,
+                     'border-rose-500/50 bg-rose-50/30 dark:bg-rose-950/10': codeError && !isCodeVerified
+                 }">
+                <!-- Header with Status -->
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#211b2e] dark:text-[#c8ff6a]"></i>
+                        <i data-lucide="shield-check" class="w-4 h-4 text-[#211b2e] dark:text-[#c8ff6a]"></i>
                         <span>SMS orqali tasdiqlash</span>
                     </span>
-                    <template x-if="smsCooldown > 0">
+                    <template x-if="isCodeVerified">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-black tracking-wide">
+                            <i data-lucide="check" class="w-3 h-3 text-emerald-600 dark:text-emerald-400"></i>
+                            <span>Tasdiqlandi</span>
+                        </span>
+                    </template>
+                    <template x-if="!isCodeVerified && smsCooldown > 0">
                         <span class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
                             <i data-lucide="clock" class="w-3 h-3 text-[#211b2e] dark:text-[#c8ff6a]"></i>
                             <span x-text="smsCooldown + ' soniya'"></span>
@@ -224,39 +243,77 @@
                     </template>
                 </div>
 
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <div class="relative flex-1">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                            <i data-lucide="key-round" class="w-4 h-4"></i>
+                <!-- Telegram style 4-digit boxes + Action Button -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between gap-2 sm:gap-3">
+                        <!-- 4 Input Boxes -->
+                        <div class="flex items-center gap-2 sm:gap-2.5" @paste="handleOtpPaste($event)">
+                            <template x-for="(digit, idx) in otpDigits" :key="idx">
+                                <input type="text" 
+                                       inputmode="numeric" 
+                                       maxlength="1" 
+                                       :value="digit"
+                                       :x-ref="'otp' + idx"
+                                       @input="handleOtpInput(idx, $event)"
+                                       @keydown="handleOtpKeyDown(idx, $event)"
+                                       :disabled="isCodeVerified"
+                                       :class="{
+                                           'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/20': isCodeVerified,
+                                           'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 ring-2 ring-rose-500/20 animate-otp-shake': codeError && !isCodeVerified,
+                                           'border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 text-slate-900 dark:text-white focus:border-[#211b2e] dark:focus:border-[#c8ff6a] focus:ring-2 focus:ring-[#211b2e]/10': !isCodeVerified && !codeError
+                                       }"
+                                       class="w-11 h-13 sm:w-12 sm:h-14 rounded-2xl border text-center text-xl sm:text-2xl font-black font-mono tracking-tight transition-all outline-none shadow-2xs">
+                            </template>
                         </div>
-                        <input type="text" 
-                               inputmode="numeric" 
-                               maxlength="4" 
-                               x-model="smsCode" 
-                               placeholder="4 xonali kod" 
-                               class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 text-xs sm:text-sm font-mono font-extrabold tracking-widest text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] focus:ring-2 focus:ring-[#211b2e]/10">
-                    </div>
-                    <button type="button" 
-                            @click="sendSmsCode()" 
-                            :disabled="isSendingSms || smsCooldown > 0 || !isComplete"
-                            class="px-4 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] disabled:opacity-40 disabled:pointer-events-none text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-[#211b2e]/20 cursor-pointer shrink-0">
-                        <template x-if="isSendingSms">
-                            <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-[#c8ff6a]"></i>
-                        </template>
-                        <template x-if="!isSendingSms">
-                            <i data-lucide="send" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
-                        </template>
-                        <span x-text="smsCooldown > 0 ? (smsCooldown + 's') : (smsSent ? 'Qayta yuborish' : 'SMS kod olish')"></span>
-                    </button>
-                </div>
 
-                <template x-if="smsStatusMessage">
-                    <div class="text-[11px] font-medium flex items-center gap-1.5"
-                         :class="smsStatusType === 'error' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-[#c8ff6a]'">
-                        <i :data-lucide="smsStatusType === 'error' ? 'alert-circle' : 'check-circle-2'" class="w-3.5 h-3.5 shrink-0"></i>
-                        <span x-text="smsStatusMessage"></span>
+                        <!-- Send / Resend SMS button -->
+                        <button type="button" 
+                                @click="sendSmsCode()" 
+                                :disabled="isSendingSms || smsCooldown > 0 || !isComplete || isCodeVerified"
+                                class="flex-1 py-3 px-3 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] disabled:opacity-40 disabled:pointer-events-none text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-[#211b2e]/20 cursor-pointer shrink-0">
+                            <template x-if="isSendingSms">
+                                <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-[#c8ff6a]"></i>
+                            </template>
+                            <template x-if="!isSendingSms && !isCodeVerified">
+                                <i data-lucide="send" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
+                            </template>
+                            <template x-if="isCodeVerified">
+                                <i data-lucide="check" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
+                            </template>
+                            <span x-text="isCodeVerified ? 'Tasdiqlangan' : (smsCooldown > 0 ? (smsCooldown + 's') : (smsSent ? 'Qayta yuborish' : 'Kod olish'))"></span>
+                        </button>
                     </div>
-                </template>
+
+                    <!-- Live feedback message -->
+                    <template x-if="isVerifyingCode">
+                        <div class="text-[11px] font-medium text-slate-500 flex items-center gap-1.5 py-0.5">
+                            <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-[#211b2e] dark:text-[#c8ff6a]"></i>
+                            <span>Kod tekshirilmoqda...</span>
+                        </div>
+                    </template>
+
+                    <template x-if="isCodeVerified">
+                        <div class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"></i>
+                            <span>Kod to'g'ri tasdiqlandi! Davom etishingiz mumkin.</span>
+                        </div>
+                    </template>
+
+                    <template x-if="codeError && !isCodeVerified">
+                        <div class="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 text-[11px] font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 animate-otp-shake">
+                            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500 shrink-0"></i>
+                            <span x-text="codeError"></span>
+                        </div>
+                    </template>
+
+                    <template x-if="!isCodeVerified && !codeError && smsStatusMessage">
+                        <div class="text-[11px] font-medium flex items-center gap-1.5"
+                             :class="smsStatusType === 'error' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-[#c8ff6a]'">
+                            <i :data-lucide="smsStatusType === 'error' ? 'alert-circle' : 'check-circle-2'" class="w-3.5 h-3.5 shrink-0"></i>
+                            <span x-text="smsStatusMessage"></span>
+                        </div>
+                    </template>
+                </div>
             </div>
             <input type="hidden" name="sms_code" :value="smsCode">
 
@@ -346,7 +403,11 @@ function phoneRegister() {
         passwordConfirm: '',
         showPassword: false,
 
+        otpDigits: ['', '', '', ''],
         smsCode: '',
+        isCodeVerified: false,
+        isVerifyingCode: false,
+        codeError: '',
         smsSent: false,
         isSendingSms: false,
         smsCooldown: 0,
@@ -748,6 +809,10 @@ function phoneRegister() {
                     this.smsStatusType = 'success';
                     this.smsStatusMessage = data.message || "Tasdiqlash kodi telefoningizga yuborildi!";
                     this.startSmsTimer(data.cooldown || 60);
+                    this.$nextTick(() => {
+                        const firstOtp = this.$refs.otp0;
+                        if (firstOtp) firstOtp.focus();
+                    });
                 } else {
                     this.smsStatusType = 'error';
                     this.smsStatusMessage = data.error || "SMS yuborishda xatolik yuz berdi";
@@ -760,6 +825,115 @@ function phoneRegister() {
                 this.smsStatusMessage = "Server bilan aloqa uzildi. Iltimos qaytadan urinib ko'ring.";
             } finally {
                 this.isSendingSms = false;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            }
+        },
+
+        handleOtpInput(idx, event) {
+            const val = event.target.value.replace(/\D/g, '');
+            this.otpDigits[idx] = val ? val.slice(-1) : '';
+            this.codeError = '';
+            this.isCodeVerified = false;
+            this.syncSmsCode();
+
+            if (val && idx < 3) {
+                const nextInput = this.$refs['otp' + (idx + 1)];
+                if (nextInput) nextInput.focus();
+            }
+
+            if (this.smsCode.length === 4) {
+                this.verifyEnteredCode();
+            }
+        },
+
+        handleOtpKeyDown(idx, event) {
+            if (event.key === 'Backspace') {
+                if (!this.otpDigits[idx] && idx > 0) {
+                    const prevInput = this.$refs['otp' + (idx - 1)];
+                    if (prevInput) {
+                        prevInput.focus();
+                        this.otpDigits[idx - 1] = '';
+                        this.syncSmsCode();
+                    }
+                } else {
+                    this.otpDigits[idx] = '';
+                    this.syncSmsCode();
+                }
+                this.codeError = '';
+                this.isCodeVerified = false;
+            } else if (event.key === 'ArrowLeft' && idx > 0) {
+                const prevInput = this.$refs['otp' + (idx - 1)];
+                if (prevInput) prevInput.focus();
+            } else if (event.key === 'ArrowRight' && idx < 3) {
+                const nextInput = this.$refs['otp' + (idx + 1)];
+                if (nextInput) nextInput.focus();
+            }
+        },
+
+        handleOtpPaste(event) {
+            event.preventDefault();
+            const text = (event.clipboardData || window.clipboardData).getData('text') || '';
+            const digits = text.replace(/\D/g, '').slice(0, 4);
+            if (!digits) return;
+            for (let i = 0; i < 4; i++) {
+                this.otpDigits[i] = digits[i] || '';
+            }
+            this.syncSmsCode();
+            const focusIdx = Math.min(digits.length, 3);
+            const targetInput = this.$refs['otp' + focusIdx];
+            if (targetInput) targetInput.focus();
+
+            if (this.smsCode.length === 4) {
+                this.verifyEnteredCode();
+            }
+        },
+
+        syncSmsCode() {
+            this.smsCode = this.otpDigits.join('');
+        },
+
+        async verifyEnteredCode() {
+            if (this.smsCode.length !== 4) return;
+            this.isVerifyingCode = true;
+            this.codeError = '';
+            this.isCodeVerified = false;
+
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                const response = await fetch('/dashboard/api/auth/verify-code/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        phone: this.fullPhoneNumber,
+                        code: this.smsCode,
+                        purpose: 'MERCHANT_REGISTER'
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    this.isCodeVerified = true;
+                    this.codeError = '';
+                    this.smsStatusType = 'success';
+                    this.smsStatusMessage = data.message || "Kod to'g'ri tasdiqlandi!";
+                } else {
+                    this.isCodeVerified = false;
+                    this.codeError = data.error || "Tasdiqlash kodi noto'g'ri";
+                    this.smsStatusType = 'error';
+                    this.smsStatusMessage = this.codeError;
+                }
+            } catch (err) {
+                this.isCodeVerified = false;
+                this.codeError = "Server bilan aloqa uzildi";
+                this.smsStatusType = 'error';
+                this.smsStatusMessage = this.codeError;
+            } finally {
+                this.isVerifyingCode = false;
                 this.$nextTick(() => {
                     if (window.lucide) lucide.createIcons();
                 });
@@ -788,12 +962,15 @@ function phoneRegister() {
                 return;
             }
 
-            if (!this.smsCode || this.smsCode.trim().length !== 4) {
+            if (!this.isCodeVerified) {
                 e.preventDefault();
-                this.phoneError = "Iltimos, SMS orqali yuborilgan 4 xonali tasdiqlash kodini kiriting";
-                if (!this.smsSent) {
-                    this.sendSmsCode();
+                if (!this.smsCode || this.smsCode.length !== 4) {
+                    this.codeError = "Iltimos, SMS orqali yuborilgan 4 xonali tasdiqlash kodini to'liq kiriting";
+                } else {
+                    this.codeError = "Iltimos, avval kod tasdiqlanishini kuting yoki to'g'ri kodni kiriting";
                 }
+                const firstOtp = this.$refs.otp0;
+                if (firstOtp) firstOtp.focus();
                 return;
             }
 
