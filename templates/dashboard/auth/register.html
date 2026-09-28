@@ -257,13 +257,6 @@
                         <span x-text="smsStatusMessage"></span>
                     </div>
                 </template>
-                
-                <template x-if="devCode">
-                    <div class="p-2.5 rounded-xl bg-[#c8ff6a]/15 border border-[#c8ff6a]/30 text-[11px] text-slate-800 dark:text-[#c8ff6a] flex items-center justify-between font-mono">
-                        <span>Test kodi: <b class="font-extrabold text-sm" x-text="devCode"></b></span>
-                        <button type="button" @click="smsCode = devCode" class="text-[10px] underline font-bold cursor-pointer hover:text-black">Kodni kiritish</button>
-                    </div>
-                </template>
             </div>
             <input type="hidden" name="sms_code" :value="smsCode">
 
@@ -360,7 +353,6 @@ function phoneRegister() {
         smsCountdownTimer: null,
         smsStatusMessage: '',
         smsStatusType: '',
-        devCode: '',
 
         countries: [
             {
@@ -755,9 +747,6 @@ function phoneRegister() {
                     this.smsSent = true;
                     this.smsStatusType = 'success';
                     this.smsStatusMessage = data.message || "Tasdiqlash kodi telefoningizga yuborildi!";
-                    if (data.dev_code) {
-                        this.devCode = data.dev_code;
-                    }
                     this.startSmsTimer(data.cooldown || 60);
                 } else {
                     this.smsStatusType = 'error';

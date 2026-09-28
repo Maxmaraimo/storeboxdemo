@@ -42,7 +42,6 @@ export const LoginPage: React.FC = () => {
   const [smsSent, setSmsSent] = useState(false);
   const [smsLoading, setSmsLoading] = useState(false);
   const [smsCooldown, setSmsCooldown] = useState(0);
-  const [devCode, setDevCode] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
 
   // Username mode state
@@ -133,9 +132,6 @@ export const LoginPage: React.FC = () => {
       if (res.data?.success) {
         setSmsSent(true);
         setStatusMsg(res.data.message || "Tasdiqlash kodi yuborildi!");
-        if (res.data.dev_code) {
-          setDevCode(res.data.dev_code);
-        }
         setSmsCooldown(res.data.cooldown || 60);
       } else {
         setError(res.data?.error || "SMS yuborishda xatolik yuz berdi");
@@ -412,18 +408,6 @@ export const LoginPage: React.FC = () => {
                 </button>
               </div>
 
-              {devCode && (
-                <div className="p-2 rounded-xl bg-[#c8ff6a]/15 border border-[#c8ff6a]/30 text-[11px] text-slate-800 dark:text-[#c8ff6a] flex items-center justify-between font-mono">
-                  <span>Test kodi: <b className="font-extrabold text-sm">{devCode}</b></span>
-                  <button
-                    type="button"
-                    onClick={() => setSmsCode(devCode)}
-                    className="text-[10px] underline font-bold cursor-pointer hover:text-black"
-                  >
-                    Kodni kiritish
-                  </button>
-                </div>
-              )}
             </div>
           )}
 

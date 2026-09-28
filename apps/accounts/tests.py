@@ -1,6 +1,6 @@
 import json
 from django.test import TestCase, Client
-from apps.accounts.models import User
+from apps.accounts.models import User, PhoneVerification
 from apps.stores.models import Store
 
 
@@ -109,7 +109,8 @@ class AuthAndRegistrationTests(TestCase):
         send_data = send_res.json()
         self.assertTrue(send_data.get('success'))
         self.assertIn('cooldown', send_data)
-        code = send_data.get('dev_code')
+        record = PhoneVerification.objects.filter(phone=phone, purpose='MERCHANT_LOGIN').latest('created_at')
+        code = record.code
         self.assertTrue(code and len(code) == 4)
 
         # 2. Test cooldown anti-spam blocks immediate duplicate send

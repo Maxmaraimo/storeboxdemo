@@ -39,9 +39,9 @@ class EskizSMSService:
     def __init__(self):
         self.api_url = getattr(settings, "ESKIZ_API_URL", "https://notify.eskiz.uz/api").rstrip("/")
         self.email = getattr(settings, "ESKIZ_EMAIL", "filtobex3@gmail.com")
-        self.password = getattr(settings, "ESKIZ_PASSWORD", "MbPIBPgQyW6wcqZdkqiq6Nvv8ojnc7nHaiH")
+        self.password = getattr(settings, "ESKIZ_PASSWORD", "MbPlBKpGyqCeg2W6wcqZdkqiq6Nvv8ojnc7nHaIh")
         self.sender_from = getattr(settings, "ESKIZ_FROM", "4546")
-        self.test_mode = getattr(settings, "ESKIZ_TEST_MODE", True)
+        self.test_mode = getattr(settings, "ESKIZ_TEST_MODE", False)
 
     def get_token(self, force_refresh: bool = False) -> str | None:
         """Fetch cached token or login to Eskiz API to retrieve a fresh token."""
@@ -91,7 +91,7 @@ class EskizSMSService:
                 resp = requests.post(send_url, data=payload, headers=headers, timeout=8)
                 if resp.status_code == 200:
                     res_data = resp.json() if resp.text else {}
-                    logger.info(f"SMS successfully sent to {clean_phone} via Eskiz")
+                    logger.info(f"SMS successfully sent to {clean_phone} via Eskiz: {res_data}")
                     return {"success": True, "status": "sent", "data": res_data}
                 elif resp.status_code == 401:
                     # Token expired -> refresh and retry once
@@ -99,9 +99,15 @@ class EskizSMSService:
                     token = self.get_token(force_refresh=True)
                     if token:
                         headers = {"Authorization": f"Bearer {token}"}
-                        retry_resp = requests.post(send_url, data=payload, headers=headers, timeout=8)
-                elif resp.status_code == 400 and ("Для теста" in resp.text or "test" in resp.text.lower()):
-                    # Eskiz test-mode account requires predefined string to deliver SMS
+                        resp = requests.post(send_url, data=payload, headers=headers, timeout=8)
+                        if resp.status_code == 200:
+                            res_data = resp.json() if resp.text else {}
+                            logger.info(f"SMS successfully sent to {clean_phone} after token refresh: {res_data}")
+                            return {"success": True, "status": "sent", "data": res_data}
+
+                if resp.status_code == 400 and ("Для теста" in resp.text or "test" in resp.text.lower()):
+                    # Eskiz account in 'Тестовый' status only permits predefined test text
+                    logger.warning(f"Eskiz is in TEST account status. Falling back to test message: {resp.text}")
                     test_payload = {
                         "mobile_phone": clean_phone,
                         "message": "Bu Eskiz dan test",
@@ -109,15 +115,17 @@ class EskizSMSService:
                     }
                     test_resp = requests.post(send_url, data=test_payload, headers=headers, timeout=8)
                     if test_resp.status_code == 200:
-                        logger.info(f"Test SMS sent to {clean_phone} via Eskiz")
+                        logger.info(f"Test SMS successfully delivered to {clean_phone} via Eskiz")
                         return {"success": True, "status": "sent", "test_mode": True, "data": test_resp.json()}
+                    else:
+                        logger.error(f"Eskiz test SMS delivery failed: {test_resp.status_code} - {test_resp.text}")
+
                 logger.warning(f"Eskiz SMS send responded {resp.status_code}: {resp.text}")
             except Exception as e:
                 logger.error(f"Eskiz SMS send request error: {e}")
 
-        # 2. If Eskiz is down / credentials are test / development mode
-        # Log clearly so developers and QA can instantly test without blocking
-        logger.info(f"[SMS DISPATCH] To: {clean_phone} | Message: {message}")
+        # 2. Fallback when Eskiz API fails or cannot be reached
+        logger.info(f"[SMS FALLBACK DISPATCH] To: {clean_phone} | Message: {message}")
         return {
             "success": True,
             "status": "sent",
@@ -190,10 +198,6 @@ def send_verification_sms(phone: str, purpose: str = "MERCHANT_REGISTER") -> dic
         "phone": normalized_phone,
         "message": "Tasdiqlash kodi telefoningizga SMS orqali yuborildi",
     }
-
-    # For seamless development and test environments, attach code in response if DEBUG is True
-    if settings.DEBUG or getattr(settings, "ESKIZ_TEST_MODE", False):
-        result["dev_code"] = code
 
     return result
 

@@ -192,7 +192,6 @@
         customerSmsSent: false,
         customerSmsLoading: false,
         customerSmsCooldown: 0,
-        customerSmsDevCode: '',
         customerSmsStatus: '',
         customerSmsError: '',
         customerSmsTimer: null,
@@ -232,9 +231,6 @@
                 if (res.ok && data.success) {
                     this.customerSmsSent = true;
                     this.customerSmsStatus = data.message || "Tasdiqlash kodi telefoningizga yuborildi!";
-                    if (data.dev_code) {
-                        this.customerSmsDevCode = data.dev_code;
-                    }
                     this.startCustomerSmsTimer(data.cooldown || 60);
                 } else {
                     this.customerSmsError = data.error || "SMS yuborishda xatolik yuz berdi";
@@ -416,12 +412,6 @@
                         </button>
                     </div>
 
-                    <template x-if="customerSmsDevCode">
-                        <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 flex items-center justify-between font-mono">
-                            <span>Test kodi: <b class="font-extrabold" x-text="customerSmsDevCode"></b></span>
-                            <button type="button" @click="customerSmsCode = customerSmsDevCode" class="text-[10px] underline font-bold cursor-pointer">Kiritish</button>
-                        </div>
-                    </template>
                 </div>
 
                 <!-- Customer Name (Optional) -->

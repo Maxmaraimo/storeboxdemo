@@ -505,13 +505,6 @@
                     </div>
                 </div>
 
-                <template x-if="customerSmsDevCode">
-                    <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 flex items-center justify-between font-mono">
-                        <span>Test kodi: <b x-text="customerSmsDevCode"></b></span>
-                        <button type="button" @click="customerSmsCode = customerSmsDevCode" class="underline font-bold">Kiritish</button>
-                    </div>
-                </template>
-
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Ism va familiya (ixtiyoriy)</label>
                     <input type="text" x-model="customerNameInput" placeholder="Ismingizni kiriting" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand">
@@ -583,13 +576,6 @@
                                         </template>
                                     </div>
                                     <input type="text" inputmode="numeric" maxlength="4" x-model="customerSmsCode" placeholder="0000" class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono font-black tracking-widest text-center focus:outline-none focus:border-brand">
-                                </div>
-                            </template>
-
-                            <template x-if="customerSmsDevCode">
-                                <div class="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 flex items-center justify-between font-mono">
-                                    <span>Kod: <b x-text="customerSmsDevCode"></b></span>
-                                    <button type="button" @click="customerSmsCode = customerSmsDevCode" class="underline font-bold">Kiritish</button>
                                 </div>
                             </template>
 
@@ -1564,7 +1550,6 @@
                 customerSmsSent: false,
                 customerSmsLoading: false,
                 customerSmsCooldown: 0,
-                customerSmsDevCode: '',
                 customerSmsError: '',
                 customerSmsTimer: null,
                 profileDrawerOpen: false,
@@ -1818,9 +1803,6 @@
                     .then(data => {
                         if (data.success) {
                             this.customerSmsSent = true;
-                            if (data.dev_code) {
-                                this.customerSmsDevCode = data.dev_code;
-                            }
                             this.startCustomerSmsTimer(data.cooldown || 60);
                             this.loginStep = 2;
                         } else {
