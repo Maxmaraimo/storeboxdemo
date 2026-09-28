@@ -16,6 +16,26 @@ export interface Store {
   phone?: string;
   telegram_bot_username?: string;
   is_active: boolean;
+  logo_url?: string | null;
+}
+
+export interface BranchItem {
+  id: number;
+  name: string;
+  address: string;
+  phone?: string;
+  latitude?: number;
+  longitude?: number;
+  working_hours?: string;
+  is_main: boolean;
+  is_active: boolean;
+  is_accepting_orders?: boolean;
+  manager_user_id?: number | null;
+  manager_username?: string;
+  manager_name?: string | null;
+  manager_phone?: string | null;
+  orders_count?: number;
+  created_at?: string;
 }
 
 export interface OrderItem {
@@ -36,6 +56,11 @@ export interface Order {
   order_number: string;
   customer_name: string;
   customer_phone: string;
+  branch?: BranchItem | null;
+  branch_id?: number | null;
+  branch_name?: string | null;
+  branch_address?: string | null;
+  branch_phone?: string | null;
   courier?: StaffItem | null;
   courier_id?: number | null;
   delivery_address: string;

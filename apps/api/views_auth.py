@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from apps.stores.models import Store
 from apps.orders.permissions import get_user_permissions
-from .serializers import UserSerializer, StoreSerializer
+from .serializers import UserSerializer, StoreSerializer, BranchSerializer
 
 def get_merchant_store(request):
     user = request.user
@@ -118,7 +118,16 @@ def login_view(request):
     perms = get_user_permissions(user, store) if store else None
 
     from apps.orders.models import StoreStaff
+    from apps.stores.models import Branch
     is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists()
+
+    user_branch = None
+    if store:
+        user_branch = Branch.objects.filter(store=store, manager_user=user).first()
+        if not user_branch:
+            staff_profile = StoreStaff.objects.filter(store=store, user=user, is_active=True).first()
+            if staff_profile and staff_profile.branch:
+                user_branch = staff_profile.branch
 
     response = Response({
         "user": UserSerializer(user).data,
@@ -126,6 +135,8 @@ def login_view(request):
         "stores": StoreSerializer(stores, many=True).data,
         "permissions": perms,
         "is_courier": is_courier,
+        "branch": BranchSerializer(user_branch).data if user_branch else None,
+        "is_branch_user": bool(user_branch),
         "redirect_url": "/dashboard/courier/" if is_courier else None,
         "message": "Muvaffaqiyatli tizimga kirildi"
     })
@@ -184,7 +195,16 @@ def me_view(request):
     store = get_merchant_store(request)
     
     from apps.orders.models import StoreStaff
+    from apps.stores.models import Branch
     is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists()
+
+    user_branch = None
+    if store:
+        user_branch = Branch.objects.filter(store=store, manager_user=user).first()
+        if not user_branch:
+            staff_profile = StoreStaff.objects.filter(store=store, user=user, is_active=True).first()
+            if staff_profile and staff_profile.branch:
+                user_branch = staff_profile.branch
 
     stores = Store.objects.filter(owner=user)
     if not stores.exists() and store:
@@ -194,12 +214,14 @@ def me_view(request):
 
     perms = get_user_permissions(user, store) if store else None
 
-    return Response({
+    response = Response({
         "user": UserSerializer(user).data,
         "store": StoreSerializer(store).data if store else None,
         "stores": StoreSerializer(stores, many=True).data,
         "permissions": perms,
         "is_courier": is_courier,
+        "branch": BranchSerializer(user_branch).data if user_branch else None,
+        "is_branch_user": bool(user_branch),
         "redirect_url": "/dashboard/courier/" if is_courier else None,
     })
     response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { api, initCsrf } from "../api/client";
-import { User, Store, UserPermissions } from "../types";
+import { User, Store, UserPermissions, BranchItem } from "../types";
 import { Language, getTranslation } from "../i18n/translations";
 import { queryClient } from "../queryClient";
 
@@ -8,6 +8,8 @@ interface AuthContextType {
   user: User | null;
   store: Store | null;
   stores: Store[];
+  branch: BranchItem | null;
+  isBranchUser: boolean;
   permissions: UserPermissions | null;
   hasPermission: (module: string, action?: "view" | "edit" | "delete") => boolean;
   lang: Language;
@@ -27,6 +29,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [store, setStore] = useState<Store | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
+  const [branch, setBranch] = useState<BranchItem | null>(null);
+  const [isBranchUser, setIsBranchUser] = useState(false);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
   const [lang, setLangState] = useState<Language>(() => {
@@ -88,11 +92,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(res.data.user);
       setStore(res.data.store);
       setStores(res.data.stores || []);
+      setBranch(res.data.branch || null);
+      setIsBranchUser(Boolean(res.data.is_branch_user));
       setPermissions(res.data.permissions || null);
     } catch {
       setUser(null);
       setStore(null);
       setStores([]);
+      setBranch(null);
+      setIsBranchUser(false);
       setPermissions(null);
     } finally {
       setLoading(false);
@@ -108,6 +116,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(res.data.user);
     setStore(res.data.store);
     setStores(res.data.stores || []);
+    if (res.data.branch) {
+      setBranch(res.data.branch);
+      setIsBranchUser(Boolean(res.data.is_branch_user));
+    }
     if (res.data.permissions) {
       setPermissions(res.data.permissions);
     }
@@ -122,6 +134,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setStore(null);
       setStores([]);
+      setBranch(null);
+      setIsBranchUser(false);
       setPermissions(null);
     }
   };
@@ -149,6 +163,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         store,
         stores,
+        branch,
+        isBranchUser,
         permissions,
         hasPermission,
         lang,

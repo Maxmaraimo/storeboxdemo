@@ -509,6 +509,14 @@ class StoreStaff(models.Model):
         related_name='staff_members',
         verbose_name='Назначенная роль'
     )
+    branch = models.ForeignKey(
+        'stores.Branch',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='staff_members',
+        verbose_name='Филиал'
+    )
     is_courier = models.BooleanField(default=False, verbose_name='Является курьером')
     is_active = models.BooleanField(default=True, verbose_name='Активен')
     current_lat = models.FloatField(null=True, blank=True, verbose_name='Текущая широта (GPS)')

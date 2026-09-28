@@ -20,7 +20,8 @@ import {
   Layers,
   Save,
   Eye,
-  X
+  X,
+  Building2
 } from "lucide-react";
 import { api } from "../../api/client";
 import { Order } from "../../types";
@@ -521,7 +522,52 @@ export const OrderDetailPage: React.FC = () => {
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Branch Box */}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-white/5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{t("branch_assigned") || "FILIAL"}</span>
+                  </div>
+                  {order.branch?.is_accepting_orders !== undefined && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.branch?.is_accepting_orders ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                      {order.branch?.is_accepting_orders ? (t("branch_open") || "Ochiq") : (t("branch_closed") || "Yopiq")}
+                    </span>
+                  )}
+                </div>
+                {order.branch_name ? (
+                  <>
+                    <div className="font-bold text-slate-900 dark:text-white text-base">
+                      {order.branch_name}
+                    </div>
+                    {order.branch_address && (
+                      <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {order.branch_address}
+                      </div>
+                    )}
+                    {order.branch_phone && (
+                      <div className="pt-1">
+                        <a
+                          href={`tel:${order.branch_phone}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-amber-50 text-slate-700 dark:text-slate-200 hover:text-amber-700 font-mono text-xs font-bold border border-slate-200 dark:border-white/10 transition-colors"
+                        >
+                          <Phone className="w-3.5 h-3.5 text-amber-600" />
+                          {order.branch_phone}
+                        </a>
+                      </div>
+                    )}
+                    <div className="text-[10px] text-slate-400 italic pt-1">
+                      {t("branch_auto_routed_notice") || "Mijoz manziliga eng yaqin ochiq filialga yo'naltirildi"}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-xs text-slate-400 italic pt-2">
+                    {t("branch_unassigned") || "Filial biriktirilmagan"}
+                  </div>
+                )}
+              </div>
+
               {/* Customer Box */}
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/70 dark:border-white/5 space-y-2">
                 <div className="text-[11px] font-black uppercase tracking-wider text-slate-400">

@@ -535,7 +535,17 @@ class Branch(models.Model):
     phone = models.CharField(max_length=30, blank=True, verbose_name='Telefon')
     working_hours = models.CharField(max_length=100, default='09:00 - 23:59')
     is_main = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, verbose_name='Активен')
+    is_accepting_orders = models.BooleanField(default=True, verbose_name='Принимает заказы онлайн')
+    manager_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='managed_branches',
+        verbose_name='Управляющий филиала'
+    )
+    manager_username = models.CharField(max_length=100, blank=True, default='', verbose_name='Логин филиала')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

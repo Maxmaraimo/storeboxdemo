@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from apps.orders.models import Order
 from .views_auth import get_merchant_store
-from .serializers import OrderSerializer
+from .serializers import OrderSerializer, BranchSerializer
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -17,8 +17,24 @@ def orders_list_view(request):
     query = request.GET.get("q", "").strip()
     branch_id = request.GET.get("branch") or request.GET.get("branch_id")
 
-    orders_qs = Order.objects.filter(store=store).select_related("store").prefetch_related("items").order_by("-created_at")
-    if branch_id and branch_id != "all":
+    from apps.orders.models import StoreStaff
+    from apps.stores.models import Branch
+
+    # Check if current user is restricted to a specific branch
+    user_branch = None
+    managed_branch = Branch.objects.filter(store=store, manager_user=request.user).first()
+    if managed_branch:
+        user_branch = managed_branch
+    else:
+        staff_profile = StoreStaff.objects.filter(store=store, user=request.user, is_active=True).first()
+        if staff_profile and staff_profile.branch:
+            user_branch = staff_profile.branch
+
+    orders_qs = Order.objects.filter(store=store).select_related("store", "branch").prefetch_related("items").order_by("-created_at")
+
+    if user_branch:
+        orders_qs = orders_qs.filter(branch=user_branch)
+    elif branch_id and branch_id != "all":
         try:
             orders_qs = orders_qs.filter(branch_id=int(branch_id))
         except (ValueError, TypeError):
@@ -62,7 +78,9 @@ def orders_list_view(request):
     return Response({
         "counts": counts,
         "orders": orders_data,
-        "total": orders_qs.count()
+        "total": orders_qs.count(),
+        "user_branch": BranchSerializer(user_branch).data if user_branch else None,
+        "is_branch_restricted": bool(user_branch)
     })
 
 @api_view(["GET"])

@@ -47,17 +47,23 @@ class UserSerializer(serializers.ModelSerializer):
 class StoreSerializer(serializers.ModelSerializer):
     subdomain = serializers.CharField(max_length=80, required=False)
     storefront_url = serializers.CharField(source="get_storefront_url", read_only=True)
+    logo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Store
         fields = [
             "id", "name", "subdomain", "storefront_url", "business_category", "currency",
-            "phone", "telegram_bot_username", "is_active",
+            "phone", "telegram_bot_username", "is_active", "logo_url",
             "delivery_price", "free_delivery_threshold", "delivery_time_estimate",
             "pickup_enabled", "courier_enabled", "address",
             "primary_color", "theme_bg_color", "theme_card_style"
         ]
-        read_only_fields = ["id", "storefront_url", "is_active"]
+        read_only_fields = ["id", "storefront_url", "is_active", "logo_url"]
+
+    def get_logo_url(self, obj):
+        if obj.logo:
+            return obj.logo.url
+        return None
 
     def validate_subdomain(self, value):
         raw_value = (value or "").strip().lower()
@@ -278,12 +284,46 @@ class StoreStaffSerializer(serializers.ModelSerializer):
         return None
 
 
+class BranchSerializer(serializers.ModelSerializer):
+    manager_name = serializers.SerializerMethodField()
+    manager_phone = serializers.SerializerMethodField()
+    orders_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Branch
+        fields = [
+            "id", "name", "address", "phone", "latitude", "longitude",
+            "working_hours", "is_main", "is_active", "is_accepting_orders",
+            "manager_user_id", "manager_username", "manager_name", "manager_phone",
+            "orders_count", "created_at"
+        ]
+
+    def get_manager_name(self, obj):
+        if obj.manager_user:
+            name = f"{obj.manager_user.first_name} {obj.manager_user.last_name}".strip()
+            return name or obj.manager_user.username
+        return None
+
+    def get_manager_phone(self, obj):
+        if obj.manager_user and getattr(obj.manager_user, 'phone', None):
+            return obj.manager_user.phone
+        return obj.phone or None
+
+    def get_orders_count(self, obj):
+        return obj.orders.count()
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     courier = StoreStaffSerializer(read_only=True)
     courier_id = serializers.PrimaryKeyRelatedField(
         queryset=StoreStaff.objects.all(), source="courier", write_only=True, required=False, allow_null=True
     )
+    branch = BranchSerializer(read_only=True)
+    branch_id = serializers.IntegerField(source="branch.id", read_only=True, allow_null=True)
+    branch_name = serializers.CharField(source="branch.name", read_only=True, allow_null=True)
+    branch_address = serializers.CharField(source="branch.address", read_only=True, allow_null=True)
+    branch_phone = serializers.CharField(source="branch.phone", read_only=True, allow_null=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     payment_method_display = serializers.CharField(source="get_payment_method_display", read_only=True)
     payment_status_display = serializers.CharField(source="get_payment_status_display", read_only=True)
@@ -293,6 +333,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             "id", "order_number", "customer_name", "customer_phone",
+            "branch", "branch_id", "branch_name", "branch_address", "branch_phone",
             "courier", "courier_id",
             "delivery_address", "delivery_lat", "delivery_lng", "delivery_fee",
             "payment_method", "payment_method_display", "payment_status", "payment_status_display",
@@ -333,12 +374,6 @@ class MarketingCampaignSerializer(serializers.ModelSerializer):
         fields = [
             "id", "title", "channel", "message", "sent_count", "status", "created_at"
         ]
-
-
-class BranchSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Branch
-        fields = ["id", "name", "address", "phone", "latitude", "longitude", "is_main", "is_active"]
 
 
 class StoreRoleSerializer(serializers.ModelSerializer):

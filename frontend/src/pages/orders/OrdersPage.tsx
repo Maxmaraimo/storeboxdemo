@@ -21,7 +21,8 @@ import {
   Maximize2,
   Minimize2,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  Building2
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
@@ -164,6 +165,7 @@ export const OrdersPage: React.FC = () => {
               <tr>
                 <th className="py-3 px-4">{t("th_order_num") || "Buyurtma"}</th>
                 <th className="py-3 px-4">{t("th_client") || "Mijoz"}</th>
+                <th className="py-3 px-4">{t("th_branch") || "Filial"}</th>
                 <th className="py-3 px-4">{t("th_payment") || "To`lov"}</th>
                 <th className="py-3 px-4">{t("th_delivery") || "Yetkazish"}</th>
                 <th className="py-3 px-4">{t("th_status") || "Holat"}</th>
@@ -199,6 +201,18 @@ export const OrdersPage: React.FC = () => {
                   <td className="py-3.5 px-4">
                     <div className="font-bold text-slate-900">{order.customer_name}</div>
                     <div className="text-[11px] text-slate-500">{order.customer_phone}</div>
+                  </td>
+                  <td className="py-3.5 px-4">
+                    {order.branch_name ? (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 max-w-[170px] truncate" title={order.branch_name}>
+                        <Building2 className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <span className="truncate">{order.branch_name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 text-[11px] italic">
+                        {t("branch_unassigned") || "Filialsiz"}
+                      </span>
+                    )}
                   </td>
                   <td className="py-3.5 px-4">
                     <div className="font-bold text-slate-900">
@@ -237,7 +251,7 @@ export const OrdersPage: React.FC = () => {
               ))}
               {orders.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     {t("no_orders_found") || "Buyurtmalar topilmadi"}
                   </td>
                 </tr>
@@ -648,6 +662,52 @@ export const OrdersPage: React.FC = () => {
                         <XCircle className="w-3.5 h-3.5" /> {t("cancel_return_stock_btn") || "Bekor qilish (Qoldiqni qaytarish)"}
                       </button>
                     </div>
+                  </div>
+
+                  {/* Branch Information */}
+                  <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5 text-amber-500" />
+                        <span>{t("branch_assigned") || "Biriktirilgan filial"}</span>
+                      </div>
+                      {selectedOrder.branch?.is_accepting_orders !== undefined && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${selectedOrder.branch?.is_accepting_orders ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                          {selectedOrder.branch?.is_accepting_orders ? (t("branch_open") || "Ochiq") : (t("branch_closed") || "Yopiq")}
+                        </span>
+                      )}
+                    </div>
+                    {selectedOrder.branch_name ? (
+                      <div className="space-y-1.5">
+                        <div className="font-bold text-slate-900 dark:text-white text-sm">
+                          {selectedOrder.branch_name}
+                        </div>
+                        {selectedOrder.branch_address && (
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{selectedOrder.branch_address}</span>
+                          </div>
+                        )}
+                        {selectedOrder.branch_phone && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <a
+                              href={`tel:${selectedOrder.branch_phone}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-zinc-800 hover:bg-amber-100 text-amber-900 dark:text-amber-200 text-xs font-bold transition-colors"
+                            >
+                              <Phone className="w-3.5 h-3.5 text-amber-600" />
+                              <span>{selectedOrder.branch_phone}</span>
+                            </a>
+                          </div>
+                        )}
+                        <div className="text-[11px] text-slate-400 italic pt-1">
+                          {t("branch_auto_routed_notice") || "Mijoz manziliga eng yaqin ochiq filialga yo'naltirildi"}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-400 italic">
+                        {t("branch_unassigned") || "Filial biriktirilmagan"}
+                      </div>
+                    )}
                   </div>
 
                   {/* Customer Information */}

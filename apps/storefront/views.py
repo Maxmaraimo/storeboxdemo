@@ -1241,9 +1241,16 @@ def checkout_view(request, subdomain=None):
             source = Order.Sources.TELEGRAM_MINI_APP if is_from_telegram else Order.Sources.WEB
 
             branch_id = request.POST.get('branch_id')
-            branch = Branch.objects.filter(id=branch_id, store=store).first() if branch_id else None
             delivery_lat = float(request.POST.get('delivery_lat')) if request.POST.get('delivery_lat') else None
             delivery_lng = float(request.POST.get('delivery_lng')) if request.POST.get('delivery_lng') else None
+
+            from apps.stores.services import find_optimal_branch
+            branch, branch_dist = find_optimal_branch(
+                store=store,
+                lat=delivery_lat,
+                lng=delivery_lng,
+                preferred_branch_id=branch_id
+            )
 
             order_number = Order.generate_order_number()
             order = Order.objects.create(
@@ -1381,7 +1388,22 @@ def checkout_view(request, subdomain=None):
             return redirect(f'/order/{order.order_number}/success/')
 
     is_tma = bool(request.GET.get('tma') == '1' or request.session.get('telegram_user_id'))
-    branches = store.branches.filter(is_active=True)
+    branches = store.branches.filter(is_active=True).order_by('-is_accepting_orders', '-is_main', 'id')
+    branches_data = [
+        {
+            'id': b.id,
+            'name': b.name,
+            'address': b.address,
+            'lat': float(b.latitude) if b.latitude else None,
+            'lng': float(b.longitude) if b.longitude else None,
+            'is_main': b.is_main,
+            'is_accepting_orders': b.is_accepting_orders,
+            'working_hours': b.working_hours,
+        }
+        for b in branches
+    ]
+    branches_json = json.dumps(branches_data)
+
     saved_phone = request.session.get('customer_phone', '')
     saved_name = request.session.get('customer_name', '')
     recommended_products = Product.objects.filter(store=store, is_active=True).order_by('-is_featured', '-rating', '-id')[:12]
@@ -1405,6 +1427,7 @@ def checkout_view(request, subdomain=None):
         'total': float(subtotal) + float(default_delivery_fee),
         'pay_settings': pay_settings,
         'branches': branches,
+        'branches_json': branches_json,
         'error': error,
         'lang': lang,
         'current_lang': lang,

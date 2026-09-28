@@ -28,7 +28,7 @@ import { useNotifications } from "../../context/NotificationContext";
 import { Language } from "../../i18n/translations";
 
 export const Header: React.FC = () => {
-  const { user, store, stores, switchStore, createStore, logout, lang, setLang, t } = useAuth();
+  const { user, store, stores, branch, isBranchUser, switchStore, createStore, logout, lang, setLang, t } = useAuth();
   const { totalUnread, notifications, markAllRead } = useNotifications();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -251,16 +251,29 @@ export const Header: React.FC = () => {
         <div className="hidden md:flex items-center gap-1.5 text-xs font-bold text-neutral-600 dark:text-neutral-300">
           {/* Branch / Region Dropdown */}
           <div ref={regionRef} className="relative">
-            <button
-              type="button"
-              data-testid="region-dropdown-btn"
-              onClick={toggleRegion}
-              className="px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-white/80 dark:border-white/10 flex items-center gap-1.5 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition-colors shadow-2xs"
-            >
-              <Building2 className="w-3 h-3 text-neutral-400" />
-              <span className="max-w-[130px] truncate">{currentRegionLabel}</span>
-              <ChevronDown className="w-3 h-3 text-neutral-400 shrink-0" />
-            </button>
+            {isBranchUser && branch ? (
+              <div
+                className="px-3 py-1.5 rounded-xl bg-[#211b2e]/5 dark:bg-white/10 border border-[#211b2e]/20 dark:border-white/20 flex items-center gap-1.5 shadow-2xs text-xs font-bold text-neutral-900 dark:text-white"
+                title={t("branch_restricted_badge") || "Faqat sizning filialingiz"}
+              >
+                <Building2 className="w-3 h-3 text-[#211b2e] dark:text-[#c8ff6a]" />
+                <span className="max-w-[140px] truncate">{branch.name}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] font-black uppercase tracking-wider ml-1">
+                  {t("th_branch") || "Filial"}
+                </span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                data-testid="region-dropdown-btn"
+                onClick={toggleRegion}
+                className="px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-white/80 dark:border-white/10 flex items-center gap-1.5 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition-colors shadow-2xs"
+              >
+                <Building2 className="w-3 h-3 text-neutral-400" />
+                <span className="max-w-[130px] truncate">{currentRegionLabel}</span>
+                <ChevronDown className="w-3 h-3 text-neutral-400 shrink-0" />
+              </button>
+            )}
             {regionOpen && (
               <div className="absolute left-0 mt-2 w-52 bg-white dark:bg-[#181a20] border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl py-1.5 z-50 text-xs font-medium">
                 {branchOptions.map((opt) => (

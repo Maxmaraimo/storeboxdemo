@@ -104,9 +104,60 @@ def branches_list_create_view(request):
         if not name:
             return Response({"error": "Filial nomi kiritilishi shart"}, status=400)
 
+        manager_username = str(data.get("manager_username") or data.get("login") or "").strip()
+        manager_password = str(data.get("manager_password") or data.get("password") or "").strip()
+        phone = str(data.get("phone", "")).strip()
+
+        manager_user = None
+        if manager_username and manager_password:
+            clean_digits = ''.join(c for c in manager_username if c.isdigit())
+            username_to_use = clean_digits if len(clean_digits) >= 7 else manager_username
+            formatted_phone = phone or (f"+{clean_digits}" if clean_digits else "")
+
+            manager_user = User.objects.filter(username=username_to_use).first()
+            if not manager_user and formatted_phone:
+                manager_user = User.objects.filter(phone=formatted_phone).first()
+
+            if not manager_user:
+                manager_user = User.objects.create_user(
+                    username=username_to_use,
+                    phone=formatted_phone,
+                    password=manager_password,
+                    first_name=name,
+                    role=User.Roles.MERCHANT
+                )
+            else:
+                manager_user.set_password(manager_password)
+                if formatted_phone:
+                    manager_user.phone = formatted_phone
+                manager_user.save()
+
         serializer = BranchSerializer(data=data)
         if serializer.is_valid():
             branch = serializer.save(store=store)
+            if manager_user:
+                branch.manager_user = manager_user
+                branch.manager_username = manager_user.username
+                branch.save(update_fields=["manager_user", "manager_username"])
+
+                ensure_default_roles_for_store(store)
+                mgr_role = StoreRole.objects.filter(store=store, name="Menejer").first() or StoreRole.objects.filter(store=store).first()
+                staff_rec, _ = StoreStaff.objects.get_or_create(
+                    store=store,
+                    user=manager_user,
+                    defaults={
+                        'name': name,
+                        'phone': manager_user.phone or phone or '',
+                        'branch': branch,
+                        'role': 'MANAGER',
+                        'store_role': mgr_role,
+                        'is_active': True,
+                    }
+                )
+                staff_rec.branch = branch
+                staff_rec.is_active = True
+                staff_rec.save(update_fields=['branch', 'is_active'])
+
             return Response(BranchSerializer(branch).data, status=201)
         return Response(serializer.errors, status=400)
 
@@ -132,9 +183,64 @@ def branch_detail_update_delete_view(request, pk):
         return Response(BranchSerializer(branch).data)
 
     if request.method in ["PUT", "PATCH"]:
-        serializer = BranchSerializer(branch, data=request.data, partial=True)
+        data = request.data
+        serializer = BranchSerializer(branch, data=data, partial=True)
         if serializer.is_valid():
             updated = serializer.save()
+
+            manager_username = str(data.get("manager_username") or data.get("login") or "").strip()
+            manager_password = str(data.get("manager_password") or data.get("password") or "").strip()
+
+            mgr_user = updated.manager_user
+            if manager_password:
+                if not mgr_user and manager_username:
+                    clean_digits = ''.join(c for c in manager_username if c.isdigit())
+                    uname = clean_digits if len(clean_digits) >= 7 else manager_username
+                    mgr_user = User.objects.filter(username=uname).first()
+                    if not mgr_user:
+                        mgr_user = User.objects.create_user(
+                            username=uname,
+                            phone=updated.phone,
+                            password=manager_password,
+                            first_name=updated.name,
+                            role=User.Roles.MERCHANT
+                        )
+                    else:
+                        mgr_user.set_password(manager_password)
+                        mgr_user.save()
+                    updated.manager_user = mgr_user
+                    updated.manager_username = mgr_user.username
+                    updated.save(update_fields=["manager_user", "manager_username"])
+                elif mgr_user:
+                    mgr_user.set_password(manager_password)
+                    if manager_username:
+                        mgr_user.username = manager_username
+                        updated.manager_username = manager_username
+                        updated.save(update_fields=["manager_username"])
+                    mgr_user.save()
+            elif manager_username and mgr_user:
+                if mgr_user.username != manager_username:
+                    mgr_user.username = manager_username
+                    mgr_user.save(update_fields=["username"])
+                    updated.manager_username = manager_username
+                    updated.save(update_fields=["manager_username"])
+
+            if mgr_user:
+                staff_rec, _ = StoreStaff.objects.get_or_create(
+                    store=store,
+                    user=mgr_user,
+                    defaults={
+                        'name': updated.name,
+                        'phone': mgr_user.phone or updated.phone,
+                        'branch': updated,
+                        'role': 'MANAGER',
+                        'is_active': True,
+                    }
+                )
+                staff_rec.branch = updated
+                staff_rec.is_active = True
+                staff_rec.save(update_fields=['branch', 'is_active'])
+
             return Response(BranchSerializer(updated).data)
         return Response(serializer.errors, status=400)
 
