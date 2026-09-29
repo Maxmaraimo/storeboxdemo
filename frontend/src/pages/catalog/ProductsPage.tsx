@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Trash2, Edit2, Package, X, Check, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Search, Plus, Trash2, Edit2, Package, X, Check, Upload, Image as ImageIcon, Loader2, Sliders } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Product, Category } from "../../types";
@@ -324,7 +325,19 @@ export const ProductsPage: React.FC = () => {
                       </div>
                     )}
                     <div>
-                      <div className="font-bold text-slate-900 text-sm">{getProductName(p)}</div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-slate-900 text-sm">{getProductName(p)}</span>
+                        {(p as any).has_constructor && (
+                          <Link
+                            to="/constructor"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-2xs"
+                            title={lang === "ru" ? "Товар-конструктор (настроить)" : "Konstruktor tovar"}
+                          >
+                            <Sliders className="w-2.5 h-2.5" />
+                            <span>{lang === "ru" ? "Конструктор" : "Konstruktor"}</span>
+                          </Link>
+                        )}
+                      </div>
                       {p.name_ru && p.name_uz !== p.name_ru && lang !== "ru" && (
                         <div className="text-[10px] text-slate-400">{p.name_ru}</div>
                       )}
@@ -396,6 +409,15 @@ export const ProductsPage: React.FC = () => {
 
                   <td className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {(p as any).has_constructor && (
+                        <Link
+                          to="/constructor"
+                          className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors"
+                          title={lang === "ru" ? "Настроить конструктор" : "Konstruktorni sozlash"}
+                        >
+                          <Sliders className="w-4 h-4" />
+                        </Link>
+                      )}
                       {canEditProduct && (
                         <button
                           type="button"

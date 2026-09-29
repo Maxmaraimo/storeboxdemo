@@ -1,1036 +1,614 @@
 {% extends 'storefront/base_storefront.html' %}
 {% load humanize static %}
 
+{% block title %}
+{% if current_lang == 'ru' %}Конструктор блюд — {{ store.name }}{% elif current_lang == 'en' %}Custom Menu — {{ store.name }}{% else %}Taomlar konstruktori — {{ store.name }}{% endif %}
+{% endblock %}
+
 {% block storefront_body %}
-<!-- PURE JSON DATA SCRIPT (Immune to Django localization comma bugs) -->
-<script id="constructor-data" type="application/json">
-{{ constructor_config_json|safe }}
+<!-- DATA PASSED SAFELY AS JSON -->
+<script id="constructor-products-data" type="application/json">
+{{ products_json|safe }}
 </script>
 
-<div class="max-w-xl mx-auto px-3 sm:px-4 py-2 sm:py-4 space-y-4 pb-44 sm:pb-36"
-     x-data="burgerConstructor()">
+<div class="max-w-2xl mx-auto px-3 sm:px-4 py-2 sm:py-4 space-y-4 pb-32"
+     x-data="foodConstructorCatalog()">
 
     <!-- TOP HEADER -->
-    <div class="flex items-center justify-between pb-1.5 gap-2">
+    <div class="flex items-center justify-between pb-1 gap-2">
         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
            class="h-9 px-3 rounded-xl bg-white border border-slate-200/90 hover:bg-slate-50 flex items-center gap-1.5 text-xs font-bold text-slate-800 transition-all active:scale-95 shadow-2xs">
             <i data-lucide="arrow-left" class="w-4 h-4 text-slate-600"></i>
-            <span>{% if current_lang == 'ru' %}Меню{% elif current_lang == 'en' %}Menu{% else %}Menyu{% endif %}</span>
+            <span>{% if current_lang == 'ru' %}В меню{% elif current_lang == 'en' %}Menu{% else %}Menyu{% endif %}</span>
         </a>
 
-        <h1 class="text-sm sm:text-base font-black text-slate-900 tracking-tight text-center flex items-center gap-1.5">
-            <span class="text-lg">🍔</span>
-            <span>{% if current_lang == 'ru' %}Конструктор Бургера{% elif current_lang == 'en' %}Burger Builder{% else %}Burger Konstruktor{% endif %}</span>
-        </h1>
-
-        <div class="flex items-center gap-1.5">
-            <button type="button" @click="resetToDefaults()"
-                    class="w-9 h-9 rounded-xl bg-white border border-slate-200/90 text-slate-600 hover:text-amber-600 hover:bg-amber-50/50 transition-all flex items-center justify-center active:scale-95 shadow-2xs cursor-pointer"
-                    title="{% if current_lang == 'ru' %}Сбросить{% elif current_lang == 'en' %}Reset{% else %}Tiklash{% endif %}">
-                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-            </button>
-            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-               class="h-9 px-2.5 rounded-xl bg-white border border-slate-200/90 hover:border-brand text-slate-800 transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs relative">
-                <i data-lucide="shopping-cart" class="w-4 h-4 text-brand"></i>
-                <span x-show="cartCount > 0" class="min-w-4.5 h-4.5 px-1 rounded-full bg-brand text-white text-[10px] font-black flex items-center justify-center" x-text="cartCount"></span>
-            </a>
+        <div class="text-center">
+            <h1 class="text-sm sm:text-base font-black text-slate-900 tracking-tight flex items-center justify-center gap-1.5">
+                <span class="text-lg">🍔</span>
+                <span>{% if current_lang == 'ru' %}Конструктор блюд{% elif current_lang == 'en' %}Custom Menu{% else %}Taomlar konstruktori{% endif %}</span>
+            </h1>
+            <p class="text-[10px] text-slate-400 font-medium">
+                {% if current_lang == 'ru' %}Соберите или измените блюдо под свой вкус{% else %}O'z didingizga moslashtiring{% endif %}
+            </p>
         </div>
+
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+           class="h-9 px-2.5 rounded-xl bg-white border border-slate-200/90 hover:border-brand text-slate-800 transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs relative">
+            <i data-lucide="shopping-cart" class="w-4 h-4 text-brand"></i>
+            <span x-show="cartCount > 0" class="min-w-4.5 h-4.5 px-1 rounded-full bg-brand text-white text-[10px] font-black flex items-center justify-center" x-text="cartCount"></span>
+        </a>
     </div>
 
-    <!-- --------------------------------------------------------------------- -->
-    <!-- REALISTIC 3D APPETIZING BURGER STAGE                                  -->
-    <!-- --------------------------------------------------------------------- -->
-    <div class="relative bg-gradient-to-b from-amber-500/10 via-orange-500/5 to-slate-50 rounded-3xl p-3 sm:p-5 border border-amber-200/60 shadow-xs overflow-hidden select-none"
-         style="touch-action: pan-y;"
-         @pointerdown="startDrag($event)"
-         @pointermove="onDrag($event)"
-         @pointerup="endDrag()"
-         @pointercancel="endDrag()"
-         @mouseleave="endDrag()">
+    <!-- CATEGORY TABS FILTER -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+        <button type="button"
+                @click="activeCategory = 'all'"
+                :class="activeCategory === 'all' ? 'bg-slate-900 text-white shadow-xs font-black' : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 font-bold'"
+                class="px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95 cursor-pointer">
+            {% if current_lang == 'ru' %}Все блюда{% elif current_lang == 'en' %}All{% else %}Barchasi{% endif %}
+            <span class="ml-1 opacity-70" x-text="`(${products.length})`"></span>
+        </button>
 
-        <!-- Ambient warmth background glow -->
-        <div class="absolute -top-10 -right-10 w-48 h-48 bg-amber-400/15 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-10 -left-10 w-48 h-48 bg-orange-400/10 rounded-full blur-3xl pointer-events-none"></div>
+        <template x-for="cat in categories" :key="cat.name">
+            <button type="button"
+                    @click="activeCategory = cat.name"
+                    :class="activeCategory === cat.name ? 'bg-slate-900 text-white shadow-xs font-black' : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 font-bold'"
+                    class="px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
+                <span x-text="cat.name"></span>
+                <span class="opacity-70 text-[10px]" x-text="`(${cat.count})`"></span>
+            </button>
+        </template>
+    </div>
 
-        <!-- TOP BAR: MODE TOGGLE & 3D ROTATION BUTTONS -->
-        <div class="flex items-center justify-between gap-2 mb-2 z-30 relative" @pointerdown.stop>
-            <!-- Mode Toggle Switch: Assembled vs Exploded Layers -->
-            <div class="inline-flex p-1 bg-white/95 backdrop-blur-md rounded-2xl border border-amber-200/80 shadow-2xs">
-                <button type="button" @click="viewMode = 'assembled'"
-                        :class="viewMode === 'assembled' ? 'bg-slate-900 text-white shadow-xs font-black' : 'text-slate-600 hover:text-slate-900 font-bold'"
-                        class="px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer">
-                    <span>🍔</span>
-                    <span>{% if current_lang == 'ru' %}В сборе{% elif current_lang == 'en' %}Assembled{% else %}Yig'ilgan{% endif %}</span>
+    <!-- PRODUCTS GRID (ITEMS THAT CAN BE CUSTOMIZED) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <template x-for="prod in filteredProducts" :key="prod.id">
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                    <!-- Product Photo (Clean, Appetizing, Static) -->
+                    <div class="relative w-full aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 mb-3 border border-slate-100 flex items-center justify-center">
+                        <img :src="prod.image_url" :alt="prod.name"
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <span class="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-md text-[10px] font-black tracking-wide text-slate-900 shadow-2xs border border-slate-200/70 flex items-center gap-1">
+                            <span>✨</span>
+                            <span>{% if current_lang == 'ru' %}Собери сам{% elif current_lang == 'en' %}Custom{% else %}Konstruktor{% endif %}</span>
+                        </span>
+                    </div>
+
+                    <!-- Title & Info -->
+                    <h3 class="font-black text-slate-900 text-sm sm:text-base leading-snug line-clamp-1" x-text="prod.name"></h3>
+                    <p class="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed" x-text="prod.description"></p>
+                </div>
+
+                <!-- Price & CTA -->
+                <div class="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                            {% if current_lang == 'ru' %}от{% elif current_lang == 'en' %}from{% else %}dan{% endif %}
+                        </span>
+                        <span class="text-sm sm:text-base font-black font-mono text-slate-900" x-text="formatMoney(prod.price)"></span>
+                    </div>
+
+                    <button type="button"
+                            @click="openCustomizer(prod)"
+                            class="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
+                        <span>{% if current_lang == 'ru' %}Настроить{% elif current_lang == 'en' %}Customize{% else %}Sozlash{% endif %}</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div x-show="filteredProducts.length === 0" class="py-16 text-center text-slate-400 text-xs">
+        <i data-lucide="package-search" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+        <span>{% if current_lang == 'ru' %}Товары в этой категории не найдены{% else %}Mahsulotlar topilmadi{% endif %}</span>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- BURGER KING STYLE PRODUCT CUSTOMIZER MODAL                                -->
+    <!-- ========================================================================= -->
+    <div x-show="customizerOpen"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in"
+         @click.self="closeCustomizer()"
+         @keydown.escape.window="closeCustomizer()">
+
+        <div class="w-full sm:max-w-2xl bg-white rounded-t-[32px] sm:rounded-3xl shadow-2xl border border-slate-200/80 max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-slide-up"
+             x-show="currentProduct">
+
+            <!-- MODAL HEADER (IMAGE + TITLE + CLOSE) -->
+            <div class="relative bg-gradient-to-b from-amber-50/50 to-white px-5 pt-4 pb-3 border-b border-slate-100 shrink-0">
+                <button type="button"
+                        @click="closeCustomizer()"
+                        class="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200/80 flex items-center justify-center shadow-2xs transition-colors cursor-pointer">
+                    <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
-                <button type="button" @click="viewMode = 'exploded'"
-                        :class="viewMode === 'exploded' ? 'bg-amber-500 text-white shadow-xs font-black' : 'text-slate-600 hover:text-slate-900 font-bold'"
-                        class="px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer">
-                    <span>💥</span>
-                    <span>{% if current_lang == 'ru' %}По слоям{% elif current_lang == 'en' %}Layers{% else %}Qatlamlar{% endif %}</span>
-                </button>
+
+                <div class="flex items-center gap-4">
+                    <!-- Static Appetizing Photo -->
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border border-slate-200/80 overflow-hidden shrink-0 shadow-2xs p-1">
+                        <img :src="currentProduct?.image_url" :alt="currentProduct?.name" class="w-full h-full object-cover rounded-xl">
+                    </div>
+
+                    <div class="min-w-0 flex-1 pr-6">
+                        <div class="flex items-center gap-1.5 mb-0.5">
+                            <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-800">
+                                {% if current_lang == 'ru' %}Конструктор блюда{% else %}Taom konstruktori{% endif %}
+                            </span>
+                        </div>
+                        <h2 class="text-base sm:text-lg font-black text-slate-900 truncate" x-text="currentProduct?.name"></h2>
+                        <p class="text-xs text-slate-500 line-clamp-2 mt-0.5" x-text="currentProduct?.description"></p>
+                    </div>
+                </div>
             </div>
 
-            <!-- Quick 3D Rotation Controls -->
-            <div class="flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-2xl border border-amber-200/80 shadow-2xs">
-                <button type="button" @click="rotateLeft()" title="Повернуть влево"
-                        class="w-7 h-7 rounded-xl hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center transition-all active:scale-90 cursor-pointer">
-                    ⟲
-                </button>
-                <button type="button" @click="resetRotation()" title="Сбросить 3D ракурс"
-                        class="px-2 h-7 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-amber-600 text-[11px] font-bold flex items-center gap-1 transition-all active:scale-95 cursor-pointer">
-                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
-                    <span class="hidden xs:inline">{% if current_lang == 'ru' %}0°{% else %}0°{% endif %}</span>
-                </button>
-                <button type="button" @click="rotateRight()" title="Повернуть вправо"
-                        class="w-7 h-7 rounded-xl hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center transition-all active:scale-90 cursor-pointer">
-                    ⟳
-                </button>
-            </div>
-        </div>
+            <!-- MODAL SCROLLABLE BODY -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
 
-        <!-- 3D ROTATION & AUTO-SCALE CONTAINER -->
-        <div class="py-2 sm:py-3 flex flex-col items-center justify-center min-h-[280px] sm:min-h-[310px] transition-transform duration-150 cursor-grab active:cursor-grabbing"
-             :style="burgerTransform">
-            
-            <div class="w-68 max-w-full flex flex-col items-center justify-center relative">
-                
-                <!-- 1. TOP BUN (CROWN) -->
-                <div class="relative z-30 transition-all duration-500 ease-out flex items-center justify-center w-full"
-                     :class="viewMode === 'exploded' ? 'mb-5 sm:mb-7' : ''">
-                    
-                    <!-- Leaf Wrap (if 'Без булки') -->
-                    <template x-if="isNoBun()">
-                        <img src="{% static 'images/constructor/lettuce_wrap_top_real.png' %}"
-                             class="w-64 sm:w-72 max-w-[290px] h-auto object-contain drop-shadow-md select-none pointer-events-none"
-                             alt="Лист салата" />
-                    </template>
+                <!-- 1. STYLE / BASE CHOICE (RADIO BUTTONS) -->
+                <template x-for="grp in singleGroups" :key="grp.id">
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                <span x-text="grp.name"></span>
+                            </h4>
+                            <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full"
+                                  x-show="grp.is_required">
+                                {% if current_lang == 'ru' %}Обязательно{% else %}Majburiy{% endif %}
+                            </span>
+                        </div>
 
-                    <!-- Gourmet Baked Bun (Brioche / Black Potato) -->
-                    <template x-if="!isNoBun()">
-                        <img :src="isBlackBun() ? '{% static 'images/constructor/bun_black_top_real.png' %}' : '{% static 'images/constructor/bun_top_real.png' %}'"
-                             class="w-64 sm:w-72 max-w-[290px] h-auto object-contain drop-shadow-xl select-none pointer-events-none"
-                             alt="Булочка бриошь" />
-                    </template>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <template x-for="item in grp.items" :key="item.id">
+                                <button type="button"
+                                        @click="selectSingle(grp.id, item)"
+                                        :class="selectedSingle[grp.id] === item.id ? 'border-amber-500 bg-amber-50/50 ring-2 ring-amber-500/20 text-slate-900 shadow-xs' : 'border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700'"
+                                        class="p-3 rounded-2xl border text-left transition-all active:scale-95 cursor-pointer flex items-center justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <div class="font-black text-xs truncate" x-text="item.name"></div>
+                                        <div class="text-[11px] font-mono mt-0.5"
+                                             :class="item.price > 0 ? 'text-amber-700 font-bold' : 'text-slate-400 font-semibold'"
+                                             x-text="item.price > 0 ? `+${formatMoney(item.price)}` : '{% if current_lang == 'ru' %}Включено{% else %}Kiritilgan{% endif %}'">
+                                        </div>
+                                    </div>
+                                    <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
+                                         :class="selectedSingle[grp.id] === item.id ? 'border-amber-600 bg-amber-600 text-white' : 'border-slate-300 bg-white'">
+                                        <div x-show="selectedSingle[grp.id] === item.id" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                    </div>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
 
-                    <!-- Exploded Label -->
-                    <div x-show="viewMode === 'exploded'" x-transition
-                         class="absolute right-0 sm:right-2 whitespace-nowrap bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold text-slate-800 border border-amber-200 shadow-2xs flex items-center gap-1 pointer-events-none z-40 max-w-[130px] truncate">
-                        <span>🍞</span>
-                        <span class="truncate" x-text="selectedBun ? (selectedBun.name_ru || selectedBun.name_uz) : 'Булочка'"></span>
+                <!-- 2. "УБРАТЬ ИНГРЕДИЕНТЫ" (BURGER KING STYLE REMOVABLE INGREDIENTS) -->
+                <div class="space-y-2.5 pt-2 border-t border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                                <i data-lucide="minus-circle" class="w-3.5 h-3.5 text-rose-500"></i>
+                                <span>{% if current_lang == 'ru' %}Убрать ингредиенты{% elif current_lang == 'en' %}Remove ingredients{% else %}Masalliqni olib tashlash{% endif %}</span>
+                            </h4>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                {% if current_lang == 'ru' %}Нажмите, чтобы исключить ингредиент из состава{% else %}Tarkibdan chiqarish uchun bosing{% endif %}
+                            </p>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400" x-text="`${removedIngredients.length} убрано`" x-show="removedIngredients.length > 0"></span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="ing in currentProduct?.removables || []" :key="ing.id">
+                            <button type="button"
+                                    @click="toggleRemoved(ing.id)"
+                                    :class="isRemoved(ing.id) ? 'bg-rose-50 text-rose-700 border-rose-300 line-through opacity-85 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200/90'"
+                                    class="px-3 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                                <span x-text="ing.icon"></span>
+                                <span x-text="ing.name_ru || ing.name_uz || ing.name"></span>
+                                <i data-lucide="x" class="w-3 h-3 text-slate-400" :class="isRemoved(ing.id) ? 'text-rose-600' : ''"></i>
+                            </button>
+                        </template>
                     </div>
                 </div>
 
-                <!-- 2. FRESH RUFFLED GREEN LETTUCE & JUICY RED TOMATOES -->
-                <div class="relative z-28 transition-all duration-500 ease-out flex items-center justify-center w-full"
-                     :class="viewMode === 'exploded' ? 'my-3.5 sm:my-4' : '-mt-16 sm:-mt-20'">
-                    <img src="{% static 'images/constructor/lettuce_tomato_real.png' %}"
-                         class="w-66 sm:w-72 max-w-[290px] h-auto object-contain drop-shadow-md select-none pointer-events-none"
-                         alt="Салат и томаты" />
-
-                    <!-- Exploded Label -->
-                    <div x-show="viewMode === 'exploded'" x-transition
-                         class="absolute right-0 sm:right-2 whitespace-nowrap bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold text-slate-800 border border-emerald-200 shadow-2xs flex items-center gap-1 pointer-events-none z-40 max-w-[130px] truncate">
-                        <span>🥬</span>
-                        <span>Салат и томаты</span>
+                <!-- 3. "ДОБАВИТЬ ПО ВКУСУ" (TOPPINGS & ADD-ONS WITH COUNTERS - NO BACON!) -->
+                <div class="space-y-3 pt-2 border-t border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                                <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                <span>{% if current_lang == 'ru' %}Добавить по вкусу{% elif current_lang == 'en' %}Add toppings{% else %}Qo'shimchalar qo'shish{% endif %}</span>
+                            </h4>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                {% if current_lang == 'ru' %}Сделайте блюдо ещё вкуснее и сытнее{% else %}Taomni yanada mazali qiling{% endif %}
+                            </p>
+                        </div>
                     </div>
-                </div>
 
-                <!-- ----------------------------------------------------------------- -->
-                <!-- 3. SAVORY HOT MID-CORE (Egg, Bacon, Onions in the CENTER!)        -->
-                <!-- ----------------------------------------------------------------- -->
-
-                <!-- 3A. SUNNY-SIDE UP FRIED EGG (In the center, right on melted cheese!) -->
-                <div x-show="hasItemNamed('яйцо') || hasItemNamed('tuxum')" x-transition
-                     class="relative z-26 transition-all duration-500 ease-out flex items-center justify-center w-full"
-                     :class="viewMode === 'exploded' ? 'my-3.5 sm:my-4' : '-mt-12 sm:-mt-14'">
-                    <img src="{% static 'images/constructor/egg_real.png' %}"
-                         class="w-60 sm:w-66 max-w-[270px] h-auto object-contain drop-shadow-md select-none pointer-events-none"
-                         alt="Жареное яйцо" />
-
-                    <!-- Exploded Label -->
-                    <div x-show="viewMode === 'exploded'" x-transition
-                         class="absolute right-0 sm:right-2 whitespace-nowrap bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold text-slate-800 border border-amber-200 shadow-2xs flex items-center gap-1 pointer-events-none z-40 max-w-[130px] truncate">
-                        <span>🍳</span>
-                        <span>Глазунья</span>
-                    </div>
-                </div>
-
-
-                <!-- 3C. CARAMELIZED ONIONS & JALAPEÑOS -->
-                <div x-show="hasItemNamed('лук') || hasItemNamed('piyoz') || hasItemNamed('халапеньо') || hasItemNamed('xalapeno')" x-transition
-                     class="relative z-24 transition-all duration-500 ease-out flex items-center justify-center w-full"
-                     :class="viewMode === 'exploded' ? 'my-3.5 sm:my-4' : '-mt-10 sm:-mt-12'">
-                    <img src="{% static 'images/constructor/onions_real.png' %}"
-                         class="w-58 sm:w-64 max-w-[260px] h-auto object-contain drop-shadow-sm select-none pointer-events-none"
-                         alt="Карамелизированный лук" />
-
-                    <!-- Exploded Label -->
-                    <div x-show="viewMode === 'exploded'" x-transition
-                         class="absolute right-0 sm:right-2 whitespace-nowrap bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold text-slate-800 border border-amber-200 shadow-2xs flex items-center gap-1 pointer-events-none z-40 max-w-[130px] truncate">
-                        <span>🧅</span>
-                        <span>Лук</span>
-                    </div>
-                </div>
-
-                <!-- 3D. CHEF SPECIAL SAUCE DRIZZLE -->
-                <div x-show="totalSaucesCount > 0" x-transition
-                     class="relative z-23 transition-all duration-500 ease-out flex items-center justify-center w-full"
-                     :class="viewMode === 'exploded' ? 'my-3.5 sm:my-4' : '-mt-8 sm:-mt-10'">
-                    <img src="{% static 'images/constructor/sauce_real.png' %}"
-                         class="w-58 sm:w-66 max-w-[270px] h-auto object-contain drop-shadow-sm select-none pointer-events-none"
-                         alt="Фирменный соус" />
-
-                    <!-- Exploded Label -->
-                    <div x-show="viewMode === 'exploded'" x-transition
-                         class="absolute right-0 sm:right-2 whitespace-nowrap bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold text-slate-800 border border-rose-200 shadow-2xs flex items-center gap-1 pointer-events-none z-40 max-w-[130px] truncate">
-                        <span>🥫</span>
-                        <span>Соус</span>
-                    </div>
-                </div>
-
-                <!-- ----------------------------------------------------------------- -->
-                <!-- 4. FLAME-GRILLED BLACK ANGUS MEAT & MELTED CHEDDAR CHEESE CORE    -->
-                <!-- ----------------------------------------------------------------- -->
-                <template x-if="totalPattiesCount > 0">
-                    <div class="w-full flex flex-col items-center">
-                        <template x-for="p in Math.min(3, totalPattiesCount)" :key="'patty-stack-' + p">
-                            <div class="w-full flex flex-col items-center relative transition-all duration-500 ease-out z-22"
-                                 :class="viewMode === 'exploded' ? 'my-3.5 sm:my-4' : (p === 1 ? '-mt-16 sm:-mt-20' : '-mt-12 sm:-mt-14')">
-                                
-                                <div class="relative transition-all duration-500 ease-out flex items-center justify-center w-full">
-                                    <img :src="(totalCheesesCount >= p || (p === 1 && totalCheesesCount > 0)) ? '{% static 'images/constructor/patty_cheese_real.png' %}' : '{% static 'images/constructor/patty_plain_real.png' %}'"
-                                         class="w-66 sm:w-74 max-w-[300px] h-auto object-contain drop-shadow-2xl select-none pointer-events-none"
-                                         :alt="'Котлета #' + p" />
-
-                                    <!-- Exploded Label -->
-                                    <div x-show="viewMode === 'exploded'" x-transition
-                                         class="absolute right-0 sm:right-2 whitespace-nowrap bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold text-slate-800 border border-amber-900/30 shadow-2xs flex items-center gap-1 pointer-events-none z-40 max-w-[130px] truncate">
-                                        <span>🥩</span>
-                                        <span x-text="((totalCheesesCount >= p || (p === 1 && totalCheesesCount > 0)) ? 'Котлета с сыром' : 'Котлета') + (totalPattiesCount > 1 ? ' #' + p : '')"></span>
+                    <!-- Toppings Cards Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                        <template x-for="top in availableToppings" :key="top.id">
+                            <div class="p-3 rounded-2xl border transition-all flex flex-col justify-between"
+                                 :class="(toppingsCount[top.id] || 0) > 0 ? 'border-amber-500 bg-amber-50/40 ring-1 ring-amber-500/30' : 'border-slate-200/90 bg-white hover:border-slate-300'">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1.5">
+                                        <div class="w-8 h-8 rounded-xl bg-amber-100/70 text-amber-800 flex items-center justify-center text-sm shrink-0 font-bold"
+                                             x-text="top.icon || '🧀'">
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-xs text-slate-900 truncate" x-text="top.name"></div>
+                                            <div class="text-[11px] font-mono font-bold text-amber-600" x-text="`+${formatMoney(top.price)}`"></div>
+                                        </div>
                                     </div>
                                 </div>
 
+                                <!-- Counter -->
+                                <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                    <span class="text-[10px] text-slate-400 font-bold">{% if current_lang == 'ru' %}Кол-во:{% else %}Soni:{% endif %}</span>
+                                    <div class="flex items-center gap-1.5 bg-slate-100 rounded-xl p-0.5">
+                                        <button type="button"
+                                                @click="decrementTopping(top.id)"
+                                                :disabled="(toppingsCount[top.id] || 0) === 0"
+                                                class="w-6 h-6 rounded-lg bg-white disabled:opacity-30 disabled:cursor-not-allowed text-slate-800 hover:bg-slate-200 flex items-center justify-center text-xs font-black shadow-2xs transition-colors cursor-pointer">
+                                            −
+                                        </button>
+                                        <span class="w-4 text-center font-mono font-black text-xs text-slate-900"
+                                              x-text="toppingsCount[top.id] || 0">
+                                        </span>
+                                        <button type="button"
+                                                @click="incrementTopping(top.id, top.max || 3)"
+                                                :disabled="(toppingsCount[top.id] || 0) >= (top.max || 3)"
+                                                class="w-6 h-6 rounded-lg bg-white disabled:opacity-30 disabled:cursor-not-allowed text-slate-800 hover:bg-slate-200 flex items-center justify-center text-xs font-black shadow-2xs transition-colors cursor-pointer">
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </template>
                     </div>
-                </template>
+                </div>
 
-                <!-- 5. CRUNCHY PICKLES (Cucumber chips on bottom base) -->
-                <div x-show="hasItemNamed('огур') || hasItemNamed('bodring')" x-transition
-                     class="relative z-19 transition-all duration-500 ease-out flex items-center justify-center w-full"
-                     :class="viewMode === 'exploded' ? 'my-3.5 sm:my-4' : '-mt-10 sm:-mt-12'">
-                    <img src="{% static 'images/constructor/pickles_real.png' %}"
-                         class="w-58 sm:w-64 max-w-[260px] h-auto object-contain drop-shadow-sm select-none pointer-events-none"
-                         alt="Маринованные огурцы" />
+                <!-- 4. NUTRITION FACTS (КБЖУ КАК В BURGER KING) -->
+                <div class="space-y-2.5 pt-2 border-t border-slate-100" x-show="currentProduct?.nutrition">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                            <i data-lucide="activity" class="w-3.5 h-3.5 text-indigo-500"></i>
+                            <span>{% if current_lang == 'ru' %}Пищевая ценность{% elif current_lang == 'en' %}Nutrition Facts{% else %}Ozuqaviy qiymati{% endif %}</span>
+                        </h4>
+                        <div class="inline-flex p-0.5 bg-slate-100 rounded-xl text-[10px] font-bold">
+                            <button type="button" @click="nutritionPortion = '100g'"
+                                    :class="nutritionPortion === '100g' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'"
+                                    class="px-2 py-0.5 rounded-lg transition-all cursor-pointer">
+                                100 г
+                            </button>
+                            <button type="button" @click="nutritionPortion = 'portion'"
+                                    :class="nutritionPortion === 'portion' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'"
+                                    class="px-2 py-0.5 rounded-lg transition-all cursor-pointer">
+                                <span x-text="`${currentProduct?.nutrition?.weight_g || 320} г`"></span>
+                            </button>
+                        </div>
+                    </div>
 
-                    <!-- Exploded Label -->
-                    <div x-show="viewMode === 'exploded'" x-transition
-                         class="absolute right-0 sm:right-2 whitespace-nowrap bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold text-slate-800 border border-emerald-200 shadow-2xs flex items-center gap-1 pointer-events-none z-40 max-w-[130px] truncate">
-                        <span>🥒</span>
-                        <span>Огурцы</span>
+                    <div class="grid grid-cols-4 gap-2">
+                        <div class="bg-slate-50 rounded-2xl p-2 text-center border border-slate-100">
+                            <span class="text-[10px] text-slate-400 font-bold block">{% if current_lang == 'ru' %}Ккал{% else %}Kkal{% endif %}</span>
+                            <span class="text-xs sm:text-sm font-black font-mono text-slate-900"
+                                  x-text="nutritionPortion === '100g' ? Math.round((currentProduct?.nutrition?.calories || 700) * 100 / (currentProduct?.nutrition?.weight_g || 320)) : (currentProduct?.nutrition?.calories || 700)">
+                            </span>
+                        </div>
+                        <div class="bg-slate-50 rounded-2xl p-2 text-center border border-slate-100">
+                            <span class="text-[10px] text-slate-400 font-bold block">{% if current_lang == 'ru' %}Белки{% else %}Oqsil{% endif %}</span>
+                            <span class="text-xs sm:text-sm font-black font-mono text-slate-900"
+                                  x-text="`${nutritionPortion === '100g' ? Math.round((currentProduct?.nutrition?.protein || 35) * 100 / (currentProduct?.nutrition?.weight_g || 320)) : (currentProduct?.nutrition?.protein || 35)} г`">
+                            </span>
+                        </div>
+                        <div class="bg-slate-50 rounded-2xl p-2 text-center border border-slate-100">
+                            <span class="text-[10px] text-slate-400 font-bold block">{% if current_lang == 'ru' %}Жиры{% else %}Yog'{% endif %}</span>
+                            <span class="text-xs sm:text-sm font-black font-mono text-slate-900"
+                                  x-text="`${nutritionPortion === '100g' ? Math.round((currentProduct?.nutrition?.fat || 32) * 100 / (currentProduct?.nutrition?.weight_g || 320)) : (currentProduct?.nutrition?.fat || 32)} г`">
+                            </span>
+                        </div>
+                        <div class="bg-slate-50 rounded-2xl p-2 text-center border border-slate-100">
+                            <span class="text-[10px] text-slate-400 font-bold block">{% if current_lang == 'ru' %}Углеводы{% else %}Uglevod{% endif %}</span>
+                            <span class="text-xs sm:text-sm font-black font-mono text-slate-900"
+                                  x-text="`${nutritionPortion === '100g' ? Math.round((currentProduct?.nutrition?.carbs || 45) * 100 / (currentProduct?.nutrition?.weight_g || 320)) : (currentProduct?.nutrition?.carbs || 45)} г`">
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 6. BOTTOM BUN (HEEL) - ALWAYS FIRMLY AT THE BASE! -->
-                <div class="relative z-18 transition-all duration-500 ease-out flex items-center justify-center w-full"
-                     :class="viewMode === 'exploded' ? 'mt-6 sm:mt-8' : (totalPattiesCount > 0 ? '-mt-16 sm:-mt-20' : '-mt-8 sm:-mt-10')">
-                    
-                    <!-- Leaf Base (if 'Без булки') -->
-                    <template x-if="isNoBun()">
-                        <img src="{% static 'images/constructor/lettuce_wrap_bottom_real.png' %}"
-                             class="w-64 sm:w-70 max-w-[285px] h-auto object-contain drop-shadow-md select-none pointer-events-none"
-                             alt="Основа из листьев салата" />
-                    </template>
+            </div>
 
-                    <!-- Bakery Bottom Bun Heel (Brioche / Black Potato) -->
-                    <template x-if="!isNoBun()">
-                        <img :src="isBlackBun() ? '{% static 'images/constructor/bun_black_bottom_real.png' %}' : '{% static 'images/constructor/bun_bottom_real.png' %}'"
-                             class="w-64 sm:w-70 max-w-[285px] h-auto object-contain drop-shadow-xl select-none pointer-events-none"
-                             alt="Основа булки" />
-                    </template>
-
-                    <!-- Exploded Label -->
-                    <div x-show="viewMode === 'exploded'" x-transition
-                         class="absolute right-0 sm:right-2 whitespace-nowrap bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold text-slate-800 border border-amber-200 shadow-2xs flex items-center gap-1 pointer-events-none z-40 max-w-[130px] truncate">
-                        <span>🍞</span>
-                        <span>Основа</span>
-                    </div>
+            <!-- MODAL BOTTOM STICKY BAR (PORTION STEPPER + TOTAL PRICE + CTA) -->
+            <div class="p-3 sm:p-4 bg-white border-t border-slate-200/80 shadow-lg flex items-center justify-between gap-3 shrink-0">
+                <!-- Portion Quantity Counter -->
+                <div class="flex items-center gap-2 bg-slate-100 rounded-2xl p-1 shrink-0">
+                    <button type="button"
+                            @click="portionCount = Math.max(1, portionCount - 1)"
+                            class="w-9 h-9 rounded-xl bg-white text-slate-800 hover:bg-slate-200 flex items-center justify-center font-black text-sm shadow-2xs transition-colors cursor-pointer">
+                        −
+                    </button>
+                    <span class="w-6 text-center font-mono font-black text-sm text-slate-900" x-text="portionCount"></span>
+                    <button type="button"
+                            @click="portionCount = portionCount + 1"
+                            class="w-9 h-9 rounded-xl bg-white text-slate-800 hover:bg-slate-200 flex items-center justify-center font-black text-sm shadow-2xs transition-colors cursor-pointer">
+                        +
+                    </button>
                 </div>
 
-                <!-- 9. GROUNDING DROP SHADOW -->
-                <div class="w-64 h-3.5 relative flex items-center justify-center -mt-1 z-10 pointer-events-none">
-                    <div class="w-58 h-3 bg-black/25 rounded-full blur-md"></div>
-                    <div class="w-42 h-1.5 bg-black/40 rounded-full blur-xs"></div>
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- 3D INTERACTIVE DRAG HINT -->
-        <div class="text-center pt-1">
-            <span class="inline-flex items-center gap-1 text-[10.5px] font-semibold text-slate-500 bg-white/70 backdrop-blur-xs px-2.5 py-0.5 rounded-full border border-amber-200/50">
-                <i data-lucide="hand" class="w-3 h-3 text-amber-500"></i>
-                <span>{% if current_lang == 'ru' %}Листайте страницу или крутите бургер 3D{% elif current_lang == 'en' %}Scroll page or rotate burger in 3D{% else %}Sahifani aylantiring yoki burgerni 3D buring{% endif %}</span>
-            </span>
-        </div>
-
-        <!-- LIVE BURGER STATS BAR -->
-        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-amber-200/50 text-center text-xs">
-            <div class="bg-white/85 backdrop-blur-md rounded-2xl p-2 border border-white/60 shadow-2xs">
-                <div class="text-[10px] uppercase font-bold text-slate-400">📏 {% if current_lang == 'ru' %}Высота{% elif current_lang == 'en' %}Height{% else %}Balandlik{% endif %}</div>
-                <div class="font-mono font-black text-sm text-slate-800" x-text="calculatedHeight + ' см'"></div>
-            </div>
-            <div class="bg-white/85 backdrop-blur-md rounded-2xl p-2 border border-white/60 shadow-2xs">
-                <div class="text-[10px] uppercase font-bold text-slate-400">⚖️ {% if current_lang == 'ru' %}Вес{% elif current_lang == 'en' %}Weight{% else %}Og'irlik{% endif %}</div>
-                <div class="font-mono font-black text-sm text-slate-800" x-text="'~' + calculatedWeight + ' г'"></div>
-            </div>
-            <div class="bg-white/85 backdrop-blur-md rounded-2xl p-2 border border-white/60 shadow-2xs">
-                <div class="text-[10px] uppercase font-bold text-slate-400">🔥 {% if current_lang == 'ru' %}Калории{% elif current_lang == 'en' %}Calories{% else %}Kaloriya{% endif %}</div>
-                <div class="font-mono font-black text-sm text-amber-600" x-text="'~' + calculatedCalories + ' ккал'"></div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- --------------------------------------------------------------------- -->
-    <!-- INGREDIENTS STEP TABS                                                  -->
-    <!-- --------------------------------------------------------------------- -->
-    <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 -mx-1 px-1">
-        <button type="button" @click="activeTab = 'buns'"
-                :class="activeTab === 'buns' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700'"
-                class="px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer">
-            🍞 {% if current_lang == 'ru' %}1. Булочка{% elif current_lang == 'en' %}1. Bun{% else %}1. Bulochka{% endif %}
-        </button>
-
-        <button type="button" @click="activeTab = 'patties'"
-                :class="activeTab === 'patties' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700'"
-                class="px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer">
-            🥩 {% if current_lang == 'ru' %}2. Котлеты{% elif current_lang == 'en' %}2. Patties{% else %}2. Kotletlar{% endif %}
-            <span class="w-4.5 h-4.5 rounded-full bg-brand text-white text-[10px] font-black flex items-center justify-center" x-text="totalPattiesCount"></span>
-        </button>
-
-        <button type="button" @click="activeTab = 'cheeses'"
-                :class="activeTab === 'cheeses' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700'"
-                class="px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer">
-            🧀 {% if current_lang == 'ru' %}3. Сыры{% elif current_lang == 'en' %}3. Cheeses{% else %}3. Pishloqlar{% endif %}
-            <span class="w-4.5 h-4.5 rounded-full bg-amber-500 text-white text-[10px] font-black flex items-center justify-center" x-text="totalCheesesCount"></span>
-        </button>
-
-        <button type="button" @click="activeTab = 'toppings'"
-                :class="activeTab === 'toppings' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700'"
-                class="px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer">
-            🥓 {% if current_lang == 'ru' %}4. Начинки{% elif current_lang == 'en' %}4. Toppings{% else %}4. Tarkib{% endif %}
-            <span x-show="totalToppingsCount > 0" class="w-4.5 h-4.5 rounded-full bg-emerald-500 text-white text-[10px] font-black flex items-center justify-center" x-text="totalToppingsCount"></span>
-        </button>
-
-        <button type="button" @click="activeTab = 'sauces'"
-                :class="activeTab === 'sauces' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700'"
-                class="px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer">
-            🥫 {% if current_lang == 'ru' %}5. Соусы{% elif current_lang == 'en' %}5. Sauces{% else %}5. Souslar{% endif %}
-            <span x-show="totalSaucesCount > 0" class="w-4.5 h-4.5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center" x-text="totalSaucesCount"></span>
-        </button>
-    </div>
-
-    <!-- --------------------------------------------------------------------- -->
-    <!-- TAB 1: BUN SELECTION (Radio)                                          -->
-    <!-- --------------------------------------------------------------------- -->
-    <div x-show="activeTab === 'buns'" x-transition class="space-y-3">
-        <div class="text-xs font-bold text-slate-700 px-1 flex items-center justify-between">
-            <span>{% if current_lang == 'ru' %}Шаг 1: Выберите основу вашего бургера (верхняя и нижняя булочка){% elif current_lang == 'en' %}Step 1: Choose your burger buns base{% else %}1-qadam: Burger bulochkasini tanlang{% endif %}</span>
-            <span class="text-slate-400 font-normal">1 / 5</span>
-        </div>
-        <template x-for="g in groups.filter(gr => isBunGroup(gr))" :key="g.id">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <template x-for="item in g.items" :key="item.id">
-                    <div @click="selectedBun = item"
-                         :class="selectedBun && selectedBun.id === item.id ? 'border-brand bg-brand/5 ring-2 ring-brand/15' : 'border-slate-200 bg-white hover:border-slate-300'"
-                         class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] shadow-2xs">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-                                 :class="selectedBun && selectedBun.id === item.id ? 'bg-brand text-white' : 'bg-slate-100 text-slate-700'">
-                                🍞
-                            </div>
-                            <div>
-                                <div class="text-xs sm:text-sm font-bold text-slate-900" x-text="item.name_ru || item.name_uz"></div>
-                                <div class="text-[11px] font-semibold text-slate-500 mt-0.5" x-text="item.price > 0 ? '+' + item.price.toLocaleString() + ' UZS' : '{% if current_lang == 'ru' %}Включено{% elif current_lang == 'en' %}Included{% else %}Kiritilgan{% endif %}'"></div>
-                            </div>
-                        </div>
-                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0"
-                             :class="selectedBun && selectedBun.id === item.id ? 'border-brand bg-brand text-white' : 'border-slate-300'">
-                            <i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]" x-show="selectedBun && selectedBun.id === item.id"></i>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </template>
-        <div class="pt-2">
-            <button type="button" @click="activeTab = 'patties'"
-                    class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xs cursor-pointer">
-                <span>{% if current_lang == 'ru' %}Далее: Котлеты ➔{% elif current_lang == 'en' %}Next: Patties ➔{% else %}Keyingisi: Kotletlar ➔{% endif %}</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- --------------------------------------------------------------------- -->
-    <!-- TAB 2: PATTIES / MEAT (Steppers: 1, 2, 3...)                          -->
-    <!-- --------------------------------------------------------------------- -->
-    <div x-show="activeTab === 'patties'" x-transition class="space-y-3">
-        <div class="text-xs font-bold text-slate-700 px-1 flex items-center justify-between">
-            <span>{% if current_lang == 'ru' %}Шаг 2: Выберите котлеты и их количество{% elif current_lang == 'en' %}Step 2: Choose patties & quantities{% else %}2-qadam: Kotletlar va sonini tanlang{% endif %}</span>
-            <span class="text-slate-400 font-normal">2 / 5</span>
-        </div>
-        <template x-for="g in groups.filter(gr => isPattyGroup(gr))" :key="g.id">
-            <div class="space-y-2.5">
-                <template x-for="item in g.items" :key="item.id">
-                    <div @click="if ((patties[item.id] || 0) === 0) updateQty(patties, item.id, 1, 3)"
-                         class="p-4 rounded-2xl border bg-white flex items-center justify-between gap-3 shadow-2xs transition-all cursor-pointer"
-                         :class="(patties[item.id] || 0) > 0 ? 'border-brand/40 bg-brand/[0.02] ring-1 ring-brand/10' : 'border-slate-200 hover:border-slate-300'">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl shrink-0">
-                                🥩
-                            </div>
-                            <div class="min-w-0">
-                                <div class="text-xs sm:text-sm font-bold text-slate-900 truncate" x-text="item.name_ru || item.name_uz"></div>
-                                <div class="text-[11px] font-mono font-bold text-brand mt-0.5" x-text="item.price > 0 ? '+' + item.price.toLocaleString() + ' UZS' : '{% if current_lang == 'ru' %}Включено{% elif current_lang == 'en' %}Included{% else %}Kiritilgan{% endif %}'"></div>
-                            </div>
-                        </div>
-
-                        <!-- Stepper [ - count + ] -->
-                        <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl shrink-0" @click.stop>
-                            <button type="button" @click="updateQty(patties, item.id, -1, 3)"
-                                    class="w-8 h-8 rounded-lg bg-white hover:bg-slate-200 flex items-center justify-center font-bold text-slate-800 transition-colors shadow-2xs active:scale-90 cursor-pointer">
-                                −
-                            </button>
-                            <span class="w-6 text-center font-bold font-mono text-xs sm:text-sm text-slate-900" x-text="patties[item.id] || 0"></span>
-                            <button type="button" @click="updateQty(patties, item.id, 1, 3)"
-                                    class="w-8 h-8 rounded-lg bg-brand hover:brightness-95 text-white flex items-center justify-center font-bold transition-colors shadow-2xs active:scale-90 cursor-pointer">
-                                +
-                            </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </template>
-        <div class="pt-2">
-            <button type="button" @click="activeTab = 'cheeses'"
-                    class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xs cursor-pointer">
-                <span>{% if current_lang == 'ru' %}Далее: Сыры ➔{% elif current_lang == 'en' %}Next: Cheeses ➔{% else %}Keyingisi: Pishloqlar ➔{% endif %}</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- --------------------------------------------------------------------- -->
-    <!-- TAB 3: CHEESES (Steppers: Чеддер, Моцарелла, Дорблю)                 -->
-    <!-- --------------------------------------------------------------------- -->
-    <div x-show="activeTab === 'cheeses'" x-transition class="space-y-3">
-        <div class="text-xs font-bold text-slate-700 px-1 flex items-center justify-between">
-            <span>{% if current_lang == 'ru' %}Шаг 3: Добавьте ломтики нежного расплавленного сыра{% elif current_lang == 'en' %}Step 3: Add slices of melted cheese{% else %}3-qadam: Pishloq bo'laklarini qo'shing{% endif %}</span>
-            <span class="text-slate-400 font-normal">3 / 5</span>
-        </div>
-        <template x-for="g in groups.filter(gr => isCheeseGroup(gr))" :key="g.id">
-            <div class="space-y-2.5">
-                <template x-for="item in g.items" :key="item.id">
-                    <div @click="if ((cheeses[item.id] || 0) === 0) updateQty(cheeses, item.id, 1, 3)"
-                         class="p-4 rounded-2xl border bg-white flex items-center justify-between gap-3 shadow-2xs transition-all cursor-pointer"
-                         :class="(cheeses[item.id] || 0) > 0 ? 'border-amber-400/50 bg-amber-500/[0.03] ring-1 ring-amber-400/20' : 'border-slate-200 hover:border-slate-300'">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-10 h-10 rounded-2xl bg-yellow-50 text-yellow-600 flex items-center justify-center text-xl shrink-0">
-                                🧀
-                            </div>
-                            <div class="min-w-0">
-                                <div class="text-xs sm:text-sm font-bold text-slate-900 truncate" x-text="item.name_ru || item.name_uz"></div>
-                                <div class="text-[11px] font-mono font-bold text-amber-600 mt-0.5" x-text="'+' + item.price.toLocaleString() + ' UZS / ломтик'"></div>
-                            </div>
-                        </div>
-
-                        <!-- Stepper [ - count + ] -->
-                        <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl shrink-0" @click.stop>
-                            <button type="button" @click="updateQty(cheeses, item.id, -1, 3)"
-                                    class="w-8 h-8 rounded-lg bg-white hover:bg-slate-200 flex items-center justify-center font-bold text-slate-800 transition-colors shadow-2xs active:scale-90 cursor-pointer">
-                                −
-                            </button>
-                            <span class="w-6 text-center font-bold font-mono text-xs sm:text-sm text-slate-900" x-text="cheeses[item.id] || 0"></span>
-                            <button type="button" @click="updateQty(cheeses, item.id, 1, 3)"
-                                    class="w-8 h-8 rounded-lg bg-amber-500 hover:brightness-95 text-white flex items-center justify-center font-bold transition-colors shadow-2xs active:scale-90 cursor-pointer">
-                                +
-                            </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </template>
-        <div class="pt-2">
-            <button type="button" @click="activeTab = 'toppings'"
-                    class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xs cursor-pointer">
-                <span>{% if current_lang == 'ru' %}Далее: Начинки ➔{% elif current_lang == 'en' %}Next: Toppings ➔{% else %}Keyingisi: Tarkib ➔{% endif %}</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- --------------------------------------------------------------------- -->
-    <!-- TAB 4: TOPPINGS (Бекон, Халапеньо, Помидор, Огурчики, Яйцо)           -->
-    <!-- --------------------------------------------------------------------- -->
-    <div x-show="activeTab === 'toppings'" x-transition class="space-y-3">
-        <div class="text-xs font-bold text-slate-700 px-1 flex items-center justify-between">
-            <span>{% if current_lang == 'ru' %}Шаг 4: Свежие овощи и хрустящие топпинги{% elif current_lang == 'en' %}Step 4: Fresh veggies and extra toppings{% else %}4-qadam: Sabzavotlar va qo'shimchalar{% endif %}</span>
-            <span class="text-slate-400 font-normal">4 / 5</span>
-        </div>
-        <template x-for="g in groups.filter(gr => isToppingGroup(gr))" :key="g.id">
-            <div class="space-y-2.5">
-                <template x-for="item in g.items" :key="item.id">
-                    <div @click="if ((toppings[item.id] || 0) === 0) updateQty(toppings, item.id, 1, 3)"
-                         class="p-4 rounded-2xl border bg-white flex items-center justify-between gap-3 shadow-2xs transition-all cursor-pointer"
-                         :class="(toppings[item.id] || 0) > 0 ? 'border-brand/40 bg-brand/[0.02] ring-1 ring-brand/10' : 'border-slate-200 hover:border-slate-300'">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl shrink-0">
-                                🥓
-                            </div>
-                            <div class="min-w-0">
-                                <div class="text-xs sm:text-sm font-bold text-slate-900 truncate" x-text="item.name_ru || item.name_uz"></div>
-                                <div class="text-[11px] font-mono font-bold text-brand mt-0.5" x-text="'+' + item.price.toLocaleString() + ' UZS'"></div>
-                            </div>
-                        </div>
-
-                        <!-- Stepper [ - count + ] -->
-                        <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl shrink-0" @click.stop>
-                            <button type="button" @click="updateQty(toppings, item.id, -1, 3)"
-                                    class="w-8 h-8 rounded-lg bg-white hover:bg-slate-200 flex items-center justify-center font-bold text-slate-800 transition-colors shadow-2xs active:scale-90 cursor-pointer">
-                                −
-                            </button>
-                            <span class="w-6 text-center font-bold font-mono text-xs sm:text-sm text-slate-900" x-text="toppings[item.id] || 0"></span>
-                            <button type="button" @click="updateQty(toppings, item.id, 1, 3)"
-                                    class="w-8 h-8 rounded-lg bg-brand hover:brightness-95 text-white flex items-center justify-center font-bold transition-colors shadow-2xs active:scale-90 cursor-pointer">
-                                +
-                            </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </template>
-        <div class="pt-2">
-            <button type="button" @click="activeTab = 'sauces'"
-                    class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xs cursor-pointer">
-                <span>{% if current_lang == 'ru' %}Далее: Соусы ➔{% elif current_lang == 'en' %}Next: Sauces ➔{% else %}Keyingisi: Souslar ➔{% endif %}</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- --------------------------------------------------------------------- -->
-    <!-- TAB 5: SAUCES (BBQ, Сырный, Трюфельный, Sriracha)                     -->
-    <!-- --------------------------------------------------------------------- -->
-    <div x-show="activeTab === 'sauces'" x-transition class="space-y-3">
-        <div class="text-xs font-bold text-slate-700 px-1 flex items-center justify-between">
-            <span>{% if current_lang == 'ru' %}Шаг 5: Фирменные соусы к бургеру{% elif current_lang == 'en' %}Step 5: Signature sauces{% else %}5-qadam: Maxsus souslar{% endif %}</span>
-            <span class="text-slate-400 font-normal">5 / 5</span>
-        </div>
-        <template x-for="g in groups.filter(gr => isSauceGroup(gr))" :key="g.id">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <template x-for="item in g.items" :key="item.id">
-                    <div @click="toggleSauce(item.id)"
-                         :class="(sauces[item.id] || 0) > 0 ? 'border-brand bg-brand/5 ring-2 ring-brand/15' : 'border-slate-200 bg-white hover:border-slate-300'"
-                         class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] shadow-2xs">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-                                 :class="(sauces[item.id] || 0) > 0 ? 'bg-brand text-white' : 'bg-slate-100 text-slate-700'">
-                                🥫
-                            </div>
-                            <div>
-                                <div class="text-xs sm:text-sm font-bold text-slate-900" x-text="item.name_ru || item.name_uz"></div>
-                                <div class="text-[11px] font-semibold text-slate-500 mt-0.5" x-text="item.price > 0 ? '+' + item.price.toLocaleString() + ' UZS' : '{% if current_lang == 'ru' %}Включено{% elif current_lang == 'en' %}Included{% else %}Kiritilgan{% endif %}'"></div>
-                            </div>
-                        </div>
-                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0"
-                             :class="(sauces[item.id] || 0) > 0 ? 'border-brand bg-brand text-white' : 'border-slate-300'">
-                            <i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]" x-show="(sauces[item.id] || 0) > 0"></i>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </template>
-        <div class="pt-2">
-            <button type="button" @click="handleMainAction()"
-                    class="w-full py-3.5 rounded-2xl bg-brand hover:brightness-95 text-white font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-brand/25 cursor-pointer">
-                <span>🛒 {% if current_lang == 'ru' %}Готово! Добавить в корзину{% elif current_lang == 'en' %}Done! Add to Cart{% else %}Tayyor! Savatga qo'shish{% endif %}</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- --------------------------------------------------------------------- -->
-    <!-- STICKY GLASSMORPHISM ORDER ACTION BAR                                 -->
-    <!-- Positioned above the mobile floating dock (bottom-[72px] sm:bottom-4) -->
-    <!-- --------------------------------------------------------------------- -->
-    <div class="fixed bottom-[72px] sm:bottom-4 inset-x-0 z-30 pointer-events-none px-3">
-        <div class="max-w-xl mx-auto pointer-events-auto bg-white/95 backdrop-blur-2xl border border-white/70 shadow-[0_-8px_30px_rgba(0,0,0,0.14)] rounded-3xl p-3 sm:p-3.5 space-y-2">
-            
-            <div class="flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                    <div class="text-[10px] uppercase font-bold text-slate-400">
-                        {% if current_lang == 'ru' %}Итоговая стоимость{% elif current_lang == 'en' %}Total price{% else %}Umumiy narxi{% endif %}
-                    </div>
-                    <div class="text-base sm:text-lg font-black font-mono text-slate-900 leading-tight"
-                         x-text="totalPrice.toLocaleString() + ' UZS'"></div>
-                </div>
-
-                <!-- Action Button -->
-                <button type="button" @click="handleMainAction()"
-                        :disabled="isAdding"
-                        class="px-5 py-3 rounded-2xl bg-brand hover:brightness-95 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-brand/25 active:scale-95 transition-all disabled:opacity-50 cursor-pointer">
-                    <i data-lucide="shopping-bag" class="w-4 h-4" x-show="!isAdding && !addedSuccess"></i>
-                    <i data-lucide="loader-2" class="w-4 h-4 animate-spin" x-show="isAdding"></i>
-                    <i data-lucide="check" class="w-4 h-4" x-show="addedSuccess"></i>
-                    <span x-text="addedSuccess ? '{% if current_lang == 'ru' %}Оформить заказ ➔{% elif current_lang == 'en' %}Checkout ➔{% else %}Buyurtma berish ➔{% endif %}' : (isAdding ? '{% if current_lang == 'ru' %}Добавление...{% else %}Qo\'shilmoqda...{% endif %}' : '{% if current_lang == 'ru' %}Добавить в корзину{% elif current_lang == 'en' %}Add to Cart{% else %}Savatga qo\'shish{% endif %}')"></span>
+                <!-- Add to Cart CTA Button -->
+                <button type="button"
+                        @click="addToCart()"
+                        :disabled="addingToCart"
+                        class="flex-1 h-12 rounded-2xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white font-black text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-between px-5">
+                    <span class="flex items-center gap-1.5">
+                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                        <span>{% if current_lang == 'ru' %}В корзину{% elif current_lang == 'en' %}Add to Cart{% else %}Savatga qo'shish{% endif %}</span>
+                    </span>
+                    <span class="font-mono font-black tracking-tight" x-text="formatMoney(calculatedTotal * portionCount)"></span>
                 </button>
             </div>
 
-            <!-- Configuration breakdown line -->
-            <div class="text-[11px] text-slate-500 font-medium truncate pt-1 border-t border-slate-100 flex items-center justify-between">
-                <span class="truncate" x-text="configurationSummary"></span>
-                <span class="shrink-0 text-slate-400 font-mono text-[10px] ml-2" x-text="'~' + calculatedWeight + 'г'"></span>
-            </div>
-
         </div>
     </div>
 
-    <!-- --------------------------------------------------------------------- -->
-    <!-- SUCCESS CONFIRMATION MODAL                                            -->
-    <!-- --------------------------------------------------------------------- -->
-    <div x-show="modalOpen" x-transition.opacity
-         class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-3 sm:p-4"
-         style="display: none;">
-        <div @click.away="modalOpen = false"
-             class="bg-white rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-2xl border border-slate-100 text-center animate-in fade-in slide-in-from-bottom duration-200">
-            
-            <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-inner">
-                🍔
-            </div>
-
-            <div class="space-y-1">
-                <h3 class="text-base font-black text-slate-900">
-                    {% if current_lang == 'ru' %}Бургер добавлен в корзину!{% elif current_lang == 'en' %}Burger added to cart!{% else %}Burger savatga qo'shildi!{% endif %}
-                </h3>
-                <p class="text-xs text-slate-500" x-text="configurationSummary"></p>
-                <div class="text-sm font-mono font-black text-brand pt-1" x-text="totalPrice.toLocaleString() + ' UZS'"></div>
-            </div>
-
-            <div class="space-y-2 pt-2">
-                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-                   class="w-full py-3 px-4 rounded-2xl bg-brand hover:brightness-95 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-brand/25 active:scale-95 transition-all">
-                    <span>{% if current_lang == 'ru' %}Перейти к оформлению заказа{% elif current_lang == 'en' %}Proceed to Checkout{% else %}Buyurtmani rasmiylashtirish{% endif %}</span>
-                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </a>
-
-                <button type="button" @click="modalOpen = false"
-                        class="w-full py-2.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs active:scale-95 transition-all cursor-pointer">
-                    {% if current_lang == 'ru' %}Собрать ещё один или продолжить{% elif current_lang == 'en' %}Build another or continue{% else %}Yana yig'ish yoki davom etish{% endif %}
-                </button>
-            </div>
+    <!-- TOAST NOTIFICATION -->
+    <div x-show="toastMessage"
+         x-cloak
+         x-transition
+         class="fixed bottom-6 inset-x-4 max-w-sm mx-auto z-50 p-3.5 rounded-2xl bg-slate-900 text-white shadow-2xl flex items-center justify-between gap-3 border border-slate-700">
+        <div class="flex items-center gap-2 text-xs font-bold">
+            <span class="text-emerald-400">✓</span>
+            <span x-text="toastMessage"></span>
         </div>
+        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}"
+           class="px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-black shrink-0 transition-colors">
+            {% if current_lang == 'ru' %}Корзина ➜{% else %}Savat ➜{% endif %}
+        </a>
     </div>
 
 </div>
+{% endblock %}
 
-<!-- INLINE SCRIPT PARSING STRICT JSON (ZERO LOCALE COMMA BUGS) -->
+{% block extra_scripts %}
 <script>
-function burgerConstructor() {
-    let cfg = {};
-    try {
-        const raw = document.getElementById('constructor-data')?.textContent;
-        cfg = raw ? JSON.parse(raw) : {};
-    } catch(e) {
-        console.error('Constructor config parse error:', e);
-    }
+function foodConstructorCatalog() {
+    const rawData = JSON.parse(document.getElementById('constructor-products-data')?.textContent || '[]');
 
     return {
-        basePrice: Number(cfg.base_price) || 25000,
-        productId: Number(cfg.product_id) || 0,
-        groups: Array.isArray(cfg.groups) ? cfg.groups : [],
-        cartAddUrl: cfg.cart_add_url || '/cart/add/',
-        cartUrl: cfg.cart_url || '/cart/',
-        cartCount: Number('{{ cart_count|default:0 }}') || 0,
-        activeTab: 'buns',
-        isAdding: false,
-        addedSuccess: false,
-        modalOpen: false,
+        products: rawData,
+        categories: {{ categories_list|safe }} || [],
+        activeCategory: 'all',
+        cartCount: {{ cart_count|default:0 }},
 
-        selectedBun: null,
-        patties: {},
-        cheeses: {},
-        toppings: {},
-        sauces: {},
+        // Customizer state
+        customizerOpen: false,
+        currentProduct: null,
+        portionCount: 1,
+        nutritionPortion: 'portion',
+        addingToCart: false,
+        toastMessage: '',
 
-        viewMode: 'assembled',
-        rotX: 6,
-        rotY: 0,
-        isDragging: false,
-        isTouch: false,
-        dragStartX: 0,
-        dragStartY: 0,
-        startRotX: 6,
-        startRotY: 0,
-        touchAxis: null,
-
-        startDrag(e) {
-            const isTouch = e.pointerType === 'touch' || Boolean(e.touches);
-            const pt = e.touches ? e.touches[0] : e;
-            this.isDragging = true;
-            this.isTouch = isTouch;
-            this.dragStartX = pt.clientX;
-            this.dragStartY = pt.clientY;
-            this.startRotX = this.rotX;
-            this.startRotY = this.rotY;
-            this.touchAxis = isTouch ? null : 'h';
-        },
-
-        onDrag(e) {
-            if (!this.isDragging) return;
-            const pt = e.touches ? e.touches[0] : e;
-            const deltaX = pt.clientX - this.dragStartX;
-            const deltaY = pt.clientY - this.dragStartY;
-
-            // On touch screens: allow natural vertical scrolling unless gesture is clearly horizontal
-            if (this.isTouch && !this.touchAxis) {
-                if (Math.abs(deltaY) > Math.abs(deltaX) + 5) {
-                    // User intends to scroll down the page vertically: cancel drag immediately
-                    this.isDragging = false;
-                    return;
-                } else if (Math.abs(deltaX) > Math.abs(deltaY) + 5) {
-                    this.touchAxis = 'h';
-                } else {
-                    return;
-                }
-            }
-
-            this.rotY = Math.max(-75, Math.min(75, this.startRotY + deltaX * 0.45));
-            if (!this.isTouch) {
-                this.rotX = Math.max(-20, Math.min(25, this.startRotX - deltaY * 0.25));
-            }
-        },
-
-        endDrag() {
-            this.isDragging = false;
-            this.touchAxis = null;
-        },
-
-        rotateLeft() {
-            this.rotY = Math.max(-70, this.rotY - 20);
-        },
-
-        rotateRight() {
-            this.rotY = Math.min(70, this.rotY + 20);
-        },
-
-        resetRotation() {
-            this.rotX = 6;
-            this.rotY = 0;
-        },
-
-        isBunGroup(g) {
-            if (!g) return false;
-            const n = ((g.name_ru || '') + ' ' + (g.name_uz || '')).toLowerCase();
-            return n.includes('булочк') || n.includes('bulochka') || n.includes('булк');
-        },
-
-        isPattyGroup(g) {
-            if (!g) return false;
-            const n = ((g.name_ru || '') + ' ' + (g.name_uz || '')).toLowerCase();
-            return n.includes('котлет') || n.includes('go\'sht') || n.includes('мясо');
-        },
-
-        isCheeseGroup(g) {
-            if (!g) return false;
-            const n = ((g.name_ru || '') + ' ' + (g.name_uz || '')).toLowerCase();
-            return n.includes('сыр') || n.includes('pishloq');
-        },
-
-        isSauceGroup(g) {
-            if (!g) return false;
-            const n = ((g.name_ru || '') + ' ' + (g.name_uz || '')).toLowerCase();
-            return n.includes('соус') || n.includes('sous');
-        },
-
-        isToppingGroup(g) {
-            if (!g) return false;
-            const n = ((g.name_ru || '') + ' ' + (g.name_uz || '')).toLowerCase();
-            return n.includes('топпинг') || n.includes('qo\'shimcha') || n.includes('начинк');
-        },
-
-        isBlackBun() {
-            if (!this.selectedBun) return false;
-            const n = ((this.selectedBun.name_ru || '') + ' ' + (this.selectedBun.name_uz || '')).toLowerCase();
-            return n.includes('черн') || n.includes('qora');
-        },
-
-        isNoBun() {
-            if (!this.selectedBun) return false;
-            const n = ((this.selectedBun.name_ru || '') + ' ' + (this.selectedBun.name_uz || '')).toLowerCase();
-            return n.includes('без бул') || n.includes('bulochkasiz') || n.includes('лист салат');
-        },
-
-        get burgerTransform() {
-            const extraLayers = (this.totalPattiesCount - 1) * 2 + this.totalCheesesCount + this.totalToppingsCount;
-            let scale = 1.0;
-            if (this.viewMode === 'exploded') {
-                if (extraLayers > 6) scale = 0.46;
-                else if (extraLayers > 3) scale = 0.52;
-                else scale = 0.58;
-            } else {
-                if (extraLayers > 7) scale = 0.88;
-                else if (extraLayers > 4) scale = 0.94;
-                else if (extraLayers > 2) scale = 0.98;
-                else scale = 1.0;
-            }
-
-            return `perspective(900px) rotateX(${this.rotX}deg) rotateY(${this.rotY}deg) scale(${scale})`;
-        },
+        // Selected options state
+        selectedSingle: {},
+        removedIngredients: [],
+        toppingsCount: {},
 
         init() {
-            const groupsList = Array.isArray(this.groups) ? this.groups : [];
-            groupsList.forEach(g => {
-                const itemsList = Array.isArray(g.items) ? g.items : [];
-                if (this.isBunGroup(g)) {
-                    const def = itemsList.find(i => i.is_default) || itemsList[0];
-                    if (def) this.selectedBun = def;
-                } else if (this.isPattyGroup(g)) {
-                    itemsList.forEach(it => {
-                        this.patties[it.id] = it.is_default ? 1 : 0;
+            const requestedId = {{ active_product_id|default:'null' }};
+            if (requestedId) {
+                const target = this.products.find(p => p.id === requestedId);
+                if (target) {
+                    this.openCustomizer(target);
+                }
+            }
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        get filteredProducts() {
+            if (this.activeCategory === 'all') return this.products;
+            return this.products.filter(p => p.category_name === this.activeCategory);
+        },
+
+        get singleGroups() {
+            if (!this.currentProduct || !this.currentProduct.groups) return [];
+            return this.currentProduct.groups.filter(g => g.group_type === 'SINGLE');
+        },
+
+        get availableToppings() {
+            // Built-in appetizing halal toppings + toppings from DB groups
+            const builtInBurgerToppings = [
+                { id: 'extra_angus', name: 'Котлета Ангус (150г)', price: 18000, icon: '🥩', max: 2 },
+                { id: 'extra_cheddar', name: 'Сыр Чеддер (2 ломтика)', price: 5000, icon: '🧀', max: 3 },
+                { id: 'crispy_onions', name: 'Хрустящий жареный лук', price: 4000, icon: '🧅', max: 3 },
+                { id: 'cheese_sauce', name: 'Сырный авторский соус', price: 3500, icon: '🥣', max: 3 },
+                { id: 'jalapeno', name: 'Острый халапеньо', price: 4000, icon: '🌶️', max: 3 },
+                { id: 'fried_egg', name: 'Жареное яйцо (глазунья)', price: 4000, icon: '🍳', max: 2 },
+                { id: 'pickles_extra', name: 'Маринованные огурчики', price: 3000, icon: '🥒', max: 3 },
+                { id: 'bbq_sauce', name: 'Копченый BBQ соус', price: 3000, icon: '🥫', max: 3 },
+            ];
+
+            const builtInPizzaToppings = [
+                { id: 'cheese_crust', name: 'Сырный бортик', price: 14000, icon: '🧀', max: 1 },
+                { id: 'extra_mozzarella', name: 'Двойная Моцарелла', price: 8000, icon: '🧀', max: 2 },
+                { id: 'beef_meat', name: 'Мраморная говядина', price: 12000, icon: '🥩', max: 2 },
+                { id: 'mushrooms', name: 'Свежие шампиньоны', price: 5000, icon: '🍄', max: 2 },
+                { id: 'jalapeno_pizza', name: 'Острый халапеньо', price: 4000, icon: '🌶️', max: 2 },
+                { id: 'ranch_sauce', name: 'Сливочный ранч', price: 3000, icon: '🥣', max: 2 },
+            ];
+
+            if (this.currentProduct?.is_pizza) {
+                return builtInPizzaToppings;
+            }
+            return builtInBurgerToppings;
+        },
+
+        openCustomizer(prod) {
+            this.currentProduct = prod;
+            this.portionCount = 1;
+            this.selectedSingle = {};
+            this.removedIngredients = [];
+            this.toppingsCount = {};
+
+            // Pre-select defaults for single groups
+            if (prod.groups) {
+                prod.groups.forEach(g => {
+                    if (g.group_type === 'SINGLE' && g.items.length > 0) {
+                        const def = g.items.find(it => it.is_default) || g.items[0];
+                        if (def) this.selectedSingle[g.id] = def.id;
+                    }
+                });
+            }
+
+            this.customizerOpen = true;
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        },
+
+        closeCustomizer() {
+            this.customizerOpen = false;
+        },
+
+        selectSingle(groupId, item) {
+            this.selectedSingle[groupId] = item.id;
+        },
+
+        isRemoved(ingId) {
+            return this.removedIngredients.includes(ingId);
+        },
+
+        toggleRemoved(ingId) {
+            if (this.isRemoved(ingId)) {
+                this.removedIngredients = this.removedIngredients.filter(id => id !== ingId);
+            } else {
+                this.removedIngredients.push(ingId);
+            }
+        },
+
+        incrementTopping(topId, max) {
+            const current = this.toppingsCount[topId] || 0;
+            if (current < max) {
+                this.toppingsCount[topId] = current + 1;
+            }
+        },
+
+        decrementTopping(topId) {
+            const current = this.toppingsCount[topId] || 0;
+            if (current > 0) {
+                this.toppingsCount[topId] = current - 1;
+            }
+        },
+
+        get calculatedTotal() {
+            if (!this.currentProduct) return 0;
+            let total = Number(this.currentProduct.price) || 0;
+
+            // Add single groups prices
+            if (this.currentProduct.groups) {
+                this.currentProduct.groups.forEach(g => {
+                    if (g.group_type === 'SINGLE') {
+                        const selId = this.selectedSingle[g.id];
+                        const it = g.items.find(i => i.id === selId);
+                        if (it && it.price) total += Number(it.price);
+                    }
+                });
+            }
+
+            // Add toppings prices
+            this.availableToppings.forEach(top => {
+                const count = this.toppingsCount[top.id] || 0;
+                if (count > 0) {
+                    total += count * Number(top.price);
+                }
+            });
+
+            return total;
+        },
+
+        formatMoney(num) {
+            return Number(num || 0).toLocaleString('ru-RU') + ' UZS';
+        },
+
+        async addToCart() {
+            if (this.addingToCart || !this.currentProduct) return;
+            this.addingToCart = true;
+
+            // Generate structured recipe summary
+            const singleItemsNames = [];
+            if (this.currentProduct.groups) {
+                this.currentProduct.groups.forEach(g => {
+                    if (g.group_type === 'SINGLE') {
+                        const selId = this.selectedSingle[g.id];
+                        const it = g.items.find(i => i.id === selId);
+                        if (it) singleItemsNames.push(it.name);
+                    }
+                });
+            }
+
+            const removedNames = (this.currentProduct.removables || [])
+                .filter(r => this.removedIngredients.includes(r.id))
+                .map(r => `Без ${r.name_ru || r.name}`);
+
+            const addedToppingsList = [];
+            this.availableToppings.forEach(top => {
+                const count = this.toppingsCount[top.id] || 0;
+                if (count > 0) {
+                    addedToppingsList.push({
+                        id: top.id,
+                        name: top.name,
+                        count: count,
+                        price: top.price,
+                        total_price: count * top.price
                     });
-                } else if (this.isCheeseGroup(g)) {
-                    itemsList.forEach(it => {
-                        this.cheeses[it.id] = it.is_default ? 1 : 0;
-                    });
-                } else if (this.isSauceGroup(g)) {
-                    itemsList.forEach(it => {
-                        this.sauces[it.id] = it.is_default ? 1 : 0;
-                    });
+                }
+            });
+
+            const toppingsNames = addedToppingsList.map(t => `${t.name} (${t.count}×)`);
+
+            let summaryParts = [];
+            if (singleItemsNames.length) summaryParts.push(singleItemsNames.join(', '));
+            if (toppingsNames.length) summaryParts.push('+ ' + toppingsNames.join(', '));
+            if (removedNames.length) summaryParts.push('- ' + removedNames.join(', '));
+            const fullSummary = summaryParts.join(' • ');
+
+            const customOptions = {
+                product_name: this.currentProduct.name,
+                single_choices: singleItemsNames,
+                removed_ingredients: removedNames,
+                toppings: addedToppingsList,
+                summary: fullSummary,
+            };
+
+            try {
+                const addUrl = '{{ cart_add_url }}';
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+                const res = await fetch(addUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({
+                        product_id: this.currentProduct.id,
+                        quantity: this.portionCount,
+                        custom_price: this.calculatedTotal,
+                        custom_summary: fullSummary,
+                        custom_options: customOptions,
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.cartCount = data.cart_count;
+                    this.closeCustomizer();
+                    this.toastMessage = `${this.currentProduct.name} savatga qo'shildi!`;
+                    setTimeout(() => { this.toastMessage = ''; }, 4000);
                 } else {
-                    itemsList.forEach(it => {
-                        this.toppings[it.id] = it.is_default ? 1 : 0;
-                    });
+                    alert(data.error || "Xatolik yuz berdi");
                 }
-            });
-
-            if (this.$nextTick) {
-                this.$nextTick(() => {
-                    if (window.lucide) window.lucide.createIcons();
-                });
-            } else if (typeof window !== 'undefined' && window.lucide) {
-                window.lucide.createIcons();
+            } catch (e) {
+                alert("Serverga ulanishda xatolik yuz berdi");
+            } finally {
+                this.addingToCart = false;
             }
-        },
-
-        get totalPattiesCount() {
-            const vals = Object.values(this.patties || {});
-            return vals.reduce((a, b) => a + (Number(b) || 0), 0);
-        },
-
-        get totalCheesesCount() {
-            const vals = Object.values(this.cheeses || {});
-            return vals.reduce((a, b) => a + (Number(b) || 0), 0);
-        },
-
-        get totalToppingsCount() {
-            const vals = Object.values(this.toppings || {});
-            return vals.reduce((a, b) => a + (Number(b) || 0), 0);
-        },
-
-        get totalSaucesCount() {
-            const vals = Object.values(this.sauces || {});
-            return vals.reduce((a, b) => a + (Number(b) || 0), 0);
-        },
-
-        get calculatedHeight() {
-            let h = 8;
-            h += this.totalPattiesCount * 2.4;
-            h += this.totalCheesesCount * 0.4;
-            h += this.totalToppingsCount * 0.8;
-            h += this.totalSaucesCount * 0.3;
-            return Math.round(h * 10) / 10;
-        },
-
-        get calculatedWeight() {
-            let w = 180;
-            w += this.totalPattiesCount * 150;
-            w += this.totalCheesesCount * 25;
-            w += this.totalToppingsCount * 30;
-            w += this.totalSaucesCount * 25;
-            return w;
-        },
-
-        get calculatedCalories() {
-            let cal = 380;
-            cal += this.totalPattiesCount * 240;
-            cal += this.totalCheesesCount * 85;
-            cal += this.totalToppingsCount * 35;
-            cal += this.totalSaucesCount * 45;
-            return cal;
-        },
-
-        get totalPrice() {
-            let sum = Number(this.basePrice) || 25000;
-            if (this.selectedBun && this.selectedBun.price) {
-                sum += Number(this.selectedBun.price) || 0;
-            }
-
-            const groupsList = Array.isArray(this.groups) ? this.groups : [];
-            groupsList.forEach(g => {
-                const itemsList = Array.isArray(g.items) ? g.items : [];
-                itemsList.forEach(it => {
-                    const count = (Number(this.patties[it.id]) || 0) +
-                                  (Number(this.cheeses[it.id]) || 0) +
-                                  (Number(this.toppings[it.id]) || 0) +
-                                  (Number(this.sauces[it.id]) || 0);
-                    if (count > 0 && it.price) {
-                        sum += (Number(it.price) || 0) * count;
-                    }
-                });
-            });
-            return sum;
-        },
-
-        get configurationSummary() {
-            const parts = [];
-            if (this.selectedBun) {
-                parts.push(this.selectedBun.name_ru || this.selectedBun.name_uz || 'Булочка');
-            }
-
-            const groupsList = Array.isArray(this.groups) ? this.groups : [];
-            groupsList.forEach(g => {
-                const itemsList = Array.isArray(g.items) ? g.items : [];
-                itemsList.forEach(it => {
-                    const count = (Number(this.patties[it.id]) || 0) +
-                                  (Number(this.cheeses[it.id]) || 0) +
-                                  (Number(this.toppings[it.id]) || 0) +
-                                  (Number(this.sauces[it.id]) || 0);
-                    if (count > 0) {
-                        const name = it.name_ru || it.name_uz;
-                        parts.push(count > 1 ? `${count}× ${name}` : name);
-                    }
-                });
-            });
-            return parts.join(' • ');
-        },
-
-        updateQty(dict, id, delta, max = 3) {
-            const cur = Number(dict[id]) || 0;
-            const next = Math.max(0, Math.min(max, cur + delta));
-            dict[id] = next;
-        },
-
-        toggleSauce(id) {
-            const cur = Number(this.sauces[id]) || 0;
-            this.sauces[id] = cur > 0 ? 0 : 1;
-        },
-
-        hasItemNamed(keyword) {
-            if (!keyword || !this.groups) return false;
-            keyword = keyword.toLowerCase();
-            const groupsList = Array.isArray(this.groups) ? this.groups : [];
-            for (let g of groupsList) {
-                const itemsList = Array.isArray(g.items) ? g.items : [];
-                for (let it of itemsList) {
-                    const n = ((it.name_ru || '') + ' ' + (it.name_uz || '')).toLowerCase();
-                    if (n.includes(keyword)) {
-                        const count = (Number(this.patties[it.id]) || 0) +
-                                      (Number(this.cheeses[it.id]) || 0) +
-                                      (Number(this.toppings[it.id]) || 0) +
-                                      (Number(this.sauces[it.id]) || 0);
-                        if (count > 0) return true;
-                    }
-                }
-            }
-            return false;
-        },
-
-        resetToDefaults() {
-            this.init();
-        },
-
-        handleMainAction() {
-            if (this.addedSuccess) {
-                // Already added - take user straight to cart/checkout
-                window.location.href = this.cartUrl + '{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}';
-                return;
-            }
-            this.addToCart();
-        },
-
-        addToCart() {
-            if (this.isAdding) return;
-            this.isAdding = true;
-
-            const getSelectedItemsWithDetails = (dict) => {
-                const list = [];
-                const groupsList = Array.isArray(this.groups) ? this.groups : [];
-                groupsList.forEach(g => {
-                    const items = Array.isArray(g.items) ? g.items : [];
-                    items.forEach(it => {
-                        const count = Number(dict[it.id]) || 0;
-                        if (count > 0) {
-                            list.push({
-                                id: it.id,
-                                name: it.name_ru || it.name_uz,
-                                count: count,
-                                unit_price: Number(it.price) || 0,
-                                total_price: (Number(it.price) || 0) * count
-                            });
-                        }
-                    });
-                });
-                return list;
-            };
-
-            const payload = {
-                product_id: this.productId,
-                quantity: 1,
-                custom_summary: this.configurationSummary,
-                custom_price: this.totalPrice,
-                custom_options: {
-                    bun: this.selectedBun ? {
-                        id: this.selectedBun.id,
-                        name: this.selectedBun.name_ru || this.selectedBun.name_uz,
-                        price: Number(this.selectedBun.price) || 0
-                    } : null,
-                    patties: getSelectedItemsWithDetails(this.patties),
-                    cheeses: getSelectedItemsWithDetails(this.cheeses),
-                    toppings: getSelectedItemsWithDetails(this.toppings),
-                    sauces: getSelectedItemsWithDetails(this.sauces),
-                    summary: this.configurationSummary,
-                    base_price: Number(this.basePrice) || 25000,
-                    total_price: this.totalPrice
-                }
-            };
-
-            fetch(this.cartAddUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(data => {
-                this.isAdding = false;
-                if (data.success) {
-                    this.addedSuccess = true;
-                    this.modalOpen = true;
-                    this.cartCount = data.cart_count || (this.cartCount + 1);
-                    if (window.__storefrontApp) {
-                        window.__storefrontApp.cartCount = data.cart_count;
-                        window.__storefrontApp.subtotal = data.subtotal;
-                    }
-                    if (this.$nextTick) {
-                        this.$nextTick(() => {
-                            if (window.lucide) window.lucide.createIcons();
-                        });
-                    }
-                }
-            })
-            .catch(err => {
-                console.error('Cart add error:', err);
-                this.isAdding = false;
-            });
         }
     };
 }

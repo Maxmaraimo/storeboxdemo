@@ -2347,45 +2347,31 @@ def storefront_get_chat_messages_api(request, subdomain=None):
 
 
 def storefront_constructor_view(request, subdomain=None):
-    """Interactive 3D / Layered Food & Burger Constructor for customers"""
+    """Storefront food and burger constructor / customizer catalog (Burger King style)"""
     store = get_current_store(request, subdomain)
     if not store:
         raise Http404("Магазин не найден")
 
-    # Find constructor product (by explicit product_id, or burger constructor, or first active)
-    product_id = request.GET.get('product_id') or request.GET.get('p')
-    product = None
-    if product_id:
-        product = Product.objects.filter(
-            store=store,
-            id=product_id,
-            has_constructor=True,
-            is_active=True
-        ).prefetch_related('constructor_groups__items').first()
+    current_lang = get_storefront_lang(request, store)
+    store._current_lang = current_lang
+    t = UI_TRANSLATIONS.get(current_lang, UI_TRANSLATIONS['uz'])
 
-    if not product:
-        product = Product.objects.filter(
-            store=store,
-            has_constructor=True,
-            is_active=True
-        ).filter(
-            Q(name_ru__icontains='бургер') | Q(name_uz__icontains='burger') | Q(name_en__icontains='burger')
-        ).prefetch_related('constructor_groups__items').first()
+    # Find all products in store marked with has_constructor=True
+    configurable_qs = Product.objects.filter(
+        store=store,
+        has_constructor=True,
+        is_active=True
+    ).prefetch_related('constructor_groups__items', 'category').order_by('id')
 
-    if not product:
-        product = Product.objects.filter(
-            store=store,
-            has_constructor=True,
-            is_active=True
-        ).prefetch_related('constructor_groups__items').first()
-
-    # If no constructor product exists yet, auto-create from burger preset
-    if not product:
+    # If no constructor products exist yet, auto-create burger preset
+    if not configurable_qs.exists():
         from apps.api.views_constructor import PRESETS
         from apps.catalog.models import ConstructorGroup, ConstructorItem
-        preset = PRESETS.get('burger')
-        if preset:
-            slug_base = slugify(preset['name_en']) or 'burger-constructor'
+        for pkey in ['burger']:
+            preset = PRESETS.get(pkey)
+            if not preset:
+                continue
+            slug_base = slugify(preset.get('name_en') or pkey) or f'{pkey}-custom'
             product_slug = slug_base
             suffix = 1
             while Product.objects.filter(store=store, slug=product_slug).exists():
@@ -2393,24 +2379,24 @@ def storefront_constructor_view(request, subdomain=None):
                 suffix += 1
 
             with transaction.atomic():
-                product = Product.objects.create(
+                p = Product.objects.create(
                     store=store,
                     name_uz=preset['name_uz'],
                     name_ru=preset['name_ru'],
-                    name_en=preset['name_en'],
+                    name_en=preset.get('name_en', ''),
                     slug=product_slug,
                     price=Decimal(str(preset['price'])),
                     stock=100,
                     has_constructor=True,
                     is_active=True,
-                    description_uz=preset['description_uz'],
-                    description_ru=preset['description_ru'],
-                    image_url=preset['image_url'],
+                    description_uz=preset.get('description_uz', ''),
+                    description_ru=preset.get('description_ru', ''),
+                    image_url=preset.get('image_url', ''),
                 )
-                for g_data in preset['groups']:
+                for g_data in preset.get('groups', []):
                     grp = ConstructorGroup.objects.create(
                         store=store,
-                        product=product,
+                        product=p,
                         name_ru=g_data['name_ru'],
                         name_uz=g_data['name_uz'],
                         group_type=g_data['group_type'],
@@ -2419,7 +2405,7 @@ def storefront_constructor_view(request, subdomain=None):
                         max_allowed=g_data['max_allowed'],
                         sort_order=g_data['sort_order'],
                     )
-                    for item_index, item_data in enumerate(g_data['items'], start=1):
+                    for item_index, item_data in enumerate(g_data.get('items', []), start=1):
                         ConstructorItem.objects.create(
                             group=grp,
                             name_ru=item_data['name_ru'],
@@ -2429,61 +2415,130 @@ def storefront_constructor_view(request, subdomain=None):
                             sort_order=item_index,
                         )
 
-    groups_data = []
-    if product:
-        for g in product.constructor_groups.filter(is_active=True).order_by('sort_order', 'id'):
-            groups_data.append({
+        configurable_qs = Product.objects.filter(
+            store=store,
+            has_constructor=True,
+            is_active=True
+        ).prefetch_related('constructor_groups__items', 'category').order_by('id')
+
+    # Default removable ingredients for food items (Burger King style)
+    default_burger_removables = [
+        {"id": "lettuce", "name_ru": "Салат Айсберг", "name_uz": "Aysberg salati", "icon": "🥬"},
+        {"id": "tomato", "name_ru": "Свежий помидор", "name_uz": "Yangi pomidor", "icon": "🍅"},
+        {"id": "mayo", "name_ru": "Майонез фирменный", "name_uz": "Mayonez", "icon": "🥣"},
+        {"id": "cheese_mix", "name_ru": "Микс тёртых сыров", "name_uz": "Qirilgan pishloqlar miksi", "icon": "🧀"},
+        {"id": "crispy_onion", "name_ru": "Хрустящий лук", "name_uz": "Qarsildoq piyoz", "icon": "🧅"},
+        {"id": "pickles", "name_ru": "Маринованные огурцы", "name_uz": "Tuzlangan bodring", "icon": "🥒"},
+    ]
+
+    default_pizza_removables = [
+        {"id": "oregano", "name_ru": "Орегано и травы", "name_uz": "Oregano va ko'katlar", "icon": "🌿"},
+        {"id": "onion", "name_ru": "Красный лук", "name_uz": "Qizil piyoz", "icon": "🧅"},
+        {"id": "olives", "name_ru": "Маслины", "name_uz": "Zaytun", "icon": "🫒"},
+        {"id": "garlic_sauce", "name_ru": "Чесночный соус", "name_uz": "Sarimsoq sousi", "icon": "🧄"},
+    ]
+
+    products_list = []
+    categories_set = {}
+
+    for p in configurable_qs:
+        p_name = p.get_name(current_lang) or p.name_ru or p.name_uz
+        cat_id = p.category.id if p.category else 0
+        cat_name = p.category.get_name(current_lang) if p.category else (
+            "Бургеры" if "бургер" in p.name_ru.lower() or "burger" in p.name_uz.lower() else (
+                "Пицца" if "пицц" in p.name_ru.lower() or "pitsa" in p.name_uz.lower() else "Фастфуд"
+            )
+        )
+        if cat_name not in categories_set:
+            categories_set[cat_name] = {"id": cat_id, "name": cat_name, "count": 0}
+        categories_set[cat_name]["count"] += 1
+
+        # Groups serialization
+        groups_list = []
+        for g in p.constructor_groups.filter(is_active=True).order_by('sort_order', 'id'):
+            g_items = []
+            for it in g.items.filter(is_active=True).order_by('sort_order', 'id'):
+                g_items.append({
+                    'id': it.id,
+                    'name': it.get_name(current_lang) or it.name_ru or it.name_uz,
+                    'name_ru': it.name_ru or it.name_uz,
+                    'name_uz': it.name_uz,
+                    'price': float(it.price),
+                    'image_url': it.image_url,
+                    'icon': it.icon,
+                    'is_default': it.is_default,
+                })
+            groups_list.append({
                 'id': g.id,
+                'name': g.get_name(current_lang) or g.name_ru or g.name_uz,
                 'name_ru': g.name_ru or g.name_uz,
                 'name_uz': g.name_uz,
-                'name_en': g.name_en or g.name_uz,
                 'group_type': g.group_type,
                 'is_required': g.is_required,
                 'min_required': g.min_required,
                 'max_allowed': g.max_allowed,
-                'sort_order': g.sort_order,
-                'items': [
-                    {
-                        'id': it.id,
-                        'name_ru': it.name_ru or it.name_uz,
-                        'name_uz': it.name_uz,
-                        'name_en': it.name_en or it.name_uz,
-                        'price': float(it.price),
-                        'image_url': it.image_url,
-                        'icon': it.icon,
-                        'is_default': it.is_default,
-                    }
-                    for it in g.items.filter(is_active=True).order_by('sort_order', 'id')
-                ]
+                'items': g_items,
             })
+
+        # Image fallback
+        p_image = p.primary_image_url or p.image_url
+        if not p_image:
+            if "пицц" in p.name_ru.lower() or "pitsa" in p.name_uz.lower():
+                p_image = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=700&auto=format&fit=crop&q=80"
+            else:
+                p_image = "/static/images/constructor/real_burger_full.png"
+
+        is_pizza = "пицц" in p.name_ru.lower() or "pitsa" in p.name_uz.lower()
+        removables = default_pizza_removables if is_pizza else default_burger_removables
+
+        products_list.append({
+            'id': p.id,
+            'name': p_name,
+            'name_ru': p.name_ru or p.name_uz,
+            'name_uz': p.name_uz,
+            'description': p.get_description(current_lang) or p.description_ru or p.description_uz or (
+                "Сочная говяжья котлета Black Angus, сыр, свежие овощи и авторский соус на мягкой булочке бриошь." if not is_pizza else "Ароматная пицца на хрустящем тесте со свежими ингредиентами и сыром моцарелла."
+            ),
+            'price': float(p.price),
+            'image_url': p_image,
+            'category_name': cat_name,
+            'is_pizza': is_pizza,
+            'nutrition': {
+                'weight_g': 340 if not is_pizza else 480,
+                'calories': 740 if not is_pizza else 1150,
+                'protein': 38 if not is_pizza else 42,
+                'fat': 34 if not is_pizza else 36,
+                'carbs': 48 if not is_pizza else 110,
+            },
+            'removables': removables,
+            'groups': groups_list,
+        })
 
     # Cart context
     cart = request.session.get('cart', {})
     cart_count = sum(item.get('quantity', 1) for item in cart.values())
     subtotal = sum(item.get('total_price', 0) for item in cart.values())
 
-    current_lang = get_storefront_lang(request, store)
-    store._current_lang = current_lang
-    t = UI_TRANSLATIONS.get(current_lang, UI_TRANSLATIONS['uz'])
-
-    constructor_config = {
-        'base_price': int(product.price) if product else 25000,
-        'product_id': product.id if product else 0,
-        'product_name': product.name_ru or product.name_uz if product else 'Бургер',
-        'groups': groups_data,
-        'cart_add_url': f'/store/{store.subdomain}/cart/add/' if store.subdomain else '/cart/add/',
-        'cart_url': f'/store/{store.subdomain}/cart/' if store.subdomain else '/cart/',
-    }
+    active_product_id = None
+    requested_pid = request.GET.get('product_id') or request.GET.get('p')
+    if requested_pid:
+        try:
+            active_product_id = int(requested_pid)
+        except ValueError:
+            active_product_id = None
 
     context = {
         'store': store,
-        'product': product,
-        'groups_data': groups_data,
-        'constructor_config_json': json.dumps(constructor_config, ensure_ascii=False),
+        'products_list': products_list,
+        'products_json': json.dumps(products_list, ensure_ascii=False),
+        'categories_list': list(categories_set.values()),
+        'active_product_id': active_product_id,
         'cart': cart,
         'cart_count': cart_count,
         'cart_subtotal': subtotal,
         'cart_json': json.dumps(cart, ensure_ascii=False),
+        'cart_add_url': f'/store/{store.subdomain}/cart/add/' if store.subdomain else '/cart/add/',
+        'cart_url': f'/store/{store.subdomain}/cart/' if store.subdomain else '/cart/',
         'current_lang': current_lang,
         'lang': current_lang,
         't': t,

@@ -62,6 +62,7 @@ export const ConstructorPage: React.FC = () => {
   const [groups, setGroups] = useState<ConstructorGroupData[]>([]);
   const [presetModalOpen, setPresetModalOpen] = useState(false);
   const [loadingPreset, setLoadingPreset] = useState<string | null>(null);
+  const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>("all");
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
 
   // 1. Fetch Constructor List
@@ -75,6 +76,28 @@ export const ConstructorPage: React.FC = () => {
 
   const constructorProducts = data?.constructor_products || [];
   const regularProducts = data?.regular_products || [];
+
+  const filterByTab = (p: any) => {
+    if (selectedCategoryTab === "all") return true;
+    const name = (p.name_ru || p.name_uz || "").toLowerCase();
+    const cat = (p.category_name_ru || p.category_name || "").toLowerCase();
+    if (selectedCategoryTab === "burger") {
+      return name.includes("бургер") || name.includes("burger") || name.includes("чизбургер") || cat.includes("бургер") || cat.includes("фастфуд");
+    }
+    if (selectedCategoryTab === "pizza") {
+      return name.includes("пицц") || name.includes("pitsa") || name.includes("pizza") || cat.includes("пицц") || cat.includes("кафе");
+    }
+    if (selectedCategoryTab === "flower") {
+      return name.includes("букет") || name.includes("цвет") || name.includes("gul") || cat.includes("цвет") || cat.includes("букет");
+    }
+    if (selectedCategoryTab === "apparel") {
+      return name.includes("мерч") || name.includes("одежд") || name.includes("футболк") || name.includes("худи") || cat.includes("одежд");
+    }
+    return true;
+  };
+
+  const filteredConstructors = constructorProducts.filter(filterByTab);
+  const filteredRegular = regularProducts.filter(filterByTab);
 
   // 2. Open Editor for a Product
   const openEditor = async (productId: number) => {
@@ -217,47 +240,83 @@ export const ConstructorPage: React.FC = () => {
         )}
       </div>
 
-      {/* QUICK PRESET BANNERS */}
+      {/* QUICK CATEGORY TABS / FILTER BANNERS */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div
-          onClick={() => handleLoadPreset("burger")}
-          className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 hover:shadow-md cursor-pointer transition-all group"
+          onClick={() => setSelectedCategoryTab(selectedCategoryTab === "burger" ? "all" : "burger")}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer group ${
+            selectedCategoryTab === "burger"
+              ? "bg-amber-100/60 border-amber-500 ring-2 ring-amber-500/20 shadow-sm"
+              : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/60 hover:shadow-md"
+          }`}
         >
-          <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center mb-2 shadow-xs group-hover:scale-105 transition-transform">
-            <Utensils className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+              <Utensils className="w-4 h-4" />
+            </div>
+            {selectedCategoryTab === "burger" && (
+              <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-full">✓ Активно</span>
+            )}
           </div>
           <div className="font-bold text-xs text-slate-900">Бургеры & Фастфуд</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Булочка, котлета, сыры, соусы</div>
         </div>
 
         <div
-          onClick={() => handleLoadPreset("pizza")}
-          className="p-3.5 rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-200/60 hover:shadow-md cursor-pointer transition-all group"
+          onClick={() => setSelectedCategoryTab(selectedCategoryTab === "pizza" ? "all" : "pizza")}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer group ${
+            selectedCategoryTab === "pizza"
+              ? "bg-rose-100/60 border-rose-500 ring-2 ring-rose-500/20 shadow-sm"
+              : "bg-gradient-to-br from-rose-50 to-orange-50 border-rose-200/60 hover:shadow-md"
+          }`}
         >
-          <div className="w-8 h-8 rounded-xl bg-rose-500 text-white flex items-center justify-center mb-2 shadow-xs group-hover:scale-105 transition-transform">
-            <Pizza className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+              <Pizza className="w-4 h-4" />
+            </div>
+            {selectedCategoryTab === "pizza" && (
+              <span className="text-[10px] font-black bg-rose-500 text-white px-2 py-0.5 rounded-full">✓ Активно</span>
+            )}
           </div>
           <div className="font-bold text-xs text-slate-900">Пиццерии & Кафе</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Тесто, соусы, мясные топпинги</div>
         </div>
 
         <div
-          onClick={() => handleLoadPreset("flower")}
-          className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 hover:shadow-md cursor-pointer transition-all group"
+          onClick={() => setSelectedCategoryTab(selectedCategoryTab === "flower" ? "all" : "flower")}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer group ${
+            selectedCategoryTab === "flower"
+              ? "bg-emerald-100/60 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
+              : "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200/60 hover:shadow-md"
+          }`}
         >
-          <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center mb-2 shadow-xs group-hover:scale-105 transition-transform">
-            <Flower2 className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+              <Flower2 className="w-4 h-4" />
+            </div>
+            {selectedCategoryTab === "flower" && (
+              <span className="text-[10px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full">✓ Активно</span>
+            )}
           </div>
           <div className="font-bold text-xs text-slate-900">Цветочные букеты</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Цветы, стебли, упаковка, декор</div>
         </div>
 
         <div
-          onClick={() => handleLoadPreset("apparel")}
-          className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200/60 hover:shadow-md cursor-pointer transition-all group"
+          onClick={() => setSelectedCategoryTab(selectedCategoryTab === "apparel" ? "all" : "apparel")}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer group ${
+            selectedCategoryTab === "apparel"
+              ? "bg-indigo-100/60 border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm"
+              : "bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200/60 hover:shadow-md"
+          }`}
         >
-          <div className="w-8 h-8 rounded-xl bg-indigo-500 text-white flex items-center justify-center mb-2 shadow-xs group-hover:scale-105 transition-transform">
-            <Shirt className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl bg-indigo-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+              <Shirt className="w-4 h-4" />
+            </div>
+            {selectedCategoryTab === "apparel" && (
+              <span className="text-[10px] font-black bg-indigo-500 text-white px-2 py-0.5 rounded-full">✓ Активно</span>
+            )}
           </div>
           <div className="font-bold text-xs text-slate-900">Мерч & Одежда</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Крой, цвет, размер, принты</div>
@@ -266,38 +325,49 @@ export const ConstructorPage: React.FC = () => {
 
       {/* CONSTRUCTOR PRODUCTS LIST */}
       <div className="space-y-3">
-        <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
-          <Layers className="w-4 h-4 text-indigo-600" />
-          <span>{lang === "ru" ? "Активные товары-конструкторы" : "Faol konstruktorlar"}</span>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-            {constructorProducts.length}
-          </span>
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-indigo-600" />
+            <span>{lang === "ru" ? "Активные товары-конструкторы" : "Faol konstruktorlar"}</span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+              {filteredConstructors.length}
+            </span>
+          </h2>
+          {selectedCategoryTab !== "all" && (
+            <button
+              type="button"
+              onClick={() => setSelectedCategoryTab("all")}
+              className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
+            >
+              {lang === "ru" ? "Показать все категории" : "Barcha toifalarni ko'rsatish"}
+            </button>
+          )}
+        </div>
 
         {isLoading ? (
           <div className="p-12 text-center text-slate-400 text-xs">
             <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-600" />
             <span>Yuklanmoqda...</span>
           </div>
-        ) : constructorProducts.length === 0 ? (
+        ) : filteredConstructors.length === 0 ? (
           <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-8 text-center space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
               <Wand2 className="w-6 h-6" />
             </div>
             <div className="max-w-md mx-auto space-y-1">
               <h3 className="font-bold text-sm text-slate-900">
-                {lang === "ru" ? "У вас пока нет товаров с конструктором" : "Hozircha konstruktorli tovarlar yo'q"}
+                {lang === "ru" ? "В этой категории пока нет товаров с конструктором" : "Ushbu toifada konstruktorli tovarlar yo'q"}
               </h3>
               <p className="text-xs text-slate-500">
                 {lang === "ru"
-                  ? "Нажмите на один из шаблонов выше (Бургер, Пицца, Букет, Одежда), чтобы за 1 секунду создать готовый конструктор!"
-                  : "Yuqoridagi tayyor shablonlardan birini tanlang yoki tovar sozlamalaridan konstruktorni yoqing."}
+                  ? "Выберите товар из списка ниже, чтобы включить для него конструктор, или загрузите готовый шаблон."
+                  : "Quyidagi ro'yxatdan tovar tanlang yoki tayyor shablonni yuklang."}
               </p>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {constructorProducts.map((p: any) => (
+            {filteredConstructors.map((p: any) => (
               <div
                 key={p.id}
                 className="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
@@ -362,14 +432,14 @@ export const ConstructorPage: React.FC = () => {
       </div>
 
       {/* REGULAR PRODUCTS: CONVERT TO CONSTRUCTOR */}
-      {regularProducts.length > 0 && (
+      {filteredRegular.length > 0 && (
         <div className="space-y-3 pt-4">
           <h2 className="text-xs font-black uppercase tracking-wider text-slate-400">
             {lang === "ru" ? "Включить конструктор для существующих товаров" : "Mavjud tovarlarga konstruktor ulash"}
           </h2>
           <div className="bg-white rounded-3xl border border-slate-200/80 p-3 overflow-hidden shadow-xs">
             <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
-              {regularProducts.map((p: any) => (
+              {filteredRegular.map((p: any) => (
                 <div key={p.id} className="py-2.5 px-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
                     <Package className="w-4 h-4 text-slate-400 shrink-0" />

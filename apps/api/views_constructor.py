@@ -89,9 +89,9 @@ PRESETS = {
                 "max_allowed": 10,
                 "sort_order": 5,
                 "items": [
-                    {"name_ru": "Хрустящий жареный бекон", "name_uz": "Qovurilgan bekon", "price": 7000, "is_default": False},
+                    {"name_ru": "Хрустящий жареный лук", "name_uz": "Qarsildoq qovurilgan piyoz", "price": 4000, "is_default": False},
                     {"name_ru": "Острый перчик халапеньо", "name_uz": "Xalapeno qalampiri", "price": 4000, "is_default": False},
-                    {"name_ru": "Карамелизированный лук", "name_uz": "Karamellangan piyoz", "price": 4000, "is_default": False},
+                    {"name_ru": "Дополнительный сыр Чеддер", "name_uz": "Qo'shimcha Chedder pishlog'i", "price": 5000, "is_default": False},
                     {"name_ru": "Маринованные огурчики", "name_uz": "Tuzlangan bodring", "price": 3000, "is_default": False},
                     {"name_ru": "Жареное яйцо (глазунья)", "name_uz": "Qovurilgan tuxum", "price": 4000, "is_default": False},
                 ],
@@ -507,7 +507,9 @@ def constructor_list_view(request):
             "name_uz": p.name_uz,
             "price": float(p.price),
             "primary_image_url": p.primary_image_url or "",
+            "category_id": p.category_id,
             "category_name": p.category.name_uz if p.category else "",
+            "category_name_ru": p.category.name_ru if p.category and p.category.name_ru else (p.category.name_uz if p.category else ""),
             "has_constructor": p.has_constructor,
             "groups_count": c_groups.count(),
             "items_count": sum(g.items.count() for g in c_groups),
@@ -755,6 +757,22 @@ def constructor_storefront_get_view(request, product_id):
             ],
         })
 
+    is_pizza = "пицц" in (product.name_ru or '').lower() or "pitsa" in (product.name_uz or '').lower()
+    default_burger_removables = [
+        {"id": "lettuce", "name_ru": "Салат Айсберг", "name_uz": "Aysberg salati", "icon": "🥬"},
+        {"id": "tomato", "name_ru": "Свежий помидор", "name_uz": "Yangi pomidor", "icon": "🍅"},
+        {"id": "mayo", "name_ru": "Майонез", "name_uz": "Mayonez", "icon": "🥣"},
+        {"id": "cheese_mix", "name_ru": "Микс сыров", "name_uz": "Pishloqlar", "icon": "🧀"},
+        {"id": "crispy_onion", "name_ru": "Хрустящий лук", "name_uz": "Qarsildoq piyoz", "icon": "🧅"},
+        {"id": "pickles", "name_ru": "Маринованные огурцы", "name_uz": "Tuzlangan bodring", "icon": "🥒"},
+    ]
+    default_pizza_removables = [
+        {"id": "oregano", "name_ru": "Орегано", "name_uz": "Oregano", "icon": "🌿"},
+        {"id": "onion", "name_ru": "Красный лук", "name_uz": "Qizil piyoz", "icon": "🧅"},
+        {"id": "olives", "name_ru": "Маслины", "name_uz": "Zaytun", "icon": "🫒"},
+    ]
+    removables = default_pizza_removables if is_pizza else default_burger_removables
+
     return Response({
         "success": True,
         "product": {
@@ -765,6 +783,14 @@ def constructor_storefront_get_view(request, product_id):
             "image": product.primary_image_url or "",
             "description": product.get_description(lang),
             "unit": product.get_unit_name(lang),
+            "removables": removables,
+            "nutrition": {
+                "weight_g": 340 if not is_pizza else 480,
+                "calories": 740 if not is_pizza else 1150,
+                "protein": 38 if not is_pizza else 42,
+                "fat": 34 if not is_pizza else 36,
+                "carbs": 48 if not is_pizza else 110,
+            }
         },
         "groups": groups_data,
     })

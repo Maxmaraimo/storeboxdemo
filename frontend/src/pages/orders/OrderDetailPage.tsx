@@ -256,7 +256,9 @@ export const OrderDetailPage: React.FC = () => {
                   (opts.patties && opts.patties.length > 0) ||
                   (opts.cheeses && opts.cheeses.length > 0) ||
                   (opts.toppings && opts.toppings.length > 0) ||
-                  (opts.sauces && opts.sauces.length > 0)
+                  (opts.sauces && opts.sauces.length > 0) ||
+                  (opts.single_choices && opts.single_choices.length > 0) ||
+                  (opts.removed_ingredients && opts.removed_ingredients.length > 0)
                 );
 
                 if (isCustom) {
@@ -378,7 +380,7 @@ export const OrderDetailPage: React.FC = () => {
                                 )}
 
                                 {opts.sauces && opts.sauces.length > 0 && (
-                                  <div className="flex items-start justify-between text-[11px]">
+                                  <div className="flex items-start justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
                                     <div className="flex items-start gap-1.5 font-bold text-slate-800 dark:text-slate-200">
                                       <span>🥫</span>
                                       <span>Соусы:</span>
@@ -395,6 +397,34 @@ export const OrderDetailPage: React.FC = () => {
                                         ? `+${Number(opts.sauces.reduce((sum: number, s: any) => sum + (s.total_price || 0), 0)).toLocaleString()} UZS`
                                         : 'включено'}
                                     </span>
+                                  </div>
+                                )}
+
+                                {opts.single_choices && opts.single_choices.length > 0 && (
+                                  <div className="flex items-start gap-1.5 text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
+                                    <span className="text-amber-600 font-bold">🔘</span>
+                                    <span className="font-bold text-slate-800 dark:text-slate-200">Выбор:</span>
+                                    <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                      {opts.single_choices.map((sc: string, scIdx: number) => (
+                                        <span key={scIdx} className="bg-amber-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-amber-200/60 dark:border-white/10">
+                                          {sc}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {opts.removed_ingredients && opts.removed_ingredients.length > 0 && (
+                                  <div className="flex items-start gap-1.5 text-[11px]">
+                                    <span className="text-rose-500 font-bold">➖</span>
+                                    <span className="font-bold text-slate-800 dark:text-slate-200">Исключено:</span>
+                                    <div className="flex flex-wrap gap-1 font-semibold text-rose-700 dark:text-rose-400">
+                                      {opts.removed_ingredients.map((r: string, rIdx: number) => (
+                                        <span key={rIdx} className="bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-200/60 dark:border-rose-900/60">
+                                          {r}
+                                        </span>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
                               </div>
