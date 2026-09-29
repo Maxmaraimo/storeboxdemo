@@ -619,6 +619,10 @@ def storefront_home_view(request, subdomain=None):
     products = Product.objects.filter(store=store, is_active=True).prefetch_related('images', 'variations')
     total_products_count = products.count()
 
+    # Constructor filter
+    if request.GET.get('constructor') == '1':
+        products = products.filter(has_constructor=True)
+
     # Category filter
     cat_slug = request.GET.get('cat') or request.GET.get('category')
     selected_category = None
@@ -2347,11 +2351,30 @@ def storefront_get_chat_messages_api(request, subdomain=None):
 
 
 def storefront_constructor_view(request, subdomain=None):
-    """Storefront food and burger constructor / customizer catalog (Burger King style)"""
+    """Storefront food and burger constructor / customizer catalog (redirects to main storefront with full layout)"""
     store = get_current_store(request, subdomain)
     if not store:
         raise Http404("Магазин не найден")
 
+    current_lang = get_storefront_lang(request, store)
+    active_product_id = request.GET.get('product_id') or request.GET.get('p')
+
+    store_base = f'/store/{store.subdomain}/' if store.subdomain else '/'
+    params = []
+    if current_lang:
+        params.append(f'lang={current_lang}')
+    if active_product_id:
+        params.append(f'open_constructor={active_product_id}')
+    else:
+        params.append('constructor=1')
+
+    qs = ('?' + '&'.join(params)) if params else ''
+    return redirect(f'{store_base}{qs}')
+
+def _unused_storefront_constructor_view_legacy(request, subdomain=None):
+    store = get_current_store(request, subdomain)
+    if not store:
+        raise Http404("Магазин не найден")
     current_lang = get_storefront_lang(request, store)
     store._current_lang = current_lang
     t = UI_TRANSLATIONS.get(current_lang, UI_TRANSLATIONS['uz'])
@@ -2480,15 +2503,22 @@ def storefront_constructor_view(request, subdomain=None):
                 'items': g_items,
             })
 
-        # Image fallback
-        p_image = p.primary_image_url or p.image_url
-        if not p_image:
-            if "пицц" in p.name_ru.lower() or "pitsa" in p.name_uz.lower():
-                p_image = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=700&auto=format&fit=crop&q=80"
-            else:
-                p_image = "/static/images/constructor/real_burger_full.png"
+        # Determine product type & image
+        name_lower = f"{p.name_ru or ''} {p.name_uz or ''}".lower()
+        cat_lower = f"{p.category.name_ru or ''} {p.category.name_uz or ''}".lower() if p.category else ''
+        is_pizza = "пицц" in name_lower or "pitsa" in name_lower or "pizza" in name_lower or "пицц" in cat_lower or "pitsa" in cat_lower
 
-        is_pizza = "пицц" in p.name_ru.lower() or "pitsa" in p.name_uz.lower()
+        if p.image_url:
+            p_image = p.image_url
+        elif p.primary_image_url:
+            p_image = p.primary_image_url
+        elif is_pizza:
+            p_image = "/static/images/constructor/real_pizza_isolated.png"
+        elif "бургер" in name_lower or "burger" in name_lower or "ангус" in name_lower:
+            p_image = "/static/images/constructor/real_burger_full.png"
+        else:
+            p_image = "/static/images/constructor/real_burger_full.png"
+
         removables = default_pizza_removables if is_pizza else default_burger_removables
 
         products_list.append({
@@ -2532,6 +2562,7 @@ def storefront_constructor_view(request, subdomain=None):
         'products_list': products_list,
         'products_json': json.dumps(products_list, ensure_ascii=False),
         'categories_list': list(categories_set.values()),
+        'categories_json': json.dumps(list(categories_set.values()), ensure_ascii=False),
         'active_product_id': active_product_id,
         'cart': cart,
         'cart_count': cart_count,

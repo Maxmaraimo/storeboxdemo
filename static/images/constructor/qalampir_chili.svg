@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="pepperRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF3B30"/>
+      <stop offset="50%" stop-color="#E02424"/>
+      <stop offset="100%" stop-color="#9B1C1C"/>
+    </linearGradient>
+    <linearGradient id="pepperStem" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <filter id="chiliGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#E02424" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Chili Body -->
+  <path d="M37 13 C36 17, 33 24, 28 31 C23.5 37.2, 17 41.5, 12 43 C10.8 43.4, 9.8 42.1, 10.6 41.2 C14.5 36.8, 17.5 31, 18.5 24 C19.2 19.5, 20.8 15, 24.5 12.5 C28 10.2, 33 10.5, 37 13 Z"
+        fill="url(#pepperRed)"
+        filter="url(#chiliGlow)"/>
+  <!-- Highlight on Body -->
+  <path d="M34 14 C30 18, 26 25, 21 32 C18 36, 15 39, 13 41"
+        stroke="#FFFFFF"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        opacity="0.5"
+        fill="none"/>
+  <!-- Calyx & Stem -->
+  <path d="M36 12 C35 10, 36.5 7.5, 39 6 C39.8 5.5, 40.8 6.4, 40.3 7.2 C39 9.3, 38.2 11.2, 38 13.5 Z"
+        fill="url(#pepperStem)"/>
+  <path d="M32 10.5 C34 9.5, 37.5 10, 39 12.5 C38 14.5, 34 15, 31.5 13.5 Z"
+        fill="url(#pepperStem)"/>
+</svg>

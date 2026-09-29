@@ -66,8 +66,8 @@
         </p>
         <div class="mt-6">
             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-               class="px-8 py-3.5 rounded-full bg-[#FEE500] hover:bg-[#FADC00] active:scale-95 text-slate-950 font-black text-xs sm:text-sm shadow-md transition-all inline-flex items-center gap-2 cursor-pointer">
-                <i data-lucide="utensils" class="w-4 h-4 text-slate-950"></i>
+               class="px-8 py-3.5 rounded-full btn-brand active:scale-95 text-white font-black text-xs sm:text-sm shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer">
+                <i data-lucide="utensils" class="w-4 h-4 text-white"></i>
                 <span>{% if current_lang == 'ru' %}Перейти в меню{% elif current_lang == 'en' %}Explore Menu{% elif current_lang == 'tr' %}Menüye Git{% else %}Menyuga o'tish{% endif %}</span>
             </a>
         </div>

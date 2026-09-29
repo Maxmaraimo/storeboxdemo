@@ -14,7 +14,7 @@
             touchEndX: 0,
             init() {
                 if (this.total > 1) {
-                    this.timer = setInterval(() => { this.next() }, 5000);
+                    this.timer = setInterval(() => { this.next() }, 8000);
                 }
             },
             next() {
@@ -29,7 +29,7 @@
             resume() {
                 if (this.total > 1) {
                     this.pause();
-                    this.timer = setInterval(() => { this.next() }, 5000);
+                    this.timer = setInterval(() => { this.next() }, 8000);
                 }
             },
             handleTouchStart(e) {
@@ -227,11 +227,22 @@
             <!-- All Categories ('Barchasi') Squircle Card -->
             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if request.GET.preview %}?preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% if request.GET.template %}&template={{ request.GET.template }}{% endif %}{% elif request.GET.template %}?template={{ request.GET.template }}{% endif %}"
                class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
-                <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if not current_category %}active-category-pill{% else %}bg-white text-slate-700 border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
+                <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if not current_category and not request.GET.constructor %}active-category-pill{% else %}bg-white text-slate-700 border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
                     <i data-lucide="layout-grid" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                 </div>
-                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5 {% if not current_category %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
+                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5 {% if not current_category and not request.GET.constructor %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
                     {{ t.all|default:"Barchasi" }}
+                </span>
+            </a>
+
+            <!-- Constructor Special Tab ("Собери сам / Конструктор") -->
+            <a href="?constructor=1{% if request.GET.lang %}&lang={{ request.GET.lang }}{% endif %}"
+               class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
+                <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if request.GET.constructor %}active-category-pill bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/25{% else %}bg-gradient-to-br from-amber-50 to-orange-50 text-amber-600 border-amber-200/80 shadow-[0_2px_8px_rgba(245,158,11,0.12)] hover:border-amber-400{% endif %}">
+                    <i data-lucide="wand-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                </div>
+                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5 {% if request.GET.constructor %}text-amber-600 font-black{% else %}text-slate-700 group-hover:text-amber-600 font-bold{% endif %}">
+                    {% if current_lang == 'ru' %}Собери сам{% elif current_lang == 'en' %}Customizer{% else %}O'zing ter{% endif %}
                 </span>
             </a>
 
@@ -289,7 +300,7 @@
         <div class="storebox-tpl-restaurant grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
             {% for product in products %}
             <div class="bg-white rounded-[24px] border border-slate-200/75 p-3 sm:p-3.5 flex items-center justify-between gap-3 sm:gap-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.07)] hover:border-slate-300/80 transition-all duration-300 group">
-                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %} class="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                     <div class="w-20 h-20 sm:w-22 sm:h-22 rounded-[18px] bg-slate-100 overflow-hidden shrink-0 relative border border-slate-100">
                         {% if product.primary_image_url %}
                         <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
@@ -378,7 +389,7 @@
             <div class="group flex flex-col justify-between bg-transparent border-0 shadow-none p-0 relative">
                 <!-- Food Image Container with Rounded Corners -->
                 <div class="relative w-full aspect-square bg-[#F4F4F6] rounded-[24px] sm:rounded-[30px] overflow-hidden mb-2 transition-all">
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}" class="block w-full h-full">
+                    <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %} class="block w-full h-full">
                         {% if product.primary_image_url %}
                         <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
                         {% else %}
@@ -407,7 +418,7 @@
                         <button type="button" @click="openConstructor({{ product.id }})"
                                 class="px-2.5 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.25)] flex items-center gap-1 active:scale-95 transition-transform text-[11px] font-bold cursor-pointer">
                             <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-400"></i>
-                            <span class="hidden sm:inline">{% if current_lang == 'uz' %}Yig'ish{% else %}Собрать{% endif %}</span>
+                            <span>{% if current_lang == 'uz' %}Yig'ish{% else %}Собрать{% endif %}</span>
                         </button>
                         {% else %}
                         <template x-if="!cartItems['{{ product.id }}_0']">
@@ -450,7 +461,7 @@
                     </div>
                     <!-- Title -->
                     <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1 group-hover:text-brand transition-colors leading-snug">
-                        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}">{{ product.display_name }}</a>
+                        <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}>{{ product.display_name }}</a>
                     </h3>
                     <!-- Specs / Weight / Description -->
                     <div class="text-[11px] text-slate-400 truncate font-normal">
@@ -486,7 +497,7 @@
                 
                 <!-- Card Top: Aspect-ratio Image Container with Floating Badges & Wishlist -->
                 <div class="relative w-full aspect-square bg-slate-50 overflow-hidden shrink-0">
-                    <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"
+                    <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}
                        class="block w-full h-full">
                         {% if product.primary_image_url %}
                         <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
@@ -542,7 +553,7 @@
                         </div>
 
                         <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1 sm:line-clamp-2 group-hover:text-brand transition-colors leading-snug">
-                            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}">
+                            <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}>
                                 {{ product.display_name }}
                             </a>
                         </h3>
@@ -572,6 +583,7 @@
                             {% if product.is_in_stock %}
                             {% if product.has_constructor %}
                             <button type="button" @click="openConstructor({{ product.id }})"
+                                    data-constructor-product-id="{{ product.id }}"
                                     class="px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] sm:text-xs shadow-md active:scale-90 transition-all flex items-center gap-1 cursor-pointer">
                                 <i data-lucide="wand-2" class="w-3 h-3 text-amber-400"></i>
                                 <span>{% if current_lang == 'uz' %}Yig'ish{% else %}Собрать{% endif %}</span>
@@ -868,84 +880,397 @@
             },
 
             // =========================================================
-            // PRODUCT CONSTRUCTOR / CUSTOMIZER
+            // PRODUCT CONSTRUCTOR / CUSTOMIZER (STOREBOX MODERN DYNAMIC)
             // =========================================================
             constructorModalOpen: false,
             constructorLoading: false,
             constructorWarning: '',
             constructorProduct: null,
             constructorGroups: [],
-            constructorSelections: {},       // { [groupId]: itemId }
-            constructorMultiSelections: {},  // { [groupId]: [itemId, ...] }
-            constructorQuantities: {},       // { [groupId]: { [itemId]: count } }
+            constructorSelectedSingle: {},    // groupId -> itemId
+            constructorSelectedMultiple: {},  // itemId -> boolean
+            constructorQuantities: {},        // itemId -> count
+            constructorRemovedIngredients: [],
+            constructorPortionCount: 1,
+            constructorNutritionPortion: 'portion', // 'portion' or '100g'
+            constructorSelectedStyle: 'classic', // 'classic' or 'spicy'
+            constructorSelectedPizzaCrust: 'traditional',
 
-            get constructorBasePrice() {
-                return Number(this.constructorProduct?.price) || 0;
+            pizzaCrustOptions: [
+                { id: 'traditional', name: '{% if current_lang == "ru" %}Традиционное 30 см{% elif current_lang == "en" %}Traditional 30 cm{% else %}An\'anaviy 30 sm{% endif %}', price: 0, desc: '{% if current_lang == "ru" %}Пышное и мягкое{% elif current_lang == "en" %}Fluffy & tender{% else %}Yumshoq xamir{% endif %}', image: '/static/images/constructor/real_pizza_isolated.png' },
+                { id: 'thin', name: '{% if current_lang == "ru" %}Тонкое 30 см{% elif current_lang == "en" %}Thin crust 30 cm{% else %}Yupqa 30 sm{% endif %}', price: 0, desc: '{% if current_lang == "ru" %}Итальянский хруст{% elif current_lang == "en" %}Italian crispy{% else %}Italyancha qarsildoq{% endif %}', image: '/static/images/constructor/real_pizza_isolated.png' },
+                { id: 'big_cheese', name: '{% if current_lang == "ru" %}Большая 35 см (+Сыр){% elif current_lang == "en" %}Large 35 cm (+Cheese){% else %}Katta 35 sm (+Pishloq){% endif %}', price: 18000, desc: '{% if current_lang == "ru" %}Сырный бортик{% elif current_lang == "en" %}Cheese crust{% else %}Pishloqli hoshiya{% endif %}', image: '/static/images/constructor/cheese_crust_visual.png' },
+            ],
+
+            get constructorDisplayedTitle() {
+                if (!this.constructorProduct) return '';
+                if (this.constructorProduct.is_pizza) {
+                    const crust = this.pizzaCrustOptions.find(c => c.id === this.constructorSelectedPizzaCrust);
+                    return `${this.constructorProduct.name} (${crust?.name || '30 см'})`;
+                }
+                if (this.constructorSelectedStyle === 'spicy') {
+                    const name = this.constructorProduct.name || '';
+                    if (name.toLowerCase().includes('achchiq') || name.toLowerCase().includes('острый') || name.toLowerCase().includes('spicy')) {
+                        return name;
+                    }
+                    return `{% if current_lang == 'ru' %}Острый{% elif current_lang == 'en' %}Spicy{% else %}Achchiq{% endif %} ${name}`;
+                }
+                return this.constructorProduct.name;
             },
 
-            get constructorTotalPrice() {
-                let total = this.constructorBasePrice;
-                for (const group of this.constructorGroups) {
-                    if (group.group_type === 'SINGLE') {
-                        const selId = this.constructorSelections[group.id];
-                        if (selId) {
-                            const item = group.items.find(i => i.id === selId);
-                            if (item) total += Number(item.price) || 0;
-                        }
-                    } else if (group.group_type === 'MULTIPLE') {
-                        const list = this.constructorMultiSelections[group.id] || [];
-                        for (const itId of list) {
-                            const item = group.items.find(i => i.id === itId);
-                            if (item) total += Number(item.price) || 0;
-                        }
-                    } else if (group.group_type === 'QUANTITY') {
-                        const qMap = this.constructorQuantities[group.id] || {};
-                        for (const it of group.items) {
-                            const count = Number(qMap[it.id]) || 0;
-                            total += (Number(it.price) || 0) * count;
+            get productType() {
+                if (!this.constructorProduct) return 'burger';
+                if (this.constructorProduct.is_pizza) return 'pizza';
+                const name = (this.constructorProduct.name || '').toLowerCase();
+                if (name.includes('lavash') || name.includes('shaurma') || name.includes('shawarma') || name.includes('doner') || name.includes('wrap')) {
+                    return 'shawarma';
+                }
+                if (name.includes('burger') || name.includes('chizburger') || name.includes('gamburger')) {
+                    return 'burger';
+                }
+                return 'food';
+            },
+
+            get constructorStyleSectionTitle() {
+                const lang = '{{ current_lang|default:"uz" }}';
+                const type = this.productType;
+                if (type === 'shawarma') {
+                    if (lang === 'ru') return 'Стиль лаваша';
+                    if (lang === 'en') return 'Shawarma style';
+                    return 'Lavash uslubi';
+                }
+                if (type === 'burger') {
+                    if (lang === 'ru') return 'Стиль бургера';
+                    if (lang === 'en') return 'Burger style';
+                    return 'Burger uslubi';
+                }
+                if (lang === 'ru') return 'Стиль блюда';
+                if (lang === 'en') return 'Dish style';
+                return 'Taom uslubi';
+            },
+
+            constructorGetStyleImage(style) {
+                const type = this.productType;
+                const prodImg = this.constructorProduct?.image;
+                if (style === 'classic') {
+                    if (prodImg) return prodImg;
+                    return type === 'burger' ? '/static/images/constructor/real_burger_full.png' : '/static/images/constructor/real_burger_full.png';
+                }
+                // spicy
+                if (type === 'burger') {
+                    return '/static/images/constructor/real_burger_spicy.png';
+                }
+                return prodImg || '/static/images/constructor/real_burger_spicy.png';
+            },
+
+            get constructorDisplayedWeight() {
+                const baseWeight = this.constructorProduct?.nutrition?.weight_g || (this.constructorProduct?.is_pizza ? 480 : 340);
+                if (this.constructorProduct?.is_pizza) {
+                    return this.constructorSelectedPizzaCrust === 'big_cheese' ? '650 г' : `${baseWeight} г`;
+                }
+                return this.constructorSelectedStyle === 'spicy' ? `${baseWeight + 14} г` : `${baseWeight} г`;
+            },
+
+            get constructorDisplayedImage() {
+                if (!this.constructorProduct) return '/static/images/constructor/real_burger_full.png';
+                if (this.constructorProduct.is_pizza) {
+                    return this.constructorProduct.image || '/static/images/constructor/real_pizza_isolated.png';
+                }
+                if (this.constructorSelectedStyle === 'spicy' && this.productType === 'burger') {
+                    return '/static/images/constructor/real_burger_spicy.png';
+                }
+                return this.constructorProduct.image || '/static/images/constructor/real_burger_full.png';
+            },
+
+            get constructorDisplayedDesc() {
+                if (!this.constructorProduct) return '';
+                const baseDesc = this.constructorProduct.description || '';
+                if (this.constructorProduct.is_pizza) {
+                    const crust = this.pizzaCrustOptions.find(c => c.id === this.constructorSelectedPizzaCrust);
+                    return `${baseDesc} {% if current_lang == "ru" %}Выбрана основа:{% elif current_lang == "en" %}Selected crust:{% else %}Tanlangan xamir:{% endif %} ${crust?.name || ''}.`;
+                }
+                if (this.constructorSelectedStyle === 'spicy') {
+                    return baseDesc + ' {% if current_lang == "ru" %}А для особой пикантности добавлены перчик халапеньо и фирменный соус Sriracha.{% elif current_lang == "en" %}Spiced up with jalapeño peppers and signature Sriracha sauce.{% else %}Maxsus achchiqlik uchun xalapeno qalampiri va o\'tkir Sriracha sousi qo\'shiladi.{% endif %}';
+                }
+                return baseDesc;
+            },
+
+            get constructorNonQuantityGroups() {
+                return (this.constructorGroups || []).filter(g => g.group_type !== 'QUANTITY');
+            },
+
+            get constructorProductRemovables() {
+                if (this.constructorProduct?.removables && this.constructorProduct.removables.length > 0) {
+                    return this.constructorProduct.removables;
+                }
+                if (this.constructorProduct?.is_pizza) {
+                    return [
+                        { id: 'oregano', name: '{% if current_lang == "ru" %}Орегано и специи{% else %}Oregano va ziravorlar{% endif %}' },
+                        { id: 'onion', name: '{% if current_lang == "ru" %}Красный лук{% else %}Qizil piyoz{% endif %}' },
+                        { id: 'olives', name: '{% if current_lang == "ru" %}Маслины{% else %}Zaytun{% endif %}' },
+                        { id: 'garlic_sauce', name: '{% if current_lang == "ru" %}Чесночный соус{% else %}Sarimsoq sousi{% endif %}' }
+                    ];
+                }
+                return [
+                    { id: 'lettuce', name: '{% if current_lang == "ru" %}Салат Айсберг{% else %}Aysberg salati{% endif %}' },
+                    { id: 'tomato', name: '{% if current_lang == "ru" %}Помидор{% else %}Pomidor{% endif %}' },
+                    { id: 'onion', name: '{% if current_lang == "ru" %}Хрустящий лук{% else %}Qarsildoq piyoz{% endif %}' },
+                    { id: 'mayo', name: '{% if current_lang == "ru" %}Майонез{% else %}Mayonez{% endif %}' },
+                    { id: 'pickles', name: '{% if current_lang == "ru" %}Маринованные огурцы{% else %}Tuzlangan bodring{% endif %}' }
+                ];
+            },
+
+            get constructorAvailableToppings() {
+                const qtyGroups = (this.constructorGroups || []).filter(g => g.group_type === 'QUANTITY');
+                if (qtyGroups.length > 0) {
+                    const tops = [];
+                    qtyGroups.forEach(g => {
+                        (g.items || []).forEach(it => {
+                            tops.push({
+                                id: it.id,
+                                groupId: g.id,
+                                name: it.name || it.title,
+                                price: Number(it.price) || 0,
+                                image: it.image_url || '/static/images/constructor/mozzarella_cheese.png',
+                                max: g.max_allowed || 5,
+                            });
+                        });
+                    });
+                    if (tops.length > 0) return tops;
+                }
+
+                // Fallback toppings with clean photos
+                if (this.constructorProduct?.is_pizza) {
+                    return [
+                        { id: 'extra_mozzarella', name: '{% if current_lang == "ru" %}Двойная Моцарелла{% else %}Qo\'shimcha Motsarella{% endif %}', price: 8000, image: '/static/images/constructor/mozzarella_cheese.png', max: 2 },
+                        { id: 'pepperoni', name: '{% if current_lang == "ru" %}Пряная пепперони (Халяль){% else %}Pepperoni (Halol){% endif %}', price: 10000, image: '/static/images/constructor/pepperoni_topping.png', max: 2 },
+                        { id: 'mushrooms', name: '{% if current_lang == "ru" %}Шампиньоны свежие{% else %}Yangi shampinyonlar{% endif %}', price: 5000, image: '/static/images/constructor/mushrooms_topping.png', max: 2 },
+                        { id: 'jalapeno', name: '{% if current_lang == "ru" %}Острый халапеньо{% else %}Achchiq xalapenyo{% endif %}', price: 4000, image: '/static/images/constructor/jalapeno_topping.png', max: 2 },
+                        { id: 'ranch_sauce', name: '{% if current_lang == "ru" %}Сливочный ранч (соус){% else %}Qaymoqli ranch{% endif %}', price: 3000, image: '/static/images/constructor/sauce_dip_cup.png', max: 2 },
+                    ];
+                }
+
+                return [
+                    { id: 'extra_cheddar', name: '{% if current_lang == "ru" %}Сыр Чеддер{% else %}Chedder pishlog\'i{% endif %}', price: 5000, image: '/static/images/constructor/mozzarella_cheese.png', max: 3 },
+                    { id: 'jalapeno', name: '{% if current_lang == "ru" %}Острый халапеньо{% else %}Xalapeno qalampiri{% endif %}', price: 4000, image: '/static/images/constructor/jalapeno_topping.png', max: 2 },
+                    { id: 'extra_angus', name: '{% if current_lang == "ru" %}Котлета Black Angus{% else %}Qo\'shimcha kotlet{% endif %}', price: 18000, image: '/static/images/constructor/patty_cheese_real.png', max: 2 },
+                    { id: 'bbq_sauce', name: '{% if current_lang == "ru" %}BBQ соус{% else %}Maxsus BBQ sousi{% endif %}', price: 3000, image: '/static/images/constructor/sauce_real.png', max: 2 },
+                    { id: 'crispy_onions', name: '{% if current_lang == "ru" %}Хрустящий жареный лук{% else %}Qarsildoq piyoz{% endif %}', price: 3000, image: '/static/images/constructor/onions_real.png', max: 2 },
+                    { id: 'pickles', name: '{% if current_lang == "ru" %}Маринованные огурцы{% else %}Tuzlangan bodring{% endif %}', price: 3000, image: '/static/images/constructor/pickles_real.png', max: 2 },
+                ];
+            },
+
+            get constructorTotalAddedToppingsCount() {
+                return Object.values(this.constructorQuantities).reduce((sum, count) => sum + (count || 0), 0);
+            },
+
+            get constructorAddedToppingsList() {
+                return this.constructorAvailableToppings.filter(t => (this.constructorQuantities[t.id] || 0) > 0);
+            },
+
+            incrementConstructorTopping(top) {
+                const max = top.max || 5;
+                const cur = this.constructorQuantities[top.id] || 0;
+                if (cur < max) {
+                    this.constructorQuantities = {
+                        ...this.constructorQuantities,
+                        [top.id]: cur + 1
+                    };
+                }
+            },
+
+            decrementConstructorTopping(top) {
+                const cur = this.constructorQuantities[top.id] || 0;
+                if (cur > 0) {
+                    this.constructorQuantities = {
+                        ...this.constructorQuantities,
+                        [top.id]: cur - 1
+                    };
+                }
+            },
+
+            selectConstructorSingle(groupId, itemId) {
+                this.constructorSelectedSingle = {
+                    ...this.constructorSelectedSingle,
+                    [groupId]: itemId
+                };
+            },
+
+            toggleConstructorMultiple(group, itemId) {
+                const isSelected = !!this.constructorSelectedMultiple[itemId];
+                if (isSelected) {
+                    const next = { ...this.constructorSelectedMultiple };
+                    delete next[itemId];
+                    this.constructorSelectedMultiple = next;
+                } else {
+                    if (group.max_allowed && group.max_allowed > 0) {
+                        const currentCount = (group.items || []).filter(it => this.constructorSelectedMultiple[it.id]).length;
+                        if (currentCount >= group.max_allowed) {
+                            if (group.max_allowed === 1) {
+                                const next = { ...this.constructorSelectedMultiple };
+                                (group.items || []).forEach(it => { delete next[it.id]; });
+                                next[itemId] = true;
+                                this.constructorSelectedMultiple = next;
+                                return;
+                            }
+                            return;
                         }
                     }
+                    this.constructorSelectedMultiple = {
+                        ...this.constructorSelectedMultiple,
+                        [itemId]: true
+                    };
                 }
-                return Math.max(0, total);
             },
 
-            get constructorSummary() {
-                const parts = [];
-                for (const group of this.constructorGroups) {
+            incrementConstructorQty(group, itemId) {
+                if (group.max_allowed && group.max_allowed > 0) {
+                    const totalInGroup = (group.items || []).reduce((sum, it) => sum + (this.constructorQuantities[it.id] || 0), 0);
+                    if (totalInGroup >= group.max_allowed) return;
+                }
+                const cur = this.constructorQuantities[itemId] || 0;
+                this.constructorQuantities = {
+                    ...this.constructorQuantities,
+                    [itemId]: cur + 1
+                };
+            },
+
+            decrementConstructorQty(itemId) {
+                const cur = this.constructorQuantities[itemId] || 0;
+                if (cur > 0) {
+                    this.constructorQuantities = {
+                        ...this.constructorQuantities,
+                        [itemId]: cur - 1
+                    };
+                }
+            },
+
+            isConstructorRemoved(id) {
+                return this.constructorRemovedIngredients.includes(id);
+            },
+
+            toggleConstructorRemoved(id) {
+                if (this.isConstructorRemoved(id)) {
+                    this.constructorRemovedIngredients = this.constructorRemovedIngredients.filter(x => x !== id);
+                } else {
+                    this.constructorRemovedIngredients.push(id);
+                }
+            },
+
+            get constructorCalculatedPrice() {
+                if (!this.constructorProduct) return 0;
+                let total = Number(this.constructorProduct.price) || 0;
+
+                // 1. Style / Crust
+                if (!this.constructorProduct.is_pizza) {
+                    if (this.constructorSelectedStyle === 'spicy') {
+                        total += 5000;
+                    }
+                } else {
+                    if (this.constructorSelectedPizzaCrust === 'big_cheese') {
+                        total += 18000;
+                    }
+                }
+
+                // 2. Groups items from database
+                for (const group of (this.constructorGroups || [])) {
                     if (group.group_type === 'SINGLE') {
-                        const selId = this.constructorSelections[group.id];
-                        if (selId) {
-                            const item = group.items.find(i => i.id === selId);
-                            if (item) parts.push(item.title);
+                        const selectedItemId = this.constructorSelectedSingle[group.id];
+                        if (selectedItemId) {
+                            const item = (group.items || []).find(it => it.id === selectedItemId);
+                            if (item) total += Number(item.price) || 0;
                         }
                     } else if (group.group_type === 'MULTIPLE') {
-                        const list = this.constructorMultiSelections[group.id] || [];
-                        for (const itId of list) {
-                            const item = group.items.find(i => i.id === itId);
-                            if (item) parts.push(item.title);
+                        for (const item of (group.items || [])) {
+                            if (this.constructorSelectedMultiple[item.id]) {
+                                total += Number(item.price) || 0;
+                            }
                         }
                     } else if (group.group_type === 'QUANTITY') {
-                        const qMap = this.constructorQuantities[group.id] || {};
-                        for (const it of group.items) {
-                            const count = Number(qMap[it.id]) || 0;
-                            if (count > 0) {
-                                parts.push(`${it.title} × ${count}`);
+                        for (const item of (group.items || [])) {
+                            const qty = this.constructorQuantities[item.id] || 0;
+                            if (qty > 0) {
+                                total += qty * (Number(item.price) || 0);
                             }
                         }
                     }
                 }
-                return parts.length > 0 ? parts.join(', ') : '{% if current_lang == "ru" %}Стандартная комплектация{% else %}Standart tarkib{% endif %}';
+
+                // 3. Fallback toppings if added
+                this.constructorAvailableToppings.forEach(top => {
+                    if (!this.constructorGroups?.some(g => (g.items || []).some(it => it.id === top.id))) {
+                        const qty = this.constructorQuantities[top.id] || 0;
+                        if (qty > 0) {
+                            total += qty * (Number(top.price) || 0);
+                        }
+                    }
+                });
+
+                return total;
+            },
+
+            get constructorCaloriesCalc() {
+                let base = this.constructorProduct?.nutrition?.calories || 740;
+                if (this.constructorSelectedStyle === 'spicy') base += 35;
+                const weight = this.constructorProduct?.nutrition?.weight_g || 340;
+                if (this.constructorNutritionPortion === '100g') {
+                    return Math.round((base * 100) / weight);
+                }
+                return base;
+            },
+
+            get constructorFatCalc() {
+                let base = this.constructorProduct?.nutrition?.fat || 34;
+                const weight = this.constructorProduct?.nutrition?.weight_g || 340;
+                const val = this.constructorNutritionPortion === '100g' ? Math.round((base * 100) / weight) : base;
+                return `${val} г`;
+            },
+
+            get constructorProteinCalc() {
+                let base = this.constructorProduct?.nutrition?.protein || 38;
+                const weight = this.constructorProduct?.nutrition?.weight_g || 340;
+                const val = this.constructorNutritionPortion === '100g' ? Math.round((base * 100) / weight) : base;
+                return `${val} г`;
+            },
+
+            get constructorCarbsCalc() {
+                let base = this.constructorProduct?.nutrition?.carbs || 48;
+                const weight = this.constructorProduct?.nutrition?.weight_g || 340;
+                const val = this.constructorNutritionPortion === '100g' ? Math.round((base * 100) / weight) : base;
+                return `${val} г`;
+            },
+
+            init() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const openC = urlParams.get('open_constructor');
+                if (openC) {
+                    this.openConstructor(openC);
+                } else if (urlParams.get('constructor') === '1') {
+                    this.$nextTick(() => {
+                        const firstCBtn = document.querySelector('[data-constructor-product-id]');
+                        if (firstCBtn) {
+                            const pid = firstCBtn.getAttribute('data-constructor-product-id');
+                            if (pid) this.openConstructor(pid);
+                        }
+                    });
+                }
             },
 
             openConstructor(productId) {
+                document.body.style.overflow = 'hidden';
                 this.constructorModalOpen = true;
                 this.constructorLoading = true;
                 this.constructorWarning = '';
                 this.constructorProduct = null;
                 this.constructorGroups = [];
-                this.constructorSelections = {};
-                this.constructorMultiSelections = {};
+                this.constructorSelectedSingle = {};
+                this.constructorSelectedMultiple = {};
                 this.constructorQuantities = {};
+                this.constructorRemovedIngredients = [];
+                this.constructorPortionCount = 1;
+                this.constructorNutritionPortion = 'portion';
+                this.constructorSelectedStyle = 'classic';
+                this.constructorSelectedPizzaCrust = 'traditional';
 
                 const lang = '{{ current_lang|default:"uz" }}';
                 fetch(`/api/constructor/storefront/${productId}/?lang=${lang}`)
@@ -959,22 +1284,33 @@
                         this.constructorProduct = data.product;
                         this.constructorGroups = data.groups || [];
 
-                        // Initialize defaults
-                        for (const grp of this.constructorGroups) {
-                            if (grp.group_type === 'SINGLE') {
-                                const defItem = grp.items.find(i => i.is_default) || (grp.is_required && grp.items.length > 0 ? grp.items[0] : null);
-                                if (defItem) {
-                                    this.constructorSelections[grp.id] = defItem.id;
+                        // Initialize defaults dynamically from database groups
+                        const singleInit = {};
+                        const multInit = {};
+                        const qtyInit = {};
+
+                        (this.constructorGroups || []).forEach(g => {
+                            if (g.group_type === 'SINGLE') {
+                                const defaultItem = (g.items || []).find(it => it.is_default) || (g.items || [])[0];
+                                if (defaultItem) {
+                                    singleInit[g.id] = defaultItem.id;
                                 }
-                            } else if (grp.group_type === 'MULTIPLE') {
-                                this.constructorMultiSelections[grp.id] = grp.items.filter(i => i.is_default).map(i => i.id);
-                            } else if (grp.group_type === 'QUANTITY') {
-                                this.constructorQuantities[grp.id] = {};
-                                for (const it of grp.items) {
-                                    this.constructorQuantities[grp.id][it.id] = it.is_default ? 1 : 0;
-                                }
+                            } else if (g.group_type === 'MULTIPLE') {
+                                (g.items || []).forEach(it => {
+                                    if (it.is_default) {
+                                        multInit[it.id] = true;
+                                    }
+                                });
+                            } else if (g.group_type === 'QUANTITY') {
+                                (g.items || []).forEach(it => {
+                                    qtyInit[it.id] = 0;
+                                });
                             }
-                        }
+                        });
+
+                        this.constructorSelectedSingle = singleInit;
+                        this.constructorSelectedMultiple = multInit;
+                        this.constructorQuantities = qtyInit;
 
                         this.$nextTick(() => {
                             if (window.lucide) window.lucide.createIcons();
@@ -990,159 +1326,161 @@
             closeConstructorModal() {
                 this.constructorModalOpen = false;
                 this.constructorWarning = '';
+                document.body.style.overflow = '';
             },
 
-            selectSingleItem(groupId, item) {
-                this.constructorSelections[groupId] = item.id;
-                this.constructorWarning = '';
-            },
-
-            toggleMultipleItem(groupId, item, maxAllowed) {
-                if (!this.constructorMultiSelections[groupId]) {
-                    this.constructorMultiSelections[groupId] = [];
-                }
-                const arr = this.constructorMultiSelections[groupId];
-                const idx = arr.indexOf(item.id);
-                if (idx > -1) {
-                    arr.splice(idx, 1);
-                } else {
-                    if (maxAllowed > 0 && arr.length >= maxAllowed) {
-                        this.constructorWarning = `{% if current_lang == "ru" %}Максимум можно выбрать: {% else %}Maksimal tanlash: {% endif %}${maxAllowed}`;
-                        return;
-                    }
-                    arr.push(item.id);
-                }
-                this.constructorMultiSelections[groupId] = [...arr];
-                this.constructorWarning = '';
-            },
-
-            isMultipleSelected(groupId, itemId) {
-                const list = this.constructorMultiSelections[groupId];
-                return Array.isArray(list) && list.includes(itemId);
-            },
-
-            adjustItemQty(groupId, itemId, delta, maxAllowed) {
-                if (!this.constructorQuantities[groupId]) {
-                    this.constructorQuantities[groupId] = {};
-                }
-                const cur = Number(this.constructorQuantities[groupId][itemId]) || 0;
-                const next = Math.max(0, cur + delta);
-
-                if (delta > 0 && maxAllowed > 0) {
-                    const currentGroupTotal = Object.values(this.constructorQuantities[groupId]).reduce((a, b) => a + (Number(b) || 0), 0);
-                    if (currentGroupTotal >= maxAllowed) {
-                        this.constructorWarning = `{% if current_lang == "ru" %}Максимальное количество: {% else %}Maksimal miqdor: {% endif %}${maxAllowed}`;
-                        return;
-                    }
-                }
-
-                this.constructorQuantities[groupId] = {
-                    ...this.constructorQuantities[groupId],
-                    [itemId]: next
-                };
-                this.constructorWarning = '';
-            },
-
-            getItemQty(groupId, itemId) {
-                return Number(this.constructorQuantities[groupId]?.[itemId]) || 0;
-            },
-
-            addConstructorToCart() {
-                if (!this.constructorProduct) return;
+            async addConstructorToCart() {
+                if (this.constructorLoading || !this.constructorProduct) return;
 
                 // Validate required groups
-                for (const grp of this.constructorGroups) {
-                    if (grp.is_required) {
-                        if (grp.group_type === 'SINGLE' && !this.constructorSelections[grp.id]) {
-                            this.constructorWarning = `{% if current_lang == "ru" %}Пожалуйста, выберите опцию в группе:{% else %}Iltimos, guruhdan variant tanlang:{% endif %} "${grp.title}"`;
+                for (const group of (this.constructorGroups || [])) {
+                    if (group.is_required) {
+                        if (group.group_type === 'SINGLE' && !this.constructorSelectedSingle[group.id]) {
+                            this.constructorWarning = `Пожалуйста, выберите вариант: ${group.name}`;
                             return;
                         }
-                        if (grp.group_type === 'MULTIPLE') {
-                            const count = (this.constructorMultiSelections[grp.id] || []).length;
-                            if (count < grp.min_required) {
-                                this.constructorWarning = `"${grp.title}": {% if current_lang == "ru" %}минимум нужно выбрать{% else %}kamida tanlang{% endif %} ${grp.min_required}`;
-                                return;
-                            }
-                        }
-                        if (grp.group_type === 'QUANTITY') {
-                            const totalQty = Object.values(this.constructorQuantities[grp.id] || {}).reduce((a, b) => a + (Number(b) || 0), 0);
-                            if (totalQty < grp.min_required) {
-                                this.constructorWarning = `"${grp.title}": {% if current_lang == "ru" %}минимум нужно выбрать{% else %}kamida tanlang{% endif %} ${grp.min_required}`;
+                        if (group.group_type === 'MULTIPLE') {
+                            const count = (group.items || []).filter(it => this.constructorSelectedMultiple[it.id]).length;
+                            if (count < (group.min_required || 1)) {
+                                this.constructorWarning = `Пожалуйста, выберите минимум ${group.min_required || 1} в категории: ${group.name}`;
                                 return;
                             }
                         }
                     }
                 }
 
-                const customOptions = [];
-                for (const grp of this.constructorGroups) {
-                    if (grp.group_type === 'SINGLE') {
-                        const selId = this.constructorSelections[grp.id];
-                        if (selId) {
-                            const it = grp.items.find(i => i.id === selId);
-                            if (it) {
-                                customOptions.push({
-                                    group_id: grp.id,
-                                    group_title: grp.title,
+                this.constructorLoading = true;
+
+                const singleChoices = [];
+                const multipleChoices = [];
+                const quantityChoices = [];
+
+                (this.constructorGroups || []).forEach(g => {
+                    if (g.group_type === 'SINGLE') {
+                        const chosenId = this.constructorSelectedSingle[g.id];
+                        const item = (g.items || []).find(it => it.id === chosenId);
+                        if (item) {
+                            singleChoices.push({
+                                group_id: g.id,
+                                group_name: g.name,
+                                item_id: item.id,
+                                name: item.name,
+                                price: item.price
+                            });
+                        }
+                    } else if (g.group_type === 'MULTIPLE') {
+                        (g.items || []).forEach(it => {
+                            if (this.constructorSelectedMultiple[it.id]) {
+                                multipleChoices.push({
+                                    group_id: g.id,
+                                    group_name: g.name,
                                     item_id: it.id,
-                                    item_title: it.title,
-                                    price: Number(it.price) || 0,
-                                    quantity: 1
+                                    name: it.name,
+                                    price: it.price
                                 });
                             }
-                        }
-                    } else if (grp.group_type === 'MULTIPLE') {
-                        const list = this.constructorMultiSelections[grp.id] || [];
-                        for (const itId of list) {
-                            const it = grp.items.find(i => i.id === itId);
-                            if (it) {
-                                customOptions.push({
-                                    group_id: grp.id,
-                                    group_title: grp.title,
-                                    item_id: it.id,
-                                    item_title: it.title,
-                                    price: Number(it.price) || 0,
-                                    quantity: 1
-                                });
-                            }
-                        }
-                    } else if (grp.group_type === 'QUANTITY') {
-                        const qMap = this.constructorQuantities[grp.id] || {};
-                        for (const it of grp.items) {
-                            const count = Number(qMap[it.id]) || 0;
+                        });
+                    } else if (g.group_type === 'QUANTITY') {
+                        (g.items || []).forEach(it => {
+                            const count = this.constructorQuantities[it.id] || 0;
                             if (count > 0) {
-                                customOptions.push({
-                                    group_id: grp.id,
-                                    group_title: grp.title,
+                                quantityChoices.push({
+                                    group_id: g.id,
+                                    group_name: g.name,
                                     item_id: it.id,
-                                    item_title: it.title,
-                                    price: Number(it.price) || 0,
-                                    quantity: count
+                                    name: it.name,
+                                    count: count,
+                                    price: it.price,
+                                    total_price: count * it.price
                                 });
                             }
+                        });
+                    }
+                });
+
+                // Include fallback toppings if any
+                this.constructorAvailableToppings.forEach(top => {
+                    if (!this.constructorGroups?.some(g => (g.items || []).some(it => it.id === top.id))) {
+                        const count = this.constructorQuantities[top.id] || 0;
+                        if (count > 0) {
+                            quantityChoices.push({
+                                group_id: 0,
+                                group_name: "Toppings",
+                                item_id: top.id,
+                                name: top.name,
+                                count: count,
+                                price: top.price,
+                                total_price: count * top.price
+                            });
                         }
                     }
+                });
+
+                const rawRemovables = this.constructorProductRemovables || [];
+                const removedNames = rawRemovables
+                    .filter(r => this.constructorRemovedIngredients.includes(r.id))
+                    .map(r => `{% if current_lang == "ru" %}Без{% else %}siz{% endif %} ${r.name || r.name_ru || r.name_uz}`);
+
+                const summaryParts = [];
+
+                // 1. Style choice (Classic vs Spicy) or Crust
+                if (!this.constructorProduct.is_pizza) {
+                    if (this.constructorSelectedStyle === 'spicy') {
+                        summaryParts.push('{% if current_lang == "ru" %}Острый (Sriracha) (+5 000 UZS){% elif current_lang == "en" %}Spicy (Sriracha) (+5 000 UZS){% else %}Achchiq (Sriracha) (+5 000 UZS){% endif %}');
+                    } else {
+                        summaryParts.push('{% if current_lang == "ru" %}Классический{% elif current_lang == "en" %}Classic{% else %}Klassik{% endif %}');
+                    }
+                } else {
+                    const crust = this.pizzaCrustOptions.find(c => c.id === this.constructorSelectedPizzaCrust);
+                    if (crust) summaryParts.push(crust.name);
                 }
+
+                if (singleChoices.length) {
+                    summaryParts.push(singleChoices.map(s => s.name).join(', '));
+                }
+                if (multipleChoices.length) {
+                    summaryParts.push('+ ' + multipleChoices.map(m => m.name).join(', '));
+                }
+                if (quantityChoices.length) {
+                    summaryParts.push('+ ' + quantityChoices.map(q => `${q.name} (${q.count}×)`).join(', '));
+                }
+                if (removedNames.length) {
+                    summaryParts.push('- ' + removedNames.join(', '));
+                }
+                const fullSummary = summaryParts.join(' • ');
+
+                const customOptions = {
+                    product_name: this.constructorDisplayedTitle,
+                    style: this.constructorSelectedStyle,
+                    crust: this.constructorSelectedPizzaCrust,
+                    single_choices: singleChoices,
+                    multiple_choices: multipleChoices,
+                    quantity_choices: quantityChoices,
+                    removed_ingredients: removedNames,
+                    summary: fullSummary
+                };
 
                 const postUrl = window.location.pathname.startsWith('/store/')
                     ? '{% if store.subdomain %}/store/{{ store.subdomain }}/cart/add/{% else %}/cart/add/{% endif %}'
                     : '/cart/add/';
-                fetch(postUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({
-                        product_id: this.constructorProduct.id,
-                        quantity: 1,
-                        custom_price: this.constructorTotalPrice,
-                        custom_options: customOptions,
-                        custom_summary: this.constructorSummary
-                    })
-                })
-                .then(r => r.json())
-                .then(data => {
+
+                try {
+                    const res = await fetch(postUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            product_id: this.constructorProduct.id,
+                            quantity: this.constructorPortionCount,
+                            custom_price: this.constructorCalculatedPrice,
+                            custom_options: customOptions,
+                            custom_summary: fullSummary
+                        })
+                    });
+                    const data = await res.json();
+                    this.constructorLoading = false;
                     if (data.success && data.cart) {
                         this.cartItems = data.cart;
                         this.closeConstructorModal();
@@ -1150,11 +1488,11 @@
                     } else {
                         this.constructorWarning = data.error || 'Не удалось добавить в корзину';
                     }
-                })
-                .catch(err => {
+                } catch (err) {
+                    this.constructorLoading = false;
                     console.error('Constructor add error:', err);
                     this.constructorWarning = 'Ошибка соединения';
-                });
+                }
             }
         }
     }

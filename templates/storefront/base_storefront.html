@@ -183,6 +183,7 @@
          "
          x-show="showSplash"
          x-cloak
+         style="display: none;"
          x-transition:leave="transition-all ease-in-out duration-500"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95 pointer-events-none"
@@ -1340,22 +1341,22 @@
                 <!-- 1. Home -->
                 <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                    title="{{ t.home|default:'Главная' }}"
-                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if url in 'home,store_home' and not request.GET.cat %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
-                    <i data-lucide="home" class="w-4.5 h-4.5 {% if url in 'home,store_home' and not request.GET.cat %}stroke-[2.2]{% else %}stroke-[1.8]{% endif %}"></i>
+                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if url in 'home,store_home' and not request.GET.cat and not request.GET.constructor %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
+                    <i data-lucide="home" class="w-4.5 h-4.5 {% if url in 'home,store_home' and not request.GET.cat and not request.GET.constructor %}stroke-[2.2]{% else %}stroke-[1.8]{% endif %}"></i>
                 </a>
 
                 <!-- 2. Catalog / Categories Drawer -->
                 <button type="button" @click="sideDrawerOpen = true"
                         title="{{ t.categories|default:'Каталог' }}"
-                        class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none text-slate-700 hover:text-slate-900 hover:bg-black/5">
+                        class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none text-slate-700 hover:text-slate-900 hover:bg-black/5 cursor-pointer">
                     <i data-lucide="layout-grid" class="w-4.5 h-4.5 stroke-[1.8]"></i>
                 </button>
 
-                <!-- 3. Burger Constructor (Build Your Own Burger) -->
-                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-                   title="{% if current_lang == 'ru' %}Конструктор бургера{% elif current_lang == 'en' %}Burger Builder{% else %}Burger konstruktor{% endif %}"
-                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if 'constructor' in url %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
-                    <svg class="w-4.5 h-4.5 {% if 'constructor' in url %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <!-- 3. Burger / Product Constructor (Build Your Own) -->
+                <a href="?constructor=1{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}"
+                   title="{% if current_lang == 'ru' %}Конструктор (Собери сам){% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}"
+                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if 'constructor' in url or request.GET.constructor %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
+                    <svg class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 11h16a1 1 0 0 0 1-1C20.5 5.5 16.7 3 12 3S3.5 5.5 3 10a1 1 0 0 0 1 1z"></path>
                         <path d="M5 14h14"></path>
                         <path d="M4 17h16a2 2 0 0 1 2 2 1 1 0 0 1-1 1H3a1 1 0 0 1-1-1 2 2 0 0 1 2-2z"></path>

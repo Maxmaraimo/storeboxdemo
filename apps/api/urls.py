@@ -49,9 +49,11 @@ urlpatterns = [
 
     # Product Constructor API
     path("constructor/", views_constructor.constructor_list_view, name="constructor_list"),
+    path("constructor/create/", views_constructor.constructor_create_view, name="constructor_create"),
     path("constructor/preset/", views_constructor.constructor_load_preset_view, name="constructor_load_preset"),
     path("constructor/<int:product_id>/", views_constructor.constructor_detail_view, name="constructor_detail"),
     path("constructor/<int:product_id>/save/", views_constructor.constructor_save_view, name="constructor_save"),
+    path("constructor/<int:product_id>/delete/", views_constructor.constructor_delete_view, name="constructor_delete"),
     path("constructor/storefront/<int:product_id>/", views_constructor.constructor_storefront_get_view, name="constructor_storefront_get"),
 
     # Promo Codes CRUD
