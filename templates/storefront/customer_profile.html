@@ -2,310 +2,7 @@
 {% load humanize %}
 
 {% block storefront_body %}
-<div class="max-w-xl mx-auto px-3 sm:px-4 py-2 sm:py-4 space-y-4 pb-28"
-     x-data="{
-        activeView: (new URLSearchParams(window.location.search).get('tab')) || 'menu',
-        activeFilter: 'all',
-        reorderingId: null,
-        languageDropdownOpen: false,
-        profileWishlistProducts: [],
-        isLoadingProfileWishlist: false,
-        copiedOrderNumber: null,
-        expandedOrders: {},
-
-        // Phone Input & Country Selector State
-        selectedCountry: {
-            id: 'uz',
-            name: 'O\'zbekiston',
-            dialCode: '+998',
-            code: '998',
-            digits: 9,
-            placeholder: '(90) 123-45-67',
-            format(d) {
-                let res = '';
-                if (d.length > 0) res += '(' + d.slice(0, 2);
-                if (d.length >= 2) res += ') ';
-                if (d.length > 2) res += d.slice(2, 5);
-                if (d.length > 5) res += '-' + d.slice(5, 7);
-                if (d.length > 7) res += '-' + d.slice(7, 9);
-                return res;
-            }
-        },
-        countries: [
-            {
-                id: 'uz',
-                name: 'O\'zbekiston',
-                flag: '🇺🇿',
-                dialCode: '+998',
-                code: '998',
-                digits: 9,
-                placeholder: '(90) 123-45-67',
-                format(d) {
-                    let res = '';
-                    if (d.length > 0) res += '(' + d.slice(0, 2);
-                    if (d.length >= 2) res += ') ';
-                    if (d.length > 2) res += d.slice(2, 5);
-                    if (d.length > 5) res += '-' + d.slice(5, 7);
-                    if (d.length > 7) res += '-' + d.slice(7, 9);
-                    return res;
-                }
-            },
-            {
-                id: 'ru',
-                name: 'Россия',
-                flag: '🇷🇺',
-                dialCode: '+7',
-                code: '7',
-                digits: 10,
-                placeholder: '(912) 345-67-89',
-                format(d) {
-                    let res = '';
-                    if (d.length > 0) res += '(' + d.slice(0, 3);
-                    if (d.length >= 3) res += ') ';
-                    if (d.length > 3) res += d.slice(3, 6);
-                    if (d.length > 6) res += '-' + d.slice(6, 8);
-                    if (d.length > 8) res += '-' + d.slice(8, 10);
-                    return res;
-                }
-            },
-            {
-                id: 'kz',
-                name: 'Казахстан',
-                flag: '🇰🇿',
-                dialCode: '+7',
-                code: '7',
-                digits: 10,
-                placeholder: '(777) 123-45-67',
-                format(d) {
-                    let res = '';
-                    if (d.length > 0) res += '(' + d.slice(0, 3);
-                    if (d.length >= 3) res += ') ';
-                    if (d.length > 3) res += d.slice(3, 6);
-                    if (d.length > 6) res += '-' + d.slice(6, 8);
-                    if (d.length > 8) res += '-' + d.slice(8, 10);
-                    return res;
-                }
-            }
-        ],
-        countryPickerOpen: false,
-        rawPhoneDigits: '',
-        nameInput: '',
-
-        get formattedPhone() {
-            return this.selectedCountry.format(this.rawPhoneDigits);
-        },
-
-        get fullPhoneNumber() {
-            if (!this.rawPhoneDigits) return '';
-            return this.selectedCountry.dialCode + this.rawPhoneDigits;
-        },
-
-        onPhoneInput(e) {
-            let val = e.target.value;
-            let digits = val.replace(/\D/g, '');
-            if (digits.startsWith(this.selectedCountry.code)) {
-                digits = digits.slice(this.selectedCountry.code.length);
-            }
-            this.rawPhoneDigits = digits.slice(0, this.selectedCountry.digits);
-            e.target.value = this.formattedPhone;
-        },
-
-        selectCountry(c) {
-            this.selectedCountry = c;
-            this.rawPhoneDigits = '';
-            this.countryPickerOpen = false;
-        },
-
-        copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                this.copiedOrderNumber = text;
-                setTimeout(() => {
-                    if (this.copiedOrderNumber === text) {
-                        this.copiedOrderNumber = null;
-                    }
-                }, 2000);
-            });
-        },
-
-        toggleOrderDetails(orderId) {
-            this.expandedOrders[orderId] = !this.expandedOrders[orderId];
-        },
-
-        init() {
-            if (this.activeView === 'wishlist') {
-                this.loadProfileWishlist();
-            }
-            this.$watch('activeView', (val) => {
-                if (val === 'wishlist') {
-                    this.loadProfileWishlist();
-                }
-                const url = new URL(window.location);
-                if (val === 'menu') {
-                    url.searchParams.delete('tab');
-                } else {
-                    url.searchParams.set('tab', val);
-                }
-                window.history.replaceState({}, '', url);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                this.$nextTick(() => {
-                    if (window.lucide) window.lucide.createIcons();
-                });
-            });
-            this.$watch('wishlist.length', () => {
-                if (this.activeView === 'wishlist') {
-                    this.loadProfileWishlist();
-                }
-            });
-        },
-
-        loadProfileWishlist() {
-            if (!this.wishlist || this.wishlist.length === 0) {
-                this.profileWishlistProducts = [];
-                return;
-            }
-            this.isLoadingProfileWishlist = true;
-            const url = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/wishlist/{% else %}/api/wishlist/{% endif %}?ids=' + this.wishlist.join(',');
-            fetch(url)
-                .then(r => r.json())
-                .then(data => {
-                    this.profileWishlistProducts = data.products || [];
-                    this.isLoadingProfileWishlist = false;
-                    this.$nextTick(() => {
-                        if (window.lucide) window.lucide.createIcons();
-                    });
-                })
-                .catch(() => {
-                    this.isLoadingProfileWishlist = false;
-                });
-        },
-
-        removeProfileWishlist(productId) {
-            this.removeFromWishlist(productId);
-            this.profileWishlistProducts = this.profileWishlistProducts.filter(p => p.id !== productId);
-        },
-
-        openChatModal() {
-            window.dispatchEvent(new CustomEvent('open-store-chat'));
-        },
-
-        customerSmsCode: '',
-        customerSmsSent: false,
-        customerSmsLoading: false,
-        customerSmsCooldown: 0,
-        customerSmsStatus: '',
-        customerSmsError: '',
-        customerSmsTimer: null,
-
-        startCustomerSmsTimer(sec = 60) {
-            this.customerSmsCooldown = sec;
-            if (this.customerSmsTimer) clearInterval(this.customerSmsTimer);
-            this.customerSmsTimer = setInterval(() => {
-                if (this.customerSmsCooldown > 1) {
-                    this.customerSmsCooldown--;
-                } else {
-                    this.customerSmsCooldown = 0;
-                    clearInterval(this.customerSmsTimer);
-                    this.customerSmsTimer = null;
-                }
-            }, 1000);
-        },
-
-        async sendCustomerSms() {
-            if (this.customerSmsLoading || this.customerSmsCooldown > 0) return;
-            if (!this.rawPhoneDigits || this.rawPhoneDigits.length < this.selectedCountry.digits) {
-                this.customerSmsError = "Iltimos, to'liq telefon raqamingizni kiriting";
-                return;
-            }
-            this.customerSmsLoading = true;
-            this.customerSmsError = '';
-            this.customerSmsStatus = '';
-
-            try {
-                const sendUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/customer/send-code/{% else %}/api/customer/send-code/{% endif %}';
-                const res = await fetch(sendUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                    body: JSON.stringify({ phone: this.fullPhoneNumber })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    this.customerSmsSent = true;
-                    this.customerSmsStatus = data.message || "Tasdiqlash kodi telefoningizga yuborildi!";
-                    this.startCustomerSmsTimer(data.cooldown || 60);
-                } else {
-                    this.customerSmsError = data.error || "SMS yuborishda xatolik yuz berdi";
-                    if (data.cooldown) {
-                        this.startCustomerSmsTimer(data.cooldown);
-                    }
-                }
-            } catch (e) {
-                this.customerSmsError = "Server bilan aloqa uzildi. Iltimos qaytadan urinib ko'ring.";
-            } finally {
-                this.customerSmsLoading = false;
-                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-            }
-        },
-
-        async verifyCustomerSmsAndLogin(e) {
-            if (e) e.preventDefault();
-            this.customerSmsError = '';
-            if (!this.rawPhoneDigits || this.rawPhoneDigits.length < this.selectedCountry.digits) {
-                this.customerSmsError = "Iltimos, telefon raqamini to'liq kiriting";
-                return;
-            }
-            if (!this.customerSmsCode || this.customerSmsCode.length !== 4) {
-                this.customerSmsError = "Iltimos, 4 xonali SMS tasdiqlash kodini kiriting";
-                if (!this.customerSmsSent) {
-                    this.sendCustomerSms();
-                }
-                return;
-            }
-
-            this.customerSmsLoading = true;
-            try {
-                const verifyUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/customer/verify-code/{% else %}/api/customer/verify-code/{% endif %}';
-                const res = await fetch(verifyUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                    body: JSON.stringify({
-                        phone: this.fullPhoneNumber,
-                        code: this.customerSmsCode,
-                        name: this.nameInput
-                    })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    localStorage.setItem('sb_cust_phone_{{ store.id }}', data.customer.phone);
-                    localStorage.setItem('sb_cust_name_{{ store.id }}', data.customer.name);
-                    window.location.reload();
-                } else {
-                    this.customerSmsError = data.error || "Noto'g'ri tasdiqlash kodi";
-                }
-            } catch (err) {
-                this.customerSmsError = "Server bilan aloqa uzildi.";
-            } finally {
-                this.customerSmsLoading = false;
-            }
-        },
-
-        reorder(orderNumber) {
-            this.reorderingId = orderNumber;
-            fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/api/order/' + orderNumber + '/reorder/{% else %}/api/order/' + orderNumber + '/reorder/{% endif %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.redirect_url) {
-                    window.location.href = data.redirect_url;
-                }
-            })
-            .catch(() => { this.reorderingId = null; });
-        }
-     }">
+<div class="max-w-xl mx-auto px-3 sm:px-4 py-2 sm:py-4 space-y-4 pb-28" x-data="customerProfileApp()">
 
     <!-- ========================================================================= -->
     <!-- CASE A: GUEST USER — MODERN CLEAN SIGN-IN                                -->
@@ -1008,4 +705,317 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function customerProfileApp() {
+    return {
+        activeView: (new URLSearchParams(window.location.search).get('tab')) || 'menu',
+        activeFilter: 'all',
+        reorderingId: null,
+        languageDropdownOpen: false,
+        profileWishlistProducts: [],
+        isLoadingProfileWishlist: false,
+        copiedOrderNumber: null,
+        expandedOrders: {},
+
+        // Phone Input & Country Selector State
+        selectedCountry: {
+            id: 'uz',
+            name: "O'zbekiston",
+            dialCode: '+998',
+            code: '998',
+            digits: 9,
+            placeholder: '(90) 123-45-67',
+            format(d) {
+                let res = '';
+                if (d.length > 0) res += '(' + d.slice(0, 2);
+                if (d.length >= 2) res += ') ';
+                if (d.length > 2) res += d.slice(2, 5);
+                if (d.length > 5) res += '-' + d.slice(5, 7);
+                if (d.length > 7) res += '-' + d.slice(7, 9);
+                return res;
+            }
+        },
+        countries: [
+            {
+                id: 'uz',
+                name: "O'zbekiston",
+                flag: '🇺🇿',
+                dialCode: '+998',
+                code: '998',
+                digits: 9,
+                placeholder: '(90) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 2);
+                    if (d.length >= 2) res += ') ';
+                    if (d.length > 2) res += d.slice(2, 5);
+                    if (d.length > 5) res += '-' + d.slice(5, 7);
+                    if (d.length > 7) res += '-' + d.slice(7, 9);
+                    return res;
+                }
+            },
+            {
+                id: 'ru',
+                name: 'Россия',
+                flag: '🇷🇺',
+                dialCode: '+7',
+                code: '7',
+                digits: 10,
+                placeholder: '(912) 345-67-89',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 8);
+                    if (d.length > 8) res += '-' + d.slice(8, 10);
+                    return res;
+                }
+            },
+            {
+                id: 'kz',
+                name: 'Казахстан',
+                flag: '🇰🇿',
+                dialCode: '+7',
+                code: '7',
+                digits: 10,
+                placeholder: '(777) 123-45-67',
+                format(d) {
+                    let res = '';
+                    if (d.length > 0) res += '(' + d.slice(0, 3);
+                    if (d.length >= 3) res += ') ';
+                    if (d.length > 3) res += d.slice(3, 6);
+                    if (d.length > 6) res += '-' + d.slice(6, 8);
+                    if (d.length > 8) res += '-' + d.slice(8, 10);
+                    return res;
+                }
+            }
+        ],
+        countryPickerOpen: false,
+        rawPhoneDigits: '',
+        nameInput: '',
+
+        get formattedPhone() {
+            return this.selectedCountry.format(this.rawPhoneDigits);
+        },
+
+        get fullPhoneNumber() {
+            if (!this.rawPhoneDigits) return '';
+            return this.selectedCountry.dialCode + this.rawPhoneDigits;
+        },
+
+        onPhoneInput(e) {
+            let val = e.target.value;
+            let digits = val.replace(/\D/g, '');
+            if (digits.startsWith(this.selectedCountry.code)) {
+                digits = digits.slice(this.selectedCountry.code.length);
+            }
+            this.rawPhoneDigits = digits.slice(0, this.selectedCountry.digits);
+            e.target.value = this.formattedPhone;
+        },
+
+        selectCountry(c) {
+            this.selectedCountry = c;
+            this.rawPhoneDigits = '';
+            this.countryPickerOpen = false;
+        },
+
+        copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.copiedOrderNumber = text;
+                setTimeout(() => {
+                    if (this.copiedOrderNumber === text) {
+                        this.copiedOrderNumber = null;
+                    }
+                }, 2000);
+            });
+        },
+
+        toggleOrderDetails(orderId) {
+            this.expandedOrders[orderId] = !this.expandedOrders[orderId];
+        },
+
+        init() {
+            if (this.activeView === 'wishlist') {
+                this.loadProfileWishlist();
+            }
+            this.$watch('activeView', (val) => {
+                if (val === 'wishlist') {
+                    this.loadProfileWishlist();
+                }
+                const url = new URL(window.location);
+                if (val === 'menu') {
+                    url.searchParams.delete('tab');
+                } else {
+                    url.searchParams.set('tab', val);
+                }
+                window.history.replaceState({}, '', url);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            });
+            this.$watch('wishlist.length', () => {
+                if (this.activeView === 'wishlist') {
+                    this.loadProfileWishlist();
+                }
+            });
+        },
+
+        loadProfileWishlist() {
+            if (!this.wishlist || this.wishlist.length === 0) {
+                this.profileWishlistProducts = [];
+                return;
+            }
+            this.isLoadingProfileWishlist = true;
+            const url = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/wishlist/{% else %}/api/wishlist/{% endif %}?ids=' + this.wishlist.join(',');
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    this.profileWishlistProducts = data.products || [];
+                    this.isLoadingProfileWishlist = false;
+                    this.$nextTick(() => {
+                        if (window.lucide) lucide.createIcons();
+                    });
+                })
+                .catch(() => {
+                    this.isLoadingProfileWishlist = false;
+                });
+        },
+
+        removeProfileWishlist(productId) {
+            this.removeFromWishlist(productId);
+            this.profileWishlistProducts = this.profileWishlistProducts.filter(p => p.id !== productId);
+        },
+
+        openChatModal() {
+            window.dispatchEvent(new CustomEvent('open-store-chat'));
+        },
+
+        customerSmsCode: '',
+        customerSmsSent: false,
+        customerSmsLoading: false,
+        customerSmsCooldown: 0,
+        customerSmsStatus: '',
+        customerSmsError: '',
+        customerSmsTimer: null,
+
+        startCustomerSmsTimer(sec = 60) {
+            this.customerSmsCooldown = sec;
+            if (this.customerSmsTimer) clearInterval(this.customerSmsTimer);
+            this.customerSmsTimer = setInterval(() => {
+                if (this.customerSmsCooldown > 1) {
+                    this.customerSmsCooldown--;
+                } else {
+                    this.customerSmsCooldown = 0;
+                    clearInterval(this.customerSmsTimer);
+                    this.customerSmsTimer = null;
+                }
+            }, 1000);
+        },
+
+        async sendCustomerSms() {
+            if (this.customerSmsLoading || this.customerSmsCooldown > 0) return;
+            if (!this.rawPhoneDigits || this.rawPhoneDigits.length < this.selectedCountry.digits) {
+                this.customerSmsError = "Iltimos, to'liq telefon raqamingizni kiriting";
+                return;
+            }
+            this.customerSmsLoading = true;
+            this.customerSmsError = '';
+            this.customerSmsStatus = '';
+
+            try {
+                const sendUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/customer/send-code/{% else %}/api/customer/send-code/{% endif %}';
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+                const res = await fetch(sendUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ phone: this.fullPhoneNumber })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.customerSmsSent = true;
+                    this.customerSmsStatus = data.message || "Tasdiqlash kodi telefoningizga yuborildi!";
+                    this.startCustomerSmsTimer(data.cooldown || 60);
+                } else {
+                    this.customerSmsError = data.error || "SMS yuborishda xatolik yuz berdi";
+                    if (data.cooldown) {
+                        this.startCustomerSmsTimer(data.cooldown);
+                    }
+                }
+            } catch (e) {
+                this.customerSmsError = "Server bilan aloqa uzildi. Iltimos qaytadan urinib ko'ring.";
+            } finally {
+                this.customerSmsLoading = false;
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            }
+        },
+
+        async verifyCustomerSmsAndLogin(e) {
+            if (e) e.preventDefault();
+            this.customerSmsError = '';
+            if (!this.rawPhoneDigits || this.rawPhoneDigits.length < this.selectedCountry.digits) {
+                this.customerSmsError = "Iltimos, telefon raqamini to'liq kiriting";
+                return;
+            }
+            if (!this.customerSmsCode || this.customerSmsCode.length !== 4) {
+                this.customerSmsError = "Iltimos, 4 xonali SMS tasdiqlash kodini kiriting";
+                if (!this.customerSmsSent) {
+                    this.sendCustomerSms();
+                }
+                return;
+            }
+
+            this.customerSmsLoading = true;
+            try {
+                const verifyUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/customer/verify-code/{% else %}/api/customer/verify-code/{% endif %}';
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+                const res = await fetch(verifyUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({
+                        phone: this.fullPhoneNumber,
+                        code: this.customerSmsCode,
+                        name: this.nameInput
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    localStorage.setItem('sb_cust_phone_{{ store.id }}', data.customer.phone);
+                    localStorage.setItem('sb_cust_name_{{ store.id }}', data.customer.name);
+                    window.location.reload();
+                } else {
+                    this.customerSmsError = data.error || "Noto'g'ri tasdiqlash kodi";
+                }
+            } catch (err) {
+                this.customerSmsError = "Server bilan aloqa uzildi.";
+            } finally {
+                this.customerSmsLoading = false;
+            }
+        },
+
+        reorder(orderNumber) {
+            this.reorderingId = orderNumber;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+            fetch('{% if store.subdomain %}/store/{{ store.subdomain }}/api/order/' + orderNumber + '/reorder/{% else %}/api/order/' + orderNumber + '/reorder/{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                }
+            })
+            .catch(() => { this.reorderingId = null; });
+        }
+    };
+}
+</script>
 {% endblock %}
