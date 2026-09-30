@@ -35,20 +35,35 @@
     </div>
 
     <!-- CONSTRUCTOR HERO BANNER (Matches Home Page Banner Style) -->
-    <div class="relative w-full rounded-[22px] sm:rounded-[32px] overflow-hidden bg-slate-950 text-white p-4 sm:p-7 shadow-xl border border-white/10 flex items-center justify-between">
+    <div class="relative w-full rounded-[22px] sm:rounded-[32px] overflow-hidden bg-slate-950 text-white p-4 sm:p-7 shadow-xl border border-white/10 flex items-center justify-between"
+         style="background: linear-gradient(135deg, {% if store.primary_color %}{{ store.primary_color }}33{% else %}#0f172a{% endif %} 0%, #090d16 100%);">
         <div class="space-y-1.5 sm:space-y-2.5 z-10 max-w-[62%] sm:max-w-md">
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-amber-400 border border-white/10">
-                ✨ BURGER & CO. CONSTRUCTOR
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-brand border border-white/10">
+                ✨ {{ store.name }} CONSTRUCTOR
             </span>
             <h1 class="text-sm sm:text-2xl font-black tracking-tight leading-tight text-white">
-                {% if current_lang == 'ru' %}Собери свой Бургер или Пиццу{% else %}O'z Burger yoki Pitsangizni Yig'ing{% endif %}
+                {% if store.theme_template == 'boutique' %}
+                    {% if current_lang == 'ru' %}Собери свой эксклюзивный Luxe-бокс{% else %}O'z Luxe Boksingizni Yig'ing{% endif %}
+                {% elif store.theme_template == 'restaurant' %}
+                    {% if current_lang == 'ru' %}Собери свой Бургер или Блюдо{% else %}O'z Burger yoki Taomingizni Yig'ing{% endif %}
+                {% else %}
+                    {% if current_lang == 'ru' %}Индивидуальный конструктор{% else %}Maxsus konstruktor{% endif %}
+                {% endif %}
             </h1>
             <p class="text-[10px] sm:text-xs text-slate-300 font-medium leading-relaxed line-clamp-2">
-                {% if current_lang == 'ru' %}Выберите тесто или булочку, любимые сыры, свежее мясо, соусы и топпинги.{% else %}Bulochka, shirali go'sht, pishloqlar va souslar bilan mukammal taom yarating.{% endif %}
+                {% if store.theme_template == 'boutique' %}
+                    {% if current_lang == 'ru' %}Выберите упаковку, любимые ароматы, косметику, аксессуары и персональную открытку.{% else %}Hashamatli quti, xushbo'y iforlar, kosmetika va tabriknoma bilan ideal sovg'a yarating.{% endif %}
+                {% else %}
+                    {% if current_lang == 'ru' %}Выберите основу, любимые ингредиенты и создайте идеальный заказ.{% else %}Asos va sevimli ingredientlarni tanlab, ideal buyurtmani shakllantiring.{% endif %}
+                {% endif %}
             </p>
         </div>
         <div class="relative w-24 sm:w-44 h-20 sm:h-36 shrink-0 flex items-center justify-center">
-            <img src="/static/images/constructor/real_burger_full.png" alt="Burger" class="max-h-full max-w-full object-contain drop-shadow-2xl">
+            {% if store.theme_template == 'boutique' %}
+            <img src="/media/products/crystall_box_builder_hd.jpg" alt="Luxe Box" class="max-h-full max-w-full object-contain rounded-2xl drop-shadow-2xl">
+            {% else %}
+            <img src="/static/images/constructor/real_burger_full.png" alt="Constructor" class="max-h-full max-w-full object-contain drop-shadow-2xl">
+            {% endif %}
         </div>
     </div>
 

@@ -2400,7 +2400,8 @@ def _unused_storefront_constructor_view_legacy(request, subdomain=None):
     if not configurable_qs.exists():
         from apps.api.views_constructor import PRESETS
         from apps.catalog.models import ConstructorGroup, ConstructorItem
-        for pkey in ['burger']:
+        preset_key = 'luxe_box' if (store.theme_template == 'boutique' or getattr(store, 'business_category', None) in ['fashion', 'beauty', 'gifts']) else 'burger'
+        for pkey in [preset_key]:
             preset = PRESETS.get(pkey)
             if not preset:
                 continue

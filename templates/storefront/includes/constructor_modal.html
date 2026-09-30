@@ -53,7 +53,7 @@
                  x-text="constructorWarning"></div>
 
             <!-- 1A. FOR NON-PIZZA (BURGERS, SHAWARMA, DISHES) -->
-            <template x-if="!constructorProduct?.is_pizza">
+            <template x-if="productType === 'burger' || productType === 'shawarma' || productType === 'food'">
                 <div class="space-y-2">
                     <label class="text-xs font-black uppercase tracking-wider text-slate-800"
                            x-text="constructorStyleSectionTitle">
@@ -61,7 +61,7 @@
                     <div class="grid grid-cols-2 gap-2.5">
                         <!-- Card 1: Klassik -->
                         <div @click="constructorSelectedStyle = 'classic'"
-                             :class="constructorSelectedStyle === 'classic' ? 'border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700 shadow-2xs'"
+                             :class="constructorSelectedStyle === 'classic' ? 'active-constructor-card' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700 shadow-2xs'"
                              class="p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between select-none">
                             <div class="flex items-center justify-center h-16 sm:h-20 w-full mb-1 overflow-hidden rounded-[14px]">
                                 <img :src="constructorGetStyleImage('classic')"
@@ -74,9 +74,9 @@
                             </div>
                             <div class="flex items-center justify-between pt-1.5 border-t border-slate-100">
                                 <span class="text-[11px] font-mono font-bold"
-                                      :class="constructorSelectedStyle === 'classic' ? 'text-amber-600' : 'text-slate-500'">0 UZS</span>
+                                      :class="constructorSelectedStyle === 'classic' ? 'text-brand' : 'text-slate-500'">0 UZS</span>
                                 <div class="w-4 h-4 rounded-full border flex items-center justify-center"
-                                     :class="constructorSelectedStyle === 'classic' ? 'border-amber-500 bg-amber-500' : 'border-slate-300 bg-white'">
+                                     :class="constructorSelectedStyle === 'classic' ? 'border-brand bg-brand' : 'border-slate-300 bg-white'">
                                     <div x-show="constructorSelectedStyle === 'classic'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
                                 </div>
                             </div>
@@ -84,7 +84,7 @@
 
                         <!-- Card 2: Achchiq (Sriracha) -->
                         <div @click="constructorSelectedStyle = 'spicy'"
-                             :class="constructorSelectedStyle === 'spicy' ? 'border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700 shadow-2xs'"
+                             :class="constructorSelectedStyle === 'spicy' ? 'active-constructor-card' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700 shadow-2xs'"
                              class="p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between select-none">
                             <div class="flex items-center justify-center h-16 sm:h-20 w-full mb-1 relative overflow-hidden rounded-[14px]">
                                 <img :src="constructorGetStyleImage('spicy')"
@@ -99,9 +99,9 @@
                                 {% if current_lang == 'ru' %}Острый (Sriracha){% elif current_lang == 'en' %}Spicy (Sriracha){% else %}Achchiq (Sriracha){% endif %}
                             </div>
                             <div class="flex items-center justify-between pt-1.5 border-t border-slate-100">
-                                <span class="text-[11px] font-mono font-bold text-amber-600">+5 000 UZS</span>
+                                <span class="text-[11px] font-mono font-bold text-brand">+5 000 UZS</span>
                                 <div class="w-4 h-4 rounded-full border flex items-center justify-center"
-                                     :class="constructorSelectedStyle === 'spicy' ? 'border-amber-500 bg-amber-500' : 'border-slate-300 bg-white'">
+                                     :class="constructorSelectedStyle === 'spicy' ? 'border-brand bg-brand' : 'border-slate-300 bg-white'">
                                     <div x-show="constructorSelectedStyle === 'spicy'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
                                 </div>
                             </div>
@@ -119,15 +119,15 @@
                     <div class="grid grid-cols-3 gap-2">
                         <template x-for="crust in pizzaCrustOptions" :key="crust.id">
                             <div @click="constructorSelectedPizzaCrust = crust.id"
-                                 :class="constructorSelectedPizzaCrust === crust.id ? 'border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs text-slate-900' : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300 shadow-2xs'"
+                                 :class="constructorSelectedPizzaCrust === crust.id ? 'active-constructor-card text-slate-900' : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300 shadow-2xs'"
                                  class="p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between text-center select-none">
-                                <div class="w-11 h-11 mx-auto rounded-xl bg-slate-100 flex items-center justify-center mb-1 overflow-hidden p-0.5">
+                                <div class="w-11 h-11 mx-auto rounded-xl bg-slate-100 flex items-center justify-center mb-1.5 overflow-hidden p-0.5">
                                     <img :src="crust.image" :alt="crust.name" class="w-full h-full object-contain drop-shadow-xs">
                                 </div>
                                 <div class="font-bold text-xs line-clamp-1" x-text="crust.name"></div>
                                 <div class="text-[9.5px] mt-0.5 text-slate-400" x-text="crust.desc"></div>
                                 <div class="mt-1 pt-1 border-t border-slate-100 text-[11px] font-mono font-bold"
-                                     :class="constructorSelectedPizzaCrust === crust.id ? 'text-amber-600' : 'text-slate-500'"
+                                     :class="constructorSelectedPizzaCrust === crust.id ? 'text-brand' : 'text-slate-500'"
                                      x-text="crust.price > 0 ? `+${formatMoney(crust.price)}` : '0 UZS'"></div>
                             </div>
                         </template>
@@ -144,7 +144,7 @@
                                 x-text="group.name || group.title"></h4>
                         </div>
                         <template x-if="group.is_required">
-                            <span class="text-[9px] font-bold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                            <span class="text-[9px] font-bold text-brand bg-brand-soft px-2 py-0.5 rounded-full">
                                 {% if current_lang == 'ru' %}Обязательно{% else %}Majburiy{% endif %}
                             </span>
                         </template>
@@ -155,7 +155,7 @@
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                             <template x-for="item in group.items" :key="item.id">
                                 <div @click="selectConstructorSingle(group.id, item.id)"
-                                     :class="constructorSelectedSingle[group.id] === item.id ? 'border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700 shadow-2xs'"
+                                     :class="constructorSelectedSingle[group.id] === item.id ? 'active-constructor-card' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700 shadow-2xs'"
                                      class="p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between select-none">
                                     <div class="flex items-center justify-center h-16 w-full mb-1">
                                         <template x-if="item.image_url">
@@ -163,17 +163,17 @@
                                         </template>
                                         <template x-if="!item.image_url">
                                             <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
-                                                <i data-lucide="utensils" class="w-4 h-4"></i>
+                                                <i data-lucide="sparkles" class="w-4 h-4"></i>
                                             </div>
                                         </template>
                                     </div>
                                     <div class="font-bold text-xs text-slate-900 text-center mb-1 line-clamp-1" x-text="item.name"></div>
                                     <div class="flex items-center justify-between pt-1.5 border-t border-slate-100">
                                         <span class="text-[11px] font-mono font-bold"
-                                              :class="constructorSelectedSingle[group.id] === item.id ? 'text-amber-600' : 'text-slate-500'"
+                                              :class="constructorSelectedSingle[group.id] === item.id ? 'text-brand' : 'text-slate-500'"
                                               x-text="item.price > 0 ? `+${formatMoney(item.price)}` : '0 UZS'"></span>
                                         <div class="w-4 h-4 rounded-full border flex items-center justify-center"
-                                             :class="constructorSelectedSingle[group.id] === item.id ? 'border-amber-500 bg-amber-500' : 'border-slate-300 bg-white'">
+                                             :class="constructorSelectedSingle[group.id] === item.id ? 'border-brand bg-brand' : 'border-slate-300 bg-white'">
                                             <div x-show="constructorSelectedSingle[group.id] === item.id" class="w-1.5 h-1.5 rounded-full bg-white"></div>
                                         </div>
                                     </div>
@@ -187,7 +187,7 @@
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                             <template x-for="item in group.items" :key="item.id">
                                 <div @click="toggleConstructorMultiple(group, item.id)"
-                                     :class="constructorSelectedMultiple[item.id] ? 'border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700 shadow-2xs'"
+                                     :class="constructorSelectedMultiple[item.id] ? 'active-constructor-card' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700 shadow-2xs'"
                                      class="p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between select-none">
                                     <div class="flex items-center justify-center h-16 w-full mb-1 relative">
                                         <template x-if="item.image_url">
@@ -199,17 +199,17 @@
                                             </div>
                                         </template>
                                         <span x-show="constructorSelectedMultiple[item.id]"
-                                              class="absolute top-0 right-0 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-black shadow-xs">
+                                              class="absolute top-0 right-0 w-4 h-4 rounded-full bg-brand text-white flex items-center justify-center text-[9px] font-black shadow-xs">
                                             ✓
                                         </span>
                                     </div>
                                     <div class="font-bold text-xs text-slate-900 text-center mb-1 line-clamp-1" x-text="item.name"></div>
                                     <div class="flex items-center justify-between pt-1.5 border-t border-slate-100">
                                         <span class="text-[11px] font-mono font-bold"
-                                              :class="constructorSelectedMultiple[item.id] ? 'text-amber-600' : 'text-slate-500'"
+                                              :class="constructorSelectedMultiple[item.id] ? 'text-brand' : 'text-slate-500'"
                                               x-text="item.price > 0 ? `+${formatMoney(item.price)}` : '0 UZS'"></span>
                                         <div class="w-4 h-4 rounded-md border flex items-center justify-center"
-                                             :class="constructorSelectedMultiple[item.id] ? 'border-amber-500 bg-amber-500 text-white' : 'border-slate-300 bg-white'">
+                                             :class="constructorSelectedMultiple[item.id] ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white'">
                                             <span x-show="constructorSelectedMultiple[item.id]" class="text-[9px] font-bold">✓</span>
                                         </div>
                                     </div>
@@ -252,7 +252,7 @@
                     <h4 class="text-xs font-black uppercase tracking-wider text-slate-800">
                         {% if current_lang == 'ru' %}Добавить по вкусу{% elif current_lang == 'en' %}Add toppings{% else %}Ta'bga ko'ra qo'shish{% endif %}
                     </h4>
-                    <span class="text-[10px] font-bold text-amber-600"
+                    <span class="text-[10px] font-bold text-brand"
                           x-show="constructorTotalAddedToppingsCount > 0"
                           x-text="`Выбрано: ${constructorTotalAddedToppingsCount}`"></span>
                 </div>
@@ -261,14 +261,14 @@
                 <div class="flex gap-2.5 overflow-x-auto pb-2 pt-1 no-scrollbar -mx-1 px-1">
                     <template x-for="top in constructorAvailableToppings" :key="top.id">
                         <div class="w-32 sm:w-36 shrink-0 p-3 rounded-2xl bg-white border transition-all flex flex-col items-center justify-between text-center select-none"
-                             :class="(constructorQuantities[top.id] || 0) > 0 ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/10 shadow-xs' : 'border-slate-200/90 shadow-2xs hover:shadow-xs'">
+                             :class="(constructorQuantities[top.id] || 0) > 0 ? 'active-constructor-card' : 'border-slate-200/90 shadow-2xs hover:shadow-xs'">
                             
                             <!-- Topping Photo (Clean isolated food, NO EMOJIS) -->
                             <div class="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100/80 flex items-center justify-center mb-1.5 relative overflow-hidden p-1.5">
                                 <img :src="top.image" :alt="top.name" class="w-full h-full object-contain drop-shadow-xs">
-                                <!-- Selected Checkmark Badge (Orange as in target design) -->
+                                <!-- Selected Checkmark Badge -->
                                 <span x-show="(constructorQuantities[top.id] || 0) > 0"
-                                      class="absolute top-1 right-1 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-black shadow-xs">
+                                      class="absolute top-1 right-1 w-4 h-4 rounded-full bg-brand text-white flex items-center justify-center text-[9px] font-black shadow-xs">
                                     ✓
                                 </span>
                             </div>
@@ -279,20 +279,20 @@
                                 <div class="text-[11px] font-mono font-bold text-slate-500 mt-0.5" x-text="`+${formatMoney(top.price)}`"></div>
                             </div>
 
-                            <!-- Action Button: Circle (+) or Orange Stepper [- count +] -->
+                            <!-- Action Button: Circle (+) or Brand Stepper [- count +] -->
                             <div class="w-full flex justify-center">
                                 <!-- State A: Not added -> Circular Plus Button -->
                                 <template x-if="!(constructorQuantities[top.id] > 0)">
                                     <button type="button"
                                             @click="incrementConstructorTopping(top)"
-                                            class="w-8 h-8 rounded-full bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-800 flex items-center justify-center font-bold text-base shadow-2xs transition-colors cursor-pointer">
+                                            class="w-8 h-8 rounded-full bg-slate-100 hover:bg-brand hover:text-white text-slate-800 flex items-center justify-center font-bold text-base shadow-2xs transition-colors cursor-pointer">
                                         +
                                     </button>
                                 </template>
 
-                                <!-- State B: Added -> Modern Orange Pill Stepper [- count +] -->
+                                <!-- State B: Added -> Modern Pill Stepper [- count +] -->
                                 <template x-if="(constructorQuantities[top.id] || 0) > 0">
-                                    <div class="flex items-center gap-1.5 bg-amber-500 text-white rounded-full px-2 py-1 shadow-xs">
+                                    <div class="flex items-center gap-1.5 bg-brand text-white rounded-full px-2 py-1 shadow-xs">
                                         <button type="button"
                                                 @click="decrementConstructorTopping(top)"
                                                 class="w-5 h-5 rounded-full hover:bg-white/20 flex items-center justify-center font-black text-xs cursor-pointer">
@@ -324,8 +324,8 @@
                 </div>
             </div>
 
-            <!-- 4. "ПИЩЕВАЯ ЦЕННОСТЬ" (NUTRITION STATS) -->
-            <div class="space-y-2 pt-2 border-t border-slate-200/80">
+            <!-- 4. "ПИЩЕВАЯ ЦЕННОСТЬ" (NUTRITION STATS) - Only for food items -->
+            <div x-show="productType === 'burger' || productType === 'pizza' || productType === 'shawarma' || productType === 'food'" class="space-y-2 pt-2 border-t border-slate-200/80">
                 <div class="flex items-center justify-between">
                     <h4 class="text-xs font-black uppercase tracking-wider text-slate-800">
                         {% if current_lang == 'ru' %}Пищевая ценность{% elif current_lang == 'en' %}Nutrition Facts{% else %}Ozuqaviy qiymati{% endif %}
@@ -333,12 +333,12 @@
                     <!-- Portion Toggle Pills -->
                     <div class="inline-flex p-0.5 bg-slate-100 rounded-full text-[10px] font-bold">
                         <button type="button" @click="constructorNutritionPortion = '100g'"
-                                :class="constructorNutritionPortion === '100g' ? 'bg-amber-500 text-white shadow-2xs' : 'text-slate-500'"
+                                :class="constructorNutritionPortion === '100g' ? 'bg-brand text-white shadow-2xs' : 'text-slate-500'"
                                 class="px-2.5 py-0.5 rounded-full transition-all cursor-pointer">
                             100 г
                         </button>
                         <button type="button" @click="constructorNutritionPortion = 'portion'"
-                                :class="constructorNutritionPortion === 'portion' ? 'bg-amber-500 text-white shadow-2xs' : 'text-slate-500'"
+                                :class="constructorNutritionPortion === 'portion' ? 'bg-brand text-white shadow-2xs' : 'text-slate-500'"
                                 class="px-2.5 py-0.5 rounded-full transition-all cursor-pointer">
                             <span x-text="constructorDisplayedWeight"></span>
                         </button>

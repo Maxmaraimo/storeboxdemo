@@ -61,6 +61,16 @@
             border-color: var(--brand-color) !important;
             box-shadow: 0 4px 16px color-mix(in srgb, var(--brand-color) 32%, transparent);
         }
+        .active-constructor-card {
+            border-color: var(--brand-color) !important;
+            background-color: color-mix(in srgb, var(--brand-color) 8%, #ffffff) !important;
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-color) 25%, transparent), 0 2px 8px color-mix(in srgb, var(--brand-color) 12%, transparent) !important;
+        }
+        .active-constructor-badge {
+            background-color: var(--brand-color) !important;
+            color: #ffffff !important;
+            border-color: var(--brand-color) !important;
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -252,11 +262,20 @@
 
                     <!-- RIGHT CONTROLS: Clean Mobile Header (Lang + Cart) & Desktop Controls -->
                     <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
-                        <!-- 🍔 3D Burger Constructor Button (Desktop) -->
+                        <!-- Constructor / Customizer Button (Desktop) -->
                         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-                           class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold transition-all shadow-2xs group active:scale-95">
-                            <span class="text-base group-hover:scale-110 transition-transform">🍔</span>
-                            <span>{% if current_lang == 'ru' %}Конструктор Бургера{% elif current_lang == 'en' %}Burger Builder{% else %}Burger Konstruktor{% endif %}</span>
+                           class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs group active:scale-95 border"
+                           style="background-color: color-mix(in srgb, var(--brand-color) 10%, #ffffff); color: var(--brand-color); border-color: color-mix(in srgb, var(--brand-color) 30%, transparent);">
+                            {% if store.theme_template == 'restaurant' %}
+                                <span class="text-base group-hover:scale-110 transition-transform">🍔</span>
+                                <span>{% if current_lang == 'ru' %}Конструктор Бургера{% elif current_lang == 'en' %}Burger Builder{% else %}Burger Konstruktor{% endif %}</span>
+                            {% elif store.theme_template == 'boutique' %}
+                                <span class="text-base group-hover:scale-110 transition-transform">🎁</span>
+                                <span>{% if current_lang == 'ru' %}Собери Luxe-бокс{% elif current_lang == 'en' %}Build Luxe Box{% else %}Luxe boks yig'ish{% endif %}</span>
+                            {% else %}
+                                <span class="text-base group-hover:scale-110 transition-transform">✨</span>
+                                <span>{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}</span>
+                            {% endif %}
                         </a>
 
                         <!-- Wishlist (Sevimlilar - Desktop Only) -->
@@ -1338,13 +1357,19 @@
 
                 <!-- 3. Burger / Product Constructor (Build Your Own) -->
                 <a href="?constructor=1{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}"
-                   title="{% if current_lang == 'ru' %}Конструктор (Собери сам){% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}"
+                   title="{% if current_lang == 'ru' %}{% if store.theme_template == 'boutique' %}Собери Luxe-бокс{% elif store.theme_template == 'restaurant' %}Конструктор Бургера{% else %}Конструктор{% endif %}{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}"
                    class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if 'constructor' in url or request.GET.constructor %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
+                    {% if store.theme_template == 'restaurant' %}
                     <svg class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 11h16a1 1 0 0 0 1-1C20.5 5.5 16.7 3 12 3S3.5 5.5 3 10a1 1 0 0 0 1 1z"></path>
                         <path d="M5 14h14"></path>
                         <path d="M4 17h16a2 2 0 0 1 2 2 1 1 0 0 1-1 1H3a1 1 0 0 1-1-1 2 2 0 0 1 2-2z"></path>
                     </svg>
+                    {% elif store.theme_template == 'boutique' %}
+                    <i data-lucide="gift" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
+                    {% else %}
+                    <i data-lucide="wand-2" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
+                    {% endif %}
                 </a>
 
                 <!-- 4. Cart (with dynamic count badge) -->
