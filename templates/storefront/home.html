@@ -252,7 +252,7 @@
                class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
                 <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] overflow-hidden relative transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if current_category.id == cat.id or current_category.slug == cat.slug %}active-category-pill{% else %}border-slate-200/80 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
                     {% if cat.primary_image_url %}
-                    <img src="{{ cat.primary_image_url }}" alt="{{ cat.display_name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.style.display='none'">
+                    <img src="{{ cat.primary_image_url }}" alt="{{ cat.display_name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" decoding="async" onerror="this.style.display='none'">
                     {% else %}
                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400">
                         <i data-lucide="tag" class="w-4 h-4 sm:w-5 sm:h-5"></i>
@@ -303,7 +303,7 @@
                 <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %} class="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                     <div class="w-20 h-20 sm:w-22 sm:h-22 rounded-[18px] bg-slate-100 overflow-hidden shrink-0 relative border border-slate-100">
                         {% if product.primary_image_url %}
-                        <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
+                        <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}" loading="lazy" decoding="async">
                         {% else %}
                         <div class="w-full h-full flex items-center justify-center text-slate-300"><i data-lucide="image" class="w-6 h-6"></i></div>
                         {% endif %}
@@ -391,7 +391,7 @@
                 <div class="relative w-full aspect-square bg-[#F4F4F6] rounded-[24px] sm:rounded-[30px] overflow-hidden mb-2 transition-all">
                     <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %} class="block w-full h-full">
                         {% if product.primary_image_url %}
-                        <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
+                        <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}" loading="lazy" decoding="async">
                         {% else %}
                         <div class="w-full h-full flex items-center justify-center text-slate-300"><i data-lucide="image" class="w-8 h-8 sm:w-10 sm:h-10"></i></div>
                         {% endif %}
@@ -500,7 +500,7 @@
                     <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}
                        class="block w-full h-full">
                         {% if product.primary_image_url %}
-                        <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}">
+                        <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}" loading="lazy" decoding="async">
                         {% else %}
                         <div class="w-full h-full flex items-center justify-center text-slate-300">
                             <i data-lucide="image" class="w-8 h-8 sm:w-10 sm:h-10"></i>

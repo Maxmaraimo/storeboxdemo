@@ -7,24 +7,8 @@
     <title>{% block title %}{{ store.name }} — StoreBox{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.ico">
 
-    <!-- High-Speed Local Assets for Instant Load -->
-    <script src="{% static 'vendor/tailwindcss.js' %}"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', '"Segoe UI"', 'Arial', 'sans-serif'],
-                        mono: ['Inter', '"Segoe UI"', 'Arial', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: '{{ store.primary_color|default:"#10B981" }}',
-                        'brand-dark': '#059669',
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Precompiled storefront styles: avoids expensive Tailwind compilation in mobile browsers. -->
+    <link rel="stylesheet" href="{% static 'css/storefront-tailwind.min.css' %}">
     <!-- Alpine.js -->
     <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
     <!-- Lucide Icons -->
@@ -1122,7 +1106,7 @@
                         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}?cat={{ cat.slug }}" @click="sideDrawerOpen = false" class="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-brand/5 hover:text-brand transition-colors">
                             <span class="flex items-center gap-2.5 truncate">
                                 {% if cat.primary_image_url %}
-                                <img src="{{ cat.primary_image_url }}" class="w-4 h-4 rounded-md object-cover">
+                                <img src="{{ cat.primary_image_url }}" class="w-4 h-4 rounded-md object-cover" loading="lazy" decoding="async">
                                 {% else %}
                                 <i data-lucide="folder" class="w-4 h-4 text-slate-400"></i>
                                 {% endif %}

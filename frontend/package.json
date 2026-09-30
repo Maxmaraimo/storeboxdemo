@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node scripts/sync-dashboard.mjs",
+    "build": "npm run build:storefront-css && tsc && vite build && node scripts/sync-dashboard.mjs",
+    "build:storefront-css": "tailwindcss -c tailwind.storefront.config.cjs -i src/storefront.css -o ../static/css/storefront-tailwind.min.css --minify",
     "preview": "vite preview"
   },
   "dependencies": {
