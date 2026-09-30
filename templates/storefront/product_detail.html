@@ -249,7 +249,7 @@
                         {% if product.is_featured %}
                         <span class="px-2 py-0.5 rounded-full bg-amber-50/95 text-amber-800 border border-amber-200/80 text-[11px] font-bold flex items-center gap-1 backdrop-blur-xs shadow-2xs">
                             <i data-lucide="flame" class="w-3 h-3 text-amber-500 fill-amber-400"></i>
-                            <span>Xit</span>
+                            <span>{% if current_lang == 'ru' %}Хит{% elif current_lang == 'en' %}Hit{% else %}Xit{% endif %}</span>
                         </span>
                         {% endif %}
                     </div>
@@ -264,7 +264,7 @@
                         <button type="button" 
                                 @click="toggleWishlist({{ product.id }})" 
                                 class="w-9 h-9 rounded-full bg-white/90 backdrop-blur-xs border border-slate-200/80 shadow-2xs flex items-center justify-center text-slate-500 hover:text-rose-500 hover:scale-105 active:scale-95 transition-all"
-                                title="Sevimlilarga saqlash">
+                                title="{% if current_lang == 'ru' %}В избранное{% elif current_lang == 'en' %}Save to favorites{% else %}Sevimlilarga saqlash{% endif %}">
                             <i data-lucide="heart" 
                                class="w-4 h-4 transition-colors"
                                :class="isInWishlist({{ product.id }}) ? 'fill-rose-500 text-rose-500' : ''"></i>
@@ -400,8 +400,8 @@
                                 class="flex-1 h-10 sm:h-11 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs">
                             <i data-lucide="shopping-bag" class="w-4 h-4"></i>
                             <span x-show="!adding && !addedSuccess">{{ t.add_to_cart|default:"Savatga qo'shish" }}</span>
-                            <span x-show="adding">{% if current_lang == 'ru' %}Добавление...{% else %}Qo'shilmoqda...{% endif %}</span>
-                            <span x-show="addedSuccess" class="text-emerald-400 font-black flex items-center gap-1">✓ {% if current_lang == 'ru' %}В корзине!{% else %}Qo'shildi!{% endif %}</span>
+                            <span x-show="adding">{% if current_lang == 'ru' %}Добавление...{% elif current_lang == 'en' %}Adding...{% else %}Qo'shilmoqda...{% endif %}</span>
+                            <span x-show="addedSuccess" class="text-emerald-400 font-black flex items-center gap-1">✓ {% if current_lang == 'ru' %}В корзине!{% elif current_lang == 'en' %}In cart!{% else %}Qo'shildi!{% endif %}</span>
                         </button>
 
                         <!-- Buy Now (⚡ Instant Checkout) -->
@@ -409,9 +409,9 @@
                                 @click="buyNow()" 
                                 :disabled="buying"
                                 class="h-10 sm:h-11 px-3 sm:px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-[0.98] text-slate-800 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-2xs" 
-                                title="{% if current_lang == 'ru' %}Купить сейчас{% else %}Hoziroq xarid qilish{% endif %}">
+                                title="{% if current_lang == 'ru' %}Купить сейчас{% elif current_lang == 'en' %}Buy now{% else %}Hoziroq xarid qilish{% endif %}">
                             <i data-lucide="zap" class="w-4 h-4 text-amber-500 fill-amber-400"></i>
-                            <span class="hidden sm:inline">{% if current_lang == 'ru' %}Купить{% else %}Tez xarid{% endif %}</span>
+                            <span class="hidden sm:inline">{% if current_lang == 'ru' %}Купить{% elif current_lang == 'en' %}Buy{% else %}Tez xarid{% endif %}</span>
                         </button>
                     </div>
                 </div>
@@ -534,7 +534,7 @@
                                     </template>
                                 </div>
                                 <div class="text-xs text-slate-500 font-medium mt-1">
-                                    <span x-text="reviewsList.length"></span> ta xaridor sharhi asosida
+                                    <span x-text="reviewsList.length"></span> {{ t.based_on_reviews|default:"ta xaridor sharhi asosida" }}
                                 </div>
                             </div>
                         </div>
@@ -542,7 +542,7 @@
                         <button type="button" @click="reviewModalOpen = true"
                                 class="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer">
                             <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            <span>Sharh qoldirish</span>
+                            <span>{{ t.leave_review|default:"Sharh qoldirish" }}</span>
                         </button>
                     </div>
 
@@ -557,7 +557,7 @@
                                         <div>
                                             <div class="font-bold text-xs text-slate-900" x-text="r.author_name"></div>
                                             <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                                                <span>✓ Xarid qilingan</span>
+                                                <span>✓ {{ t.verified_purchase|default:"Xarid qilingan" }}</span>
                                             </span>
                                         </div>
                                     </div>
@@ -575,7 +575,7 @@
                         </template>
 
                         <div x-show="reviewsList.length === 0" class="py-8 text-center text-slate-400 text-xs">
-                            Hozircha sharhlar yo'q. Birinchi bo'lib sharh qoldiring!
+                            {{ t.no_reviews|default:"Hozircha sharhlar yo'q. Birinchi bo'lib sharh qoldiring!" }}
                         </div>
                     </div>
                 </div>
@@ -640,7 +640,7 @@
                         {% endif %}
                         {% if rp.is_featured and rp.is_in_stock %}
                         <span class="px-2 py-0.5 rounded-full btn-brand text-white font-black text-[9px] tracking-wider uppercase shadow-2xs">
-                            XIT TOVAR
+                            {% if current_lang == 'ru' %}ХИТ ТОВАР{% elif current_lang == 'en' %}BESTSELLER{% else %}XIT TOVAR{% endif %}
                         </span>
                         {% elif not rp.discount_percent and rp.is_in_stock %}
                         <span class="px-2 py-0.5 rounded-full bg-slate-900/85 backdrop-blur-xs text-white font-black text-[9px] tracking-wider uppercase shadow-xs">
@@ -652,7 +652,7 @@
                     <!-- Top Right Wishlist Button -->
                     <button type="button" @click.stop="toggleWishlist({{ rp.id }})"
                             class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md hover:bg-white flex items-center justify-center shadow-xs text-slate-400 hover:text-rose-500 transition-all active:scale-90 cursor-pointer z-10"
-                            aria-label="Sevimliga qo'shish">
+                            aria-label="{% if current_lang == 'ru' %}В избранное{% elif current_lang == 'en' %}Save to favorites{% else %}Sevimliga qo'shish{% endif %}">
                         <i data-lucide="heart" class="w-4 h-4" :class="isInWishlist({{ rp.id }}) ? 'fill-rose-500 text-rose-500' : ''"></i>
                     </button>
 
@@ -737,7 +737,7 @@
          x-cloak
          class="sm:hidden fixed bottom-[58px] left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-4 py-2.5 flex items-center justify-between gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <div>
-            <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{% if current_lang == 'ru' %}Цена:{% else %}Narxi:{% endif %}</div>
+            <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{% if current_lang == 'ru' %}Цена:{% elif current_lang == 'en' %}Price:{% else %}Narxi:{% endif %}</div>
             <div class="text-base font-black text-slate-900 font-mono" x-text="Number(selectedPrice).toLocaleString() + ' UZS'">
                 {{ product.price|floatformat:0 }} UZS
             </div>
@@ -749,8 +749,8 @@
                 class="h-10 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all">
             <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
             <span x-show="!adding && !addedSuccess">{{ t.add_to_cart|default:"Savatga qo'shish" }}</span>
-            <span x-show="adding">{% if current_lang == 'ru' %}Добавление...{% else %}Qo'shilmoqda...{% endif %}</span>
-            <span x-show="addedSuccess" class="text-emerald-400 font-bold">✓ {% if current_lang == 'ru' %}Добавлено!{% else %}Qo'shildi!{% endif %}</span>
+            <span x-show="adding">{% if current_lang == 'ru' %}Добавление...{% elif current_lang == 'en' %}Adding...{% else %}Qo'shilmoqda...{% endif %}</span>
+            <span x-show="addedSuccess" class="text-emerald-400 font-bold">✓ {% if current_lang == 'ru' %}Добавлено!{% elif current_lang == 'en' %}Added!{% else %}Qo'shildi!{% endif %}</span>
         </button>
     </div>
     {% endif %}
@@ -780,7 +780,7 @@
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 class="text-lg font-black text-slate-900 flex items-center gap-2">
                     <i data-lucide="message-square" class="w-5 h-5 text-brand"></i>
-                    <span>Sharh qoldirish</span>
+                    <span>{{ t.leave_review|default:"Sharh qoldirish" }}</span>
                 </h3>
                 <button type="button" @click="reviewModalOpen = false" class="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -823,13 +823,13 @@
             <!-- Form Inputs -->
             <div class="space-y-3.5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Ismingiz</label>
-                    <input type="text" x-model="reviewName" placeholder="Ismingizni kiriting" 
+                    <label class="block text-xs font-bold text-slate-700 mb-1">{% if current_lang == 'ru' %}Ваше имя{% elif current_lang == 'en' %}Your name{% else %}Ismingiz{% endif %}</label>
+                    <input type="text" x-model="reviewName" placeholder="{% if current_lang == 'ru' %}Введите ваше имя{% elif current_lang == 'en' %}Enter your name{% else %}Ismingizni kiriting{% endif %}" 
                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Fikringiz <span class="text-rose-500">*</span></label>
-                    <textarea x-model="reviewComment" rows="4" placeholder="Mahsulot haqidagi taassurotlaringiz, yetkazib berish va sifat haqida yozing..." 
+                    <label class="block text-xs font-bold text-slate-700 mb-1">{% if current_lang == 'ru' %}Ваш отзыв{% elif current_lang == 'en' %}Your review{% else %}Fikringiz{% endif %} <span class="text-rose-500">*</span></label>
+                    <textarea x-model="reviewComment" rows="4" placeholder="{% if current_lang == 'ru' %}Напишите ваше впечатление о товаре, доставке и качестве...{% elif current_lang == 'en' %}Write your impressions about the product, delivery and quality...{% else %}Mahsulot haqidagi taassurotlaringiz, yetkazib berish va sifat haqida yozing...{% endif %}" 
                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"></textarea>
                 </div>
                 <div x-show="reviewError" class="p-3 rounded-xl bg-rose-50 border border-rose-100 text-xs font-bold text-rose-600 flex items-center gap-2">
@@ -838,18 +838,18 @@
                 </div>
                 <div x-show="reviewSuccess" class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-xs font-bold text-emerald-600 flex items-center gap-2">
                     <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i>
-                    <span>Sharhingiz muvaffaqiyatli saqlandi! Rahmat!</span>
+                    <span>{% if current_lang == 'ru' %}Ваш отзыв успешно сохранен! Спасибо!{% elif current_lang == 'en' %}Your review has been successfully submitted! Thank you!{% else %}Sharhingiz muvaffaqiyatli saqlandi! Rahmat!{% endif %}</span>
                 </div>
             </div>
 
             <div class="flex items-center gap-3 pt-2">
                 <button type="button" @click="reviewModalOpen = false" class="flex-1 py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors">
-                    Bekor qilish
+                    {% if current_lang == 'ru' %}Отмена{% elif current_lang == 'en' %}Cancel{% else %}Bekor qilish{% endif %}
                 </button>
                 <button type="button" @click="submitReview()" :disabled="reviewSubmitting || reviewSuccess" class="flex-1 py-3 px-4 rounded-xl btn-brand text-white font-bold text-xs flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md">
                     <i data-lucide="send" class="w-4 h-4" x-show="!reviewSubmitting"></i>
-                    <span x-show="!reviewSubmitting">Yuborish</span>
-                    <span x-show="reviewSubmitting">Yuborilmoqda...</span>
+                    <span x-show="!reviewSubmitting">{% if current_lang == 'ru' %}Отправить{% elif current_lang == 'en' %}Submit{% else %}Yuborish{% endif %}</span>
+                    <span x-show="reviewSubmitting">{% if current_lang == 'ru' %}Отправка...{% elif current_lang == 'en' %}Submitting...{% else %}Yuborilmoqda...{% endif %}</span>
                 </button>
             </div>
         </div>

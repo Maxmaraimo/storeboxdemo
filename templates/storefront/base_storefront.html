@@ -262,19 +262,18 @@
 
                     <!-- RIGHT CONTROLS: Clean Mobile Header (Lang + Cart) & Desktop Controls -->
                     <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
-                        <!-- Constructor / Customizer Button (Desktop) -->
+                        <!-- Constructor / Customizer Button (Desktop - Sleek Round Icon) -->
                         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-                           class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs group active:scale-95 border"
-                           style="background-color: color-mix(in srgb, var(--brand-color) 10%, #ffffff); color: var(--brand-color); border-color: color-mix(in srgb, var(--brand-color) 30%, transparent);">
+                           @click="if (window.sbOpenConstructor) { $event.preventDefault(); window.sbOpenConstructor(); }"
+                           title="{% if store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Конструктор блюд{% elif current_lang == 'en' %}Burger / Food Builder{% else %}Taom konstruktori{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}{% endif %}"
+                           class="hidden sm:flex items-center justify-center w-8.5 h-8.5 rounded-full border transition-all shadow-2xs group active:scale-95 cursor-pointer"
+                           style="background-color: color-mix(in srgb, var(--brand-color) 12%, #ffffff); border-color: color-mix(in srgb, var(--brand-color) 35%, transparent); color: var(--brand-color);">
                             {% if store.theme_template == 'restaurant' %}
-                                <span class="text-base group-hover:scale-110 transition-transform">🍔</span>
-                                <span>{% if current_lang == 'ru' %}Конструктор Бургера{% elif current_lang == 'en' %}Burger Builder{% else %}Burger Konstruktor{% endif %}</span>
+                                <i data-lucide="wand-2" class="w-4.5 h-4.5 group-hover:rotate-12 transition-transform"></i>
                             {% elif store.theme_template == 'boutique' %}
-                                <span class="text-base group-hover:scale-110 transition-transform">🎁</span>
-                                <span>{% if current_lang == 'ru' %}Собери Luxe-бокс{% elif current_lang == 'en' %}Build Luxe Box{% else %}Luxe boks yig'ish{% endif %}</span>
+                                <i data-lucide="sparkles" class="w-4.5 h-4.5 group-hover:scale-110 transition-transform"></i>
                             {% else %}
-                                <span class="text-base group-hover:scale-110 transition-transform">✨</span>
-                                <span>{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}</span>
+                                <i data-lucide="sliders-horizontal" class="w-4.5 h-4.5 group-hover:scale-110 transition-transform"></i>
                             {% endif %}
                         </a>
 
@@ -293,11 +292,12 @@
                             <span class="px-1.5 py-0.2 rounded-full bg-white text-slate-900 text-[10px] font-black flex items-center justify-center" x-text="cartCount">0</span>
                         </a>
 
-                        <!-- User Profile Button (Desktop Only) -->
-                        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}"
-                           class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 text-xs font-bold hover:bg-slate-50 transition-colors">
-                            <i data-lucide="user" class="w-4 h-4 text-slate-600"></i>
-                            <span x-text="customerLoggedIn ? customerName : '{{ t.login|default:'Kirish' }}'">{{ t.login|default:'Kirish' }}</span>
+                        <!-- User Profile Button (Desktop Only - Clean Circular Icon in Brand Color) -->
+                        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+                           title="{% if current_lang == 'ru' %}Профиль{% elif current_lang == 'en' %}Profile{% else %}Profil{% endif %}"
+                           class="hidden sm:flex items-center justify-center w-8.5 h-8.5 rounded-full border transition-all active:scale-95 shadow-2xs cursor-pointer"
+                           style="background-color: color-mix(in srgb, var(--brand-color) 12%, #ffffff); border-color: color-mix(in srgb, var(--brand-color) 35%, transparent); color: var(--brand-color);">
+                            <i data-lucide="user" class="w-4.5 h-4.5"></i>
                         </a>
 
                         <!-- Language Switcher (Desktop & Mobile) -->
@@ -783,20 +783,67 @@
                 </template>
 
                 <template x-if="infoModal === 'delivery'">
-                    <div class="space-y-3">
-                        <p class="font-bold text-slate-900">Tovarlar butun shahar bo'ylab qisqa vaqt ichida yetkazib beriladi.</p>
-                        <p>{{ store.delivery_terms_uz|default:"Tovarlar buyurtma tasdiqlanganidan so'ng 30-45 daqiqa ichida yetkazib beriladi. Yetkazib berish narxi belgilangan tariflar bo'yicha hisoblanadi." }}</p>
-                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                            <div class="font-bold text-slate-900">Standart yetkazib berish:</div>
-                            <div class="text-[11px] text-slate-500 mt-0.5">{{ store.delivery_price|floatformat:0 }} UZS (Bepul chegara: {{ store.free_delivery_threshold|floatformat:0 }} UZS)</div>
+                    <div class="space-y-3 text-xs leading-relaxed text-slate-600">
+                        <p class="font-bold text-sm text-slate-900">
+                            {% if current_lang == 'ru' %}
+                                Быстрая доставка по всему городу в кратчайшие сроки.
+                            {% elif current_lang == 'en' %}
+                                Fast citywide delivery in the shortest possible time.
+                            {% elif current_lang == 'tr' %}
+                                Şehir genelinde en kısa sürede hızlı teslimat.
+                            {% else %}
+                                Tovarlar butun shahar bo'ylab qisqa vaqt ichida yetkazib beriladi.
+                            {% endif %}
+                        </p>
+                        <p>
+                            {% if current_lang == 'ru' %}
+                                {{ store.delivery_terms_ru|default:"Товары доставляются курьером в течение 30-60 минут после подтверждения заказа. Стоимость доставки рассчитывается по фиксированным тарифам магазина." }}
+                            {% elif current_lang == 'en' %}
+                                Orders are delivered by courier within 30-60 minutes after confirmation. Delivery fee is calculated according to the store's fixed rates.
+                            {% elif current_lang == 'tr' %}
+                                Sipariş onayından sonra 30-60 dakika içinde kurye ile teslim edilir. Teslimat ücreti mağazanın sabit tarifelerine göre hesaplanır.
+                            {% else %}
+                                {{ store.delivery_terms_uz|default:"Tovarlar buyurtma tasdiqlanganidan so'ng 30-45 daqiqa ichida yetkazib beriladi. Yetkazib berish narxi belgilangan tariflar bo'yicha hisoblanadi." }}
+                            {% endif %}
+                        </p>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                            <div class="font-bold text-slate-900">
+                                {% if current_lang == 'ru' %}Стандартная доставка:{% elif current_lang == 'en' %}Standard delivery:{% elif current_lang == 'tr' %}Standart teslimat:{% else %}Standart yetkazib berish:{% endif %}
+                            </div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">
+                                {{ store.delivery_price|floatformat:0 }} UZS
+                                {% if store.free_delivery_threshold %}
+                                    ({% if current_lang == 'ru' %}Бесплатно при заказе от{% elif current_lang == 'en' %}Free for orders over{% elif current_lang == 'tr' %}Şu tutardan itibaren ücretsiz{% else %}Bepul chegara{% endif %}: {{ store.free_delivery_threshold|floatformat:0 }} UZS)
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </template>
 
                 <template x-if="infoModal === 'returns'">
-                    <div class="space-y-3">
-                        <p class="font-bold text-slate-900">Xaridor huquqlari va tovarlarni almashtirish tartibi</p>
-                        <p>{{ store.return_terms_uz|default:"Xaridor tovar sifatsiz chiqqan taqdirda uni qabul qilgandan keyin 24 soat ichida almashtirishi yoki qaytarishi mumkin. Qaytarilgan tovar o'z holatida va to'liq to'plamda bo'lishi lozim." }}</p>
+                    <div class="space-y-3 text-xs leading-relaxed text-slate-600">
+                        <p class="font-bold text-sm text-slate-900">
+                            {% if current_lang == 'ru' %}
+                                Права покупателя и порядок возврата товаров
+                            {% elif current_lang == 'en' %}
+                                Customer rights and return policy
+                            {% elif current_lang == 'tr' %}
+                                Müşteri hakları ve ürün iade prosedürü
+                            {% else %}
+                                Xaridor huquqlari va tovarlarni almashtirish tartibi
+                            {% endif %}
+                        </p>
+                        <p>
+                            {% if current_lang == 'ru' %}
+                                {{ store.return_terms_ru|default:"Покупатель может обменять или вернуть товар в течение 14 дней (для непродовольственных товаров) или 24 часов (для готовых блюд) при сохранении товарного вида и чека. В случае несоответствия качества производится мгновенная замена или возврат средств." }}
+                            {% elif current_lang == 'en' %}
+                                Customers may exchange or return items within 14 days (non-food) or upon receipt (food items) in original condition. In case of unsatisfactory quality, immediate replacement or full refund is provided.
+                            {% elif current_lang == 'tr' %}
+                                Müşteri, orijinal durumunda olması koşuluyla 14 gün içinde (gıda dışı) veya teslim anında ürün değişimi ya da iadesi yapabilir. Kalite uyuşmazlığında anında değişim veya para iadesi sağlanır.
+                            {% else %}
+                                {{ store.return_terms_uz|default:"Xaridor tovar sifatsiz chiqqan taqdirda uni qabul qilgandan keyin 24 soat ichida almashtirishi yoki qaytarishi mumkin. Qaytarilgan tovar o'z holatida va to'liq to'plamda bo'lishi lozim." }}
+                            {% endif %}
+                        </p>
                     </div>
                 </template>
 
@@ -1356,19 +1403,16 @@
                 </button>
 
                 <!-- 3. Burger / Product Constructor (Build Your Own) -->
-                <a href="?constructor=1{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}"
-                   title="{% if current_lang == 'ru' %}{% if store.theme_template == 'boutique' %}Собери Luxe-бокс{% elif store.theme_template == 'restaurant' %}Конструктор Бургера{% else %}Конструктор{% endif %}{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}"
-                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if 'constructor' in url or request.GET.constructor %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
+                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+                   @click="if (window.sbOpenConstructor) { $event.preventDefault(); window.sbOpenConstructor(); }"
+                   title="{% if store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Конструктор блюд{% elif current_lang == 'en' %}Burger / Food Builder{% else %}Taom konstruktori{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}{% endif %}"
+                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
                     {% if store.theme_template == 'restaurant' %}
-                    <svg class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 11h16a1 1 0 0 0 1-1C20.5 5.5 16.7 3 12 3S3.5 5.5 3 10a1 1 0 0 0 1 1z"></path>
-                        <path d="M5 14h14"></path>
-                        <path d="M4 17h16a2 2 0 0 1 2 2 1 1 0 0 1-1 1H3a1 1 0 0 1-1-1 2 2 0 0 1 2-2z"></path>
-                    </svg>
+                    <i data-lucide="wand-2" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
                     {% elif store.theme_template == 'boutique' %}
-                    <i data-lucide="gift" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
+                    <i data-lucide="sparkles" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
                     {% else %}
-                    <i data-lucide="wand-2" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
+                    <i data-lucide="sliders-horizontal" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
                     {% endif %}
                 </a>
 
@@ -1385,13 +1429,14 @@
                 {% endwith %}
             </nav>
 
-            <!-- DETACHED CIRCULAR PROFILE BUTTON -->
+            <!-- DETACHED CIRCULAR PROFILE BUTTON (Store Brand Color) -->
             {% with url=request.resolver_match.url_name %}
             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                title="{{ t.profile|default:'Профиль' }}"
                class="w-11 h-11 rounded-full bg-white/75 backdrop-blur-xl border border-white/60 shadow-[0_8px_24px_rgba(0,0,0,0.08)] flex items-center justify-center shrink-0 transition-all active:scale-90 select-none">
-                <div class="w-9 h-9 rounded-full flex items-center justify-center {% if 'profile' in url or 'order' in url %}bg-brand text-white shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200/80{% endif %}">
-                    <i data-lucide="user" class="w-4.5 h-4.5 {% if 'profile' in url or 'order' in url %}stroke-[2.2]{% else %}stroke-[2]{% endif %}"></i>
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white shadow-xs"
+                     style="background-color: var(--brand-color);">
+                    <i data-lucide="user" class="w-4.5 h-4.5 text-white stroke-[2.2]"></i>
                 </div>
             </a>
             {% endwith %}

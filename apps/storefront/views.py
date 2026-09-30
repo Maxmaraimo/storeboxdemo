@@ -149,6 +149,10 @@ UI_TRANSLATIONS = {
         'barcode': "Shtrix-kod:",
         'ikpu_code': "IKPU kodi:",
         'category_label': "Kategoriya:",
+        'delivery_badge_free': "Yetkazish: Bepul",
+        'leave_review': "Sharh qoldirish",
+        'verified_purchase': "Xarid qilingan",
+        'based_on_reviews': "ta xaridor sharhi asosida",
         'order_now': "Buyurtma berish",
         'quick_buy': "Tezkor xarid",
         'information': "Ma'lumotlar",
@@ -279,6 +283,10 @@ UI_TRANSLATIONS = {
         'barcode': "Штрихкод:",
         'ikpu_code': "Код ИКПУ:",
         'category_label': "Категория:",
+        'delivery_badge_free': "Доставка: Бесплатно",
+        'leave_review': "Оставить отзыв",
+        'verified_purchase': "Куплено",
+        'based_on_reviews': "отзывов покупателей",
         'order_now': "Заказать",
         'quick_buy': "Купить в 1 клик",
         'information': "Информация",
@@ -409,6 +417,10 @@ UI_TRANSLATIONS = {
         'barcode': "Barcode:",
         'ikpu_code': "IKPU Code:",
         'category_label': "Category:",
+        'delivery_badge_free': "Delivery: Free",
+        'leave_review': "Leave a review",
+        'verified_purchase': "Verified purchase",
+        'based_on_reviews': "customer reviews",
         'order_now': "Order Now",
         'quick_buy': "Quick Buy",
         'information': "Information",
@@ -845,6 +857,9 @@ def storefront_home_view(request, subdomain=None):
     if free_threshold and subtotal >= free_threshold:
         delivery_fee = 0.0
 
+    first_c_prod = Product.objects.filter(store=store, has_constructor=True, is_active=True).first()
+    first_constructor_product_id = first_c_prod.id if first_c_prod else None
+
     t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
     context = {
         'store': store,
@@ -869,6 +884,7 @@ def storefront_home_view(request, subdomain=None):
         'free_delivery_threshold': free_threshold,
         'default_delivery_fee': delivery_fee,
         'delivery_fee': delivery_fee,
+        'first_constructor_product_id': first_constructor_product_id,
     }
     return render(request, 'storefront/home.html', context)
 
@@ -2368,6 +2384,11 @@ def storefront_constructor_view(request, subdomain=None):
 
     current_lang = get_storefront_lang(request, store)
     active_product_id = request.GET.get('product_id') or request.GET.get('p')
+
+    if not active_product_id:
+        c_prod = Product.objects.filter(store=store, has_constructor=True, is_active=True).first()
+        if c_prod:
+            active_product_id = c_prod.id
 
     store_base = f'/store/{store.subdomain}/' if store.subdomain else '/'
     params = []

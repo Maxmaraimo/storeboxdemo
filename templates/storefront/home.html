@@ -734,17 +734,17 @@
     <!-- Two separate pills on left & right with open space in middle  -->
     <!-- ============================================================= -->
     <div x-show="cartCount > 0" x-cloak
-         class="fixed bottom-[62px] sm:bottom-6 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
+         class="fixed bottom-[72px] sm:bottom-6 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
         
         <!-- Left: Compact Frosted Glass Delivery Pill -->
-        <div class="pointer-events-auto bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_6px_20px_rgba(0,0,0,0.08)] rounded-full px-3 py-1.5 flex items-center gap-2 max-w-[190px]">
+        <div class="pointer-events-auto bg-white/80 backdrop-blur-xl border border-white/60 shadow-[0_6px_20px_rgba(0,0,0,0.08)] rounded-full px-3 py-1.5 flex items-center gap-2 max-w-[210px]">
             <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
                 <i data-lucide="bike" class="w-3 h-3 stroke-[2.2]"></i>
             </span>
             <div class="min-w-0">
                 <span class="text-[11px] font-bold text-slate-800 whitespace-nowrap block leading-tight"
                       :class="deliveryFee === 0 ? 'text-emerald-700' : 'text-slate-800'"
-                      x-text="deliveryFee === 0 ? '{% if current_lang == 'ru' %}0 сум (Бесплатно){% else %}0 UZS (Bepul){% endif %}' : formatMoney(deliveryFee)"></span>
+                      x-text="deliveryFee === 0 ? '{{ t.delivery_badge_free|default:"Доставка: Бесплатно" }}' : ('{% if current_lang == "ru" %}Доставка: {% elif current_lang == "en" %}Delivery: {% else %}Yetkazish: {% endif %}' + formatMoney(deliveryFee))"></span>
                 <!-- Mini progress line -->
                 <div class="w-12 bg-slate-200/80 h-1 rounded-full overflow-hidden mt-0.5" x-show="freeThreshold > 0">
                     <div class="bg-emerald-500 h-full rounded-full transition-all duration-300"
@@ -932,10 +932,10 @@
                 if ('{{ store.theme_template }}' !== 'restaurant') return 'custom';
                 if (this.constructorProduct.is_pizza) return 'pizza';
                 const name = (this.constructorProduct.name || '').toLowerCase();
-                if (name.includes('lavash') || name.includes('shaurma') || name.includes('shawarma') || name.includes('doner') || name.includes('wrap')) {
+                if (name.includes('lavash') || name.includes('shaurma') || name.includes('shawarma') || name.includes('doner') || name.includes('wrap') || name.includes('лаваш') || name.includes('шаурма') || name.includes('донер')) {
                     return 'shawarma';
                 }
-                if (name.includes('burger') || name.includes('chizburger') || name.includes('gamburger')) {
+                if (name.includes('burger') || name.includes('chizburger') || name.includes('gamburger') || name.includes('бургер') || name.includes('чизбургер') || name.includes('гамбургер')) {
                     return 'burger';
                 }
                 return 'food';
@@ -1251,17 +1251,27 @@
             },
 
             init() {
+                window.sbOpenConstructor = () => {
+                    const firstCBtn = document.querySelector('[data-constructor-product-id]');
+                    if (firstCBtn) {
+                        const pid = firstCBtn.getAttribute('data-constructor-product-id');
+                        if (pid) {
+                            this.openConstructor(pid);
+                            return;
+                        }
+                    }
+                    {% if first_constructor_product_id %}
+                    this.openConstructor({{ first_constructor_product_id }});
+                    {% endif %}
+                };
+
                 const urlParams = new URLSearchParams(window.location.search);
                 const openC = urlParams.get('open_constructor');
                 if (openC) {
                     this.openConstructor(openC);
                 } else if (urlParams.get('constructor') === '1') {
                     this.$nextTick(() => {
-                        const firstCBtn = document.querySelector('[data-constructor-product-id]');
-                        if (firstCBtn) {
-                            const pid = firstCBtn.getAttribute('data-constructor-product-id');
-                            if (pid) this.openConstructor(pid);
-                        }
+                        window.sbOpenConstructor();
                     });
                 }
             },
