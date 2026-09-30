@@ -109,7 +109,7 @@
                 <!-- Step 2: Verification Code & Submit (Shown after SMS is sent) -->
                 <template x-if="customerSmsSent">
                     <div class="space-y-4 pt-1 animate-in fade-in duration-200">
-                        <!-- SMS Verification Code Input -->
+                        <!-- SMS Verification Code Input (4 Digit Boxes) -->
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
                             <div class="flex items-center justify-between">
                                 <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -124,9 +124,24 @@
                                 </template>
                             </div>
 
-                            <input type="text" inputmode="numeric" maxlength="4" x-model="customerSmsCode"
-                                   placeholder="0000" autofocus
-                                   class="w-full py-3 px-4 rounded-xl bg-white border border-slate-200 text-2xl font-mono font-black tracking-[0.5em] text-center text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all">
+                            <!-- 4 Digit OTP Inputs with reliable auto-advance -->
+                            <div class="flex items-center justify-center gap-2.5 sm:gap-3 py-1" @paste="handleCustomerOtpPaste($event)">
+                                <template x-for="(d, idx) in customerOtpDigits" :key="idx">
+                                    <input type="text"
+                                           inputmode="numeric"
+                                           maxlength="1"
+                                           :id="'cust_otp_' + idx"
+                                           :value="d"
+                                           @input="handleCustomerOtpInput(idx, $event)"
+                                           @keydown="handleCustomerOtpKeyDown(idx, $event)"
+                                           class="w-12 h-14 sm:w-14 sm:h-16 rounded-2xl border text-center text-xl sm:text-2xl font-black font-mono tracking-tight transition-all outline-none shadow-2xs"
+                                           :class="{
+                                               'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20': customerSmsStatus && !customerSmsError,
+                                               'border-rose-500 bg-rose-50 text-rose-700 ring-2 ring-rose-500/20 animate-shake': customerSmsError,
+                                               'border-slate-200 bg-white text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/10': !customerSmsError && !customerSmsStatus
+                                           }">
+                                </template>
+                            </div>
 
                             <div class="flex items-center justify-between pt-1 text-xs">
                                 <span class="text-slate-400">
@@ -146,20 +161,20 @@
                             </div>
                         </div>
 
-                        <!-- Customer Name (Optional) -->
+                        <!-- Customer Name (Mandatory) -->
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
                                 <i data-lucide="user" class="w-3.5 h-3.5 text-brand"></i>
-                                <span>{% if current_lang == 'uz' %}Ismingiz (ixtiyoriy){% elif current_lang == 'en' %}Your name (optional){% elif current_lang == 'tr' %}Adınız (isteğe bağlı){% else %}Ваше имя (необязательно){% endif %}</span>
+                                <span>{% if current_lang == 'uz' %}Ismingiz *{% elif current_lang == 'en' %}Your name *{% elif current_lang == 'tr' %}Adınız *{% else %}Ваше имя *{% endif %}</span>
                             </label>
-                            <input type="text" name="name" x-model="nameInput"
+                            <input type="text" name="name" x-model="nameInput" required
                                    placeholder="{% if current_lang == 'uz' %}Masalan: Azizbek{% else %}Например: Азиз{% endif %}"
                                    class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all placeholder:text-slate-400">
                         </div>
 
                         <!-- Submit Button -->
                         <button type="submit"
-                                :disabled="customerSmsLoading || !customerSmsCode || customerSmsCode.length < 4"
+                                :disabled="customerSmsLoading || !customerSmsCode || customerSmsCode.length < 4 || !nameInput || !nameInput.trim()"
                                 class="w-full py-3.5 rounded-2xl bg-brand hover:brightness-95 text-white font-bold text-sm shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer disabled:opacity-50">
                             <span x-text="customerSmsLoading ? '{% if current_lang == 'ru' %}Проверка...{% else %}Tekshirilmoqda...{% endif %}' : '{% if current_lang == 'uz' %}Tasdiqlash va kirish{% elif current_lang == 'en' %}Verify & Sign in{% else %}Войти по SMS{% endif %}'"></span>
                             <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -311,7 +326,7 @@
             </button>
 
             <!-- Row 3: Do'kon bilan chat (Chat with Store) -->
-            <button type="button" @click="openChatModal(); window.dispatchEvent(new CustomEvent('open-store-chat'))"
+            <button type="button" @click="openStoreChat()"
                     class="w-full px-4 py-3.5 hover:bg-slate-50 transition-colors flex items-center justify-between gap-3 text-left group">
                 <div class="flex items-center gap-3.5 min-w-0">
                     <i data-lucide="message-circle" class="w-5 h-5 text-slate-800 stroke-[1.8] shrink-0"></i>
@@ -739,6 +754,100 @@
         </div>
     </div>
 
+    <!-- ========================================================================= -->
+    <!-- VIEW 4: CHAT WITH STORE / SELLER                                         -->
+    <!-- ========================================================================= -->
+    <div x-show="activeView === 'chat'" x-cloak class="space-y-3 animate-in fade-in duration-200">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-1">
+            <button type="button" @click="activeView = 'menu'"
+                    class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-800 transition-colors cursor-pointer">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <h1 class="text-base font-bold text-slate-900 tracking-tight text-center">
+                {{ t.seller_chat|default:"Do'kon bilan chat" }}
+            </h1>
+            <div class="w-8"></div>
+        </div>
+
+        <!-- Store Contact Card -->
+        <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs space-y-3">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center overflow-hidden shrink-0 border border-amber-200/50">
+                    {% if store.logo %}
+                    <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <i data-lucide="store" class="w-6 h-6"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
+                        <span>{{ store.name }}</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                    </h3>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">
+                        {% if current_lang == 'ru' %}Служба поддержки и прием заказов{% else %}Mijozlarni qo'llab-quvvatlash markazi{% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Action Links: Telegram & Phone -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                {% if store.telegram_bot_username or store.telegram_channel %}
+                <a href="https://t.me/{{ store.telegram_bot_username|default:store.telegram_channel|cut:'@' }}" target="_blank"
+                   class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs transition-colors shadow-2xs">
+                    <i data-lucide="send" class="w-3.5 h-3.5 text-sky-600"></i>
+                    <span>{% if current_lang == 'ru' %}Написать в Telegram{% else %}Telegram'da yozish{% endif %}</span>
+                </a>
+                {% endif %}
+                {% if store.phone %}
+                <a href="tel:{{ store.phone }}"
+                   class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors shadow-2xs">
+                    <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span>{{ store.phone }}</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- In-app Store Message Feed -->
+        <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <i data-lucide="messages-square" class="w-4 h-4 text-brand"></i>
+                    <span>{% if current_lang == 'ru' %}Онлайн-чат магазина{% else %}Onlayn do'kon chati{% endif %}</span>
+                </span>
+                <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">Online</span>
+            </div>
+
+            <div class="min-h-[160px] max-h-[300px] overflow-y-auto space-y-2.5 p-2 bg-slate-50/70 rounded-xl" id="profileChatScroll">
+                <template x-if="chatMessages.length === 0">
+                    <div class="py-8 text-center text-xs text-slate-400">
+                        {% if current_lang == 'ru' %}Напишите ваше сообщение, оператор ответит вам в ближайшее время.{% else %}Savolingizni yozing, operatorimiz tez orada javob beradi.{% endif %}
+                    </div>
+                </template>
+                <template x-for="(m, mIdx) in chatMessages" :key="mIdx">
+                    <div class="flex flex-col" :class="m.sender === 'customer' ? 'items-end' : 'items-start'">
+                        <div class="max-w-[80%] rounded-2xl px-3.5 py-2 text-xs font-medium"
+                             :class="m.sender === 'customer' ? 'bg-brand text-white rounded-br-xs' : 'bg-white border border-slate-200/80 text-slate-800 rounded-bl-xs shadow-2xs'"
+                             x-text="m.text">
+                        </div>
+                        <span class="text-[9px] text-slate-400 mt-0.5 px-1" x-text="m.time || ''"></span>
+                    </div>
+                </template>
+            </div>
+
+            <form @submit.prevent="sendProfileChatMessage()" class="flex items-center gap-2 pt-1">
+                <input type="text" x-model="chatInputText" placeholder="{% if current_lang == 'ru' %}Напишите сообщение...{% else %}Xabar yozing...{% endif %}"
+                       class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:border-brand">
+                <button type="submit" :disabled="!chatInputText.trim() || isSendingChat"
+                        class="p-2.5 rounded-xl bg-brand text-white hover:brightness-95 disabled:opacity-50 transition-all flex items-center justify-center cursor-pointer">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
     {% endif %}
 
 </div>
@@ -938,8 +1047,126 @@ function customerProfileApp() {
         customerSmsLoading: false,
         customerSmsCooldown: 0,
         customerSmsStatus: '',
+        customerOtpDigits: ['', '', '', ''],
+        customerSmsCode: '',
+        customerSmsSent: false,
+        customerSmsLoading: false,
+        customerSmsCooldown: 0,
+        customerSmsStatus: '',
         customerSmsError: '',
         customerSmsTimer: null,
+        chatMessages: [],
+        chatInputText: '',
+        isSendingChat: false,
+
+        openStoreChat() {
+            this.activeView = 'chat';
+            this.fetchProfileChatMessages();
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            window.dispatchEvent(new CustomEvent('open-store-chat'));
+        },
+
+        handleCustomerOtpInput(idx, event) {
+            const val = event.target.value.replace(/\D/g, '');
+            this.customerOtpDigits[idx] = val ? val.slice(-1) : '';
+            event.target.value = this.customerOtpDigits[idx];
+            this.customerSmsCode = this.customerOtpDigits.join('');
+            this.customerSmsError = '';
+            
+            if (this.customerOtpDigits[idx] && idx < 3) {
+                this.$nextTick(() => {
+                    const next = document.getElementById('cust_otp_' + (idx + 1));
+                    if (next) next.focus();
+                });
+            }
+            if (this.customerSmsCode.length === 4) {
+                this.verifyCustomerSmsAndLogin();
+            }
+        },
+
+        handleCustomerOtpKeyDown(idx, event) {
+            if (event.key === 'Backspace') {
+                if (!this.customerOtpDigits[idx] && idx > 0) {
+                    const prev = document.getElementById('cust_otp_' + (idx - 1));
+                    if (prev) {
+                        this.customerOtpDigits[idx - 1] = '';
+                        prev.value = '';
+                        prev.focus();
+                        this.customerSmsCode = this.customerOtpDigits.join('');
+                    }
+                } else {
+                    this.customerOtpDigits[idx] = '';
+                    event.target.value = '';
+                    this.customerSmsCode = this.customerOtpDigits.join('');
+                }
+                this.customerSmsError = '';
+            } else if (event.key === 'ArrowLeft' && idx > 0) {
+                const prev = document.getElementById('cust_otp_' + (idx - 1));
+                if (prev) prev.focus();
+            } else if (event.key === 'ArrowRight' && idx < 3) {
+                const next = document.getElementById('cust_otp_' + (idx + 1));
+                if (next) next.focus();
+            }
+        },
+
+        handleCustomerOtpPaste(event) {
+            event.preventDefault();
+            const text = (event.clipboardData || window.clipboardData).getData('text') || '';
+            const digits = text.replace(/\D/g, '').slice(0, 4);
+            if (!digits) return;
+            for (let i = 0; i < 4; i++) {
+                this.customerOtpDigits[i] = digits[i] || '';
+                const el = document.getElementById('cust_otp_' + i);
+                if (el) el.value = this.customerOtpDigits[i];
+            }
+            this.customerSmsCode = this.customerOtpDigits.join('');
+            const focusIdx = Math.min(digits.length, 3);
+            const target = document.getElementById('cust_otp_' + focusIdx);
+            if (target) target.focus();
+            if (this.customerSmsCode.length === 4) {
+                this.verifyCustomerSmsAndLogin();
+            }
+        },
+
+        async fetchProfileChatMessages() {
+            try {
+                const chatUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/chat/messages/{% else %}/api/chat/messages/{% endif %}';
+                const res = await fetch(chatUrl);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.messages && Array.isArray(data.messages)) {
+                        this.chatMessages = data.messages;
+                    }
+                }
+            } catch (e) {}
+        },
+
+        async sendProfileChatMessage() {
+            const text = (this.chatInputText || '').trim();
+            if (!text || this.isSendingChat) return;
+            this.isSendingChat = true;
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            this.chatMessages.push({ sender: 'customer', text: text, time: timeStr });
+            this.chatInputText = '';
+            this.$nextTick(() => {
+                const scrollEl = document.getElementById('profileChatScroll');
+                if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+            });
+
+            try {
+                const sendUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/api/chat/send/{% else %}/api/chat/send/{% endif %}';
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+                await fetch(sendUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ message: text, phone: this.fullPhoneNumber || '{{ customer_phone|default:"" }}' })
+                });
+            } catch(e) {}
+            finally {
+                this.isSendingChat = false;
+            }
+        },
 
         startCustomerSmsTimer(sec = 60) {
             this.customerSmsCooldown = sec;
@@ -957,6 +1184,12 @@ function customerProfileApp() {
 
         async sendCustomerSms() {
             if (this.customerSmsLoading || this.customerSmsCooldown > 0) return;
+            if (!this.nameInput || !this.nameInput.trim()) {
+                this.customerSmsError = "{% if current_lang == 'ru' %}Пожалуйста, укажите ваше имя{% elif current_lang == 'en' %}Please enter your name{% else %}Iltimos, ismingizni kiriting{% endif %}";
+                const nameEl = document.querySelector('input[name="name"]');
+                if (nameEl) nameEl.focus();
+                return;
+            }
             if (!this.rawPhoneDigits || this.rawPhoneDigits.length < this.selectedCountry.digits) {
                 this.customerSmsError = "Iltimos, to'liq telefon raqamingizni kiriting";
                 return;
@@ -976,8 +1209,14 @@ function customerProfileApp() {
                 const data = await res.json();
                 if (res.ok && data.success) {
                     this.customerSmsSent = true;
+                    this.customerOtpDigits = ['', '', '', ''];
+                    this.customerSmsCode = '';
                     this.customerSmsStatus = data.message || "Tasdiqlash kodi telefoningizga yuborildi!";
                     this.startCustomerSmsTimer(data.cooldown || 60);
+                    this.$nextTick(() => {
+                        const first = document.getElementById('cust_otp_0');
+                        if (first) first.focus();
+                    });
                 } else {
                     this.customerSmsError = data.error || "SMS yuborishda xatolik yuz berdi";
                     if (data.cooldown) {
@@ -1006,6 +1245,12 @@ function customerProfileApp() {
                 }
                 return;
             }
+            if (!this.nameInput || !this.nameInput.trim()) {
+                this.customerSmsError = "{% if current_lang == 'ru' %}Пожалуйста, укажите ваше имя{% elif current_lang == 'en' %}Please enter your name{% else %}Iltimos, ismingizni kiriting{% endif %}";
+                const nameEl = document.querySelector('input[name="name"]');
+                if (nameEl) nameEl.focus();
+                return;
+            }
 
             this.customerSmsLoading = true;
             try {
@@ -1017,14 +1262,19 @@ function customerProfileApp() {
                     body: JSON.stringify({
                         phone: this.fullPhoneNumber,
                         code: this.customerSmsCode,
-                        name: this.nameInput
+                        name: this.nameInput.trim()
                     })
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
                     localStorage.setItem('sb_cust_phone_{{ store.id }}', data.customer.phone);
                     localStorage.setItem('sb_cust_name_{{ store.id }}', data.customer.name);
-                    window.location.reload();
+                    const nextUrl = new URLSearchParams(window.location.search).get('next');
+                    if (nextUrl && nextUrl.startsWith('/')) {
+                        window.location.href = nextUrl;
+                    } else {
+                        window.location.reload();
+                    }
                 } else {
                     this.customerSmsError = data.error || "Noto'g'ri tasdiqlash kodi";
                 }

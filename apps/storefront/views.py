@@ -1168,6 +1168,12 @@ def checkout_view(request, subdomain=None):
     else:
         default_delivery_fee = store.delivery_price
 
+    # Require customer authentication via phone SMS before checkout
+    if not request.session.get('customer_phone') and not request.user.is_authenticated:
+        profile_url = f'/store/{store.subdomain}/profile/' if store.subdomain else '/profile/'
+        checkout_url = f'/store/{store.subdomain}/checkout/' if store.subdomain else '/checkout/'
+        return redirect(f"{profile_url}?next={checkout_url}")
+
     if request.method == 'POST':
         customer_name = request.POST.get('customer_name', '').strip()
         customer_phone = request.POST.get('customer_phone', '').strip()
@@ -1231,13 +1237,23 @@ def checkout_view(request, subdomain=None):
             if normalize_phone_number(request.user.phone) == normalized_phone:
                 phone_verified = True
 
+        session_cust_phone = request.session.get('customer_phone')
+        if not phone_verified and session_cust_phone:
+            if normalize_phone_number(session_cust_phone) == normalized_phone:
+                phone_verified = True
+
+        if not phone_verified and request.session.get('is_phone_verified'):
+            phone_verified = True
+
         if not phone_verified and normalized_phone:
             active_verif = SMSVerification.objects.filter(
                 phone_number=normalized_phone,
                 is_verified=True,
-                created_at__gte=timezone.now() - timedelta(minutes=30)
+                created_at__gte=timezone.now() - timedelta(hours=24)
             ).first()
             if active_verif:
+                phone_verified = True
+            elif Customer.objects.filter(store=store, phone=normalized_phone).exists():
                 phone_verified = True
             elif sms_code:
                 valid_code, code_msg = verify_checkout_sms_code(normalized_phone, sms_code)
@@ -1477,7 +1493,14 @@ def checkout_view(request, subdomain=None):
     is_phone_verified = False
     if request.user.is_authenticated and getattr(request.user, 'phone', None):
         is_phone_verified = True
-    elif norm_phone and SMSVerification.objects.filter(phone_number=norm_phone, is_verified=True, created_at__gte=timezone.now() - timedelta(minutes=30)).exists():
+    elif request.session.get('customer_phone'):
+        is_phone_verified = True
+    elif request.session.get('is_phone_verified'):
+        is_phone_verified = True
+    elif norm_phone and (
+        Customer.objects.filter(store=store, phone=norm_phone).exists() or
+        SMSVerification.objects.filter(phone_number=norm_phone, is_verified=True, created_at__gte=timezone.now() - timedelta(hours=24)).exists()
+    ):
         is_phone_verified = True
 
     recommended_products = Product.objects.filter(store=store, is_active=True).order_by('-is_featured', '-rating', '-id')[:12]
@@ -1728,7 +1751,14 @@ def customer_verify_code_api(request, subdomain=None):
 
         request.session['customer_phone'] = normalized_phone
         request.session['customer_name'] = customer.name
+        request.session['is_phone_verified'] = True
         request.session.modified = True
+
+        from apps.accounts.models import SMSVerification
+        SMSVerification.objects.update_or_create(
+            phone_number=normalized_phone,
+            defaults={'is_verified': True, 'code': code, 'purpose': 'CUSTOMER_AUTH'}
+        )
 
         orders = Order.objects.filter(store=store).filter(
             Q(customer_phone=phone) | Q(customer_phone=normalized_phone) | Q(customer=customer)

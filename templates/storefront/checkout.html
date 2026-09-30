@@ -174,12 +174,23 @@
 
         <!-- 1. Contact Information -->
         <div class="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
-            <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
-                <div class="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center text-xs">1</div>
-                <h3>{{ t.contact_data|default:"Aloqa ma'lumotlari" }}</h3>
+            <div class="flex items-center justify-between cursor-pointer select-none" @click="contactSectionOpen = !contactSectionOpen">
+                <div class="flex items-center gap-2 text-slate-900 font-black text-sm">
+                    <div class="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center text-xs">1</div>
+                    <h3>{{ t.contact_data|default:"Aloqa ma'lumotlari" }}</h3>
+                    <template x-if="!contactSectionOpen && (customerName || fullPhoneNumber)">
+                        <span class="text-xs font-semibold text-slate-500 font-mono ml-2 hidden sm:inline" x-text="(customerName ? customerName + ' • ' : '') + (formattedPhone || fullPhoneNumber)"></span>
+                    </template>
+                </div>
+                <button type="button" @click.stop="contactSectionOpen = !contactSectionOpen"
+                        class="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-black transition-colors"
+                        :title="contactSectionOpen ? 'Свернуть' : 'Развернуть'">
+                    <span x-text="contactSectionOpen ? '−' : '+'"></span>
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <div x-show="contactSectionOpen" class="space-y-4 pt-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">
                         {{ t.name|default:"Ismingiz" }} <span class="text-rose-500">*</span>
@@ -332,6 +343,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
 
         <!-- 2. Delivery & Fulfillment Method -->
@@ -812,6 +824,7 @@
         {% endif %}
 
         return {
+            contactSectionOpen: true,
             customerName: '{{ saved_name|escapejs }}' || localStorage.getItem('sb_cust_name_{{ store.id }}') || '',
             orderNotes: sessionStorage.getItem('cart_restaurant_comment') || '',
             cutleryCount: Number(sessionStorage.getItem('cart_cutlery_count')) || 0,
@@ -1319,17 +1332,20 @@
             validateCheckout(e) {
                 this.phoneError = '';
                 if (!this.customerName.trim()) {
+                    this.contactSectionOpen = true;
                     alert('{% if lang == "uz" %}Iltimos, ismingizni kiriting{% else %}Пожалуйста, введите ваше имя{% endif %}');
                     e.preventDefault();
                     return false;
                 }
                 if (!this.isPhoneComplete) {
+                    this.contactSectionOpen = true;
                     this.phoneError = `{% if lang == "uz" %}Telefon raqamini to'liq kiriting (${this.selectedCountry.digits} ta raqam){% else %}Пожалуйста, введите полный номер телефона (${this.selectedCountry.digits} цифр){% endif %}`;
                     if (this.$refs.phoneInput) this.$refs.phoneInput.focus();
                     e.preventDefault();
                     return false;
                 }
                 if (!this.isPhoneVerified) {
+                    this.contactSectionOpen = true;
                     alert('{% if lang == "uz" %}Iltimos, avval telefon raqamingizni SMS-kod orqali tasdiqlang{% else %}Пожалуйста, подтвердите ваш номер телефона через SMS-код{% endif %}');
                     e.preventDefault();
                     if (!this.smsSent) {

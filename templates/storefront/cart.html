@@ -576,7 +576,15 @@ function storeboxCartApp() {
             sessionStorage.setItem('cart_cutlery_count', this.cutleryCount);
             sessionStorage.setItem('cart_restaurant_comment', this.restaurantComment);
 
-            const checkoutUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/checkout/{% else %}/checkout/{% endif %}';
+            const isCustomerLoggedIn = Boolean('{{ request.session.customer_phone|default:"" }}' || '{{ request.user.phone|default:"" }}' || localStorage.getItem('sb_cust_phone_{{ store.id }}'));
+            const checkoutUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/checkout/{% else %}/checkout/{% endif %}{% if current_lang != "uz" %}?lang={{ current_lang }}{% endif %}';
+            const profileLoginUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}?next=' + encodeURIComponent(checkoutUrl);
+
+            if (!isCustomerLoggedIn) {
+                window.location.href = profileLoginUrl;
+                return;
+            }
+
             window.location.href = checkoutUrl;
         }
     };
