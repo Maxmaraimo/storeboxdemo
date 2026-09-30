@@ -117,7 +117,7 @@
     {% endif %}
 
     <!-- TEMPLATE SPECIFIC DISTINCT SECTIONS -->
-    {% if store.theme_template == 'restaurant' %}
+    {% if store.is_restaurant or store.theme_template == 'restaurant' %}
     <!-- 1. RESTAURANT SERVICE & DELIVERY CONTROLS -->
     <div class="rounded-3xl p-4 sm:p-5 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3.5">
         <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -145,7 +145,7 @@
                     </div>
                     <div class="text-[11px] text-slate-400 font-medium mt-0.5 flex items-center gap-1.5">
                         <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
-                        <span>Yetkazib berish: {{ store.delivery_time_estimate|default:"30-45 daqiqa" }}</span>
+                        <span>{% if current_lang == 'ru' %}Доставка: {{ store.delivery_time_estimate|default:"30-45 минут" }}{% elif current_lang == 'en' %}Delivery: {{ store.delivery_time_estimate|default:"30-45 min" }}{% elif current_lang == 'tr' %}Teslimat: {{ store.delivery_time_estimate|default:"30-45 dk" }}{% else %}Yetkazib berish: {{ store.delivery_time_estimate|default:"30-45 daqiqa" }}{% endif %}</span>
                     </div>
                 </div>
             </div>
@@ -154,11 +154,11 @@
             <div class="flex items-center p-1 rounded-2xl bg-slate-100 border border-slate-200/70 text-xs font-bold" x-data="{ orderMode: 'delivery' }">
                 <button type="button" @click="orderMode = 'delivery'" :class="orderMode === 'delivery' ? 'bg-white text-slate-950 shadow-2xs' : 'text-slate-500 hover:text-slate-800'" class="px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer">
                     <i data-lucide="bike" class="w-3.5 h-3.5 text-amber-500"></i>
-                    <span>Yetkazib berish</span>
+                    <span>{% if current_lang == 'ru' %}Доставка{% elif current_lang == 'en' %}Delivery{% elif current_lang == 'tr' %}Teslimat{% else %}Yetkazib berish{% endif %}</span>
                 </button>
                 <button type="button" @click="orderMode = 'pickup'" :class="orderMode === 'pickup' ? 'bg-white text-slate-950 shadow-2xs' : 'text-slate-500 hover:text-slate-800'" class="px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer">
                     <i data-lucide="store" class="w-3.5 h-3.5 text-amber-500"></i>
-                    <span>Olib ketish</span>
+                    <span>{% if current_lang == 'ru' %}Самовывоз{% elif current_lang == 'en' %}Pickup{% elif current_lang == 'tr' %}Gel-Al{% else %}Olib ketish{% endif %}</span>
                 </button>
             </div>
         </div>
@@ -166,11 +166,11 @@
         <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-500 font-semibold">
             <div class="flex items-center gap-2">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>{{ store.free_delivery_threshold|floatformat:0 }} UZS dan bepul yetkazish</span>
+                <span>{% if current_lang == 'ru' %}Бесплатная доставка от {{ store.free_delivery_threshold|floatformat:0 }} UZS{% elif current_lang == 'en' %}Free delivery from {{ store.free_delivery_threshold|floatformat:0 }} UZS{% elif current_lang == 'tr' %}{{ store.free_delivery_threshold|floatformat:0 }} UZS üzeri ücretsiz teslimat{% else %}{{ store.free_delivery_threshold|floatformat:0 }} UZS dan bepul yetkazish{% endif %}</span>
             </div>
             <div class="flex items-center gap-4 text-slate-600">
-                <span class="flex items-center gap-1"><i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i> Issiq qadoqlash</span>
-                <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> 100% Halol</span>
+                <span class="flex items-center gap-1"><i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i> {% if current_lang == 'ru' %}Термоупаковка{% elif current_lang == 'en' %}Hot packaging{% elif current_lang == 'tr' %}Sıcak paketleme{% else %}Issiq qadoqlash{% endif %}</span>
+                <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> {% if current_lang == 'ru' %}100% Халяль{% elif current_lang == 'en' %}100% Halal{% elif current_lang == 'tr' %}%100 Helal{% else %}100% Halol{% endif %}</span>
             </div>
         </div>
     </div>
@@ -241,7 +241,7 @@
                class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
                 <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border"
                      style="{% if request.GET.constructor %}background-color: var(--brand-color); color: #ffffff; border-color: var(--brand-color); box-shadow: 0 4px 16px color-mix(in srgb, var(--brand-color) 32%, transparent);{% else %}background-color: color-mix(in srgb, var(--brand-color) 10%, #ffffff); color: var(--brand-color); border-color: color-mix(in srgb, var(--brand-color) 30%, transparent); box-shadow: 0 2px 8px color-mix(in srgb, var(--brand-color) 12%, transparent);{% endif %}">
-                    {% if store.theme_template == 'restaurant' %}
+                    {% if store.is_restaurant or store.theme_template == 'restaurant' %}
                     <i data-lucide="wand-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                     {% elif store.theme_template == 'boutique' %}
                     <i data-lucide="gift" class="w-4 h-4 sm:w-5 sm:h-5"></i>
@@ -251,7 +251,7 @@
                 </div>
                 <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5"
                       style="{% if request.GET.constructor %}color: var(--brand-color); font-weight: 900;{% endif %}">
-                    {% if current_lang == 'ru' %}{% if store.theme_template == 'restaurant' %}Конструктор{% elif store.theme_template == 'boutique' %}Собери бокс{% else %}Собери сам{% endif %}{% elif current_lang == 'en' %}{% if store.theme_template == 'restaurant' %}Customizer{% elif store.theme_template == 'boutique' %}Build Box{% else %}Customizer{% endif %}{% else %}{% if store.theme_template == 'restaurant' %}Konstruktor{% elif store.theme_template == 'boutique' %}Boks yig'ish{% else %}O'zing ter{% endif %}{% endif %}
+                    {% if current_lang == 'ru' %}{% if store.is_restaurant or store.theme_template == 'restaurant' %}Конструктор{% elif store.theme_template == 'boutique' %}Собери бокс{% else %}Собери сам{% endif %}{% elif current_lang == 'en' %}{% if store.is_restaurant or store.theme_template == 'restaurant' %}Customizer{% elif store.theme_template == 'boutique' %}Build Box{% else %}Customizer{% endif %}{% else %}{% if store.is_restaurant or store.theme_template == 'restaurant' %}Konstruktor{% elif store.theme_template == 'boutique' %}Boks yig'ish{% else %}O'zing ter{% endif %}{% endif %}
                 </span>
             </a>
 
@@ -930,7 +930,8 @@
 
             get productType() {
                 if (!this.constructorProduct) return 'custom';
-                if ('{{ store.theme_template }}' !== 'restaurant') return 'custom';
+                const isRestaurant = {% if store.is_restaurant or store.theme_template == 'restaurant' %}true{% else %}false{% endif %};
+                if (!isRestaurant) return 'custom';
                 if (this.constructorProduct.is_pizza) return 'pizza';
                 const name = (this.constructorProduct.name || '').toLowerCase();
                 if (name.includes('lavash') || name.includes('shaurma') || name.includes('shawarma') || name.includes('doner') || name.includes('wrap') || name.includes('лаваш') || name.includes('шаурма') || name.includes('донер')) {
@@ -975,7 +976,8 @@
             },
 
             get constructorDisplayedWeight() {
-                if ('{{ store.theme_template }}' !== 'restaurant' || this.productType === 'custom') {
+                const isRestaurant = {% if store.is_restaurant or store.theme_template == 'restaurant' %}true{% else %}false{% endif %};
+                if (!isRestaurant || this.productType === 'custom') {
                     return '';
                 }
                 const baseWeight = this.constructorProduct?.nutrition?.weight_g || (this.constructorProduct?.is_pizza ? 480 : 340);

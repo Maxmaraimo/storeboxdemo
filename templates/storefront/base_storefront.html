@@ -265,10 +265,10 @@
                         <!-- Constructor / Customizer Button (Desktop - Sleek Round Icon) -->
                         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                            @click="if (window.sbOpenConstructor) { $event.preventDefault(); window.sbOpenConstructor(); }"
-                           title="{% if store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Конструктор блюд{% elif current_lang == 'en' %}Burger / Food Builder{% else %}Taom konstruktori{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}{% endif %}"
+                           title="{% if store.is_restaurant or store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Конструктор блюд{% elif current_lang == 'en' %}Burger / Food Builder{% else %}Taom konstruktori{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}{% endif %}"
                            class="hidden sm:flex items-center justify-center w-8.5 h-8.5 rounded-full border transition-all shadow-2xs group active:scale-95 cursor-pointer"
                            style="background-color: color-mix(in srgb, var(--brand-color) 12%, #ffffff); border-color: color-mix(in srgb, var(--brand-color) 35%, transparent); color: var(--brand-color);">
-                            {% if store.theme_template == 'restaurant' %}
+                            {% if store.is_restaurant or store.theme_template == 'restaurant' %}
                                 <i data-lucide="wand-2" class="w-4.5 h-4.5 group-hover:rotate-12 transition-transform"></i>
                             {% elif store.theme_template == 'boutique' %}
                                 <i data-lucide="sparkles" class="w-4.5 h-4.5 group-hover:scale-110 transition-transform"></i>
@@ -353,22 +353,22 @@
                     {% endif %}
                     <div>
                         <h4 class="text-sm sm:text-base font-black text-slate-900">{{ store.name }}</h4>
-                        <p class="text-xs text-slate-500 mt-0.5">Online buyurtma va yetkazib berish xizmati</p>
+                        <p class="text-xs text-slate-500 mt-0.5">{% if current_lang == 'ru' %}Онлайн-заказ и быстрая служба доставки{% elif current_lang == 'en' %}Online ordering & fast delivery service{% elif current_lang == 'tr' %}Online sipariş ve hızlı teslimat hizmeti{% else %}Online buyurtma va yetkazib berish xizmati{% endif %}</p>
                     </div>
                 </div>
 
                 <!-- Working Hours -->
                 <div class="flex flex-col items-center justify-center space-y-1">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ish vaqti</span>
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{% if current_lang == 'ru' %}Режим работы{% elif current_lang == 'en' %}Working hours{% elif current_lang == 'tr' %}Çalışma saatleri{% else %}{{ t.work_hours|default:'Ish vaqti' }}{% endif %}</span>
                     <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                         <i data-lucide="clock" class="w-3.5 h-3.5 text-brand"></i>
-                        <span>09:00 — 23:00 (Har kuni)</span>
+                        <span>{% if current_lang == 'ru' %}09:00 — 23:00 (Ежедневно){% elif current_lang == 'en' %}09:00 — 23:00 (Daily){% elif current_lang == 'tr' %}09:00 — 23:00 (Her gün){% else %}09:00 — 23:00 (Har kuni){% endif %}</span>
                     </div>
                 </div>
 
                 <!-- Phone & Support Contact -->
                 <div class="flex flex-col items-center md:items-end justify-center space-y-1">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mijozlarni qo'llab-quvvatlash</span>
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{% if current_lang == 'ru' %}Служба поддержки{% elif current_lang == 'en' %}Customer support{% elif current_lang == 'tr' %}Müşteri desteği{% else %}Mijozlarni qo'llab-quvvatlash{% endif %}</span>
                     {% if store.phone %}
                     <a href="tel:{{ store.phone }}" class="font-mono font-bold text-sm text-slate-900 hover:text-brand transition-colors flex items-center gap-1.5">
                         <i data-lucide="phone-call" class="w-3.5 h-3.5 text-brand"></i>
@@ -624,7 +624,7 @@
                     <button type="button" @click="infoModal = 'about'; profileDrawerOpen = false" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors">
                         <div class="flex items-center gap-2.5">
                             <i data-lucide="store" class="w-4 h-4 text-slate-500"></i>
-                            <span>Biz haqimizda</span>
+                            <span>{% if current_lang == 'ru' %}О нас{% elif current_lang == 'en' %}About us{% elif current_lang == 'tr' %}Hakkımızda{% else %}Biz haqimizda{% endif %}</span>
                         </div>
                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
                     </button>
@@ -632,7 +632,7 @@
                     <button type="button" @click="infoModal = 'delivery'; profileDrawerOpen = false" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors">
                         <div class="flex items-center gap-2.5">
                             <i data-lucide="truck" class="w-4 h-4 text-slate-500"></i>
-                            <span>Yetkazib berish shartlari</span>
+                            <span>{% if current_lang == 'ru' %}Условия доставки{% elif current_lang == 'en' %}Delivery terms{% elif current_lang == 'tr' %}Teslimat şartları{% else %}Yetkazib berish shartlari{% endif %}</span>
                         </div>
                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
                     </button>
@@ -640,7 +640,7 @@
                     <button type="button" @click="infoModal = 'returns'; profileDrawerOpen = false" class="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors">
                         <div class="flex items-center gap-2.5">
                             <i data-lucide="rotate-ccw" class="w-4 h-4 text-slate-500"></i>
-                            <span>Qaytarish va almashtirish</span>
+                            <span>{% if current_lang == 'ru' %}Условия возврата и обмена{% elif current_lang == 'en' %}Return & exchange{% elif current_lang == 'tr' %}İade ve değişim{% else %}Qaytarish va almashtirish{% endif %}</span>
                         </div>
                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
                     </button>
@@ -649,7 +649,7 @@
                     <a href="tel:{{ store.phone }}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors">
                         <div class="flex items-center gap-2.5">
                             <i data-lucide="phone" class="w-4 h-4 text-emerald-600"></i>
-                            <span>Biz bilan bog'lanish</span>
+                            <span>{% if current_lang == 'ru' %}Связаться с нами{% elif current_lang == 'en' %}Contact us{% elif current_lang == 'tr' %}Bize ulaşın{% else %}Biz bilan bog'lanish{% endif %}</span>
                         </div>
                         <span class="text-[11px] font-mono font-bold text-brand">{{ store.phone }}</span>
                     </a>
@@ -660,7 +660,7 @@
             <template x-if="customerLoggedIn">
                 <button type="button" @click="customerLogout()" class="w-full py-3 rounded-xl border border-rose-200 text-rose-600 text-xs font-bold hover:bg-rose-50 flex items-center justify-center gap-2 transition-colors">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
-                    <span>Tizimdan chiqish</span>
+                    <span>{% if current_lang == 'ru' %}Выйти из аккаунта{% elif current_lang == 'en' %}Sign out{% elif current_lang == 'tr' %}Çıkış yap{% else %}Tizimdan chiqish{% endif %}</span>
                 </button>
             </template>
         </div>
@@ -672,7 +672,12 @@
     <div x-show="infoModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
         <div @click.away="infoModal = null" class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-4 max-h-[80vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-black text-base text-slate-900" x-text="infoModal === 'about' ? 'Biz haqimizda' : (infoModal === 'delivery' ? 'Yetkazib berish shartlari' : (infoModal === 'branches' ? 'Filiallar' : 'Qaytarish va almashtirish shartlari'))"></h3>
+                <h3 class="font-black text-base text-slate-900"
+                    x-text="infoModal === 'about' ? '{% if current_lang == "ru" %}О нас{% elif current_lang == "en" %}About Us{% elif current_lang == "tr" %}Hakkımızda{% else %}Biz haqimizda{% endif %}' :
+                           (infoModal === 'delivery' ? '{% if current_lang == "ru" %}Условия доставки{% elif current_lang == "en" %}Delivery Terms{% elif current_lang == "tr" %}Teslimat Koşulları{% else %}Yetkazib berish shartlari{% endif %}' :
+                           (infoModal === 'branches' ? '{% if current_lang == "ru" %}Филиалы магазина{% elif current_lang == "en" %}Store Branches{% elif current_lang == "tr" %}Şubelerimiz{% else %}Do\'kon filiallari{% endif %}' :
+                           '{% if current_lang == "ru" %}Условия возврата и обмена{% elif current_lang == "en" %}Return & Exchange Policy{% elif current_lang == "tr" %}İade ve Değişim Koşulları{% else %}Qaytarish va almashtirish shartlari{% endif %}'))">
+                </h3>
                 <button type="button" @click="infoModal = null" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
             </div>
 
@@ -708,11 +713,11 @@
                                 </div>
                                 <div class="text-[11px] text-slate-700 bg-white p-2.5 rounded-xl border border-slate-100 space-y-1">
                                     {% if store.working_hours %}
-                                        <div class="flex justify-between"><span>Dushanba - Juma:</span> <span>{{ store.working_hours.mon.open|default:'09:00' }} - {{ store.working_hours.mon.close|default:'22:00' }}</span></div>
-                                        <div class="flex justify-between"><span>Shanba:</span> <span>{% if store.working_hours.sat.closed %}<strong class="text-rose-600">{{ t.day_off|default:'Dam olish kuni' }}</strong>{% else %}{{ store.working_hours.sat.open|default:'10:00' }} - {{ store.working_hours.sat.close|default:'23:00' }}{% endif %}</span></div>
-                                        <div class="flex justify-between"><span>Yakshanba:</span> <span>{% if store.working_hours.sun.closed %}<strong class="text-rose-600">{{ t.day_off|default:'Dam olish kuni' }}</strong>{% else %}{{ store.working_hours.sun.open|default:'10:00' }} - {{ store.working_hours.sun.close|default:'22:00' }}{% endif %}</span></div>
+                                        <div class="flex justify-between"><span>{% if current_lang == 'ru' %}Понедельник - Пятница:{% elif current_lang == 'en' %}Monday - Friday:{% elif current_lang == 'tr' %}Pazartesi - Cuma:{% else %}Dushanba - Juma:{% endif %}</span> <span>{{ store.working_hours.mon.open|default:'09:00' }} - {{ store.working_hours.mon.close|default:'22:00' }}</span></div>
+                                        <div class="flex justify-between"><span>{% if current_lang == 'ru' %}Суббота:{% elif current_lang == 'en' %}Saturday:{% elif current_lang == 'tr' %}Cumartesi:{% else %}Shanba:{% endif %}</span> <span>{% if store.working_hours.sat.closed %}<strong class="text-rose-600">{% if current_lang == 'ru' %}Выходной день{% elif current_lang == 'en' %}Day off{% elif current_lang == 'tr' %}Tatil günü{% else %}{{ t.day_off|default:'Dam olish kuni' }}{% endif %}</strong>{% else %}{{ store.working_hours.sat.open|default:'10:00' }} - {{ store.working_hours.sat.close|default:'23:00' }}{% endif %}</span></div>
+                                        <div class="flex justify-between"><span>{% if current_lang == 'ru' %}Воскресенье:{% elif current_lang == 'en' %}Sunday:{% elif current_lang == 'tr' %}Pazar:{% else %}Yakshanba:{% endif %}</span> <span>{% if store.working_hours.sun.closed %}<strong class="text-rose-600">{% if current_lang == 'ru' %}Выходной день{% elif current_lang == 'en' %}Day off{% elif current_lang == 'tr' %}Tatil günü{% else %}{{ t.day_off|default:'Dam olish kuni' }}{% endif %}</strong>{% else %}{{ store.working_hours.sun.open|default:'10:00' }} - {{ store.working_hours.sun.close|default:'22:00' }}{% endif %}</span></div>
                                     {% else %}
-                                        <div>Dushanba - Yakshanba: 09:00 - 23:00</div>
+                                        <div>{% if current_lang == 'ru' %}Понедельник - Воскресенье: 09:00 - 23:00{% elif current_lang == 'en' %}Monday - Sunday: 09:00 - 23:00{% elif current_lang == 'tr' %}Pazartesi - Pazar: 09:00 - 23:00{% else %}Dushanba - Yakshanba: 09:00 - 23:00{% endif %}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -857,7 +862,7 @@
                                     <span>{{ b.name }}</span>
                                 </div>
                                 {% if b.is_main %}
-                                <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">Asosiy</span>
+                                <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">{% if current_lang == 'ru' %}Основной филиал{% elif current_lang == 'en' %}Main branch{% elif current_lang == 'tr' %}Ana şube{% else %}Asosiy{% endif %}</span>
                                 {% endif %}
                             </div>
                             <div class="text-xs text-slate-600 flex items-start gap-1.5">
@@ -1405,9 +1410,9 @@
                 <!-- 3. Burger / Product Constructor (Build Your Own) -->
                 <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                    @click="if (window.sbOpenConstructor) { $event.preventDefault(); window.sbOpenConstructor(); }"
-                   title="{% if store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Конструктор блюд{% elif current_lang == 'en' %}Burger / Food Builder{% else %}Taom konstruktori{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}{% endif %}"
+                   title="{% if store.is_restaurant or store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Конструктор блюд{% elif current_lang == 'en' %}Burger / Food Builder{% else %}Taom konstruktori{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}{% endif %}"
                    class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
-                    {% if store.theme_template == 'restaurant' %}
+                    {% if store.is_restaurant or store.theme_template == 'restaurant' %}
                     <i data-lucide="wand-2" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
                     {% elif store.theme_template == 'boutique' %}
                     <i data-lucide="sparkles" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>

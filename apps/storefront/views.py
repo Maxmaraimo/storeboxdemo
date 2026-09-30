@@ -2063,6 +2063,13 @@ def product_detail_page_view(request, product_id, subdomain=None):
 
     t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
 
+    if store.theme_template == 'boutique':
+        effective_card_style = 'minimal'
+    elif getattr(store, 'is_restaurant', False) or store.theme_template == 'restaurant':
+        effective_card_style = 'compact'
+    else:
+        effective_card_style = store.theme_card_style or 'modern'
+
     context = {
         'store': store,
         'product': product,
@@ -2082,6 +2089,7 @@ def product_detail_page_view(request, product_id, subdomain=None):
         'lang': lang,
         'current_lang': lang,
         't': t,
+        'effective_card_style': effective_card_style,
         'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
     }
     return render(request, 'storefront/product_detail.html', context)

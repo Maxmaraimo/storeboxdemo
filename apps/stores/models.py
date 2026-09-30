@@ -140,6 +140,14 @@ class Store(models.Model):
         verbose_name='Ниша магазина для ИИ'
     )
 
+    @property
+    def is_restaurant(self):
+        return (
+            self.theme_template == self.ThemeTemplates.RESTAURANT or
+            self.business_type == self.BusinessTypes.RESTAURANT or
+            self.business_category == self.BusinessCategories.FOOD
+        )
+
     phone = models.CharField(max_length=30, blank=True, verbose_name='Телефон (+998)')
     
     # 6 Social Networks from Video

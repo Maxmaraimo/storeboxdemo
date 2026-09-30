@@ -57,6 +57,11 @@ def is_valid_translation(original: str, target_lang: str, translated: str, src_l
 
     # 3. Source and target differ, but output is identical to input
     if src_lang != target_lang and t_clean.lower() == orig_clean.lower():
+        # If target is Russian and text has multiple words or Uzbek characters, it cannot be identical
+        if target_lang == 'ru':
+            words = [w for w in re.split(r'\s+', t_clean) if any(c.isalpha() for c in w)]
+            if len(words) > 1 or re.search(r"[oO]['`ʻ]|[gG]['`ʻ]|sh|ch|yu|ya|yo|q|x", t_clean, re.I):
+                return False
         # Only brand names with ASCII letters (e.g. Nike, iPhone, Coca-Cola) can be identical
         if re.search(r'[\u0400-\u04FF\u4e00-\u9fff\u0600-\u06FF]', orig_clean):
             return False
@@ -98,6 +103,49 @@ def _save_to_disk_cache(text, target_lang, translated, src_lang='auto'):
 _load_disk_cache()
 
 CATALOG_DICT = {
+    # ---------------- Banners & Storefront Headlines ----------------
+    "yangi to'plam 2026": {
+        "uz": "Yangi To'plam 2026",
+        "ru": "Новая Коллекция 2026",
+        "en": "New Collection 2026",
+        "tr": "Yeni Koleksiyon 2026"
+    },
+    "yangi to'plam": {
+        "uz": "Yangi To'plam",
+        "ru": "Новая коллекция",
+        "en": "New Collection",
+        "tr": "Yeni Koleksiyon"
+    },
+    "luxe box & selektiv parfyumeriya": {
+        "uz": "Luxe Box & Selektiv Parfyumeriya",
+        "ru": "Luxe Box и Селективная Парфюмерия",
+        "en": "Luxe Box & Niche Perfumery",
+        "tr": "Lüks Kutu ve Seçkin Parfüm"
+    },
+    "crystall ami — samarqand, makon mall. eksklyuziv liboslar va nish parfyumeriya.": {
+        "uz": "Crystall Ami — Samarqand, Makon Mall. Eksklyuziv liboslar va nish parfyumeriya.",
+        "ru": "Crystall Ami — Самарканд, Makon Mall. Эксклюзивные образы и нишевая парфюмерия.",
+        "en": "Crystall Ami — Samarkand, Makon Mall. Exclusive dresses and niche perfumery.",
+        "tr": "Crystall Ami — Semerkant, Makon Mall. Özel elbiseler ve niş parfümler."
+    },
+    "sevimli insoningiz uchun hashamatli sovg'a to'plamlari va xushbo'y iforlar.": {
+        "uz": "Sevimli insoningiz uchun hashamatli sovg'a to'plamlari va xushbo'y iforlar.",
+        "ru": "Роскошные подарочные наборы и селективные ароматы для ваших близких.",
+        "en": "Luxury gift sets and signature fragrances for your loved ones.",
+        "tr": "Sevdikleriniz için lüks hediye setleri ve özel kokular."
+    },
+    "sovg'a boksini o'zingiz yig'ing": {
+        "uz": "Sovg'a boksini o'zingiz yig'ing",
+        "ru": "Соберите подарочный бокс сами",
+        "en": "Build your own gift box",
+        "tr": "Kendi hediye kutunuzu oluşturun"
+    },
+    "sevimli parfyum va premium qadoqni tanlang": {
+        "uz": "Sevimli parfyum va premium qadoqni tanlang",
+        "ru": "Выберите любимый парфюм и премиальную упаковку",
+        "en": "Choose your favorite perfume and premium packaging",
+        "tr": "Favori parfümünüzü ve premium ambalajı seçin"
+    },
     # ---------------- Categories ----------------
     "mevalar": {
         "uz": "Mevalar",
@@ -1442,13 +1490,13 @@ def get_reverse_catalog_index():
         _REVERSE_CATALOG_INDEX = idx
     return _REVERSE_CATALOG_INDEX
 
-def resolve_translation(text: str, lang: str = 'uz', fallback: str = '') -> str:
+def resolve_translation(text: str, lang: str = 'uz', fallback: str = None) -> str:
     """
     Looks up pre-translated clean terms for common catalog items across uz, ru, en, tr.
     Supports bidirectional lookups from any source language!
     """
     if not text:
-        return fallback or ''
+        return fallback
 
     norm_key = text.strip().lower().replace("'", "`").replace("’", "`").replace("ʻ", "`")
     rev_index = get_reverse_catalog_index()
@@ -1465,7 +1513,7 @@ def resolve_translation(text: str, lang: str = 'uz', fallback: str = '') -> str:
             if lang in entry and entry[lang]:
                 return entry[lang]
 
-    return fallback or text
+    return fallback
 
 def detect_text_language(text: str) -> str:
     """
