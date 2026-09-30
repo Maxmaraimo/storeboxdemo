@@ -165,7 +165,7 @@
                     </div>
 
                     <!-- The Phone Number Input with strict mask -->
-                    <div class="relative flex-1">
+                    <div class="relative flex-1 flex items-center">
                         <input type="tel" 
                                 id="phoneInputField"
                                 x-ref="phoneInput"
@@ -178,7 +178,14 @@
                                 :placeholder="selectedCountry.placeholder"
                                 :maxlength="(selectedCountry ? selectedCountry.placeholder.length : 15) + 1"
                                 autocomplete="tel-national"
-                                class="block w-full px-3.5 py-2.5 rounded-r-2xl bg-transparent text-slate-900 dark:text-white placeholder-slate-400 text-xs sm:text-sm font-semibold tracking-wide focus:outline-none">
+                                class="block w-full px-3.5 py-2.5 rounded-r-2xl bg-transparent text-slate-900 dark:text-white placeholder-slate-400 text-xs sm:text-sm font-semibold tracking-wide focus:outline-none pr-8">
+                        <template x-if="rawDigits">
+                            <button type="button" @click="clearPhone()"
+                                    class="absolute right-2 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                    title="Tozalash">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </template>
                     </div>
                 </div>
 
@@ -665,9 +672,77 @@ function phoneRegister() {
         },
 
         handleKeyDown(e) {
+            if (e.key === 'Backspace') {
+                const input = e.target;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                if (start === end && start > 0) {
+                    const val = input.value;
+                    const charBefore = val[start - 1];
+                    if (/\D/.test(charBefore)) {
+                        e.preventDefault();
+                        const digitsBefore = val.slice(0, start).replace(/\D/g, '');
+                        if (digitsBefore.length > 0) {
+                            const targetIdx = digitsBefore.length - 1;
+                            let arr = this.rawDigits.split('');
+                            arr.splice(targetIdx, 1);
+                            this.rawDigits = arr.join('');
+
+                            const formatted = this.displayValue;
+                            input.value = formatted;
+                            if (this.$refs.phoneInput) this.$refs.phoneInput.value = formatted;
+
+                            let count = 0;
+                            let newCursorPos = 0;
+                            if (targetIdx > 0) {
+                                for (let i = 0; i < formatted.length; i++) {
+                                    if (/\d/.test(formatted[i])) {
+                                        count++;
+                                        if (count === targetIdx) {
+                                            newCursorPos = i + 1;
+                                            break;
+                                        }
+                                    }
+                                }
+                            } else {
+                                const firstDigit = formatted.search(/\d/);
+                                newCursorPos = firstDigit >= 0 ? firstDigit : 0;
+                            }
+                            input.setSelectionRange(newCursorPos, newCursorPos);
+                        } else {
+                            this.clearPhone();
+                        }
+                    }
+                }
+                return;
+            } else if (e.key === 'Delete') {
+                const input = e.target;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                if (start === end && start < input.value.length) {
+                    const charAt = input.value[start];
+                    if (/\D/.test(charAt)) {
+                        e.preventDefault();
+                        const digitsBefore = input.value.slice(0, start).replace(/\D/g, '');
+                        const targetIdx = digitsBefore.length;
+                        if (targetIdx < this.rawDigits.length) {
+                            let arr = this.rawDigits.split('');
+                            arr.splice(targetIdx, 1);
+                            this.rawDigits = arr.join('');
+
+                            const formatted = this.displayValue;
+                            input.value = formatted;
+                            if (this.$refs.phoneInput) this.$refs.phoneInput.value = formatted;
+                            input.setSelectionRange(start, start);
+                        }
+                    }
+                }
+                return;
+            }
+
             // Allow control keys
             const allowed = [
-                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 
+                'ArrowLeft', 'ArrowRight', 'Tab', 
                 'Home', 'End', 'Enter'
             ];
             if (allowed.includes(e.key) || e.ctrlKey || e.metaKey) {
@@ -686,6 +761,21 @@ function phoneRegister() {
             if (!hasSelection && this.rawDigits.length >= this.selectedCountry.digits) {
                 e.preventDefault();
             }
+        },
+
+        clearPhone() {
+            this.rawDigits = '';
+            this.phoneError = '';
+            this.isPhoneVerified = false;
+            this.smsSent = false;
+            this.otpDigits = ['', '', '', ''];
+            this.$nextTick(() => {
+                if (this.$refs.phoneInput) {
+                    this.$refs.phoneInput.value = '';
+                    this.$refs.phoneInput.focus();
+                }
+                if (window.lucide) lucide.createIcons();
+            });
         },
 
         handleInput(e) {

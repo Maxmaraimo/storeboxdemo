@@ -1725,7 +1725,7 @@ def customer_verify_code_api(request, subdomain=None):
         from apps.accounts.models import SMSVerification
         SMSVerification.objects.update_or_create(
             phone_number=normalized_phone,
-            defaults={'is_verified': True, 'code': code, 'purpose': 'CUSTOMER_AUTH'}
+            defaults={'is_verified': True, 'code': code}
         )
 
         orders = Order.objects.filter(store=store).filter(

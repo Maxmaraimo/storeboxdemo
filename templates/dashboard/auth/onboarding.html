@@ -1511,7 +1511,77 @@
                 },
 
                 handlePhoneKeyDown(e) {
-                    const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'];
+                    if (e.key === 'Backspace') {
+                        const input = e.target;
+                        const start = input.selectionStart;
+                        const end = input.selectionEnd;
+                        if (start === end && start > 0) {
+                            const val = input.value;
+                            const charBefore = val[start - 1];
+                            if (/\D/.test(charBefore)) {
+                                e.preventDefault();
+                                const digitsBefore = val.slice(0, start).replace(/\D/g, '');
+                                if (digitsBefore.length > 0) {
+                                    const targetIdx = digitsBefore.length - 1;
+                                    let arr = this.rawPhoneDigits.split('');
+                                    arr.splice(targetIdx, 1);
+                                    this.rawPhoneDigits = arr.join('');
+
+                                    const formatted = this.phoneDisplayValue;
+                                    input.value = formatted;
+                                    if (this.$refs.phoneInput) this.$refs.phoneInput.value = formatted;
+
+                                    let count = 0;
+                                    let newCursorPos = 0;
+                                    if (targetIdx > 0) {
+                                        for (let i = 0; i < formatted.length; i++) {
+                                            if (/\d/.test(formatted[i])) {
+                                                count++;
+                                                if (count === targetIdx) {
+                                                    newCursorPos = i + 1;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        const firstDigit = formatted.search(/\d/);
+                                        newCursorPos = firstDigit >= 0 ? firstDigit : 0;
+                                    }
+                                    input.setSelectionRange(newCursorPos, newCursorPos);
+                                } else {
+                                    this.rawPhoneDigits = '';
+                                    input.value = '';
+                                    if (this.$refs.phoneInput) this.$refs.phoneInput.value = '';
+                                }
+                            }
+                        }
+                        return;
+                    } else if (e.key === 'Delete') {
+                        const input = e.target;
+                        const start = input.selectionStart;
+                        const end = input.selectionEnd;
+                        if (start === end && start < input.value.length) {
+                            const charAt = input.value[start];
+                            if (/\D/.test(charAt)) {
+                                e.preventDefault();
+                                const digitsBefore = input.value.slice(0, start).replace(/\D/g, '');
+                                const targetIdx = digitsBefore.length;
+                                if (targetIdx < this.rawPhoneDigits.length) {
+                                    let arr = this.rawPhoneDigits.split('');
+                                    arr.splice(targetIdx, 1);
+                                    this.rawPhoneDigits = arr.join('');
+
+                                    const formatted = this.phoneDisplayValue;
+                                    input.value = formatted;
+                                    if (this.$refs.phoneInput) this.$refs.phoneInput.value = formatted;
+                                    input.setSelectionRange(start, start);
+                                }
+                            }
+                        }
+                        return;
+                    }
+
+                    const allowed = ['ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'];
                     if (allowed.includes(e.key) || e.ctrlKey || e.metaKey) return;
                     if (!/^\d$/.test(e.key)) {
                         e.preventDefault();

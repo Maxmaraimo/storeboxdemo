@@ -200,10 +200,10 @@ class CheckoutSMSIntegrationTests(TestCase):
             'payment_method': Order.PaymentMethods.CASH,
         }
 
-        # Submitting without verification returns 200 with error
+        # Submitting without being logged in redirects to profile with ?next=...
         res = self.client.post(f'/store/{self.store.subdomain}/checkout/', data=post_data)
-        self.assertEqual(res.status_code, 200)
-        self.assertContains(res, 'SMS')
+        self.assertEqual(res.status_code, 302)
+        self.assertIn('/profile/', res.url)
         self.assertEqual(Order.objects.filter(customer_phone='+998941112233').count(), 0)
 
     @patch('apps.storefront.views.send_telegram_notification')
@@ -218,6 +218,8 @@ class CheckoutSMSIntegrationTests(TestCase):
         )
 
         session = self.client.session
+        session['customer_phone'] = phone
+        session['is_phone_verified'] = True
         session['cart'] = {
             f'{self.product.id}_': {
                 'product_id': self.product.id,

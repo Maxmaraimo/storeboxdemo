@@ -90,15 +90,31 @@
                         </div>
 
                         <!-- Masked input -->
-                        <input type="tel" @input="onPhoneInput($event)" required
+                        <input type="tel"
+                               id="customerPhoneInput"
+                               :value="formattedPhone"
+                               @input="onPhoneInput($event)"
+                               @keydown="onPhoneKeyDown($event)"
+                               required
                                :disabled="customerSmsSent"
                                :placeholder="selectedCountry.placeholder"
                                class="flex-1 px-3 py-3 bg-transparent text-xs font-mono font-bold text-slate-900 focus:outline-none placeholder:text-slate-400 disabled:opacity-75">
                         
+                        <!-- Quick Clear Button (when typing and not sent) -->
+                        <template x-if="rawPhoneDigits && !customerSmsSent">
+                            <button type="button" @click="clearPhone()"
+                                    class="mr-2 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                                    title="Tozalash">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </template>
+
+                        <!-- Change number button (when SMS sent) -->
                         <template x-if="customerSmsSent">
-                            <button type="button" @click="customerSmsSent = false; customerSmsCode = ''"
-                                    class="mr-3 px-2 py-1 text-[11px] font-bold text-brand hover:underline cursor-pointer">
-                                {% if current_lang == 'ru' %}Изменить{% else %}O'zgartirish{% endif %}
+                            <button type="button" @click="changePhoneNumber()"
+                                    class="mr-2.5 px-2.5 py-1 rounded-xl bg-brand/10 text-brand text-[11px] font-bold hover:bg-brand/20 transition-colors cursor-pointer shrink-0 flex items-center gap-1">
+                                <i data-lucide="pencil" class="w-3 h-3"></i>
+                                <span>{% if current_lang == 'ru' %}Изменить{% else %}O'zgartirish{% endif %}</span>
                             </button>
                         </template>
                     </div>
@@ -962,11 +978,123 @@ function customerProfileApp() {
         onPhoneInput(e) {
             let val = e.target.value;
             let digits = val.replace(/\D/g, '');
-            if (digits.startsWith(this.selectedCountry.code)) {
+            // Only strip country code prefix if entered with '+' or full international length
+            if (val.trim().startsWith('+') && digits.startsWith(this.selectedCountry.code)) {
+                digits = digits.slice(this.selectedCountry.code.length);
+            } else if (digits.length > this.selectedCountry.digits && digits.startsWith(this.selectedCountry.code)) {
                 digits = digits.slice(this.selectedCountry.code.length);
             }
             this.rawPhoneDigits = digits.slice(0, this.selectedCountry.digits);
             e.target.value = this.formattedPhone;
+            this.customerSmsError = '';
+        },
+
+        onPhoneKeyDown(e) {
+            const input = e.target;
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+
+            if (e.key === 'Backspace') {
+                if (start !== end) return;
+                if (start === 0) return;
+
+                const val = input.value;
+                const charBefore = val[start - 1];
+
+                // If character before cursor is punctuation (space, bracket, dash)
+                if (/\D/.test(charBefore)) {
+                    e.preventDefault();
+                    const digitsBefore = val.slice(0, start).replace(/\D/g, '');
+                    if (digitsBefore.length > 0) {
+                        const targetIdx = digitsBefore.length - 1;
+                        let arr = this.rawPhoneDigits.split('');
+                        arr.splice(targetIdx, 1);
+                        this.rawPhoneDigits = arr.join('');
+
+                        const newFormatted = this.formattedPhone;
+                        input.value = newFormatted;
+                        this.customerSmsError = '';
+
+                        // Position cursor accurately right after the preceding digit
+                        let count = 0;
+                        let newCursorPos = 0;
+                        if (targetIdx > 0) {
+                            for (let i = 0; i < newFormatted.length; i++) {
+                                if (/\d/.test(newFormatted[i])) {
+                                    count++;
+                                    if (count === targetIdx) {
+                                        newCursorPos = i + 1;
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            const firstDigit = newFormatted.search(/\d/);
+                            newCursorPos = firstDigit >= 0 ? firstDigit : 0;
+                        }
+                        input.setSelectionRange(newCursorPos, newCursorPos);
+                    } else {
+                        this.rawPhoneDigits = '';
+                        input.value = '';
+                        this.customerSmsError = '';
+                    }
+                }
+            } else if (e.key === 'Delete') {
+                if (start !== end) return;
+                const val = input.value;
+                if (start >= val.length) return;
+
+                const charAt = val[start];
+                if (/\D/.test(charAt)) {
+                    e.preventDefault();
+                    const digitsBefore = val.slice(0, start).replace(/\D/g, '');
+                    const targetIdx = digitsBefore.length;
+                    if (targetIdx < this.rawPhoneDigits.length) {
+                        let arr = this.rawPhoneDigits.split('');
+                        arr.splice(targetIdx, 1);
+                        this.rawPhoneDigits = arr.join('');
+
+                        const newFormatted = this.formattedPhone;
+                        input.value = newFormatted;
+                        this.customerSmsError = '';
+                        input.setSelectionRange(start, start);
+                    }
+                }
+            }
+        },
+
+        clearPhone() {
+            this.rawPhoneDigits = '';
+            this.customerSmsError = '';
+            this.$nextTick(() => {
+                const el = document.getElementById('customerPhoneInput');
+                if (el) {
+                    el.value = '';
+                    el.focus();
+                }
+                if (window.lucide) lucide.createIcons();
+            });
+        },
+
+        changePhoneNumber() {
+            this.customerSmsSent = false;
+            this.customerOtpDigits = ['', '', '', ''];
+            this.customerSmsCode = '';
+            this.customerSmsError = '';
+            this.customerSmsStatus = '';
+            if (this.customerSmsTimer) {
+                clearInterval(this.customerSmsTimer);
+                this.customerSmsTimer = null;
+            }
+            this.customerSmsCooldown = 0;
+            this.$nextTick(() => {
+                const el = document.getElementById('customerPhoneInput');
+                if (el) {
+                    el.focus();
+                    el.select();
+                }
+                if (window.lucide) lucide.createIcons();
+            });
         },
 
         selectCountry(c) {
@@ -1268,10 +1396,15 @@ function customerProfileApp() {
                         name: this.nameInput.trim()
                     })
                 });
-                const data = await res.json();
+                let data = {};
+                try {
+                    data = await res.json();
+                } catch (jsonErr) {
+                    data = { error: "Xatolik yuz berdi" };
+                }
                 if (res.ok && data.success) {
-                    localStorage.setItem('sb_cust_phone_{{ store.id }}', data.customer.phone);
-                    localStorage.setItem('sb_cust_name_{{ store.id }}', data.customer.name);
+                    localStorage.setItem('sb_cust_phone_{{ store.id }}', data.customer ? data.customer.phone : this.fullPhoneNumber);
+                    localStorage.setItem('sb_cust_name_{{ store.id }}', data.customer ? data.customer.name : this.nameInput.trim());
                     const nextUrl = new URLSearchParams(window.location.search).get('next');
                     if (nextUrl && nextUrl.startsWith('/')) {
                         window.location.href = nextUrl;
@@ -1280,9 +1413,15 @@ function customerProfileApp() {
                     }
                 } else {
                     this.customerSmsError = data.error || "Noto'g'ri tasdiqlash kodi";
+                    this.customerOtpDigits = ['', '', '', ''];
+                    this.customerSmsCode = '';
+                    this.$nextTick(() => {
+                        const first = document.getElementById('cust_otp_0');
+                        if (first) first.focus();
+                    });
                 }
             } catch (err) {
-                this.customerSmsError = "Server bilan aloqa uzildi.";
+                this.customerSmsError = "Server bilan aloqa uzildi. Iltimos qaytadan urinib ko'ring.";
             } finally {
                 this.customerSmsLoading = false;
             }

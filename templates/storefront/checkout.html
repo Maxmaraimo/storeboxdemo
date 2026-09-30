@@ -239,10 +239,20 @@
                                x-ref="phoneInput"
                                :value="formattedPhone"
                                @input="onPhoneInput($event)"
+                               @keydown="onPhoneKeyDown($event)"
                                required
                                :placeholder="selectedCountry.placeholder"
                                class="flex-1 px-3.5 py-3 bg-transparent text-slate-900 text-xs font-mono font-bold focus:outline-none placeholder:text-slate-300">
                         
+                        <!-- Quick Clear Button (when typing) -->
+                        <template x-if="rawPhoneDigits">
+                            <button type="button" @click="clearPhone()"
+                                    class="mr-2 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                                    title="Tozalash">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </template>
+
                         <!-- Validation Check Icon -->
                         <div class="flex items-center pr-3 pointer-events-none" x-show="isPhoneComplete">
                             <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
@@ -1294,8 +1304,10 @@
             onPhoneInput(e) {
                 let val = e.target.value;
                 let digits = val.replace(/\D/g, '');
-                // If user pasted or typed with country dialCode
-                if (digits.startsWith(this.selectedCountry.code)) {
+                // Only strip country code prefix if entered with '+' or full international length
+                if (val.trim().startsWith('+') && digits.startsWith(this.selectedCountry.code)) {
+                    digits = digits.slice(this.selectedCountry.code.length);
+                } else if (digits.length > this.selectedCountry.digits && digits.startsWith(this.selectedCountry.code)) {
                     digits = digits.slice(this.selectedCountry.code.length);
                 }
                 const oldDigits = this.rawPhoneDigits;
@@ -1310,6 +1322,114 @@
                     this.smsError = '';
                     this.smsSuccess = '';
                 }
+            },
+
+            onPhoneKeyDown(e) {
+                const input = e.target;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+
+                if (e.key === 'Backspace') {
+                    if (start !== end) return;
+                    if (start === 0) return;
+
+                    const val = input.value;
+                    const charBefore = val[start - 1];
+
+                    // If character before cursor is punctuation (space, bracket, dash)
+                    if (/\D/.test(charBefore)) {
+                        e.preventDefault();
+                        const digitsBefore = val.slice(0, start).replace(/\D/g, '');
+                        if (digitsBefore.length > 0) {
+                            const targetIdx = digitsBefore.length - 1;
+                            let arr = this.rawPhoneDigits.split('');
+                            arr.splice(targetIdx, 1);
+                            const oldDigits = this.rawPhoneDigits;
+                            this.rawPhoneDigits = arr.join('');
+
+                            const newFormatted = this.formattedPhone;
+                            input.value = newFormatted;
+                            this.phoneError = '';
+                            if (oldDigits !== this.rawPhoneDigits) {
+                                this.isPhoneVerified = false;
+                                this.smsSent = false;
+                                this.smsCodeDigits = ['', '', '', ''];
+                                this.otpStatus = 'idle';
+                                this.smsError = '';
+                                this.smsSuccess = '';
+                            }
+
+                            // Position cursor accurately right after the preceding digit
+                            let count = 0;
+                            let newCursorPos = 0;
+                            if (targetIdx > 0) {
+                                for (let i = 0; i < newFormatted.length; i++) {
+                                    if (/\d/.test(newFormatted[i])) {
+                                        count++;
+                                        if (count === targetIdx) {
+                                            newCursorPos = i + 1;
+                                            break;
+                                        }
+                                    }
+                                }
+                            } else {
+                                const firstDigit = newFormatted.search(/\d/);
+                                newCursorPos = firstDigit >= 0 ? firstDigit : 0;
+                            }
+                            input.setSelectionRange(newCursorPos, newCursorPos);
+                        } else {
+                            this.clearPhone();
+                        }
+                    }
+                } else if (e.key === 'Delete') {
+                    if (start !== end) return;
+                    const val = input.value;
+                    if (start >= val.length) return;
+
+                    const charAt = val[start];
+                    if (/\D/.test(charAt)) {
+                        e.preventDefault();
+                        const digitsBefore = val.slice(0, start).replace(/\D/g, '');
+                        const targetIdx = digitsBefore.length;
+                        if (targetIdx < this.rawPhoneDigits.length) {
+                            let arr = this.rawPhoneDigits.split('');
+                            arr.splice(targetIdx, 1);
+                            const oldDigits = this.rawPhoneDigits;
+                            this.rawPhoneDigits = arr.join('');
+
+                            const newFormatted = this.formattedPhone;
+                            input.value = newFormatted;
+                            this.phoneError = '';
+                            if (oldDigits !== this.rawPhoneDigits) {
+                                this.isPhoneVerified = false;
+                                this.smsSent = false;
+                                this.smsCodeDigits = ['', '', '', ''];
+                                this.otpStatus = 'idle';
+                                this.smsError = '';
+                                this.smsSuccess = '';
+                            }
+                            input.setSelectionRange(start, start);
+                        }
+                    }
+                }
+            },
+
+            clearPhone() {
+                this.rawPhoneDigits = '';
+                this.phoneError = '';
+                this.isPhoneVerified = false;
+                this.smsSent = false;
+                this.smsCodeDigits = ['', '', '', ''];
+                this.otpStatus = 'idle';
+                this.smsError = '';
+                this.smsSuccess = '';
+                this.$nextTick(() => {
+                    if (this.$refs.phoneInput) {
+                        this.$refs.phoneInput.value = '';
+                        this.$refs.phoneInput.focus();
+                    }
+                    if (window.lucide) lucide.createIcons();
+                });
             },
 
             initPhone() {
