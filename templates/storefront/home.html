@@ -51,10 +51,10 @@
         
         <!-- Slides Track Card Container -->
         <div class="relative rounded-[20px] sm:rounded-[36px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-slate-900/10">
-            <div id="bannerTrack" class="bannerTrack flex transition-transform duration-500 ease-out"
+            <div id="bannerTrack" class="bannerTrack w-full flex flex-nowrap transition-transform duration-500 ease-out"
                  :style="`transform: translateX(-${slide * 100}%);`">
                 {% for b in banners %}
-                <div class="w-full shrink-0 relative px-4 py-5 sm:px-10 sm:py-12 md:px-14 md:py-14 text-white min-h-[160px] sm:min-h-[260px] md:min-h-[300px] flex items-center justify-between overflow-hidden"
+                <div class="w-full min-w-full flex-shrink-0 shrink-0 relative px-4 py-5 sm:px-10 sm:py-12 md:px-14 md:py-14 text-white min-h-[160px] sm:min-h-[260px] md:min-h-[300px] flex items-center justify-between overflow-hidden"
                      data-store-banner-container
                      style="{% if b.display_image_url or b.image or b.image_url %}background: linear-gradient(90deg, #090d16 0%, rgba(9, 13, 22, 0.92) 42%, rgba(9, 13, 22, 0.45) 72%, rgba(9, 13, 22, 0.15) 100%), url('{% if b.display_image_url %}{{ b.display_image_url|safe }}{% elif b.image %}{{ b.image.url|safe }}{% else %}{{ b.image_url|safe }}{% endif %}') center right / cover no-repeat;{% else %}background: linear-gradient(135deg, {% if store.primary_color %}{{ store.primary_color }}{% else %}#0f172a{% endif %} 0%, #1e293b 50%, #090d16 100%);{% endif %}">
                     
@@ -116,69 +116,7 @@
     </div>
     {% endif %}
 
-    <!-- TEMPLATE SPECIFIC DISTINCT SECTIONS -->
-    {% if store.is_restaurant or store.theme_template == 'restaurant' %}
-    <!-- 1. RESTAURANT SERVICE & DELIVERY CONTROLS -->
-    <div class="rounded-3xl p-4 sm:p-5 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-3.5">
-        <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
-                    <i data-lucide="utensils" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <div class="font-black text-slate-900 flex items-center gap-2">
-                        {% with status=store.is_currently_open %}
-                        {% if status.0 %}
-                        <span class="inline-flex items-center gap-1.5 text-emerald-600 font-black">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            {{ status.1 }}
-                        </span>
-                        {% else %}
-                        <span class="inline-flex items-center gap-1.5 text-rose-600 font-black">
-                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                            {{ status.1 }}
-                        </span>
-                        {% endif %}
-                        {% endwith %}
-                        <span class="text-slate-300">&bull;</span>
-                        <span class="text-slate-600 font-bold">09:00 &mdash; 23:00</span>
-                    </div>
-                    <div class="text-[11px] text-slate-400 font-medium mt-0.5 flex items-center gap-1.5">
-                        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
-                        <span>{% if current_lang == 'ru' %}Доставка: {{ store.delivery_time_estimate|default:"30-45 минут" }}{% elif current_lang == 'en' %}Delivery: {{ store.delivery_time_estimate|default:"30-45 min" }}{% elif current_lang == 'tr' %}Teslimat: {{ store.delivery_time_estimate|default:"30-45 dk" }}{% else %}Yetkazib berish: {{ store.delivery_time_estimate|default:"30-45 daqiqa" }}{% endif %}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Order Mode: Delivery / Pickup selector -->
-            <div class="flex items-center p-1 rounded-2xl bg-slate-100 border border-slate-200/70 text-xs font-bold" x-data="{ orderMode: 'delivery' }">
-                <button type="button" @click="orderMode = 'delivery'" :class="orderMode === 'delivery' ? 'bg-white text-slate-950 shadow-2xs' : 'text-slate-500 hover:text-slate-800'" class="px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer">
-                    <i data-lucide="bike" class="w-3.5 h-3.5 text-amber-500"></i>
-                    <span>{% if current_lang == 'ru' %}Доставка{% elif current_lang == 'en' %}Delivery{% elif current_lang == 'tr' %}Teslimat{% else %}Yetkazib berish{% endif %}</span>
-                </button>
-                <button type="button" @click="orderMode = 'pickup'" :class="orderMode === 'pickup' ? 'bg-white text-slate-950 shadow-2xs' : 'text-slate-500 hover:text-slate-800'" class="px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer">
-                    <i data-lucide="store" class="w-3.5 h-3.5 text-amber-500"></i>
-                    <span>{% if current_lang == 'ru' %}Самовывоз{% elif current_lang == 'en' %}Pickup{% elif current_lang == 'tr' %}Gel-Al{% else %}Olib ketish{% endif %}</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-500 font-semibold">
-            <div class="flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>{% if current_lang == 'ru' %}Бесплатная доставка от {{ store.free_delivery_threshold|floatformat:0 }} UZS{% elif current_lang == 'en' %}Free delivery from {{ store.free_delivery_threshold|floatformat:0 }} UZS{% elif current_lang == 'tr' %}{{ store.free_delivery_threshold|floatformat:0 }} UZS üzeri ücretsiz teslimat{% else %}{{ store.free_delivery_threshold|floatformat:0 }} UZS dan bepul yetkazish{% endif %}</span>
-            </div>
-            <div class="flex items-center gap-4 text-slate-600">
-                <span class="flex items-center gap-1"><i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i> {% if current_lang == 'ru' %}Термоупаковка{% elif current_lang == 'en' %}Hot packaging{% elif current_lang == 'tr' %}Sıcak paketleme{% else %}Issiq qadoqlash{% endif %}</span>
-                <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> {% if current_lang == 'ru' %}100% Халяль{% elif current_lang == 'en' %}100% Halal{% elif current_lang == 'tr' %}%100 Helal{% else %}100% Halol{% endif %}</span>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-
     <!-- VISUAL CATEGORIES SECTION: SQUIRCLE PHOTO CAROUSEL & PILL CHIPS (Robosell & Grocery App Reference) -->
-    <!-- VISUAL CATEGORIES SECTION: SQUIRCLE PHOTO CAROUSEL & PILL CHIPS (Centered if few, scrollable if many) -->
     {% if not search_q and categories %}
     <div class="space-y-3" x-data="{
         isOverflowing: false,
@@ -199,12 +137,7 @@
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <h3 class="text-sm font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight flex items-center gap-1.5">
-                    {% if store.theme_template == 'restaurant' %}
-                        <i data-lucide="utensils" class="w-4 h-4 text-amber-500"></i>
-                        <span>{{ t.restaurant_sections|default:"Taomlar Bo'limlari" }}</span>
-                    {% else %}
-                        {{ t.categories|default:"Kategoriyalar" }}
-                    {% endif %}
+                    {{ t.categories|default:"Katalog" }}
                 </h3>
                 <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">{{ categories|length }} {{ t.items_unit|default:"ta" }}</span>
             </div>
@@ -220,12 +153,11 @@
             </div>
         </div>
 
-        <!-- SQUIRCLE PHOTO CAROUSEL: Centered if few/not overflowing, scrollable from start if overflowing -->
+        <!-- SQUIRCLE PHOTO CAROUSEL: Left-aligned and compact, exactly matching burger-co.storebox.uz -->
         <div x-ref="catSlider"
-             :class="isOverflowing ? 'justify-start' : 'justify-center'"
-             class="flex items-start gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-2 px-2 sm:mx-0 sm:px-0 scroll-smooth transition-all duration-200">
+             class="flex items-start gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-2 px-2 sm:mx-0 sm:px-0 scroll-smooth transition-all duration-200 justify-start">
             <!-- All Categories ('Barchasi') Squircle Card -->
-            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if request.GET.preview %}?preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% if request.GET.template %}&template={{ request.GET.template }}{% endif %}{% elif request.GET.template %}?template={{ request.GET.template }}{% endif %}"
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
                 <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if not current_category and not request.GET.constructor %}active-category-pill{% else %}bg-white text-slate-700 border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
                     <i data-lucide="layout-grid" class="w-4 h-4 sm:w-5 sm:h-5"></i>
@@ -235,29 +167,20 @@
                 </span>
             </a>
 
-            <!-- Constructor Special Tab ("Собери сам / Конструктор") -->
-            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-               @click="if (window.sbOpenConstructor) { $event.preventDefault(); window.sbOpenConstructor(); }"
+            <!-- Constructor Special Tab ("Собери сам / O'zing ter") with wand-2 icon -->
+            <a href="{% if request.GET.constructor %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}{% else %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}?constructor=1{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}{% endif %}"
                class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
-                <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border"
-                     style="{% if request.GET.constructor %}background-color: var(--brand-color); color: #ffffff; border-color: var(--brand-color); box-shadow: 0 4px 16px color-mix(in srgb, var(--brand-color) 32%, transparent);{% else %}background-color: color-mix(in srgb, var(--brand-color) 10%, #ffffff); color: var(--brand-color); border-color: color-mix(in srgb, var(--brand-color) 30%, transparent); box-shadow: 0 2px 8px color-mix(in srgb, var(--brand-color) 12%, transparent);{% endif %}">
-                    {% if store.is_restaurant or store.theme_template == 'restaurant' %}
+                <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if request.GET.constructor %}active-category-pill{% else %}bg-gradient-to-br from-amber-50 to-orange-50 text-amber-600 border-amber-200/80 shadow-[0_2px_8px_rgba(245,158,11,0.12)] hover:border-amber-400{% endif %}">
                     <i data-lucide="wand-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
-                    {% elif store.theme_template == 'boutique' %}
-                    <i data-lucide="gift" class="w-4 h-4 sm:w-5 sm:h-5"></i>
-                    {% else %}
-                    <i data-lucide="wand-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
-                    {% endif %}
                 </div>
-                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5"
-                      style="{% if request.GET.constructor %}color: var(--brand-color); font-weight: 900;{% endif %}">
-                    {% if current_lang == 'ru' %}{% if store.is_restaurant or store.theme_template == 'restaurant' %}Конструктор{% elif store.theme_template == 'boutique' %}Собери бокс{% else %}Собери сам{% endif %}{% elif current_lang == 'en' %}{% if store.is_restaurant or store.theme_template == 'restaurant' %}Customizer{% elif store.theme_template == 'boutique' %}Build Box{% else %}Customizer{% endif %}{% else %}{% if store.is_restaurant or store.theme_template == 'restaurant' %}Konstruktor{% elif store.theme_template == 'boutique' %}Boks yig'ish{% else %}O'zing ter{% endif %}{% endif %}
+                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5 {% if request.GET.constructor %}text-slate-950 font-black{% else %}text-slate-700 group-hover:text-amber-600 font-bold{% endif %}">
+                    {% if current_lang == 'ru' %}Собери сам{% elif current_lang == 'en' %}Build yourself{% else %}O'zing ter{% endif %}
                 </span>
             </a>
 
             <!-- Each Category as a Squircle Photo Card -->
             {% for cat in categories %}
-            <a href="?cat={{ cat.slug }}{% if request.GET.preview %}&preview=1{% if request.GET.preview_niche %}&preview_niche={{ request.GET.preview_niche }}{% endif %}{% if request.GET.force_preview %}&force_preview=1{% endif %}{% if request.GET.template %}&template={{ request.GET.template }}{% endif %}{% elif request.GET.template %}?template={{ request.GET.template }}&cat={{ cat.slug }}{% endif %}"
+            <a href="?cat={{ cat.slug }}{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}"
                class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
                 <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] overflow-hidden relative transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if current_category.id == cat.id or current_category.slug == cat.slug %}active-category-pill{% else %}border-slate-200/80 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
                     {% if cat.primary_image_url %}
@@ -268,7 +191,7 @@
                     </div>
                     {% endif %}
                 </div>
-                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5 line-clamp-2 {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
+                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5 line-clamp-2 break-words {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
                     {{ cat.display_name }}
                 </span>
             </a>
@@ -426,9 +349,9 @@
                         {% if product.has_constructor %}
                         <button type="button" @click="openConstructor({{ product.id }})"
                                 data-constructor-product-id="{{ product.id }}"
-                                class="px-2.5 py-1.5 rounded-full btn-brand text-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] flex items-center gap-1 active:scale-95 transition-transform text-[11px] font-bold cursor-pointer">
-                            <i data-lucide="{% if store.theme_template == 'boutique' %}gift{% else %}wand-2{% endif %}" class="w-3.5 h-3.5 text-white"></i>
-                            <span>{% if current_lang == 'uz' %}Yig'ish{% else %}Собрать{% endif %}</span>
+                                class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full {% if store.is_restaurant or store.theme_template == 'restaurant' %}bg-[#18181B] hover:bg-black text-white{% else %}btn-brand text-white{% endif %} shadow-[0_2px_8px_rgba(0,0,0,0.18)] flex items-center gap-1.5 active:scale-95 transition-transform text-[11px] sm:text-xs font-bold cursor-pointer">
+                            <i data-lucide="wand-2" class="w-3.5 h-3.5 {% if store.is_restaurant or store.theme_template == 'restaurant' %}text-amber-400{% else %}text-white{% endif %}"></i>
+                            <span>{% if current_lang == 'ru' %}Собрать{% elif current_lang == 'en' %}Build{% else %}Yig'ish{% endif %}</span>
                         </button>
                         {% else %}
                         <template x-if="!cartItems['{{ product.id }}_0']">
@@ -594,9 +517,9 @@
                             {% if product.has_constructor %}
                             <button type="button" @click="openConstructor({{ product.id }})"
                                     data-constructor-product-id="{{ product.id }}"
-                                    class="px-2.5 sm:px-3 py-1.5 rounded-full btn-brand text-white font-bold text-[11px] sm:text-xs shadow-md active:scale-90 transition-all flex items-center gap-1 cursor-pointer">
-                                <i data-lucide="{% if store.theme_template == 'boutique' %}gift{% else %}wand-2{% endif %}" class="w-3 h-3 text-white"></i>
-                                <span>{% if current_lang == 'uz' %}Yig'ish{% else %}Собрать{% endif %}</span>
+                                    class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full {% if store.is_restaurant or store.theme_template == 'restaurant' %}bg-[#18181B] hover:bg-black text-white{% else %}btn-brand text-white{% endif %} font-bold text-[11px] sm:text-xs shadow-md active:scale-90 transition-all flex items-center gap-1.5 cursor-pointer">
+                                <i data-lucide="wand-2" class="w-3.5 h-3.5 {% if store.is_restaurant or store.theme_template == 'restaurant' %}text-amber-400{% else %}text-white{% endif %}"></i>
+                                <span>{% if current_lang == 'ru' %}Собрать{% elif current_lang == 'en' %}Build{% else %}Yig'ish{% endif %}</span>
                             </button>
                             {% else %}
                             <template x-if="!cartItems['{{ product.id }}_0']">
@@ -735,17 +658,18 @@
     <!-- Two separate pills on left & right with open space in middle  -->
     <!-- ============================================================= -->
     <div x-show="cartCount > 0" x-cloak
-         class="fixed bottom-[72px] sm:bottom-6 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
+         class="fixed bottom-[62px] sm:bottom-6 left-3 right-3 z-30 flex items-center justify-between pointer-events-none"
+         style="bottom: 62px;">
         
         <!-- Left: Compact Frosted Glass Delivery Pill -->
-        <div class="pointer-events-auto bg-white/80 backdrop-blur-xl border border-white/60 shadow-[0_6px_20px_rgba(0,0,0,0.08)] rounded-full px-3 py-1.5 flex items-center gap-2 max-w-[210px]">
+        <div class="pointer-events-auto bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_6px_20px_rgba(0,0,0,0.08)] rounded-full px-3 py-1.5 flex items-center gap-2 max-w-[190px]">
             <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
                 <i data-lucide="bike" class="w-3 h-3 stroke-[2.2]"></i>
             </span>
             <div class="min-w-0">
                 <span class="text-[11px] font-bold text-slate-800 whitespace-nowrap block leading-tight"
                       :class="deliveryFee === 0 ? 'text-emerald-700' : 'text-slate-800'"
-                      x-text="deliveryFee === 0 ? '{{ t.delivery_badge_free|default:"Доставка: Бесплатно" }}' : ('{% if current_lang == "ru" %}Доставка: {% elif current_lang == "en" %}Delivery: {% else %}Yetkazish: {% endif %}' + formatMoney(deliveryFee))"></span>
+                      x-text="deliveryFee === 0 ? '{% if current_lang == "ru" %}0 сум (Бесплатно){% elif current_lang == "en" %}0 UZS (Free){% else %}0 UZS (Bepul){% endif %}' : formatMoney(deliveryFee)"></span>
                 <!-- Mini progress line -->
                 <div class="w-12 bg-slate-200/80 h-1 rounded-full overflow-hidden mt-0.5" x-show="freeThreshold > 0">
                     <div class="bg-emerald-500 h-full rounded-full transition-all duration-300"
@@ -937,10 +861,7 @@
                 if (name.includes('lavash') || name.includes('shaurma') || name.includes('shawarma') || name.includes('doner') || name.includes('wrap') || name.includes('лаваш') || name.includes('шаурма') || name.includes('донер')) {
                     return 'shawarma';
                 }
-                if (name.includes('burger') || name.includes('chizburger') || name.includes('gamburger') || name.includes('бургер') || name.includes('чизбургер') || name.includes('гамбургер')) {
-                    return 'burger';
-                }
-                return 'food';
+                return 'burger';
             },
 
             get constructorStyleSectionTitle() {
@@ -950,11 +871,6 @@
                     if (lang === 'ru') return 'Стиль лаваша';
                     if (lang === 'en') return 'Shawarma style';
                     return 'Lavash uslubi';
-                }
-                if (type === 'burger') {
-                    if (lang === 'ru') return 'Стиль бургера';
-                    if (lang === 'en') return 'Burger style';
-                    return 'Burger uslubi';
                 }
                 if (lang === 'ru') return 'Стиль блюда';
                 if (lang === 'en') return 'Dish style';
@@ -1162,14 +1078,14 @@
             },
 
             isConstructorRemoved(id) {
-                return this.constructorRemovedIngredients.includes(id);
+                return this.constructorRemovedIngredients.some(x => String(x) === String(id));
             },
 
             toggleConstructorRemoved(id) {
                 if (this.isConstructorRemoved(id)) {
-                    this.constructorRemovedIngredients = this.constructorRemovedIngredients.filter(x => x !== id);
+                    this.constructorRemovedIngredients = this.constructorRemovedIngredients.filter(x => String(x) !== String(id));
                 } else {
-                    this.constructorRemovedIngredients.push(id);
+                    this.constructorRemovedIngredients.push(String(id));
                 }
             },
 
@@ -1257,6 +1173,15 @@
             },
 
             init() {
+                window.addEventListener('cart-updated', (e) => {
+                    if (e.detail && e.detail.cart) {
+                        this.cartItems = e.detail.cart;
+                        this.$nextTick(() => {
+                            if (window.lucide) window.lucide.createIcons();
+                        });
+                    }
+                });
+
                 window.sbOpenConstructor = () => {
                     const firstCBtn = document.querySelector('[data-constructor-product-id]');
                     if (firstCBtn) {
@@ -1275,10 +1200,6 @@
                 const openC = urlParams.get('open_constructor');
                 if (openC) {
                     this.openConstructor(openC);
-                } else if (urlParams.get('constructor') === '1') {
-                    this.$nextTick(() => {
-                        window.sbOpenConstructor();
-                    });
                 }
             },
 
@@ -1444,7 +1365,7 @@
 
                 const rawRemovables = this.constructorProductRemovables || [];
                 const removedNames = rawRemovables
-                    .filter(r => this.constructorRemovedIngredients.includes(r.id))
+                    .filter(r => this.constructorRemovedIngredients.some(x => String(x) === String(r.id)))
                     .map(r => `{% if current_lang == "ru" %}Без{% else %}siz{% endif %} ${r.name || r.name_ru || r.name_uz}`);
 
                 const summaryParts = [];

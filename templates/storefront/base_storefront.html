@@ -202,7 +202,7 @@
         <!-- TOP STOREBOX BADGE STRIP (Video 05:27) -->
         <div class="bg-slate-950 text-slate-300 text-[10.5px] py-1 px-4 text-center font-medium tracking-wider flex items-center justify-center gap-1.5 border-b border-white/[0.06]">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>StoreBox platformasida yaratilgan</span>
+            <span>{% if current_lang == 'ru' %}Создано на платформе StoreBox{% elif current_lang == 'en' %}Created on StoreBox platform{% elif current_lang == 'tr' %}StoreBox platforması ile oluşturuldu{% else %}StoreBox platformasida yaratilgan{% endif %}</span>
         </div>
 
         <!-- MAIN STOREFRONT HEADER (Luxury Glassmorphic & Minimalist Style) -->
@@ -263,18 +263,11 @@
                     <!-- RIGHT CONTROLS: Clean Mobile Header (Lang + Cart) & Desktop Controls -->
                     <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
                         <!-- Constructor / Customizer Button (Desktop - Sleek Round Icon) -->
-                        <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-                           @click="if (window.sbOpenConstructor) { $event.preventDefault(); window.sbOpenConstructor(); }"
-                           title="{% if store.is_restaurant or store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Конструктор блюд{% elif current_lang == 'en' %}Burger / Food Builder{% else %}Taom konstruktori{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}{% endif %}"
-                           class="hidden sm:flex items-center justify-center w-8.5 h-8.5 rounded-full border transition-all shadow-2xs group active:scale-95 cursor-pointer"
-                           style="background-color: color-mix(in srgb, var(--brand-color) 12%, #ffffff); border-color: color-mix(in srgb, var(--brand-color) 35%, transparent); color: var(--brand-color);">
-                            {% if store.is_restaurant or store.theme_template == 'restaurant' %}
-                                <i data-lucide="wand-2" class="w-4.5 h-4.5 group-hover:rotate-12 transition-transform"></i>
-                            {% elif store.theme_template == 'boutique' %}
-                                <i data-lucide="sparkles" class="w-4.5 h-4.5 group-hover:scale-110 transition-transform"></i>
-                            {% else %}
-                                <i data-lucide="sliders-horizontal" class="w-4.5 h-4.5 group-hover:scale-110 transition-transform"></i>
-                            {% endif %}
+                        <a href="{% if request.GET.constructor %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}{% else %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}?constructor=1{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}{% endif %}"
+                           title="{% if store.is_restaurant or store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Собери сам{% elif current_lang == 'en' %}Build yourself{% else %}O'zing ter{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Собери сам{% elif current_lang == 'en' %}Build yourself{% else %}O'zing ter{% endif %}{% endif %}"
+                           class="hidden sm:flex items-center justify-center w-8.5 h-8.5 rounded-full border transition-all shadow-2xs group active:scale-95 cursor-pointer {% if request.GET.constructor %}bg-brand text-white border-brand{% endif %}"
+                           style="{% if not request.GET.constructor %}background-color: color-mix(in srgb, var(--brand-color) 12%, #ffffff); border-color: color-mix(in srgb, var(--brand-color) 35%, transparent); color: var(--brand-color);{% endif %}">
+                            <i data-lucide="wand-2" class="w-4.5 h-4.5 group-hover:scale-110 transition-transform"></i>
                         </a>
 
                         <!-- Wishlist (Sevimlilar - Desktop Only) -->
@@ -1223,16 +1216,16 @@
                         <span>{{ t.language|default:"Til" }}</span>
                     </div>
                     <div class="grid grid-cols-4 gap-1 px-1">
-                        <a href="?lang=uz" @click.prevent="switchStoreLanguage('uz', $event)" class="py-1.5 px-1 rounded-xl text-xs font-bold text-center border {% if current_lang == 'uz' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
+                        <a href="?lang=uz" @click.prevent="sideDrawerOpen = false; switchStoreLanguage('uz', $event)" class="py-1.5 px-1 rounded-xl text-xs font-bold text-center border {% if current_lang == 'uz' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
                             UZ
                         </a>
-                        <a href="?lang=ru" @click.prevent="switchStoreLanguage('ru', $event)" class="py-1.5 px-1 rounded-xl text-xs font-bold text-center border {% if current_lang == 'ru' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
+                        <a href="?lang=ru" @click.prevent="sideDrawerOpen = false; switchStoreLanguage('ru', $event)" class="py-1.5 px-1 rounded-xl text-xs font-bold text-center border {% if current_lang == 'ru' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
                             RU
                         </a>
-                        <a href="?lang=en" @click.prevent="switchStoreLanguage('en', $event)" class="py-1.5 px-1 rounded-xl text-xs font-bold text-center border {% if current_lang == 'en' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
+                        <a href="?lang=en" @click.prevent="sideDrawerOpen = false; switchStoreLanguage('en', $event)" class="py-1.5 px-1 rounded-xl text-xs font-bold text-center border {% if current_lang == 'en' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
                             EN
                         </a>
-                        <a href="?lang=tr" @click.prevent="switchStoreLanguage('tr', $event)" class="py-1.5 px-1 rounded-xl text-xs font-bold text-center border {% if current_lang == 'tr' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
+                        <a href="?lang=tr" @click.prevent="sideDrawerOpen = false; switchStoreLanguage('tr', $event)" class="py-1.5 px-1 rounded-xl text-xs font-bold text-center border {% if current_lang == 'tr' %}border-brand bg-brand/5 text-brand{% else %}border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
                             TR
                         </a>
                     </div>
@@ -1248,7 +1241,7 @@
                 </a>
                 {% endif %}
                 <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1">
-                    <span>StoreBox platformasi</span>
+                    <span>{% if current_lang == 'ru' %}Платформа StoreBox{% elif current_lang == 'en' %}StoreBox platform{% elif current_lang == 'tr' %}StoreBox platforması{% else %}StoreBox platformasi{% endif %}</span>
                     <span>v2.0</span>
                 </div>
             </div>
@@ -1407,18 +1400,11 @@
                     <i data-lucide="layout-grid" class="w-4.5 h-4.5 stroke-[1.8]"></i>
                 </button>
 
-                <!-- 3. Burger / Product Constructor (Build Your Own) -->
-                <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-                   @click="if (window.sbOpenConstructor) { $event.preventDefault(); window.sbOpenConstructor(); }"
-                   title="{% if store.is_restaurant or store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Конструктор блюд{% elif current_lang == 'en' %}Burger / Food Builder{% else %}Taom konstruktori{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Customizer{% else %}Konstruktor{% endif %}{% endif %}"
-                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
-                    {% if store.is_restaurant or store.theme_template == 'restaurant' %}
-                    <i data-lucide="wand-2" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
-                    {% elif store.theme_template == 'boutique' %}
-                    <i data-lucide="sparkles" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
-                    {% else %}
-                    <i data-lucide="sliders-horizontal" class="w-4.5 h-4.5 {% if 'constructor' in url or request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
-                    {% endif %}
+                <!-- 3. Product Constructor (Magic Wand - Consistent across all stores) -->
+                <a href="{% if request.GET.constructor %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}{% else %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}?constructor=1{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}{% endif %}"
+                   title="{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Constructor{% else %}Konstruktor{% endif %}"
+                   class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if request.GET.constructor or request.GET.open_constructor %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
+                    <i data-lucide="wand-2" class="w-4.5 h-4.5 {% if request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
                 </a>
 
                 <!-- 4. Cart (with dynamic count badge) -->

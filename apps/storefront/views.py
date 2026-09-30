@@ -986,8 +986,8 @@ def cart_add_view(request, subdomain=None):
     if variation_id:
         variation = product.variations.filter(id=variation_id, is_active=True).first()
 
-    lang = getattr(request, 'language', 'ru')
-    name = product.get_name(lang)
+    lang = get_storefront_lang(request, getattr(request, 'store', None))
+    name = product.get_name(lang) if hasattr(product, 'get_name') else (getattr(product, f'name_{lang}', None) or getattr(product, 'name_uz', '') or getattr(product, 'name_ru', ''))
 
     cart = request.session.get('cart', {})
     custom_options = data.get('custom_options')
@@ -1911,6 +1911,21 @@ def cart_page_view(request, subdomain=None):
     store._current_lang = lang
 
     cart = request.session.get('cart', {})
+    for item in cart.values():
+        pid = item.get('product_id')
+        if pid:
+            try:
+                prod = Product.objects.filter(id=pid, is_active=True).first()
+                if prod:
+                    item['name'] = prod.get_name(lang) if hasattr(prod, 'get_name') else (getattr(prod, f'name_{lang}', None) or getattr(prod, 'name_uz', '') or getattr(prod, 'name_ru', ''))
+                    vid = item.get('variation_id')
+                    if vid:
+                        var = prod.variations.filter(id=vid, is_active=True).first()
+                        if var:
+                            item['variation_name'] = var.get_name(lang) if hasattr(var, 'get_name') else (getattr(var, f'name_{lang}', None) or getattr(var, 'name_uz', ''))
+            except Exception:
+                pass
+
     cart_count = sum(item.get('quantity', 1) for item in cart.values())
     subtotal = float(sum(item.get('total_price', 0) for item in cart.values()))
 
