@@ -984,7 +984,16 @@ def cart_add_view(request, subdomain=None):
         config_hash = hashlib.md5((custom_summary + str(custom_price)).encode()).hexdigest()[:8]
         item_key = f"{product.id}_c_{config_hash}"
         unit_price = float(custom_price) if custom_price is not None else float(product.price)
-        var_name = custom_summary
+        
+        # Determine concise variation label for cart display
+        opts = custom_options or {}
+        if opts.get('style') == 'spicy':
+            var_name = "Острый (Sriracha)" if lang == 'ru' else ("Spicy (Sriracha)" if lang == 'en' else "Achchiq (Sriracha)")
+        elif opts.get('crust'):
+            var_name = str(opts.get('crust'))
+        else:
+            var_name = "Свой рецепт" if lang == 'ru' else ("Custom recipe" if lang == 'en' else "Maxsus retsept")
+
         try:
             from apps.orders.burger_image_service import render_custom_burger_image
             custom_image_url = render_custom_burger_image(custom_options)
@@ -1015,6 +1024,7 @@ def cart_add_view(request, subdomain=None):
             'custom_summary': custom_summary,
             'custom_options': custom_options or {},
             'custom_image_url': custom_image_url,
+            'is_constructor': bool(custom_summary or custom_options),
             'unit_price': unit_price,
             'price': unit_price,
             'quantity': quantity,

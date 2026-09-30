@@ -21,7 +21,10 @@ import {
   Save,
   Eye,
   X,
-  Building2
+  Building2,
+  ChefHat,
+  Sliders,
+  Flame
 } from "lucide-react";
 import { api } from "../../api/client";
 import { Order } from "../../types";
@@ -273,24 +276,26 @@ export const OrderDetailPage: React.FC = () => {
                             {index + 1}
                           </span>
 
-                          {/* Realistic Composite Burger Photo */}
+                          {/* Composite Burger/Custom Photo or Icon */}
                           <div
                             onClick={() => item.product_image && setPreviewImage(item.product_image)}
-                            className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-amber-500/10 dark:bg-zinc-800 border-2 border-amber-300/80 dark:border-amber-500/30 p-1 flex flex-col items-center justify-center shrink-0 overflow-hidden relative group cursor-pointer shadow-xs hover:border-amber-400 transition-colors"
-                            title="Нажмите для просмотра фото бургера"
+                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-amber-500/10 dark:bg-zinc-800 border-2 border-amber-300/80 dark:border-amber-500/30 p-1 flex flex-col items-center justify-center shrink-0 overflow-hidden relative group cursor-pointer shadow-xs hover:border-amber-400 transition-colors"
+                            title="Нажмите для просмотра фото"
                           >
                             {item.product_image ? (
                               <img
                                 src={item.product_image}
-                                alt="Собранный бургер"
+                                alt="Собранный товар"
                                 className="w-full h-full object-contain filter drop-shadow-md group-hover:scale-105 transition-transform duration-200"
                               />
                             ) : (
-                              <span className="text-3xl">🍔</span>
+                              <ChefHat className="w-8 h-8 text-amber-500" />
                             )}
-                            <span className="absolute bottom-1 inset-x-1 bg-black/75 backdrop-blur-xs text-white text-[8px] font-bold py-0.5 rounded text-center opacity-90 group-hover:opacity-100 flex items-center justify-center gap-0.5">
-                              <Eye className="w-2.5 h-2.5" /> Фото заказа
-                            </span>
+                            {item.product_image && (
+                              <span className="absolute bottom-1 inset-x-1 bg-black/75 backdrop-blur-xs text-white text-[8px] font-bold py-0.5 rounded text-center opacity-90 group-hover:opacity-100 flex items-center justify-center gap-0.5">
+                                <Eye className="w-2.5 h-2.5" /> Фото
+                              </span>
+                            )}
                           </div>
 
                           {/* Item Info & Ingredients */}
@@ -299,153 +304,134 @@ export const OrderDetailPage: React.FC = () => {
                               <span className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">
                                 {item.product_name}
                               </span>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white shadow-2xs">
-                                🍔 Кастомная сборка
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white shadow-2xs">
+                                <Sliders className="w-3 h-3" /> Рецепт / Конструктор
                               </span>
                             </div>
 
-                            {/* Structured Ingredients List */}
-                            {hasStructuredOpts ? (
-                              <div className="bg-white/90 dark:bg-zinc-800/90 rounded-xl p-2.5 border border-amber-200/80 dark:border-amber-800/40 space-y-1.5 text-xs shadow-2xs">
-                                {opts.bun && (
-                                  <div className="flex items-center justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
-                                    <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
-                                      <span>🍞</span>
-                                      <span>Булочка:</span>
-                                      <span className="font-semibold text-amber-700 dark:text-amber-400">{opts.bun.name}</span>
-                                    </div>
-                                    <span className="font-mono text-[10px] text-slate-500 shrink-0">
-                                      {opts.bun.price > 0 ? `+${Number(opts.bun.price).toLocaleString()} UZS` : 'включено'}
+                            {/* Structured Ingredients / Options List */}
+                            <div className="bg-white/90 dark:bg-zinc-850 rounded-xl p-3 border border-amber-200/80 dark:border-amber-900/40 space-y-2.5 text-xs shadow-2xs">
+                              {/* 1. Style / Crust */}
+                              {(opts.style || opts.crust) && (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {opts.style === 'spicy' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                      <Flame className="w-3 h-3 text-rose-500" />
+                                      Острый (Sriracha)
                                     </span>
-                                  </div>
-                                )}
-
-                                {opts.patties && opts.patties.length > 0 && (
-                                  <div className="flex items-start justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
-                                    <div className="flex items-start gap-1.5 font-bold text-slate-800 dark:text-slate-200">
-                                      <span>🥩</span>
-                                      <span>Котлеты:</span>
-                                      <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                        {opts.patties.map((p: any, pIdx: number) => (
-                                          <span key={pIdx} className="bg-amber-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-amber-200/60 dark:border-white/10">
-                                            {p.count > 1 ? `${p.count}× ` : ''}{p.name}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                    <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
-                                      {opts.patties.reduce((sum: number, p: any) => sum + (p.total_price || 0), 0) > 0
-                                        ? `+${Number(opts.patties.reduce((sum: number, p: any) => sum + (p.total_price || 0), 0)).toLocaleString()} UZS`
-                                        : 'включено'}
+                                  )}
+                                  {opts.style === 'classic' && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                      Классический
                                     </span>
-                                  </div>
-                                )}
-
-                                {opts.cheeses && opts.cheeses.length > 0 && (
-                                  <div className="flex items-start justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
-                                    <div className="flex items-start gap-1.5 font-bold text-slate-800 dark:text-slate-200">
-                                      <span>🧀</span>
-                                      <span>Сыр:</span>
-                                      <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                        {opts.cheeses.map((c: any, cIdx: number) => (
-                                          <span key={cIdx} className="bg-amber-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-amber-200/60 dark:border-white/10">
-                                            {c.count > 1 ? `${c.count}× ` : ''}{c.name}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                    <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
-                                      +{Number(opts.cheeses.reduce((sum: number, c: any) => sum + (c.total_price || 0), 0)).toLocaleString()} UZS
+                                  )}
+                                  {opts.crust && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                      Основа: {opts.crust}
                                     </span>
-                                  </div>
-                                )}
-
-                                {opts.toppings && opts.toppings.length > 0 && (
-                                  <div className="flex items-start justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
-                                    <div className="flex items-start gap-1.5 font-bold text-slate-800 dark:text-slate-200">
-                                      <span>🥬</span>
-                                      <span>Начинка:</span>
-                                      <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                        {opts.toppings.map((t: any, tIdx: number) => (
-                                          <span key={tIdx} className="bg-emerald-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-white/10">
-                                            {t.count > 1 ? `${t.count}× ` : ''}{t.name}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                    <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
-                                      +{Number(opts.toppings.reduce((sum: number, t: any) => sum + (t.total_price || 0), 0)).toLocaleString()} UZS
-                                    </span>
-                                  </div>
-                                )}
-
-                                {opts.sauces && opts.sauces.length > 0 && (
-                                  <div className="flex items-start justify-between text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
-                                    <div className="flex items-start gap-1.5 font-bold text-slate-800 dark:text-slate-200">
-                                      <span>🥫</span>
-                                      <span>Соусы:</span>
-                                      <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                        {opts.sauces.map((s: any, sIdx: number) => (
-                                          <span key={sIdx} className="bg-rose-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-rose-200/60 dark:border-white/10">
-                                            {s.name}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                    <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
-                                      {opts.sauces.reduce((sum: number, s: any) => sum + (s.total_price || 0), 0) > 0
-                                        ? `+${Number(opts.sauces.reduce((sum: number, s: any) => sum + (s.total_price || 0), 0)).toLocaleString()} UZS`
-                                        : 'включено'}
-                                    </span>
-                                  </div>
-                                )}
-
-                                {opts.single_choices && opts.single_choices.length > 0 && (
-                                  <div className="flex items-start gap-1.5 text-[11px] pb-1 border-b border-amber-100 dark:border-white/5">
-                                    <span className="text-amber-600 font-bold">🔘</span>
-                                    <span className="font-bold text-slate-800 dark:text-slate-200">Выбор:</span>
-                                    <div className="flex flex-wrap gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                      {opts.single_choices.map((sc: string, scIdx: number) => (
-                                        <span key={scIdx} className="bg-amber-50 dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-amber-200/60 dark:border-white/10">
-                                          {sc}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {opts.removed_ingredients && opts.removed_ingredients.length > 0 && (
-                                  <div className="flex items-start gap-1.5 text-[11px]">
-                                    <span className="text-rose-500 font-bold">➖</span>
-                                    <span className="font-bold text-slate-800 dark:text-slate-200">Исключено:</span>
-                                    <div className="flex flex-wrap gap-1 font-semibold text-rose-700 dark:text-rose-400">
-                                      {opts.removed_ingredients.map((r: string, rIdx: number) => (
-                                        <span key={rIdx} className="bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded border border-rose-200/60 dark:border-rose-900/60">
-                                          {r}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ) : item.variation_name ? (
-                              <div className="bg-white/90 dark:bg-zinc-800/90 rounded-xl p-2.5 border border-amber-200/80 dark:border-amber-800/40 space-y-1.5 text-xs shadow-2xs">
-                                <div className="flex items-center gap-1.5 text-[10px] font-black text-amber-800 dark:text-amber-300 uppercase tracking-wider">
-                                  <span>🍔</span>
-                                  <span>Состав бургера:</span>
+                                  )}
                                 </div>
+                              )}
+
+                              {/* 2. Single Choices & Multiple Choices */}
+                              {((opts.single_choices && opts.single_choices.length > 0) || (opts.multiple_choices && opts.multiple_choices.length > 0)) && (
                                 <div className="flex flex-wrap gap-1">
-                                  {item.variation_name.split("•").map((part, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-zinc-700 text-slate-800 dark:text-slate-200 border border-amber-200 dark:border-amber-800/60 shadow-2xs"
-                                    >
+                                  {[...(opts.single_choices || []), ...(opts.multiple_choices || [])].map((sc: any, scIdx: number) => {
+                                    const text = typeof sc === 'string' ? sc : `${sc.group_name ? sc.group_name + ': ' : ''}${sc.name}`;
+                                    return (
+                                      <span key={scIdx} className="bg-amber-50 dark:bg-zinc-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded-md font-semibold text-[10px] border border-amber-200/70">
+                                        {text}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* 3. Added Toppings (Quantity Choices) */}
+                              {opts.quantity_choices && opts.quantity_choices.length > 0 && (
+                                <div className="space-y-1">
+                                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Добавлено к блюду:</div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {opts.quantity_choices.map((qc: any, qcIdx: number) => (
+                                      <span key={qcIdx} className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-zinc-700 text-emerald-800 dark:text-emerald-300 border border-emerald-200/70">
+                                        + {qc.name} ({qc.count}×)
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 4. Removed Ingredients */}
+                              {opts.removed_ingredients && opts.removed_ingredients.length > 0 && (
+                                <div className="space-y-1">
+                                  <div className="text-[10px] font-bold text-rose-500 uppercase tracking-tight">Убрать / Исключить:</div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {opts.removed_ingredients.map((rem: any, remIdx: number) => {
+                                      const remText = typeof rem === 'string' ? rem : (rem.name || rem.name_ru || rem.name_uz);
+                                      return (
+                                        <span key={remIdx} className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/70">
+                                          {remText.startsWith('-') ? remText : `- ${remText}`}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 5. Legacy 3D Burger Options */}
+                              {opts.bun && (
+                                <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                                  Булочка: <b>{opts.bun.name}</b>
+                                </div>
+                              )}
+                              {opts.patties && opts.patties.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {opts.patties.map((p: any, idx: number) => (
+                                    <span key={idx} className="bg-amber-50 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-700 border border-amber-200">
+                                      {p.count > 1 ? `${p.count}× ` : ''}{p.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {opts.cheeses && opts.cheeses.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {opts.cheeses.map((c: any, idx: number) => (
+                                    <span key={idx} className="bg-amber-50 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-700 border border-amber-200">
+                                      {c.count > 1 ? `${c.count}× ` : ''}{c.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {opts.toppings && opts.toppings.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {opts.toppings.map((t: any, idx: number) => (
+                                    <span key={idx} className="bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                                      + {t.count > 1 ? `${t.count}× ` : ''}{t.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {opts.sauces && opts.sauces.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {opts.sauces.map((s: any, idx: number) => (
+                                    <span key={idx} className="bg-rose-50 px-1.5 py-0.5 rounded text-[10px] font-semibold text-rose-700 border border-rose-200">
+                                      {s.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* 6. Fallback string if structured arrays not populated */}
+                              {!opts.quantity_choices?.length && !opts.single_choices?.length && !opts.removed_ingredients?.length && !opts.bun && (item.custom_summary || item.variation_name) && (
+                                <div className="flex flex-wrap gap-1">
+                                  {(item.custom_summary || item.variation_name).split('•').map((part: string, idx: number) => (
+                                    <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-zinc-700 text-slate-800 dark:text-slate-200 border border-amber-200 dark:border-amber-800/60 shadow-2xs">
                                       {part.trim()}
                                     </span>
                                   ))}
                                 </div>
-                              </div>
-                            ) : null}
+                              )}
+                            </div>
 
                             <div className="text-xs text-slate-500 font-mono font-bold">
                               {item.quantity} шт. × {Number(item.unit_price).toLocaleString()} UZS

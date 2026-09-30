@@ -99,23 +99,19 @@
                             <!-- Left: Product Photo & Title (Clickable) -->
                             <div class="flex items-center gap-3 min-w-0 flex-1">
                                 <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/' + item.product_id + '/{% else %}/product/' + item.product_id + '/{% endif %}'"
-                                   :class="(item.variation_name && item.variation_name.includes('•')) ? 'w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-500/10 p-1 shrink-0 border border-amber-200 flex items-center justify-center' : 'w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100'"
-                                   class="hover:opacity-90 transition-opacity block">
+                                   class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100 hover:opacity-90 transition-opacity block flex items-center justify-center p-0.5">
                                     <img :src="item.image || item.image_url || 'https://placehold.co/160x160?text=Product'"
                                          :alt="item.name"
-                                         :class="(item.variation_name && item.variation_name.includes('•')) ? 'w-full h-full object-contain filter drop-shadow-sm' : 'w-full h-full object-cover'">
+                                         class="w-full h-full object-cover rounded-xl">
                                 </a>
                                 <div class="min-w-0 flex-1">
                                     <a :href="'{% if store.subdomain %}/store/{{ store.subdomain }}/product/' + item.product_id + '/{% else %}/product/' + item.product_id + '/{% endif %}'"
-                                       class="font-bold text-xs sm:text-sm text-slate-900 leading-snug hover:text-brand transition-colors block"
+                                       class="font-bold text-xs sm:text-sm text-slate-900 leading-snug hover:text-brand transition-colors block line-clamp-1"
                                        x-text="item.name"></a>
-                                    <div x-show="item.variation_name" class="text-[11px] text-slate-500 font-medium mt-0.5">
+                                    <div x-show="item.variation_name" class="text-[11px] text-slate-400 font-medium mt-0.5">
                                         <template x-if="item.variation_name && item.variation_name.includes('•')">
-                                            <div class="flex flex-wrap gap-1 mt-1 max-w-sm sm:max-w-md">
-                                                <template x-for="(part, idx) in item.variation_name.split('•')" :key="idx">
-                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-slate-700 border border-amber-200 shadow-2xs" x-text="part.trim()"></span>
-                                                </template>
-                                            </div>
+                                            <span class="text-amber-600 font-semibold"
+                                                  x-text="item.variation_name.includes('Achchiq') || item.variation_name.includes('Острый') || item.variation_name.includes('Spicy') ? '{% if current_lang == "ru" %}Острый (Sriracha){% elif current_lang == "en" %}Spicy (Sriracha){% else %}Achchiq (Sriracha){% endif %}' : '{% if current_lang == "ru" %}Свой рецепт{% elif current_lang == "en" %}Custom recipe{% else %}Maxsus retsept{% endif %}'"></span>
                                         </template>
                                         <template x-if="!item.variation_name || !item.variation_name.includes('•')">
                                             <span class="line-clamp-1" x-text="item.variation_name"></span>

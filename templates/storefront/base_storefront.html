@@ -1010,7 +1010,7 @@
                                 <div class="space-y-1 text-xs border-y border-slate-200/60 py-2">
                                     <template x-for="item in ord.items" :key="item.product_name">
                                         <div class="flex items-center justify-between text-slate-700">
-                                            <span class="font-medium" x-text="item.product_name + (item.variation_name ? ' (' + item.variation_name + ')' : '') + ' x' + item.quantity"></span>
+                                            <span class="font-medium" x-text="item.product_name + (item.variation_name ? ' (' + (item.variation_name.includes('•') ? (item.variation_name.includes('Achchiq') || item.variation_name.includes('Острый') || item.variation_name.includes('Spicy') ? '{% if current_lang == 'ru' %}Острый{% else %}Achchiq{% endif %}' : '{% if current_lang == 'ru' %}Свой рецепт{% else %}Maxsus retsept{% endif %}') : item.variation_name) + ')' : '') + ' x' + item.quantity"></span>
                                             <span class="font-mono font-bold text-slate-900" x-text="item.total_price.toLocaleString() + ' UZS'"></span>
                                         </div>
                                     </template>

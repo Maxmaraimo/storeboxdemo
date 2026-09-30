@@ -94,9 +94,9 @@
                     {% for key, item in cart.items %}
                     <div class="py-2.5 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-12 h-12 rounded-xl {% if '•' in item.variation_name %}bg-amber-500/10 p-0.5 border border-amber-200{% else %}bg-slate-100 overflow-hidden border border-slate-200/60{% endif %} shrink-0 flex items-center justify-center">
+                            <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden border border-slate-200/60 shrink-0 flex items-center justify-center p-0.5">
                                 {% if item.image or item.image_url %}
-                                <img src="{{ item.image|default:item.image_url }}" alt="{{ item.name }}" class="w-full h-full {% if '•' in item.variation_name %}object-contain filter drop-shadow-sm{% else %}object-cover{% endif %}" onerror="this.style.display='none'">
+                                <img src="{{ item.image|default:item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover rounded-lg" onerror="this.style.display='none'">
                                 {% else %}
                                 <div class="w-full h-full flex items-center justify-center text-slate-400">
                                     <i data-lucide="package" class="w-5 h-5"></i>
@@ -107,15 +107,15 @@
                                 <h4 class="font-bold text-xs text-slate-900 truncate">{{ item.name }}</h4>
                                 {% if item.variation_name %}
                                     {% if '•' in item.variation_name %}
-                                    <div class="flex flex-wrap gap-1 mt-0.5 max-w-xs">
-                                        {% for part in item.variation_name.split|default:item.variation_name %}
-                                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-50 text-slate-700 border border-amber-200">
-                                            {{ part.strip }}
-                                        </span>
-                                        {% endfor %}
-                                    </div>
+                                    <p class="text-[11px] text-amber-600 font-semibold truncate">
+                                        {% if 'Achchiq' in item.variation_name or 'Острый' in item.variation_name or 'Spicy' in item.variation_name %}
+                                            {% if lang == 'ru' %}Острый (Sriracha){% elif lang == 'en' %}Spicy (Sriracha){% else %}Achchiq (Sriracha){% endif %}
+                                        {% else %}
+                                            {% if lang == 'ru' %}Свой рецепт{% elif lang == 'en' %}Custom recipe{% else %}Maxsus retsept{% endif %}
+                                        {% endif %}
+                                    </p>
                                     {% else %}
-                                    <p class="text-[11px] text-slate-400">{{ item.variation_name }}</p>
+                                    <p class="text-[11px] text-slate-400 truncate">{{ item.variation_name }}</p>
                                     {% endif %}
                                 {% endif %}
                                 <p class="text-[11px] text-slate-500 font-mono mt-0.5">
@@ -133,9 +133,9 @@
                     <template x-for="(item, key) in cartItems" :key="key">
                         <div class="py-2.5 flex items-center justify-between gap-3">
                             <div class="flex items-center gap-3 min-w-0">
-                                <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200/60">
+                                <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200/60 p-0.5 flex items-center justify-center">
                                     <template x-if="item.image || item.image_url">
-                                        <img :src="item.image || item.image_url" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                                        <img :src="item.image || item.image_url" class="w-full h-full object-cover rounded-lg" onerror="this.style.display='none'">
                                     </template>
                                     <template x-if="!item.image && !item.image_url">
                                         <div class="w-full h-full flex items-center justify-center text-slate-400">
@@ -145,6 +145,15 @@
                                 </div>
                                 <div class="min-w-0">
                                     <h4 class="font-bold text-xs text-slate-900 truncate" x-text="item.name"></h4>
+                                    <div x-show="item.variation_name" class="text-[11px] text-slate-400 font-medium">
+                                        <template x-if="item.variation_name && item.variation_name.includes('•')">
+                                            <span class="text-amber-600 font-semibold"
+                                                  x-text="item.variation_name.includes('Achchiq') || item.variation_name.includes('Острый') || item.variation_name.includes('Spicy') ? '{% if lang == "ru" %}Острый (Sriracha){% elif lang == "en" %}Spicy (Sriracha){% else %}Achchiq (Sriracha){% endif %}' : '{% if lang == "ru" %}Свой рецепт{% elif lang == "en" %}Custom recipe{% else %}Maxsus retsept{% endif %}'"></span>
+                                        </template>
+                                        <template x-if="!item.variation_name || !item.variation_name.includes('•')">
+                                            <span class="line-clamp-1" x-text="item.variation_name"></span>
+                                        </template>
+                                    </div>
                                     <p class="text-[11px] text-slate-500 font-mono mt-0.5">
                                         <span x-text="item.quantity"></span> x <span x-text="item.unit_price.toLocaleString() + ' UZS'"></span>
                                     </p>

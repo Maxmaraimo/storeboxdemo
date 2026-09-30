@@ -97,7 +97,13 @@
                 <div class="flex justify-between py-2">
                     <div>
                         <span class="font-bold text-slate-900">{{ item.product_name }}</span>
-                        {% if item.variation_name %}<span class="text-brand">({{ item.variation_name }})</span>{% endif %}
+                        {% if item.variation_name %}
+                            {% if '•' in item.variation_name %}
+                                <span class="text-brand font-medium">({% if 'Achchiq' in item.variation_name or 'Острый' in item.variation_name or 'Spicy' in item.variation_name %}{% if current_lang == 'ru' %}Острый (Sriracha){% else %}Achchiq (Sriracha){% endif %}{% else %}{% if current_lang == 'ru' %}Свой рецепт{% else %}Maxsus retsept{% endif %}{% endif %})</span>
+                            {% else %}
+                                <span class="text-brand font-medium">({{ item.variation_name }})</span>
+                            {% endif %}
+                        {% endif %}
                         <span class="text-slate-400">× {{ item.quantity }}</span>
                     </div>
                     <span class="font-mono font-bold text-slate-800">{{ item.total_price|floatformat:0 }} UZS</span>
