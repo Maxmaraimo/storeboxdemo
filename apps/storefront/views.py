@@ -1168,11 +1168,11 @@ def checkout_view(request, subdomain=None):
     else:
         default_delivery_fee = store.delivery_price
 
-    # Require customer authentication via phone SMS before checkout
-    if not request.session.get('customer_phone') and not request.user.is_authenticated:
+    # Require customer authentication via store account (phone verification) before checkout
+    if not request.session.get('customer_phone'):
         profile_url = f'/store/{store.subdomain}/profile/' if store.subdomain else '/profile/'
-        checkout_url = f'/store/{store.subdomain}/checkout/' if store.subdomain else '/checkout/'
-        return redirect(f"{profile_url}?next={checkout_url}")
+        checkout_full_path = request.get_full_path()
+        return redirect(f"{profile_url}?next={checkout_full_path}")
 
     if request.method == 'POST':
         customer_name = request.POST.get('customer_name', '').strip()
@@ -1231,36 +1231,22 @@ def checkout_view(request, subdomain=None):
 
         normalized_phone = normalize_phone_number(customer_phone)
 
-        # Phone verification validation
+        # Phone verification validation:
+        # A phone is verified ONLY IF session customer matches OR valid SMS code is verified
         phone_verified = False
-        if request.user.is_authenticated and getattr(request.user, 'phone', None):
-            if normalize_phone_number(request.user.phone) == normalized_phone:
-                phone_verified = True
-
         session_cust_phone = request.session.get('customer_phone')
-        if not phone_verified and session_cust_phone:
-            if normalize_phone_number(session_cust_phone) == normalized_phone:
-                phone_verified = True
-
-        if not phone_verified and request.session.get('is_phone_verified'):
+        if session_cust_phone and normalize_phone_number(session_cust_phone) == normalized_phone and request.session.get('is_phone_verified'):
             phone_verified = True
-
-        if not phone_verified and normalized_phone:
-            active_verif = SMSVerification.objects.filter(
-                phone_number=normalized_phone,
-                is_verified=True,
-                created_at__gte=timezone.now() - timedelta(hours=24)
-            ).first()
-            if active_verif:
+        elif sms_code:
+            valid_code, code_msg = verify_checkout_sms_code(normalized_phone, sms_code)
+            if valid_code:
                 phone_verified = True
-            elif Customer.objects.filter(store=store, phone=normalized_phone).exists():
-                phone_verified = True
-            elif sms_code:
-                valid_code, code_msg = verify_checkout_sms_code(normalized_phone, sms_code)
-                if valid_code:
-                    phone_verified = True
-                else:
-                    error = code_msg
+                request.session['customer_phone'] = normalized_phone
+                request.session['customer_name'] = customer_name
+                request.session['is_phone_verified'] = True
+                request.session.modified = True
+            else:
+                error = code_msg
 
         if not customer_name or not customer_phone:
             error = 'Пожалуйста, укажите ваше имя и номер телефона'
@@ -1483,25 +1469,7 @@ def checkout_view(request, subdomain=None):
 
     saved_phone = request.session.get('customer_phone', '')
     saved_name = request.session.get('customer_name', '')
-    if request.user.is_authenticated and getattr(request.user, 'phone', None):
-        saved_phone = saved_phone or request.user.phone
-        saved_name = saved_name or request.user.get_full_name() or request.user.first_name
-
-    from apps.core.sms_service import normalize_phone_number
-    from apps.accounts.models import SMSVerification
-    norm_phone = normalize_phone_number(saved_phone) if saved_phone else ''
-    is_phone_verified = False
-    if request.user.is_authenticated and getattr(request.user, 'phone', None):
-        is_phone_verified = True
-    elif request.session.get('customer_phone'):
-        is_phone_verified = True
-    elif request.session.get('is_phone_verified'):
-        is_phone_verified = True
-    elif norm_phone and (
-        Customer.objects.filter(store=store, phone=norm_phone).exists() or
-        SMSVerification.objects.filter(phone_number=norm_phone, is_verified=True, created_at__gte=timezone.now() - timedelta(hours=24)).exists()
-    ):
-        is_phone_verified = True
+    is_phone_verified = bool(saved_phone and request.session.get('is_phone_verified'))
 
     recommended_products = Product.objects.filter(store=store, is_active=True).order_by('-is_featured', '-rating', '-id')[:12]
     for p in recommended_products:
@@ -2195,6 +2163,7 @@ def customer_profile_page_view(request, subdomain=None):
         elif action == 'logout':
             request.session.pop('customer_phone', None)
             request.session.pop('customer_name', None)
+            request.session.pop('is_phone_verified', None)
             request.session.modified = True
             return redirect(request.path)
 

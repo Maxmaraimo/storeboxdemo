@@ -125,7 +125,14 @@
             .then(data => {
                 this.buying = false;
                 if (data.success) {
-                    window.location.href = '{% if store.subdomain %}/store/{{ store.subdomain }}/checkout/{% else %}/checkout/{% endif %}{% if current_lang != "uz" %}?lang={{ current_lang }}{% endif %}';
+                    const isCustomerLoggedIn = Boolean('{{ request.session.customer_phone|default:"" }}');
+                    const checkoutUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/checkout/{% else %}/checkout/{% endif %}{% if current_lang != "uz" %}?lang={{ current_lang }}{% endif %}';
+                    if (!isCustomerLoggedIn) {
+                        const profileLoginUrl = '{% if store.subdomain %}/store/{{ store.subdomain }}/profile/{% else %}/profile/{% endif %}?next=' + encodeURIComponent(checkoutUrl);
+                        window.location.href = profileLoginUrl;
+                        return;
+                    }
+                    window.location.href = checkoutUrl;
                 }
             })
             .catch(() => { this.buying = false; });
