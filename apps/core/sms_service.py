@@ -16,6 +16,10 @@ RESEND_COOLDOWN_SECONDS = 60
 HOURLY_ATTEMPT_LIMIT = 6
 
 
+ESKIZ_APPROVED_TEMPLATE_ID = 92326
+ESKIZ_APPROVED_TEMPLATE_TEXT = "StoreBox internet-magazinlar platformasiga kirish uchun tasdiqlash kodi: {code}"
+
+
 def normalize_phone_number(raw_phone: str) -> str:
     """Normalize any phone input into +998XXXXXXXXX format."""
     digits = re.sub(r"\D", "", raw_phone or "")
@@ -29,12 +33,21 @@ def normalize_phone_number(raw_phone: str) -> str:
 
 
 def format_for_eskiz(phone: str) -> str:
-    """Eskiz expects phone without leading '+' (e.g. 998901234567)."""
-    return re.sub(r"\D", "", phone or "")
+    """
+    Eskiz expects phone strictly as digits without leading '+' or whitespace (e.g. 998953580709).
+    """
+    digits = re.sub(r"\D", "", phone or "")
+    if len(digits) == 9:
+        digits = "998" + digits
+    elif len(digits) == 10 and digits.startswith("8"):
+        digits = "998" + digits[1:]
+    elif len(digits) == 11 and digits.startswith("8"):
+        digits = "998" + digits[2:]
+    return digits
 
 
 class EskizSMSService:
-    """Robust Eskiz.uz SMS Gateway Integration with token caching and fallback."""
+    """Robust Eskiz.uz SMS Gateway Integration with token caching, auto-refresh, and detailed logging."""
 
     def __init__(self):
         self.api_url = getattr(settings, "ESKIZ_API_URL", "https://notify.eskiz.uz/api").rstrip("/")
@@ -44,7 +57,7 @@ class EskizSMSService:
         self.test_mode = getattr(settings, "ESKIZ_TEST_MODE", False)
 
     def get_token(self, force_refresh: bool = False) -> str | None:
-        """Fetch cached token or login to Eskiz API to retrieve a fresh token."""
+        """Fetch cached token or login to Eskiz API to retrieve a fresh Bearer token."""
         if not force_refresh:
             cached = cache.get(CACHE_TOKEN_KEY)
             if cached:
@@ -52,29 +65,40 @@ class EskizSMSService:
 
         login_url = f"{self.api_url}/auth/login"
         payload = {"email": self.email, "password": self.password}
+        print(f"[ESKIZ AUTH] Requesting Bearer token from {login_url} for user {self.email}...", flush=True)
 
         try:
             resp = requests.post(login_url, data=payload, timeout=8)
+            print(f"[ESKIZ AUTH RESPONSE] HTTP {resp.status_code}: {resp.text}", flush=True)
             data = resp.json() if resp.text else {}
             if resp.status_code == 200 and "data" in data and "token" in data["data"]:
                 token = data["data"]["token"]
                 cache.set(CACHE_TOKEN_KEY, token, timeout=CACHE_TOKEN_TIMEOUT)
                 logger.info("Successfully authenticated with Eskiz.uz SMS Gateway")
+                print(f"[ESKIZ AUTH SUCCESS] Token successfully cached for {CACHE_TOKEN_TIMEOUT}s", flush=True)
                 return token
             else:
-                logger.warning(
-                    f"Eskiz authentication failed: {resp.status_code} - {data.get('message', resp.text)}"
-                )
+                err_msg = f"Eskiz authentication failed: {resp.status_code} - {data.get('message', resp.text)}"
+                logger.error(err_msg)
+                print(f"[ESKIZ AUTH ERROR] {err_msg}", flush=True)
         except Exception as e:
-            logger.error(f"Eskiz connection error during login: {e}")
+            err_msg = f"Eskiz connection error during login: {e}"
+            logger.error(err_msg)
+            print(f"[ESKIZ AUTH EXCEPTION] {err_msg}", flush=True)
 
         return None
 
-    def send_sms(self, phone: str, message: str, template_id: int | None = None) -> dict:
-        """Send an SMS via Eskiz.uz gateway with auto token refresh on 401."""
+    def send_sms(self, phone: str, message: str, template_id: int | None = ESKIZ_APPROVED_TEMPLATE_ID) -> dict:
+        """
+        Send an SMS via Eskiz.uz gateway with auto token refresh on 401.
+        Logs every request and exact response from Eskiz.
+        """
         clean_phone = format_for_eskiz(phone)
-        if not clean_phone or len(clean_phone) < 9:
-            return {"success": False, "error": "Telefon raqami noto'g'ri"}
+        if not clean_phone or len(clean_phone) != 12:
+            err = f"Telefon raqami noto'g'ri: {phone} (kutilgan: 998XXXXXXXXX)"
+            logger.error(f"[ESKIZ ERROR] {err}")
+            print(f"[ESKIZ ERROR] {err}", flush=True)
+            return {"success": False, "error": err}
 
         token = self.get_token()
         send_url = f"{self.api_url}/message/sms/send"
@@ -86,53 +110,74 @@ class EskizSMSService:
         if template_id:
             payload["template_id"] = template_id
 
+        print(f"[ESKIZ SEND REQUEST] URL: {send_url} | Phone: {clean_phone} | From: {self.sender_from} | Template: {template_id} | Message: '{message}'", flush=True)
+
         # 1. Attempt sending with token if available
         if token:
             headers = {"Authorization": f"Bearer {token}"}
             try:
-                resp = requests.post(send_url, data=payload, headers=headers, timeout=8)
+                resp = requests.post(send_url, data=payload, headers=headers, timeout=10)
+                print(f"[ESKIZ SEND RESPONSE] HTTP {resp.status_code}: {resp.text}", flush=True)
+
                 if resp.status_code == 200:
                     res_data = resp.json() if resp.text else {}
                     logger.info(f"SMS successfully sent to {clean_phone} via Eskiz: {res_data}")
+                    print(f"[ESKIZ SUCCESS] SMS delivered/queued for {clean_phone}: {res_data}", flush=True)
                     return {"success": True, "status": "sent", "data": res_data}
+
                 elif resp.status_code == 401:
                     # Token expired -> refresh and retry once
+                    print(f"[ESKIZ TOKEN EXPIRED] 401 received. Refreshing token...", flush=True)
                     cache.delete(CACHE_TOKEN_KEY)
                     token = self.get_token(force_refresh=True)
                     if token:
                         headers = {"Authorization": f"Bearer {token}"}
-                        resp = requests.post(send_url, data=payload, headers=headers, timeout=8)
+                        resp = requests.post(send_url, data=payload, headers=headers, timeout=10)
+                        print(f"[ESKIZ RETRY RESPONSE] HTTP {resp.status_code}: {resp.text}", flush=True)
                         if resp.status_code == 200:
                             res_data = resp.json() if resp.text else {}
                             logger.info(f"SMS successfully sent to {clean_phone} after token refresh: {res_data}")
+                            print(f"[ESKIZ SUCCESS] SMS delivered after refresh for {clean_phone}: {res_data}", flush=True)
                             return {"success": True, "status": "sent", "data": res_data}
 
-                if resp.status_code == 400 and ("Для теста" in resp.text or "test" in resp.text.lower()):
-                    # Eskiz account in 'Тестовый' status only permits predefined test text
-                    logger.warning(f"Eskiz is in TEST account status. Falling back to test message: {resp.text}")
-                    test_payload = {
-                        "mobile_phone": clean_phone,
-                        "message": "Bu Eskiz dan test",
-                        "from": self.sender_from,
+                # Extract human-readable error from Eskiz response
+                err_detail = resp.text
+                try:
+                    res_json = resp.json()
+                    err_detail = res_json.get('message') or res_json.get('error') or resp.text
+                except Exception:
+                    pass
+
+                logger.error(f"[ESKIZ SEND FAILED] HTTP {resp.status_code}: {err_detail}")
+                print(f"[ESKIZ SEND FAILED] HTTP {resp.status_code}: {err_detail}", flush=True)
+
+                if not self.test_mode:
+                    return {
+                        "success": False,
+                        "error": f"Eskiz xatoligi: {err_detail}",
+                        "status_code": resp.status_code
                     }
-                    test_resp = requests.post(send_url, data=test_payload, headers=headers, timeout=8)
-                    if test_resp.status_code == 200:
-                        logger.info(f"Test SMS successfully delivered to {clean_phone} via Eskiz")
-                        return {"success": True, "status": "sent", "test_mode": True, "data": test_resp.json()}
-                    else:
-                        logger.error(f"Eskiz test SMS delivery failed: {test_resp.status_code} - {test_resp.text}")
 
-                logger.warning(f"Eskiz SMS send responded {resp.status_code}: {resp.text}")
             except Exception as e:
-                logger.error(f"Eskiz SMS send request error: {e}")
+                err_msg = f"Eskiz SMS send request error: {e}"
+                logger.error(f"[ESKIZ EXCEPTION] {err_msg}")
+                print(f"[ESKIZ EXCEPTION] {err_msg}", flush=True)
+                if not self.test_mode:
+                    return {"success": False, "error": err_msg}
 
-        # 2. Fallback when Eskiz API fails or cannot be reached
-        logger.info(f"[SMS FALLBACK DISPATCH] To: {clean_phone} | Message: {message}")
+        # 2. Fallback in TEST MODE only (e.g. during automated CI/tests)
+        if self.test_mode:
+            print(f"[ESKIZ TEST MODE SIMULATION] Delivered to: {clean_phone} | Message: {message}", flush=True)
+            return {
+                "success": True,
+                "status": "sent",
+                "test_mode": True,
+                "message": "SMS yuborildi (Test rejim)",
+            }
+
         return {
-            "success": True,
-            "status": "sent",
-            "fallback": True,
-            "message": "SMS yuborildi",
+            "success": False,
+            "error": "Eskiz SMS serveri bilan ulanib bo'lmadi",
         }
 
 
@@ -142,8 +187,8 @@ sms_service = EskizSMSService()
 
 def send_sms_via_eskiz(phone: str, code: str) -> dict:
     """Send verification code via Eskiz API using approved template 92326."""
-    message = f"StoreBox: Vash kod podtverjdeniya: {code}"
-    return sms_service.send_sms(phone=phone, message=message, template_id=92326)
+    message = ESKIZ_APPROVED_TEMPLATE_TEXT.format(code=code)
+    return sms_service.send_sms(phone=phone, message=message, template_id=ESKIZ_APPROVED_TEMPLATE_ID)
 
 
 def send_checkout_sms_code(phone: str) -> dict:
@@ -189,6 +234,13 @@ def send_checkout_sms_code(phone: str) -> dict:
 
     # 4. Dispatch via Eskiz API with approved template 92326
     res = send_sms_via_eskiz(normalized_phone, code)
+
+    if not res.get("success"):
+        return {
+            "success": False,
+            "error": res.get("error", "SMS yuborishda xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."),
+            "eskiz_res": res,
+        }
 
     return {
         "success": True,
@@ -326,15 +378,23 @@ def send_verification_sms(phone: str, purpose: str = "MERCHANT_REGISTER") -> dic
         expires_at=expires_at,
     )
 
-    # 5. Send via Eskiz SMS Gateway
-    message = f"StoreBox: Sizning tasdiqlash kodingiz: {code}. Kodni hech kimga bermang."
-    res = sms_service.send_sms(normalized_phone, message)
+    # 5. Send via Eskiz SMS Gateway using approved template 92326
+    message = ESKIZ_APPROVED_TEMPLATE_TEXT.format(code=code)
+    res = sms_service.send_sms(normalized_phone, message, template_id=ESKIZ_APPROVED_TEMPLATE_ID)
+
+    if not res.get("success"):
+        return {
+            "success": False,
+            "error": res.get("error", "SMS yuborishda xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."),
+            "eskiz_res": res,
+        }
 
     result = {
         "success": True,
         "cooldown": RESEND_COOLDOWN_SECONDS,
         "phone": normalized_phone,
         "message": "Tasdiqlash kodi telefoningizga SMS orqali yuborildi",
+        "eskiz_res": res,
     }
 
     return result

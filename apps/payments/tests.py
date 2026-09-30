@@ -276,10 +276,17 @@ class PaymentGatewaysTests(TestCase):
         self.assertEqual(self.order.payment_status, Order.PaymentStatuses.PAID)
         self.assertEqual(self.order.payment_method, Order.PaymentMethods.MULTICARD)
 
-    def test_multicard_checkout_page(self):
+    from unittest.mock import patch
+
+    @patch('apps.payments.services.MulticardProvider.create_invoice')
+    def test_multicard_checkout_page(self, mock_invoice):
+        mock_invoice.return_value = {
+            'success': True,
+            'checkout_url': 'https://dev-app.rhmt.uz/invoice/test-uuid-123',
+            'uuid': 'test-uuid-123'
+        }
         res = self.client.get(f'/payments/multicard/checkout/{self.order.order_number}/')
-        self.assertEqual(res.status_code, 200)
-        self.assertContains(res, 'Multicard')
-        self.assertContains(res, self.order.order_number)
-        self.assertContains(res, '8600 5333 6409 8829')
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res['Location'], 'https://dev-app.rhmt.uz/invoice/test-uuid-123')
+
 

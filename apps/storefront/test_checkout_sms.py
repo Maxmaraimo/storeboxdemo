@@ -69,7 +69,7 @@ class CheckoutSMSIntegrationTests(TestCase):
             self.assertTrue(res['success'])
             mock_send.assert_called_once_with(
                 phone='+998901234567',
-                message='StoreBox: Vash kod podtverjdeniya: 4567',
+                message='StoreBox internet-magazinlar platformasiga kirish uchun tasdiqlash kodi: 4567',
                 template_id=92326
             )
 

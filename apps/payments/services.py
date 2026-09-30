@@ -340,8 +340,7 @@ class MulticardProvider(BasePaymentProvider):
         res = self.create_invoice(order, return_url=return_url)
         if res.get('success') and res.get('checkout_url'):
             return res['checkout_url']
-        # Graceful fallback: storefront direct card payment page
-        return f"/order/{order.order_number}/pay-multicard/"
+        return f"/payments/multicard/checkout/{order.order_number}/"
 
     def create_card_payment(self, order, pan: str, expiry: str, client_ip: str = "127.0.0.1", user_agent: str = "StoreBox", callback_url: str = None) -> dict:
         """
@@ -530,7 +529,7 @@ class MulticardProvider(BasePaymentProvider):
         except Order.DoesNotExist:
             return {'success': False, 'message': 'Заказ не найден'}
 
-        if status in ['success', 'paid']:
+        if status in ['success', 'paid', 'complete', '1'] or payload.get('success') is True:
             with transaction.atomic():
                 order.payment_status = Order.PaymentStatuses.PAID
                 order.payment_method = Order.PaymentMethods.MULTICARD

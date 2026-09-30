@@ -1405,8 +1405,9 @@ def checkout_view(request, subdomain=None):
                 try:
                     success_rel = f'/store/{store.subdomain}/order/{order.order_number}/success/?paid=1' if store and store.subdomain else f'/order/{order.order_number}/success/?paid=1'
                     return_url = request.build_absolute_uri(success_rel)
+                    callback_url = request.build_absolute_uri('/payments/multicard/callback/')
                     p = PaymentService.get_provider(store, 'MULTICARD')
-                    inv = p.create_invoice(order, return_url=return_url)
+                    inv = p.create_invoice(order, return_url=return_url, callback_url=callback_url)
                     if inv.get('success') and inv.get('checkout_url'):
                         dest_url = inv['checkout_url']
                     else:

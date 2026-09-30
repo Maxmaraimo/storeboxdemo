@@ -1,0 +1,38 @@
+{% extends "storefront/base_storefront.html" %}
+{% load static %}
+
+{% block title %}Ошибка оплаты — Multicard{% endblock %}
+
+{% block storefront_body %}
+<div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-100 text-center space-y-5">
+        <div class="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+            <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+        </div>
+
+        <div>
+            <h1 class="text-xl font-black text-slate-900">Не удалось открыть страницу оплаты</h1>
+            <p class="text-xs text-slate-500 mt-1">Шлюз Multicard временно недоступен или отклонил создание инвойса.</p>
+        </div>
+
+        {% if error %}
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-mono text-slate-600 text-left overflow-x-auto max-h-32">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="flex flex-col gap-2 pt-2">
+            <a href="/payments/multicard/checkout/{{ order.order_number }}/"
+               class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                <span>Попробовать снова</span>
+            </a>
+
+            <a href="{{ order_url|default:'/' }}"
+               class="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">
+                Вернуться к заказу
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -548,20 +548,40 @@ def multicard_confirm_otp_view(request):
 
 def multicard_checkout_page_view(request, order_number):
     """
-    Dedicated branded checkout page for Multicard direct payment.
-    Allows entering card details with OTP confirmation or redirecting to invoice.
+    Dedicated official Multicard checkout redirect (docs.multicard.uz).
+    Creates invoice via POST /payment/invoice and redirects (HTTP 302) buyer
+    directly to Multicard's official hosted checkout_url.
     """
     order = get_object_or_404(
         Order.objects.select_related('store', 'store__payment_settings'),
         order_number=order_number
     )
     store = order.store
-    pay_settings = getattr(store, 'payment_settings', None)
 
-    return render(request, 'storefront/multicard_pay.html', {
+    success_rel = f'/store/{store.subdomain}/order/{order.order_number}/success/?paid=1' if store and store.subdomain else f'/order/{order.order_number}/success/?paid=1'
+    if order.payment_status == Order.PaymentStatuses.PAID:
+        return redirect(success_rel)
+
+    from apps.payments.services import MulticardProvider
+    provider = MulticardProvider(store)
+
+    return_url = request.build_absolute_uri(success_rel)
+    callback_url = request.build_absolute_uri('/payments/multicard/callback/')
+
+    inv = provider.create_invoice(order, return_url=return_url, callback_url=callback_url)
+    if inv.get('success') and inv.get('checkout_url'):
+        return redirect(inv['checkout_url'])
+
+    # If invoice creation fails, render informative error with retry link
+    error_msg = inv.get('error', 'Не удалось связаться со шлюзом Multicard')
+    logger.error("Multicard invoice creation failed for order %s: %s", order.order_number, error_msg)
+
+    order_url = f'/store/{store.subdomain}/order/{order.order_number}/success/' if store and store.subdomain else f'/order/{order.order_number}/success/'
+    return render(request, 'storefront/multicard_error.html', {
         'order': order,
         'store': store,
-        'pay_settings': pay_settings,
-        'payment_settings': pay_settings,
-    })
+        'error': error_msg,
+        'order_url': order_url,
+    }, status=502)
+
 
