@@ -2387,6 +2387,55 @@ def storefront_constructor_view(request, subdomain=None):
 
     if not active_product_id:
         c_prod = Product.objects.filter(store=store, has_constructor=True, is_active=True).first()
+        if not c_prod:
+            from apps.api.views_constructor import PRESETS
+            from apps.catalog.models import ConstructorGroup, ConstructorItem
+            preset_key = 'luxe_box' if (store.theme_template == 'boutique' or getattr(store, 'business_category', None) in ['fashion', 'beauty', 'gifts']) else 'burger'
+            preset = PRESETS.get(preset_key)
+            if preset:
+                slug_base = slugify(preset.get('name_en') or preset_key) or f'{preset_key}-custom'
+                product_slug = slug_base
+                suffix = 1
+                while Product.objects.filter(store=store, slug=product_slug).exists():
+                    product_slug = f'{slug_base}-{suffix}'
+                    suffix += 1
+
+                with transaction.atomic():
+                    c_prod = Product.objects.create(
+                        store=store,
+                        name_uz=preset['name_uz'],
+                        name_ru=preset['name_ru'],
+                        name_en=preset.get('name_en', ''),
+                        slug=product_slug,
+                        price=Decimal(str(preset['price'])),
+                        stock=100,
+                        has_constructor=True,
+                        is_active=True,
+                        description_uz=preset.get('description_uz', ''),
+                        description_ru=preset.get('description_ru', ''),
+                        image_url=preset.get('image_url', ''),
+                    )
+                    for g_data in preset.get('groups', []):
+                        grp = ConstructorGroup.objects.create(
+                            store=store,
+                            product=c_prod,
+                            name_ru=g_data['name_ru'],
+                            name_uz=g_data['name_uz'],
+                            group_type=g_data['group_type'],
+                            is_required=g_data['is_required'],
+                            min_required=g_data['min_required'],
+                            max_allowed=g_data['max_allowed'],
+                            sort_order=g_data['sort_order'],
+                        )
+                        for item_index, item_data in enumerate(g_data.get('items', []), start=1):
+                            ConstructorItem.objects.create(
+                                group=grp,
+                                name_ru=item_data['name_ru'],
+                                name_uz=item_data['name_uz'],
+                                price=Decimal(str(item_data['price'])),
+                                is_default=item_data.get('is_default', False),
+                                sort_order=item_index,
+                            )
         if c_prod:
             active_product_id = c_prod.id
 

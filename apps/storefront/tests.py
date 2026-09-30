@@ -91,8 +91,7 @@ class StorefrontTemplateAndCarouselTests(TestCase):
     def test_constructor_page_creates_burger_preset_when_store_has_none(self):
         self.assertFalse(self.store.products.filter(has_constructor=True).exists())
 
-        res = self.client.get(f'/store/{self.store.subdomain}/constructor/')
-
+        res = self.client.get(f'/store/{self.store.subdomain}/constructor/', follow=True)
         self.assertEqual(res.status_code, 200)
         product = self.store.products.get(has_constructor=True)
         self.assertTrue(product.slug)

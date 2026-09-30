@@ -11,7 +11,8 @@
     <div class="space-y-4 animate-in fade-in duration-300">
         
         <!-- Top Gradient Banner -->
-        <div class="bg-gradient-to-b from-brand to-brand/90 rounded-3xl p-6 sm:p-8 text-white text-center shadow-lg shadow-brand/20 relative overflow-hidden">
+        <div class="rounded-3xl p-6 sm:p-8 text-white text-center shadow-lg relative overflow-hidden"
+             style="background: linear-gradient(135deg, var(--brand-color), color-mix(in srgb, var(--brand-color) 80%, #000000)); color: #ffffff; box-shadow: 0 10px 25px -5px color-mix(in srgb, var(--brand-color) 30%, transparent);">
             <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mx-auto mb-3 shadow-inner">
                 <i data-lucide="user" class="w-8 h-8 text-white stroke-[2.2]"></i>
             </div>
@@ -233,7 +234,8 @@
     <div x-show="activeView === 'menu'" class="space-y-3 animate-in fade-in duration-200">
         
         <!-- HEADER IN STORE BRAND COLOR (media_1790500832351.jpg) -->
-        <div class="bg-gradient-to-b from-brand to-brand/90 rounded-3xl p-5 sm:p-6 text-white shadow-md shadow-brand/15 relative overflow-hidden">
+        <div class="rounded-3xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden"
+             style="background: linear-gradient(135deg, var(--brand-color), color-mix(in srgb, var(--brand-color) 80%, #000000)); color: #ffffff; box-shadow: 0 8px 24px color-mix(in srgb, var(--brand-color) 25%, transparent);">
             
             <!-- Top bar: Centered Title 'Profil' + Settings Gear on right -->
             <div class="flex items-center justify-between pb-4">
@@ -254,7 +256,7 @@
                 <div class="relative shrink-0">
                     <div class="w-16 h-16 rounded-full bg-white flex flex-col items-center justify-center shadow-md relative overflow-hidden">
                         <i data-lucide="user" class="w-9 h-9 text-brand fill-brand"></i>
-                        <span class="text-[8px] font-bold text-brand -mt-1 leading-none">To'g'rilash</span>
+                        <span class="text-[8px] font-bold text-brand -mt-1 leading-none">{% if current_lang == 'ru' %}Изм.{% elif current_lang == 'en' %}Edit{% elif current_lang == 'tr' %}Düzenle{% else %}To'g'rilash{% endif %}</span>
                     </div>
                 </div>
 
@@ -263,7 +265,7 @@
                     <h2 class="text-lg sm:text-xl font-bold tracking-tight text-white truncate leading-snug">
                         {{ customer_name }}
                     </h2>
-                    <p class="text-xs sm:text-sm text-white/80 font-medium font-mono mt-0.5">
+                    <p class="text-xs sm:text-sm text-white font-bold font-mono mt-0.5 tracking-wide drop-shadow-xs">
                         {{ customer_phone }}
                     </p>
                 </div>

@@ -1,7 +1,7 @@
 {% extends 'storefront/base_storefront.html' %}
 
 {% block storefront_body %}
-<div class="max-w-6xl mx-auto px-3 sm:px-6 py-3.5 sm:py-6 space-y-4 sm:space-y-8" x-data="homeCatalog()">
+<div class="max-w-6xl mx-auto px-3 sm:px-6 pt-3.5 pb-28 sm:pt-6 sm:pb-16 space-y-4 sm:space-y-8" x-data="homeCatalog()">
 
     <!-- BANNERS SLIDER (Dynamic multi-banner carousel with auto-play, touch swipe & navigation) -->
     {% if banners %}
@@ -236,21 +236,22 @@
             </a>
 
             <!-- Constructor Special Tab ("Собери сам / Конструктор") -->
-            <a href="?constructor=1{% if request.GET.lang %}&lang={{ request.GET.lang }}{% endif %}"
+            <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/constructor/{% else %}/constructor/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
+               @click="if (window.sbOpenConstructor) { $event.preventDefault(); window.sbOpenConstructor(); }"
                class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
                 <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border"
                      style="{% if request.GET.constructor %}background-color: var(--brand-color); color: #ffffff; border-color: var(--brand-color); box-shadow: 0 4px 16px color-mix(in srgb, var(--brand-color) 32%, transparent);{% else %}background-color: color-mix(in srgb, var(--brand-color) 10%, #ffffff); color: var(--brand-color); border-color: color-mix(in srgb, var(--brand-color) 30%, transparent); box-shadow: 0 2px 8px color-mix(in srgb, var(--brand-color) 12%, transparent);{% endif %}">
-                    {% if store.theme_template == 'boutique' %}
+                    {% if store.theme_template == 'restaurant' %}
+                    <i data-lucide="wand-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    {% elif store.theme_template == 'boutique' %}
                     <i data-lucide="gift" class="w-4 h-4 sm:w-5 sm:h-5"></i>
-                    {% elif store.theme_template == 'restaurant' %}
-                    <i data-lucide="utensils" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                     {% else %}
                     <i data-lucide="wand-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                     {% endif %}
                 </div>
                 <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5"
                       style="{% if request.GET.constructor %}color: var(--brand-color); font-weight: 900;{% endif %}">
-                    {% if current_lang == 'ru' %}{% if store.theme_template == 'boutique' %}Собери бокс{% else %}Собери сам{% endif %}{% elif current_lang == 'en' %}{% if store.theme_template == 'boutique' %}Build Box{% else %}Customizer{% endif %}{% else %}{% if store.theme_template == 'boutique' %}Boks yig'ish{% else %}O'zing ter{% endif %}{% endif %}
+                    {% if current_lang == 'ru' %}{% if store.theme_template == 'restaurant' %}Конструктор{% elif store.theme_template == 'boutique' %}Собери бокс{% else %}Собери сам{% endif %}{% elif current_lang == 'en' %}{% if store.theme_template == 'restaurant' %}Customizer{% elif store.theme_template == 'boutique' %}Build Box{% else %}Customizer{% endif %}{% else %}{% if store.theme_template == 'restaurant' %}Konstruktor{% elif store.theme_template == 'boutique' %}Boks yig'ish{% else %}O'zing ter{% endif %}{% endif %}
                 </span>
             </a>
 
@@ -974,6 +975,9 @@
             },
 
             get constructorDisplayedWeight() {
+                if ('{{ store.theme_template }}' !== 'restaurant' || this.productType === 'custom') {
+                    return '';
+                }
                 const baseWeight = this.constructorProduct?.nutrition?.weight_g || (this.constructorProduct?.is_pizza ? 480 : 340);
                 if (this.constructorProduct?.is_pizza) {
                     return this.constructorSelectedPizzaCrust === 'big_cheese' ? '650 г' : `${baseWeight} г`;
