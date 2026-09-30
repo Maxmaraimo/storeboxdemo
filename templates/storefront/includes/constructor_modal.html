@@ -21,11 +21,11 @@
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
 
-            <!-- Food Photo Container (Clean isolated display) -->
+            <!-- Product Photo Container (Clean isolated display) -->
             <div class="relative w-full h-36 sm:h-44 rounded-[20px] bg-slate-100/60 p-1.5 sm:p-2 flex items-center justify-center select-none overflow-hidden">
                 <img :src="constructorDisplayedImage"
                      :alt="constructorProduct?.name || ''"
-                     :class="productType === 'burger' ? 'max-h-[92%] max-w-[85%] object-contain drop-shadow-md' : 'w-full h-full object-cover rounded-[16px]'"
+                     :class="productType === 'burger' || productType === 'custom' ? 'max-h-[92%] max-w-[85%] object-contain drop-shadow-md' : 'w-full h-full object-cover rounded-[16px]'"
                      class="transition-all duration-300">
             </div>
 
@@ -34,7 +34,8 @@
                 <div class="flex items-baseline gap-2">
                     <h2 class="text-base sm:text-xl font-black text-slate-900 tracking-tight leading-tight line-clamp-1"
                         x-text="constructorDisplayedTitle"></h2>
-                    <span class="text-[11px] sm:text-xs text-slate-500 font-semibold bg-slate-100 px-2.5 py-0.5 rounded-full shrink-0"
+                    <span x-show="constructorDisplayedWeight"
+                          class="text-[11px] sm:text-xs text-slate-500 font-semibold bg-slate-100 px-2.5 py-0.5 rounded-full shrink-0"
                           x-text="constructorDisplayedWeight"></span>
                 </div>
                 <p class="text-[11px] sm:text-xs text-slate-500 leading-relaxed line-clamp-2"

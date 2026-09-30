@@ -145,7 +145,7 @@ PRESETS = {
         "price": 350000,
         "description_ru": "Создайте персональный подарочный набор: выберите премиальную коробку, селективный парфюм, уходовую косметику и эксклюзивную открытку.",
         "description_uz": "Eksklyuziv sovg'a to'plami: hashamatli quti, selektiv parfyum, parvarish vositalari va maxsus tabriknoma.",
-        "image_url": "/media/products/crystall_box_builder_hd.jpg",
+        "image_url": "/media/products/packshots/gift_zielinski_coffret.jpg",
         "groups": [
             {
                 "name_ru": "1. Формат и оформление бокса",
@@ -156,9 +156,9 @@ PRESETS = {
                 "max_allowed": 1,
                 "sort_order": 1,
                 "items": [
-                    {"name_ru": "Luxe Box Black & Gold (Премиум велюр)", "name_uz": "Luxe Box Black & Gold (Velur)", "price": 0, "is_default": True, "image_url": "/media/products/crystall_box_builder_hd.jpg"},
-                    {"name_ru": "Pink Powder Box (Шелковый бант)", "name_uz": "Pink Powder Box (Ipak tasma)", "price": 40000, "is_default": False, "image_url": "/media/products/crystall_box_dior_hd.jpg"},
-                    {"name_ru": "Grand Heart Box (Форма сердца)", "name_uz": "Grand Heart Box (Yurak shakli)", "price": 90000, "is_default": False, "image_url": "/media/products/crystall_box_roses_hd.jpg"},
+                    {"name_ru": "Zielinski & Rozen Luxe Box (Премиум набор)", "name_uz": "Zielinski & Rozen Luxe Box", "price": 0, "is_default": True, "image_url": "/media/products/packshots/gift_zielinski_coffret.jpg"},
+                    {"name_ru": "Le Labo & Zielinski Exclusive Box", "name_uz": "Le Labo & Zielinski Box", "price": 40000, "is_default": False, "image_url": "/media/products/packshots/gift_lelabo_box.jpg"},
+                    {"name_ru": "Amouage Guidance Royal Coffret", "name_uz": "Amouage Royal Coffret", "price": 90000, "is_default": False, "image_url": "/media/products/packshots/gift_amouage_coffret.jpg"},
                 ],
             },
             {
@@ -170,10 +170,10 @@ PRESETS = {
                 "max_allowed": 1,
                 "sort_order": 2,
                 "items": [
-                    {"name_ru": "Marc-Antoine Barrois Ganymede (10 мл)", "name_uz": "Marc-Antoine Barrois Ganymede (10 ml)", "price": 120000, "is_default": True, "image_url": "/media/products/crystall_perfume_ganymede_hd.jpg"},
-                    {"name_ru": "Kilian Angels' Share (10 мл)", "name_uz": "Kilian Angels' Share (10 ml)", "price": 150000, "is_default": False, "image_url": "/media/products/crystall_perfume_angels_hd.jpg"},
-                    {"name_ru": "Vilhelm Parfumerie (10 мл)", "name_uz": "Vilhelm Parfumerie (10 ml)", "price": 140000, "is_default": False, "image_url": ""},
-                    {"name_ru": "Yves Saint Laurent Libre (10 мл)", "name_uz": "YSL Libre (10 ml)", "price": 130000, "is_default": False, "image_url": ""},
+                    {"name_ru": "Marc-Antoine Barrois Ganymede (10 мл)", "name_uz": "Marc-Antoine Barrois Ganymede (10 ml)", "price": 120000, "is_default": True, "image_url": "/media/products/packshots/perfume_ganymede.jpg"},
+                    {"name_ru": "Kilian Angels' Share (10 мл)", "name_uz": "Kilian Angels' Share (10 ml)", "price": 150000, "is_default": False, "image_url": "/media/products/packshots/perfume_angels_share.jpg"},
+                    {"name_ru": "Bois Impérial Quentin Bisch (10 мл)", "name_uz": "Bois Impérial (10 ml)", "price": 140000, "is_default": False, "image_url": "/media/products/packshots/perfume_bois_imperial.jpg"},
+                    {"name_ru": "Yves Saint Laurent Libre (10 мл)", "name_uz": "YSL Libre (10 ml)", "price": 130000, "is_default": False, "image_url": "/media/products/packshots/perfume_ysl_libre.jpg"},
                 ],
             },
             {
@@ -829,6 +829,7 @@ def constructor_storefront_get_view(request, product_id):
         })
 
     is_pizza = "пицц" in (product.name_ru or '').lower() or "pitsa" in (product.name_uz or '').lower()
+    is_boutique = bool(product.store and product.store.theme_template == 'boutique')
     if rem_group:
         removables = [
             {
@@ -839,6 +840,8 @@ def constructor_storefront_get_view(request, product_id):
             }
             for it in rem_group.items.filter(is_active=True).order_by("sort_order", "id")
         ]
+    elif is_boutique:
+        removables = []
     else:
         default_burger_removables = [
             {"id": "lettuce", "name_ru": "Салат Айсберг", "name_uz": "Aysberg salati"},
@@ -870,6 +873,8 @@ def constructor_storefront_get_view(request, product_id):
         p_img = product.primary_image_url
     elif is_pizza:
         p_img = "/static/images/constructor/real_pizza_isolated.png"
+    elif is_boutique:
+        p_img = "/media/products/packshots/gift_zielinski_coffret.jpg"
     elif "бургер" in (product.name_ru or '').lower() or "burger" in (product.name_uz or '').lower() or "ангус" in (product.name_ru or '').lower():
         p_img = "/static/images/constructor/real_burger_full.png"
     else:
@@ -886,8 +891,9 @@ def constructor_storefront_get_view(request, product_id):
             "description": product.get_description(lang),
             "unit": product.get_unit_name(lang),
             "is_pizza": is_pizza,
+            "is_boutique": is_boutique,
             "removables": removables,
-            "nutrition": {
+            "nutrition": None if is_boutique else {
                 "weight_g": 340 if not is_pizza else 480,
                 "calories": 740 if not is_pizza else 1150,
                 "protein": 38 if not is_pizza else 42,
