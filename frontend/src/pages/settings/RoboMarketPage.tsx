@@ -25,7 +25,14 @@ import {
   Award,
   TrendingUp,
   Info,
-  CheckCheck
+  CheckCheck,
+  Trash2,
+  Tag,
+  Home,
+  Grid,
+  User,
+  ExternalLink,
+  ChevronLeft
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
@@ -49,6 +56,16 @@ interface ProductPreviewItem {
   tag?: string;
   desc: string;
   spec?: string;
+  calories?: number;
+  grams?: number;
+}
+
+interface CartItemSimulation {
+  id: string;
+  product: ProductPreviewItem;
+  quantity: number;
+  selectedOption: string;
+  itemTotal: number;
 }
 
 interface TemplateData {
@@ -166,7 +183,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     aspectRatio: "square",
     description: "Аппетитный фудтех-шаблон мирового уровня для ресторанов и бургерных. Глубокий темный фон, сочнейшие макро-фотографии на открытом огне, интерактивная гриль-лаборатория бургеров с живым расчетом калорий и термодоставка за 25 минут.",
     highlights: ["Интерактивный конструктор бургеров", "Живой КБЖУ HUD", "Термодоставка 25 мин", "100% Мраморная говядина Халяль"],
-    sampleCategories: ["Все меню", "Крафт-Бургеры", "Снеки & Фри", "Соусы", "Напитки"],
+    sampleCategories: ["Все меню", "Крафт-Бургеры", "Снеки & Фри", "Напитки"],
     sampleProducts: [
       {
         id: 201,
@@ -177,7 +194,9 @@ const BRAND_TEMPLATES: TemplateData[] = [
         image: "/static/images/templates/burger_whopper.jpg",
         tag: "ХИТ ГРИЛЯ",
         desc: "Две сочные котлеты из мраморного Black Angus, расплавленный чеддер и фирменный соус.",
-        spec: "340г • 820 ккал • 44г белка"
+        spec: "340г • 820 ккал • 44г белка",
+        calories: 820,
+        grams: 340
       },
       {
         id: 202,
@@ -186,7 +205,9 @@ const BRAND_TEMPLATES: TemplateData[] = [
         price: 54000,
         image: "/static/images/templates/burger_chicken.jpg",
         desc: "Золотистое куриное филе в кукурузной панировке с копченым беконом и соусом айоли.",
-        spec: "310г • 680 ккал • 38г белка"
+        spec: "310г • 680 ккал • 38г белка",
+        calories: 680,
+        grams: 310
       },
       {
         id: 203,
@@ -196,7 +217,9 @@ const BRAND_TEMPLATES: TemplateData[] = [
         image: "/static/images/templates/burger_fries.jpg",
         tag: "ШЕФ-ВЫБОР",
         desc: "Хрустящий картофель фри с трюфельным маслом первого отжима и тертым Грана Падано.",
-        spec: "180г • 380 ккал"
+        spec: "180г • 380 ккал",
+        calories: 380,
+        grams: 180
       },
       {
         id: 204,
@@ -205,7 +228,9 @@ const BRAND_TEMPLATES: TemplateData[] = [
         price: 24000,
         image: "/static/images/templates/burger_shake.jpg",
         desc: "Густой крафтовый милкшейк из натурального пломбира со соленой карамелью.",
-        spec: "400мл • Натуральное молоко"
+        spec: "400мл • Натуральное молоко",
+        calories: 420,
+        grams: 400
       }
     ],
     stats: [
@@ -240,7 +265,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     sampleProducts: [
       {
         id: 301,
-        name: "iPhone 16 Pro Max 256GB Titanium",
+        name: "iPhone 16 Pro Max Titanium",
         category: "Смартфоны",
         price: 15400000,
         oldPrice: 16200000,
@@ -306,7 +331,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     aspectRatio: "square",
     description: "Дерзкий, высокоэнергетический streetwear-дизайн в духе лимитированных дропов Nike SNKRS. Агрессивная кинематика, счетчик остатка пар в реальном времени, селектор размеров US 8-12 и подошва с амортизацией Air Zoom.",
     highlights: ["Счетчик остатка пар Limited Drop", "Сетка размеров US 8-12", "Амортизация ZoomX Foam", "Анимации 120 FPS"],
-    sampleCategories: ["Все дропы", "Кроссовки", "Худи & Костюмы", "Аксессуары"],
+    sampleCategories: ["Все дропы", "Кроссовки", "Худи & Костюмы"],
     sampleProducts: [
       {
         id: 401,
@@ -367,7 +392,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     aspectRatio: "portrait",
     description: "Королевская селективная парфюмерия и ювелирная эстетика. Французская акцидентная типографика Didot, интерактивная пирамида нот (верхние, сердце, шлейф), селектор объема флакона 50-250мл и фирменная шелковая подарочная упаковка.",
     highlights: ["Интерактивная пирамида нот", "Выбор объема 50 - 250 мл", "Шелковая упаковка с восковой печатью", "100% Оригинал Грасс (Франция)"],
-    sampleCategories: ["Все ароматы", "Extrait de Parfum", "Millésime", "Подарочные сеты"],
+    sampleCategories: ["Все ароматы", "Extrait de Parfum", "Millésime"],
     sampleProducts: [
       {
         id: 501,
@@ -422,6 +447,7 @@ export const RoboMarketPage: React.FC = () => {
   const [previewTemplate, setPreviewTemplate] = useState<TemplateData | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "tablet" | "desktop">("mobile");
   const [previewActiveCategory, setPreviewActiveCategory] = useState<string>("Все");
+  const [previewMobileNav, setPreviewMobileNav] = useState<"home" | "catalog" | "cart" | "profile">("home");
 
   // Live Brand Customization States
   const [previewColorMap, setPreviewColorMap] = useState<Record<string, string>>({});
@@ -445,13 +471,18 @@ export const RoboMarketPage: React.FC = () => {
   // Interactive Chanel Perfumery States
   const [simulatedVolume, setSimulatedVolume] = useState<string>("100 ml");
 
-  // In-Preview Shopping Cart Simulator
-  const [simulatedCart, setSimulatedCart] = useState<{ count: number; lastItem: string | null }>({
-    count: 0,
-    lastItem: null
-  });
+  // Detailed Product Modal inside preview
+  const [activeProductDetail, setActiveProductDetail] = useState<ProductPreviewItem | null>(null);
+  const [detailQuantity, setDetailQuantity] = useState<number>(1);
+
+  // Real Simulation Cart Drawer inside preview
+  const [cartDrawerOpen, setCartDrawerOpen] = useState<boolean>(false);
+  const [cartItems, setCartItems] = useState<CartItemSimulation[]>([]);
   const [cartToastMessage, setCartToastMessage] = useState<string | null>(null);
   const [wishlistItems, setWishlistItems] = useState<number[]>([]);
+  const [promoCodeInput, setPromoCodeInput] = useState<string>("");
+  const [promoDiscount, setPromoDiscount] = useState<number>(0);
+  const [orderCelebration, setOrderCelebration] = useState<boolean>(false);
 
   // 1-Click Install Confirmation Modal
   const [applyModalTemplate, setApplyModalTemplate] = useState<TemplateData | null>(null);
@@ -476,22 +507,61 @@ export const RoboMarketPage: React.FC = () => {
   const openPreviewModal = (tpl: TemplateData) => {
     setPreviewTemplate(tpl);
     setPreviewActiveCategory("Все");
-    setSimulatedCart({ count: 0, lastItem: null });
+    setCartItems([]);
     setCartToastMessage(null);
+    setActiveProductDetail(null);
+    setCartDrawerOpen(false);
+    setOrderCelebration(false);
+    setPreviewMobileNav("home");
   };
 
-  // Simulated Add to Cart with live toast feedback
-  const handleSimulatedAddToCart = (product: ProductPreviewItem, customNamePrefix?: string) => {
-    const itemName = customNamePrefix ? `${customNamePrefix} ${product.name}` : product.name;
-    setSimulatedCart(prev => ({
-      count: prev.count + 1,
-      lastItem: itemName
-    }));
+  // Add Item to Cart with full feedback and real cart object
+  const addToCartSimulation = (
+    product: ProductPreviewItem,
+    optionLabel: string,
+    quantity: number = 1,
+    unitPrice?: number
+  ) => {
+    const finalPrice = unitPrice || product.price;
+    const itemKey = `${product.id}-${optionLabel}`;
 
-    setCartToastMessage(`Добавлено: ${itemName}`);
+    setCartItems(prev => {
+      const existing = prev.find(item => item.id === itemKey);
+      if (existing) {
+        return prev.map(item =>
+          item.id === itemKey
+            ? {
+                ...item,
+                quantity: item.quantity + quantity,
+                itemTotal: (item.quantity + quantity) * finalPrice
+              }
+            : item
+        );
+      } else {
+        return [
+          ...prev,
+          {
+            id: itemKey,
+            product,
+            quantity,
+            selectedOption: optionLabel,
+            itemTotal: quantity * finalPrice
+          }
+        ];
+      }
+    });
+
+    setCartToastMessage(`В корзине: ${product.name} (${optionLabel})`);
     setTimeout(() => {
       setCartToastMessage(null);
     }, 2800);
+
+    setActiveProductDetail(null);
+  };
+
+  // Remove from simulation cart
+  const removeCartItem = (itemId: string) => {
+    setCartItems(prev => prev.filter(item => item.id !== itemId));
   };
 
   // Wishlist Toggle
@@ -553,6 +623,10 @@ export const RoboMarketPage: React.FC = () => {
     if (simulatedTruffleSauce) { cals += 45; grams += 20; }
     return { cals, grams };
   };
+
+  const cartSubtotal = cartItems.reduce((acc, item) => acc + item.itemTotal, 0);
+  const cartTotalWithDiscount = Math.max(0, cartSubtotal - (cartSubtotal * promoDiscount));
+  const cartItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-20 font-sans selection:bg-neutral-900 selection:text-white">
@@ -790,9 +864,9 @@ export const RoboMarketPage: React.FC = () => {
       {/* ============================================================== */}
       {previewTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-2xl p-2 sm:p-6 animate-in fade-in duration-300">
-          <div className="bg-[#0A0B0E] text-white w-full max-w-6xl h-[92vh] rounded-[36px] border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.95)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-[#0A0B0E] text-white w-full max-w-6xl h-[94vh] rounded-[36px] border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.95)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             
-            {/* Modal Header Bar */}
+            {/* Modal Top Control Bar */}
             <div className="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between gap-4 shrink-0 bg-[#0A0B0E]">
               <div className="flex items-center gap-3">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -874,7 +948,7 @@ export const RoboMarketPage: React.FC = () => {
               
               {/* Floating Add to Cart Toast inside Device Stage */}
               {cartToastMessage && (
-                <div className="absolute top-8 z-40 bg-neutral-950 text-white px-4 py-2.5 rounded-2xl border border-white/20 shadow-2xl flex items-center gap-2.5 animate-in fade-in slide-in-from-top-3 duration-200">
+                <div className="absolute top-6 z-50 bg-neutral-950 text-white px-4 py-2.5 rounded-2xl border border-white/20 shadow-2xl flex items-center gap-2.5 animate-in fade-in slide-in-from-top-3 duration-200">
                   <ShoppingBag className="w-4 h-4 text-emerald-400" />
                   <span className="text-xs font-medium">{cartToastMessage}</span>
                 </div>
@@ -883,10 +957,10 @@ export const RoboMarketPage: React.FC = () => {
               {/* Hardware Frame */}
               <div className={`transition-all duration-300 relative ${
                 previewDevice === "mobile"
-                  ? "w-[390px] h-[720px] max-h-full rounded-[50px] border-[6px] border-neutral-700 shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-3 bg-black flex flex-col"
+                  ? "w-[390px] h-[730px] max-h-full rounded-[50px] border-[6px] border-neutral-700 shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-3 bg-black flex flex-col"
                   : previewDevice === "tablet"
-                  ? "w-[660px] h-[720px] max-h-full rounded-[40px] border-[6px] border-neutral-700 shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-3.5 bg-black flex flex-col"
-                  : "w-full max-w-5xl h-[720px] max-h-full rounded-2xl border border-neutral-800 shadow-[0_25px_60px_rgba(0,0,0,0.9)] bg-neutral-950 flex flex-col overflow-hidden"
+                  ? "w-[680px] h-[730px] max-h-full rounded-[40px] border-[6px] border-neutral-700 shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-3.5 bg-black flex flex-col"
+                  : "w-full max-w-5xl h-[730px] max-h-full rounded-2xl border border-neutral-800 shadow-[0_25px_60px_rgba(0,0,0,0.9)] bg-neutral-950 flex flex-col overflow-hidden"
               }`}>
                 
                 {/* Dynamic Island on Mobile */}
@@ -898,16 +972,18 @@ export const RoboMarketPage: React.FC = () => {
 
                 {/* Telegram Mini App Top Bar on Mobile */}
                 {previewDevice === "mobile" && (
-                  <div className="pt-5 pb-2 px-4 bg-neutral-900 text-white flex items-center justify-between text-[11px] font-medium border-b border-neutral-800">
-                    <span className="text-neutral-400 cursor-pointer">Закрыть</span>
-                    <span className="font-semibold">{previewTemplate.name}</span>
+                  <div className="pt-5 pb-2 px-4 bg-neutral-900 text-white flex items-center justify-between text-[11px] font-medium border-b border-neutral-800 shrink-0">
+                    <span className="text-neutral-400 hover:text-white cursor-pointer" onClick={() => setPreviewTemplate(null)}>
+                      Закрыть
+                    </span>
+                    <span className="font-semibold truncate max-w-[150px]">{previewTemplate.name}</span>
                     <span className="text-neutral-400 cursor-pointer">•••</span>
                   </div>
                 )}
 
                 {/* MacBook Browser Chrome */}
                 {previewDevice === "desktop" && (
-                  <div className="px-4 py-2.5 bg-neutral-900 border-b border-neutral-800 flex items-center gap-3">
+                  <div className="px-4 py-2.5 bg-neutral-900 border-b border-neutral-800 flex items-center gap-3 shrink-0">
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
                       <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
@@ -926,7 +1002,7 @@ export const RoboMarketPage: React.FC = () => {
                 {/* ========================================================== */}
                 {/* DYNAMIC TEMPLATE INTERIOR: SPECIFIC BRAND ARCHITECTURES     */}
                 {/* ========================================================== */}
-                <div className={`w-full flex-1 overflow-y-auto no-scrollbar relative select-none ${
+                <div className={`w-full flex-1 overflow-y-auto no-scrollbar relative ${
                   previewTemplate.category === "restaurant"
                     ? "bg-[#09090b] text-white"
                     : previewTemplate.category === "tech"
@@ -940,7 +1016,7 @@ export const RoboMarketPage: React.FC = () => {
                   {/* ARCHETYPE 1: ZARA & HIGH FASHION LOOKBOOK                */}
                   {/* -------------------------------------------------------- */}
                   {previewTemplate.category === "fashion" && (
-                    <div className="space-y-6 pb-12">
+                    <div className="space-y-6 pb-20">
                       {/* Zara Monochrome Header */}
                       <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-5 py-4 border-b border-neutral-100 flex items-center justify-between">
                         <span className="font-serif text-lg tracking-[0.25em] font-light uppercase text-neutral-950">
@@ -949,10 +1025,11 @@ export const RoboMarketPage: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black text-white text-[11px] font-mono tracking-wider cursor-pointer"
+                            onClick={() => setCartDrawerOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black text-white text-[11px] font-mono tracking-wider cursor-pointer hover:bg-neutral-800 transition-colors"
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
-                            <span>{simulatedCart.count}</span>
+                            <span>{cartItemCount}</span>
                           </button>
                         </div>
                       </div>
@@ -991,7 +1068,7 @@ export const RoboMarketPage: React.FC = () => {
                                 type="button"
                                 onClick={() => {
                                   setSimulatedSize(sz);
-                                  handleSimulatedAddToCart(previewTemplate.sampleProducts[0], `[${sz}]`);
+                                  addToCartSimulation(previewTemplate.sampleProducts[0], `Размер ${sz}`);
                                 }}
                                 className={`py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
                                   simulatedSize === sz
@@ -1024,17 +1101,20 @@ export const RoboMarketPage: React.FC = () => {
                         ))}
                       </div>
 
-                      {/* Zara 3:4 Vertical Lookbook Grid */}
+                      {/* Zara 3:4 Vertical Lookbook Grid (All Cards Clickable!) */}
                       <div className="px-5 grid grid-cols-2 gap-4">
                         {previewTemplate.sampleProducts
                           .filter(p => previewActiveCategory === "Все" || p.category === previewActiveCategory)
                           .map(product => (
                             <div
                               key={product.id}
-                              className="group/product flex flex-col justify-between cursor-pointer space-y-2"
-                              onClick={() => handleSimulatedAddToCart(product, `[${simulatedSize}]`)}
+                              className="group/product flex flex-col justify-between cursor-pointer space-y-2 border border-transparent hover:border-neutral-200 p-1.5 rounded-xl transition-all"
+                              onClick={() => {
+                                setActiveProductDetail(product);
+                                setDetailQuantity(1);
+                              }}
                             >
-                              <div className="aspect-[3/4] bg-neutral-100 overflow-hidden relative">
+                              <div className="aspect-[3/4] bg-neutral-100 overflow-hidden relative rounded-lg">
                                 <img
                                   src={product.image}
                                   alt={product.name}
@@ -1063,7 +1143,7 @@ export const RoboMarketPage: React.FC = () => {
                                 <h4 className="text-xs font-medium tracking-tight text-neutral-900 truncate">
                                   {product.name}
                                 </h4>
-                                <div className="text-[11px] font-mono text-neutral-500">
+                                <div className="text-[11px] font-mono text-neutral-500 truncate">
                                   {product.spec}
                                 </div>
                                 <div className="flex items-center justify-between pt-1">
@@ -1071,7 +1151,7 @@ export const RoboMarketPage: React.FC = () => {
                                     {product.price.toLocaleString("ru-RU")} UZS
                                   </span>
                                   <span className="text-[10px] text-neutral-400 uppercase tracking-widest group-hover/product:text-black">
-                                    + В сумку
+                                    Выбрать размер
                                   </span>
                                 </div>
                               </div>
@@ -1085,7 +1165,7 @@ export const RoboMarketPage: React.FC = () => {
                   {/* ARCHETYPE 2: BURGER KING & APP-LEVEL FASTFOOD            */}
                   {/* -------------------------------------------------------- */}
                   {previewTemplate.category === "restaurant" && (
-                    <div className="space-y-6 pb-12">
+                    <div className="space-y-6 pb-20">
                       {/* FastFood Header */}
                       <div className="sticky top-0 z-20 bg-neutral-950/95 backdrop-blur-md px-5 py-3 border-b border-neutral-800 flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -1097,10 +1177,11 @@ export const RoboMarketPage: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-lg shadow-orange-600/30 cursor-pointer"
+                            onClick={() => setCartDrawerOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-lg shadow-orange-600/30 cursor-pointer transition-transform active:scale-95"
                           >
                             <ShoppingBag className="w-4 h-4" />
-                            <span className="font-mono">{simulatedCart.count}</span>
+                            <span className="font-mono">{cartItemCount}</span>
                           </button>
                         </div>
                       </div>
@@ -1199,11 +1280,13 @@ export const RoboMarketPage: React.FC = () => {
                           {/* Instant Order CTA with Live Price */}
                           <button
                             type="button"
-                            onClick={() => handleSimulatedAddToCart(
+                            onClick={() => addToCartSimulation(
                               previewTemplate.sampleProducts[0],
-                              `[${simulatedPatties} котлеты ${simulatedCheddar ? "+ Чеддер" : ""} ${simulatedBacon ? "+ Бекон" : ""}]`
+                              `${simulatedPatties} котлеты ${simulatedCheddar ? "+ Чеддер" : ""} ${simulatedBacon ? "+ Бекон" : ""}`,
+                              1,
+                              calculateBurgerPrice()
                             )}
-                            className="w-full py-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-lg shadow-orange-600/40 flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all"
+                            className="w-full py-3.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-lg shadow-orange-600/40 flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all"
                           >
                             <Flame className="w-4 h-4 fill-white" />
                             <span>Добавить в заказ • {calculateBurgerPrice().toLocaleString("ru-RU")} UZS</span>
@@ -1229,7 +1312,7 @@ export const RoboMarketPage: React.FC = () => {
                         ))}
                       </div>
 
-                      {/* Food Cards Grid */}
+                      {/* Food Cards Grid (Clickable into Details!) */}
                       <div className="px-5 grid grid-cols-2 gap-3.5">
                         {previewTemplate.sampleProducts
                           .filter(p => previewActiveCategory === "Все меню" || p.category === previewActiveCategory)
@@ -1237,7 +1320,10 @@ export const RoboMarketPage: React.FC = () => {
                             <div
                               key={item.id}
                               className="group/food p-3 rounded-2xl bg-neutral-900 border border-neutral-800 flex flex-col justify-between hover:border-orange-500/60 transition-all cursor-pointer"
-                              onClick={() => handleSimulatedAddToCart(item)}
+                              onClick={() => {
+                                setActiveProductDetail(item);
+                                setDetailQuantity(1);
+                              }}
                             >
                               <div>
                                 <div className="aspect-square rounded-xl overflow-hidden bg-black mb-2 relative">
@@ -1274,7 +1360,7 @@ export const RoboMarketPage: React.FC = () => {
                   {/* ARCHETYPE 3: APPLE & KEYNOTE TECH                        */}
                   {/* -------------------------------------------------------- */}
                   {previewTemplate.category === "tech" && (
-                    <div className="space-y-6 pb-12">
+                    <div className="space-y-6 pb-20">
                       {/* Apple Header */}
                       <div className="sticky top-0 z-20 bg-black/90 backdrop-blur-md px-5 py-3 border-b border-neutral-800 flex items-center justify-between">
                         <span className="font-semibold text-xs tracking-wider uppercase text-white">
@@ -1283,10 +1369,11 @@ export const RoboMarketPage: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600 text-white text-[11px] font-mono cursor-pointer"
+                            onClick={() => setCartDrawerOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600 text-white text-[11px] font-mono cursor-pointer hover:bg-blue-500 transition-colors"
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
-                            <span>{simulatedCart.count}</span>
+                            <span>{cartItemCount}</span>
                           </button>
                         </div>
                       </div>
@@ -1370,7 +1457,10 @@ export const RoboMarketPage: React.FC = () => {
                             <div
                               key={prod.id}
                               className="p-3 rounded-2xl bg-neutral-900 border border-neutral-800 flex flex-col justify-between hover:border-neutral-600 transition-all cursor-pointer"
-                              onClick={() => handleSimulatedAddToCart(prod, `[${simulatedTechFinish} ${simulatedTechMemory}]`)}
+                              onClick={() => {
+                                setActiveProductDetail(prod);
+                                setDetailQuantity(1);
+                              }}
                             >
                               <div className="aspect-square bg-black rounded-xl overflow-hidden mb-2 relative">
                                 <img
@@ -1386,7 +1476,7 @@ export const RoboMarketPage: React.FC = () => {
                               </div>
                               <div>
                                 <h5 className="text-xs font-semibold text-white truncate">{prod.name}</h5>
-                                <p className="text-[10px] text-neutral-400 font-mono mt-0.5">{prod.spec}</p>
+                                <p className="text-[10px] text-neutral-400 font-mono mt-0.5 truncate">{prod.spec}</p>
                               </div>
                               <div className="pt-2 border-t border-neutral-800 mt-2 flex items-center justify-between">
                                 <span className="text-xs font-mono text-white font-bold">
@@ -1407,7 +1497,7 @@ export const RoboMarketPage: React.FC = () => {
                   {/* ARCHETYPE 4: NIKE VELOCITY LAB (STREETWEAR)              */}
                   {/* -------------------------------------------------------- */}
                   {previewTemplate.category === "streetwear" && (
-                    <div className="space-y-6 pb-12">
+                    <div className="space-y-6 pb-20">
                       {/* Nike Streetwear Header */}
                       <div className="sticky top-0 z-20 bg-neutral-950/95 backdrop-blur-md px-5 py-3 border-b border-neutral-800 flex items-center justify-between">
                         <span className="font-extrabold text-sm tracking-tighter uppercase italic text-lime-400">
@@ -1416,10 +1506,11 @@ export const RoboMarketPage: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-lime-400 text-black text-xs font-extrabold cursor-pointer"
+                            onClick={() => setCartDrawerOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-lime-400 text-black text-xs font-extrabold cursor-pointer hover:bg-lime-300 transition-colors"
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
-                            <span>{simulatedCart.count}</span>
+                            <span>{cartItemCount}</span>
                           </button>
                         </div>
                       </div>
@@ -1458,7 +1549,7 @@ export const RoboMarketPage: React.FC = () => {
                                 type="button"
                                 onClick={() => {
                                   setSimulatedSneakerSize(sz);
-                                  handleSimulatedAddToCart(previewTemplate.sampleProducts[0], `[${sz}]`);
+                                  addToCartSimulation(previewTemplate.sampleProducts[0], `Размер ${sz}`);
                                 }}
                                 className={`py-2 text-xs font-black rounded-lg transition-all cursor-pointer ${
                                   simulatedSneakerSize === sz
@@ -1479,7 +1570,10 @@ export const RoboMarketPage: React.FC = () => {
                           <div
                             key={p.id}
                             className="p-3 rounded-2xl bg-neutral-900 border border-neutral-800 flex flex-col justify-between hover:border-lime-400 transition-all cursor-pointer"
-                            onClick={() => handleSimulatedAddToCart(p, `[${simulatedSneakerSize}]`)}
+                            onClick={() => {
+                              setActiveProductDetail(p);
+                              setDetailQuantity(1);
+                            }}
                           >
                             <div className="aspect-square bg-black rounded-xl overflow-hidden mb-2 relative">
                               <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
@@ -1506,7 +1600,7 @@ export const RoboMarketPage: React.FC = () => {
                   {/* ARCHETYPE 5: CHANEL & HAUTE PARFUMERIE                   */}
                   {/* -------------------------------------------------------- */}
                   {previewTemplate.category === "luxury" && (
-                    <div className="space-y-6 pb-12">
+                    <div className="space-y-6 pb-20">
                       {/* Chanel Header */}
                       <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-5 py-3 border-b border-neutral-100 flex items-center justify-between">
                         <span className="font-serif text-sm tracking-[0.3em] uppercase text-neutral-950 font-light">
@@ -1515,10 +1609,11 @@ export const RoboMarketPage: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-950 text-amber-200 text-xs font-serif cursor-pointer"
+                            onClick={() => setCartDrawerOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-950 text-amber-200 text-xs font-serif cursor-pointer hover:bg-neutral-800 transition-colors"
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
-                            <span>{simulatedCart.count}</span>
+                            <span>{cartItemCount}</span>
                           </button>
                         </div>
                       </div>
@@ -1580,7 +1675,10 @@ export const RoboMarketPage: React.FC = () => {
                           <div
                             key={p.id}
                             className="group/luxury flex flex-col justify-between cursor-pointer space-y-2"
-                            onClick={() => handleSimulatedAddToCart(p, `[${simulatedVolume}]`)}
+                            onClick={() => {
+                              setActiveProductDetail(p);
+                              setDetailQuantity(1);
+                            }}
                           >
                             <div className="aspect-[3/4] bg-neutral-100 overflow-hidden relative rounded-xl">
                               <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover/luxury:scale-105 transition-transform duration-700" />
@@ -1605,6 +1703,361 @@ export const RoboMarketPage: React.FC = () => {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* ======================================================== */}
+                  {/* MODAL: INTERACTIVE PRODUCT DETAIL SHEET (CLICK ON ITEM)  */}
+                  {/* ======================================================== */}
+                  {activeProductDetail && (
+                    <div className="absolute inset-0 z-40 bg-black/80 backdrop-blur-md p-4 flex flex-col justify-end animate-in fade-in duration-200">
+                      <div className="bg-white text-neutral-950 rounded-3xl p-5 space-y-4 max-h-[85%] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-8 duration-300">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600 text-[10px] font-mono font-semibold uppercase">
+                              {activeProductDetail.category}
+                            </span>
+                            {activeProductDetail.tag && (
+                              <span className="px-2 py-0.5 rounded-md bg-neutral-950 text-white text-[10px] font-mono font-bold uppercase">
+                                {activeProductDetail.tag}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActiveProductDetail(null)}
+                            className="p-1.5 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-neutral-900 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="flex gap-4 items-center">
+                          <div className="w-24 h-24 rounded-2xl overflow-hidden bg-neutral-100 shrink-0">
+                            <img src={activeProductDetail.image} alt={activeProductDetail.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="text-sm font-bold tracking-tight text-neutral-900 leading-snug">
+                              {activeProductDetail.name}
+                            </h3>
+                            <p className="text-[11px] text-neutral-500 leading-relaxed">
+                              {activeProductDetail.desc}
+                            </p>
+                            <div className="text-sm font-extrabold font-mono text-neutral-950 pt-1">
+                              {activeProductDetail.price.toLocaleString("ru-RU")} UZS
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Interactive Option Selector based on Category */}
+                        {previewTemplate.category === "fashion" && (
+                          <div className="space-y-1.5 pt-2 border-t border-neutral-100">
+                            <span className="text-[11px] font-semibold text-neutral-700 block">Размер:</span>
+                            <div className="grid grid-cols-5 gap-1.5">
+                              {["XS", "S", "M", "L", "XL"].map(sz => (
+                                <button
+                                  key={sz}
+                                  type="button"
+                                  onClick={() => setSimulatedSize(sz)}
+                                  className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                                    simulatedSize === sz ? "bg-black text-white border-black" : "bg-white text-neutral-800 border-neutral-200"
+                                  }`}
+                                >
+                                  {sz}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {previewTemplate.category === "restaurant" && (
+                          <div className="space-y-2 pt-2 border-t border-neutral-100 text-xs">
+                            <span className="font-bold text-neutral-800 block">Дополнительные опции:</span>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSimulatedCheddar(!simulatedCheddar)}
+                                className={`flex-1 p-2 rounded-xl border text-center transition-all ${
+                                  simulatedCheddar ? "border-orange-500 bg-orange-50 text-orange-700 font-bold" : "border-neutral-200 text-neutral-600"
+                                }`}
+                              >
+                                🧀 Сыр (+8 000 UZS)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSimulatedBacon(!simulatedBacon)}
+                                className={`flex-1 p-2 rounded-xl border text-center transition-all ${
+                                  simulatedBacon ? "border-orange-500 bg-orange-50 text-orange-700 font-bold" : "border-neutral-200 text-neutral-600"
+                                }`}
+                              >
+                                🥓 Бекон (+12 000 UZS)
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {previewTemplate.category === "tech" && (
+                          <div className="space-y-2 pt-2 border-t border-neutral-100 text-xs">
+                            <span className="font-semibold text-neutral-700 block">Объем накопителя:</span>
+                            <div className="grid grid-cols-3 gap-2">
+                              {["256GB", "512GB", "1TB"].map(mem => (
+                                <button
+                                  key={mem}
+                                  type="button"
+                                  onClick={() => setSimulatedTechMemory(mem)}
+                                  className={`py-1.5 text-xs font-mono rounded-lg border transition-all ${
+                                    simulatedTechMemory === mem ? "bg-blue-600 text-white border-blue-600 font-bold" : "border-neutral-200 text-neutral-700"
+                                  }`}
+                                >
+                                  {mem}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Quantity Stepper & Submit Button */}
+                        <div className="flex items-center gap-3 pt-3 border-t border-neutral-100">
+                          <div className="flex items-center border border-neutral-200 rounded-xl overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => setDetailQuantity(Math.max(1, detailQuantity - 1))}
+                              className="w-8 h-9 flex items-center justify-center hover:bg-neutral-100 text-neutral-600"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="w-8 text-center text-xs font-bold font-mono text-neutral-900">
+                              {detailQuantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setDetailQuantity(detailQuantity + 1)}
+                              className="w-8 h-9 flex items-center justify-center hover:bg-neutral-100 text-neutral-600"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const opt = previewTemplate.category === "fashion" ? `Размер ${simulatedSize}` :
+                                          previewTemplate.category === "restaurant" ? (simulatedCheddar ? "+ Чеддер" : "Классика") :
+                                          previewTemplate.category === "tech" ? `${simulatedTechMemory} ${simulatedTechFinish}` :
+                                          previewTemplate.category === "streetwear" ? `Размер ${simulatedSneakerSize}` :
+                                          `Объем ${simulatedVolume}`;
+                              addToCartSimulation(activeProductDetail, opt, detailQuantity);
+                            }}
+                            className="flex-1 py-3 px-4 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                          >
+                            <ShoppingBag className="w-4 h-4" />
+                            <span>Добавить • {(activeProductDetail.price * detailQuantity).toLocaleString("ru-RU")} UZS</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ======================================================== */}
+                  {/* MODAL: INTERACTIVE CART DRAWER (CLICK ON SHOPPING BAG)   */}
+                  {/* ======================================================== */}
+                  {cartDrawerOpen && (
+                    <div className="absolute inset-0 z-40 bg-black/85 backdrop-blur-md p-4 flex flex-col justify-end animate-in fade-in duration-200">
+                      <div className="bg-white text-neutral-950 rounded-3xl p-5 space-y-4 max-h-[90%] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-8 duration-300 flex flex-col">
+                        <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                          <div className="flex items-center gap-2">
+                            <ShoppingBag className="w-4 h-4 text-neutral-950" />
+                            <h3 className="text-sm font-bold tracking-tight text-neutral-900">
+                              Ваша корзина ({cartItemCount})
+                            </h3>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setCartDrawerOpen(false)}
+                            className="p-1.5 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-neutral-900 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {orderCelebration ? (
+                          <div className="py-8 text-center space-y-3 animate-in zoom-in-95 duration-300">
+                            <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                              <CheckCheck className="w-8 h-8" />
+                            </div>
+                            <h4 className="text-base font-bold text-neutral-900">Заказ успешно оформлен!</h4>
+                            <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
+                              Клиент получил подтверждение, а бот отправил моментальное уведомление владельцу магазина.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOrderCelebration(false);
+                                setCartItems([]);
+                                setCartDrawerOpen(false);
+                              }}
+                              className="px-6 py-2.5 rounded-xl bg-neutral-950 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
+                            >
+                              Отлично
+                            </button>
+                          </div>
+                        ) : cartItems.length === 0 ? (
+                          <div className="py-10 text-center space-y-2">
+                            <ShoppingBag className="w-10 h-10 text-neutral-300 mx-auto" />
+                            <p className="text-xs font-medium text-neutral-500">Корзина пока пуста</p>
+                            <p className="text-[11px] text-neutral-400">Нажмите на любой товар, чтобы добавить его в заказ</p>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Items List */}
+                            <div className="space-y-2.5 divide-y divide-neutral-100 max-h-56 overflow-y-auto pr-1">
+                              {cartItems.map(item => (
+                                <div key={item.id} className="pt-2.5 flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-11 h-11 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
+                                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="text-left">
+                                      <div className="text-xs font-semibold text-neutral-900 truncate max-w-[140px]">
+                                        {item.product.name}
+                                      </div>
+                                      <div className="text-[10px] text-neutral-400 font-mono">
+                                        {item.selectedOption} • {item.quantity} шт.
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono font-bold text-neutral-950">
+                                      {item.itemTotal.toLocaleString("ru-RU")} UZS
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeCartItem(item.id)}
+                                      className="p-1 text-neutral-400 hover:text-red-600 transition-colors"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Promo Code Input */}
+                            <div className="pt-2 flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={promoCodeInput}
+                                onChange={(e) => setPromoCodeInput(e.target.value)}
+                                placeholder="Промокод (напр. VIP2026)"
+                                className="flex-1 px-3 py-2 rounded-xl border border-neutral-200 text-xs uppercase font-mono tracking-wider focus:outline-neutral-900"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (promoCodeInput.trim().toUpperCase() === "VIP2026") {
+                                    setPromoDiscount(0.15);
+                                    alert("Промокод применен: скидка 15%!");
+                                  } else {
+                                    alert("Промокод VIP2026 дает скидку 15%!");
+                                  }
+                                }}
+                                className="px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold transition-colors"
+                              >
+                                Применить
+                              </button>
+                            </div>
+
+                            {/* Total Calculation */}
+                            <div className="pt-2 border-t border-neutral-100 space-y-1.5 text-xs">
+                              <div className="flex justify-between text-neutral-500">
+                                <span>Сумма товаров:</span>
+                                <span className="font-mono">{cartSubtotal.toLocaleString("ru-RU")} UZS</span>
+                              </div>
+                              {promoDiscount > 0 && (
+                                <div className="flex justify-between text-emerald-600 font-semibold">
+                                  <span>Скидка по промокоду (15%):</span>
+                                  <span className="font-mono">-{(cartSubtotal * promoDiscount).toLocaleString("ru-RU")} UZS</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between text-neutral-500">
+                                <span>Доставка:</span>
+                                <span className="text-emerald-600 font-bold">Бесплатно</span>
+                              </div>
+                              <div className="flex justify-between text-neutral-950 font-bold text-sm pt-1 border-t border-neutral-100">
+                                <span>Итого к оплате:</span>
+                                <span className="font-mono">{cartTotalWithDiscount.toLocaleString("ru-RU")} UZS</span>
+                              </div>
+                            </div>
+
+                            {/* Checkout CTA */}
+                            <button
+                              type="button"
+                              onClick={() => setOrderCelebration(true)}
+                              className="w-full py-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs tracking-wider uppercase transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                            >
+                              <Zap className="w-4 h-4 fill-white" />
+                              <span>Оформить заказ в 1 клик</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ======================================================== */}
+                  {/* MOBILE (IPHONE 16 TMA) BOTTOM NAVIGATION BAR             */}
+                  {/* ======================================================== */}
+                  {previewDevice === "mobile" && (
+                    <div className="absolute bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-neutral-200/80 px-4 py-2 flex items-center justify-around text-neutral-500 text-[10px] font-medium shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() => { setPreviewMobileNav("home"); setCartDrawerOpen(false); }}
+                        className={`flex flex-col items-center gap-1 cursor-pointer transition-colors ${
+                          previewMobileNav === "home" ? "text-neutral-950 font-bold" : "hover:text-neutral-900"
+                        }`}
+                      >
+                        <Home className="w-4 h-4" />
+                        <span>Главная</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { setPreviewMobileNav("catalog"); setCartDrawerOpen(false); }}
+                        className={`flex flex-col items-center gap-1 cursor-pointer transition-colors ${
+                          previewMobileNav === "catalog" ? "text-neutral-950 font-bold" : "hover:text-neutral-900"
+                        }`}
+                      >
+                        <Grid className="w-4 h-4" />
+                        <span>Каталог</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCartDrawerOpen(true)}
+                        className="flex flex-col items-center gap-1 cursor-pointer relative hover:text-neutral-900 transition-colors"
+                      >
+                        <div className="relative">
+                          <ShoppingBag className="w-4 h-4" />
+                          {cartItemCount > 0 && (
+                            <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-orange-600 text-white rounded-full text-[9px] font-mono flex items-center justify-center font-bold">
+                              {cartItemCount}
+                            </span>
+                          )}
+                        </div>
+                        <span>Корзина</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { setPreviewMobileNav("profile"); setCartDrawerOpen(false); }}
+                        className={`flex flex-col items-center gap-1 cursor-pointer transition-colors ${
+                          previewMobileNav === "profile" ? "text-neutral-950 font-bold" : "hover:text-neutral-900"
+                        }`}
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Профиль</span>
+                      </button>
                     </div>
                   )}
 
