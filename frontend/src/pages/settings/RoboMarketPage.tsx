@@ -24,7 +24,8 @@ import {
   Layers,
   Award,
   TrendingUp,
-  Info
+  Info,
+  CheckCheck
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
@@ -70,6 +71,7 @@ interface TemplateData {
   stats: { label: string; value: string }[];
 }
 
+// 100% Guaranteed Local, Ultra-Crisp Flagship Assets
 const BRAND_TEMPLATES: TemplateData[] = [
   // 1. ZARA & HIGH FASHION
   {
@@ -79,7 +81,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     name: "Zara Atelier / High Fashion",
     tagline: "Swiss Minimalism & Editorial Runway Lookbook",
     badge: "HAUTE COUTURE",
-    heroImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=90",
+    heroImage: "/static/images/templates/zara_hero.jpg",
     accentColor: "#09090b",
     colorSwatches: [
       { name: "Obsidian Noir", hex: "#09090b" },
@@ -90,7 +92,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     themeTemplate: "boutique",
     cardStyle: "minimal",
     aspectRatio: "portrait",
-    description: "Бескомпромиссный европейский минимализм в духе парижских и миланских недель моды. Чистейшая вертикальная сетка 3:4 во весь рост, скрытая типографика цен, интерактивный выбор размеров XS-XL и моментальный Shop the Look.",
+    description: "Бескомпромиссный европейский минимализм в духе парижских и миланских недель моды. Чистейшая вертикальная сетка 3:4 во весь рост, строгая монохромная типографика, интерактивный выбор размеров XS-XL и моментальный Shop the Look.",
     highlights: ["Подиумная сетка 3:4", "Швейцарская монохром-типографика", "Всплывающий селектор XS-XL", "Shop the Look хотспоты"],
     sampleCategories: ["Все", "Новая коллекция", "Пальто & Тренчи", "Шелк & Платья", "Деним"],
     sampleProducts: [
@@ -100,7 +102,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         category: "Пальто & Тренчи",
         price: 1890000,
         oldPrice: 2250000,
-        image: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/zara_coat.jpg",
         tag: "RUNWAY 2026",
         desc: "Двубортный силуэт из премиальной итальянской шерсти с акцентным поясом.",
         spec: "100% Virgin Wool • Made in Italy"
@@ -110,7 +112,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "Wide-Leg Raw Indigo Denim",
         category: "Деним",
         price: 840000,
-        image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/zara_denim.jpg",
         tag: "EDITORIAL",
         desc: "Прямой расслабленный крой с высокой талией и японской кромкой селвидж.",
         spec: "13.5 oz Japanese Denim"
@@ -121,7 +123,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         category: "Шелк & Платья",
         price: 1150000,
         oldPrice: 1390000,
-        image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/zara_dress.jpg",
         tag: "LIMITED",
         desc: "Элегантное вечернее платье-комбинация из плотного натурального шелка.",
         spec: "100% Mulberry Silk"
@@ -131,7 +133,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "Ribbed Cashmere Mock-Neck",
         category: "Новая коллекция",
         price: 720000,
-        image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/zara_knit.jpg",
         desc: "Ультрамягкий свитер тонкой вязки из монгольского кашемира первого сбора.",
         spec: "Grade-A Mongolian Cashmere"
       }
@@ -149,9 +151,9 @@ const BRAND_TEMPLATES: TemplateData[] = [
     brandArchetype: "BURGER KING / SHAKE SHACK",
     category: "restaurant",
     name: "Burger King Flamehouse",
-    tagline: "Flame-Grilled Craft Burgers & Sizzling Kitchen",
+    tagline: "Flame-Grilled Smash Burgers & Sizzling Kitchen",
     badge: "100% OPEN FLAME",
-    heroImage: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1600&q=90",
+    heroImage: "/static/images/templates/burger_hero.jpg",
     accentColor: "#EA580C",
     colorSwatches: [
       { name: "Flame Orange", hex: "#EA580C" },
@@ -172,7 +174,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         category: "Крафт-Бургеры",
         price: 68000,
         oldPrice: 75000,
-        image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/burger_whopper.jpg",
         tag: "ХИТ ГРИЛЯ",
         desc: "Две сочные котлеты из мраморного Black Angus, расплавленный чеддер и фирменный соус.",
         spec: "340г • 820 ккал • 44г белка"
@@ -182,7 +184,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "Crispy Country Bacon & Cheese",
         category: "Крафт-Бургеры",
         price: 54000,
-        image: "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/burger_chicken.jpg",
         desc: "Золотистое куриное филе в кукурузной панировке с копченым беконом и соусом айоли.",
         spec: "310г • 680 ккал • 38г белка"
       },
@@ -191,7 +193,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "Truffle Parmesan Rustic Fries",
         category: "Снеки & Фри",
         price: 28000,
-        image: "https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/burger_fries.jpg",
         tag: "ШЕФ-ВЫБОР",
         desc: "Хрустящий картофель фри с трюфельным маслом первого отжима и тертым Грана Падано.",
         spec: "180г • 380 ккал"
@@ -201,7 +203,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "Salted Caramel Craft Milkshake",
         category: "Напитки",
         price: 24000,
-        image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/burger_shake.jpg",
         desc: "Густой крафтовый милкшейк из натурального пломбира со соленой карамелью.",
         spec: "400мл • Натуральное молоко"
       }
@@ -221,7 +223,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     name: "Apple Keynote Titanium",
     tagline: "Cupertino Aesthetics & Grade 5 Titanium Studio",
     badge: "KEYNOTE SPEC",
-    heroImage: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1600&q=90",
+    heroImage: "/static/images/templates/apple_hero.jpg",
     accentColor: "#2563EB",
     colorSwatches: [
       { name: "Desert Titanium", hex: "#C5A880" },
@@ -233,7 +235,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     cardStyle: "modern",
     aspectRatio: "square",
     description: "Глубокий обсидиановый минимализм в стиле официального сайта Apple. Интерактивный конфигуратор 4 оттенков титана Grade 5, Bento-сетка характеристик чипа A18 Pro, селектор памяти и расчет рассрочки 0-0-12.",
-    highlights: ["4 оттенка корпуса титана", "Bento-сетка характеристик", "Конфигуратор 256GB - 1TB", "Рассрочка 0-0-12 Payme/Uzum"],
+    highlights: ["4 оттенка корпуса титана", "Bento-сетка характеристик", "Конфигуратор 128GB - 1TB", "Рассрочка 0-0-12 Payme/Uzum"],
     sampleCategories: ["Все девайсы", "Смартфоны", "MacBook", "Аудио & AirPods", "Watch"],
     sampleProducts: [
       {
@@ -242,7 +244,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         category: "Смартфоны",
         price: 15400000,
         oldPrice: 16200000,
-        image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/apple_iphone.jpg",
         tag: "ФЛАГМАН 2026",
         desc: "Корпус из титана Grade 5, 3-нм процессор A18 Pro и камера 48MP Fusion 5x Telephoto.",
         spec: "A18 Pro • 6.9\" Super Retina XDR • USB-C 3.0"
@@ -252,7 +254,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "MacBook Pro 16 M3 Max Space Black",
         category: "MacBook",
         price: 28900000,
-        image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/apple_macbook.jpg",
         desc: "Liquid Retina XDR 16.2\", 36GB объединенной памяти, до 22 часов автономной работы.",
         spec: "M3 Max (16-core CPU) • 1TB SSD • 120Hz ProMotion"
       },
@@ -261,7 +263,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "AirPods Max Space Gray",
         category: "Аудио & AirPods",
         price: 6800000,
-        image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/apple_airpods.jpg",
         tag: "HI-RES AUDIO",
         desc: "Активное шумоподавление студийного уровня, пространственное аудио с динамическим трекингом.",
         spec: "Apple H1 Chip • Lossless Audio • 20h Battery"
@@ -271,7 +273,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "Apple Watch Ultra 2 Titanium",
         category: "Watch",
         price: 9400000,
-        image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/apple_watch.jpg",
         desc: "Титановый корпус 49мм, яркость дисплея 3000 нит, двухчастотный GPS L1/L5.",
         spec: "WR100 Водонепроницаемость • 72h Low Power"
       }
@@ -291,7 +293,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     name: "Nike Velocity Lab",
     tagline: "High-Energy Streetwear & Air Sole Visualizer",
     badge: "LIMITED DROP",
-    heroImage: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1600&q=90",
+    heroImage: "/static/images/templates/nike_hero.jpg",
     accentColor: "#84CC16",
     colorSwatches: [
       { name: "Volt Neon", hex: "#84CC16" },
@@ -302,8 +304,8 @@ const BRAND_TEMPLATES: TemplateData[] = [
     themeTemplate: "universal",
     cardStyle: "modern",
     aspectRatio: "square",
-    description: "Дерзкий, высокоэнергетический streetwear-дизайн в духе лимитированных дропов Nike SNKRS. Агрессивная кинематика, счетчик остатка пар в реальном времени, селектор размеров US 7-12 и подошва с амортизацией Air Zoom.",
-    highlights: ["Счетчик остатка пар Limited Drop", "Сетка размеров US 7-12", "Амортизация ZoomX Foam", "Анимации 120 FPS"],
+    description: "Дерзкий, высокоэнергетический streetwear-дизайн в духе лимитированных дропов Nike SNKRS. Агрессивная кинематика, счетчик остатка пар в реальном времени, селектор размеров US 8-12 и подошва с амортизацией Air Zoom.",
+    highlights: ["Счетчик остатка пар Limited Drop", "Сетка размеров US 8-12", "Амортизация ZoomX Foam", "Анимации 120 FPS"],
     sampleCategories: ["Все дропы", "Кроссовки", "Худи & Костюмы", "Аксессуары"],
     sampleProducts: [
       {
@@ -312,7 +314,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         category: "Кроссовки",
         price: 2850000,
         oldPrice: 3200000,
-        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/nike_alphafly.jpg",
         tag: "ОСТАЛОСЬ 9 ПАР",
         desc: "Марафонская пластина из углеродного волокна Flyplate и двойные баллоны Air Zoom.",
         spec: "ZoomX Foam • 198g • Carbon Plate"
@@ -322,7 +324,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "Air Jordan 1 Retro High OG Chicago",
         category: "Кроссовки",
         price: 2600000,
-        image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/nike_jordan.jpg",
         tag: "GRAIL",
         desc: "Легендарная оригинальная расцветка 1985 года из премиальной зернистой кожи.",
         spec: "Full Grain Leather • Air Sole Unit"
@@ -332,7 +334,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "Nike Tech Fleece Windrunner Nocturne",
         category: "Худи & Костюмы",
         price: 1420000,
-        image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/nike_fleece.jpg",
         desc: "Легкий теплоизолирующий трехслойный трикотаж с водоотталкивающими карманами.",
         spec: "Thermal Tech Fleece • Double Zipper"
       }
@@ -352,7 +354,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
     name: "Chanel Cristall Royale",
     tagline: "French Haute Parfumerie & Olfactory Pyramid",
     badge: "PARFUM D'EXCEPTION",
-    heroImage: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=1600&q=90",
+    heroImage: "/static/images/templates/chanel_hero.jpg",
     accentColor: "#D4AF37",
     colorSwatches: [
       { name: "Imperial Gold", hex: "#D4AF37" },
@@ -373,7 +375,7 @@ const BRAND_TEMPLATES: TemplateData[] = [
         category: "Extrait de Parfum",
         price: 3200000,
         oldPrice: 3800000,
-        image: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/chanel_coco.jpg",
         tag: "EXCLUSIF",
         desc: "Абсолют грасской майской розы, ирис и мадагаскарская ваниль в граненом хрустале.",
         spec: "30% Концентрация масел • Стойкость 48 часов"
@@ -383,18 +385,18 @@ const BRAND_TEMPLATES: TemplateData[] = [
         name: "Bois Impérial Millésime 100ml",
         category: "Millésime",
         price: 2450000,
-        image: "https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/chanel_bois.jpg",
         desc: "Базилик тайский, древесный акигалавуд и ветивер с акцентом амброксана.",
         spec: "Древесный пряный шлейф • Унисекс"
       },
       {
         id: 503,
-        name: "Velvet Oud & Saffron Elixir",
+        name: "Dior Sauvage Elixir 100ml",
         category: "Extrait de Parfum",
         price: 2890000,
-        image: "https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=90",
+        image: "/static/images/templates/chanel_sauvage.jpg",
         tag: "LIMITED",
-        desc: "Камбоджийский уд редкой выдержки, пряный иранский шафран и теплая амбра.",
+        desc: "Пряный ликерный кардамон, лаванда первого сбора и густой шлейф древесной смолы.",
         spec: "Ручной розлив • Лимитированный тираж"
       }
     ],
@@ -432,7 +434,6 @@ export const RoboMarketPage: React.FC = () => {
   const [simulatedCheddar, setSimulatedCheddar] = useState<boolean>(true);
   const [simulatedBacon, setSimulatedBacon] = useState<boolean>(true);
   const [simulatedTruffleSauce, setSimulatedTruffleSauce] = useState<boolean>(false);
-  const [isBurgerCustomizerOpen, setIsBurgerCustomizerOpen] = useState<boolean>(false);
 
   // Interactive Apple Tech States
   const [simulatedTechFinish, setSimulatedTechFinish] = useState<string>("Desert Titanium");
@@ -443,7 +444,6 @@ export const RoboMarketPage: React.FC = () => {
 
   // Interactive Chanel Perfumery States
   const [simulatedVolume, setSimulatedVolume] = useState<string>("100 ml");
-  const [simulatedGiftBox, setSimulatedGiftBox] = useState<boolean>(true);
 
   // In-Preview Shopping Cart Simulator
   const [simulatedCart, setSimulatedCart] = useState<{ count: number; lastItem: string | null }>({
@@ -478,7 +478,6 @@ export const RoboMarketPage: React.FC = () => {
     setPreviewActiveCategory("Все");
     setSimulatedCart({ count: 0, lastItem: null });
     setCartToastMessage(null);
-    setIsBurgerCustomizerOpen(false);
   };
 
   // Simulated Add to Cart with live toast feedback

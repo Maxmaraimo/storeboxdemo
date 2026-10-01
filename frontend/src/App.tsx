@@ -296,6 +296,30 @@ export const App: React.FC = () => {
                     </PermissionGuard>
                   }
                 />
+                <Route
+                  path="settings/robomarket"
+                  element={
+                    <PermissionGuard module="channels">
+                      <RoboMarketPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/robo-market"
+                  element={
+                    <PermissionGuard module="channels">
+                      <RoboMarketPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/templates"
+                  element={
+                    <PermissionGuard module="channels">
+                      <RoboMarketPage />
+                    </PermissionGuard>
+                  }
+                />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
