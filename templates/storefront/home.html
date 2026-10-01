@@ -117,13 +117,16 @@
     {% endif %}
 
     <!-- VISUAL CATEGORIES SECTION: SQUIRCLE PHOTO CAROUSEL & PILL CHIPS (Robosell & Grocery App Reference) -->
+    <!-- VISUAL CATEGORIES SECTION: SQUIRCLE PHOTO CAROUSEL & PILL CHIPS (Centered if few, scrollable if many) -->
     {% if not search_q and categories %}
     <div class="space-y-3" x-data="{
         isOverflowing: false,
         checkOverflow() {
-            if (this.$refs.catSlider) {
-                this.isOverflowing = this.$refs.catSlider.scrollWidth > this.$refs.catSlider.clientWidth;
-            }
+            this.$nextTick(() => {
+                if (this.$refs.catSlider) {
+                    this.isOverflowing = this.$refs.catSlider.scrollWidth > (this.$refs.catSlider.clientWidth + 6);
+                }
+            });
         },
         scrollCat(direction) {
             const container = this.$refs.catSlider;
@@ -133,7 +136,7 @@
             }
         }
     }"
-    x-init="$nextTick(() => { checkOverflow(); }); window.addEventListener('resize', () => checkOverflow());">
+    x-init="checkOverflow(); $nextTick(() => { checkOverflow(); }); setTimeout(() => checkOverflow(), 50); setTimeout(() => checkOverflow(), 250); window.addEventListener('resize', () => checkOverflow());">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <h3 class="text-sm font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight flex items-center gap-1.5">
@@ -153,9 +156,10 @@
             </div>
         </div>
 
-        <!-- SQUIRCLE PHOTO CAROUSEL: Left-aligned and compact, exactly matching burger-co.storebox.uz -->
+        <!-- SQUIRCLE PHOTO CAROUSEL: Centered if few/not overflowing, scrollable from start if overflowing -->
         <div x-ref="catSlider"
-             class="flex items-start gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-2 px-2 sm:mx-0 sm:px-0 scroll-smooth transition-all duration-200 justify-start">
+             :class="isOverflowing ? 'justify-start' : 'justify-center'"
+             class="flex items-start gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-2 px-2 sm:mx-0 sm:px-0 scroll-smooth transition-all duration-200 justify-center">
             <!-- All Categories ('Barchasi') Squircle Card -->
             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
                class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
