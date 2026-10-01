@@ -857,12 +857,14 @@ def storefront_home_view(request, subdomain=None):
     if free_threshold and subtotal >= free_threshold:
         delivery_fee = 0.0
 
-    first_c_prod = Product.objects.filter(store=store, has_constructor=True, is_active=True).first()
+    show_constructor = store.show_constructor
+    first_c_prod = Product.objects.filter(store=store, has_constructor=True, is_active=True).first() if show_constructor else None
     first_constructor_product_id = first_c_prod.id if first_c_prod else None
 
     t = UI_TRANSLATIONS.get(lang, UI_TRANSLATIONS['uz'])
     context = {
         'store': store,
+        'show_constructor': show_constructor,
         'effective_card_style': effective_card_style,
         'banners': banners,
         'categories': categories,
@@ -2406,6 +2408,13 @@ def storefront_constructor_view(request, subdomain=None):
         raise Http404("Магазин не найден")
 
     current_lang = get_storefront_lang(request, store)
+    store_base = f'/store/{store.subdomain}/' if store.subdomain else '/'
+
+    # If constructor is explicitly disabled for the store, redirect safely to store home
+    if not store.is_constructor_enabled:
+        qs = f'?lang={current_lang}' if current_lang != 'uz' else ''
+        return redirect(f'{store_base}{qs}')
+
     active_product_id = request.GET.get('product_id') or request.GET.get('p')
 
     if not active_product_id:
@@ -2462,9 +2471,8 @@ def storefront_constructor_view(request, subdomain=None):
         if c_prod:
             active_product_id = c_prod.id
 
-    store_base = f'/store/{store.subdomain}/' if store.subdomain else '/'
     params = []
-    if current_lang:
+    if current_lang and current_lang != 'uz':
         params.append(f'lang={current_lang}')
     if active_product_id:
         params.append(f'open_constructor={active_product_id}')

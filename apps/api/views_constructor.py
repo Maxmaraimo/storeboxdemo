@@ -279,6 +279,7 @@ def constructor_list_view(request):
             regular_products.append(p_data)
 
     return Response({
+        "is_constructor_enabled": getattr(store, "is_constructor_enabled", True),
         "constructor_products": constructor_products,
         "regular_products": regular_products[:50],
         "total_constructors": len(constructor_products),
@@ -287,6 +288,35 @@ def constructor_list_view(request):
             {"id": "pizza", "name": "Пицца-конструктор (Пиццерии)", "desc": "Размер и тесто, сырный бортик, моцарелла, пепперони, грибы"},
             {"id": "shawarma", "name": "Шаурма / Лаваш (Фастфуд)", "desc": "Размер порции, доп. мясо, моцарелла, картофель фри, чесночный соус"},
         ],
+    })
+
+
+# -----------------------------------------------------------------
+# 1.1 TOGGLE CONSTRUCTOR STATUS FOR STORE
+# -----------------------------------------------------------------
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def constructor_toggle_status_view(request):
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Do'kon topilmadi"}, status=404)
+
+    is_enabled = request.data.get("is_enabled")
+    if is_enabled is not None:
+        store.is_constructor_enabled = bool(is_enabled)
+    else:
+        store.is_constructor_enabled = not getattr(store, "is_constructor_enabled", True)
+
+    store.save(update_fields=["is_constructor_enabled"])
+
+    msg_ru = "Конструктор включен на витрине" if store.is_constructor_enabled else "Конструктор отключен на витрине"
+    msg_uz = "Konstruktor saytda faollashtirildi" if store.is_constructor_enabled else "Konstruktor saytda o'chirildi"
+
+    return Response({
+        "success": True,
+        "is_constructor_enabled": store.is_constructor_enabled,
+        "message": msg_ru,
+        "message_uz": msg_uz,
     })
 
 

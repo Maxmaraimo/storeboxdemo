@@ -56,7 +56,8 @@ class StoreSerializer(serializers.ModelSerializer):
             "phone", "telegram_bot_username", "is_active", "logo_url",
             "delivery_price", "free_delivery_threshold", "delivery_time_estimate",
             "pickup_enabled", "courier_enabled", "address",
-            "primary_color", "theme_bg_color", "theme_card_style"
+            "primary_color", "theme_bg_color", "theme_card_style",
+            "is_constructor_enabled"
         ]
         read_only_fields = ["id", "storefront_url", "is_active", "logo_url"]
 

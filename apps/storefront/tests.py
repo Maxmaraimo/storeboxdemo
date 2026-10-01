@@ -98,3 +98,38 @@ class StorefrontTemplateAndCarouselTests(TestCase):
         self.assertTrue(product.image_url)
         self.assertTrue(product.constructor_groups.exists())
         self.assertFalse(product.constructor_groups.exclude(store=self.store).exists())
+
+    def test_constructor_toggle_and_storefront_visibility(self):
+        prod = self.store.products.first()
+        prod.has_constructor = True
+        prod.save()
+
+        # 1. When constructor is enabled and product exists, constructor tab and icon appear
+        self.store.is_constructor_enabled = True
+        self.store.save()
+        res_enabled = self.client.get(f'/store/{self.store.subdomain}/')
+        self.assertEqual(res_enabled.status_code, 200)
+        content_enabled = res_enabled.content.decode('utf-8')
+        self.assertIn("O'zing ter", content_enabled)
+        self.assertIn('data-lucide="wand-2"', content_enabled)
+
+        # 2. When constructor is disabled via is_constructor_enabled = False, it disappears
+        self.store.is_constructor_enabled = False
+        self.store.save()
+        res_disabled = self.client.get(f'/store/{self.store.subdomain}/')
+        self.assertEqual(res_disabled.status_code, 200)
+        content_disabled = res_disabled.content.decode('utf-8')
+        self.assertNotIn("O'zing ter", content_disabled)
+        self.assertNotIn('data-lucide="wand-2"', content_disabled)
+
+        # 3. Direct access to constructor redirects when disabled
+        res_redirect = self.client.get(f'/store/{self.store.subdomain}/constructor/')
+        self.assertEqual(res_redirect.status_code, 302)
+
+        # 4. API toggle endpoint works
+        self.client.force_login(self.store.owner)
+        res_api = self.client.post('/api/constructor/toggle-status/', content_type='application/json')
+        self.assertEqual(res_api.status_code, 200)
+        self.store.refresh_from_db()
+        self.assertTrue(self.store.is_constructor_enabled)
+

@@ -53,8 +53,11 @@ def tenant_context(request):
         except Exception:
             pass
 
+    show_constructor = getattr(store, 'show_constructor', False) if store else False
+
     return {
         'tenant_store': store,
+        'show_constructor': show_constructor,
         'is_platform_root': is_platform_root,
         'current_lang': current_lang,
         't': get_translations(current_lang),

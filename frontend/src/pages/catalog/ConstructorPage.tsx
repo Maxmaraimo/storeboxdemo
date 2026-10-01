@@ -162,6 +162,28 @@ export const ConstructorPage: React.FC = () => {
     },
   });
 
+  const isConstructorEnabled = data?.is_constructor_enabled ?? (store as any)?.is_constructor_enabled ?? true;
+  const [statusMsg, setStatusMsg] = useState("");
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async (newStatus: boolean) => {
+      const res = await api.post("/constructor/toggle-status/", {
+        is_enabled: newStatus,
+      });
+      return res.data;
+    },
+    onSuccess: (resData) => {
+      queryClient.invalidateQueries({ queryKey: ["constructor-list"] });
+      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+      setStatusMsg(
+        lang === "ru"
+          ? (resData.is_constructor_enabled ? "Конструктор включен на сайте" : "Конструктор отключен на сайте")
+          : (resData.is_constructor_enabled ? "Konstruktor saytda faollashtirildi" : "Konstruktor saytda o'chirildi")
+      );
+      setTimeout(() => setStatusMsg(""), 4000);
+    },
+  });
+
   const constructorProducts = data?.constructor_products || [];
   const regularProducts = data?.regular_products || [];
 
@@ -550,7 +572,42 @@ export const ConstructorPage: React.FC = () => {
             </div>
 
             {canEdit && (
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Master Switch: Включить / Отключить конструктор на витрине */}
+                <div
+                  className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-white dark:bg-zinc-800/80 border border-slate-200/80 dark:border-white/10 shadow-2xs select-none"
+                  title={
+                    isConstructorEnabled
+                      ? (lang === "ru" ? "Нажмите, чтобы отключить конструктор на сайте" : "Saytda konstruktorni o'chirish uchun bosing")
+                      : (lang === "ru" ? "Нажмите, чтобы включить конструктор на сайте" : "Saytda konstruktorni yoqish uchun bosing")
+                  }
+                >
+                  <div className="flex flex-col text-right">
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                      {lang === "ru" ? "Витрина" : "Veb-saytda"}
+                    </span>
+                    <span className={`text-[10px] font-extrabold ${isConstructorEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+                      {isConstructorEnabled
+                        ? (lang === "ru" ? "Включен" : "Faol")
+                        : (lang === "ru" ? "Отключен" : "O'chiq")}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={toggleStatusMutation.isPending}
+                    onClick={() => toggleStatusMutation.mutate(!isConstructorEnabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      isConstructorEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-zinc-700"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        isConstructorEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 {/* Button: + Добавить товар */}
                 <button
                   type="button"
@@ -573,6 +630,45 @@ export const ConstructorPage: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* STATUS NOTIFICATION TOAST */}
+          {statusMsg && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2.5 shadow-2xs animate-in fade-in duration-200">
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{statusMsg}</span>
+            </div>
+          )}
+
+          {/* BANNER WHEN CONSTRUCTOR DISABLED */}
+          {!isConstructorEnabled && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-2xs animate-in fade-in duration-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <PowerOff className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-amber-950">
+                    {lang === "ru"
+                      ? "Конструктор товаров сейчас отключен на вашей витрине"
+                      : "Mahsulotlar konstruktori hozirda veb-saytingizda o'chirilgan"}
+                  </h4>
+                  <p className="text-[11px] text-amber-800/85 mt-0.5">
+                    {lang === "ru"
+                      ? "Покупатели на сайте и в мобильной версии не видят иконку конструктора и вкладку «Собери сам»."
+                      : "Xaridorlar veb-sayt va mobil versiyada konstruktor tugmasi hamda «O'zing ter» bo'limini ko'rmaydilar."}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={toggleStatusMutation.isPending}
+                onClick={() => toggleStatusMutation.mutate(true)}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-xs transition-all cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto"
+              >
+                {lang === "ru" ? "Включить на сайте" : "Saytda yoqish"}
+              </button>
+            </div>
+          )}
 
           {/* QUICK CATEGORY TABS / FILTER BANNERS */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

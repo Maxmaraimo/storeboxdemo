@@ -148,6 +148,17 @@ class Store(models.Model):
             self.business_category == self.BusinessCategories.FOOD
         )
 
+    @property
+    def has_active_constructors(self):
+        try:
+            return self.products.filter(has_constructor=True, is_active=True).exists()
+        except Exception:
+            return False
+
+    @property
+    def show_constructor(self):
+        return bool(self.is_constructor_enabled and self.has_active_constructors)
+
     phone = models.CharField(max_length=30, blank=True, verbose_name='Телефон (+998)')
     
     # 6 Social Networks from Video
@@ -205,6 +216,10 @@ class Store(models.Model):
     qr_sub_text_color = models.CharField(max_length=20, default='#64748B', verbose_name='Ikkilamchi matn rangi')
 
     is_active = models.BooleanField(default=True, verbose_name='Активен')
+    is_constructor_enabled = models.BooleanField(
+        default=True,
+        verbose_name='Конструктор товаров активен на витрине'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

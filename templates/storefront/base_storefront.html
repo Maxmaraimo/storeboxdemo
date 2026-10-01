@@ -73,6 +73,49 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .cat-card-item {
+            width: 72px;
+            flex-shrink: 0;
+        }
+        @media (min-width: 640px) {
+            .cat-card-item {
+                width: 80px;
+            }
+        }
+        .cat-squircle-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+        @media (min-width: 640px) {
+            .cat-squircle-icon {
+                width: 62px;
+                height: 62px;
+                border-radius: 20px;
+            }
+        }
+        .cat-card-label {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            text-align: center;
+            font-size: 11px;
+            line-height: 13px;
+            font-weight: 600;
+            width: 100%;
+        }
+        @media (min-width: 640px) {
+            .cat-card-label {
+                font-size: 12px;
+                line-height: 14px;
+            }
+        }
     </style>
     <script>
         // Real-time live theme preview message listener (from Design & AI Studio)
@@ -262,6 +305,7 @@
 
                     <!-- RIGHT CONTROLS: Clean Mobile Header (Lang + Cart) & Desktop Controls -->
                     <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                        {% if show_constructor %}
                         <!-- Constructor / Customizer Button (Desktop - Sleek Round Icon) -->
                         <a href="{% if request.GET.constructor %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}{% else %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}?constructor=1{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}{% endif %}"
                            title="{% if store.is_restaurant or store.theme_template == 'restaurant' %}{% if current_lang == 'ru' %}Собери сам{% elif current_lang == 'en' %}Build yourself{% else %}O'zing ter{% endif %}{% elif store.theme_template == 'boutique' %}{% if current_lang == 'ru' %}Собрать подарочный бокс{% elif current_lang == 'en' %}Build Gift Box{% else %}Sovg'a boksini yig'ish{% endif %}{% else %}{% if current_lang == 'ru' %}Собери сам{% elif current_lang == 'en' %}Build yourself{% else %}O'zing ter{% endif %}{% endif %}"
@@ -269,6 +313,7 @@
                            style="{% if not request.GET.constructor %}background-color: color-mix(in srgb, var(--brand-color) 12%, #ffffff); border-color: color-mix(in srgb, var(--brand-color) 35%, transparent); color: var(--brand-color);{% endif %}">
                             <i data-lucide="wand-2" class="w-4.5 h-4.5 group-hover:scale-110 transition-transform"></i>
                         </a>
+                        {% endif %}
 
                         <!-- Wishlist (Sevimlilar - Desktop Only) -->
                         <button type="button" @click="openWishlist()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 relative text-xs font-bold text-slate-700 transition-all">
@@ -1400,12 +1445,14 @@
                     <i data-lucide="layout-grid" class="w-4.5 h-4.5 stroke-[1.8]"></i>
                 </button>
 
+                {% if show_constructor %}
                 <!-- 3. Product Constructor (Magic Wand - Consistent across all stores) -->
                 <a href="{% if request.GET.constructor %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}{% else %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}?constructor=1{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}{% endif %}"
                    title="{% if current_lang == 'ru' %}Конструктор{% elif current_lang == 'en' %}Constructor{% else %}Konstruktor{% endif %}"
                    class="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 select-none {% if request.GET.constructor or request.GET.open_constructor %}bg-brand text-white shadow-xs{% else %}text-slate-700 hover:text-slate-900 hover:bg-black/5{% endif %}">
                     <i data-lucide="wand-2" class="w-4.5 h-4.5 {% if request.GET.constructor or request.GET.open_constructor %}text-white stroke-[2.2]{% else %}text-slate-700 stroke-[1.8]{% endif %}"></i>
                 </a>
+                {% endif %}
 
                 <!-- 4. Cart (with dynamic count badge) -->
                 <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/cart/{% else %}/cart/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"

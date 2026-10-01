@@ -648,7 +648,7 @@
                     <!-- Floating Action Button -->
                     {% if rp.is_in_stock %}
                     <div class="absolute bottom-2 right-2 z-10" @click.stop>
-                        {% if rp.has_constructor %}
+                        {% if show_constructor and rp.has_constructor %}
                         <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/?open_constructor={{ rp.id }}{% else %}/?open_constructor={{ rp.id }}{% endif %}"
                            class="{% if store.is_restaurant or store.theme_template == 'restaurant' %}bg-[#18181B] hover:bg-black text-white shadow-md{% else %}btn-brand text-white shadow-xs{% endif %} px-2.5 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-transform text-[10px] sm:text-xs font-bold cursor-pointer">
                             <i data-lucide="wand-2" class="w-3 h-3 {% if store.is_restaurant or store.theme_template == 'restaurant' %}text-amber-400{% else %}text-white{% endif %}"></i>

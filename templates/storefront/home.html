@@ -140,9 +140,14 @@
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <h3 class="text-sm font-black {% if store.theme_bg_color == '#0F172A' %}text-white{% else %}text-slate-900{% endif %} tracking-tight flex items-center gap-1.5">
-                    {{ t.categories|default:"Katalog" }}
+                    {% if store.theme_template == 'restaurant' %}
+                        <i data-lucide="utensils" class="w-4 h-4 text-amber-500"></i>
+                        <span>{{ t.restaurant_sections|default:"Taomlar Bo'limlari" }}</span>
+                    {% else %}
+                        {{ t.categories|default:"Katalog" }}
+                    {% endif %}
                 </h3>
-                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">{{ categories|length }} {{ t.items_unit|default:"ta" }}</span>
+                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">{{ categories|length }}{% if current_lang == 'uz' %} ta{% endif %}</span>
             </div>
 
             <!-- Desktop Left/Right Carousel Chevrons (Only visible when overflowing) -->
@@ -159,45 +164,53 @@
         <!-- SQUIRCLE PHOTO CAROUSEL: Centered if few/not overflowing, scrollable from start if overflowing -->
         <div x-ref="catSlider"
              :class="isOverflowing ? 'justify-start' : 'justify-center'"
-             class="flex items-start gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-2 px-2 sm:mx-0 sm:px-0 scroll-smooth transition-all duration-200 justify-center">
+             class="flex items-start gap-3 sm:gap-4 overflow-x-auto no-scrollbar py-1 -mx-2 px-2 sm:mx-0 sm:px-0 scroll-smooth transition-all duration-200">
             <!-- All Categories ('Barchasi') Squircle Card -->
             <a href="{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}"
-               class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
-                <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if not current_category and not request.GET.constructor %}active-category-pill{% else %}bg-white text-slate-700 border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
-                    <i data-lucide="layout-grid" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+               class="cat-card-item flex flex-col items-center gap-1.5 group cursor-pointer text-center">
+                <div class="cat-squircle-icon flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if not current_category and not request.GET.constructor %}active-category-pill{% else %}bg-white text-slate-700 border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
+                    <i data-lucide="layout-grid" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                 </div>
-                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5 {% if not current_category and not request.GET.constructor %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
-                    {{ t.all|default:"Barchasi" }}
-                </span>
+                <div class="w-full min-h-[26px] sm:min-h-[28px] flex items-center justify-center">
+                    <span class="cat-card-label px-0.5 {% if not current_category and not request.GET.constructor %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
+                        {{ t.all|default:"Barchasi" }}
+                    </span>
+                </div>
             </a>
 
+            {% if show_constructor %}
             <!-- Constructor Special Tab ("Собери сам / O'zing ter") with wand-2 icon -->
             <a href="{% if request.GET.constructor %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}{% if current_lang != 'uz' %}?lang={{ current_lang }}{% endif %}{% else %}{% if store.subdomain %}/store/{{ store.subdomain }}/{% else %}/{% endif %}?constructor=1{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}{% endif %}"
-               class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
-                <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if request.GET.constructor %}active-category-pill{% else %}bg-gradient-to-br from-amber-50 to-orange-50 text-amber-600 border-amber-200/80 shadow-[0_2px_8px_rgba(245,158,11,0.12)] hover:border-amber-400{% endif %}">
-                    <i data-lucide="wand-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+               class="cat-card-item flex flex-col items-center gap-1.5 group cursor-pointer text-center">
+                <div class="cat-squircle-icon flex items-center justify-center transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if request.GET.constructor %}active-category-pill{% else %}bg-gradient-to-br from-amber-50 to-orange-50 text-amber-600 border-amber-200/80 shadow-[0_2px_8px_rgba(245,158,11,0.12)] hover:border-amber-400{% endif %}">
+                    <i data-lucide="wand-2" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                 </div>
-                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5 {% if request.GET.constructor %}text-slate-950 font-black{% else %}text-slate-700 group-hover:text-amber-600 font-bold{% endif %}">
-                    {% if current_lang == 'ru' %}Собери сам{% elif current_lang == 'en' %}Build yourself{% else %}O'zing ter{% endif %}
-                </span>
+                <div class="w-full min-h-[26px] sm:min-h-[28px] flex items-center justify-center">
+                    <span class="cat-card-label px-0.5 {% if request.GET.constructor %}text-slate-950 font-black{% else %}text-slate-700 group-hover:text-amber-600 font-bold{% endif %}">
+                        {% if current_lang == 'ru' %}{% if store.is_restaurant or store.theme_template == 'restaurant' %}Конструктор{% elif store.theme_template == 'boutique' %}Собери бокс{% else %}Собери сам{% endif %}{% elif current_lang == 'en' %}{% if store.is_restaurant or store.theme_template == 'restaurant' %}Customizer{% elif store.theme_template == 'boutique' %}Build Box{% else %}Customizer{% endif %}{% else %}{% if store.is_restaurant or store.theme_template == 'restaurant' %}Konstruktor{% elif store.theme_template == 'boutique' %}Boks yig'ish{% else %}O'zing ter{% endif %}{% endif %}
+                    </span>
+                </div>
             </a>
+            {% endif %}
 
             <!-- Each Category as a Squircle Photo Card -->
             {% for cat in categories %}
             <a href="?cat={{ cat.slug }}{% if current_lang != 'uz' %}&lang={{ current_lang }}{% endif %}"
-               class="shrink-0 w-[56px] sm:w-[76px] flex flex-col items-center gap-1 group cursor-pointer text-center">
-                <div class="w-[48px] h-[48px] sm:w-[62px] sm:h-[62px] rounded-[16px] sm:rounded-[22px] overflow-hidden relative transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if current_category.id == cat.id or current_category.slug == cat.slug %}active-category-pill{% else %}border-slate-200/80 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
+               class="cat-card-item flex flex-col items-center gap-1.5 group cursor-pointer text-center">
+                <div class="cat-squircle-icon transition-all duration-200 group-hover:scale-[1.04] active:scale-95 border {% if current_category.id == cat.id or current_category.slug == cat.slug %}active-category-pill{% else %}border-slate-200/80 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:border-slate-300{% endif %}">
                     {% if cat.primary_image_url %}
                     <img src="{{ cat.primary_image_url }}" alt="{{ cat.display_name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" decoding="async" onerror="this.style.display='none'">
                     {% else %}
                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400">
-                        <i data-lucide="tag" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                        <i data-lucide="tag" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                     </div>
                     {% endif %}
                 </div>
-                <span class="text-[10px] sm:text-[11px] font-semibold leading-[11px] sm:leading-[12px] h-5 sm:h-6 flex items-center justify-center text-center px-0.5 line-clamp-2 break-words {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
-                    {{ cat.display_name }}
-                </span>
+                <div class="w-full min-h-[26px] sm:min-h-[28px] flex items-center justify-center">
+                    <span class="cat-card-label px-0.5 {% if current_category.id == cat.id or current_category.slug == cat.slug %}text-slate-950 font-black{% else %}text-slate-600 group-hover:text-slate-900{% endif %}">
+                        {{ cat.display_name }}
+                    </span>
+                </div>
             </a>
             {% endfor %}
         </div>
@@ -236,7 +249,7 @@
         <div class="storebox-tpl-restaurant grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
             {% for product in products %}
             <div class="bg-white rounded-[24px] border border-slate-200/75 p-3 sm:p-3.5 flex items-center justify-between gap-3 sm:gap-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.07)] hover:border-slate-300/80 transition-all duration-300 group">
-                <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %} class="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                <a {% if show_constructor and product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %} class="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                     <div class="w-20 h-20 sm:w-22 sm:h-22 rounded-[18px] bg-slate-100 overflow-hidden shrink-0 relative border border-slate-100">
                         {% if product.primary_image_url %}
                         <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}" loading="lazy" decoding="async">
@@ -281,7 +294,7 @@
                 </a>
                 <div class="shrink-0">
                     {% if product.is_in_stock %}
-                    {% if product.has_constructor %}
+                    {% if show_constructor and product.has_constructor %}
                     <button type="button" @click="openConstructor({{ product.id }})"
                             class="px-3 sm:px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer">
                         <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-400"></i>
@@ -325,7 +338,7 @@
             <div class="group flex flex-col justify-between bg-transparent border-0 shadow-none p-0 relative">
                 <!-- Food Image Container with Rounded Corners -->
                 <div class="relative w-full aspect-square bg-[#F4F4F6] rounded-[24px] sm:rounded-[30px] overflow-hidden mb-2 transition-all">
-                    <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %} class="block w-full h-full">
+                    <a {% if show_constructor and product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %} class="block w-full h-full">
                         {% if product.primary_image_url %}
                         <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}" loading="lazy" decoding="async">
                         {% else %}
@@ -350,7 +363,7 @@
                     <!-- YANDEX EATS SIGNATURE: Corner Floating Plus Button / Stepper Pill -->
                     {% if product.is_in_stock %}
                     <div class="absolute bottom-2.5 right-2.5 z-10" @click.stop>
-                        {% if product.has_constructor %}
+                        {% if show_constructor and product.has_constructor %}
                         <button type="button" @click="openConstructor({{ product.id }})"
                                 data-constructor-product-id="{{ product.id }}"
                                 class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full {% if store.is_restaurant or store.theme_template == 'restaurant' %}bg-[#18181B] hover:bg-black text-white{% else %}btn-brand text-white{% endif %} shadow-[0_2px_8px_rgba(0,0,0,0.18)] flex items-center gap-1.5 active:scale-95 transition-transform text-[11px] sm:text-xs font-bold cursor-pointer">
@@ -398,7 +411,7 @@
                     </div>
                     <!-- Title -->
                     <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1 group-hover:text-brand transition-colors leading-snug">
-                        <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}>{{ product.display_name }}</a>
+                        <a {% if show_constructor and product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}>{{ product.display_name }}</a>
                     </h3>
                     <!-- Specs / Weight / Description -->
                     <div class="text-[11px] text-slate-400 truncate font-normal">
@@ -434,7 +447,7 @@
                 
                 <!-- Card Top: Aspect-ratio Image Container with Floating Badges & Wishlist -->
                 <div class="relative w-full aspect-square bg-slate-50 overflow-hidden shrink-0">
-                    <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}
+                    <a {% if show_constructor and product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}
                        class="block w-full h-full">
                         {% if product.primary_image_url %}
                         <img src="{{ product.primary_image_url }}" alt="{{ product.display_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out {% if not product.is_in_stock %}grayscale opacity-75 contrast-75{% endif %}" loading="lazy" decoding="async">
@@ -490,7 +503,7 @@
                         </div>
 
                         <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1 sm:line-clamp-2 group-hover:text-brand transition-colors leading-snug">
-                            <a {% if product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}>
+                            <a {% if show_constructor and product.has_constructor %}href="javascript:void(0)" @click.prevent="openConstructor({{ product.id }})"{% else %}href="{% if store.subdomain %}/store/{{ store.subdomain }}/product/{{ product.id }}/{% else %}/product/{{ product.id }}/{% endif %}"{% endif %}>
                                 {{ product.display_name }}
                             </a>
                         </h3>
@@ -518,7 +531,7 @@
 
                         <div>
                             {% if product.is_in_stock %}
-                            {% if product.has_constructor %}
+                            {% if show_constructor and product.has_constructor %}
                             <button type="button" @click="openConstructor({{ product.id }})"
                                     data-constructor-product-id="{{ product.id }}"
                                     class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full {% if store.is_restaurant or store.theme_template == 'restaurant' %}bg-[#18181B] hover:bg-black text-white{% else %}btn-brand text-white{% endif %} font-bold text-[11px] sm:text-xs shadow-md active:scale-90 transition-all flex items-center gap-1.5 cursor-pointer">
@@ -654,8 +667,10 @@
         </div>
     </div>
 
+    {% if show_constructor %}
     <!-- Product Customizer / Constructor Modal -->
     {% include 'storefront/includes/constructor_modal.html' %}
+    {% endif %}
 
     <!-- ============================================================= -->
     <!-- FLOATING GLASSMORPHISM DELIVERY PILL & SEPARATE CART BUTTON   -->
@@ -1186,6 +1201,7 @@
                     }
                 });
 
+                {% if show_constructor %}
                 window.sbOpenConstructor = () => {
                     const firstCBtn = document.querySelector('[data-constructor-product-id]');
                     if (firstCBtn) {
@@ -1205,6 +1221,7 @@
                 if (openC) {
                     this.openConstructor(openC);
                 }
+                {% endif %}
             },
 
             openConstructor(productId) {

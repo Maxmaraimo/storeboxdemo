@@ -49,6 +49,7 @@ urlpatterns = [
 
     # Product Constructor API
     path("constructor/", views_constructor.constructor_list_view, name="constructor_list"),
+    path("constructor/toggle-status/", views_constructor.constructor_toggle_status_view, name="constructor_toggle_status"),
     path("constructor/create/", views_constructor.constructor_create_view, name="constructor_create"),
     path("constructor/preset/", views_constructor.constructor_load_preset_view, name="constructor_load_preset"),
     path("constructor/<int:product_id>/", views_constructor.constructor_detail_view, name="constructor_detail"),
