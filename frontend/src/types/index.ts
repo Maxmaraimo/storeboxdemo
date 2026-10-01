@@ -17,6 +17,14 @@ export interface Store {
   telegram_bot_username?: string;
   is_active: boolean;
   logo_url?: string | null;
+  theme_template?: string;
+  theme_business_niche?: string;
+  primary_color?: string;
+  theme_card_style?: string;
+  theme_card_radius?: string;
+  theme_image_aspect?: string;
+  theme_button_style?: string;
+  theme_bg_color?: string;
 }
 
 export interface BranchDaySchedule {
