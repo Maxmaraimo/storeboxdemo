@@ -22,6 +22,25 @@ from apps.telegram_bot.services import send_telegram_notification, format_order_
 from apps.catalog.translations import auto_translate_text
 
 
+# Curated product media used by the 222-FMA collection grid. Product details
+# and recommendations must use these same packshots so the clicked item never
+# changes its appearance between pages.
+STREETWEAR_PRODUCT_MEDIA = {
+    'zip-hudi-kakao': {'slot': 'top', 'label': 'Half-Zip Knit / Atelier', 'color': '#11120f', 'image': '/static/images/streetwear/packshot_zip_knit.png', 'fitted': '/static/images/222fma/uploads/models/mannequin-fit-8-2ab5f6cefeaf.webp'},
+    'kardigan-kabu72-08': {'slot': 'top', 'label': 'Ecru Knit / Atelier', 'color': '#dfd6c8', 'image': '/static/images/streetwear/packshot_cardigan_ecru.png', 'fitted': '/static/images/222fma/uploads/models/mannequin-fit-6-2b837adf18d7.webp'},
+    'polzamok-trikotaj-grafit': {'slot': 'top', 'label': 'Terracotta / Earth Tone', 'color': '#7e5647', 'image': '/static/images/streetwear/packshot_knit_terracotta.png', 'fitted': '/static/images/222fma/uploads/models/mannequin-fit-7-c880eb50df5a.webp'},
+    'shim-grafit': {'slot': 'bottom', 'label': 'Graphite / Relaxed Twill', 'color': '#2a2c2e', 'image': '/static/images/streetwear/packshot_pants_graphite.png', 'fitted': '/static/images/222fma/uploads/models/mannequin-fit-5-a5984d772803.webp'},
+    'shim-shimo-76160': {'slot': 'bottom', 'label': 'Stone Wash / Wide Denim', 'color': '#4a4d52', 'image': '/static/images/streetwear/packshot_denim_stone.png', 'fitted': '/static/images/222fma/uploads/models/mannequin-fit-3-e11676191ff0.webp'},
+    'jogger-shim-kakao': {'slot': 'bottom', 'label': 'Cognac / Tailored Cut', 'color': '#6a493d', 'image': '/static/images/streetwear/packshot_trousers_cognac.png', 'fitted': '/static/images/222fma/uploads/models/mannequin-fit-4-6e8ff4158faa.webp'},
+    'krossovka-espresso': {'slot': 'shoes', 'label': 'Espresso / Chunky Runner', 'color': '#141414', 'image': '/static/images/streetwear/packshot_sneakers_runner.png', 'fitted': '/static/images/streetwear/shoes_fit_runner.webp'},
+    'krossovka-kulrang': {'slot': 'shoes', 'label': 'Shadow Grey / Urban Runner', 'color': '#938f8d', 'image': '/static/images/streetwear/packshot_sneakers_grey.png', 'fitted': '/static/images/streetwear/shoes_fit_grey.webp'},
+}
+
+
+def get_streetwear_product_media(product):
+    return STREETWEAR_PRODUCT_MEDIA.get(getattr(product, 'slug', ''), {})
+
+
 def get_current_store(request, subdomain=None):
     """Helper to get active store from request.store or subdomain param"""
     store = getattr(request, 'store', None)
@@ -890,70 +909,12 @@ def storefront_home_view(request, subdomain=None):
     }
     if store.theme_template == 'streetwear':
         OUTFIT_GARMENT_MAP = {
-            'zip-hudi-kakao': {
-                'slot': 'top',
-                'label': 'Half-Zip Knit / Atelier',
-                'color': '#11120f',
-                'cutout': '/static/images/streetwear/packshot_zip_knit.png',
-                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-8-2ab5f6cefeaf.webp',
-                'photo': '/static/images/streetwear/packshot_zip_knit.png',
-            },
-            'kardigan-kabu72-08': {
-                'slot': 'top',
-                'label': 'Ecru Knit / Atelier',
-                'color': '#dfd6c8',
-                'cutout': '/static/images/streetwear/packshot_cardigan_ecru.png',
-                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-6-2b837adf18d7.webp',
-                'photo': '/static/images/streetwear/packshot_cardigan_ecru.png',
-            },
-            'polzamok-trikotaj-grafit': {
-                'slot': 'top',
-                'label': 'Terracotta / Earth Tone',
-                'color': '#7e5647',
-                'cutout': '/static/images/streetwear/packshot_knit_terracotta.png',
-                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-7-c880eb50df5a.webp',
-                'photo': '/static/images/streetwear/packshot_knit_terracotta.png',
-            },
-            'shim-grafit': {
-                'slot': 'bottom',
-                'label': 'Graphite / Relaxed Twill',
-                'color': '#2a2c2e',
-                'cutout': '/static/images/streetwear/packshot_pants_graphite.png',
-                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-5-a5984d772803.webp',
-                'photo': '/static/images/streetwear/packshot_pants_graphite.png',
-            },
-            'shim-shimo-76160': {
-                'slot': 'bottom',
-                'label': 'Stone Wash / Wide Denim',
-                'color': '#4a4d52',
-                'cutout': '/static/images/streetwear/packshot_denim_stone.png',
-                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-3-e11676191ff0.webp',
-                'photo': '/static/images/streetwear/packshot_denim_stone.png',
-            },
-            'jogger-shim-kakao': {
-                'slot': 'bottom',
-                'label': 'Cognac / Tailored Cut',
-                'color': '#6a493d',
-                'cutout': '/static/images/streetwear/packshot_trousers_cognac.png',
-                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-4-6e8ff4158faa.webp',
-                'photo': '/static/images/streetwear/packshot_trousers_cognac.png',
-            },
-            'krossovka-espresso': {
-                'slot': 'shoes',
-                'label': 'Espresso / Chunky Runner',
-                'color': '#141414',
-                'cutout': '/static/images/streetwear/packshot_sneakers_runner.png',
-                'fitted': '/static/images/streetwear/shoes_fit_runner.webp',
-                'photo': '/static/images/streetwear/packshot_sneakers_runner.png',
-            },
-            'krossovka-kulrang': {
-                'slot': 'shoes',
-                'label': 'Shadow Grey / Urban Runner',
-                'color': '#938f8d',
-                'cutout': '/static/images/streetwear/packshot_sneakers_grey.png',
-                'fitted': '/static/images/streetwear/shoes_fit_grey.webp',
-                'photo': '/static/images/streetwear/packshot_sneakers_grey.png',
-            },
+            slug: {
+                **meta,
+                'cutout': meta['image'],
+                'photo': meta['image'],
+            }
+            for slug, meta in STREETWEAR_PRODUCT_MEDIA.items()
         }
 
         outfit_prods = []
@@ -2172,6 +2133,11 @@ def product_detail_page_view(request, product_id, subdomain=None):
         rp.display_name = rp.get_name(lang) if hasattr(rp, 'get_name') else (getattr(rp, f'name_{lang}', None) or getattr(rp, 'name_uz', '') or getattr(rp, 'name_ru', ''))
         rp.display_unit = rp.get_unit_name(lang) if hasattr(rp, 'get_unit_name') else (rp.get_unit_display() if hasattr(rp, 'get_unit_display') else '')
 
+    if store.theme_template == 'streetwear':
+        product.streetwear_image_url = get_streetwear_product_media(product).get('image') or product.primary_image_url
+        for rp in related_products:
+            rp.streetwear_image_url = get_streetwear_product_media(rp).get('image') or rp.primary_image_url
+
     if product.category:
         product.category.display_name = product.category.get_name(lang) if hasattr(product.category, 'get_name') else (getattr(product.category, f'name_{lang}', None) or getattr(product.category, 'name_uz', ''))
 
@@ -2831,4 +2797,3 @@ def _unused_storefront_constructor_view_legacy(request, subdomain=None):
         't': t,
     }
     return render(request, 'storefront/constructor.html', context)
-
