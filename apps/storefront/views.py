@@ -41,6 +41,34 @@ def get_streetwear_product_media(product):
     return STREETWEAR_PRODUCT_MEDIA.get(getattr(product, 'slug', ''), {})
 
 
+def get_product_cart_image(product, store=None):
+    """Use the same product image in the storefront, detail page and cart."""
+    if store and store.theme_template == 'streetwear':
+        curated = get_streetwear_product_media(product).get('image')
+        if curated:
+            return curated
+    return product.primary_image_url or ''
+
+
+def normalize_streetwear_cart_images(cart, store):
+    if not cart or not store or store.theme_template != 'streetwear':
+        return False
+    product_ids = [item.get('product_id') for item in cart.values() if item.get('product_id')]
+    products = Product.objects.filter(store=store, id__in=product_ids, is_active=True)
+    product_by_id = {product.id: product for product in products}
+    changed = False
+    for item in cart.values():
+        product = product_by_id.get(item.get('product_id'))
+        if not product:
+            continue
+        image = get_product_cart_image(product, store)
+        if image and (item.get('image') != image or item.get('image_url') != image):
+            item['image'] = image
+            item['image_url'] = image
+            changed = True
+    return changed
+
+
 def get_current_store(request, subdomain=None):
     """Helper to get active store from request.store or subdomain param"""
     store = getattr(request, 'store', None)
@@ -953,6 +981,14 @@ def storefront_home_view(request, subdomain=None):
             })
         context['outfit_products_json'] = json.dumps(outfit_prods, ensure_ascii=False)
         context['mannequin_base_url'] = '/static/images/222fma/uploads/models/mannequin-3b30f3cb4662.webp'
+
+        # Repair carts created before the streetwear packshots were wired into
+        # the cart API. This makes already-added mobile items visible at once.
+        if normalize_streetwear_cart_images(cart, store):
+            request.session['cart'] = cart
+            request.session.modified = True
+        context['cart'] = cart
+        context['cart_json'] = json.dumps(cart)
         return render(request, 'storefront/streetwear_home.html', context)
 
     return render(request, 'storefront/home.html', context)
@@ -1053,7 +1089,8 @@ def cart_add_view(request, subdomain=None):
         raw_items = [data]
 
     cart = request.session.get('cart', {})
-    lang = get_storefront_lang(request, getattr(request, 'store', None))
+    store = get_current_store(request, subdomain)
+    lang = get_storefront_lang(request, store)
 
     for item_data in raw_items:
         product_id = item_data.get('product_id')
@@ -1062,7 +1099,10 @@ def cart_add_view(request, subdomain=None):
         variation_id = item_data.get('variation_id')
         quantity = int(item_data.get('quantity', 1))
 
-        product = Product.objects.filter(id=product_id, is_active=True).first()
+        product_query = Product.objects.filter(id=product_id, is_active=True)
+        if store:
+            product_query = product_query.filter(store=store)
+        product = product_query.first()
         if not product:
             continue
         variation = None
@@ -1098,17 +1138,18 @@ def cart_add_view(request, subdomain=None):
             unit_price = float(variation.price if variation else product.price)
             var_name = variation.get_name(lang) if variation else ''
 
+        img_to_use = custom_image_url or get_product_cart_image(product, store)
+
         if item_key in cart:
             cart[item_key]['quantity'] += quantity
             cart[item_key]['total_price'] = cart[item_key]['quantity'] * unit_price
             cart[item_key]['price'] = unit_price
             cart[item_key]['unit_price'] = unit_price
+            cart[item_key]['image'] = img_to_use
+            cart[item_key]['image_url'] = img_to_use
             if custom_image_url:
-                cart[item_key]['image'] = custom_image_url
-                cart[item_key]['image_url'] = custom_image_url
                 cart[item_key]['custom_image_url'] = custom_image_url
         else:
-            img_to_use = custom_image_url or (product.primary_image_url or '')
             cart[item_key] = {
                 'product_id': product.id,
                 'variation_id': variation.id if variation else None,
@@ -2105,6 +2146,9 @@ def product_detail_page_view(request, product_id, subdomain=None):
 
     # Cart context
     cart = request.session.get('cart', {})
+    if normalize_streetwear_cart_images(cart, store):
+        request.session['cart'] = cart
+        request.session.modified = True
     cart_count = sum(item.get('quantity', 1) for item in cart.values())
     subtotal = sum(item.get('total_price', 0) for item in cart.values())
 
