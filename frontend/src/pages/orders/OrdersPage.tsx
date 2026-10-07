@@ -98,6 +98,60 @@ export const OrdersPage: React.FC = () => {
     }
   };
 
+  const getOrderStatusBadge = (st: string) => {
+    switch (st?.toUpperCase()) {
+      case "COMPLETED":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
+            <span>{getOrderStatusLabel(st)}</span>
+          </span>
+        );
+      case "NEW":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <span>{getOrderStatusLabel(st)}</span>
+          </span>
+        );
+      case "PROCESSING":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+            <span>{getOrderStatusLabel(st)}</span>
+          </span>
+        );
+      case "READY":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+            <span>{getOrderStatusLabel(st)}</span>
+          </span>
+        );
+      case "IN_DELIVERY":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+            <span>{getOrderStatusLabel(st)}</span>
+          </span>
+        );
+      case "CANCELLED":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+            <span>{getOrderStatusLabel(st)}</span>
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+            <span>{st}</span>
+          </span>
+        );
+    }
+  };
+
   const tabs = [
     { id: "ALL", label: t("status_all") || "Barchasi", count: counts.all },
     { id: "NEW", label: t("status_new") || "Yangi", count: counts.new, badgeColor: "bg-amber-100 text-amber-800" },
@@ -227,9 +281,7 @@ export const OrdersPage: React.FC = () => {
                     {order.delivery_address || (t("address_not_specified") || "Manzil ko`rsatilmagan")}
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                      {getOrderStatusLabel(order.status) || order.status_display}
-                    </span>
+                    {getOrderStatusBadge(order.status)}
                   </td>
                   <td className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>

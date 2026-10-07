@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Truck, MapPin, Check, Save } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { SettingsLayout } from "./SettingsLayout";
 
 export const DeliveryPage: React.FC = () => {
   const { t } = useAuth();
@@ -56,8 +57,9 @@ export const DeliveryPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 max-w-4xl pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <SettingsLayout>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">{t("delivery") || "Yetkazib berish"}</h1>
           <p className="text-xs text-slate-500 mt-1 font-normal">{t("delivery_subtitle") || "Yetkazib berish narxlari, shartlari va olib ketish zonalari"}</p>
@@ -188,5 +190,6 @@ export const DeliveryPage: React.FC = () => {
         </div>
       </div>
     </div>
-  );
+  </SettingsLayout>
+);
 };

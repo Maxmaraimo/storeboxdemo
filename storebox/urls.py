@@ -47,6 +47,18 @@ urlpatterns = [
     # Merchant Dashboard
     path('dashboard/', include('apps.dashboard.urls')),
 
+    # Root redirects to dashboard SPA
+    path('products/<path:subpath>', RedirectView.as_view(url='/dashboard/products/%(subpath)s', permanent=False)),
+    path('products/', RedirectView.as_view(url='/dashboard/products/', permanent=False)),
+    path('orders/<path:subpath>', RedirectView.as_view(url='/dashboard/orders/%(subpath)s', permanent=False)),
+    path('orders/', RedirectView.as_view(url='/dashboard/orders/', permanent=False)),
+    path('customers/<path:subpath>', RedirectView.as_view(url='/dashboard/customers/%(subpath)s', permanent=False)),
+    path('customers/', RedirectView.as_view(url='/dashboard/customers/', permanent=False)),
+    path('settings/<path:subpath>', RedirectView.as_view(url='/dashboard/settings/%(subpath)s', permanent=False)),
+    path('settings/', RedirectView.as_view(url='/dashboard/settings/', permanent=False)),
+    path('analytics/', RedirectView.as_view(url='/dashboard/analytics/', permanent=False)),
+    path('marketing/', RedirectView.as_view(url='/dashboard/marketing/', permanent=False)),
+
     # Payment Gateways (Click, Payme, Uzum Pay)
     path('payments/', include('apps.payments.urls')),
 

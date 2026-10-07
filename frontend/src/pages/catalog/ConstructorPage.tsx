@@ -555,12 +555,12 @@ export const ConstructorPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                  <span className="p-2 rounded-2xl bg-amber-500/10 text-amber-600">
+                  <span className="p-2 rounded-2xl bg-zinc-100 text-zinc-800">
                     <Wand2 className="w-5 h-5 sm:w-6 sm:h-6" />
                   </span>
                   <span>{lang === "ru" ? "Конструктор товаров (Собери сам)" : "Mahsulotlar konstruktori"}</span>
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500 text-white uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-zinc-900 text-white uppercase tracking-wider">
                   PRO
                 </span>
               </div>
@@ -612,7 +612,7 @@ export const ConstructorPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setAddModalOpen(true)}
-                  className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition-all flex items-center gap-2 shadow-sm shadow-amber-500/25 cursor-pointer active:scale-95"
+                  className="px-4 py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-black transition-all flex items-center gap-2 shadow-sm shadow-xs cursor-pointer active:scale-95"
                 >
                   <Plus className="w-4 h-4 text-white stroke-[2.5]" />
                   <span>{lang === "ru" ? "Добавить товар" : "Tovar qo'shish"}</span>
@@ -624,7 +624,7 @@ export const ConstructorPage: React.FC = () => {
                   onClick={() => setPresetModalOpen(true)}
                   className="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <Sparkles className="w-4 h-4 text-zinc-700" />
                   <span>{lang === "ru" ? "Готовые шаблоны (1-клик)" : "Tayyor shablonlar"}</span>
                 </button>
               </div>
@@ -641,18 +641,18 @@ export const ConstructorPage: React.FC = () => {
 
           {/* BANNER WHEN CONSTRUCTOR DISABLED */}
           {!isConstructorEnabled && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-2xs animate-in fade-in duration-200">
+            <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-2xs animate-in fade-in duration-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shrink-0 shadow-xs">
                   <PowerOff className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-extrabold text-amber-950">
+                  <h4 className="text-xs font-extrabold text-zinc-900">
                     {lang === "ru"
                       ? "Конструктор товаров сейчас отключен на вашей витрине"
                       : "Mahsulotlar konstruktori hozirda veb-saytingizda o'chirilgan"}
                   </h4>
-                  <p className="text-[11px] text-amber-800/85 mt-0.5">
+                  <p className="text-[11px] text-zinc-800/85 mt-0.5">
                     {lang === "ru"
                       ? "Покупатели на сайте и в мобильной версии не видят иконку конструктора и вкладку «Собери сам»."
                       : "Xaridorlar veb-sayt va mobil versiyada konstruktor tugmasi hamda «O'zing ter» bo'limini ko'rmaydilar."}
@@ -663,7 +663,7 @@ export const ConstructorPage: React.FC = () => {
                 type="button"
                 disabled={toggleStatusMutation.isPending}
                 onClick={() => toggleStatusMutation.mutate(true)}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-xs transition-all cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto"
+                className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-black text-xs shadow-xs transition-all cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto"
               >
                 {lang === "ru" ? "Включить на сайте" : "Saytda yoqish"}
               </button>
@@ -696,16 +696,16 @@ export const ConstructorPage: React.FC = () => {
               onClick={() => setSelectedCategoryTab(selectedCategoryTab === "burger" ? "all" : "burger")}
               className={`p-3.5 rounded-2xl border transition-all cursor-pointer group ${
                 selectedCategoryTab === "burger"
-                  ? "bg-amber-100/60 border-amber-500 ring-2 ring-amber-500/20 shadow-sm"
-                  : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/60 hover:shadow-md"
+                  ? "bg-zinc-100 border-zinc-900 ring-2 ring-zinc-900/10 shadow-sm"
+                  : "bg-zinc-50 border-zinc-200 hover:shadow-md"
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
                   <Utensils className="w-4 h-4" />
                 </div>
                 {selectedCategoryTab === "burger" && (
-                  <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-full">Активно</span>
+                  <span className="text-[10px] font-black bg-zinc-900 text-white px-2 py-0.5 rounded-full">Активно</span>
                 )}
               </div>
               <div className="font-bold text-xs text-slate-900">Бургеры & Фастфуд</div>
@@ -736,16 +736,16 @@ export const ConstructorPage: React.FC = () => {
               onClick={() => setSelectedCategoryTab(selectedCategoryTab === "shawarma" ? "all" : "shawarma")}
               className={`p-3.5 rounded-2xl border transition-all cursor-pointer group ${
                 selectedCategoryTab === "shawarma"
-                  ? "bg-orange-100/60 border-orange-500 ring-2 ring-orange-500/20 shadow-sm"
-                  : "bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200/60 hover:shadow-md"
+                  ? "bg-zinc-100 border-zinc-900 ring-2 ring-zinc-900/10 shadow-sm"
+                  : "bg-zinc-50 border-orange-200/60 hover:shadow-md"
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
                   <Coffee className="w-4 h-4" />
                 </div>
                 {selectedCategoryTab === "shawarma" && (
-                  <span className="text-[10px] font-black bg-orange-500 text-white px-2 py-0.5 rounded-full">Активно</span>
+                  <span className="text-[10px] font-black bg-zinc-900 text-white px-2 py-0.5 rounded-full">Активно</span>
                 )}
               </div>
               <div className="font-bold text-xs text-slate-900">Шаурма & Снэки</div>
@@ -757,9 +757,9 @@ export const ConstructorPage: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-amber-500" />
+                <Layers className="w-4 h-4 text-zinc-700" />
                 <span>{lang === "ru" ? "Активные товары-конструкторы" : "Faol konstruktorlar"}</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-800 border border-zinc-200">
                   {filteredConstructors.length}
                 </span>
               </h2>
@@ -767,7 +767,7 @@ export const ConstructorPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedCategoryTab("all")}
-                  className="text-xs font-bold text-amber-600 hover:underline cursor-pointer"
+                  className="text-xs font-bold text-zinc-800 hover:underline cursor-pointer"
                 >
                   {lang === "ru" ? "Показать все категории" : "Barcha toifalarni ko'rsatish"}
                 </button>
@@ -776,12 +776,12 @@ export const ConstructorPage: React.FC = () => {
 
             {isLoading ? (
               <div className="p-12 text-center text-slate-400 text-xs">
-                <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500" />
+                <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-zinc-700" />
                 <span>Yuklanmoqda...</span>
               </div>
             ) : filteredConstructors.length === 0 ? (
               <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-8 text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-50 text-zinc-800 flex items-center justify-center mx-auto">
                   <Wand2 className="w-6 h-6" />
                 </div>
                 <div className="max-w-md mx-auto space-y-1">
@@ -817,14 +817,14 @@ export const ConstructorPage: React.FC = () => {
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="font-black text-slate-900 text-sm truncate">{p.name_ru || p.name_uz}</div>
-                          <div className="text-xs font-mono font-bold text-amber-600 mt-0.5">
+                          <div className="text-xs font-mono font-bold text-zinc-800 mt-0.5">
                             {Number(p.price).toLocaleString()} UZS
                             <span className="text-[10px] text-slate-400 font-sans font-normal ml-1">
                               ({lang === "ru" ? "базовая цена" : "boshlang'ich narx"})
                             </span>
                           </div>
                           <div className="flex items-center gap-2 mt-2">
-                            <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
+                            <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-zinc-50 text-zinc-800 border border-zinc-200">
                               {p.groups_count} {lang === "ru" ? "шагов" : "qadam"}
                             </span>
                             <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-600">
@@ -849,7 +849,7 @@ export const ConstructorPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => openEditor(p.id)}
-                        className="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                        className="flex-1 py-2 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                       >
                         <Sliders className="w-3.5 h-3.5" />
                         <span>{lang === "ru" ? "Редактировать" : "Tahrirlash"}</span>
@@ -859,7 +859,7 @@ export const ConstructorPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleDisableConstructor(p.id, p.name_ru || p.name_uz)}
-                        className="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-amber-50 hover:text-amber-800 text-slate-600 font-bold text-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        className="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-zinc-50 hover:text-zinc-800 text-slate-600 font-bold text-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
                         title={lang === "ru" ? "Отключить конструктор для товара" : "Konstruktorni o'chirish"}
                       >
                         <PowerOff className="w-3.5 h-3.5" />
@@ -902,7 +902,7 @@ export const ConstructorPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => openEditor(p.id)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-zinc-50 hover:text-zinc-800 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>{lang === "ru" ? "Включить конструктор" : "Konstruktor qo'shish"}</span>
@@ -927,7 +927,7 @@ export const ConstructorPage: React.FC = () => {
                 onClick={closeEditor}
                 className="px-3.5 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <ArrowLeft className="w-4 h-4 text-amber-500" />
+                <ArrowLeft className="w-4 h-4 text-zinc-700" />
                 <span>{lang === "ru" ? "Назад к списку товаров" : "Ro'yxatga qaytish"}</span>
               </button>
 
@@ -936,13 +936,13 @@ export const ConstructorPage: React.FC = () => {
                   <h2 className="text-base sm:text-lg font-black text-slate-900 truncate">
                     {editingProduct.name_ru || editingProduct.name_uz || "Товар-конструктор"}
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 shrink-0">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-800 border border-zinc-200 shrink-0">
                     Студия
                   </span>
                 </div>
                 <div className="text-xs text-slate-500 font-medium">
                   {lang === "ru" ? "Базовая цена:" : "Boshlang'ich narx:"}{" "}
-                  <span className="font-mono font-bold text-amber-600">
+                  <span className="font-mono font-bold text-zinc-800">
                     {Number(editingProduct.price || 0).toLocaleString()} UZS
                   </span>
                 </div>
@@ -964,7 +964,7 @@ export const ConstructorPage: React.FC = () => {
                 type="button"
                 onClick={() => setPreviewTab("preview")}
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
-                  previewTab === "preview" ? "bg-amber-500 text-white shadow-xs" : "text-slate-600"
+                  previewTab === "preview" ? "bg-zinc-900 text-white shadow-xs" : "text-slate-600"
                 }`}
               >
                 <Smartphone className="w-3.5 h-3.5" />
@@ -984,7 +984,7 @@ export const ConstructorPage: React.FC = () => {
                 type="button"
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending}
-                className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs shadow-md shadow-amber-500/25 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                className="px-5 py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 active:scale-95 text-white font-black text-xs shadow-md shadow-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 <span>{lang === "ru" ? "Сохранить изменения" : "Saqlash"}</span>
@@ -1004,7 +1004,7 @@ export const ConstructorPage: React.FC = () => {
               <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-xl bg-zinc-100 text-zinc-800 flex items-center justify-center">
                       <Edit3 className="w-4 h-4" />
                     </div>
                     <div>
@@ -1071,7 +1071,7 @@ export const ConstructorPage: React.FC = () => {
                         }}
                         className="w-full px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <Sparkles className="w-3.5 h-3.5 text-zinc-700" />
                         <span>{lang === "ru" ? "Выбрать из галереи" : "Galereyadan tanlash"}</span>
                       </button>
                     </div>
@@ -1099,7 +1099,7 @@ export const ConstructorPage: React.FC = () => {
                           value={editingProduct.name_ru || ""}
                           onChange={(e) => updateProductField("name_ru", e.target.value)}
                           placeholder="Например: Собери свой Бургер"
-                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white transition-all"
                         />
                       </div>
                       <div>
@@ -1111,7 +1111,7 @@ export const ConstructorPage: React.FC = () => {
                           value={editingProduct.name_uz || ""}
                           onChange={(e) => updateProductField("name_uz", e.target.value)}
                           placeholder="Masalan: O'z burgeringizni yig'ing"
-                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white transition-all"
                         />
                       </div>
                     </div>
@@ -1121,7 +1121,7 @@ export const ConstructorPage: React.FC = () => {
                         <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
                           {lang === "ru" ? "Базовая цена товара (UZS)" : "Boshlang'ich narx (UZS)"}
                         </label>
-                        <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-amber-500 focus-within:bg-white transition-all">
+                        <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-zinc-900 focus-within:bg-white transition-all">
                           <input
                             type="number"
                             value={editingProduct.price ?? 0}
@@ -1140,7 +1140,7 @@ export const ConstructorPage: React.FC = () => {
                           value={editingProduct.description_ru || ""}
                           onChange={(e) => updateProductField("description_ru", e.target.value)}
                           placeholder="Фирменное блюдо с возможностью кастомизации"
-                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white transition-all"
                         />
                       </div>
                     </div>
@@ -1208,7 +1208,7 @@ export const ConstructorPage: React.FC = () => {
                         }
                       }}
                       placeholder={lang === "ru" ? "Например: Маринованные огурцы, Лук, Соус..." : "Masalan: Tuzlangan bodring..."}
-                      className="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+                      className="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white transition-all"
                     />
                     <button
                       type="button"
@@ -1239,7 +1239,7 @@ export const ConstructorPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={addGroup}
-                    className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>{lang === "ru" ? "Добавить шаг" : "Qadam qo'shish"}</span>
@@ -1263,7 +1263,7 @@ export const ConstructorPage: React.FC = () => {
                         {/* Row 1: Step Badge + Type Select + Required Checkbox + Delete */}
                         <div className="flex flex-wrap items-center justify-between gap-2.5">
                           <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-700 font-black text-xs">
+                            <span className="px-2.5 py-1 rounded-xl bg-zinc-500/10 text-zinc-800 font-black text-xs">
                               {lang === "ru" ? `Шаг ${gIdx + 1}` : `${gIdx + 1}-qadam`}
                             </span>
                             <select
@@ -1283,7 +1283,7 @@ export const ConstructorPage: React.FC = () => {
                                 type="checkbox"
                                 checked={group.is_required}
                                 onChange={(e) => updateGroup(gIdx, "is_required", e.target.checked)}
-                                className="rounded text-amber-500 focus:ring-amber-500"
+                                className="rounded text-zinc-700 focus:ring-amber-500"
                               />
                               <span>{lang === "ru" ? "Обязательно" : "Majburiy"}</span>
                             </label>
@@ -1310,7 +1310,7 @@ export const ConstructorPage: React.FC = () => {
                               value={group.name_ru}
                               onChange={(e) => updateGroup(gIdx, "name_ru", e.target.value)}
                               placeholder="Например: 1. Основа теста"
-                              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+                              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white transition-all"
                             />
                           </div>
                           <div>
@@ -1322,7 +1322,7 @@ export const ConstructorPage: React.FC = () => {
                               value={group.name_uz}
                               onChange={(e) => updateGroup(gIdx, "name_uz", e.target.value)}
                               placeholder="Masalan: 1. Asos xamiri"
-                              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+                              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white transition-all"
                             />
                           </div>
                         </div>
@@ -1335,7 +1335,7 @@ export const ConstructorPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => addItem(gIdx)}
-                            className="text-amber-600 hover:underline flex items-center gap-1 font-bold cursor-pointer"
+                            className="text-zinc-800 hover:underline flex items-center gap-1 font-bold cursor-pointer"
                           >
                             <PlusCircle className="w-3.5 h-3.5" />
                             <span>{lang === "ru" ? "Добавить вариант" : "Variant qo'shish"}</span>
@@ -1356,7 +1356,7 @@ export const ConstructorPage: React.FC = () => {
                                     setPhotoPickerTarget({ type: "item", gIdx, itIdx });
                                     setCustomPhotoInput(item.image_url || "");
                                   }}
-                                  className="w-12 h-12 rounded-xl bg-white border border-slate-200 hover:border-amber-500 flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs transition-all group/photo relative cursor-pointer"
+                                  className="w-12 h-12 rounded-xl bg-white border border-slate-200 hover:border-zinc-900 flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs transition-all group/photo relative cursor-pointer"
                                   title={lang === "ru" ? "Нажмите для выбора фото" : "Rasm tanlash"}
                                 >
                                   {item.image_url ? (
@@ -1375,14 +1375,14 @@ export const ConstructorPage: React.FC = () => {
                                     value={item.name_ru}
                                     onChange={(e) => updateItem(gIdx, itIdx, "name_ru", e.target.value)}
                                     placeholder="Название (RU)"
-                                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold focus:outline-none focus:border-amber-500"
+                                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                                   />
                                   <input
                                     type="text"
                                     value={item.name_uz}
                                     onChange={(e) => updateItem(gIdx, itIdx, "name_uz", e.target.value)}
                                     placeholder="Nomi (UZ)"
-                                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold focus:outline-none focus:border-amber-500"
+                                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                                   />
                                   <div className="flex items-center gap-1">
                                     <span className="text-[10px] font-bold text-slate-400">+</span>
@@ -1391,7 +1391,7 @@ export const ConstructorPage: React.FC = () => {
                                       value={item.price}
                                       onChange={(e) => updateItem(gIdx, itIdx, "price", Number(e.target.value) || 0)}
                                       placeholder="0 UZS"
-                                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-amber-500"
+                                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                                     />
                                     <span className="text-[10px] font-mono text-slate-400">UZS</span>
                                   </div>
@@ -1402,7 +1402,7 @@ export const ConstructorPage: React.FC = () => {
                                     type="checkbox"
                                     checked={item.is_default}
                                     onChange={(e) => updateItem(gIdx, itIdx, "is_default", e.target.checked)}
-                                    className="rounded text-amber-500 focus:ring-amber-500"
+                                    className="rounded text-zinc-700 focus:ring-amber-500"
                                   />
                                   <span className="hidden sm:inline">{lang === "ru" ? "По умолч." : "Standart"}</span>
                                 </label>
@@ -1426,9 +1426,9 @@ export const ConstructorPage: React.FC = () => {
                                       setPhotoPickerTarget({ type: "item", gIdx, itIdx });
                                       setCustomPhotoInput(item.image_url || "");
                                     }}
-                                    className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                                    className="px-2.5 py-1 rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-800 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
                                   >
-                                    <Sparkles className="w-3 h-3 text-amber-600" />
+                                    <Sparkles className="w-3 h-3 text-zinc-800" />
                                     <span>
                                       {item.image_url
                                         ? (lang === "ru" ? "Сменить фото" : "Rasmni almashtirish")
@@ -1470,7 +1470,7 @@ export const ConstructorPage: React.FC = () => {
             >
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                  <Smartphone className="w-4 h-4 text-amber-500" />
+                  <Smartphone className="w-4 h-4 text-zinc-700" />
                   <span>{lang === "ru" ? "Витрина покупателя (1:1 с магазином)" : "Xaridor oynasi (1:1)"}</span>
                 </span>
                 <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
@@ -1562,7 +1562,7 @@ export const ConstructorPage: React.FC = () => {
                               onClick={() => setPreviewBurgerStyle("classic")}
                               className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between select-none ${
                                 previewBurgerStyle === "classic"
-                                  ? "border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs text-slate-900"
+                                  ? "border-zinc-900 bg-zinc-50/20 ring-2 ring-zinc-900/10 shadow-xs text-slate-900"
                                   : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-2xs"
                               }`}
                             >
@@ -1577,11 +1577,11 @@ export const ConstructorPage: React.FC = () => {
                                 {lang === "ru" ? "Классический" : "Klassik"}
                               </div>
                               <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
-                                <span className={`text-[11px] font-mono font-bold ${previewBurgerStyle === "classic" ? "text-amber-600" : "text-slate-500"}`}>
+                                <span className={`text-[11px] font-mono font-bold ${previewBurgerStyle === "classic" ? "text-zinc-800" : "text-slate-500"}`}>
                                   0 UZS
                                 </span>
                                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                  previewBurgerStyle === "classic" ? "border-amber-500 bg-amber-500" : "border-slate-300 bg-white"
+                                  previewBurgerStyle === "classic" ? "border-zinc-900 bg-zinc-500" : "border-slate-300 bg-white"
                                 }`}>
                                   {previewBurgerStyle === "classic" && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                                 </div>
@@ -1593,7 +1593,7 @@ export const ConstructorPage: React.FC = () => {
                               onClick={() => setPreviewBurgerStyle("spicy")}
                               className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between select-none ${
                                 previewBurgerStyle === "spicy"
-                                  ? "border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs text-slate-900"
+                                  ? "border-zinc-900 bg-zinc-50/20 ring-2 ring-zinc-900/10 shadow-xs text-slate-900"
                                   : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-2xs"
                               }`}
                             >
@@ -1613,9 +1613,9 @@ export const ConstructorPage: React.FC = () => {
                                 {lang === "ru" ? "Острый (Sriracha)" : "Achchiq (Sriracha)"}
                               </div>
                               <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
-                                <span className="text-[11px] font-mono font-bold text-amber-600">+5 000 UZS</span>
+                                <span className="text-[11px] font-mono font-bold text-zinc-800">+5 000 UZS</span>
                                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                  previewBurgerStyle === "spicy" ? "border-amber-500 bg-amber-500" : "border-slate-300 bg-white"
+                                  previewBurgerStyle === "spicy" ? "border-zinc-900 bg-zinc-500" : "border-slate-300 bg-white"
                                 }`}>
                                   {previewBurgerStyle === "spicy" && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                                 </div>
@@ -1693,7 +1693,7 @@ export const ConstructorPage: React.FC = () => {
                               {/* Step Header */}
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="w-4 h-4 rounded-full bg-amber-500/10 text-amber-700 flex items-center justify-center text-[9px] font-black">
+                                  <span className="w-4 h-4 rounded-full bg-zinc-500/10 text-zinc-800 flex items-center justify-center text-[9px] font-black">
                                     {gIdx + 1}
                                   </span>
                                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-800">
@@ -1701,7 +1701,7 @@ export const ConstructorPage: React.FC = () => {
                                   </span>
                                 </div>
                                 {group.is_required && (
-                                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-zinc-800">
                                     {lang === "ru" ? "Обязательно" : "Majburiy"}
                                   </span>
                                 )}
@@ -1735,7 +1735,7 @@ export const ConstructorPage: React.FC = () => {
                                         }
                                         className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between select-none ${
                                           isSelected
-                                            ? "border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs text-slate-900"
+                                            ? "border-zinc-900 bg-zinc-50/20 ring-2 ring-zinc-900/10 shadow-xs text-slate-900"
                                             : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-2xs"
                                         }`}
                                       >
@@ -1758,7 +1758,7 @@ export const ConstructorPage: React.FC = () => {
                                         <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
                                           <span
                                             className={`text-[11px] font-mono font-bold ${
-                                              isSelected ? "text-amber-600" : "text-slate-500"
+                                              isSelected ? "text-zinc-800" : "text-slate-500"
                                             }`}
                                           >
                                             {itPrice > 0 ? `+${itPrice.toLocaleString()} UZS` : "0 UZS"}
@@ -1766,7 +1766,7 @@ export const ConstructorPage: React.FC = () => {
                                           <div
                                             className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                                               isSelected
-                                                ? "border-amber-500 bg-amber-500"
+                                                ? "border-zinc-900 bg-zinc-500"
                                                 : "border-slate-300 bg-white"
                                             }`}
                                           >
@@ -1808,7 +1808,7 @@ export const ConstructorPage: React.FC = () => {
                                         }
                                         className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between select-none ${
                                           isSelected
-                                            ? "border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs text-slate-900"
+                                            ? "border-zinc-900 bg-zinc-50/20 ring-2 ring-zinc-900/10 shadow-xs text-slate-900"
                                             : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-2xs"
                                         }`}
                                       >
@@ -1825,7 +1825,7 @@ export const ConstructorPage: React.FC = () => {
                                             </div>
                                           )}
                                           {isSelected && (
-                                            <span className="absolute top-0 right-0 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-black shadow-xs">
+                                            <span className="absolute top-0 right-0 w-4 h-4 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[9px] font-black shadow-xs">
                                               ✓
                                             </span>
                                           )}
@@ -1836,7 +1836,7 @@ export const ConstructorPage: React.FC = () => {
                                         <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
                                           <span
                                             className={`text-[11px] font-mono font-bold ${
-                                              isSelected ? "text-amber-600" : "text-slate-500"
+                                              isSelected ? "text-zinc-800" : "text-slate-500"
                                             }`}
                                           >
                                             {itPrice > 0 ? `+${itPrice.toLocaleString()} UZS` : "0 UZS"}
@@ -1844,7 +1844,7 @@ export const ConstructorPage: React.FC = () => {
                                           <div
                                             className={`w-4 h-4 rounded-md border flex items-center justify-center ${
                                               isSelected
-                                                ? "border-amber-500 bg-amber-500 text-white"
+                                                ? "border-zinc-900 bg-zinc-900 text-white"
                                                 : "border-slate-300 bg-white"
                                             }`}
                                           >
@@ -1882,7 +1882,7 @@ export const ConstructorPage: React.FC = () => {
                                         key={itIdx}
                                         className={`w-28 shrink-0 p-2.5 rounded-2xl bg-white border transition-all flex flex-col items-center justify-between text-center select-none ${
                                           count > 0
-                                            ? "border-amber-500 bg-amber-50/20 ring-2 ring-amber-500/20 shadow-xs"
+                                            ? "border-zinc-900 bg-zinc-50/20 ring-2 ring-zinc-900/10 shadow-xs"
                                             : "border-slate-200 hover:border-slate-300 text-slate-700 shadow-2xs"
                                         }`}
                                       >
@@ -1899,7 +1899,7 @@ export const ConstructorPage: React.FC = () => {
                                             </div>
                                           )}
                                           {count > 0 && (
-                                            <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-black shadow-xs">
+                                            <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[9px] font-black shadow-xs">
                                               ✓
                                             </span>
                                           )}
@@ -1923,12 +1923,12 @@ export const ConstructorPage: React.FC = () => {
                                                   [key]: 1,
                                                 }))
                                               }
-                                              className="w-6 h-6 rounded-full bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-800 flex items-center justify-center font-bold text-xs shadow-2xs transition-colors cursor-pointer"
+                                              className="w-6 h-6 rounded-full bg-slate-100 hover:bg-zinc-500 hover:text-white text-slate-800 flex items-center justify-center font-bold text-xs shadow-2xs transition-colors cursor-pointer"
                                             >
                                               +
                                             </button>
                                           ) : (
-                                            <div className="flex items-center gap-1 bg-amber-500 text-white rounded-full px-1.5 py-0.5 shadow-xs">
+                                            <div className="flex items-center gap-1 bg-zinc-900 text-white rounded-full px-1.5 py-0.5 shadow-xs">
                                               <button
                                                 type="button"
                                                 onClick={() =>
@@ -1980,7 +1980,7 @@ export const ConstructorPage: React.FC = () => {
                               type="button"
                               onClick={() => setPreviewNutritionPortion("100g")}
                               className={`px-2 py-0.2 rounded-full transition-all cursor-pointer ${
-                                previewNutritionPortion === "100g" ? "bg-amber-500 text-white shadow-2xs" : "text-slate-500"
+                                previewNutritionPortion === "100g" ? "bg-zinc-900 text-white shadow-2xs" : "text-slate-500"
                               }`}
                             >
                               100 г
@@ -1989,7 +1989,7 @@ export const ConstructorPage: React.FC = () => {
                               type="button"
                               onClick={() => setPreviewNutritionPortion("portion")}
                               className={`px-2 py-0.2 rounded-full transition-all cursor-pointer ${
-                                previewNutritionPortion === "portion" ? "bg-amber-500 text-white shadow-2xs" : "text-slate-500"
+                                previewNutritionPortion === "portion" ? "bg-zinc-900 text-white shadow-2xs" : "text-slate-500"
                               }`}
                             >
                               {isEditingPizza ? "480 г" : "340 г"}
@@ -2049,7 +2049,7 @@ export const ConstructorPage: React.FC = () => {
                       </div>
 
                       {/* Modest CTA Order Button */}
-                      <div className="flex-1 h-9 sm:h-10 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-between px-3 cursor-pointer">
+                      <div className="flex-1 h-9 sm:h-10 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-between px-3 cursor-pointer">
                         <span className="whitespace-nowrap font-bold tracking-tight">{lang === "ru" ? "Заказать" : "Buyurtma berish"}</span>
                         <span className="font-mono font-bold text-[10px] sm:text-[11px] bg-black/15 px-2 py-0.5 rounded-md whitespace-nowrap tracking-tight ml-1.5">
                           {(previewCalculatedPrice * previewPortionCount).toLocaleString()} UZS
@@ -2082,7 +2082,7 @@ export const ConstructorPage: React.FC = () => {
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-2xl bg-zinc-100 text-zinc-800 flex items-center justify-center">
                   <Plus className="w-5 h-5 stroke-[2.5]" />
                 </div>
                 <div>
@@ -2139,7 +2139,7 @@ export const ConstructorPage: React.FC = () => {
                       value={modalSearchQuery}
                       onChange={(e) => setModalSearchQuery(e.target.value)}
                       placeholder={lang === "ru" ? "Поиск блюда (бургер, шаурма, пицца...)" : "Qidiruv..."}
-                      className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+                      className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white transition-all"
                     />
                   </div>
 
@@ -2227,7 +2227,7 @@ export const ConstructorPage: React.FC = () => {
                           type="button"
                           onClick={() => createConstructorMutation.mutate({ productId: p.id })}
                           disabled={createConstructorMutation.isPending}
-                          className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1 active:scale-95 disabled:opacity-50"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>{lang === "ru" ? "Включить" : "Ulash"}</span>
@@ -2251,7 +2251,7 @@ export const ConstructorPage: React.FC = () => {
                     value={newProductNameRu}
                     onChange={(e) => setNewProductNameRu(e.target.value)}
                     placeholder="Например: Кастомный Бургер"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white"
                   />
                 </div>
 
@@ -2264,7 +2264,7 @@ export const ConstructorPage: React.FC = () => {
                     value={newProductNameUz}
                     onChange={(e) => setNewProductNameUz(e.target.value)}
                     placeholder="Masalan: Maxsus Burger"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white"
                   />
                 </div>
 
@@ -2277,7 +2277,7 @@ export const ConstructorPage: React.FC = () => {
                       type="number"
                       value={newProductPrice}
                       onChange={(e) => setNewProductPrice(Number(e.target.value) || 0)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white"
                     />
                   </div>
 
@@ -2290,7 +2290,7 @@ export const ConstructorPage: React.FC = () => {
                       onClick={() => setPhotoPickerTarget({ type: "new_product" })}
                       className="w-full px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <Sparkles className="w-3.5 h-3.5 text-zinc-700" />
                       <span>{lang === "ru" ? "Выбрать фото" : "Tanlash"}</span>
                     </button>
                   </div>
@@ -2303,7 +2303,7 @@ export const ConstructorPage: React.FC = () => {
                   <select
                     value={newProductPreset}
                     onChange={(e) => setNewProductPreset(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:bg-white"
                   >
                     <option value="burger">{lang === "ru" ? "Бургер-конструктор" : "Burger konstruktor"}</option>
                     <option value="shawarma">{lang === "ru" ? "Шаурма / Лаваш / Донер" : "Lavash / Shaurma"}</option>
@@ -2325,7 +2325,7 @@ export const ConstructorPage: React.FC = () => {
                       })
                     }
                     disabled={!newProductNameRu.trim() || createConstructorMutation.isPending}
-                    className="w-full py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-xs shadow-md shadow-amber-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    className="w-full py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 text-white font-black text-xs shadow-md shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                   >
                     {createConstructorMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -2350,8 +2350,8 @@ export const ConstructorPage: React.FC = () => {
             {/* Header */}
             <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-amber-600" />
+                <div className="w-8 h-8 rounded-xl bg-zinc-50 text-zinc-800 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-zinc-800" />
                 </div>
                 <div>
                   <h3 className="font-black text-sm text-slate-900">
@@ -2386,7 +2386,7 @@ export const ConstructorPage: React.FC = () => {
                 }}
               />
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-zinc-100 text-zinc-800 flex items-center justify-center shrink-0">
                   <Upload className="w-5 h-5" />
                 </div>
                 <div>
@@ -2444,7 +2444,7 @@ export const ConstructorPage: React.FC = () => {
                   onClick={() => setPhotoCategoryTab(tab.id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                     photoCategoryTab === tab.id
-                      ? "bg-amber-500 text-white shadow-xs"
+                      ? "bg-zinc-900 text-white shadow-xs"
                       : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
                   }`}
                 >
@@ -2463,12 +2463,12 @@ export const ConstructorPage: React.FC = () => {
                     key={pIdx}
                     type="button"
                     onClick={() => handleSelectPhoto(photo.url)}
-                    className="p-3 rounded-2xl border border-slate-200 hover:border-amber-500 hover:shadow-md transition-all group flex flex-col items-center text-center bg-white cursor-pointer"
+                    className="p-3 rounded-2xl border border-slate-200 hover:border-zinc-900 hover:shadow-md transition-all group flex flex-col items-center text-center bg-white cursor-pointer"
                   >
                     <div className="w-20 h-20 rounded-xl bg-slate-50 flex items-center justify-center p-1 mb-2 group-hover:scale-105 transition-transform">
                       <img src={photo.url} alt="" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-[11px] font-bold text-slate-800 line-clamp-1 group-hover:text-amber-600">
+                    <span className="text-[11px] font-bold text-slate-800 line-clamp-1 group-hover:text-zinc-800">
                       {photo.label}
                     </span>
                   </button>
@@ -2484,7 +2484,7 @@ export const ConstructorPage: React.FC = () => {
                   value={customPhotoInput}
                   onChange={(e) => setCustomPhotoInput(e.target.value)}
                   placeholder="Вставьте ссылку на фото из интернета (URL)"
-                  className="flex-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-medium focus:outline-none focus:border-amber-500"
+                  className="flex-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-medium focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                 />
                 <button
                   type="button"
@@ -2493,7 +2493,7 @@ export const ConstructorPage: React.FC = () => {
                       handleSelectPhoto(customPhotoInput.trim());
                     }
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shrink-0 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs shrink-0 cursor-pointer"
                 >
                   {lang === "ru" ? "Применить" : "Qo'llash"}
                 </button>
@@ -2519,7 +2519,7 @@ export const ConstructorPage: React.FC = () => {
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-zinc-100 text-zinc-800 flex items-center justify-center">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <h3 className="font-black text-sm text-slate-900">
@@ -2543,34 +2543,34 @@ export const ConstructorPage: React.FC = () => {
 
             <div className="space-y-2.5">
               {[
-                { id: "burger", icon: Utensils, title: "Бургер-конструктор", desc: "Булочки, котлеты Black Angus, сыры, соусы, халапеньо, бекон", color: "text-amber-600" },
-                { id: "shawarma", icon: Utensils, title: "Шаурма / Лаваш / Донер", desc: "Лаваш, сырный лаваш, пита, мясо гриль, соусы, картофель фри", color: "text-amber-700" },
+                { id: "burger", icon: Utensils, title: "Бургер-конструктор", desc: "Булочки, котлеты Black Angus, сыры, соусы, халапеньо, бекон", color: "text-zinc-800" },
+                { id: "shawarma", icon: Utensils, title: "Шаурма / Лаваш / Донер", desc: "Лаваш, сырный лаваш, пита, мясо гриль, соусы, картофель фри", color: "text-zinc-800" },
                 { id: "pizza", icon: Pizza, title: "Пицца-конструктор", desc: "Основа теста, соусы, моцарелла, пепперони, грибы", color: "text-rose-600" },
-                { id: "hotdog", icon: Utensils, title: "Хот-дог конструктор", desc: "Булочки бриошь, баварские колбаски, лук фри, релиш, соусы", color: "text-orange-600" },
-                { id: "coffee", icon: Coffee, title: "Кофе и напитки", desc: "Эспрессо, капучино, овсяное/миндальное молоко, сиропы, сливки", color: "text-amber-800" },
+                { id: "hotdog", icon: Utensils, title: "Хот-дог конструктор", desc: "Булочки бриошь, баварские колбаски, лук фри, релиш, соусы", color: "text-zinc-800" },
+                { id: "coffee", icon: Coffee, title: "Кофе и напитки", desc: "Эспрессо, капучино, овсяное/миндальное молоко, сиропы, сливки", color: "text-zinc-800" },
               ].map((p) => (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => handleLoadPreset(p.id)}
                   disabled={Boolean(loadingPreset)}
-                  className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-amber-500 hover:bg-amber-50/40 text-left transition-all flex items-center justify-between group cursor-pointer"
+                  className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-zinc-900 hover:bg-zinc-50/40 text-left transition-all flex items-center justify-between group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 group-hover:bg-white transition-colors">
                       <p.icon className={`w-5 h-5 ${p.color}`} />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-900 group-hover:text-amber-600 transition-colors">
+                      <div className="font-bold text-xs text-slate-900 group-hover:text-zinc-800 transition-colors">
                         {p.title}
                       </div>
                       <div className="text-[10px] text-slate-400">{p.desc}</div>
                     </div>
                   </div>
                   {loadingPreset === p.id ? (
-                    <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                    <Loader2 className="w-4 h-4 text-zinc-700 animate-spin" />
                   ) : (
-                    <Plus className="w-4 h-4 text-slate-400 group-hover:text-amber-600" />
+                    <Plus className="w-4 h-4 text-slate-400 group-hover:text-zinc-800" />
                   )}
                 </button>
               ))}

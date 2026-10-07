@@ -15,6 +15,12 @@ import {
   ShoppingCart,
   MessageSquare,
   Menu,
+  User,
+  UserPlus,
+  X,
+  Loader2,
+  Sparkles,
+  Building2,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
@@ -25,13 +31,14 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
-  const { user, store, stores, switchStore, createStore, logout, lang, setLang, t } = useAuth();
+  const { user, store, stores, switchStore, logout, lang, setLang, t } = useAuth();
   const { totalUnread, notifications, markAllRead } = useNotifications();
   const navigate = useNavigate();
 
   const [langOpen, setLangOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   const langRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
@@ -83,6 +90,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
     }
   };
 
+
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchQuery.trim()) {
       navigate(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
@@ -112,7 +120,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
           </button>
         )}
 
-        <div className="relative w-full max-w-md">
+        {/* Search input: shown on sm+, collapsed to icon button on mobile */}
+        <div className="relative w-full max-w-md hidden sm:block">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
@@ -135,6 +144,44 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
             </kbd>
           </div>
         </div>
+
+        {/* Mobile Search Icon Button */}
+        <button
+          type="button"
+          onClick={() => setMobileSearchOpen(true)}
+          className="sm:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
+          title={lang === "ru" ? "Поиск" : "Search"}
+        >
+          <Search className="w-4 h-4" />
+        </button>
+
+        {/* Full-width Mobile Search Bar Overlay */}
+        {mobileSearchOpen && (
+          <div className="fixed inset-x-0 top-0 h-14 bg-white dark:bg-[#18181B] border-b border-slate-200 dark:border-zinc-800 px-4 flex items-center gap-3 z-50 animate-in fade-in">
+            <Search className="w-4 h-4 text-slate-400 shrink-0" />
+            <input
+              autoFocus
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  setMobileSearchOpen(false);
+                  navigate(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
+              placeholder={lang === "ru" ? "Поиск по магазину..." : "Search..."}
+              className="flex-1 bg-transparent border-none text-xs text-slate-900 dark:text-white outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(false)}
+              className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Store Domain Pill */}
         {store?.subdomain && (
@@ -311,13 +358,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                 </div>
               </div>
 
-              {/* Stores switcher if multiple */}
-              {stores && stores.length > 1 && (
-                <div className="py-1">
-                  <div className="px-3.5 py-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400">
-                    {lang === "ru" ? "Магазины" : "Do'konlar"}
-                  </div>
-                  {stores.map((s) => (
+              {/* Stores switcher */}
+              <div className="py-1">
+                <div className="px-3.5 py-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+                  {lang === "ru" ? "Магазины" : "Do'konlar"}
+                </div>
+                {stores && stores.length > 0 ? (
+                  stores.map((s) => (
                     <button
                       key={s.id}
                       type="button"
@@ -334,9 +381,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                       <span className="truncate">{s.name}</span>
                       {store?.id === s.id && <Check className="w-3 h-3 text-slate-900 dark:text-white" />}
                     </button>
-                  ))}
-                </div>
-              )}
+                  ))
+                ) : (
+                  <div className="px-3.5 py-1 text-slate-600 dark:text-zinc-400">{store?.name || "StoreBox"}</div>
+                )}
+                <a
+                  href="/onboarding/?new=1"
+                  className="w-full flex items-center gap-2 px-3.5 py-1.5 text-zinc-900 dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-medium transition-colors cursor-pointer text-left"
+                >
+                  <Plus className="w-3.5 h-3.5 text-zinc-500" />
+                  <span>{lang === "ru" ? "Добавить магазин" : "Do'kon qo'shish"}</span>
+                </a>
+              </div>
 
               <div className="py-1">
                 <Link
@@ -358,7 +414,25 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                 </a>
               </div>
 
-              <div className="py-1">
+              <div className="py-1 space-y-0.5">
+                <a
+                  href="/register/?switch=1"
+                  className="w-full flex items-center gap-2 px-3.5 py-1.5 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer text-left"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{lang === "ru" ? "Добавить аккаунт" : "Yangi hisob yaratish"}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserOpen(false);
+                    window.location.href = "/dashboard/login/?switch=1";
+                  }}
+                  className="w-full flex items-center gap-2 px-3.5 py-1.5 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer text-left"
+                >
+                  <User className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{lang === "ru" ? "Сменить аккаунт" : "Boshqa hisobga o'tish"}</span>
+                </button>
                 <button
                   type="button"
                   data-testid="header-logout-btn"

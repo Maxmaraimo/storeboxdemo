@@ -321,9 +321,9 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Action Controls: Periods, Currency, Refresh */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 max-w-full">
           {/* Period selector */}
-          <div className="inline-flex rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
+          <div className="inline-flex max-w-full overflow-x-auto no-scrollbar rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
             {periods.map((p) => (
               <button
                 key={p.id}
@@ -341,7 +341,7 @@ export const DashboardPage: React.FC = () => {
                     return next;
                   });
                 }}
-                className={`px-2.5 py-1 text-xs font-normal rounded-md transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 text-xs font-normal rounded-md transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                   period === p.id && !startDateParam
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium"
                     : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
@@ -360,7 +360,7 @@ export const DashboardPage: React.FC = () => {
                   setCustomEnd(endDateParam || metrics?.today_date || "2026-09-24");
                   setShowDatePicker(!showDatePicker);
                 }}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer flex items-center gap-1 ${
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap ${
                   period === "custom" || (startDateParam && endDateParam)
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium"
                     : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white font-normal"

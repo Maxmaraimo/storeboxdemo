@@ -119,7 +119,7 @@ def login_view(request):
 
     from apps.orders.models import StoreStaff
     from apps.stores.models import Branch
-    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists()
+    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists() and not stores.exists() and not user.is_superuser
 
     user_branch = None
     if store:

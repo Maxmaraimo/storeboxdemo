@@ -14,11 +14,11 @@ import {
   DollarSign,
   Truck,
   MapPin,
-  Users,
-  Bot
+  Bot,
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { SettingsLayout } from "./SettingsLayout";
 
 type Availability = "idle" | "checking" | "available" | "unavailable";
 
@@ -167,45 +167,16 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 max-w-4xl">
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">
-          {t("settings") || (lang === "ru" ? "Настройки" : "Sozlamalar")}
-        </h1>
-        <p className="text-xs text-slate-500 font-normal mt-0.5">
-          {t("settings_subtitle") || (lang === "ru" ? "Управление названием магазина, доменом и валютой" : "Do'kon nomi, internet manzili va valyutasini boshqaring")}
-        </p>
-      </div>
-
-      {/* SETTINGS HUB TABS */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 dark:border-zinc-800 -mx-4 sm:mx-0 px-4 sm:px-0 text-xs">
-        {[
-          { path: "/settings", label: lang === "ru" ? "Основные" : "Asosiy", icon: StoreIcon },
-          { path: "/settings/tariffs", label: lang === "ru" ? "Тарифы" : "Tariflar", icon: CreditCard },
-          { path: "/settings/payments", label: lang === "ru" ? "Платежи" : "To'lovlar", icon: DollarSign },
-          { path: "/settings/delivery", label: lang === "ru" ? "Доставка" : "Yetkazib berish", icon: Truck },
-          { path: "/settings/branches", label: lang === "ru" ? "Филиалы" : "Filiallar", icon: MapPin },
-          { path: "/settings/staff", label: lang === "ru" ? "Персонал" : "Xodimlar", icon: Users },
-          { path: "/platforms", label: "Telegram", icon: Bot },
-        ].map((tab) => {
-          const isCurrent = tab.path === "/settings";
-          const Icon = tab.icon;
-          return (
-            <Link
-              key={tab.path}
-              to={tab.path}
-              className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shrink-0 transition-colors ${
-                isCurrent
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium"
-                  : "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 font-normal"
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
-            </Link>
-          );
-        })}
-      </div>
+    <SettingsLayout>
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">
+            {t("settings") || (lang === "ru" ? "Основные настройки" : "Asosiy sozlamalar")}
+          </h1>
+          <p className="text-xs text-slate-500 font-normal mt-0.5">
+            {t("settings_subtitle") || (lang === "ru" ? "Управление названием магазина, доменом и валютой" : "Do'kon nomi, internet manzili va valyutasini boshqaring")}
+          </p>
+        </div>
 
       {(successMessage || errorMessage) && (
         <div
@@ -350,5 +321,6 @@ export const SettingsPage: React.FC = () => {
         </div>
       </form>
     </div>
-  );
+  </SettingsLayout>
+);
 };

@@ -233,19 +233,19 @@
 
     <!-- FIXED TOP BAR -->
     <header class="detail-nav">
-        <!-- Left: Prominent Back to Store Link -->
-        <a href="/store/{{ store.subdomain }}/#collection" class="back-btn">
+        <!-- Left: Prominent Back to Store Link (compact on mobile) -->
+        <a href="/store/{{ store.subdomain }}/#collection" class="back-btn" :title="t('backToStore')">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            <span x-text="t('backToStore')"></span>
+            <span class="hidden sm:inline" x-text="t('backToStore')"></span>
         </a>
 
         <!-- Center: Brand Wordmark -->
         <a href="/store/{{ store.subdomain }}/#home" class="flex items-center">
-            <img src="{% static 'images/streetwear/logo_wordmark_dark.svg' %}" alt="AURA ATELIER" class="h-7 w-auto">
+            <img src="{% static 'images/streetwear/logo_wordmark_dark.svg' %}" alt="AURA ATELIER" class="h-6 sm:h-7 w-auto">
         </a>
 
         <!-- Right: Lang Switcher & Cart Pill -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 sm:gap-3">
             <div class="lang-pill">
                 <a href="?lang=uz" :class="currentLang === 'uz' ? 'active' : ''">UZ</a>
                 <a href="?lang=ru" :class="currentLang === 'ru' ? 'active' : ''">RU</a>
@@ -253,7 +253,8 @@
 
             <button @click="cartDrawerOpen = true" class="cart-pill">
                 <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-                <span x-text="t('cart') + ' (' + cartCount + ')'"></span>
+                <span class="hidden sm:inline" x-text="t('cart') + ' (' + cartCount + ')'"></span>
+                <span class="sm:hidden font-mono font-bold text-xs" x-text="'(' + cartCount + ')'"></span>
             </button>
         </div>
     </header>
@@ -481,17 +482,22 @@
             </template>
 
             <template x-for="item in cartItems" :key="item.key">
-                <div class="flex gap-4 p-3 rounded-2xl bg-gray-50 border border-gray-100 items-center">
+                <div class="flex gap-3 p-3 rounded-2xl bg-gray-50 border border-gray-100 items-center">
                     <img :src="item.image" :alt="item.name" class="w-16 h-16 rounded-xl object-contain bg-white p-1 border border-gray-100">
                     <div class="flex-1 min-w-0">
                         <h4 class="font-condensed font-bold text-sm uppercase text-black truncate" x-text="item.name"></h4>
                         <small class="text-xs text-gray-500 block" x-show="item.variation_name" x-text="'Размер: ' + item.variation_name"></small>
                         <span class="font-condensed font-bold text-sm text-black block mt-1" x-text="formatMoney(item.price) + ' UZS'"></span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button @click="updateCartQty(item.key, -1)" class="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-100">-</button>
-                        <span class="text-xs font-bold w-4 text-center" x-text="item.quantity"></span>
-                        <button @click="updateCartQty(item.key, 1)" class="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-100">+</button>
+                    <div class="flex flex-col items-end gap-1.5">
+                        <button @click="updateCartQty(item.key, 0, 'remove')" class="text-red-400 hover:text-red-600 p-1" title="Удалить">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                        <div class="flex items-center gap-1.5">
+                            <button @click="updateCartQty(item.key, -1)" class="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-100">-</button>
+                            <span class="text-xs font-bold w-4 text-center" x-text="item.quantity"></span>
+                            <button @click="updateCartQty(item.key, 1)" class="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-100">+</button>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -652,18 +658,23 @@
                     }
                 },
 
-                async updateCartQty(itemKey, delta) {
+                async updateCartQty(itemKey, delta = 0, action = null) {
                     try {
                         const item = this.cartItems.find(i => i.key === itemKey);
-                        if (!item) return;
-                        const newQty = item.quantity + delta;
+                        if (!item && !action) return;
+                        let payload = { item_key: itemKey };
+                        if (action === 'remove' || (item && item.quantity + delta <= 0)) {
+                            payload.action = 'remove';
+                        } else {
+                            payload.quantity = (item ? item.quantity : 1) + delta;
+                        }
                         const resp = await fetch('/store/{{ store.subdomain }}/cart/update/', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRFToken': '{{ csrf_token }}'
                             },
-                            body: JSON.stringify({ item_key: itemKey, quantity: newQty })
+                            body: JSON.stringify(payload)
                         });
                         const data = await resp.json();
                         if (data.cart) {

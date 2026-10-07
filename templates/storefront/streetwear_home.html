@@ -231,6 +231,25 @@
             transform: translateY(-1px) !important;
         }
 
+        /* Mobile-Ready Slide-Over Drawer & Always-Visible Sticky Footer */
+        .drawer {
+            display: flex !important;
+            flex-direction: column !important;
+            z-index: 201 !important;
+        }
+        .cart-items {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        .cart-footer {
+            flex-shrink: 0 !important;
+            margin-top: auto !important;
+            background: #f0efea !important;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+
         /* Profile Pill Button */
         .fma-profile-pill {
             display: inline-flex !important;
@@ -851,9 +870,10 @@
             </a>
 
             <!-- Slide-over Cart Trigger (Ultra high contrast black pill with white text) -->
-            <button @click="cartDrawerOpen = true" class="fma-cart-pill group">
+            <button @click="cartDrawerOpen = true" class="fma-cart-pill group" :title="t('cart')">
                 <i data-lucide="shopping-bag" class="w-4 h-4 group-hover:scale-105 transition-transform"></i>
-                <span x-text="t('cart') + ' (' + cartCount + ')'"></span>
+                <span class="hidden sm:inline" x-text="t('cart') + ' (' + cartCount + ')'"></span>
+                <span class="sm:hidden font-mono font-bold text-xs" x-text="'(' + cartCount + ')'"></span>
             </button>
         </div>
     </header>
@@ -1431,7 +1451,7 @@
                         <div class="font-condensed font-bold text-xs text-[#0c0d0b] mt-1" x-text="formatMoney(item.unit_price || item.price) + ' UZS'"></div>
                     </div>
                     <div class="flex flex-col items-end gap-2">
-                        <button @click="updateCart(key, -item.quantity)" class="text-red-500 hover:text-red-700 text-xs">
+                        <button @click="updateCart(key, 0, 'remove')" class="text-red-500 hover:text-red-700 text-xs p-1" title="Удалить">
                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                         </button>
                         <div class="qty rounded-full bg-white border border-[#141512]/15">
@@ -1852,19 +1872,27 @@
                     }
                 },
 
-                async updateCart(key, delta) {
+                async updateCart(key, delta = 0, action = null) {
                     try {
+                        const payload = { item_key: key };
+                        if (action === 'remove' || delta === 0) {
+                            payload.action = 'remove';
+                        } else {
+                            payload.quantity_delta = delta;
+                        }
                         const res = await fetch('/store/{{ store.subdomain }}/cart/update/', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ item_key: key, quantity_delta: delta })
+                            body: JSON.stringify(payload)
                         });
                         const data = await res.json();
                         if (data.success) {
                             this.cartItems = data.cart;
                             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error("Cart update error", e);
+                    }
                 },
 
                 showToast(msg) {

@@ -216,14 +216,14 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#f6f6f7] dark:bg-[#0c0d0e]">
       <div className="bg-white dark:bg-[#18181b] rounded-2xl border border-slate-200/80 dark:border-white/10 p-7 sm:p-9 max-w-md w-full shadow-sm space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex w-12 h-12 rounded-xl bg-blue-600 items-center justify-center shadow-xs mx-auto text-white">
-            <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-white fill-none stroke-[2] stroke-linejoin-round">
+          <div className="inline-flex w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-700/80 items-center justify-center shadow-xs mx-auto">
+            <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[2] stroke-linejoin-round">
               <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
               <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
             </svg>
           </div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">
-            Store<span className="text-blue-600">Box</span> tizimiga kirish
+            StoreBox tizimiga kirish
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Boshqaruv paneliga kirish uchun ma'lumotlaringizni kiriting

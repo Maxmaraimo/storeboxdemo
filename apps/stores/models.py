@@ -25,16 +25,17 @@ class Store(models.Model):
         OTHER = 'OTHER', 'Boshqa'
 
     class BusinessCategories(models.TextChoices):
-        ACCESSORIES = 'ACCESSORIES', 'Aksessuarlar'
-        AUTO = 'AUTO', 'Avto ehtiyot qismlar'
+        FLOWERS = 'FLOWERS', "Gullar va sovg'alar"
+        FOOD = 'FOOD', 'Oziq-ovqat'
+        CLOTHES = 'CLOTHES', 'Kiyim-kechak'
         ELECTRONICS = 'ELECTRONICS', 'Elektronika'
         BEAUTY = 'BEAUTY', "Go'zallik va parvarish"
+        ACCESSORIES = 'ACCESSORIES', 'Aksessuarlar'
+        AUTO = 'AUTO', 'Avto ehtiyot qismlar'
         PETS = 'PETS', 'Hayvonlar uchun mahsulotlar'
         DRINKS = 'DRINKS', 'Ichimliklar'
         BOOKS = 'BOOKS', 'Kitoblar va ofis anjomlari'
-        CLOTHES = 'CLOTHES', 'Kiyim-kechak'
         APPLIANCES = 'APPLIANCES', 'Maishiy texnika'
-        FOOD = 'FOOD', 'Oziq-ovqat'
         SHOES = 'SHOES', 'Poyabzal'
         SPORT = 'SPORT', 'Sport anjomlari'
         HOME = 'HOME', 'Uy jihozlari'

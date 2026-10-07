@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth import login, logout, authenticate
+from django.contrib import messages
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
 from django.middleware.csrf import get_token
@@ -748,9 +749,10 @@ def _safe_login_redirect(request):
 
 def login_view(request):
     if request.user.is_authenticated and not request.GET.get('switch'):
-        courier_staff = StoreStaff.objects.filter(user=request.user, is_courier=True, is_active=True).first()
-        if courier_staff:
-            return redirect('dashboard:courier_panel')
+        if not request.user.stores.exists() and not request.user.is_superuser:
+            courier_staff = StoreStaff.objects.filter(user=request.user, is_courier=True, is_active=True).first()
+            if courier_staff:
+                return redirect('dashboard:courier_panel')
         next_url = _safe_login_redirect(request)
         if next_url:
             return redirect(next_url)
@@ -788,9 +790,10 @@ def login_view(request):
 
         if user:
             login(request, user)
-            courier_staff = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).first()
-            if courier_staff:
-                return redirect('dashboard:courier_panel')
+            if not user.stores.exists() and not user.is_superuser:
+                courier_staff = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).first()
+                if courier_staff:
+                    return redirect('dashboard:courier_panel')
 
             next_url = _safe_login_redirect(request)
             if next_url:
@@ -836,10 +839,16 @@ def logout_view(request):
 
 @login_required
 def onboarding_wizard_view(request):
-    is_new = request.GET.get('new') in ['1', 'true', 'yes'] or request.GET.get('force') in ['1', 'true', 'yes'] or request.path.endswith('/stores/create/') or request.path.endswith('/new-store/')
+    is_new = (
+        request.GET.get('new') in ['1', 'true', 'yes']
+        or request.GET.get('force') in ['1', 'true', 'yes']
+        or 'create' in request.path
+        or 'new-store' in request.path
+        or 'onboarding' in request.path
+    )
     existing_store = get_merchant_store(request)
     if existing_store and not is_new:
-        return redirect('dashboard:home')
+        is_new = True
 
     query_lang = request.GET.get('lang')
     if query_lang in ['uz', 'ru', 'en']:
@@ -851,11 +860,7 @@ def onboarding_wizard_view(request):
     if current_lang not in ['uz', 'ru', 'en']:
         current_lang = 'uz'
 
-    if is_new and request.user.is_authenticated:
-        user_stores_count = Store.objects.filter(owner=request.user).count()
-        if user_stores_count >= 5:
-            messages.error(request, "Bitta hisobda maksimal 5 ta do'kon yaratish mumkin")
-            return redirect('dashboard:home')
+    user_stores_count = Store.objects.filter(owner=request.user).count() if request.user.is_authenticated else 0
 
     error = None
     if request.method == 'POST':

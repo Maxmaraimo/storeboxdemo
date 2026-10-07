@@ -1192,11 +1192,25 @@ def cart_update_view(request, subdomain=None):
     item_key = data.get('item_key')
     action = data.get('action') # 'increase', 'decrease', 'remove'
     quantity = data.get('quantity')
+    quantity_delta = data.get('quantity_delta')
 
     cart = request.session.get('cart', {})
-    if item_key in cart:
+    actual_key = str(item_key) if item_key is not None else ''
+    if actual_key not in cart:
+        if f"{actual_key}_0" in cart:
+            actual_key = f"{actual_key}_0"
+        else:
+            for k in cart.keys():
+                if k == actual_key or k.startswith(f"{actual_key}_"):
+                    actual_key = k
+                    break
+
+    if actual_key in cart:
+        item_key = actual_key
         unit_p = float(cart[item_key].get('unit_price') or cart[item_key].get('price') or 0)
-        if quantity is not None:
+        if action in ['remove', 'delete'] or (quantity_delta is not None and int(quantity_delta) == 0 and action in ['remove', 'delete', None] and quantity is None):
+            del cart[item_key]
+        elif quantity is not None:
             try:
                 qty = int(quantity)
                 if qty <= 0:
@@ -1206,6 +1220,20 @@ def cart_update_view(request, subdomain=None):
                     cart[item_key]['unit_price'] = unit_p
                     cart[item_key]['price'] = unit_p
                     cart[item_key]['total_price'] = qty * unit_p
+            except (ValueError, TypeError):
+                pass
+        elif quantity_delta is not None:
+            try:
+                delta = int(quantity_delta)
+                current_qty = cart[item_key].get('quantity', 1)
+                new_qty = current_qty + delta
+                if new_qty <= 0:
+                    del cart[item_key]
+                else:
+                    cart[item_key]['quantity'] = new_qty
+                    cart[item_key]['unit_price'] = unit_p
+                    cart[item_key]['price'] = unit_p
+                    cart[item_key]['total_price'] = new_qty * unit_p
             except (ValueError, TypeError):
                 pass
         elif action in ['increase', 'increment']:
@@ -1221,8 +1249,6 @@ def cart_update_view(request, subdomain=None):
                 cart[item_key]['unit_price'] = unit_p
                 cart[item_key]['price'] = unit_p
                 cart[item_key]['total_price'] = cart[item_key]['quantity'] * unit_p
-        elif action == 'remove':
-            del cart[item_key]
 
     request.session['cart'] = cart
     request.session.modified = True
