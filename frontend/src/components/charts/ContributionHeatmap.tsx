@@ -103,13 +103,13 @@ export const ContributionHeatmap: React.FC<Props> = ({
     }
     switch (day.level) {
       case 1:
-        return "bg-[#c8ff6a]/30 dark:bg-[#c8ff6a]/20 border border-[#c8ff6a]/40 dark:border-[#c8ff6a]/30";
+        return "bg-emerald-200 dark:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-800";
       case 2:
-        return "bg-[#c8ff6a]/55 dark:bg-[#c8ff6a]/45 border border-[#c8ff6a]/60 dark:border-[#c8ff6a]/50";
+        return "bg-emerald-350 dark:bg-emerald-700/60 border border-emerald-400 dark:border-emerald-650";
       case 3:
-        return "bg-[#c8ff6a]/80 dark:bg-[#c8ff6a]/70 border border-[#c8ff6a]/85 dark:border-[#c8ff6a]/75";
+        return "bg-emerald-500 dark:bg-emerald-500 border border-emerald-600 dark:border-emerald-400";
       case 4:
-        return "bg-[#c8ff6a] dark:bg-[#c8ff6a] border border-[#a8f03b] shadow-2xs shadow-[#c8ff6a]/25";
+        return "bg-emerald-600 dark:bg-emerald-400 border border-emerald-700 shadow-2xs";
       default:
         // Level 0: empty
         return "bg-neutral-100 dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04]";
@@ -121,7 +121,7 @@ export const ContributionHeatmap: React.FC<Props> = ({
       {/* 1. Header Summary Stats */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-black/[0.04] dark:border-white/5">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-black text-neutral-900 dark:text-white tracking-tight">
+          <span className="text-sm font-semibold text-neutral-900 dark:text-white tracking-tight">
             {total_orders.toLocaleString()} {lang === "ru" ? "заказов" : lang === "en" ? "orders" : "ta buyurtma"}
           </span>
           <span className="text-[11px] text-neutral-400 dark:text-neutral-500 font-medium">
@@ -131,7 +131,7 @@ export const ContributionHeatmap: React.FC<Props> = ({
 
         <div className="flex items-center gap-3 text-[11px]">
           {active_days > 0 && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 font-bold">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium text-[11px]">
               <span>{lang === "ru" ? `Активные дни: ${active_days}` : lang === "en" ? `Active days: ${active_days}` : `Faol kunlar: ${active_days} kun`}</span>
             </div>
           )}
@@ -194,9 +194,9 @@ export const ContributionHeatmap: React.FC<Props> = ({
                           day
                         )} ${
                           !day.is_future
-                            ? "cursor-pointer hover:scale-135 hover:z-30 hover:ring-2 hover:ring-[#c8ff6a] dark:hover:ring-[#c8ff6a]"
+                            ? "cursor-pointer hover:scale-135 hover:z-30 hover:ring-2 hover:ring-emerald-400"
                             : ""
-                        } ${isHovered ? "scale-135 ring-2 ring-[#c8ff6a] z-30 shadow-md" : ""}`}
+                        } ${isHovered ? "scale-135 ring-2 ring-emerald-400 z-30 shadow-xs" : ""}`}
                         onMouseEnter={(e) => {
                           if (!day.is_future && containerRef.current) {
                             const containerRect = containerRef.current.getBoundingClientRect();
@@ -232,10 +232,10 @@ export const ContributionHeatmap: React.FC<Props> = ({
         <div className="flex items-center gap-1.5">
           <span className="text-[10px]">{lang === "ru" ? "Меньше" : lang === "en" ? "Less" : "Kamroq"}</span>
           <div className="w-2.5 h-2.5 rounded-[2px] bg-neutral-100 dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04]" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/30 dark:bg-[#c8ff6a]/20 border border-[#c8ff6a]/40" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/55 dark:bg-[#c8ff6a]/45 border border-[#c8ff6a]/60" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a]/80 dark:bg-[#c8ff6a]/70 border border-[#c8ff6a]/85" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#c8ff6a] dark:bg-[#c8ff6a] border border-[#a8f03b]" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-200 border border-emerald-300" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-350 border border-emerald-400" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-500 border border-emerald-600" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-600 border border-emerald-700" />
           <span className="text-[10px]">{lang === "ru" ? "Больше" : lang === "en" ? "More" : "Ko'proq"}</span>
         </div>
       </div>
@@ -254,7 +254,7 @@ export const ContributionHeatmap: React.FC<Props> = ({
 
         return (
           <div
-            className={`absolute pointer-events-none z-50 transform ${transformClass} mb-1 px-3 py-2 rounded-xl bg-neutral-900/95 dark:bg-neutral-800/95 text-white backdrop-blur-md shadow-2xl border border-white/10 text-xs font-sans whitespace-nowrap transition-all duration-150`}
+            className={`absolute pointer-events-none z-50 transform ${transformClass} mb-1 px-3 py-2 rounded-xl bg-neutral-900/95 text-white backdrop-blur-md shadow-xl border border-white/10 text-xs font-sans whitespace-nowrap transition-all duration-150`}
             style={{
               left: `${hoveredCell.x}px`,
               top: `${hoveredCell.y - 6}px`,
@@ -262,7 +262,7 @@ export const ContributionHeatmap: React.FC<Props> = ({
           >
             {hoveredCell.day.count > 0 ? (
               <div>
-                <div className="font-black text-[#c8ff6a] flex items-center gap-1.5">
+                <div className="font-semibold text-emerald-400 flex items-center gap-1.5">
                   <span>
                     {hoveredCell.day.count} {lang === "ru" ? (hoveredCell.day.count === 1 ? "заказ" : "заказа") : lang === "en" ? (hoveredCell.day.count === 1 ? "order" : "orders") : "ta buyurtma"}
                   </span>

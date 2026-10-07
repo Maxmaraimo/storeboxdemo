@@ -35,7 +35,8 @@ import {
   Eye,
   CheckCircle2,
   XCircle,
-  Package
+  Package,
+  Smartphone
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
@@ -152,50 +153,128 @@ export const getCanonicalPhone = (formatted: string): string => {
   return "+" + digits;
 };
 
-export const validateUzbekPhone = (formatted: string): { valid: boolean; error?: string } => {
+export const validateUzbekPhone = (formatted: string, lang: string = "uz"): { valid: boolean; error?: string } => {
   let digits = formatted.replace(/\D/g, "");
   if (digits.startsWith("998")) {
     digits = digits.slice(3);
   }
   if (digits.length === 0) {
-    return { valid: false, error: "Telefon raqamini kiriting" };
+    return { valid: false, error: lang === "ru" ? "Введите номер телефона" : lang === "en" ? "Enter phone number" : "Telefon raqamini kiriting" };
   }
   if (digits.length < 9) {
-    return { valid: false, error: `Telefon raqami to'liq emas (${digits.length}/9 raqam kiritildi)` };
+    return {
+      valid: false,
+      error: lang === "ru"
+        ? `Номер телефона неполный (${digits.length}/9 цифр введено)`
+        : lang === "en"
+        ? `Phone number incomplete (${digits.length}/9 digits entered)`
+        : `Telefon raqami to'liq emas (${digits.length}/9 raqam kiritildi)`
+    };
   }
   const prefix = digits.slice(0, 2);
   if (!UZ_VALID_PREFIXES.includes(prefix)) {
-    return { valid: false, error: `Noto'g'ri operator kodi: (${prefix}). Haqiqiy O'zbekiston kodi kiriting (masalan: 90, 91, 93, 94, 95, 97, 98, 99, 33, 50, 77, 88)` };
+    return {
+      valid: false,
+      error: lang === "ru"
+        ? `Неверный код оператора: (${prefix}). Введите код Узбекистана (например: 90, 91, 93, 94, 95, 97, 98, 99, 33, 50, 77, 88)`
+        : lang === "en"
+        ? `Invalid operator code: (${prefix}). Enter valid Uzbekistan code (e.g.: 90, 91, 93, 94, 95, 97, 98, 99, 33, 50, 77, 88)`
+        : `Noto'g'ri operator kodi: (${prefix}). Haqiqiy O'zbekiston kodi kiriting (masalan: 90, 91, 93, 94, 95, 97, 98, 99, 33, 50, 77, 88)`
+    };
   }
   return { valid: true };
 };
 
 const MODULE_DEFINITIONS = [
-  { key: "dashboard", label: "Boshqaruv paneli" },
-  { key: "orders", label: "Buyurtmalar" },
-  { key: "customers", label: "Mijozlar" },
-  { key: "chats", label: "Chat" },
-  { key: "categories", label: "Kategoriyalar" },
-  { key: "products", label: "Mahsulotlar" },
-  { key: "discounts", label: "Chegirma" },
-  { key: "ikpu", label: "IKPU" },
-  { key: "warehouse", label: "Omborxona" },
-  { key: "broadcast", label: "Rassilka" },
-  { key: "promocodes", label: "Promokod" },
-  { key: "analytics", label: "Manbalar" },
-  { key: "banners", label: "Banner" },
-  { key: "telegram", label: "Telegram bot" },
-  { key: "payments", label: "To'lov turi" },
-  { key: "delivery", label: "Yetkazib berish" },
-  { key: "branches", label: "Filiallar" },
-  { key: "staff", label: "Xodimlar" },
-  { key: "roles", label: "Rollar" },
-  { key: "settings", label: "Sozlamalar" },
-  { key: "channels", label: "Kanal bo'yicha yuborish" },
+  { key: "dashboard", label: "Boshqaruv paneli", labelRu: "Панель управления", labelEn: "Dashboard" },
+  { key: "orders", label: "Buyurtmalar", labelRu: "Заказы", labelEn: "Orders" },
+  { key: "customers", label: "Mijozlar", labelRu: "Клиенты", labelEn: "Customers" },
+  { key: "chats", label: "Chat", labelRu: "Чат", labelEn: "Chat" },
+  { key: "categories", label: "Kategoriyalar", labelRu: "Категории", labelEn: "Categories" },
+  { key: "products", label: "Mahsulotlar", labelRu: "Товары", labelEn: "Products" },
+  { key: "discounts", label: "Chegirma", labelRu: "Скидки", labelEn: "Discounts" },
+  { key: "ikpu", label: "IKPU", labelRu: "ИКПУ", labelEn: "IKPU" },
+  { key: "warehouse", label: "Omborxona", labelRu: "Склад", labelEn: "Warehouse" },
+  { key: "broadcast", label: "Rassilka", labelRu: "Рассылка", labelEn: "Broadcast" },
+  { key: "promocodes", label: "Promokod", labelRu: "Промокоды", labelEn: "Promo codes" },
+  { key: "analytics", label: "Manbalar / Tahlil", labelRu: "Источники / Аналитика", labelEn: "Analytics" },
+  { key: "banners", label: "Bannerlar", labelRu: "Баннеры", labelEn: "Banners" },
+  { key: "telegram", label: "Telegram bot", labelRu: "Telegram бот", labelEn: "Telegram Bot" },
+  { key: "payments", label: "To'lov turi", labelRu: "Способы оплаты", labelEn: "Payment Methods" },
+  { key: "delivery", label: "Yetkazib berish", labelRu: "Доставка & Курьеры", labelEn: "Delivery & Couriers" },
+  { key: "branches", label: "Filiallar", labelRu: "Филиалы", labelEn: "Branches" },
+  { key: "staff", label: "Xodimlar", labelRu: "Сотрудники", labelEn: "Staff" },
+  { key: "roles", label: "Rollar va Huquqlar", labelRu: "Роли и права", labelEn: "Roles & Permissions" },
+  { key: "settings", label: "Sozlamalar", labelRu: "Настройки", labelEn: "Settings" },
+  { key: "channels", label: "Kanal bo'yicha yuborish", labelRu: "Публикация в канал", labelEn: "Channel Posting" },
 ];
 
+const getModuleLabel = (mod: typeof MODULE_DEFINITIONS[number], currentLang: string) => {
+  if (currentLang === "ru") return mod.labelRu;
+  if (currentLang === "en") return mod.labelEn;
+  return mod.label;
+};
+
+const formatRoleName = (name: string, currentLang: string): string => {
+  if (!name) return "";
+  const lower = name.trim().toLowerCase();
+  if (currentLang === "ru") {
+    if (lower === "admin" || lower === "administrator") return "Администратор";
+    if (lower === "menejer" || lower === "manager") return "Менеджер";
+    if (lower === "kassir" || lower === "cashier") return "Кассир";
+    if (lower === "kuryer" || lower === "courier") return "Курьер";
+    if (lower === "operator") return "Оператор";
+    if (lower === "do'kon egasi" || lower === "dokon egasi" || lower === "owner") return "Владелец магазина";
+    if (lower === "superadmin" || lower === "super admin") return "Главный администратор";
+  } else if (currentLang === "en") {
+    if (lower === "admin" || lower === "administrator") return "Administrator";
+    if (lower === "menejer" || lower === "manager") return "Manager";
+    if (lower === "kassir" || lower === "cashier") return "Cashier";
+    if (lower === "kuryer" || lower === "courier") return "Courier";
+    if (lower === "operator") return "Operator";
+    if (lower === "do'kon egasi" || lower === "dokon egasi" || lower === "owner") return "Store Owner";
+    if (lower === "superadmin" || lower === "super admin") return "Super Admin";
+  } else {
+    if (lower === "admin" || lower === "administrator") return "Admin";
+    if (lower === "menejer" || lower === "manager") return "Menejer";
+    if (lower === "kassir" || lower === "cashier") return "Kassir";
+    if (lower === "kuryer" || lower === "courier") return "Kuryer";
+    if (lower === "operator") return "Operator";
+    if (lower === "do'kon egasi" || lower === "dokon egasi" || lower === "owner") return "Do'kon egasi";
+    if (lower === "superadmin" || lower === "super admin") return "Superadmin";
+  }
+  return name;
+};
+
+const formatRoleDescription = (desc: string, currentLang: string): string => {
+  if (!desc) return "";
+  const lower = desc.trim().toLowerCase();
+  if (currentLang === "ru") {
+    if (lower.includes("barcha huquqlar") || lower.includes("toliq") || lower.includes("to'liq")) {
+      return "Полный доступ ко всем разделам и настройкам магазина";
+    }
+    if (lower.includes("buyurtmalar") && (lower.includes("tovarlar") || lower.includes("mijozlar"))) {
+      return "Управление заказами, товарами, клиентами и складом";
+    }
+    if (lower.includes("kassa") || lower.includes("kassir")) {
+      return "Работа с кассой и прием поступающих заказов";
+    }
+  } else if (currentLang === "en") {
+    if (lower.includes("barcha huquqlar") || lower.includes("toliq") || lower.includes("to'liq")) {
+      return "Full access to all store modules and settings";
+    }
+    if (lower.includes("buyurtmalar") && (lower.includes("tovarlar") || lower.includes("mijozlar"))) {
+      return "Manage orders, products, customers and warehouse";
+    }
+    if (lower.includes("kassa") || lower.includes("kassir")) {
+      return "Cash register and incoming orders processing";
+    }
+  }
+  return desc;
+};
+
 export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }> = ({ initialTab = "staff" }) => {
-  const { t } = useAuth();
+  const { t, lang } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -556,24 +635,24 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
   const saveStaffMutation = useMutation({
     mutationFn: async () => {
-      if (!staffModal.name.trim()) throw new Error("Xodim ismini kiriting");
+      if (!staffModal.name.trim()) throw new Error(lang === "ru" ? "Введите имя сотрудника" : lang === "en" ? "Enter employee name" : "Xodim ismini kiriting");
       
-      const phoneValidation = validateUzbekPhone(staffModal.phone);
+      const phoneValidation = validateUzbekPhone(staffModal.phone, lang);
       if (!phoneValidation.valid) {
         throw new Error(phoneValidation.error);
       }
       const canonicalPhone = getCanonicalPhone(staffModal.phone);
 
       if (!staffModal.editId) {
-        if (!staffModal.password) throw new Error("Parol kiritilishi shart");
-        if (staffModal.password.length < 6) throw new Error("Parol kamida 6 ta belgidan iborat bo'lishi kerak");
+        if (!staffModal.password) throw new Error(lang === "ru" ? "Пароль обязателен" : lang === "en" ? "Password is required" : "Parol kiritilishi shart");
+        if (staffModal.password.length < 6) throw new Error(lang === "ru" ? "Пароль должен содержать минимум 6 символов" : lang === "en" ? "Password must be at least 6 characters" : "Parol kamida 6 ta belgidan iborat bo'lishi kerak");
         if (staffModal.password !== staffModal.confirmPassword) {
-          throw new Error("Parol va parolni tasdiqlash mos kelmadi");
+          throw new Error(lang === "ru" ? "Пароли не совпадают" : lang === "en" ? "Passwords do not match" : "Parol va parolni tasdiqlash mos kelmadi");
         }
       } else if (staffModal.password) {
-        if (staffModal.password.length < 6) throw new Error("Parol kamida 6 ta belgidan iborat bo'lishi kerak");
+        if (staffModal.password.length < 6) throw new Error(lang === "ru" ? "Пароль должен содержать минимум 6 символов" : lang === "en" ? "Password must be at least 6 characters" : "Parol kamida 6 ta belgidan iborat bo'lishi kerak");
         if (staffModal.password !== staffModal.confirmPassword) {
-          throw new Error("Parol va parolni tasdiqlash mos kelmadi");
+          throw new Error(lang === "ru" ? "Пароли не совпадают" : lang === "en" ? "Passwords do not match" : "Parol va parolni tasdiqlash mos kelmadi");
         }
       }
 
@@ -714,7 +793,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
   const saveRoleMutation = useMutation({
     mutationFn: async () => {
-      if (!roleModal.name.trim()) throw new Error("Rol nomini kiriting");
+      if (!roleModal.name.trim()) throw new Error(lang === "ru" ? "Введите название роли" : lang === "en" ? "Enter role name" : "Rol nomini kiriting");
 
       const payload = {
         name: roleModal.name.trim(),
@@ -785,24 +864,24 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
   const saveCourierMutation = useMutation({
     mutationFn: async () => {
-      if (!courierModal.name.trim()) throw new Error("Kuryer ismini kiriting");
+      if (!courierModal.name.trim()) throw new Error(lang === "ru" ? "Введите имя курьера" : lang === "en" ? "Enter courier name" : "Kuryer ismini kiriting");
       
-      const phoneValidation = validateUzbekPhone(courierModal.phone);
+      const phoneValidation = validateUzbekPhone(courierModal.phone, lang);
       if (!phoneValidation.valid) {
         throw new Error(phoneValidation.error);
       }
       const canonicalPhone = getCanonicalPhone(courierModal.phone);
 
       if (!courierModal.editId) {
-        if (!courierModal.password) throw new Error("Parol kiritilishi shart");
-        if (courierModal.password.length < 6) throw new Error("Parol kamida 6 ta belgidan iborat bo'lishi kerak");
+        if (!courierModal.password) throw new Error(lang === "ru" ? "Пароль обязателен" : lang === "en" ? "Password is required" : "Parol kiritilishi shart");
+        if (courierModal.password.length < 6) throw new Error(lang === "ru" ? "Пароль должен содержать минимум 6 символов" : lang === "en" ? "Password must be at least 6 characters" : "Parol kamida 6 ta belgidan iborat bo'lishi kerak");
         if (courierModal.password !== courierModal.confirmPassword) {
-          throw new Error("Parol va parolni tasdiqlash mos kelmadi");
+          throw new Error(lang === "ru" ? "Пароли не совпадают" : lang === "en" ? "Passwords do not match" : "Parol va parolni tasdiqlash mos kelmadi");
         }
       } else if (courierModal.password) {
-        if (courierModal.password.length < 6) throw new Error("Parol kamida 6 ta belgidan iborat bo'lishi kerak");
+        if (courierModal.password.length < 6) throw new Error(lang === "ru" ? "Пароль должен содержать минимум 6 символов" : lang === "en" ? "Password must be at least 6 characters" : "Parol kamida 6 ta belgidan iborat bo'lishi kerak");
         if (courierModal.password !== courierModal.confirmPassword) {
-          throw new Error("Parol va parolni tasdiqlash mos kelmadi");
+          throw new Error(lang === "ru" ? "Пароли не совпадают" : lang === "en" ? "Passwords do not match" : "Parol va parolni tasdiqlash mos kelmadi");
         }
       }
 
@@ -836,15 +915,15 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            Xodimlar va Huquqlar
+            {t("staff_page_title") || (lang === "ru" ? "Сотрудники и роли" : lang === "en" ? "Staff & Permissions" : "Xodimlar va Huquqlar")}
           </h1>
           <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1 font-medium">
-            {t("staff_page_subtitle") || "Xodimlar, kirish rollari va kuryerlar ro'yxatini to'liq boshqarish"}
+            {t("staff_page_subtitle") || (lang === "ru" ? "Полное управление сотрудниками, ролями доступа и курьерами" : lang === "en" ? "Full management of staff team, access roles and courier dispatch" : "Xodimlar, kirish rollari va kuryerlar ro'yxatini to'liq boshqarish")}
           </p>
         </div>
 
-        {/* Add Button depending on Tab */}
-        <div>
+        {/* Add / Action Buttons depending on Tab */}
+        <div className="flex items-center gap-2.5 flex-wrap">
           {activeTab === "staff" && (
             <button
               type="button"
@@ -852,7 +931,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
               className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-bold hover:bg-brand-dark transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>{t("add_staff_btn") || "Xodim qo'shish"}</span>
+              <span>{t("add_staff_btn") || (lang === "ru" ? "Добавить сотрудника" : lang === "en" ? "Add Staff" : "Xodim qo'shish")}</span>
             </button>
           )}
           {activeTab === "roles" && (
@@ -862,18 +941,33 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
               className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-bold hover:bg-brand-dark transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>{t("add_role_btn") || "Rol qo'shish"}</span>
+              <span>{t("add_role_btn") || (lang === "ru" ? "Добавить роль" : lang === "en" ? "Add Role" : "Rol qo'shish")}</span>
             </button>
           )}
           {activeTab === "couriers" && (
-            <button
-              type="button"
-              onClick={openAddCourier}
-              className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-bold hover:bg-brand-dark transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{t("add_courier_btn") || "Kuryer qo'shish"}</span>
-            </button>
+            <>
+              {/* Courier Panel Quick Access Button */}
+              <a
+                href="/dashboard/courier/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title={t("open_courier_panel_desc") || (lang === "ru" ? "Открыть мобильный веб-терминал курьера в новой вкладке" : lang === "en" ? "Open mobile courier web terminal in a new tab" : "Kuryer mobil terminalini yangi oynada ochish")}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 border border-emerald-500/30"
+              >
+                <Smartphone className="w-4 h-4 text-emerald-200" />
+                <span>{t("courier_panel_btn") || (lang === "ru" ? "Панель курьера" : lang === "en" ? "Courier Panel" : "Kuryer paneli")}</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+              </a>
+
+              <button
+                type="button"
+                onClick={openAddCourier}
+                className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-bold hover:bg-brand-dark transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{t("add_courier_btn") || (lang === "ru" ? "Добавить курьера" : lang === "en" ? "Add Courier" : "Kuryer qo'shish")}</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -891,7 +985,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             }`}
           >
             <UserCheck className="w-4 h-4" />
-            <span>{t("staff_title") || "Xodimlar"}</span>
+            <span>{t("staff_tab_title") || (lang === "ru" ? "Сотрудники" : lang === "en" ? "Staff" : "Xodimlar")}</span>
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200/80 dark:bg-neutral-600 font-bold">
               {staffList.length}
             </span>
@@ -907,7 +1001,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>{t("roles_title") || "Rollar"}</span>
+            <span>{t("roles_title") || (lang === "ru" ? "Роли и права" : lang === "en" ? "Roles & Permissions" : "Rollar va huquqlar")}</span>
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200/80 dark:bg-neutral-600 font-bold">
               {rolesList.length}
             </span>
@@ -923,7 +1017,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             }`}
           >
             <Truck className="w-4 h-4" />
-            <span>{t("courier_title") || "Kuryer"}</span>
+            <span>{t("courier_title") || (lang === "ru" ? "Курьеры" : lang === "en" ? "Couriers" : "Kuryerlar")}</span>
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200/80 dark:bg-neutral-600 font-bold">
               {couriersList.length}
             </span>
@@ -939,10 +1033,10 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               activeTab === "staff"
-                ? "Xodimlarni qidirish..."
+                ? (t("search_staff_ph") || (lang === "ru" ? "Поиск сотрудников..." : lang === "en" ? "Search staff..." : "Xodimlarni qidirish..."))
                 : activeTab === "roles"
-                ? "Rollarni qidirish..."
-                : "Kuryerlarni qidirish..."
+                ? (t("search_roles_ph") || (lang === "ru" ? "Поиск ролей..." : lang === "en" ? "Search roles..." : "Rollarni qidirish..."))
+                : (t("search_couriers_ph") || (lang === "ru" ? "Поиск курьеров..." : lang === "en" ? "Search couriers..." : "Kuryerlarni qidirish..."))
             }
             className="w-full pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand transition-colors"
           />
@@ -958,13 +1052,13 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-800/40 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  <th className="p-4">Xodim</th>
-                  <th className="p-4">Telefon raqami</th>
-                  <th className="p-4">Rol</th>
-                  <th className="p-4 text-center">Buyurtmalar soni</th>
-                  <th className="p-4">Sana</th>
-                  <th className="p-4 text-center">Holat</th>
-                  <th className="p-4 text-right">Amal</th>
+                  <th className="p-4">{t("staff_col_name") || (lang === "ru" ? "Сотрудник" : lang === "en" ? "Staff Member" : "Xodim")}</th>
+                  <th className="p-4">{t("staff_col_phone") || (lang === "ru" ? "Номер телефона" : lang === "en" ? "Phone Number" : "Telefon raqami")}</th>
+                  <th className="p-4">{t("staff_col_role") || (lang === "ru" ? "Роль" : lang === "en" ? "Role" : "Rol")}</th>
+                  <th className="p-4 text-center">{t("staff_col_orders") || (lang === "ru" ? "Кол-во заказов" : lang === "en" ? "Orders Count" : "Buyurtmalar soni")}</th>
+                  <th className="p-4">{t("staff_col_date") || (lang === "ru" ? "Дата" : lang === "en" ? "Date" : "Sana")}</th>
+                  <th className="p-4 text-center">{t("staff_col_status") || (lang === "ru" ? "Статус" : lang === "en" ? "Status" : "Holat")}</th>
+                  <th className="p-4 text-right">{t("staff_col_action") || (lang === "ru" ? "Действия" : lang === "en" ? "Actions" : "Amal")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-neutral-800 text-xs font-medium text-slate-700 dark:text-neutral-300">
@@ -981,14 +1075,14 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     <td className="p-4 font-mono text-slate-500 dark:text-neutral-400">{s.phone}</td>
                     <td className="p-4">
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300 border border-slate-200/80 dark:border-neutral-700">
-                        {s.role_name || s.role}
+                        {formatRoleName(s.role_name || s.role || "", lang)}
                       </span>
                     </td>
                     <td className="p-4 text-center font-bold text-slate-900 dark:text-white">
                       {s.orders_count || 0}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-neutral-400">
-                      {s.created_at ? new Date(s.created_at).toLocaleDateString("ru-RU") : "—"}
+                      {s.created_at ? new Date(s.created_at).toLocaleDateString(lang === "en" ? "en-US" : "ru-RU") : "—"}
                     </td>
                     <td className="p-4 text-center">
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -998,7 +1092,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           onChange={() => toggleStaffMutation.mutate(s.id)}
                           className="sr-only peer"
                         />
-                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#211b2e] dark:peer-checked:bg-[#c8ff6a] dark:peer-checked:after:bg-[#211b2e]"></div>
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                       </label>
                     </td>
                     <td className="p-4 text-right">
@@ -1007,7 +1101,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           type="button"
                           onClick={() => openEditStaff(s)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-                          title="Tahrirlash"
+                          title={t("edit") || (lang === "ru" ? "Редактировать" : lang === "en" ? "Edit" : "Tahrirlash")}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -1018,11 +1112,11 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                               open: true,
                               type: "staff",
                               id: s.id,
-                              title: `'${s.name}' xodimi`,
+                              title: `'${s.name}'`,
                             })
                           }
                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors cursor-pointer"
-                          title="O'chirish"
+                          title={t("delete") || (lang === "ru" ? "Удалить" : lang === "en" ? "Delete" : "O'chirish")}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1033,7 +1127,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 {filteredStaff.length === 0 && !isStaffLoading && (
                   <tr>
                     <td colSpan={7} className="p-10 text-center text-slate-400 dark:text-neutral-500 text-xs">
-                      Xodimlar topilmadi.
+                      {t("staff_not_found") || (lang === "ru" ? "Сотрудники не найдены." : lang === "en" ? "No staff found." : "Xodimlar topilmadi.")}
                     </td>
                   </tr>
                 )}
@@ -1052,12 +1146,12 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-800/40 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  <th className="p-4">Rol nomi</th>
-                  <th className="p-4 text-center">Xodimlar soni</th>
-                  <th className="p-4">Yaratilgan sana</th>
-                  <th className="p-4">Yangilangan sana</th>
-                  <th className="p-4 text-center">Holat</th>
-                  <th className="p-4 text-right">Amal</th>
+                  <th className="p-4">{t("roles_col_name") || (lang === "ru" ? "Название роли" : lang === "en" ? "Role Name" : "Rol nomi")}</th>
+                  <th className="p-4 text-center">{t("roles_col_staff_count") || (lang === "ru" ? "Кол-во сотрудников" : lang === "en" ? "Staff Count" : "Xodimlar soni")}</th>
+                  <th className="p-4">{t("roles_col_created") || (lang === "ru" ? "Дата создания" : lang === "en" ? "Created Date" : "Yaratilgan sana")}</th>
+                  <th className="p-4">{t("roles_col_updated") || (lang === "ru" ? "Дата обновления" : lang === "en" ? "Updated Date" : "Yangilangan sana")}</th>
+                  <th className="p-4 text-center">{t("roles_col_status") || (lang === "ru" ? "Статус" : lang === "en" ? "Status" : "Holat")}</th>
+                  <th className="p-4 text-right">{t("roles_col_action") || (lang === "ru" ? "Действия" : lang === "en" ? "Actions" : "Amal")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-neutral-800 text-xs font-medium text-slate-700 dark:text-neutral-300">
@@ -1065,25 +1159,25 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                   <tr key={r.id} className="hover:bg-slate-50/80 dark:hover:bg-neutral-800/60 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <div className="font-bold text-slate-900 dark:text-white">{r.name}</div>
+                        <div className="font-bold text-slate-900 dark:text-white">{formatRoleName(r.name, lang)}</div>
                         {r.is_system && (
                           <span className="px-2 py-0.5 text-[9px] font-semibold rounded-md bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400 border border-slate-200 dark:border-neutral-700">
-                            Tizim roli
+                            {t("system_role_badge") || (lang === "ru" ? "Системная роль" : lang === "en" ? "System Role" : "Tizim roli")}
                           </span>
                         )}
                       </div>
                       {r.description && (
-                        <div className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">{r.description}</div>
+                        <div className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">{formatRoleDescription(r.description, lang)}</div>
                       )}
                     </td>
                     <td className="p-4 text-center font-bold text-slate-900 dark:text-white">
                       {r.staff_count || 0}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-neutral-400">
-                      {r.created_at ? new Date(r.created_at).toLocaleDateString("ru-RU") : "—"}
+                      {r.created_at ? new Date(r.created_at).toLocaleDateString(lang === "en" ? "en-US" : "ru-RU") : "—"}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-neutral-400">
-                      {r.updated_at ? new Date(r.updated_at).toLocaleDateString("ru-RU") : "—"}
+                      {r.updated_at ? new Date(r.updated_at).toLocaleDateString(lang === "en" ? "en-US" : "ru-RU") : "—"}
                     </td>
                     <td className="p-4 text-center">
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -1094,7 +1188,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           onChange={() => toggleRoleMutation.mutate(r.id)}
                           className="sr-only peer disabled:cursor-not-allowed"
                         />
-                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#211b2e] dark:peer-checked:bg-[#c8ff6a] dark:peer-checked:after:bg-[#211b2e]"></div>
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                       </label>
                     </td>
                     <td className="p-4 text-right">
@@ -1103,7 +1197,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           type="button"
                           onClick={() => openEditRole(r)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-                          title="Tahrirlash va huquqlar"
+                          title={t("edit_role_and_perms") || (lang === "ru" ? "Редактировать и права" : lang === "en" ? "Edit & Permissions" : "Tahrirlash va huquqlar")}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -1115,11 +1209,11 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                                 open: true,
                                 type: "role",
                                 id: r.id,
-                                title: `'${r.name}' roli`,
+                                title: `'${r.name}'`,
                               })
                             }
                             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors cursor-pointer"
-                            title="O'chirish"
+                            title={t("delete") || (lang === "ru" ? "Удалить" : lang === "en" ? "Delete" : "O'chirish")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1131,7 +1225,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 {filteredRoles.length === 0 && !isRolesLoading && (
                   <tr>
                     <td colSpan={6} className="p-10 text-center text-slate-400 dark:text-neutral-500 text-xs">
-                      Rollar topilmadi.
+                      {t("roles_not_found") || (lang === "ru" ? "Роли не найдены." : lang === "en" ? "No roles found." : "Rollar topilmadi.")}
                     </td>
                   </tr>
                 )}
@@ -1150,12 +1244,12 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-800/40 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  <th className="p-4">Kuryer</th>
-                  <th className="p-4">Telefon raqami</th>
-                  <th className="p-4 text-center">Jonli holat & Buyurtma</th>
-                  <th className="p-4 text-center">Yetkazilgan</th>
-                  <th className="p-4 text-center">Holat</th>
-                  <th className="p-4 text-right">Amal</th>
+                  <th className="p-4">{t("courier_col_courier") || (lang === "ru" ? "КУРЬЕР" : lang === "en" ? "COURIER" : "KURYER")}</th>
+                  <th className="p-4">{t("courier_col_phone") || (lang === "ru" ? "НОМЕР ТЕЛЕФОНА" : lang === "en" ? "PHONE NUMBER" : "TELEFON RAQAMI")}</th>
+                  <th className="p-4 text-center">{t("courier_col_live_order") || (lang === "ru" ? "ЖИВОЙ СТАТУС & ЗАКАЗ" : lang === "en" ? "LIVE STATUS & ORDER" : "JONLI HOLAT & BUYURTMA")}</th>
+                  <th className="p-4 text-center">{t("courier_col_delivered") || (lang === "ru" ? "ДОСТАВЛЕНО" : lang === "en" ? "DELIVERED" : "YETKAZILGAN")}</th>
+                  <th className="p-4 text-center">{t("courier_col_status") || (lang === "ru" ? "СТАТУС" : lang === "en" ? "STATUS" : "HOLAT")}</th>
+                  <th className="p-4 text-right">{t("courier_col_action") || (lang === "ru" ? "ДЕЙСТВИЯ" : lang === "en" ? "ACTIONS" : "AMAL")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-neutral-800 text-xs font-medium text-slate-700 dark:text-neutral-300">
@@ -1169,39 +1263,41 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                         <div
                           onClick={() => setProfileCourierId(c.id)}
                           className="flex items-center gap-3 cursor-pointer group select-none"
-                          title="Kuryer profili va statistikasini ochish"
+                          title={t("courier_profile_title") || (lang === "ru" ? "Профиль курьера и статистика" : lang === "en" ? "Courier profile and statistics" : "Kuryer profili va statistikasini ochish")}
                         >
                           <div className="relative">
-                            <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center font-bold shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                            <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0 shadow-2xs">
                               <Truck className="w-4.5 h-4.5" />
                             </div>
                             <span
                               className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-neutral-900 ${
-                                isOnline ? "bg-slate-500 animate-pulse" : "bg-slate-300 dark:bg-neutral-600"
+                                isOnline ? "bg-emerald-500 animate-pulse" : "bg-slate-300 dark:bg-neutral-600"
                               }`}
-                              title={isOnline ? "Online" : "Offline"}
+                              title={isOnline ? (t("online_status") || "Online") : (t("offline_status") || "Offline")}
                             />
                           </div>
                           <div>
-                            <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <div className="font-medium text-slate-900 dark:text-white flex items-center gap-1.5">
                               <span className="group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-sm">
                                 {c.name}
                               </span>
                               {hasOrder && (
-                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
-                                  Yetkazmoqda
+                                <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                                  {t("courier_badge_delivering") || (lang === "ru" ? "В пути" : lang === "en" ? "Delivering" : "Yetkazmoqda")}
                                 </span>
                               )}
                             </div>
                             <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
                               <span>
                                 {isOnline
-                                  ? `Online • signal: ${c.last_seen_seconds_ago}s oldin`
+                                  ? (lang === "ru" ? `Онлайн • сигнал: ${c.last_seen_seconds_ago}с назад` : lang === "en" ? `Online • signal: ${c.last_seen_seconds_ago}s ago` : `Online • signal: ${c.last_seen_seconds_ago}s oldin`)
                                   : c.last_seen_seconds_ago
-                                  ? `Oxirgi signal: ${Math.round(c.last_seen_seconds_ago / 60)} daq. oldin`
-                                  : "GPS signali kutilmoqda"}
+                                  ? (lang === "ru" ? `Последний сигнал: ${Math.round(c.last_seen_seconds_ago / 60)} мин. назад` : lang === "en" ? `Last signal: ${Math.round(c.last_seen_seconds_ago / 60)} min ago` : `Oxirgi signal: ${Math.round(c.last_seen_seconds_ago / 60)} daq. oldin`)
+                                  : (t("gps_waiting") || (lang === "ru" ? "Ожидание GPS сигнала" : lang === "en" ? "Awaiting GPS signal" : "GPS signali kutilmoqda"))}
                               </span>
-                              <span className="text-slate-500 dark:text-neutral-400 font-medium group-hover:inline-block hidden">• Profilni ko'rish &rarr;</span>
+                              <span className="text-slate-500 dark:text-neutral-400 font-medium group-hover:inline-block hidden">
+                                • {t("courier_view_profile") || (lang === "ru" ? "Смотреть профиль →" : lang === "en" ? "View profile →" : "Profilni ko'rish →")}
+                              </span>
                             </p>
                           </div>
                         </div>
@@ -1219,7 +1315,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           </div>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-neutral-800 dark:text-neutral-400">
-                            Bo'sh (Kutmoqda)
+                            {t("courier_badge_idle") || (lang === "ru" ? "Свободен (Ожидает)" : lang === "en" ? "Idle (Waiting)" : "Bo'sh (Kutmoqda)")}
                           </span>
                         )}
                       </td>
@@ -1234,36 +1330,48 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                             onChange={() => toggleCourierMutation.mutate(c.id)}
                             className="sr-only peer"
                           />
-                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#211b2e] dark:peer-checked:bg-[#c8ff6a] dark:peer-checked:after:bg-[#211b2e]"></div>
+                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
                       </td>
                       <td className="p-4 text-right">
                         <div className="inline-flex items-center gap-1.5">
+                          {/* Dedicated Courier Terminal Button */}
+                          <a
+                            href={`/dashboard/courier/?courier_id=${c.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-emerald-200/80 dark:border-emerald-800/60"
+                            title={t("open_courier_terminal_tooltip") || (lang === "ru" ? "Открыть мобильный терминал этого курьера в новой вкладке" : lang === "en" ? "Open this courier's mobile terminal in a new tab" : "Ushbu kuryer mobil terminalini yangi oynada ochish")}
+                          >
+                            <Smartphone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>{t("courier_terminal_btn") || (lang === "ru" ? "Терминал" : lang === "en" ? "Terminal" : "Terminal")}</span>
+                          </a>
+
                           {/* Profile & Statistics Button */}
                           <button
                             type="button"
                             onClick={() => setProfileCourierId(c.id)}
-                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200/80 dark:border-neutral-700"
-                            title="Kuryer profili va statistikasi"
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200/80 dark:border-neutral-700"
+                            title={t("courier_profile_title") || (lang === "ru" ? "Профиль курьера и статистика" : lang === "en" ? "Courier profile and statistics" : "Kuryer profili va statistikasi")}
                           >
                             <Activity className="w-3.5 h-3.5 text-slate-500 dark:text-neutral-400" />
-                            <span>Statistika</span>
+                            <span>{t("courier_stats_btn") || (lang === "ru" ? "Статистика" : lang === "en" ? "Statistics" : "Statistika")}</span>
                           </button>
                           {/* Real-time Tracking Button */}
                           <button
                             type="button"
                             onClick={() => setMonitorCourier(c)}
-                            className="px-2.5 py-1.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243e] text-white dark:bg-[#c8ff6a] dark:text-[#211b2e] dark:hover:bg-[#bbf556] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                            title="Kuryer jonli harakati va xaritasi"
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                            title={t("live_map_modal_title") || (lang === "ru" ? "Живое движение курьера и карта" : lang === "en" ? "Live courier movement and map" : "Kuryer jonli harakati va xaritasi")}
                           >
-                            <Radio className="w-3.5 h-3.5 text-[#c8ff6a] dark:text-[#211b2e] animate-pulse" />
-                            <span>Jonli xarita</span>
+                            <Radio className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+                            <span>{t("courier_live_map_btn") || (lang === "ru" ? "Живая карта" : lang === "en" ? "Live Map" : "Jonli xarita")}</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => openEditCourier(c)}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-                            title="Tahrirlash"
+                            title={t("edit") || (lang === "ru" ? "Редактировать" : lang === "en" ? "Edit" : "Tahrirlash")}
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -1274,11 +1382,11 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                                 open: true,
                                 type: "courier",
                                 id: c.id,
-                                title: `'${c.name}' kuryeri`,
+                                title: `'${c.name}'`,
                               })
                             }
                             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors cursor-pointer"
-                            title="O'chirish"
+                            title={t("delete") || (lang === "ru" ? "Удалить" : lang === "en" ? "Delete" : "O'chirish")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1290,7 +1398,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 {filteredCouriers.length === 0 && !isCouriersLoading && (
                   <tr>
                     <td colSpan={6} className="p-10 text-center text-slate-400 dark:text-neutral-500 text-xs">
-                      Kuryerlar topilmadi.
+                      {t("couriers_not_found") || (lang === "ru" ? "Курьеры не найдены." : lang === "en" ? "No couriers found." : "Kuryerlar topilmadi.")}
                     </td>
                   </tr>
                 )}
@@ -1308,7 +1416,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
           <div className="bg-white dark:bg-neutral-900 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 border border-slate-100 dark:border-neutral-800">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
               <h3 className="text-base font-black text-slate-900 dark:text-white">
-                {staffModal.editId ? "Xodimni tahrirlash" : "Yangi xodim qo'shish"}
+                {staffModal.editId
+                  ? (t("staff_modal_edit_title") || (lang === "ru" ? "Редактировать сотрудника" : lang === "en" ? "Edit Staff Member" : "Xodimni tahrirlash"))
+                  : (t("staff_modal_add_title") || (lang === "ru" ? "Добавить нового сотрудника" : lang === "en" ? "Add New Staff Member" : "Yangi xodim qo'shish"))}
               </h3>
               <button
                 type="button"
@@ -1329,7 +1439,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             <div className="space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  Xodim ismi *
+                  {t("staff_name_input_label") || (lang === "ru" ? "Имя сотрудника *" : lang === "en" ? "Staff Name *" : "Xodim ismi *")}
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1337,7 +1447,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     type="text"
                     value={staffModal.name}
                     onChange={(e) => setStaffModal((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Masalan: Sardor Aliyev"
+                    placeholder={t("staff_name_ph") || (lang === "ru" ? "Например: Сардор Алиев" : lang === "en" ? "E.g.: Sardor Aliyev" : "Masalan: Sardor Aliyev")}
                     className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand"
                   />
                 </div>
@@ -1345,7 +1455,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  Telefon raqami *
+                  {t("staff_phone_label") || (lang === "ru" ? "Номер телефона *" : lang === "en" ? "Phone Number *" : "Telefon raqami *")}
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1362,13 +1472,13 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                   />
                 </div>
                 <span className="text-[10px] text-slate-400 dark:text-neutral-500 mt-1 block">
-                  Format: +998 (XX) XXX-XX-XX (faqat 9 ta raqam)
+                  {t("staff_phone_format_hint") || (lang === "ru" ? "Формат: +998 (XX) XXX-XX-XX (9 цифр)" : lang === "en" ? "Format: +998 (XX) XXX-XX-XX (9 digits)" : "Format: +998 (XX) XXX-XX-XX (faqat 9 ta raqam)")}
                 </span>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  Lavozim / Rol *
+                  {t("staff_role_select_label") || (lang === "ru" ? "Должность / Роль *" : lang === "en" ? "Position / Role *" : "Lavozim / Rol *")}
                 </label>
                 <select
                   value={staffModal.roleId || ""}
@@ -1379,7 +1489,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 >
                   {rolesList.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.name}
+                      {formatRoleName(r.name, lang)}
                     </option>
                   ))}
                 </select>
@@ -1387,7 +1497,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  {staffModal.editId ? "Yangi parol (o'zgartirish shart emas)" : "Parol *"}
+                  {staffModal.editId
+                    ? (t("staff_password_new_label") || (lang === "ru" ? "Новый пароль (не обязательно)" : lang === "en" ? "New password (optional)" : "Yangi parol (o'zgartirish shart emas)"))
+                    : (t("staff_password_label") || (lang === "ru" ? "Пароль *" : lang === "en" ? "Password *" : "Parol *"))}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1395,7 +1507,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     type="password"
                     value={staffModal.password}
                     onChange={(e) => setStaffModal((prev) => ({ ...prev, password: e.target.value }))}
-                    placeholder="Kamida 6 ta belgi"
+                    placeholder={t("staff_password_min_ph") || (lang === "ru" ? "Минимум 6 символов" : lang === "en" ? "At least 6 characters" : "Kamida 6 ta belgi")}
                     className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand"
                   />
                 </div>
@@ -1403,7 +1515,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  Parolni tasdiqlash {staffModal.editId ? "(agar yangilansa)" : "*"}
+                  {t("staff_password_confirm_label") || (lang === "ru" ? "Подтверждение пароля" : lang === "en" ? "Confirm Password" : "Parolni tasdiqlash")} {staffModal.editId ? (lang === "ru" ? "(если меняется)" : lang === "en" ? "(if updating)" : "(agar yangilansa)") : "*"}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1411,7 +1523,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     type="password"
                     value={staffModal.confirmPassword}
                     onChange={(e) => setStaffModal((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                    placeholder="Parolni qayta kiriting"
+                    placeholder={t("staff_password_confirm_ph") || (lang === "ru" ? "Повторите пароль" : lang === "en" ? "Re-enter password" : "Parolni qayta kiriting")}
                     className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand"
                   />
                 </div>
@@ -1424,7 +1536,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 onClick={() => setStaffModal((prev) => ({ ...prev, open: false }))}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
-                Bekor qilish
+                {t("cancel_btn") || (lang === "ru" ? "Отмена" : lang === "en" ? "Cancel" : "Bekor qilish")}
               </button>
               <button
                 type="button"
@@ -1432,7 +1544,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 disabled={saveStaffMutation.isPending}
                 className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-bold hover:bg-brand-dark transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {saveStaffMutation.isPending ? "Saqlanmoqda..." : "Saqlash"}
+                {saveStaffMutation.isPending
+                  ? (t("saving_btn") || (lang === "ru" ? "Сохранение..." : "Saqlanmoqda..."))
+                  : (t("save_btn") || (lang === "ru" ? "Сохранить" : "Saqlash"))}
               </button>
             </div>
           </div>
@@ -1448,10 +1562,12 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">
-                  {roleModal.editId ? "Rolni tahrirlash va huquqlarni sozlash" : "Yangi rol va huquqlar matritsasi"}
+                  {roleModal.editId
+                    ? (t("role_modal_edit_title") || (lang === "ru" ? "Редактирование роли и прав" : lang === "en" ? "Edit Role & Permissions" : "Rolni tahrirlash va huquqlarni sozlash"))
+                    : (t("role_modal_add_title") || (lang === "ru" ? "Новая роль и матрица прав" : lang === "en" ? "New Role & Permissions Matrix" : "Yangi rol va huquqlar matritsasi"))}
                 </h3>
                 <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">
-                  Har bir bo'lim bo'yicha ko'rish, tahrirlash va o'chirish huquqlarini belgilang
+                  {t("role_modal_desc") || (lang === "ru" ? "Укажите права на просмотр, редактирование и удаление для каждого раздела" : lang === "en" ? "Set view, edit, and delete permissions for each module" : "Har bir bo'lim bo'yicha ko'rish, tahrirlash va o'chirish huquqlarini belgilang")}
                 </p>
               </div>
               <button
@@ -1474,25 +1590,25 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  Rol nomi *
+                  {t("role_name_label") || (lang === "ru" ? "Название роли *" : lang === "en" ? "Role name *" : "Rol nomi *")}
                 </label>
                 <input
                   type="text"
                   value={roleModal.name}
                   onChange={(e) => setRoleModal((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="Masalan: Kontent menejer, Operator"
+                  placeholder={t("role_name_ph") || (lang === "ru" ? "Например: Контент-менеджер, Оператор" : lang === "en" ? "E.g.: Content Manager, Operator" : "Masalan: Kontent menejer, Operator")}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  Tavsif (ixtiyoriy)
+                  {t("role_desc_label") || (lang === "ru" ? "Описание (необязательно)" : lang === "en" ? "Description (optional)" : "Tavsif (ixtiyoriy)")}
                 </label>
                 <input
                   type="text"
                   value={roleModal.description}
                   onChange={(e) => setRoleModal((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder="Vazifasi haqida qisqacha ma'lumot"
+                  placeholder={t("role_desc_ph") || (lang === "ru" ? "Краткая информация об обязанностях" : lang === "en" ? "Brief information about duties" : "Vazifasi haqida qisqacha ma'lumot")}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand"
                 />
               </div>
@@ -1503,15 +1619,15 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 bg-slate-100 dark:bg-neutral-800 z-10">
                   <tr className="border-b border-slate-200 dark:border-neutral-700 text-[11px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
-                    <th className="p-3">Bo'lim nomi</th>
+                    <th className="p-3">{t("matrix_col_module") || (lang === "ru" ? "Название раздела" : lang === "en" ? "Module Name" : "Bo'lim nomi")}</th>
                     <th className="p-3 text-center w-28">
                       <button
                         type="button"
                         onClick={() => handleToggleColumn("view")}
                         className="inline-flex items-center gap-1 hover:text-brand cursor-pointer"
-                        title="Barchasini tanlash / bekor qilish"
+                        title={t("matrix_toggle_all") || (lang === "ru" ? "Выбрать / снять все" : lang === "en" ? "Select all / Deselect" : "Barchasini tanlash / bekor qilish")}
                       >
-                        <span>Ko'rish</span>
+                        <span>{t("matrix_col_view") || (lang === "ru" ? "Просмотр" : lang === "en" ? "View" : "Ko'rish")}</span>
                       </button>
                     </th>
                     <th className="p-3 text-center w-28">
@@ -1519,9 +1635,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                         type="button"
                         onClick={() => handleToggleColumn("edit")}
                         className="inline-flex items-center gap-1 hover:text-brand cursor-pointer"
-                        title="Barchasini tanlash / bekor qilish"
+                        title={t("matrix_toggle_all") || (lang === "ru" ? "Выбрать / снять все" : lang === "en" ? "Select all / Deselect" : "Barchasini tanlash / bekor qilish")}
                       >
-                        <span>Tahrirlash</span>
+                        <span>{t("matrix_col_edit") || (lang === "ru" ? "Редактирование" : lang === "en" ? "Edit" : "Tahrirlash")}</span>
                       </button>
                     </th>
                     <th className="p-3 text-center w-28">
@@ -1529,9 +1645,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                         type="button"
                         onClick={() => handleToggleColumn("delete")}
                         className="inline-flex items-center gap-1 hover:text-brand cursor-pointer"
-                        title="Barchasini tanlash / bekor qilish"
+                        title={t("matrix_toggle_all") || (lang === "ru" ? "Выбрать / снять все" : lang === "en" ? "Select all / Deselect" : "Barchasini tanlash / bekor qilish")}
                       >
-                        <span>O'chirish</span>
+                        <span>{t("matrix_col_delete") || (lang === "ru" ? "Удаление" : lang === "en" ? "Delete" : "O'chirish")}</span>
                       </button>
                     </th>
                   </tr>
@@ -1541,7 +1657,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     const perm = roleModal.permissions[m.key] || { view: false, edit: false, delete: false };
                     return (
                       <tr key={m.key} className="hover:bg-slate-50/80 dark:hover:bg-neutral-800/50 transition-colors">
-                        <td className="p-3 font-semibold text-slate-900 dark:text-white">{m.label}</td>
+                        <td className="p-3 font-semibold text-slate-900 dark:text-white">{getModuleLabel(m, lang)}</td>
                         <td className="p-3 text-center">
                           <input
                             type="checkbox"
@@ -1579,7 +1695,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 onClick={() => setRoleModal((prev) => ({ ...prev, open: false }))}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
-                Bekor qilish
+                {t("cancel_btn") || (lang === "ru" ? "Отмена" : lang === "en" ? "Cancel" : "Bekor qilish")}
               </button>
               <button
                 type="button"
@@ -1587,7 +1703,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 disabled={saveRoleMutation.isPending}
                 className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-bold hover:bg-brand-dark transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {saveRoleMutation.isPending ? "Saqlanmoqda..." : "Saqlash"}
+                {saveRoleMutation.isPending
+                  ? (t("saving_btn") || (lang === "ru" ? "Сохранение..." : "Saqlanmoqda..."))
+                  : (t("save_btn") || (lang === "ru" ? "Сохранить" : "Saqlash"))}
               </button>
             </div>
           </div>
@@ -1602,7 +1720,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
           <div className="bg-white dark:bg-neutral-900 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 border border-slate-100 dark:border-neutral-800">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-3">
               <h3 className="text-base font-black text-slate-900 dark:text-white">
-                {courierModal.editId ? "Kuryerni tahrirlash" : "Yangi kuryer qo'shish"}
+                {courierModal.editId
+                  ? (t("courier_modal_edit_title") || (lang === "ru" ? "Редактировать курьера" : "Kuryerni tahrirlash"))
+                  : (t("courier_modal_add_title") || (lang === "ru" ? "Добавить нового курьера" : "Yangi kuryer qo'shish"))}
               </h3>
               <button
                 type="button"
@@ -1623,7 +1743,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             <div className="space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  Kuryer ismi *
+                  {t("courier_name_input_label") || (lang === "ru" ? "Имя курьера *" : "Kuryer ismi *")}
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1631,7 +1751,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     type="text"
                     value={courierModal.name}
                     onChange={(e) => setCourierModal((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Masalan: Nodirbek Yusupov"
+                    placeholder={t("courier_name_ph") || (lang === "ru" ? "Например: Джамшид Расулов" : "Masalan: Jamshid Rasulov")}
                     className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand"
                   />
                 </div>
@@ -1639,7 +1759,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  Telefon raqami *
+                  {t("staff_col_phone") || (lang === "ru" ? "Номер телефона *" : "Telefon raqami *")}
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1656,13 +1776,15 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                   />
                 </div>
                 <span className="text-[10px] text-slate-400 dark:text-neutral-500 mt-1 block">
-                  Format: +998 (XX) XXX-XX-XX (faqat 9 ta raqam)
+                  {t("staff_phone_format_hint") || (lang === "ru" ? "Формат: +998 (XX) XXX-XX-XX (только 9 цифр)" : "Format: +998 (XX) XXX-XX-XX (faqat 9 ta raqam)")}
                 </span>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  {courierModal.editId ? "Yangi parol (o'zgartirish shart emas)" : "Parol *"}
+                  {courierModal.editId
+                    ? (t("staff_password_new_label") || (lang === "ru" ? "Новый пароль (не обязательно)" : "Yangi parol (o'zgartirish shart emas)"))
+                    : (t("staff_password_label") || (lang === "ru" ? "Пароль *" : "Parol *"))}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1670,7 +1792,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     type="password"
                     value={courierModal.password}
                     onChange={(e) => setCourierModal((prev) => ({ ...prev, password: e.target.value }))}
-                    placeholder="Kamida 6 ta belgi"
+                    placeholder={t("staff_password_min_ph") || (lang === "ru" ? "Минимум 6 символов" : "Kamida 6 ta belgi")}
                     className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand"
                   />
                 </div>
@@ -1678,7 +1800,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1">
-                  Parolni tasdiqlash {courierModal.editId ? "(agar yangilansa)" : "*"}
+                  {t("staff_password_confirm_label") || (lang === "ru" ? "Подтверждение пароля" : "Parolni tasdiqlash")} {courierModal.editId ? (lang === "ru" ? "(если обновляется)" : "(agar yangilansa)") : "*"}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1686,7 +1808,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     type="password"
                     value={courierModal.confirmPassword}
                     onChange={(e) => setCourierModal((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                    placeholder="Parolni qayta kiriting"
+                    placeholder={t("staff_password_confirm_ph") || (lang === "ru" ? "Повторите пароль" : "Parolni qayta kiriting")}
                     className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-brand"
                   />
                 </div>
@@ -1699,7 +1821,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 onClick={() => setCourierModal((prev) => ({ ...prev, open: false }))}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
-                Bekor qilish
+                {t("cancel_btn") || (lang === "ru" ? "Отмена" : "Bekor qilish")}
               </button>
               <button
                 type="button"
@@ -1707,7 +1829,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 disabled={saveCourierMutation.isPending}
                 className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-bold hover:bg-brand-dark transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {saveCourierMutation.isPending ? "Saqlanmoqda..." : "Saqlash"}
+                {saveCourierMutation.isPending
+                  ? (t("saving_btn") || (lang === "ru" ? "Сохранение..." : "Saqlanmoqda..."))
+                  : (t("save_btn") || (lang === "ru" ? "Сохранить" : "Saqlash"))}
               </button>
             </div>
           </div>
@@ -1725,10 +1849,23 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-base font-black text-slate-900 dark:text-white">O'chirishni tasdiqlang</h3>
+              <h3 className="text-base font-black text-slate-900 dark:text-white">
+                {t("confirm_delete_title") || (lang === "ru" ? "Подтверждение удаления" : "O'chirishni tasdiqlang")}
+              </h3>
               <p className="text-xs text-slate-500 dark:text-neutral-400">
-                Haqiqatan ham <strong className="text-slate-900 dark:text-white">{deleteModal.title}</strong>ni
-                o'chirmoqchimisiz? Ushbu amalni ortga qaytarib bo'lmaydi.
+                {lang === "ru" ? (
+                  <>
+                    Вы действительно хотите удалить <strong className="text-slate-900 dark:text-white">{deleteModal.title}</strong>? Это действие невозможно отменить.
+                  </>
+                ) : lang === "en" ? (
+                  <>
+                    Are you sure you want to delete <strong className="text-slate-900 dark:text-white">{deleteModal.title}</strong>? This action cannot be undone.
+                  </>
+                ) : (
+                  <>
+                    Haqiqatan ham <strong className="text-slate-900 dark:text-white">{deleteModal.title}</strong>ni o'chirmoqchimisiz? Ushbu amalni ortga qaytarib bo'lmaydi.
+                  </>
+                )}
               </p>
             </div>
 
@@ -1738,7 +1875,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 onClick={() => setDeleteModal((prev) => ({ ...prev, open: false }))}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
-                Bekor qilish
+                {t("cancel_btn") || (lang === "ru" ? "Отмена" : "Bekor qilish")}
               </button>
               <button
                 type="button"
@@ -1746,7 +1883,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 disabled={deleteMutation.isPending}
                 className="px-5 py-2 bg-rose-500 text-white rounded-xl text-xs font-bold hover:bg-rose-600 transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {deleteMutation.isPending ? "O'chirilmoqda..." : "Ha, o'chirish"}
+                {deleteMutation.isPending
+                  ? (t("deleting") || (lang === "ru" ? "Удаление..." : "O'chirilmoqda..."))
+                  : (t("yes_delete") || (lang === "ru" ? "Да, удалить" : "Ha, o'chirish"))}
               </button>
             </div>
           </div>
@@ -1761,50 +1900,60 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             {/* Modal Header */}
             <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center shadow-md">
-                  <Navigation className="w-5 h-5 animate-pulse" />
+                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                  <Navigation className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm sm:text-base font-black tracking-tight">{monitorCourier.name}</h3>
+                    <h3 className="text-sm sm:text-base font-semibold tracking-tight">{monitorCourier.name}</h3>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider ${
                         monitorCourier.last_seen_seconds_ago !== null &&
                         monitorCourier.last_seen_seconds_ago !== undefined &&
                         monitorCourier.last_seen_seconds_ago < 180
-                          ? "bg-[#c8ff6a]/20 text-[#c8ff6a] border border-[#c8ff6a]/40"
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
                           : "bg-slate-700 text-slate-300"
                       }`}
                     >
                       {monitorCourier.last_seen_seconds_ago !== null &&
                       monitorCourier.last_seen_seconds_ago !== undefined &&
                       monitorCourier.last_seen_seconds_ago < 180
-                        ? "Online • Harakatda"
-                        : "Offline"}
+                        ? (t("online_moving") || (lang === "ru" ? "Онлайн • В движении" : "Online • Harakatda"))
+                        : (t("offline_status") || (lang === "ru" ? "Офлайн" : "Offline"))}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400 font-mono mt-0.5">
                     {monitorCourier.phone} •{" "}
                     {monitorCourier.last_seen_seconds_ago !== null && monitorCourier.last_seen_seconds_ago !== undefined
-                      ? `Signal: ${monitorCourier.last_seen_seconds_ago} soniya oldin`
-                      : "GPS signali kutilmoqda"}
+                      ? `${t("last_signal") || (lang === "ru" ? "Сигнал:" : "Signal:")} ${monitorCourier.last_seen_seconds_ago} ${t("seconds_ago") || (lang === "ru" ? "сек. назад" : "soniya oldin")}`
+                      : (t("gps_waiting") || (lang === "ru" ? "Ожидание GPS сигнала" : "GPS signali kutilmoqda"))}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
+                <a
+                  href={`/dashboard/courier/?courier_id=${monitorCourier.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-2xs"
+                  title={t("open_courier_terminal_tooltip") || (lang === "ru" ? "Открыть мобильный веб-терминал курьера" : "Kuryer mobil terminalini ochish")}
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>{t("courier_terminal_btn") || (lang === "ru" ? "Терминал" : "Terminal")}</span>
+                </a>
                 <button
                   type="button"
                   onClick={() => refetchCouriers()}
-                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
-                  title="Yangilash"
+                  className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+                  title={lang === "ru" ? "Обновить" : "Yangilash"}
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setMonitorCourier(null)}
-                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+                  className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1813,17 +1962,17 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
             {/* Active Order / Current Status Banner */}
             {monitorCourier.active_order ? (
-              <div className="p-4 bg-slate-50 dark:bg-neutral-800/40 border-b border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="p-4 bg-slate-50 dark:bg-neutral-800/40 border-b border-slate-200/80 dark:neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-black text-slate-900 dark:text-white font-mono text-sm">
+                    <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">
                       #{monitorCourier.active_order.order_number}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md font-semibold text-[10px] bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700">
+                    <span className="px-2 py-0.5 rounded-md font-medium text-[10px] bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700">
                       {monitorCourier.active_order.status_display}
                     </span>
                     {routeInfo && (
-                      <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-md font-medium text-[10px] bg-blue-50 text-blue-700 border border-blue-200/60 flex items-center gap-1">
                         <Navigation className="w-3 h-3" />
                         <span>{routeInfo.duration} ({routeInfo.distance})</span>
                       </span>
@@ -1831,15 +1980,17 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                   </div>
                   <p className="text-slate-600 dark:text-neutral-300 font-semibold truncate flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                    <span>{monitorCourier.active_order.delivery_address || "Manzil ko'rsatilmagan"}</span>
+                    <span>{monitorCourier.active_order.delivery_address || (lang === "ru" ? "Адрес не указан" : "Manzil ko'rsatilmagan")}</span>
                   </p>
                   <p className="text-slate-500 dark:text-neutral-400 text-[11px]">
-                    Mijoz: <strong className="text-slate-800 dark:text-white">{monitorCourier.active_order.customer_name}</strong> ({monitorCourier.active_order.customer_phone})
+                    {lang === "ru" ? "Клиент:" : "Mijoz:"} <strong className="text-slate-800 dark:text-white">{monitorCourier.active_order.customer_name}</strong> ({monitorCourier.active_order.customer_phone})
                   </p>
                 </div>
 
                 <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Buyurtma summasi</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                    {t("order_amount_label") || (lang === "ru" ? "Сумма заказа" : "Buyurtma summasi")}
+                  </span>
                   <span className="font-mono font-black text-slate-900 dark:text-white text-sm sm:text-base">
                     {monitorCourier.active_order.total_amount?.toLocaleString()} UZS
                   </span>
@@ -1847,7 +1998,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
               </div>
             ) : (
               <div className="p-3 bg-slate-50 dark:bg-neutral-800/50 border-b border-slate-100 dark:border-neutral-800 text-center text-xs font-semibold text-slate-500 dark:text-neutral-400">
-                Kuryer hozirda yangi buyurtma olmagan (bo'sh holatda).
+                {t("no_active_order_courier") || (lang === "ru" ? "Сейчас заказов нет — Курьер готов принять новый заказ" : "Kuryer hozirda yangi buyurtma olmagan (bo'sh holatda).")}
               </div>
             )}
 
@@ -1884,8 +2035,8 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                       <Marker position={[cLat, cLng]} icon={courierCarIcon}>
                         <Popup>
                           <div className="text-xs space-y-1">
-                            <strong className="block text-blue-600">{monitorCourier.name} (Kuryer)</strong>
-                            <span>{monitorCourier.last_seen_seconds_ago !== null && monitorCourier.last_seen_seconds_ago !== undefined ? `Signal: ${monitorCourier.last_seen_seconds_ago}s oldin` : 'GPS signali faol'}</span>
+                            <strong className="block text-blue-600">{monitorCourier.name} ({lang === "ru" ? "Курьер" : "Kuryer"})</strong>
+                            <span>{monitorCourier.last_seen_seconds_ago !== null && monitorCourier.last_seen_seconds_ago !== undefined ? `${t("last_signal") || (lang === "ru" ? "Сигнал:" : "Signal:")} ${monitorCourier.last_seen_seconds_ago} ${t("seconds_ago") || (lang === "ru" ? "сек. назад" : "s oldin")}` : (lang === "ru" ? "GPS активен" : "GPS signali faol")}</span>
                           </div>
                         </Popup>
                       </Marker>
@@ -1895,7 +2046,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           <Popup>
                             <div className="text-xs space-y-1">
                               <strong className="block text-rose-600">
-                                #{monitorCourier.active_order?.order_number} Manzili
+                                #{monitorCourier.active_order?.order_number} {lang === "ru" ? "Адрес доставки" : "Manzili"}
                               </strong>
                               <p>{monitorCourier.active_order?.delivery_address}</p>
                               <p className="font-bold">{monitorCourier.active_order?.customer_name}</p>
@@ -1965,7 +2116,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             <div className="p-4 bg-slate-50 dark:bg-neutral-900 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-between gap-3">
               <div className="text-[11px] text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
                 <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
-                <span>Jonli kuzatuv • Har 6 soniyada yangilanadi</span>
+                <span>{t("live_tracking_updating") || (lang === "ru" ? "Живое отслеживание • Обновление каждые 6 сек" : "Jonli kuzatuv • Har 6 soniyada yangilanadi")}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -1974,7 +2125,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                   onClick={() => setMonitorCourier(null)}
                   className="px-5 py-2 rounded-xl bg-slate-200 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-bold text-xs hover:bg-slate-300 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
                 >
-                  Yopish
+                  {t("close_btn") || (lang === "ru" ? "Закрыть" : "Yopish")}
                 </button>
               </div>
             </div>
@@ -1991,27 +2142,31 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
             {/* Header */}
             <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 text-white flex items-center justify-between">
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-12 h-12 rounded-2xl bg-[#c8ff6a] text-[#120d1d] flex items-center justify-center font-black text-xl shadow-lg shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-xs shrink-0">
                   {courierAnalyticsData?.courier.name ? courierAnalyticsData.courier.name.slice(0, 1).toUpperCase() : "K"}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-black tracking-tight truncate">
-                      {courierAnalyticsData?.courier.name || "Kuryer profili"}
+                    <h3 className="text-base sm:text-lg font-bold tracking-tight truncate">
+                      {courierAnalyticsData?.courier.name || (lang === "ru" ? "Профиль курьера" : "Kuryer profili")}
                     </h3>
                     {courierAnalyticsData?.courier && (
                       <>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                             courierAnalyticsData.courier.is_online
                               ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
                               : "bg-slate-700 text-slate-300"
                           }`}
                         >
-                          {courierAnalyticsData.courier.is_online ? "Online" : "Offline"}
+                          {courierAnalyticsData.courier.is_online
+                            ? (t("online_status") || (lang === "ru" ? "Онлайн" : "Online"))
+                            : (t("offline_status") || (lang === "ru" ? "Офлайн" : "Offline"))}
                         </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-slate-200 border border-white/10">
-                          {courierAnalyticsData.courier.is_active ? "Faol kuryer" : "Nofaol"}
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-slate-200 border border-white/10">
+                          {courierAnalyticsData.courier.is_active
+                            ? (t("courier_active_badge") || (lang === "ru" ? "Активный курьер" : "Faol kuryer"))
+                            : (t("courier_inactive_badge") || (lang === "ru" ? "Неактивен" : "Nofaol"))}
                         </span>
                       </>
                     )}
@@ -2025,7 +2180,14 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                       <span className="text-slate-400 text-[11px] font-sans flex items-center gap-1">
                         <span>•</span>
                         <Calendar className="w-3 h-3 text-slate-400" />
-                        <span>{courierAnalyticsData.courier.created_at} dan beri ({courierAnalyticsData.courier.working_days} kun xizmatda)</span>
+                        <span>
+                          {courierAnalyticsData.courier.created_at}{" "}
+                          {lang === "ru"
+                            ? `(на службе ${courierAnalyticsData.courier.working_days} дн.)`
+                            : lang === "en"
+                            ? `(${courierAnalyticsData.courier.working_days} days in service)`
+                            : `dan beri (${courierAnalyticsData.courier.working_days} kun xizmatda)`}
+                        </span>
                       </span>
                     )}
                   </div>
@@ -2033,11 +2195,23 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                {courierAnalyticsData?.courier && (
+                  <a
+                    href={`/dashboard/courier/?courier_id=${courierAnalyticsData.courier.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1.5 text-xs font-medium"
+                    title={t("open_courier_terminal_tooltip") || (lang === "ru" ? "Открыть мобильный веб-терминал курьера" : "Kuryer mobil terminalini ochish")}
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    <span>{t("courier_terminal_btn") || (lang === "ru" ? "Терминал" : "Terminal")}</span>
+                  </a>
+                )}
                 <button
                   type="button"
                   onClick={() => refetchAnalytics()}
                   className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-                  title="Yangilash"
+                  title={lang === "ru" ? "Обновить" : "Yangilash"}
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
@@ -2056,7 +2230,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
               {isAnalyticsLoading && !courierAnalyticsData ? (
                 <div className="py-16 text-center text-sm font-bold text-slate-400 flex flex-col items-center gap-3">
                   <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  <span>Kuryer statistikasi yuklanmoqda...</span>
+                  <span>{lang === "ru" ? "Загрузка статистики курьера..." : lang === "en" ? "Loading courier analytics..." : "Kuryer statistikasi yuklanmoqda..."}</span>
                 </div>
               ) : courierAnalyticsData ? (
                 <>
@@ -2064,77 +2238,99 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
                     <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
                       <div className="flex items-center justify-between text-slate-400 mb-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Jami buyurtmalar</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          {t("courier_kpi_total_orders") || (lang === "ru" ? "Всего заказов" : "Jami buyurtmalar")}
+                        </span>
                         <Package className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
                       <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
                         {courierAnalyticsData.stats.total_orders}
                       </p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">biriktirilgan</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {t("courier_kpi_assigned") || (lang === "ru" ? "назначено" : "biriktirilgan")}
+                      </p>
                     </div>
 
                     <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
                       <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Yetkazilgan</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          {t("courier_kpi_delivered") || (lang === "ru" ? "Доставлено" : "Yetkazilgan")}
+                        </span>
                         <CheckCircle2 className="w-4 h-4 text-slate-600 dark:text-neutral-300" />
                       </div>
                       <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
                         {courierAnalyticsData.stats.completed_orders}
                       </p>
                       <p className="text-[10px] text-slate-500 dark:text-neutral-400 font-medium mt-0.5">
-                        {courierAnalyticsData.stats.success_rate}% muvaffaqiyat
+                        {courierAnalyticsData.stats.success_rate}% {t("courier_kpi_success_rate") || (lang === "ru" ? "успешно" : "muvaffaqiyat")}
                       </p>
                     </div>
 
                     <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
                       <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Bugun</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          {t("courier_kpi_today") || (lang === "ru" ? "Сегодня" : "Bugun")}
+                        </span>
                         <Clock className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
                       <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
                         {courierAnalyticsData.stats.today_orders}
                       </p>
-                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">muvaffaqiyatli</p>
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                        {t("courier_kpi_successful") || (lang === "ru" ? "успешно" : "muvaffaqiyatli")}
+                      </p>
                     </div>
 
                     <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
                       <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider">O'rtacha vaqt</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          {t("courier_kpi_avg_time") || (lang === "ru" ? "Среднее время" : "O'rtacha vaqt")}
+                        </span>
                         <Activity className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
                       <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
-                        ~{courierAnalyticsData.stats.avg_delivery_minutes} m
+                        ~{courierAnalyticsData.stats.avg_delivery_minutes} {lang === "ru" ? "мин" : "m"}
                       </p>
-                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">har buyurtmaga</p>
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                        {t("courier_kpi_per_order") || (lang === "ru" ? "на заказ" : "har buyurtmaga")}
+                      </p>
                     </div>
 
                     <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
                       <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Bosib o'tildi</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          {t("courier_kpi_distance") || (lang === "ru" ? "Пройденное расст." : "Bosib o'tildi")}
+                        </span>
                         <Route className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
                       <p className="text-xl font-black text-slate-900 dark:text-white font-mono">
-                        ~{courierAnalyticsData.stats.total_distance_km} km
+                        ~{courierAnalyticsData.stats.total_distance_km} {lang === "ru" ? "км" : "km"}
                       </p>
-                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">umumiy masofa</p>
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                        {t("courier_kpi_total_distance") || (lang === "ru" ? "общее расстояние" : "umumiy masofa")}
+                      </p>
                     </div>
 
                     <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-2xl border border-slate-200/80 dark:border-neutral-800">
                       <div className="flex items-center justify-between text-slate-600 dark:text-neutral-300 mb-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Tushum</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          {t("courier_kpi_revenue") || (lang === "ru" ? "Выручка" : "Tushum")}
+                        </span>
                         <DollarSign className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                       </div>
                       <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono truncate">
                         {courierAnalyticsData.stats.total_revenue.toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">UZS topshirildi</p>
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                        {t("courier_kpi_delivered_money") || (lang === "ru" ? "UZS сдано" : "UZS topshirildi")}
+                      </p>
                     </div>
                   </div>
 
                   {/* Current Active Delivery Highlight Card */}
                   <div>
                     <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-neutral-400 mb-2">
-                      Hozirgi yetkazish holati
+                      {t("current_delivery_status") || (lang === "ru" ? "Текущий статус доставки" : "Hozirgi yetkazish holati")}
                     </h4>
                     {courierAnalyticsData.active_order ? (
                       <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-neutral-800/40 border border-slate-200 dark:border-neutral-700 shadow-xs relative overflow-hidden">
@@ -2142,22 +2338,22 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                           <div className="space-y-1.5 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="relative flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#211b2e] dark:bg-[#c8ff6a]"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
                               </span>
-                              <span className="font-mono font-black text-slate-900 dark:text-white text-base">
+                              <span className="font-mono font-bold text-slate-900 dark:text-white text-base">
                                 #{courierAnalyticsData.active_order.order_number}
                               </span>
-                              <span className="px-2 py-0.5 rounded-md font-semibold text-[10px] bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700">
+                              <span className="px-2 py-0.5 rounded-md font-medium text-[10px] bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700">
                                 {courierAnalyticsData.active_order.status_display}
                               </span>
                             </div>
-                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                               <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
-                              <span>{courierAnalyticsData.active_order.delivery_address}</span>
+                              <span>{courierAnalyticsData.active_order.delivery_address || (lang === "ru" ? "Адрес не указан" : "Manzil ko'rsatilmagan")}</span>
                             </p>
                             <p className="text-xs text-slate-500 dark:text-neutral-400">
-                              Mijoz: <strong className="text-slate-800 dark:text-white">{courierAnalyticsData.active_order.customer_name}</strong>{" "}
+                              {lang === "ru" ? "Клиент:" : "Mijoz:"} <strong className="text-slate-800 dark:text-white">{courierAnalyticsData.active_order.customer_name}</strong>{" "}
                               {courierAnalyticsData.active_order.customer_phone && (
                                 <a
                                   href={`tel:${courierAnalyticsData.active_order.customer_phone}`}
@@ -2171,8 +2367,10 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
 
                           <div className="flex flex-col sm:items-end justify-between gap-3 shrink-0">
                             <div>
-                              <span className="text-[10px] font-bold text-slate-400 block uppercase">Buyurtma summasi</span>
-                              <span className="font-mono font-black text-slate-900 dark:text-white text-base sm:text-lg">
+                              <span className="text-[10px] font-medium text-slate-400 block uppercase">
+                                {t("order_amount_label") || (lang === "ru" ? "Сумма заказа" : "Buyurtma summasi")}
+                              </span>
+                              <span className="font-mono font-bold text-slate-900 dark:text-white text-base sm:text-lg">
                                 {courierAnalyticsData.active_order.total_amount.toLocaleString()} UZS
                               </span>
                             </div>
@@ -2185,10 +2383,10 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                                   setMonitorCourier(found);
                                 }
                               }}
-                              className="px-4 py-2 rounded-xl bg-[#211b2e] hover:bg-[#2c243e] text-white dark:bg-[#c8ff6a] dark:text-[#211b2e] font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all"
+                              className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                             >
-                              <Radio className="w-3.5 h-3.5 text-[#c8ff6a] dark:text-[#211b2e] animate-pulse" />
-                              <span>Xaritada jonli kuzatish</span>
+                              <Radio className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+                              <span>{t("live_track_on_map") || (lang === "ru" ? "Живое отслеживание на карте" : "Xaritada jonli kuzatish")}</span>
                             </button>
                           </div>
                         </div>
@@ -2196,7 +2394,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                     ) : (
                       <div className="p-4 rounded-2xl bg-slate-50 dark:bg-neutral-800/40 border border-slate-200/80 dark:border-neutral-800 text-center text-xs font-semibold text-slate-500 dark:text-neutral-400 flex items-center justify-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        <span>Hozirda buyurtma yo'q — Kuryer yangi buyurtma qabul qilishga tayyor</span>
+                        <span>{t("no_active_order_courier") || (lang === "ru" ? "Сейчас заказов нет — Курьер готов принять новый заказ" : "Hozirda buyurtma yo'q — Kuryer yangi buyurtma qabul qilishga tayyor")}</span>
                       </div>
                     )}
                   </div>
@@ -2205,7 +2403,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                   <div>
                     <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                       <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-neutral-400">
-                        Buyurtmalar tarixi ({courierAnalyticsData.orders_history.length})
+                        {t("orders_history_title") || (lang === "ru" ? "История заказов" : "Buyurtmalar tarixi")} ({courierAnalyticsData.orders_history.length})
                       </h4>
                       <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-neutral-800 text-[11px] font-bold">
                         <button
@@ -2217,7 +2415,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                               : "text-slate-500 dark:text-neutral-400 hover:text-slate-800"
                           }`}
                         >
-                          Barchasi
+                          {t("history_filter_all") || (lang === "ru" ? "Все" : "Barchasi")}
                         </button>
                         <button
                           type="button"
@@ -2228,7 +2426,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                               : "text-slate-500 dark:text-neutral-400 hover:text-slate-800"
                           }`}
                         >
-                          Yo'lda
+                          {t("history_filter_in_delivery") || (lang === "ru" ? "В пути" : "Yo'lda")}
                         </button>
                         <button
                           type="button"
@@ -2239,7 +2437,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                               : "text-slate-500 dark:text-neutral-400 hover:text-slate-800"
                           }`}
                         >
-                          Yetkazilgan
+                          {t("history_filter_completed") || (lang === "ru" ? "Доставлено" : "Yetkazilgan")}
                         </button>
                         <button
                           type="button"
@@ -2250,7 +2448,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                               : "text-slate-500 dark:text-neutral-400 hover:text-slate-800"
                           }`}
                         >
-                          Bekor
+                          {t("history_filter_cancelled") || (lang === "ru" ? "Отменено" : "Bekor")}
                         </button>
                       </div>
                     </div>
@@ -2264,7 +2462,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                       if (filteredHistory.length === 0) {
                         return (
                           <div className="p-8 rounded-2xl bg-slate-50 dark:bg-neutral-800/40 border border-slate-200/80 dark:border-neutral-800 text-center text-xs text-slate-400">
-                            Tanlangan filtr bo'yicha buyurtmalar topilmadi
+                            {t("no_orders_for_filter") || (lang === "ru" ? "Заказы по выбранному фильтру не найдены" : "Tanlangan filtr bo'yicha buyurtmalar topilmadi")}
                           </div>
                         );
                       }
@@ -2282,9 +2480,9 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                                     #{o.order_number}
                                   </span>
                                   <span
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    className={`px-2 py-0.5 rounded text-[10px] font-medium ${
                                       o.status === "COMPLETED"
-                                        ? "bg-slate-900 text-white dark:bg-[#c8ff6a] dark:text-[#211b2e]"
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
                                         : o.status === "IN_DELIVERY"
                                         ? "bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700"
                                         : o.status === "CANCELLED"
@@ -2308,7 +2506,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                                   {o.total_amount.toLocaleString()} UZS
                                 </span>
                                 <span className="text-[10px] text-slate-400">
-                                  {o.payment_method_display || "To'lov"}
+                                  {o.payment_method_display || (lang === "ru" ? "Оплата" : "To'lov")}
                                 </span>
                               </div>
                             </div>
@@ -2327,10 +2525,10 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 {courierAnalyticsData?.courier.phone && (
                   <a
                     href={`tel:${courierAnalyticsData.courier.phone}`}
-                    className="px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-white font-bold text-xs hover:bg-slate-50 flex items-center gap-1.5 transition-colors"
+                    className="px-3.5 py-2 rounded-lg bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-white font-medium text-xs hover:bg-slate-50 flex items-center gap-1.5 transition-colors"
                   >
                     <Phone className="w-3.5 h-3.5 text-slate-600 dark:text-neutral-300" />
-                    <span>Qo'ng'iroq</span>
+                    <span>{t("call_action_btn") || (lang === "ru" ? "Позвонить" : "Qo'ng'iroq")}</span>
                   </a>
                 )}
                 {courierAnalyticsData?.courier && (
@@ -2343,10 +2541,10 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                         setMonitorCourier(found);
                       }
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-[#211b2e] hover:bg-[#2c243e] text-white dark:bg-[#c8ff6a] dark:text-[#211b2e] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                   >
-                    <Radio className="w-3.5 h-3.5 text-[#c8ff6a] dark:text-[#211b2e] animate-pulse" />
-                    <span>Jonli xarita</span>
+                    <Radio className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+                    <span>{t("courier_live_map_btn") || (lang === "ru" ? "Живая карта" : "Jonli xarita")}</span>
                   </button>
                 )}
               </div>
@@ -2356,7 +2554,7 @@ export const StaffPage: React.FC<{ initialTab?: "staff" | "roles" | "couriers" }
                 onClick={() => setProfileCourierId(null)}
                 className="px-5 py-2 rounded-xl bg-slate-200 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-bold text-xs hover:bg-slate-300 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
               >
-                Yopish
+                {t("close_btn") || (lang === "ru" ? "Закрыть" : "Yopish")}
               </button>
             </div>
           </div>

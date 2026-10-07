@@ -1,1568 +1,1890 @@
 {% load l10n %}<!DOCTYPE html>
-<html lang="{{ current_lang|default:'uz' }}" class="h-full bg-slate-100">
+<html lang="{{ current_lang|default:'uz' }}" class="h-full bg-[#f4f5f8]">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{{ t.courier_panel_title|default:"Kuryer Paneli" }} — StoreBox 2.0</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <style>
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            -webkit-tap-highlight-color: transparent;
-        }
-        [x-cloak] { display: none !important; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>{{ t.courier_panel_title|default:"Kuryer Paneli" }} — StoreBox Pro</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.ico">
 
-        /* StoreBox 2.0 Brand Colors & Buttons */
-        .btn-storebox-lime {
-            background-color: #c8ff6a;
-            color: #120d1d;
-            font-weight: 900;
-            box-shadow: 0 4px 18px rgba(200, 255, 106, 0.45);
-            transition: all 0.15s ease-out;
-        }
-        .btn-storebox-lime:hover {
-            background-color: #bbf556;
-            box-shadow: 0 6px 24px rgba(200, 255, 106, 0.6);
-        }
-        .btn-storebox-lime:active {
-            transform: scale(0.98);
-        }
+  <!-- Official Yandex Maps JavaScript API v2.1 -->
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=05cb44b0-89df-4d2a-9349-167c0e97a836&lang=ru_RU" type="text/javascript"></script>
 
-        /* Radar pulse around vehicle & destination */
-        @keyframes radar-pulse {
-            0% { transform: scale(0.85); opacity: 0.95; }
-            50% { transform: scale(1.35); opacity: 0.35; }
-            100% { transform: scale(1.85); opacity: 0; }
-        }
-        .radar-pulse-ring {
-            position: absolute;
-            inset: -10px;
-            border-radius: 50%;
-            background: rgba(200, 255, 106, 0.5);
-            animation: radar-pulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
-            pointer-events: none;
-        }
-        .dest-pulse-ring {
-            position: absolute;
-            inset: -10px;
-            border-radius: 50%;
-            background: rgba(33, 27, 46, 0.35);
-            animation: radar-pulse 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
-            pointer-events: none;
-        }
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-        /* 3D First-Person Perspective Navigation Container (Yandex / Waze style) */
-        .nav-perspective-viewport {
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
-            background: #0f172a;
-            z-index: 10;
-            isolation: isolate;
-        }
-        .nav-perspective-viewport.mode-3d {
-            perspective: 1200px;
-            perspective-origin: 50% 70%;
-        }
-        .nav-perspective-viewport.mode-3d #liveNavigatorMap {
-            position: absolute;
-            top: -60vh;
-            left: -80vw;
-            width: 260vw;
-            height: 260vh;
-            transform-origin: 50% 50%;
-            transform: rotateX(36deg) rotateZ(calc(-1 * var(--nav-bearing-deg, 0deg))) scale(1.15);
-            transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
-            will-change: transform;
-        }
-        .nav-perspective-viewport.mode-2d #liveNavigatorMap {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            transform-origin: 50% 50%;
-            transform: none;
-            transition: transform 0.35s ease-out;
-        }
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* Subtle atmospheric horizon fade at top */
-        .nav-horizon-gradient {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 14%;
-            background: linear-gradient(to bottom, rgba(33, 27, 46, 0.6) 0%, transparent 100%);
-            pointer-events: none;
-            z-index: 10;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select: none;
+      background: #f4f5f8;
+      color: #0f172a;
+      overflow: hidden;
+    }
 
-        /* 3D Navigation Vehicle Arrow & Headlights */
-        .nav-vehicle-3d-wrap {
-            position: relative;
-            width: 64px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-        }
-        .nav-vehicle-headlight-cone {
-            position: absolute;
-            bottom: 50%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 70px;
-            height: 120px;
-            background: linear-gradient(to top, rgba(200, 255, 106, 0.55), rgba(200, 255, 106, 0.15) 60%, transparent 100%);
-            clip-path: polygon(35% 100%, 65% 100%, 100% 0%, 0% 0%);
-            pointer-events: none;
-            filter: blur(2px);
-        }
-        .nav-vehicle-body {
-            width: 46px;
-            height: 46px;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(200,255,106,0.5));
-            transform-origin: center center;
-            transition: transform 0.2s ease-out;
-        }
+    #liveYandexMap {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
 
-        /* Prevent Chrome blue autofill */
-        input:-webkit-autofill {
-            -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
-            -webkit-text-fill-color: #0f172a !important;
-        }
-    </style>
+    /* StoreBox Signature Colors */
+    .bg-storebox-dark { background-color: #0f172a; }
+    .bg-storebox-lime { background-color: #c8ff6a; }
+    .text-storebox-lime { color: #0f172a; }
+    .border-storebox-lime { border-color: #c8ff6a; }
+
+    /* Ultra-sleek Action Buttons */
+    .btn-lime {
+      background-color: #c8ff6a;
+      color: #0f172a;
+      font-weight: 800;
+      transition: all 0.15s ease-out;
+      box-shadow: 0 4px 14px rgba(200, 255, 106, 0.45);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .btn-lime:hover {
+      background-color: #bbf556;
+      box-shadow: 0 6px 18px rgba(200, 255, 106, 0.6);
+    }
+    .btn-lime:active { transform: scale(0.98); }
+
+    /* Crisp Light Surfaces (Yandex Pro Daytime Standard) */
+    .glass-pill {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      color: #0f172a;
+    }
+
+    .glass-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+      color: #0f172a;
+    }
+
+    .glass-sheet {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid #e2e8f0;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Delta Marker Smooth Rotation */
+    .courier-arrow-wrapper {
+      transform-origin: 50% 50%;
+      transition: transform 0.04s linear;
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    @keyframes limeGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(200, 255, 106, 0.65); }
+      50% { box-shadow: 0 0 0 8px rgba(200, 255, 106, 0); }
+    }
+    .pulse-glow { animation: limeGlow 1.8s infinite; }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
-<body class="h-full flex flex-col bg-slate-100 text-slate-800 antialiased selection:bg-[#c8ff6a] selection:text-[#120d1d]" x-data="courierApp()">
+<body class="h-full w-full relative">
 
-    <!-- MOBILE-OPTIMIZED TOP BAR -->
-    <header class="sticky top-0 z-30 bg-[#211b2e] text-white px-4 py-3 shadow-lg border-b border-white/10">
-        <div class="max-w-xl mx-auto flex items-center justify-between">
-            <!-- Left: Brand Logo & Courier Info -->
-            <div class="flex items-center gap-2.5">
-                <!-- StoreBox 2.0 Cube -->
-                <div class="w-10 h-10 rounded-2xl bg-[#171320] border border-white/10 flex items-center justify-center shadow-md shadow-black/30 shrink-0">
-                    <svg viewBox="0 0 32 32" class="w-5 h-5 stroke-[#c8ff6a] fill-none stroke-[2] stroke-linejoin-round">
-                        <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
-                        <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
-                    </svg>
-                </div>
-                <div class="min-w-0">
-                    <div class="flex items-center gap-1.5">
-                        <h1 class="text-sm font-black text-white truncate max-w-[140px] sm:max-w-xs" x-text="courierInfo.name || 'Kuryer'">
-                            {% if courier %}{{ courier.name }}{% else %}{{ request.user.first_name|default:request.user.username }}{% endif %}
-                        </h1>
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-[#c8ff6a]/15 text-[#c8ff6a] border border-[#c8ff6a]/30 shrink-0">
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#c8ff6a] animate-pulse"></span>
-                            Online
-                        </span>
-                    </div>
-                    <p class="text-[11px] font-medium text-slate-400 truncate">{{ store.name }}</p>
-                </div>
-            </div>
-
-            <!-- Right: Actions & Language -->
-            <div class="flex items-center gap-1.5">
-                <!-- Language Switcher -->
-                <div class="flex items-center bg-white/10 p-0.5 rounded-xl border border-white/10 text-[10px] font-black">
-                    <a href="/change-language/uz/?next={{ request.get_full_path|urlencode }}" class="px-2 py-1 rounded-lg transition-all {% if current_lang == 'uz' %}bg-[#c8ff6a] text-[#120d1d] shadow-xs{% else %}text-slate-300 hover:text-white{% endif %}">UZ</a>
-                    <a href="/change-language/ru/?next={{ request.get_full_path|urlencode }}" class="px-2 py-1 rounded-lg transition-all {% if current_lang == 'ru' %}bg-[#c8ff6a] text-[#120d1d] shadow-xs{% else %}text-slate-300 hover:text-white{% endif %}">RU</a>
-                    <a href="/change-language/en/?next={{ request.get_full_path|urlencode }}" class="px-2 py-1 rounded-lg transition-all {% if current_lang == 'en' %}bg-[#c8ff6a] text-[#120d1d] shadow-xs{% else %}text-slate-300 hover:text-white{% endif %}">EN</a>
-                </div>
-
-                <button type="button" @click="window.location.reload()" class="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors" title="{{ t.refresh_tooltip|default:'Yangilash' }}">
-                    <i data-lucide="rotate-cw" class="w-4 h-4"></i>
-                </button>
-                <a href="/logout/" class="p-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors" title="{{ t.logout_tooltip|default:'Chiqish' }}">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                </a>
-            </div>
+  <!-- =================================================================== -->
+  <!-- SCREEN 0: AUTHENTICATION (Вход и Регистрация)                       -->
+  <!-- =================================================================== -->
+  <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto hidden">
+    <div class="glass-card max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 my-auto">
+      <!-- Logo & Branding -->
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-2xl bg-storebox-lime text-slate-950 flex items-center justify-center mx-auto font-black shadow-md border border-black/5">
+          <i data-lucide="bike" class="w-7 h-7"></i>
         </div>
+        <h1 class="text-base font-extrabold text-slate-900 tracking-tight">StoreBox Courier</h1>
+        <p class="text-xs text-slate-500">Вход для курьеров платформы</p>
+      </div>
+
+      <!-- Auth Mode Switcher -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-2xl gap-1 border border-slate-200 text-xs font-semibold">
+        <button onclick="app.setAuthMode('login')" id="authTabLogin" class="flex-1 py-1.5 rounded-xl text-slate-900 bg-white shadow-sm transition-all font-bold">Вход</button>
+        <button onclick="app.setAuthMode('register')" id="authTabRegister" class="flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all font-semibold">Регистрация</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="loginForm" onsubmit="app.handleLogin(event)" class="space-y-3">
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Номер телефона / Логин</label>
+          <input type="text" id="loginPhone" required placeholder="+998 90 123 45 67" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors">
+        </div>
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Пароль</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors">
+        </div>
+        <button type="submit" id="loginSubmitBtn" class="w-full btn-lime py-3 rounded-2xl text-xs font-bold shadow-md">
+          Войти в панель
+        </button>
+
+        <!-- Fast Demo Courier Login Button -->
+        <button type="button" onclick="app.handleDemoLogin()" class="w-full py-2.5 rounded-2xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 flex items-center justify-center gap-1.5 transition-all">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+          <span>Быстрый демо-вход</span>
+        </button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="registerForm" onsubmit="app.handleRegister(event)" class="space-y-3 hidden">
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">ФИО Курьера</label>
+          <input type="text" id="regName" required placeholder="Иван Иванов" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors">
+        </div>
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Номер телефона</label>
+          <input type="text" id="regPhone" required placeholder="+998 90 123 45 67" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors">
+        </div>
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Транспорт</label>
+          <select id="regVehicle" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors">
+            <option value="car">Автомобиль 🚗</option>
+            <option value="moto">Мото / Скутер 🏍</option>
+            <option value="bike">Велосипед 🚲</option>
+            <option value="foot">Пеший курьер 🚶</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Пароль</label>
+          <input type="password" id="regPassword" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors">
+        </div>
+        <button type="submit" id="regSubmitBtn" class="w-full btn-lime py-3 rounded-2xl text-xs font-bold shadow-md">
+          Зарегистрироваться
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- SCREEN 1: НАВИГАТОР И ЖИВАЯ КАРТА (Map Tab)                         -->
+  <!-- =================================================================== -->
+  <div id="mapTabScreen" class="h-full w-full relative">
+    <!-- Live Map Canvas -->
+    <div id="liveYandexMap"></div>
+
+    <!-- Top Status Capsule -->
+    <header class="absolute top-0 left-0 right-0 z-30 p-2.5 pt-safe flex items-center justify-between gap-2 pointer-events-none">
+      <div class="pointer-events-auto flex items-center gap-2 glass-pill px-3 py-1.5 rounded-full shadow-lg border border-slate-200/80">
+        <button onclick="app.toggleShift()" class="flex items-center gap-1.5 text-xs font-semibold hover:opacity-90 transition-opacity">
+          <span id="shiftStatusDot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="shiftStatusText" class="text-slate-800 text-[11px] font-bold">В сети</span>
+        </button>
+        <span class="w-[1px] h-3 bg-slate-200"></span>
+        <div class="text-[11px] font-extrabold text-slate-900">
+          <span id="courierEarningsDisplay">{{ total_completed_amount|default:"0"|floatformat:0 }} UZS</span>
+        </div>
+        <span class="w-[1px] h-3 bg-slate-200"></span>
+        <div class="flex items-center gap-0.5 text-[10px] text-amber-500 font-bold">
+          <span>★</span>
+          <span>4.98</span>
+        </div>
+      </div>
+
+      <div class="pointer-events-auto flex items-center gap-1.5">
+        <button onclick="app.createTestOrder()" class="glass-pill text-slate-900 hover:bg-slate-100 px-2.5 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-md active:scale-95 transition-all border border-slate-200/80">
+          <i data-lucide="plus" class="w-3 h-3 text-emerald-600"></i>
+          <span>Заказ</span>
+        </button>
+      </div>
     </header>
 
-    <!-- QUICK STATS DASHBOARD WIDGETS -->
-    <section class="bg-white border-b border-slate-200/80 px-4 py-3 shadow-xs">
-        <div class="max-w-xl mx-auto grid grid-cols-3 gap-2.5">
-            <!-- 1. Pending -->
-            <button type="button" @click="activeTab = 'pending'"
-                    class="p-2.5 rounded-2xl transition-all cursor-pointer border text-center relative overflow-hidden"
-                    :class="activeTab === 'pending' ? 'bg-[#211b2e] text-[#c8ff6a] border-[#211b2e] shadow-md ring-1 ring-[#c8ff6a]/30' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
-                <p class="text-xl font-black leading-tight font-mono" :class="activeTab === 'pending' ? 'text-[#c8ff6a]' : 'text-slate-900'" x-text="pendingOrdersList.length"></p>
-                <p class="text-[10px] font-extrabold uppercase tracking-wide mt-0.5" :class="activeTab === 'pending' ? 'text-slate-300' : 'text-slate-500'">{{ t.stat_pending|default:"Tayyor" }}</p>
-            </button>
-
-            <!-- 2. Delivering -->
-            <button type="button" @click="activeTab = 'delivering'"
-                    class="p-2.5 rounded-2xl transition-all cursor-pointer border text-center relative overflow-hidden"
-                    :class="activeTab === 'delivering' ? 'bg-[#211b2e] text-[#c8ff6a] border-[#211b2e] shadow-md ring-1 ring-[#c8ff6a]/30' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
-                <p class="text-xl font-black leading-tight font-mono" :class="activeTab === 'delivering' ? 'text-[#c8ff6a]' : 'text-slate-900'" x-text="deliveringOrdersList.length"></p>
-                <p class="text-[10px] font-extrabold uppercase tracking-wide mt-0.5" :class="activeTab === 'delivering' ? 'text-slate-300' : 'text-slate-500'">{{ t.stat_delivering|default:"Yo'lda" }}</p>
-            </button>
-
-            <!-- 3. Completed -->
-            <button type="button" @click="activeTab = 'completed'"
-                    class="p-2.5 rounded-2xl transition-all cursor-pointer border text-center relative overflow-hidden"
-                    :class="activeTab === 'completed' ? 'bg-[#211b2e] text-[#c8ff6a] border-[#211b2e] shadow-md ring-1 ring-[#c8ff6a]/30' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
-                <p class="text-xl font-black leading-tight font-mono text-slate-900" :class="activeTab === 'completed' ? 'text-[#c8ff6a]' : 'text-slate-900'">{{ completed_count }}</p>
-                <p class="text-[10px] font-extrabold uppercase tracking-wide mt-0.5" :class="activeTab === 'completed' ? 'text-slate-300' : 'text-slate-500'">{{ t.stat_completed|default:"Yetkazildi" }}</p>
-            </button>
+    <!-- Top Navigation HUD (Matching fix8.mov sketch: Maneuver | Speedometer | Close (X)) -->
+    <div id="navManeuverBanner" class="absolute top-2.5 left-2.5 right-2.5 z-30 pointer-events-none hidden transition-all duration-300">
+      <div class="max-w-sm mx-auto pointer-events-auto flex items-center justify-between gap-1.5">
+        <!-- Maneuver Pill -->
+        <div class="flex-1 min-w-0 glass-pill px-3 py-2 rounded-2xl shadow-xl flex items-center gap-2 border border-slate-200/80">
+          <div class="w-7 h-7 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <i data-lucide="arrow-up" class="w-4 h-4 stroke-[2.5]"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div id="maneuverTitle" class="text-xs font-extrabold text-slate-900 truncate leading-tight">
+              Двигайтесь по улице
+            </div>
+            <div id="maneuverSubtitle" class="text-[10px] text-slate-500 truncate">
+              к адресу доставки
+            </div>
+          </div>
         </div>
-    </section>
 
-    <!-- NATIVE-STYLE SEGMENTED TAB SWITCHER -->
-    <div class="sticky top-[61px] z-20 bg-slate-100/95 backdrop-blur-md px-4 py-2 border-b border-slate-200/80">
-        <div class="max-w-xl mx-auto flex items-center bg-slate-200/90 p-1 rounded-2xl text-xs font-bold shadow-inner">
-            <button type="button" @click="activeTab = 'pending'"
-                    :class="activeTab === 'pending' ? 'bg-white text-[#211b2e] shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'"
-                    class="flex-1 py-2 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer">
-                <span>{{ t.tab_pending|default:"Назначенные" }}</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black" :class="activeTab === 'pending' ? 'bg-[#211b2e] text-[#c8ff6a]' : 'bg-slate-300/80 text-slate-700'" x-text="pendingOrdersList.length"></span>
-            </button>
-            <button type="button" @click="activeTab = 'delivering'"
-                    :class="activeTab === 'delivering' ? 'bg-[#211b2e] text-[#c8ff6a] shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'"
-                    class="flex-1 py-2 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer">
-                <span>{{ t.tab_delivering|default:"В доставке" }}</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black" :class="activeTab === 'delivering' ? 'bg-[#c8ff6a] text-[#120d1d]' : 'bg-slate-300/80 text-slate-700'" x-text="deliveringOrdersList.length"></span>
-            </button>
-            <button type="button" @click="activeTab = 'completed'"
-                    :class="activeTab === 'completed' ? 'bg-white text-[#211b2e] shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'"
-                    class="flex-1 py-2 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer">
-                <span>{{ t.tab_completed|default:"Завершённые" }}</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-slate-300/80 text-slate-700">{{ completed_count }}</span>
-            </button>
+        <!-- Live Speedometer Pill (from sketch: 0 KM/Ч) -->
+        <div class="glass-pill px-2.5 py-2 rounded-2xl shadow-xl flex items-center gap-1.5 border border-slate-200/80 shrink-0">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="navSpeedBadge" class="text-xs font-black text-slate-900 font-mono tracking-tight">0 км/ч</span>
         </div>
+
+        <!-- Close / Exit Navigation Button (from sketch: (X)) -->
+        <button onclick="app.exitNavigation()" class="w-9 h-9 rounded-2xl glass-pill text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center shadow-xl active:scale-95 transition-all shrink-0 border border-slate-200/80" title="Закрыть навигатор">
+          <i data-lucide="x" class="w-4.5 h-4.5"></i>
+        </button>
+      </div>
     </div>
 
-    <!-- MAIN ORDERS LIST (MOBILE FIRST) -->
-    <main class="flex-1 max-w-xl w-full mx-auto p-4 space-y-4 pb-20">
+    <!-- Center On Courier Button -->
+    <div class="absolute right-3 bottom-52 z-20 flex flex-col gap-2">
+      <button id="recenterBtn" onclick="app.centerOnCourier()" class="w-10 h-10 rounded-2xl glass-pill text-slate-800 flex items-center justify-center shadow-lg active:scale-95 transition-all hover:bg-slate-50 border border-slate-200/80" title="Где я">
+        <i data-lucide="crosshair" class="w-4.5 h-4.5 text-slate-900"></i>
+      </button>
+    </div>
 
-        <!-- TAB 1: PENDING ORDERS (READY TO TAKE) -->
-        <div x-show="activeTab === 'pending'" class="space-y-4" x-cloak>
-            <template x-for="order in pendingOrdersList" :key="order.id">
-                <div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-4 hover:border-slate-300 transition-all">
-                    <!-- Order Header -->
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="font-black text-slate-900 text-base font-mono" x-text="'#' + order.order_number"></span>
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-slate-100 text-slate-700 border border-slate-200" x-text="order.status_display"></span>
-                        </div>
-                        <span class="text-[11px] font-semibold text-slate-400 font-mono" x-text="order.created_at"></span>
-                    </div>
+    <!-- Bottom Active Order Drawer (Floating - matching fix8.mov sketch) -->
+    <div class="absolute bottom-16 left-0 right-0 z-30 p-2.5 pointer-events-none">
+      <div id="activeOrderCard" class="max-w-sm mx-auto pointer-events-auto glass-card rounded-3xl p-3.5 shadow-2xl space-y-2.5 transition-all hidden border border-slate-200">
+        <!-- ROW 1 (Matching sketch: ~3 мин | 2.0 км | (📞) | [Инфо]) -->
+        <div class="flex items-center justify-between gap-2">
+          <!-- Time & Distance badges -->
+          <div class="flex items-center gap-2">
+            <div id="navTimeBadge" class="text-xs font-black text-slate-900">~3 мин</div>
+            <span class="w-[1px] h-3 bg-slate-300"></span>
+            <div id="navDistBadge" class="text-xs font-black text-emerald-600">2.0 км</div>
+          </div>
 
-                    <!-- Customer Info & 1-Tap Call -->
-                    <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-9 h-9 rounded-xl bg-slate-200/70 text-slate-700 flex items-center justify-center font-black">
-                                <i data-lucide="user" class="w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-black text-slate-900" x-text="order.customer_name"></p>
-                                <p class="text-[11px] font-semibold text-slate-500 font-mono" x-text="order.customer_phone"></p>
-                            </div>
-                        </div>
-                        <a :href="'tel:' + order.customer_phone" class="px-3.5 py-2 rounded-xl bg-[#211b2e] text-[#c8ff6a] font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors">
-                            <i data-lucide="phone" class="w-3.5 h-3.5"></i>
-                            <span>Qo'ng'iroq</span>
-                        </a>
-                    </div>
-
-                    <!-- Delivery Address -->
-                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5 text-xs">
-                        <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
-                            <i data-lucide="map-pin" class="w-4 h-4"></i>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold uppercase text-slate-400">Yetkazish manzili:</p>
-                            <p class="text-slate-900 font-bold leading-snug" x-text="order.delivery_address || 'Manzil kiritilmagan'"></p>
-                        </div>
-                    </div>
-
-                    <!-- Items Summary -->
-                    <div class="border-t border-slate-100 pt-2.5">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{{ t.order_items_title|default:"Buyurtma tarkibi" }}</p>
-                        <ul class="text-xs text-slate-600 divide-y divide-slate-100">
-                            <template x-for="(it, idx) in order.items" :key="idx">
-                                <li class="py-1.5 flex justify-between">
-                                    <span class="font-medium" x-text="it.quantity + 'x ' + it.product_name + (it.variation_name ? ' (' + it.variation_name + ')' : '')"></span>
-                                    <span class="font-bold text-slate-900 font-mono" x-text="Number(it.total_price).toLocaleString() + ' UZS'"></span>
-                                </li>
-                            </template>
-                        </ul>
-                    </div>
-
-                    <!-- Price & Start Delivery Action Button -->
-                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">{{ t.total_payment|default:"Jami to'lov" }}</p>
-                            <p class="text-base font-black text-slate-900 font-mono" x-text="Number(order.total_amount).toLocaleString() + ' UZS'"></p>
-                            <span class="text-[10px] font-bold text-slate-500" x-text="order.payment_method_display"></span>
-                        </div>
-
-                        <button type="button" @click="takeOrder(order.id)" class="px-5 py-3 rounded-2xl btn-storebox-lime text-xs flex items-center gap-2 cursor-pointer shadow-md">
-                            <i data-lucide="navigation" class="w-4 h-4"></i>
-                            <span>{{ t.start_delivery_btn|default:"Yetkazishni boshlash" }}</span>
-                        </button>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Empty State -->
-            <div x-show="pendingOrdersList.length === 0" class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
-                <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
-                    <i data-lucide="package" class="w-7 h-7"></i>
-                </div>
-                <p class="font-black text-sm text-slate-800">{{ t.no_pending_orders|default:"Yangi buyurtmalar yo'q" }}</p>
-                <p class="text-xs text-slate-500 max-w-xs mx-auto">{{ t.no_pending_desc|default:"Yangi buyurtmalar do'kon tomonidan tasdiqlanganda bu yerda ko'rinadi." }}</p>
-            </div>
-        </div>
-
-        <!-- TAB 2: DELIVERING ORDERS (ACTIVE IN ROUTE) -->
-        <div x-show="activeTab === 'delivering'" class="space-y-4" x-cloak>
-            <template x-for="order in deliveringOrdersList" :key="order.id">
-                <div class="bg-white rounded-3xl p-5 border-2 border-[#211b2e] shadow-xl space-y-4 relative overflow-hidden">
-                    <!-- Subtle neon ambient glow -->
-                    <div class="absolute top-0 right-0 w-36 h-36 bg-[#c8ff6a]/15 rounded-full blur-2xl pointer-events-none"></div>
-
-                    <!-- Header -->
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="font-black text-slate-900 text-lg font-mono" x-text="'#' + order.order_number"></span>
-                            <span class="px-3 py-1 rounded-full text-xs font-black bg-[#211b2e] text-[#c8ff6a] shadow-xs">
-                                {{ t.stat_delivering|default:"В пути" }}
-                            </span>
-                        </div>
-                        <span class="text-xs font-black text-[#211b2e] flex items-center gap-1.5 bg-[#c8ff6a]/25 px-3 py-1 rounded-full border border-[#c8ff6a]/40">
-                            <span class="w-2 h-2 rounded-full bg-[#211b2e] animate-ping"></span>
-                            {{ t.customer_waiting|default:"Mijoz kutyapti" }}
-                        </span>
-                    </div>
-
-                    <!-- Customer & Quick Call -->
-                    <div class="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
-                        <div>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">Mijoz:</p>
-                            <p class="font-black text-slate-900 text-base" x-text="order.customer_name"></p>
-                        </div>
-                        <a :href="'tel:' + order.customer_phone" class="px-4 py-2.5 rounded-xl bg-[#211b2e] text-[#c8ff6a] font-black text-xs flex items-center gap-2 shadow-xs transition-colors">
-                            <i data-lucide="phone-call" class="w-4 h-4"></i>
-                            <span class="font-mono" x-text="order.customer_phone"></span>
-                        </a>
-                    </div>
-
-                    <!-- Address Display -->
-                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5 text-xs">
-                        <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
-                            <i data-lucide="map-pin" class="w-4 h-4"></i>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Yetkazish manzili:</span>
-                            <span class="text-slate-900 font-bold text-sm block leading-snug" x-text="order.delivery_address || 'Manzil kiritilmagan'"></span>
-                        </div>
-                    </div>
-
-                    <!-- HERO LIVE 3D NAVIGATOR BUTTON (YANDEX STYLE 3D FIRST-PERSON CALLOUT) -->
-                    <button type="button" @click="openLiveNavigator(order.id)" class="w-full py-4 px-4.5 rounded-2xl bg-gradient-to-r from-[#c8ff6a] to-[#bbf556] text-[#120d1d] flex items-center justify-between shadow-xl shadow-[#c8ff6a]/35 cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all border border-[#c8ff6a]/50">
-                        <div class="flex items-center gap-3 text-left">
-                            <div class="w-11 h-11 rounded-2xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shadow-md shrink-0">
-                                <svg class="w-6 h-6 transform rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6">
-                                    <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <p class="text-sm font-black leading-tight text-[#120d1d]">Jonli 3D Navigator</p>
-                                    <span class="px-1.5 py-0.2 rounded-md bg-[#211b2e] text-[#c8ff6a] text-[9px] font-black uppercase">3D GPS</span>
-                                </div>
-                                <p class="text-[11px] font-bold text-[#120d1d]/85 mt-0.5">Avtomobil / piyoda yo'nalishi (от первого лица)</p>
-                            </div>
-                        </div>
-                        <span class="px-3.5 py-2 rounded-xl bg-[#211b2e] text-[#c8ff6a] text-xs font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 shrink-0">
-                            <span>NAVIGATOR</span>
-                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                        </span>
-                    </button>
-
-                    <!-- Payment Amount Banner -->
-                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
-                        <div>
-                            <p class="text-[10px] font-bold uppercase text-slate-500">{{ t.amount_to_collect|default:"Olinishi kerak bo'lgan summa:" }}</p>
-                            <p class="text-xl font-black text-slate-900 font-mono" x-text="Number(order.total_amount).toLocaleString() + ' UZS'"></p>
-                        </div>
-                        <span class="px-3 py-1 rounded-xl bg-white text-xs font-bold text-slate-700 border border-slate-200 shadow-xs" x-text="order.payment_method_display"></span>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="grid grid-cols-2 gap-2.5 pt-1">
-                        <button type="button" @click="openCancelModal(order.id)" class="py-3 rounded-2xl bg-white text-rose-600 font-bold text-xs hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer">
-                            {{ t.delivery_failed_btn|default:"Yetkazib bo'lmadi" }}
-                        </button>
-                        <button type="button" @click="updateStatus(order.id, 'COMPLETED')" class="py-3.5 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-[#c8ff6a] font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#211b2e]/25 transition-all cursor-pointer">
-                            <i data-lucide="check-circle" class="w-4 h-4"></i>
-                            <span>{{ t.delivered_and_payment_btn|default:"Yetkazildi & To'lov" }}</span>
-                        </button>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Empty State -->
-            <div x-show="deliveringOrdersList.length === 0" class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
-                <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
-                    <i data-lucide="navigation" class="w-7 h-7"></i>
-                </div>
-                <p class="font-black text-sm text-slate-800">{{ t.no_delivering_orders|default:"Hozirda yetkazilayotgan buyurtma yo'q" }}</p>
-                <p class="text-xs text-slate-500 max-w-xs mx-auto">{{ t.no_delivering_desc|default:"Biriktirilgan buyurtmalardan birini «Yetkazishni boshlash» tugmasini bosing" }}</p>
-            </div>
-        </div>
-
-        <!-- TAB 3: COMPLETED ORDERS -->
-        <div x-show="activeTab === 'completed'" class="space-y-3" x-cloak>
-            {% for order in completed_orders %}
-            <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="font-black text-slate-900 text-xs font-mono">#{{ order.order_number }}</span>
-                        {% if order.status == 'COMPLETED' %}
-                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-[#211b2e] text-[#c8ff6a]">{{ t.stat_completed|default:"Yetkazildi" }}</span>
-                        {% else %}
-                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">{{ t.status_cancelled|default:"Bekor qilindi" }}</span>
-                        {% endif %}
-                    </div>
-                    <p class="text-xs text-slate-500 font-medium mt-1">{{ order.customer_name }} — <span class="font-mono font-bold text-slate-900">{{ order.total_amount|floatformat:0 }} UZS</span></p>
-                </div>
-                <span class="text-[11px] font-semibold text-slate-400 font-mono">{{ order.updated_at|date:"H:i, d.m" }}</span>
-            </div>
-            {% empty %}
-            <div class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
-                <p class="font-black text-sm text-slate-700">{{ t.no_completed_orders|default:"Tugallangan buyurtmalar tarixi bo'sh" }}</p>
-            </div>
-            {% endfor %}
-        </div>
-    </main>
-
-    <!-- ========================================================================= -->
-    <!-- FULLSCREEN 3D FIRST-PERSON LIVE DRIVING NAVIGATOR (YANDEX TAXI STYLE)      -->
-    <!-- ========================================================================= -->
-    <div x-show="navigatorModalOpen" x-cloak class="fixed inset-0 z-50 flex flex-col bg-slate-950 text-slate-800 overflow-hidden select-none">
-
-        <!-- 3D PERSPECTIVE MAP VIEWPORT -->
-        <div class="nav-perspective-viewport" :class="navViewMode === '3d' ? 'mode-3d' : 'mode-2d'">
-            <!-- Sky/Atmosphere Horizon Gradient (visible in 3D perspective) -->
-            <div x-show="navViewMode === '3d'" class="nav-horizon-gradient"></div>
-
-            <!-- LEAFLET MAP SURFACE -->
-            <div id="liveNavigatorMap"></div>
-        </div>
-
-        <!-- 1. TOP TURN-BY-TURN INSTRUCTION SHIELD (HUD КАК У ЯНДЕКС НАВИГАТОРА) -->
-        <div class="absolute top-3 inset-x-3 sm:top-5 sm:inset-x-6 z-40 max-w-lg mx-auto pointer-events-none">
-            <!-- OVERVIEW MODE TOP BAR -->
-            <div x-show="navStage === 'overview'" class="pointer-events-auto bg-[#211b2e]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-3.5 sm:p-4 shadow-2xl text-white flex items-center justify-between gap-3 transition-all">
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-2xl bg-[#c8ff6a] text-[#120d1d] flex items-center justify-center font-black shadow-md shadow-[#c8ff6a]/20 shrink-0">
-                        <svg class="w-6 h-6 stroke-[#120d1d] fill-none stroke-[2.5]" viewBox="0 0 24 24">
-                            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-black text-white leading-tight">Marshrut ko'rinishi (Обзор)</p>
-                        <p class="text-[11px] font-bold text-slate-300 mt-0.5">«Yo'lga chiqish (В путь)» tugmasini bosing</p>
-                    </div>
-                </div>
-                <button type="button" @click="closeLiveNavigator()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0" title="Yopish">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <!-- DRIVING / ARRIVED MODE TOP SHIELD -->
-            <div x-show="navStage === 'driving' || navStage === 'arrived'" class="pointer-events-auto bg-[#211b2e]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-3.5 sm:p-4 shadow-2xl text-white flex items-center gap-3.5 transition-all">
-                <!-- Large Animated Maneuver Icon -->
-                <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-[#c8ff6a] text-[#120d1d] flex items-center justify-center font-black shadow-lg shadow-[#c8ff6a]/25 shrink-0">
-                    <!-- Dynamic Maneuver SVG -->
-                    <template x-if="activeManeuver.type === 'left' || activeManeuver.type === 'turn-left'">
-                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
-                            <path d="M19 19v-6a4 4 0 0 0-4-4H5"/>
-                            <polyline points="9 5 5 9 9 13"/>
-                        </svg>
-                    </template>
-                    <template x-if="activeManeuver.type === 'right' || activeManeuver.type === 'turn-right'">
-                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
-                            <path d="M5 19v-6a4 4 0 0 1 4-4h10"/>
-                            <polyline points="15 5 19 9 15 13"/>
-                        </svg>
-                    </template>
-                    <template x-if="activeManeuver.type === 'straight'">
-                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
-                            <line x1="12" y1="19" x2="12" y2="5"/>
-                            <polyline points="5 12 12 5 19 12"/>
-                        </svg>
-                    </template>
-                    <template x-if="activeManeuver.type === 'slight-left'">
-                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
-                            <path d="M16 19l-4-8-4-4"/>
-                            <polyline points="4 11 8 7 12 7"/>
-                        </svg>
-                    </template>
-                    <template x-if="activeManeuver.type === 'slight-right'">
-                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
-                            <path d="M8 19l4-8 4-4"/>
-                            <polyline points="12 7 16 7 20 11"/>
-                        </svg>
-                    </template>
-                    <template x-if="activeManeuver.type === 'uturn'">
-                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
-                            <path d="M19 19V9a6 6 0 0 0-12 0v10"/>
-                            <polyline points="3 15 7 19 11 15"/>
-                        </svg>
-                    </template>
-                    <template x-if="activeManeuver.type === 'arrive'">
-                        <svg class="w-7 h-7 stroke-[#120d1d] fill-none stroke-[3] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
-                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-                            <line x1="4" y1="22" x2="4" y2="15"/>
-                        </svg>
-                    </template>
-                </div>
-
-                <!-- Maneuver Details -->
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white" x-text="activeManeuver.distanceText">150 m</span>
-                        <span class="text-xs font-black text-[#c8ff6a] uppercase tracking-wide truncate" x-text="activeManeuver.instruction">O'ngga buriling</span>
-                    </div>
-                    <p class="text-xs font-bold text-slate-300 truncate" x-text="activeManeuver.streetName || navOrder?.delivery_address">Narpay ko'chasiga</p>
-
-                    <!-- Lane Indicators & Second Maneuver Preview -->
-                    <div class="flex items-center gap-1.5 mt-1">
-                        <div class="flex items-center gap-0.5">
-                            <span class="px-1.5 py-0.2 rounded text-[10px] font-black" :class="activeManeuver.lane === 'left' ? 'bg-[#c8ff6a] text-[#120d1d]' : 'bg-white/10 text-slate-400'">↑</span>
-                            <span class="px-1.5 py-0.2 rounded text-[10px] font-black" :class="activeManeuver.lane === 'center' ? 'bg-[#c8ff6a] text-[#120d1d]' : 'bg-white/10 text-slate-400'">↑</span>
-                            <span class="px-1.5 py-0.2 rounded text-[10px] font-black" :class="activeManeuver.lane === 'right' ? 'bg-[#c8ff6a] text-[#120d1d]' : 'bg-white/10 text-slate-400'">↱</span>
-                        </div>
-                        <span class="text-slate-500 font-bold text-[10px]">•</span>
-                        <span class="text-[11px] font-bold text-slate-400 truncate" x-text="secondManeuverText || 'Keyin: To\'g\'riga'"></span>
-                    </div>
-                </div>
-
-                <!-- Close Navigator Button -->
-                <button type="button" @click="closeLiveNavigator()" class="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0" title="Yopish">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- 2. SPEEDOMETER & GPS STATUS (LEFT SIDE FLOATING) -->
-        <div class="absolute left-3 top-24 sm:left-6 sm:top-28 z-30 pointer-events-none flex flex-col gap-2">
-            <!-- Yandex Style Digital Speedometer -->
-            <div class="pointer-events-auto flex items-center gap-2.5 bg-[#211b2e]/90 text-white backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-2xl border border-white/15">
-                <div class="w-10 h-10 rounded-full border-2 border-[#c8ff6a] flex flex-col items-center justify-center font-mono shrink-0 shadow-sm" :class="navSpeed > 60 ? 'border-rose-500 text-rose-400' : 'border-[#c8ff6a] text-[#c8ff6a]'">
-                    <span class="text-sm font-black leading-none" x-text="navSpeed">38</span>
-                </div>
-                <div class="leading-tight">
-                    <span class="text-[10px] font-mono font-bold text-slate-400 block uppercase">km/s</span>
-                    <span class="text-[9px] font-black text-slate-500 block">Maks 60</span>
-                </div>
-            </div>
-
-            <!-- GPS Status Pill -->
-            <div class="pointer-events-auto inline-flex items-center gap-1.5 bg-[#211b2e]/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 shadow-lg text-[10px] font-mono font-black text-white">
-                <span class="w-2.5 h-2.5 rounded-full" :class="gpsActive ? 'bg-[#c8ff6a] animate-pulse' : 'bg-amber-400'"></span>
-                <span x-text="gpsActive ? 'GPS FAOL' : 'LOKATSIYA'"></span>
-            </div>
-        </div>
-
-        <!-- 3. RIGHT FLOATING CONTROLS: 3D/2D TOGGLE, COMPASS & RECENTER -->
-        <div class="absolute right-3 top-24 sm:right-6 sm:top-28 z-30 pointer-events-auto flex flex-col items-center gap-2">
-            <!-- 3D / 2D Perspective Toggle Button (LIKE YANDEX / 2GIS) -->
-            <button type="button" @click="toggle3DMode()"
-                    class="w-12 h-12 rounded-2xl bg-[#211b2e] text-[#c8ff6a] border-2 border-[#c8ff6a] shadow-2xl flex flex-col items-center justify-center transition-transform active:scale-90 cursor-pointer font-mono font-black text-xs"
-                    :title="navViewMode === '3d' ? '3D Rejim (Bosqichma-bosqich)' : '2D Rejim (Umumiy ko\'rinish)'">
-                <span class="text-xs font-black tracking-tight" x-text="navViewMode === '3d' ? '3D' : '2D'">3D</span>
-                <span class="text-[8px] font-bold text-slate-400 leading-none mt-0.5" x-text="navViewMode === '3d' ? 'Kurs' : 'Shimal'"></span>
+          <!-- Actions: Phone & Info -->
+          <div class="flex items-center gap-1.5">
+            <a id="activeCustomerPhoneBtn" href="#" class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0 hover:bg-emerald-100 active:scale-95 transition-all" title="Позвонить клиенту">
+              <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+            </a>
+            <button type="button" onclick="app.toggleOrderInfoModal()" class="px-2.5 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold border border-slate-200 flex items-center gap-1 active:scale-95 transition-all" title="Детали заказа">
+              <i data-lucide="info" class="w-3 h-3 text-sky-600"></i>
+              <span id="orderInfoBtnText">Инфо</span>
             </button>
+          </div>
+        </div>
 
-            <!-- Compass Needle (Rotates to show Magnetic North relative to tilted map) -->
-            <div class="w-11 h-11 rounded-2xl bg-white/95 text-slate-800 border border-slate-200 shadow-xl flex items-center justify-center cursor-pointer select-none"
-                 @click="navBearing = 0; updateMapPerspectiveTransform();"
-                 title="Shimolga yo'naltirish">
-                <div class="w-6 h-6 flex items-center justify-center" :style="'transform: rotate(' + (navViewMode === '3d' ? (-navBearing) : 0) + 'deg); transition: transform 0.25s ease-out;'">
-                    <svg viewBox="0 0 24 24" class="w-6 h-6">
-                        <polygon points="12 2 16 12 12 9 8 12" fill="#ef4444"/>
-                        <polygon points="12 22 16 12 12 15 8 12" fill="#94a3b8"/>
-                    </svg>
-                </div>
+        <!-- Collapsible Order Info Details (Address, Customer, Payment) -->
+        <div id="orderInfoDetails" class="space-y-1.5 pt-1.5 border-t border-slate-100 text-xs">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span id="activeOrderNumber" class="text-xs font-black text-slate-900">#RB-----</span>
+              <span class="text-slate-300">•</span>
+              <span id="activeCustomerName" class="text-xs font-bold text-slate-800 truncate">Клиент</span>
             </div>
+            <span id="activePaymentBadge" class="text-[10px] font-semibold text-slate-500 shrink-0">0 UZS</span>
+          </div>
+          <div class="flex items-center gap-1 text-slate-600">
+            <i data-lucide="map-pin" class="w-3 h-3 text-rose-500 shrink-0"></i>
+            <span id="activeDeliveryAddress" class="text-[11px] font-normal truncate">Адрес</span>
+          </div>
+        </div>
 
-            <!-- Recenter to vehicle -->
-            <button type="button" @click="recenterMap()"
-                    class="w-11 h-11 rounded-2xl bg-white/95 text-slate-800 hover:bg-white border border-slate-200 shadow-xl flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
-                    title="Mening joyimga">
-                <i data-lucide="crosshair" class="w-5 h-5"></i>
+        <!-- 3-STAGE ACTION BUTTONS (Matching sketch: big prominent action bar) -->
+        <div class="space-y-1.5 pt-0.5">
+          <button id="btnStartRoute" onclick="app.startNavigation()" class="w-full btn-lime py-3 px-3 rounded-2xl text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-md">
+            <i data-lucide="navigation" class="w-3.5 h-3.5 transform rotate-45"></i>
+            <span id="btnStartRouteText">KETDIK</span>
+          </button>
+
+          <div id="stage2Container" class="hidden space-y-1">
+            <button id="btnArrivedAtDest" onclick="app.markArrived()" class="w-full py-2.5 px-3 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all opacity-50 bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200" disabled>
+              <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+              <span id="btnArrivedText">Я НА МЕСТЕ (ещё -- м)</span>
             </button>
+            <button onclick="app.testApproachDestination()" class="w-full py-0.5 text-[10px] text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1 transition-colors">
+              <i data-lucide="zap" class="w-2.5 h-2.5 text-amber-500"></i>
+              <span>⚡ Подъехать к адресу (Тест)</span>
+            </button>
+          </div>
+
+          <button id="btnCompleteDelivery" onclick="app.completeCurrentOrder()" class="hidden w-full py-2.5 px-3 rounded-2xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-1.5 shadow-lg pulse-glow transition-all active:scale-[0.98]">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+            <span>ВРУЧИТЬ ЗАКАЗ & ОПЛАТА</span>
+          </button>
         </div>
+      </div>
 
-        <!-- 4. ARRIVAL CELEBRATION MODAL -->
-        <div x-show="navStage === 'arrived'" x-cloak class="absolute top-28 inset-x-4 z-40 max-w-sm mx-auto p-5 rounded-3xl bg-[#211b2e] text-white text-center shadow-2xl space-y-2 border-2 border-[#c8ff6a] animate-bounce">
-            <div class="w-12 h-12 rounded-2xl bg-[#c8ff6a] text-[#120d1d] flex items-center justify-center mx-auto shadow-md">
-                <i data-lucide="map-pin" class="w-6 h-6"></i>
-            </div>
-            <p class="text-base font-black text-[#c8ff6a]">Manzilga yetib kelindi!</p>
-            <p class="text-xs text-slate-200">Mijoz eshigi oldidasiz. Buyurtmani topshirib to'lovni tasdiqlang.</p>
+      <!-- If no active order, show helpful chip -->
+      <div id="noActiveOrderChip" class="max-w-sm mx-auto pointer-events-auto glass-card rounded-2xl p-2.5 text-center flex items-center justify-between gap-2 border border-slate-200">
+        <div class="text-[11px] text-slate-600 flex items-center gap-1.5">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>Нет активного заказа</span>
         </div>
-
-        <!-- 5. ULTRA-MODERN BOTTOM SHEET (YANDEX PRO / UBER STYLE) -->
-        <div class="absolute bottom-0 inset-x-0 z-40 pointer-events-none p-2.5 sm:p-4">
-            <div class="max-w-md mx-auto pointer-events-auto bg-white/98 backdrop-blur-xl rounded-[32px] p-4 sm:p-5 border border-slate-200 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] space-y-3 transition-all duration-300">
-                
-                <!-- Drag Handle -->
-                <div @click="sheetExpanded = !sheetExpanded" class="w-full flex flex-col items-center cursor-pointer select-none pb-0.5 group">
-                    <div class="w-12 h-1.5 rounded-full bg-slate-300 group-hover:bg-slate-400 transition-colors"></div>
-                </div>
-
-                <!-- ROW 1: Distance & ETA + Quick Call & Expand Toggle -->
-                <div class="flex items-center justify-between gap-3">
-                    <div @click="sheetExpanded = !sheetExpanded" class="flex items-baseline gap-2 cursor-pointer flex-1 min-w-0">
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono" x-text="navDistText || '700 m'">2.9 km</span>
-                        <span class="text-slate-300 font-light text-2xl mx-0.5">•</span>
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono" x-text="navEtaText || '4 daq'">4 daq</span>
-                        <span class="text-xs font-bold text-slate-400 font-mono ml-1" x-text="'(' + navArrivalTime + ')'"></span>
-                    </div>
-
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <a :href="'tel:' + (navOrder?.customer_phone || '')" class="w-11 h-11 rounded-2xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shadow-md transition-colors" title="Qo'ng'iroq">
-                            <i data-lucide="phone" class="w-4 h-4"></i>
-                        </a>
-                        <button type="button" @click="sheetExpanded = !sheetExpanded" class="w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer" :title="sheetExpanded ? 'Kichiklashtirish' : 'Kengaytirish'">
-                            <i data-lucide="chevron-up" class="w-4 h-4 transition-transform duration-200" :class="sheetExpanded ? 'rotate-180' : ''"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ROW 2: Address Preview -->
-                <div class="flex items-center gap-2 text-xs text-slate-600 truncate">
-                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500 shrink-0"></i>
-                    <span class="font-bold text-slate-800 truncate" x-text="navOrder?.delivery_address || 'Manzil kiritilmagan'"></span>
-                </div>
-
-                <!-- EXPANDED ACCORDION: External Navigators & Order Details -->
-                <div x-show="sheetExpanded" x-cloak class="space-y-3 pt-3 border-t border-slate-100 transition-all">
-                    <!-- EXTERNAL NAVIGATORS SHORTCUTS (YANDEX, GOOGLE, 2GIS) -->
-                    <div>
-                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Tashqi ilovada ochish:</p>
-                        <div class="grid grid-cols-3 gap-2">
-                            <!-- Yandex Navi -->
-                            <button type="button" @click="openExternalNav('yandex')" class="py-2.5 px-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 flex flex-col items-center justify-center text-[10px] font-black gap-1 cursor-pointer transition-colors">
-                                <span class="text-sm">🟡</span>
-                                <span>Yandex Navi</span>
-                            </button>
-                            <!-- Google Maps -->
-                            <button type="button" @click="openExternalNav('google')" class="py-2.5 px-2 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 flex flex-col items-center justify-center text-[10px] font-black gap-1 cursor-pointer transition-colors">
-                                <span class="text-sm">🔵</span>
-                                <span>Google Maps</span>
-                            </button>
-                            <!-- 2GIS -->
-                            <button type="button" @click="openExternalNav('2gis')" class="py-2.5 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 flex flex-col items-center justify-center text-[10px] font-black gap-1 cursor-pointer transition-colors">
-                                <span class="text-sm">🟢</span>
-                                <span>2GIS</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Payment & Customer Pill -->
-                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
-                        <div>
-                            <span class="text-[10px] text-slate-400 block font-bold uppercase">Mijoz:</span>
-                            <span class="font-black text-slate-900" x-text="navOrder?.customer_name"></span>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-[10px] text-slate-400 block font-bold uppercase">To'lov:</span>
-                            <span class="font-black text-slate-900 font-mono" x-text="Number(navOrder?.total_amount || 0).toLocaleString() + ' UZS'"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ROW 3: PRIMARY ACTION BUTTONS (LIME #c8ff6a & OBSIDIAN #211b2e) -->
-                <div class="flex items-center gap-2 pt-1">
-                    <!-- Harakat testi toggle -->
-                    <button type="button" @click="toggleDriveSimulation()"
-                            class="py-3.5 px-3 rounded-2xl border font-black text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
-                            :class="isSimulatingDrive ? 'bg-[#211b2e] text-[#c8ff6a] border-[#211b2e] shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'">
-                        <i :data-lucide="isSimulatingDrive ? 'pause' : 'play'" class="w-4 h-4"></i>
-                        <span x-text="isSimulatingDrive ? 'To\'xtatish' : 'Harakat'"></span>
-                    </button>
-
-                    <!-- STAGE 1: Overview mode -> "Yo'lga chiqish (В путь - 3D)" -->
-                    <template x-if="navStage === 'overview'">
-                        <button type="button" @click="startDrivingMode()" class="flex-1 py-3.5 px-4 rounded-2xl btn-storebox-lime text-sm flex items-center justify-center gap-2 cursor-pointer">
-                            <svg class="w-5 h-5 text-[#120d1d] transform rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-                            </svg>
-                            <span class="font-black text-[#120d1d]">Yo'lga chiqish (В путь - 3D)</span>
-                        </button>
-                    </template>
-
-                    <!-- STAGE 2: Driving active -> "Yetib keldim (На месте)" -->
-                    <template x-if="navStage === 'driving'">
-                        <button type="button" @click="markArrived()" class="flex-1 py-3.5 px-4 rounded-2xl btn-storebox-lime text-sm flex items-center justify-center gap-2 cursor-pointer">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-[#120d1d]"></i>
-                            <span class="font-black text-[#120d1d]">Yetib keldim (На месте)</span>
-                        </button>
-                    </template>
-
-                    <!-- STAGE 3: Arrived -> "Mijozga topshirildi & To'lov" -->
-                    <template x-if="navStage === 'arrived'">
-                        <button type="button" @click="completeOrderFromNav()" class="flex-1 py-3.5 px-4 rounded-2xl btn-storebox-lime text-sm flex items-center justify-center gap-2 cursor-pointer animate-pulse">
-                            <i data-lucide="check-circle" class="w-5 h-5 text-[#120d1d]"></i>
-                            <span class="font-black text-[#120d1d]">Mijozga topshirildi & To'lov</span>
-                        </button>
-                    </template>
-                </div>
-            </div>
-        </div>
+        <button onclick="app.switchMainTab('orders')" class="btn-lime py-1 px-2.5 rounded-xl text-[10px] font-bold">
+          Взять заказ
+        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- CANCEL REASON MODAL -->
-    <div x-show="cancelModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-        <div @click.away="cancelModalOpen = false" class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-200">
-            <h3 class="font-black text-sm text-slate-900">{{ t.cancel_reason_title|default:"Nima uchun yetkazib bo'lmadi?" }}</h3>
-            <textarea x-model="cancelReason" rows="3" placeholder="{{ t.cancel_reason_placeholder|default:'Masalan: Mijoz telefonni ko\'tarmadi yoki manzil noto\'g\'ri ko\'rsatilgan...' }}" class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium focus:outline-none focus:border-[#211b2e] focus:ring-2 focus:ring-[#211b2e]/20"></textarea>
-            <div class="grid grid-cols-2 gap-2">
-                <button type="button" @click="cancelModalOpen = false" class="py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200">{{ t.cancel_btn|default:"Bekor qilish" }}</button>
-                <button type="button" @click="submitCancel()" class="py-2.5 rounded-xl bg-rose-600 text-white text-xs font-black hover:bg-rose-700">{{ t.confirm_btn|default:"Tasdiqlash" }}</button>
-            </div>
+  <!-- =================================================================== -->
+  <!-- SCREEN 2: УПРАВЛЕНИЕ ЗАКАЗАМИ (Orders Tab)                         -->
+  <!-- =================================================================== -->
+  <div id="ordersTabScreen" class="h-full w-full bg-[#f4f5f8] pt-safe pb-20 px-3 overflow-y-auto no-scrollbar hidden">
+    <div class="max-w-sm mx-auto py-2 space-y-3">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-extrabold text-slate-900">Список заказов</h2>
+        <button onclick="app.createTestOrder()" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>+ Тест</span>
+        </button>
+      </div>
+
+      <!-- Segmented Toggle: В доставке vs Доступные -->
+      <div class="flex items-center bg-slate-200/80 p-1 rounded-2xl gap-1 border border-slate-200 text-xs font-semibold">
+        <button onclick="app.setOrdersSubTab('delivering')" id="subTabDelivering" class="flex-1 py-1.5 rounded-xl text-slate-900 bg-white shadow-sm transition-all flex items-center justify-center gap-1.5 font-bold">
+          <span>В доставке</span>
+          <span id="deliveringBadgeCount" class="w-4 h-4 rounded-full bg-slate-900 text-[#c8ff6a] text-[10px] font-black flex items-center justify-center">0</span>
+        </button>
+        <button onclick="app.setOrdersSubTab('available')" id="subTabAvailable" class="flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all flex items-center justify-center gap-1.5 font-semibold">
+          <span>Доступные</span>
+          <span id="availableBadgeCount" class="w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] font-black flex items-center justify-center">0</span>
+        </button>
+      </div>
+
+      <!-- Container: Delivering Orders -->
+      <div id="ordersListDelivering" class="space-y-2"></div>
+      <div id="emptyDelivering" class="py-8 text-center text-xs text-slate-500 space-y-1 hidden">
+        <div class="text-slate-800 font-bold">Нет заказов в работе</div>
+        <div class="text-[11px]">Возьмите заказ из вкладки «Доступные»</div>
+      </div>
+
+      <!-- Container: Available Orders -->
+      <div id="ordersListAvailable" class="space-y-2 hidden"></div>
+      <div id="emptyAvailable" class="py-8 text-center text-xs text-slate-500 space-y-1 hidden">
+        <div class="text-slate-800 font-bold">Нет доступных заказов</div>
+        <div class="text-[11px]">Новые заказы появятся автоматически</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- SCREEN 3: ИСТОРИЯ ДОСТАВОК (History Tab)                           -->
+  <!-- =================================================================== -->
+  <div id="historyTabScreen" class="h-full w-full bg-[#f4f5f8] pt-safe pb-20 px-3 overflow-y-auto no-scrollbar hidden">
+    <div class="max-w-sm mx-auto py-2 space-y-3">
+      <!-- Total Earned Banner -->
+      <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between border border-slate-200/90 shadow-sm">
+        <div>
+          <div class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Всего заработано</div>
+          <div id="historyTotalEarned" class="text-base font-black text-slate-900">0 UZS</div>
         </div>
+        <div class="text-right">
+          <div class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Доставок</div>
+          <div id="historyTotalCount" class="text-base font-black text-slate-900">0</div>
+        </div>
+      </div>
+
+      <!-- Delivery History List -->
+      <h3 class="text-xs font-bold text-slate-800 px-1">Завершенные заказы</h3>
+      <div id="historyListContainer" class="space-y-2"></div>
+      <div id="emptyHistory" class="py-12 text-center text-xs text-slate-400 hidden">
+        История выполненных доставок пока пуста
+      </div>
     </div>
+  </div>
 
-    <!-- TOAST NOTIFICATION -->
-    <div x-show="toastMessage" x-cloak x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl bg-[#211b2e] text-white font-bold text-xs shadow-2xl border border-white/10 flex items-center gap-2">
-        <i data-lucide="info" class="w-4 h-4 text-[#c8ff6a]"></i>
-        <span x-text="toastMessage"></span>
+  <!-- =================================================================== -->
+  <!-- SCREEN 4: ПРОФИЛЬ КУРЬЕРА (Profile Tab)                            -->
+  <!-- =================================================================== -->
+  <div id="profileTabScreen" class="h-full w-full bg-[#f4f5f8] pt-safe pb-20 px-3 overflow-y-auto no-scrollbar hidden">
+    <div class="max-w-sm mx-auto py-2 space-y-3">
+      <!-- Profile Header Card -->
+      <div class="glass-card rounded-3xl p-4 flex items-center gap-3 border border-slate-200/90 shadow-sm">
+        <div class="w-12 h-12 rounded-2xl bg-slate-900 text-[#c8ff6a] flex items-center justify-center font-black text-base shrink-0 shadow-md">
+          <i data-lucide="user" class="w-6 h-6"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <h2 id="profCourierName" class="text-sm font-extrabold text-slate-900 truncate">Курьер</h2>
+          <p id="profCourierPhone" class="text-xs text-slate-500 truncate">+998 -- --- -- --</p>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Активен</span>
+            <span id="profCourierStore" class="text-[10px] text-slate-400">StoreBox</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-3 gap-2">
+        <div class="glass-card rounded-2xl p-2.5 text-center border border-slate-200/90 shadow-sm">
+          <div class="text-[9px] uppercase font-bold text-slate-400">Рейтинг</div>
+          <div class="text-xs font-black text-amber-500 mt-0.5 flex items-center justify-center gap-0.5">
+            <span>★</span>
+            <span id="profRating">4.98</span>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-2.5 text-center border border-slate-200/90 shadow-sm">
+          <div class="text-[9px] uppercase font-bold text-slate-400">Доставок</div>
+          <div id="profCompletedCount" class="text-xs font-black text-slate-900 mt-0.5">0</div>
+        </div>
+        <div class="glass-card rounded-2xl p-2.5 text-center border border-slate-200/90 shadow-sm">
+          <div class="text-[9px] uppercase font-bold text-slate-400">Успешно</div>
+          <div class="text-xs font-black text-emerald-600 mt-0.5">100%</div>
+        </div>
+      </div>
+
+      <!-- Transport Type Selector -->
+      <div class="glass-card rounded-2xl p-3 space-y-2 border border-slate-200/90 shadow-sm">
+        <div class="text-[11px] font-bold text-slate-900">Тип транспорта</div>
+        <div class="grid grid-cols-4 gap-1.5 text-center text-xs">
+          <button onclick="app.setVehicle('car')" id="veh-car" class="py-2 rounded-xl bg-slate-900 text-white font-bold shadow-sm">🚗 Авто</button>
+          <button onclick="app.setVehicle('moto')" id="veh-moto" class="py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium">🏍 Мото</button>
+          <button onclick="app.setVehicle('bike')" id="veh-bike" class="py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium">🚲 Вело</button>
+          <button onclick="app.setVehicle('foot')" id="veh-foot" class="py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium">🚶 Пеший</button>
+        </div>
+      </div>
+
+      <!-- Working Parameters & Toggles -->
+      <div class="glass-card rounded-2xl p-3 space-y-3 border border-slate-200/90 shadow-sm">
+        <div class="text-[11px] font-bold text-slate-900">Рабочие параметры</div>
+
+        <!-- Shift Toggle -->
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-xs font-semibold text-slate-800">Статус смены</div>
+            <div class="text-[10px] text-slate-500">Прием новых заказов</div>
+          </div>
+          <button onclick="app.toggleShift()" id="profShiftBtn" class="w-11 h-6 rounded-full bg-emerald-500 relative transition-colors">
+            <span id="profShiftKnob" class="w-5 h-5 rounded-full bg-white absolute top-0.5 right-0.5 transition-transform shadow-sm"></span>
+          </button>
+        </div>
+
+        <!-- Auto-accept toggle -->
+        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+          <div>
+            <div class="text-xs font-semibold text-slate-800">Автопринятие заказов</div>
+            <div class="text-[10px] text-slate-500">Автоматически брать ближайшие</div>
+          </div>
+          <button onclick="app.toggleAutoAccept()" id="autoAcceptBtn" class="w-11 h-6 rounded-full bg-slate-200 relative transition-colors">
+            <span id="autoAcceptKnob" class="w-5 h-5 rounded-full bg-white absolute top-0.5 left-0.5 transition-transform shadow-sm"></span>
+          </button>
+        </div>
+
+        <!-- Sound toggle -->
+        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+          <div>
+            <div class="text-xs font-semibold text-slate-800">Звуковые сигналы</div>
+            <div class="text-[10px] text-slate-500">Озвучивать повороты и заказы</div>
+          </div>
+          <button onclick="app.toggleSound()" id="soundBtn" class="w-11 h-6 rounded-full bg-emerald-500 relative transition-colors">
+            <span id="soundKnob" class="w-5 h-5 rounded-full bg-white absolute top-0.5 right-0.5 transition-transform shadow-sm"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Language Selector -->
+      <div class="glass-card rounded-2xl p-3 space-y-2 border border-slate-200/90 shadow-sm">
+        <div class="text-[11px] font-bold text-slate-900">Язык интерфейса</div>
+        <div class="grid grid-cols-3 gap-1.5 text-xs font-semibold">
+          <button onclick="app.setLanguage('uz')" id="profLangUz" class="py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium">O'zbekcha</button>
+          <button onclick="app.setLanguage('ru')" id="profLangRu" class="py-2 rounded-xl bg-slate-900 text-white font-bold shadow-sm">Русский</button>
+          <button onclick="app.setLanguage('en')" id="profLangEn" class="py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium">English</button>
+        </div>
+      </div>
+
+      <!-- Logout Button -->
+      <button onclick="app.handleLogout()" class="w-full py-3 rounded-2xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center gap-1.5 transition-all">
+        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+        <span>Выйти из аккаунта</span>
+      </button>
     </div>
-
-    <!-- SERIALIZED DATA SCRIPTS (SAFE JSON) -->
-    <script id="delivering-orders-data" type="application/json">{{ delivering_orders_json|safe }}</script>
-    <script id="pending-orders-data" type="application/json">{{ pending_orders_json|safe }}</script>
-    <script id="courier-data" type="application/json">{{ courier_json|safe }}</script>
-
-    <!-- JAVASCRIPT LOGIC -->
-    <script>
-        function courierApp() {
-            return {
-                activeTab: '{{ active_tab }}' === 'completed' ? 'completed' : ('{{ active_tab }}' === 'delivering' ? 'delivering' : 'pending'),
-                cancelModalOpen: false,
-                cancelOrderId: null,
-                cancelReason: '',
-                toastMessage: '',
-
-                // Data lists parsed safely from JSON
-                deliveringOrdersList: [],
-                pendingOrdersList: [],
-                courierInfo: {},
-
-                // Live Navigator State
-                navigatorModalOpen: false,
-                navViewMode: '2d', // '3d' (first-person heading-up perspective) | '2d' (flat north-up overview)
-                navOrder: null,
-                navMap: null,
-                navCourierMarker: null,
-                navDestMarker: null,
-                navTrafficPolylines: [],
-                navWatchId: null,
-                navCourierPos: null,
-                navBearing: 0,
-                navSpeed: 38,
-                navEtaText: '4 daq',
-                navDistText: '2.9 km',
-                navArrivalTime: '15:45',
-                gpsActive: false,
-                lastReportTime: 0,
-
-                // Turn-by-Turn Maneuvers Engine (Yandex Style)
-                parsedSteps: [],
-                currentStepIdx: 0,
-                activeManeuver: {
-                    type: 'straight',
-                    instruction: 'To\'g\'riga harakatlaning',
-                    distanceText: '150 m',
-                    streetName: '',
-                    lane: 'center'
-                },
-                secondManeuverText: '',
-
-                // Stage & UI Controls
-                navStage: 'overview', // 'overview' | 'driving' | 'arrived'
-                sheetExpanded: false,
-
-                // Drive Simulation
-                isSimulatingDrive: false,
-                simInterval: null,
-                simRouteCoords: [],
-                simIndex: 0,
-
-                init() {
-                    try {
-                        this.deliveringOrdersList = JSON.parse(document.getElementById('delivering-orders-data')?.textContent || '[]');
-                        this.pendingOrdersList = JSON.parse(document.getElementById('pending-orders-data')?.textContent || '[]');
-                        this.courierInfo = JSON.parse(document.getElementById('courier-data')?.textContent || '{}');
-                    } catch (e) {
-                        console.error("Data parse error:", e);
-                    }
-                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-                },
-
-                showToast(msg) {
-                    this.toastMessage = msg;
-                    setTimeout(() => { this.toastMessage = ''; }, 3500);
-                },
-
-                openLiveNavigator(orderId) {
-                    const order = this.deliveringOrdersList.find(o => String(o.id) === String(orderId))
-                                || this.pendingOrdersList.find(o => String(o.id) === String(orderId));
-                    if (!order) {
-                        this.showToast("Buyurtma topilmadi");
-                        return;
-                    }
-
-                    this.navOrder = order;
-                    this.navigatorModalOpen = true;
-                    this.navStage = 'overview';
-                    this.navViewMode = '2d';
-                    this.sheetExpanded = false;
-                    this.navEtaText = 'Hisoblanmoqda...';
-                    this.navDistText = '...';
-
-                    // Compute ETA arrival clock
-                    this.updateArrivalTime(4);
-
-                    setTimeout(() => {
-                        if (window.lucide) lucide.createIcons();
-                        this.startGpsAndInitNavigator();
-                    }, 150);
-                },
-
-                closeLiveNavigator() {
-                    this.navigatorModalOpen = false;
-                    this.stopDriveSimulation();
-                    if (this.navWatchId) {
-                        navigator.geolocation.clearWatch(this.navWatchId);
-                        this.navWatchId = null;
-                    }
-                    if (this.navMap) {
-                        this.navMap.remove();
-                        this.navMap = null;
-                        this.navCourierMarker = null;
-                        this.navDestMarker = null;
-                        if (this.navTrafficPolylines) {
-                            this.navTrafficPolylines.forEach(l => l.remove());
-                            this.navTrafficPolylines = [];
-                        }
-                    }
-                },
-
-                toggle3DMode() {
-                    this.navViewMode = this.navViewMode === '3d' ? '2d' : '3d';
-                    this.updateMapPerspectiveTransform();
-                    this.showToast(this.navViewMode === '3d' ? "3D rejim (kurs bo'yicha)" : "2D rejim (shimol)");
-                    if (this.navMap) {
-                        setTimeout(() => {
-                            this.navMap.invalidateSize({ pan: false });
-                            if (this.navCourierPos) {
-                                const targetZoom = this.navViewMode === '3d' ? 17.5 : 15.5;
-                                this.navMap.setView(this.navCourierPos, targetZoom, { animate: true, duration: 0.4 });
-                            }
-                        }, 100);
-                    }
-                },
-
-                updateArrivalTime(minutes) {
-                    const now = new Date();
-                    now.setMinutes(now.getMinutes() + (minutes || 4));
-                    const hh = String(now.getHours()).padStart(2, '0');
-                    const mm = String(now.getMinutes()).padStart(2, '0');
-                    this.navArrivalTime = `${hh}:${mm}`;
-                },
-
-                startGpsAndInitNavigator() {
-                    const destLat = parseFloat(this.navOrder?.dest_lat) || 39.6772;
-                    const destLng = parseFloat(this.navOrder?.dest_lng) || 66.9325;
-
-                    // Fallback coordinates
-                    let initialLat = parseFloat(this.courierInfo?.current_lat) || (destLat - 0.014);
-                    let initialLng = parseFloat(this.courierInfo?.current_lng) || (destLng - 0.014);
-
-                    // Initialize Map Container
-                    this.initNavigatorMap(initialLat, initialLng, destLat, destLng);
-
-                    // Request Real Geolocation
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            (pos) => {
-                                const lat = pos.coords.latitude;
-                                const lng = pos.coords.longitude;
-                                this.gpsActive = true;
-                                this.navCourierPos = [lat, lng];
-                                if (pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
-                                    this.navBearing = Math.round(pos.coords.heading);
-                                }
-                                this.updateCourierMarkerPosition(lat, lng);
-                                this.calculateLiveRoute(lat, lng, destLat, destLng);
-                                this.reportLocationToServer(lat, lng);
-                                this.showToast("GPS lokatsiyangiz aniqlandi");
-                            },
-                            (err) => {
-                                console.warn("GPS fallback used:", err.message);
-                                this.gpsActive = false;
-                                this.updateCourierMarkerPosition(initialLat, initialLng);
-                                this.calculateLiveRoute(initialLat, initialLng, destLat, destLng);
-                            },
-                            { enableHighAccuracy: true, timeout: 8000 }
-                        );
-
-                        // Continuous watch
-                        this.navWatchId = navigator.geolocation.watchPosition(
-                            (pos) => {
-                                if (this.isSimulatingDrive) return;
-                                const lat = pos.coords.latitude;
-                                const lng = pos.coords.longitude;
-                                this.gpsActive = true;
-                                if (pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
-                                    this.navBearing = Math.round(pos.coords.heading);
-                                }
-                                this.updateCourierMarkerPosition(lat, lng);
-                                this.checkAndReroute(lat, lng);
-
-                                const now = Date.now();
-                                if (now - this.lastReportTime > 3500) {
-                                    this.lastReportTime = now;
-                                    this.reportLocationToServer(lat, lng);
-                                }
-                            },
-                            (err) => {},
-                            { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
-                        );
-                    } else {
-                        this.updateCourierMarkerPosition(initialLat, initialLng);
-                        this.calculateLiveRoute(initialLat, initialLng, destLat, destLng);
-                    }
-                },
-
-                initNavigatorMap(cLat, cLng, destLat, destLng) {
-                    if (this.navMap) {
-                        this.navMap.remove();
-                        this.navMap = null;
-                    }
-
-                    // Leaflet map with zoom control disabled
-                    this.navMap = L.map('liveNavigatorMap', {
-                        zoomControl: false,
-                        attributionControl: false
-                    }).setView([cLat, cLng], 16);
-
-                    L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl={{ active_lang|default:"ru" }}&x={x}&y={y}&z={z}', {
-                        subdomains: ['0', '1', '2', '3'],
-                        maxZoom: 20
-                    }).addTo(this.navMap);
-
-                    // Destination Marker - Yandex Pro Checkered Finish Flag
-                    const destIcon = L.divIcon({
-                        className: 'custom-dest-pin',
-                        html: `<div class="relative flex items-center justify-center">
-                            <div class="dest-pulse-ring"></div>
-                            <div class="w-12 h-12 rounded-2xl bg-[#211b2e] text-white flex items-center justify-center shadow-2xl border-2 border-white/20">
-                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                                    <path d="M4 2v20" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-                                    <rect x="6" y="3" width="7" height="6" fill="#ffffff"/>
-                                    <rect x="13" y="3" width="7" height="6" fill="#c8ff6a"/>
-                                    <rect x="6" y="9" width="7" height="6" fill="#c8ff6a"/>
-                                    <rect x="13" y="9" width="7" height="6" fill="#ffffff"/>
-                                </svg>
-                            </div>
-                        </div>`,
-                        iconSize: [48, 48],
-                        iconAnchor: [24, 40]
-                    });
-
-                    this.navDestMarker = L.marker([destLat, destLng], { icon: destIcon }).addTo(this.navMap)
-                        .bindPopup(`<b>${this.navOrder.customer_name}</b><br>${this.navOrder.delivery_address}`);
-
-                    // Map click allows testing rerouting
-                    this.navMap.on('click', (e) => {
-                        const newLat = e.latlng.lat;
-                        const newLng = e.latlng.lng;
-                        this.updateCourierMarkerPosition(newLat, newLng);
-                        this.calculateLiveRoute(newLat, newLng, destLat, destLng);
-                        this.reportLocationToServer(newLat, newLng);
-                        this.showToast("Marshrut qayta hisoblandi");
-                    });
-
-                    setTimeout(() => {
-                        if (this.navMap) this.navMap.invalidateSize();
-                    }, 250);
-                },
-
-                updateMapPerspectiveTransform() {
-                    const el = document.getElementById('liveNavigatorMap');
-                    if (!el) return;
-                    if (this.navViewMode === '3d') {
-                        el.style.setProperty('--nav-bearing-deg', `${this.navBearing}deg`);
-                    } else {
-                        el.style.removeProperty('--nav-bearing-deg');
-                    }
-                },
-
-                updateCourierMarkerPosition(lat, lng) {
-                    this.navCourierPos = [lat, lng];
-                    this.updateMapPerspectiveTransform();
-
-                    // In 3D mode, the map rotates to `-bearing`, so vehicle arrow points forward (0deg).
-                    // In 2D mode, map is static north-up, so vehicle arrow rotates to `bearing`.
-                    const arrowRotation = this.navViewMode === '3d' ? 0 : this.navBearing;
-
-                    const courierIcon = L.divIcon({
-                        className: 'nav-vehicle-3d-wrap',
-                        html: `<div class="relative flex items-center justify-center">
-                            <div class="radar-pulse-ring"></div>
-                            <!-- Headlight beam projecting onto road -->
-                            <div class="nav-vehicle-headlight-cone" style="transform: rotate(${arrowRotation}deg) translateX(-50%);"></div>
-                            <div id="courierVehicleBody" class="nav-vehicle-body" style="transform: rotate(${arrowRotation}deg);">
-                                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
-                                    <path d="M24 3 L43 43 L24 33 L5 43 Z" fill="rgba(15,23,42,0.4)" transform="translate(0, 4)"/>
-                                    <!-- Left Facet -->
-                                    <path d="M24 3 L5 43 L24 33 Z" fill="url(#navFacetLeft)" stroke="#211b2e" stroke-width="1.5" stroke-linejoin="round"/>
-                                    <!-- Right Facet -->
-                                    <path d="M24 3 L43 43 L24 33 Z" fill="url(#navFacetRight)" stroke="#211b2e" stroke-width="1.5" stroke-linejoin="round"/>
-                                    <!-- Glowing Spine -->
-                                    <line x1="24" y1="3" x2="24" y2="33" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-                                    <!-- Neon Core Dot -->
-                                    <circle cx="24" cy="22" r="3.5" fill="#c8ff6a" stroke="#211b2e" stroke-width="1.5"/>
-                                    <defs>
-                                        <linearGradient id="navFacetLeft" x1="5" y1="3" x2="24" y2="33" gradientUnits="userSpaceOnUse">
-                                            <stop stop-color="#c8ff6a"/>
-                                            <stop offset="0.7" stop-color="#a3e635"/>
-                                            <stop offset="1" stop-color="#4d7c0f"/>
-                                        </linearGradient>
-                                        <linearGradient id="navFacetRight" x1="43" y1="3" x2="24" y2="33" gradientUnits="userSpaceOnUse">
-                                            <stop stop-color="#a3e635"/>
-                                            <stop offset="0.7" stop-color="#65a30d"/>
-                                            <stop offset="1" stop-color="#365314"/>
-                                        </linearGradient>
-                                    </defs>
-                                </svg>
-                            </div>
-                        </div>`,
-                        iconSize: [64, 64],
-                        iconAnchor: [32, 32]
-                    });
-
-                    if (!this.navCourierMarker) {
-                        this.navCourierMarker = L.marker([lat, lng], { icon: courierIcon }).addTo(this.navMap);
-                    } else {
-                        this.navCourierMarker.setLatLng([lat, lng]);
-                        const arrowEl = document.getElementById('courierVehicleBody');
-                        if (arrowEl) arrowEl.style.transform = `rotate(${arrowRotation}deg)`;
-                    }
-
-                    // Update Top HUD Maneuver relative distance
-                    this.updateManeuverHUD(lat, lng);
-                },
-
-                // STAGE 2: Start Driving Mode ("Yo'lga chiqish / В путь")
-                startDrivingMode() {
-                    this.navStage = 'driving';
-                    this.navViewMode = '3d'; // Activate 3D first-person camera
-                    this.sheetExpanded = false;
-                    this.updateMapPerspectiveTransform();
-                    this.showToast("3D Navigatsiya faollashdi! (От первого лица)");
-
-                    if (this.navMap && this.navCourierPos) {
-                        setTimeout(() => {
-                            this.navMap.invalidateSize({ pan: false });
-                            this.navMap.setView(this.navCourierPos, 17.5, { animate: true, duration: 0.5 });
-                        }, 100);
-                    }
-                },
-
-                async calculateLiveRoute(cLat, cLng, dLat, dLng) {
-                    let route = null;
-                    let steps = [];
-
-                    // Fetch OSRM with steps=true
-                    try {
-                        const url = `https://router.project-osrm.org/route/v1/driving/${cLng},${cLat};${dLng},${dLat}?overview=full&geometries=geojson&steps=true`;
-                        const res = await fetch(url);
-                        const data = await res.json();
-                        if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-                            route = data.routes[0];
-                            if (route.legs && route.legs[0] && route.legs[0].steps) {
-                                steps = route.legs[0].steps;
-                            }
-                        }
-                    } catch (e) {
-                        console.warn("OSRM primary route error:", e);
-                    }
-
-                    if (!route) {
-                        try {
-                            const mirrorUrl = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${cLng},${cLat};${dLng},${dLat}?overview=full&geometries=geojson&steps=true`;
-                            const res2 = await fetch(mirrorUrl);
-                            const data2 = await res2.json();
-                            if (data2.code === 'Ok' && data2.routes && data2.routes.length > 0) {
-                                route = data2.routes[0];
-                                if (route.legs && route.legs[0] && route.legs[0].steps) {
-                                    steps = route.legs[0].steps;
-                                }
-                            }
-                        } catch (e2) {}
-                    }
-
-                    // Offline Geometric Fallback
-                    if (!route) {
-                        const pts = [];
-                        for (let i = 0; i <= 28; i++) {
-                            const r = i / 28;
-                            pts.push([cLat + (dLat - cLat) * r, cLng + (dLng - cLng) * r]);
-                        }
-                        this.simRouteCoords = pts;
-                        this.generateSyntheticManeuvers(pts);
-                        this.renderTrafficRoute(pts);
-                        this.navDistText = '1.8 km';
-                        this.navEtaText = '4 daq';
-                        this.updateArrivalTime(4);
-                        return;
-                    }
-
-                    const coords = route.geometry.coordinates.map(pt => [pt[1], pt[0]]);
-                    this.simRouteCoords = coords;
-
-                    // Parse real OSRM Maneuver steps
-                    this.parseRouteSteps(steps, coords);
-
-                    const distanceM = route.distance;
-                    if (distanceM >= 1000) {
-                        this.navDistText = `${(distanceM / 1000).toFixed(1)} km`;
-                    } else {
-                        this.navDistText = `${Math.round(distanceM)} m`;
-                    }
-                    const durationMin = Math.max(1, Math.round(route.duration / 60));
-                    this.navEtaText = `${durationMin} daq`;
-                    this.updateArrivalTime(durationMin);
-
-                    // Initial Bearing calculation
-                    if (coords.length > 1) {
-                        this.navBearing = this.calculateBearing(coords[0], coords[1]);
-                        this.updateCourierMarkerPosition(cLat, cLng);
-                    }
-
-                    this.renderTrafficRoute(coords);
-
-                    // If overview, fit bounds
-                    if (this.navStage === 'overview' && this.navMap) {
-                        const bounds = L.latLngBounds(coords);
-                        this.navMap.fitBounds(bounds, { padding: [100, 40] });
-                    }
-                },
-
-                parseRouteSteps(steps, fullCoords) {
-                    if (!steps || steps.length === 0) {
-                        this.generateSyntheticManeuvers(fullCoords);
-                        return;
-                    }
-
-                    this.parsedSteps = steps.map(s => {
-                        const m = s.maneuver;
-                        const mod = (m.modifier || '').toLowerCase();
-                        let type = 'straight';
-                        let instruction = 'To\'g\'riga harakatlaning';
-                        let lane = 'center';
-
-                        if (mod.includes('left')) {
-                            type = mod.includes('sharp') ? 'sharp-left' : (mod.includes('slight') ? 'slight-left' : 'left');
-                            instruction = 'Chapga buriling';
-                            lane = 'left';
-                        } else if (mod.includes('right')) {
-                            type = mod.includes('sharp') ? 'sharp-right' : (mod.includes('slight') ? 'slight-right' : 'right');
-                            instruction = 'O\'ngga buriling';
-                            lane = 'right';
-                        } else if (mod.includes('u-turn') || mod.includes('uturn')) {
-                            type = 'uturn';
-                            instruction = 'Qayrilib oling';
-                            lane = 'left';
-                        } else if (m.type === 'arrive') {
-                            type = 'arrive';
-                            instruction = 'Manzilga yetib kelindi';
-                            lane = 'center';
-                        }
-
-                        return {
-                            type: type,
-                            instruction: instruction,
-                            streetName: s.name ? (s.name + " ko'chasiga") : (this.navOrder?.delivery_address || 'Asosiy yo\'l'),
-                            distance: Math.round(s.distance || 150),
-                            location: [m.location[1], m.location[0]], // [lat, lng]
-                            lane: lane
-                        };
-                    });
-
-                    this.currentStepIdx = 0;
-                    this.applyManeuverStep(0);
-                },
-
-                generateSyntheticManeuvers(pts) {
-                    const steps = [];
-                    steps.push({
-                        type: 'straight',
-                        instruction: 'To\'g\'riga harakatlaning',
-                        streetName: 'Narpay ko\'chasiga',
-                        distance: 250,
-                        location: pts[0],
-                        lane: 'center'
-                    });
-                    steps.push({
-                        type: 'right',
-                        instruction: 'O\'ngga buriling',
-                        streetName: 'Beruniy ko\'chasiga',
-                        distance: 600,
-                        location: pts[Math.floor(pts.length * 0.4)],
-                        lane: 'right'
-                    });
-                    steps.push({
-                        type: 'left',
-                        instruction: 'Chapga buriling',
-                        streetName: '42-maktab tomon',
-                        distance: 400,
-                        location: pts[Math.floor(pts.length * 0.75)],
-                        lane: 'left'
-                    });
-                    steps.push({
-                        type: 'arrive',
-                        instruction: 'Yetib kelindi',
-                        streetName: this.navOrder?.delivery_address || 'Mijoz manzili',
-                        distance: 50,
-                        location: pts[pts.length - 1],
-                        lane: 'center'
-                    });
-                    this.parsedSteps = steps;
-                    this.currentStepIdx = 0;
-                    this.applyManeuverStep(0);
-                },
-
-                applyManeuverStep(idx) {
-                    if (!this.parsedSteps || this.parsedSteps.length === 0) return;
-                    const step = this.parsedSteps[idx] || this.parsedSteps[0];
-                    this.activeManeuver = {
-                        type: step.type,
-                        instruction: step.instruction,
-                        distanceText: step.distance >= 1000 ? `${(step.distance / 1000).toFixed(1)} km` : `${step.distance} m`,
-                        streetName: step.streetName,
-                        lane: step.lane
-                    };
-
-                    const nextStep = this.parsedSteps[idx + 1];
-                    if (nextStep) {
-                        const iconSymbol = nextStep.type.includes('left') ? '⬅️' : (nextStep.type.includes('right') ? '➡️' : '⬆️');
-                        this.secondManeuverText = `Keyin: ${iconSymbol} ${nextStep.distance} m (${nextStep.streetName})`;
-                    } else {
-                        this.secondManeuverText = '🏁 Manzil yaqinida';
-                    }
-                },
-
-                updateManeuverHUD(curLat, curLng) {
-                    if (!this.parsedSteps || this.parsedSteps.length === 0) return;
-                    const curStep = this.parsedSteps[this.currentStepIdx];
-                    if (!curStep) return;
-
-                    const d = this.getDistanceMeters(curLat, curLng, curStep.location[0], curStep.location[1]);
-                    if (d < 25 && this.currentStepIdx < this.parsedSteps.length - 1) {
-                        this.currentStepIdx++;
-                        this.applyManeuverStep(this.currentStepIdx);
-                    } else {
-                        this.activeManeuver.distanceText = d >= 1000 ? `${(d / 1000).toFixed(1)} km` : `${Math.round(d)} m`;
-                    }
-                },
-
-                renderTrafficRoute(coords) {
-                    if (this.navTrafficPolylines && this.navTrafficPolylines.length > 0) {
-                        this.navTrafficPolylines.forEach(l => l.remove());
-                    }
-                    this.navTrafficPolylines = [];
-
-                    // Base Casing Line (Dark Obsidian)
-                    const casing = L.polyline(coords, {
-                        color: '#0f172a',
-                        weight: 9,
-                        opacity: 0.9,
-                        lineCap: 'round',
-                        lineJoin: 'round'
-                    }).addTo(this.navMap);
-                    this.navTrafficPolylines.push(casing);
-
-                    // Multi-color traffic flow line: StoreBox Neon Lime -> Amber -> Red
-                    const totalPts = coords.length;
-                    const seg1 = coords.slice(0, Math.ceil(totalPts * 0.6));
-                    const seg2 = coords.slice(Math.max(0, Math.floor(totalPts * 0.55)), Math.ceil(totalPts * 0.85));
-                    const seg3 = coords.slice(Math.max(0, Math.floor(totalPts * 0.80)));
-
-                    const lineLime = L.polyline(seg1, { color: '#c8ff6a', weight: 6, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.navMap);
-                    const lineOrange = L.polyline(seg2, { color: '#f59e0b', weight: 6, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.navMap);
-                    const lineRed = L.polyline(seg3, { color: '#ef4444', weight: 6, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(this.navMap);
-
-                    this.navTrafficPolylines.push(lineLime, lineOrange, lineRed);
-                },
-
-                calculateBearing(p1, p2) {
-                    const rad = Math.PI / 180;
-                    const y = Math.sin((p2[1] - p1[1]) * rad) * Math.cos(p2[0] * rad);
-                    const x = Math.cos(p1[0] * rad) * Math.sin(p2[0] * rad) - Math.sin(p1[0] * rad) * Math.cos(p2[0] * rad) * Math.cos((p2[1] - p1[1]) * rad);
-                    let brg = Math.atan2(y, x) * 180 / Math.PI;
-                    return Math.round((brg + 360) % 360);
-                },
-
-                getDistanceMeters(lat1, lon1, lat2, lon2) {
-                    const R = 6371e3;
-                    const φ1 = lat1 * Math.PI / 180;
-                    const φ2 = lat2 * Math.PI / 180;
-                    const Δφ = (lat2 - lat1) * Math.PI / 180;
-                    const Δλ = (lon2 - lon1) * Math.PI / 180;
-                    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                              Math.cos(φ1) * Math.cos(φ2) *
-                              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                    return R * c;
-                },
-
-                checkAndReroute(curLat, curLng) {
-                    if (!this.simRouteCoords || this.simRouteCoords.length < 2) return;
-                    const destLat = parseFloat(this.navOrder?.dest_lat) || 39.6772;
-                    const destLng = parseFloat(this.navOrder?.dest_lng) || 66.9325;
-
-                    let minDist = Infinity;
-                    for (let i = 0; i < this.simRouteCoords.length; i++) {
-                        const d = this.getDistanceMeters(curLat, curLng, this.simRouteCoords[i][0], this.simRouteCoords[i][1]);
-                        if (d < minDist) minDist = d;
-                    }
-
-                    if (minDist > 55) {
-                        this.calculateLiveRoute(curLat, curLng, destLat, destLng);
-                    }
-                },
-
-                // DRIVE SIMULATION (ANIMATED FIRST-PERSON LIVE DRIVING)
-                toggleDriveSimulation() {
-                    if (this.isSimulatingDrive) {
-                        this.stopDriveSimulation();
-                    } else {
-                        if (this.navStage === 'overview') {
-                            this.startDrivingMode();
-                        }
-                        this.startDriveSimulation();
-                    }
-                },
-
-                startDriveSimulation() {
-                    this.isSimulatingDrive = true;
-                    this.navSpeed = 44;
-
-                    if (!this.simRouteCoords || this.simRouteCoords.length < 2) {
-                        return;
-                    }
-
-                    this.simIndex = 0;
-                    if (this.simInterval) clearInterval(this.simInterval);
-
-                    this.showToast("3D Harakat boshlandi! Xarita kurs bo'yicha aylanadi");
-
-                    this.simInterval = setInterval(() => {
-                        if (this.simIndex >= this.simRouteCoords.length - 1) {
-                            this.stopDriveSimulation();
-                            this.markArrived();
-                            return;
-                        }
-
-                        const p1 = this.simRouteCoords[this.simIndex];
-                        const p2 = this.simRouteCoords[this.simIndex + 1];
-                        this.simIndex++;
-
-                        // Dynamic Bearing
-                        this.navBearing = this.calculateBearing(p1, p2);
-
-                        // Move courier marker & rotate 3D canvas
-                        this.updateCourierMarkerPosition(p2[0], p2[1]);
-
-                        // Follow with camera
-                        if (this.navMap) {
-                            this.navMap.panTo([p2[0], p2[1]], { animate: false });
-                        }
-
-                        // Remaining distance & ETA
-                        const remainingPts = this.simRouteCoords.length - this.simIndex;
-                        const mLeft = Math.round(remainingPts * 55);
-                        if (mLeft >= 1000) {
-                            this.navDistText = `${(mLeft / 1000).toFixed(1)} km`;
-                        } else {
-                            this.navDistText = `${mLeft} m`;
-                        }
-                        const minLeft = Math.max(1, Math.round(remainingPts * 0.22));
-                        this.navEtaText = `${minLeft} daq`;
-                        this.updateArrivalTime(minLeft);
-
-                        // Fluctuating realistic city speed
-                        this.navSpeed = Math.floor(38 + Math.sin(this.simIndex * 0.8) * 12);
-
-                        // Report to backend
-                        this.reportLocationToServer(p2[0], p2[1]);
-                    }, 900);
-                },
-
-                stopDriveSimulation() {
-                    this.isSimulatingDrive = false;
-                    if (this.simInterval) {
-                        clearInterval(this.simInterval);
-                        this.simInterval = null;
-                    }
-                },
-
-                markArrived() {
-                    this.navStage = 'arrived';
-                    this.navDistText = '0 m';
-                    this.navEtaText = 'Yetib kelindi';
-                    this.navSpeed = 0;
-                    this.activeManeuver.instruction = "Manzilga yetib kelindi!";
-                    this.activeManeuver.type = "arrive";
-                    this.activeManeuver.distanceText = "0 m";
-                    this.showToast("Manzilga yetib kelindi! Mijoz eshigi oldidasiz");
-                },
-
-                recenterMap() {
-                    if (this.navMap && this.navCourierPos) {
-                        const targetZoom = this.navStage === 'driving' ? 17.5 : 16;
-                        this.navMap.setView(this.navCourierPos, targetZoom, { animate: true });
-                    }
-                },
-
-                openExternalNav(app) {
-                    const destLat = parseFloat(this.navOrder?.dest_lat) || 39.6772;
-                    const destLng = parseFloat(this.navOrder?.dest_lng) || 66.9325;
-                    let url = '';
-
-                    if (app === 'yandex') {
-                        // Yandex Navigator deep-link
-                        url = `yandexnavi://build_route_on_map?lat_to=${destLat}&lon_to=${destLng}`;
-                        setTimeout(() => {
-                            // Web fallback if app not installed
-                            window.open(`https://yandex.ru/maps/?rtext=~${destLat},${destLng}&rtt=auto`, '_blank');
-                        }, 500);
-                        window.location.href = url;
-                        return;
-                    } else if (app === 'google') {
-                        url = `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`;
-                    } else if (app === '2gis') {
-                        url = `dgis://2gis.ru/routeSearch/rsType/car/to/${destLng},${destLat}`;
-                        setTimeout(() => {
-                            window.open(`https://2gis.ru/routeSearch/rsType/car/to/${destLng},${destLat}`, '_blank');
-                        }, 500);
-                        window.location.href = url;
-                        return;
-                    }
-                    window.open(url, '_blank');
-                },
-
-                async reportLocationToServer(lat, lng) {
-                    try {
-                        const fd = new FormData();
-                        fd.append('lat', lat);
-                        fd.append('lng', lng);
-                        if (this.courierInfo?.id) {
-                            fd.append('courier_id', this.courierInfo.id);
-                        }
-                        await fetch('/dashboard/api/courier-location/', {
-                            method: 'POST',
-                            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                            body: fd
-                        });
-                    } catch (e) {
-                        console.error("Location sync error:", e);
-                    }
-                },
-
-                completeOrderFromNav() {
-                    if (!confirm("Buyurtma mijozga yetkazilganini va to'lov olinganini tasdiqlaysizmi?")) return;
-                    this.updateStatus(this.navOrder.id, 'COMPLETED');
-                    this.closeLiveNavigator();
-                },
-
-                async takeOrder(orderId) {
-                    const fd = new FormData();
-                    fd.append('order_id', orderId);
-                    fd.append('action', 'take');
-
-                    try {
-                        const res = await fetch('/dashboard/api/courier-update-order/', {
-                            method: 'POST',
-                            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                            body: fd
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            this.showToast(data.message || "Buyurtma qabul qilindi va yetkazishga olindi!");
-                            setTimeout(() => { window.location.href = window.location.pathname + '?tab=delivering'; }, 600);
-                        } else {
-                            alert(data.error || "Xatolik yuz berdi");
-                        }
-                    } catch (e) {
-                        alert("Tarmoq xatosi!");
-                    }
-                },
-
-                async updateStatus(orderId, status, reason = '') {
-                    const fd = new FormData();
-                    fd.append('order_id', orderId);
-                    fd.append('status', status);
-                    if (reason) fd.append('reason', reason);
-
-                    try {
-                        const res = await fetch('/dashboard/api/courier-update-order/', {
-                            method: 'POST',
-                            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                            body: fd
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            this.showToast(status === 'COMPLETED' ? "Buyurtma yetkazildi deb belgilandi! To'lov qabul qilindi" : "Status o'zgartirildi!");
-                            setTimeout(() => { window.location.reload(); }, 600);
-                        } else {
-                            alert(data.error || "Xatolik yuz berdi");
-                        }
-                    } catch (e) {
-                        alert("Tarmoq xatosi!");
-                    }
-                },
-
-                openCancelModal(orderId) {
-                    this.cancelOrderId = orderId;
-                    this.cancelReason = '';
-                    this.cancelModalOpen = true;
-                },
-
-                submitCancel() {
-                    if (!this.cancelReason.trim()) {
-                        alert("Iltimos, sababni yozing");
-                        return;
-                    }
-                    this.updateStatus(this.cancelOrderId, 'CANCELLED', this.cancelReason);
-                    this.cancelModalOpen = false;
-                }
-            }
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.lucide) lucide.createIcons();
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- BOTTOM TAB BAR (Yandex Pro 4-Screen Mobile Dock)                    -->
+  <!-- =================================================================== -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 glass-sheet pb-safe">
+    <div class="max-w-sm mx-auto flex items-center justify-around py-1.5 px-2">
+      <!-- 1. Навигатор / Карта -->
+      <button onclick="app.switchMainTab('map')" id="dockTabMap" class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-950 font-extrabold transition-all">
+        <i data-lucide="map" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold">Карта</span>
+      </button>
+
+      <!-- 2. Заказы -->
+      <button onclick="app.switchMainTab('orders')" id="dockTabOrders" class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-400 hover:text-slate-700 font-semibold transition-all relative">
+        <i data-lucide="package" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold">Заказы</span>
+        <span id="dockOrdersBadge" class="absolute top-0 right-2 w-3.5 h-3.5 rounded-full bg-emerald-600 text-white text-[8px] font-black flex items-center justify-center hidden">0</span>
+      </button>
+
+      <!-- 3. История -->
+      <button onclick="app.switchMainTab('history')" id="dockTabHistory" class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-400 hover:text-slate-700 font-semibold transition-all">
+        <i data-lucide="history" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold">История</span>
+      </button>
+
+      <!-- 4. Профиль -->
+      <button onclick="app.switchMainTab('profile')" id="dockTabProfile" class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-400 hover:text-slate-700 font-semibold transition-all">
+        <i data-lucide="user" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold">Профиль</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- =================================================================== -->
+  <!-- CELEBRATION TOAST                                                   -->
+  <!-- =================================================================== -->
+  <div id="celebrationToast" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 hidden">
+    <div class="glass-card rounded-3xl p-6 text-center max-w-xs w-full space-y-2.5 border border-emerald-500/30 shadow-2xl bg-white text-slate-900">
+      <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center border border-emerald-200">
+        <i data-lucide="check-circle" class="w-7 h-7"></i>
+      </div>
+      <h3 class="text-sm font-bold text-slate-900">Заказ успешно доставлен! 🎉</h3>
+      <p id="celebrationAmount" class="text-sm font-black text-emerald-600">+0 UZS</p>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- APPLICATION CODE (Vanilla JS, Zero Bloat, 60fps Yandex Pro)        -->
+  <!-- =================================================================== -->
+  <script>
+    const IS_AUTHENTICATED_INIT = {{ is_authenticated|yesno:"true,false" }};
+    const INITIAL_COURIER = {{ courier_json|safe|default:"{}" }};
+    const INITIAL_DELIVERING = {{ delivering_orders_json|safe|default:"[]" }};
+    const INITIAL_PENDING = {{ pending_orders_json|safe|default:"[]" }};
+    const INITIAL_COMPLETED = {{ completed_orders_json|safe|default:"[]" }};
+    const CSRF_TOKEN = "{{ csrf_token }}";
+
+    const I18N = {
+      uz: {
+        shiftOnline: "Tarmoqda",
+        shiftBreak: "Tanaffusda",
+        btnDrive: "KETDIK",
+        btnArrivedLocked: "MANZILDAMAN (yana {m} m)",
+        btnArrivedUnlocked: "📍 MANZILDAMAN (YETIB KELDIM)",
+        btnComplete: "BUYURTMANI TOPSHIRISH & TO'LOV",
+        testApproach: "⚡ Manzilga yaqinlashish (Test)",
+        noActiveOrder: "Faol buyurtma yo'q",
+        takeOrderBtn: "Buyurtma olish",
+        dockMap: "Xarita",
+        dockOrders: "Buyurtmalar",
+        dockHistory: "Tarix",
+        dockProfile: "Profil",
+        subDelivering: "Yetkazilmoqda",
+        subAvailable: "Mavjud",
+        emptyDeliveringTitle: "Jarayonda buyurtmalar yo'q",
+        emptyDeliveringSub: "«Mavjud» bo'limidan buyurtma oling",
+        emptyAvailableTitle: "Mavjud buyurtmalar yo'q",
+        emptyAvailableSub: "Yangi buyurtmalar avtomatik paydo bo'ladi",
+        historyTotalTitle: "JAMI ISHLANGAN",
+        historyCountTitle: "DOSTAVKALAR",
+        historyCompletedHeader: "Tugallangan buyurtmalar",
+        historyEmpty: "Bajarilgan buyurtmalar tarixi hozircha bo'sh",
+        profRating: "REYTING",
+        profDelivered: "DOSTAVKA",
+        profSuccess: "MUVAFFAQ",
+        profTransport: "Transport turi",
+        profParams: "Ish parametrlari",
+        profShiftStatus: "Smena holati",
+        profShiftSub: "Yangi buyurtmalarni qabul qilish",
+        profAutoAccept: "Avtomatik qabul qilish",
+        profAutoAcceptSub: "Eng yaqin buyurtmalarni avtomatik olish",
+        profSound: "Ovozli signallar",
+        profSoundSub: "Burilishlar va buyurtmalarni ovozlantirish",
+        profLangTitle: "Interfeys tili",
+        profLogout: "Hisobdan chiqish",
+        orderDeliveredToast: "Buyurtma muvaffaqiyatli yetkazildi! 🎉",
+        paymentCash: "Naqd pul",
+        paymentPaid: "To'langan",
+        navBtn: "Navigator",
+        takeBtn: "Qabul qilish",
+        readyStatus: "Tayyor",
+        maneuverArrived: "Siz manzilga yetib keldingiz",
+        maneuverDriving: "Ko'cha bo'ylab harakatlaning",
+        maneuverSub: "yetkazib berish manziliga",
+        arrivedBadge: "Yetib kelindi",
+        testOrderBtn: "+ Buyurtma",
+        orderDeliveredBadge: "Yetkazildi",
+        speedUnit: "km/soat",
+        infoBtn: "Ma'lumot",
+        infoClose: "Yopish"
+      },
+      ru: {
+        shiftOnline: "В сети",
+        shiftBreak: "На перерыве",
+        btnDrive: "ПОЕХАЛИ",
+        btnArrivedLocked: "Я НА МЕСТЕ (ещё {m} м)",
+        btnArrivedUnlocked: "📍 Я НА МЕСТЕ (ПРИБЫЛ)",
+        btnComplete: "ВРУЧИТЬ ЗАКАЗ & ОПЛАТА",
+        testApproach: "⚡ Подъехать к адресу (Тест)",
+        noActiveOrder: "Нет активного заказа",
+        takeOrderBtn: "Взять заказ",
+        dockMap: "Карта",
+        dockOrders: "Заказы",
+        dockHistory: "История",
+        dockProfile: "Профиль",
+        subDelivering: "В доставке",
+        subAvailable: "Доступные",
+        emptyDeliveringTitle: "Нет заказов в работе",
+        emptyDeliveringSub: "Возьмите заказ из вкладки «Доступные»",
+        emptyAvailableTitle: "Нет доступных заказов",
+        emptyAvailableSub: "Новые заказы появятся автоматически",
+        historyTotalTitle: "ВСЕГО ЗАРАБОТАНО",
+        historyCountTitle: "ДОСТАВОК",
+        historyCompletedHeader: "Завершенные заказы",
+        historyEmpty: "История выполненных доставок пока пуста",
+        profRating: "РЕЙТИНГ",
+        profDelivered: "ДОСТАВОК",
+        profSuccess: "УСПЕШНО",
+        profTransport: "Тип транспорта",
+        profParams: "Рабочие параметры",
+        profShiftStatus: "Статус смены",
+        profShiftSub: "Прием новых заказов",
+        profAutoAccept: "Автопринятие заказов",
+        profAutoAcceptSub: "Автоматически брать ближайшие",
+        profSound: "Звуковые сигналы",
+        profSoundSub: "Озвучивать повороты и заказы",
+        profLangTitle: "Язык интерфейса",
+        profLogout: "Выйти из аккаунта",
+        orderDeliveredToast: "Заказ успешно доставлен! 🎉",
+        paymentCash: "Наличные",
+        paymentPaid: "Оплачено",
+        navBtn: "Навигатор",
+        takeBtn: "Взять заказ",
+        readyStatus: "Готов",
+        maneuverArrived: "Вы прибыли к клиенту",
+        maneuverDriving: "Двигайтесь по улице",
+        maneuverSub: "к адресу доставки",
+        arrivedBadge: "Прибыли",
+        testOrderBtn: "+ Заказ",
+        orderDeliveredBadge: "Доставлен",
+        speedUnit: "км/ч",
+        infoBtn: "Инфо",
+        infoClose: "Скрыть"
+      },
+      en: {
+        shiftOnline: "Online",
+        shiftBreak: "On break",
+        btnDrive: "LET'S GO",
+        btnArrivedLocked: "I AM HERE ({m} m left)",
+        btnArrivedUnlocked: "📍 I AM HERE (ARRIVED)",
+        btnComplete: "DELIVER ORDER & COLLECT PAYMENT",
+        testApproach: "⚡ Approach Address (Test)",
+        noActiveOrder: "No active order",
+        takeOrderBtn: "Take order",
+        dockMap: "Map",
+        dockOrders: "Orders",
+        dockHistory: "History",
+        dockProfile: "Profile",
+        subDelivering: "In Delivery",
+        subAvailable: "Available",
+        emptyDeliveringTitle: "No active deliveries",
+        emptyDeliveringSub: "Accept an order from the Available tab",
+        emptyAvailableTitle: "No available orders",
+        emptyAvailableSub: "New orders will appear automatically",
+        historyTotalTitle: "TOTAL EARNED",
+        historyCountTitle: "DELIVERIES",
+        historyCompletedHeader: "Completed Orders",
+        historyEmpty: "Delivery history is currently empty",
+        profRating: "RATING",
+        profDelivered: "ORDERS",
+        profSuccess: "SUCCESS",
+        profTransport: "Vehicle Type",
+        profParams: "Work Settings",
+        profShiftStatus: "Shift Status",
+        profShiftSub: "Accepting new orders",
+        profAutoAccept: "Auto-accept orders",
+        profAutoAcceptSub: "Automatically accept nearest orders",
+        profSound: "Audio alerts",
+        profSoundSub: "Announce maneuvers and orders",
+        profLangTitle: "Interface Language",
+        profLogout: "Log out",
+        orderDeliveredToast: "Order successfully delivered! 🎉",
+        paymentCash: "Cash",
+        paymentPaid: "Paid",
+        navBtn: "Navigator",
+        takeBtn: "Take Order",
+        readyStatus: "Ready",
+        maneuverArrived: "You have arrived at destination",
+        maneuverDriving: "Follow the street",
+        maneuverSub: "to delivery address",
+        arrivedBadge: "Arrived",
+        testOrderBtn: "+ Order",
+        orderDeliveredBadge: "Delivered",
+        speedUnit: "km/h",
+        infoBtn: "Info",
+        infoClose: "Close"
+      }
+    };
+
+    const app = {
+      isAuthenticated: IS_AUTHENTICATED_INIT,
+      lang: "{{ current_lang|default:'uz' }}",
+      currentTab: 'map',
+      ordersSubTab: 'delivering',
+      courier: INITIAL_COURIER,
+      deliveringOrders: INITIAL_DELIVERING,
+      pendingOrders: INITIAL_PENDING,
+      completedOrders: INITIAL_COMPLETED,
+      activeOrder: INITIAL_DELIVERING.length > 0 ? INITIAL_DELIVERING[0] : null,
+
+      t: function(key) {
+        const langDict = I18N[this.lang] || I18N['ru'];
+        return langDict[key] || I18N['ru'][key] || key;
+      },
+
+      applyLanguage: function(l) {
+        this.lang = l;
+        document.cookie = `storebox_lang=${l}; path=/; max-age=31536000; SameSite=Lax`;
+        document.cookie = `django_language=${l}; path=/; max-age=31536000; SameSite=Lax`;
+
+        // Update Dock labels
+        const dMap = document.querySelector('#dockTabMap span');
+        if (dMap) dMap.innerText = this.t('dockMap');
+        const dOrd = document.querySelector('#dockTabOrders span');
+        if (dOrd) dOrd.innerText = this.t('dockOrders');
+        const dHist = document.querySelector('#dockTabHistory span');
+        if (dHist) dHist.innerText = this.t('dockHistory');
+        const dProf = document.querySelector('#dockTabProfile span');
+        if (dProf) dProf.innerText = this.t('dockProfile');
+
+        // Update Sub-tabs
+        const stDel = document.querySelector('#subTabDelivering span');
+        if (stDel) stDel.innerText = this.t('subDelivering');
+        const stAvail = document.querySelector('#subTabAvailable span');
+        if (stAvail) stAvail.innerText = this.t('subAvailable');
+
+        // Update buttons
+        const btnDrive = document.querySelector('#btnStartRoute span');
+        if (btnDrive) btnDrive.innerText = this.t('btnDrive');
+        const btnComp = document.querySelector('#btnCompleteDelivery span');
+        if (btnComp) btnComp.innerText = this.t('btnComplete');
+
+        // Profile language buttons styling
+        ['uz', 'ru', 'en'].forEach(k => {
+          const btn = document.getElementById(`profLang${k.charAt(0).toUpperCase() + k.slice(1)}`);
+          if (btn) {
+            btn.className = k === l ? 'py-2 rounded-xl bg-slate-900 text-white font-bold shadow-sm' : 'py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium';
+          }
         });
-    </script>
+
+        this.updateHeaderUI();
+        this.renderAllOrderLists();
+      },
+
+      // Settings
+      vehicle: 'car',
+      autoAccept: false,
+      soundEnabled: true,
+
+      // Yandex Map & Navigator
+      ymapsInstance: null,
+      map: null,
+      courierMarker: null,
+      destMarker: null,
+      activePolyline: null,
+
+      navStage: 'PREVIEW',
+      courierCoords: [
+        (INITIAL_COURIER && INITIAL_COURIER.current_lat) ? parseFloat(INITIAL_COURIER.current_lat) : 39.6772,
+        (INITIAL_COURIER && INITIAL_COURIER.current_lng) ? parseFloat(INITIAL_COURIER.current_lng) : 66.9325
+      ],
+      currentBearing: 0,
+      routeCoords: [],
+      distanceRemaining: 0,
+      durationRemaining: 0,
+      animFrameId: null,
+
+      init: function() {
+        lucide.createIcons();
+
+        if (!this.isAuthenticated) {
+          document.getElementById('authScreen').classList.remove('hidden');
+          return;
+        }
+
+        this.applyLanguage(this.lang);
+        this.updateProfileUI();
+        this.updateHeaderUI();
+        this.renderAllOrderLists();
+
+        // Initialize Yandex Maps
+        ymaps.ready(() => {
+          this.ymapsInstance = ymaps;
+          this.initMap();
+        });
+
+        // Background polling every 7s
+        setInterval(() => {
+          if (this.isAuthenticated) this.pollUpdates();
+        }, 7000);
+
+        // Real GPS Watcher
+        if (navigator.geolocation) {
+          navigator.geolocation.watchPosition(
+            (pos) => this.onGpsUpdate(pos.coords.latitude, pos.coords.longitude),
+            null,
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 }
+          );
+        }
+      },
+
+      // ===============================================================
+      // 1. AUTHENTICATION & PROFILE LOGIC
+      // ===============================================================
+      setAuthMode: function(mode) {
+        const isLogin = mode === 'login';
+        document.getElementById('authTabLogin').className = isLogin ? 'flex-1 py-1.5 rounded-xl text-slate-900 bg-white shadow-sm transition-all font-bold' : 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all font-semibold';
+        document.getElementById('authTabRegister').className = !isLogin ? 'flex-1 py-1.5 rounded-xl text-slate-900 bg-white shadow-sm transition-all font-bold' : 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all font-semibold';
+        document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+        document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+      },
+
+      handleLogin: function(e) {
+        e.preventDefault();
+        const username = document.getElementById('loginPhone').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const btn = document.getElementById('loginSubmitBtn');
+        btn.innerText = 'Вход...';
+
+        fetch('/api/v1/auth/login/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+          body: JSON.stringify({ username, password })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error('Неверный логин или пароль');
+          return res.json();
+        })
+        .then(data => {
+          window.location.reload();
+        })
+        .catch(err => {
+          alert(err.message || 'Ошибка авторизации');
+          btn.innerText = 'Войти в панель';
+        });
+      },
+
+      handleDemoLogin: function() {
+        // Fast demo courier login via dev login
+        fetch('/dev-login/?role=courier', { credentials: 'same-origin' })
+          .then(() => window.location.reload())
+          .catch(() => window.location.reload());
+      },
+
+      handleRegister: function(e) {
+        e.preventDefault();
+        const name = document.getElementById('regName').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+        const vehicle = document.getElementById('regVehicle').value;
+        const password = document.getElementById('regPassword').value;
+        const btn = document.getElementById('regSubmitBtn');
+        btn.innerText = 'Регистрация...';
+
+        fetch('/api/v1/auth/register/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+          body: JSON.stringify({ name, phone, password, is_courier: true, vehicle })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error('Ошибка при регистрации');
+          return res.json();
+        })
+        .then(data => {
+          window.location.reload();
+        })
+        .catch(err => {
+          alert(err.message || 'Ошибка регистрации');
+          btn.innerText = 'Зарегистрироваться';
+        });
+      },
+
+      handleLogout: function() {
+        if (!confirm('Вы действительно хотите выйти из аккаунта?')) return;
+        fetch('/api/v1/auth/logout/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF_TOKEN }
+        }).finally(() => {
+          window.location.reload();
+        });
+      },
+
+      // ===============================================================
+      // 2. MAIN BOTTOM TABS (Карта / Заказы / История / Профиль)
+      // ===============================================================
+      switchMainTab: function(tab) {
+        this.currentTab = tab;
+        ['map', 'orders', 'history', 'profile'].forEach(t => {
+          const btn = document.getElementById(`dockTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+          const screen = document.getElementById(`${t}TabScreen`);
+          if (t === tab) {
+            btn.className = 'flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-950 font-extrabold transition-all';
+            screen.classList.remove('hidden');
+          } else {
+            btn.className = 'flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-400 hover:text-slate-700 font-semibold transition-all';
+            screen.classList.add('hidden');
+          }
+        });
+
+        // Trigger map viewport resize if entering map tab
+        if (tab === 'map' && this.map) {
+          this.map.container.fitToViewport();
+          if (this.courierMarker) {
+            this.map.setCenter(this.courierCoords, 17, { duration: 150 });
+          }
+        }
+      },
+
+      setOrdersSubTab: function(sub) {
+        this.ordersSubTab = sub;
+        const isDelivering = sub === 'delivering';
+        document.getElementById('subTabDelivering').className = isDelivering ? 'flex-1 py-1.5 rounded-xl text-slate-900 bg-white shadow-sm transition-all flex items-center justify-center gap-1.5 font-bold' : 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all flex items-center justify-center gap-1.5 font-semibold';
+        document.getElementById('subTabAvailable').className = !isDelivering ? 'flex-1 py-1.5 rounded-xl text-slate-900 bg-white shadow-sm transition-all flex items-center justify-center gap-1.5 font-bold' : 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all flex items-center justify-center gap-1.5 font-semibold';
+        document.getElementById('ordersListDelivering').classList.toggle('hidden', !isDelivering);
+        document.getElementById('ordersListAvailable').classList.toggle('hidden', isDelivering);
+      },
+
+      followCamera: true,
+      lastCameraUpdate: 0,
+      recenterTimer: null,
+
+      // ===============================================================
+      // 3. YANDEX MAP & ROAD NAVIGATION ENGINE (Yandex Taxi Pro style)
+      // ===============================================================
+      initMap: function() {
+        const container = document.getElementById('liveYandexMap');
+        this.map = new ymaps.Map(container, {
+          center: this.courierCoords,
+          zoom: 16.5,
+          controls: [],
+          type: 'yandex#map'
+        }, {
+          suppressMapOpenBlock: true
+        });
+
+        // Detect user manual pan/touch on map canvas
+        if (container) {
+          const onUserPan = () => {
+            if (this.navStage === 'DRIVING') {
+              this.followCamera = false;
+              this.updateRecenterBtn(true);
+              if (this.recenterTimer) clearTimeout(this.recenterTimer);
+              this.recenterTimer = setTimeout(() => {
+                if (this.navStage === 'DRIVING') {
+                  this.centerOnCourier();
+                }
+              }, 5000);
+            }
+          };
+          container.addEventListener('touchstart', onUserPan, { passive: true });
+          container.addEventListener('pointerdown', onUserPan, { passive: true });
+          container.addEventListener('mousedown', onUserPan, { passive: true });
+          container.addEventListener('wheel', onUserPan, { passive: true });
+
+          if (this.map.behaviors.isEnabled('drag')) {
+            this.map.behaviors.get('drag').events.add('dragstart', onUserPan);
+          }
+          if (this.map.behaviors.isEnabled('scrollZoom')) {
+            this.map.behaviors.get('scrollZoom').events.add('wheel', onUserPan);
+          }
+          if (this.map.behaviors.isEnabled('multiTouch')) {
+            this.map.behaviors.get('multiTouch').events.add('pinchstart', onUserPan);
+          }
+        }
+
+        // Authentic Yandex Pro / Taxi Navigator Delta Arrow Layout
+        const DeltaLayout = ymaps.templateLayoutFactory.createClass(
+          '<div id="courierDeltaArrow" class="courier-arrow-wrapper" style="width: 48px; height: 48px; margin-left: -24px; margin-top: -24px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35)); transform: rotate($[properties.bearing|default:0]deg);">' +
+            '<svg width="48" height="48" viewBox="0 0 48 48" fill="none">' +
+              '<circle cx="24" cy="24" r="22" fill="rgba(16, 185, 129, 0.12)" stroke="#10B981" stroke-width="1.2" stroke-dasharray="3 3"/>' +
+              '<circle cx="24" cy="24" r="15" fill="rgba(16, 185, 129, 0.08)"/>' +
+              '<path d="M24 5 L39 41 L24 33 L9 41 Z" fill="#0F172A" stroke="#C8FF6A" stroke-width="2.5" stroke-linejoin="round"/>' +
+              '<path d="M24 11 L33 36 L24 30 L15 36 Z" fill="#C8FF6A"/>' +
+              '<circle cx="24" cy="24" r="3.5" fill="#0F172A"/>' +
+              '<circle cx="24" cy="24" r="1.5" fill="#FFFFFF"/>' +
+            '</svg>' +
+          '</div>'
+        );
+
+        this.courierMarker = new ymaps.Placemark(this.courierCoords, {
+          bearing: this.currentBearing
+        }, {
+          iconLayout: DeltaLayout,
+          iconPane: 'overlaps',
+          zIndex: 9999
+        });
+        this.map.geoObjects.add(this.courierMarker);
+
+        // Destination Marker Pin
+        const DestPinLayout = ymaps.templateLayoutFactory.createClass(
+          '<div style="transform: translate(-50%, -100%); filter: drop-shadow(0 3px 8px rgba(225, 29, 72, 0.45));">' +
+            '<div style="background: #e11d48; color: white; padding: 3px 7px; border-radius: 9px; font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 3px; border: 1.5px solid white; white-space: nowrap;">' +
+              '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>' +
+              '<span>$[properties.address]</span>' +
+            '</div>' +
+          '</div>'
+        );
+
+        this.destMarker = new ymaps.Placemark([0, 0], { address: 'Клиент' }, {
+          iconLayout: DestPinLayout,
+          iconPane: 'overlaps',
+          visible: false
+        });
+        this.map.geoObjects.add(this.destMarker);
+
+        if (this.activeOrder) {
+          this.buildRealRoadRoute(this.activeOrder);
+        }
+      },
+
+      buildRealRoadRoute: function(order, onReady) {
+        if (!this.map || !this.ymapsInstance || !order) return;
+
+        const destLat = parseFloat(order.dest_lat || order.delivery_lat || (this.courierCoords[0] + 0.007));
+        const destLng = parseFloat(order.dest_lng || order.delivery_lng || (this.courierCoords[1] + 0.006));
+        const destCoords = [destLat, destLng];
+
+        this.destMarker.geometry.setCoordinates(destCoords);
+        this.destMarker.properties.set('address', (order.delivery_address || 'Клиент').slice(0, 16));
+        this.destMarker.options.set('visible', true);
+
+        // 1. Try Yandex Routing API
+        this.ymapsInstance.route([this.courierCoords, destCoords], {
+          mapStateAutoApply: false
+        }).then((route) => {
+          let coords = [];
+          const paths = route.getPaths();
+          if (paths && paths.getLength() > 0) {
+            const path = paths.get(0);
+            const segs = path.getSegments ? path.getSegments() : [];
+            const segCount = Array.isArray(segs) ? segs.length : (segs.getLength ? segs.getLength() : 0);
+            if (segCount > 0) {
+              for (let i = 0; i < segCount; i++) {
+                const seg = Array.isArray(segs) ? segs[i] : segs.get(i);
+                const c = (seg.geometry && seg.geometry.getCoordinates) ? seg.geometry.getCoordinates() : (seg.getCoordinates ? seg.getCoordinates() : []);
+                if (c && c.length > 0) coords = coords.concat(c);
+              }
+            } else if (path.geometry && path.geometry.getCoordinates) {
+              coords = path.geometry.getCoordinates();
+            }
+          }
+
+          if (coords && coords.length > 2) {
+            this.drawRoadLine(coords, route.getLength(), route.getTime(), onReady);
+          } else {
+            this.fetchOsrmDirect(destCoords, onReady);
+          }
+        }).catch(() => {
+          // 2. Direct browser OSRM fallback (Real Road Network!)
+          this.fetchOsrmDirect(destCoords, onReady);
+        });
+      },
+
+      fetchOsrmDirect: function(destCoords, onReady) {
+        const startLng = this.courierCoords[1];
+        const startLat = this.courierCoords[0];
+        const destLng = destCoords[1];
+        const destLat = destCoords[0];
+        const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${destLng},${destLat}?overview=full&geometries=geojson`;
+
+        fetch(url)
+          .then(res => res.json())
+          .then(data => {
+            if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+              const route = data.routes[0];
+              const coords = route.geometry.coordinates.map(pt => [pt[1], pt[0]]);
+              this.drawRoadLine(coords, route.distance, route.duration, onReady);
+            } else {
+              throw new Error('OSRM no routes');
+            }
+          })
+          .catch(() => {
+            // Server corridor fallback
+            fetch(`/dashboard/api/courier-route/?start_lat=${startLat}&start_lng=${startLng}&dest_lat=${destLat}&dest_lng=${destLng}`)
+              .then(res => res.json())
+              .then(cData => {
+                if (cData.coordinates && cData.coordinates.length > 0) {
+                  this.drawRoadLine(cData.coordinates, cData.distance, cData.duration, onReady);
+                } else {
+                  throw new Error('No server route');
+                }
+              }).catch(() => {
+                // Resilient road interpolation fallback
+                const steps = 30;
+                const fallbackCoords = [];
+                for (let i = 0; i <= steps; i++) {
+                  const frac = i / steps;
+                  fallbackCoords.push([
+                    startLat + (destLat - startLat) * frac,
+                    startLng + (destLng - startLng) * frac
+                  ]);
+                }
+                this.drawRoadLine(fallbackCoords, this.calcDistance(startLat, startLng, destLat, destLng), 300, onReady);
+              });
+          });
+      },
+
+      drawRoadLine: function(coords, distMeters, timeSec, onReady) {
+        if (!coords || coords.length === 0) return;
+        this.routeCoords = coords;
+        this.distanceRemaining = distMeters || this.calcDistance(this.courierCoords[0], this.courierCoords[1], coords[coords.length - 1][0], coords[coords.length - 1][1]);
+        this.durationRemaining = timeSec || Math.round(this.distanceRemaining / 8.33);
+
+        if (this.activePolyline) this.map.geoObjects.remove(this.activePolyline);
+
+        this.activePolyline = new this.ymapsInstance.Polyline(coords, {}, {
+          strokeColor: '#10b981',
+          strokeWidth: 5,
+          strokeOpacity: 0.95,
+          outlineColor: '#064e3b',
+          outlineWidth: 2,
+          lineCap: 'round',
+          lineJoin: 'round'
+        });
+        this.map.geoObjects.add(this.activePolyline);
+
+        // Fit Bounds only in preview mode so driving camera is not disturbed
+        if (this.navStage === 'PREVIEW') {
+          this.map.setBounds(this.activePolyline.geometry.getBounds(), {
+            zoomMargin: [80, 30, 220, 30],
+            duration: 250
+          });
+        }
+
+        // Set Heading forward along road
+        if (coords.length >= 2) {
+          const initBearing = this.calcBearing(coords[0][0], coords[0][1], coords[1][0], coords[1][1]);
+          this.updateVehicleAngle(initBearing);
+        }
+
+        this.updateActiveOrderCardUI();
+        if (typeof onReady === 'function') onReady();
+      },
+
+      calcBearing: function(lat1, lon1, lat2, lon2) {
+        if (lat1 === lat2 && lon1 === lon2) return this.currentBearing;
+        const toRad = d => d * Math.PI / 180;
+        const toDeg = r => r * 180 / Math.PI;
+        const φ1 = toRad(lat1), φ2 = toRad(lat2);
+        const Δλ = toRad(lon2 - lon1);
+        const y = Math.sin(Δλ) * Math.cos(φ2);
+        const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+        const b = (toDeg(Math.atan2(y, x)) + 360) % 360;
+        return isNaN(b) ? this.currentBearing : b;
+      },
+
+      calcDistance: function(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const toRad = d => d * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      },
+
+      updateVehicleAngle: function(targetAngle) {
+        if (isNaN(targetAngle)) return;
+        let diff = (targetAngle - this.currentBearing) % 360;
+        if (diff > 180) diff -= 360;
+        if (diff < -180) diff += 360;
+        this.currentBearing += diff;
+
+        const el = document.getElementById('courierDeltaArrow');
+        if (el) {
+          el.style.transform = `rotate(${this.currentBearing}deg)`;
+        }
+      },
+
+      updateVehiclePosition: function(lat, lng) {
+        this.courierCoords = [lat, lng];
+        if (this.courierMarker) {
+          this.courierMarker.geometry.setCoordinates([lat, lng]);
+        }
+        const el = document.getElementById('courierDeltaArrow');
+        if (el && !el.style.transform) {
+          el.style.transform = `rotate(${this.currentBearing}deg)`;
+        }
+      },
+
+      // Forward Lookahead Camera Math (focuses camera ahead of courier along road direction)
+      getForwardCameraCoords: function(lat, lng, bearingDeg, offsetMeters) {
+        if (!offsetMeters || offsetMeters <= 0) return [lat, lng];
+        const R = 6371000;
+        const bRad = (bearingDeg * Math.PI) / 180;
+        const latRad = (lat * Math.PI) / 180;
+
+        const dLat = (offsetMeters * Math.cos(bRad)) / R;
+        const dLng = (offsetMeters * Math.sin(bRad)) / (R * Math.cos(latRad));
+
+        const targetLat = lat + (dLat * 180) / Math.PI;
+        const targetLng = lng + (dLng * 180) / Math.PI;
+        return [targetLat, targetLng];
+      },
+
+      currentSpeed: 0,
+
+      updateRecenterBtn: function(isPanned) {
+        const btn = document.getElementById('recenterBtn');
+        if (!btn) return;
+        if (isPanned) {
+          btn.className = 'w-10 h-10 rounded-2xl bg-slate-900 text-[#c8ff6a] border-2 border-slate-900 shadow-2xl pulse-glow flex items-center justify-center active:scale-95 transition-all';
+        } else {
+          btn.className = 'w-10 h-10 rounded-2xl glass-pill text-slate-800 flex items-center justify-center shadow-lg active:scale-95 transition-all hover:bg-slate-50 border border-slate-200/80';
+        }
+      },
+
+      centerOnCourier: function() {
+        this.followCamera = true;
+        this.updateRecenterBtn(false);
+        if (this.recenterTimer) clearTimeout(this.recenterTimer);
+        if (this.map) {
+          if (this.navStage === 'DRIVING') {
+            const lookahead = Math.min(65, Math.max(15, this.distanceRemaining * 0.45));
+            const camTarget = this.getForwardCameraCoords(this.courierCoords[0], this.courierCoords[1], this.currentBearing, lookahead);
+            let targetZoom = 17.8;
+            if (this.distanceRemaining <= 70) targetZoom = 18.2;
+            else if (this.distanceRemaining <= 180) targetZoom = 18.0;
+            this.map.setCenter(camTarget, targetZoom, { duration: 300, checkZoomRange: false });
+          } else {
+            this.map.setCenter(this.courierCoords, 17.0, { duration: 300 });
+          }
+        }
+      },
+
+      exitNavigation: function() {
+        this.navStage = 'PREVIEW';
+        if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+        this.followCamera = false;
+        this.currentSpeed = 0;
+
+        document.getElementById('navManeuverBanner').classList.add('hidden');
+        document.getElementById('btnStartRoute').classList.remove('hidden');
+        document.getElementById('stage2Container').classList.add('hidden');
+        document.getElementById('btnCompleteDelivery').classList.add('hidden');
+
+        const speedEl = document.getElementById('navSpeedBadge');
+        if (speedEl) speedEl.innerText = `0 ${this.t('speedUnit')}`;
+
+        if (this.activePolyline && this.map) {
+          this.map.setBounds(this.activePolyline.geometry.getBounds(), {
+            zoomMargin: [80, 30, 220, 30],
+            duration: 350
+          });
+        }
+      },
+
+      toggleOrderInfoModal: function() {
+        const details = document.getElementById('orderInfoDetails');
+        const btn = document.getElementById('orderInfoBtnText');
+        if (details) {
+          const isHidden = details.classList.contains('hidden');
+          details.classList.toggle('hidden', !isHidden);
+          if (btn) btn.innerText = isHidden ? this.t('infoClose') : this.t('infoBtn');
+        }
+      },
+
+      // STAGE 1 -> 2: ПОЕХАЛИ / KETDIK
+      startNavigation: function() {
+        if (!this.activeOrder) return;
+        this.navStage = 'DRIVING';
+        this.followCamera = true;
+        this.updateRecenterBtn(false);
+        document.getElementById('btnStartRoute').classList.add('hidden');
+        document.getElementById('stage2Container').classList.remove('hidden');
+        document.getElementById('navManeuverBanner').classList.remove('hidden');
+
+        // Immediately close-up guidance zoom directly ahead of courier (like Yandex Taxi)
+        if (this.map) {
+          const initCamTarget = this.getForwardCameraCoords(
+            this.courierCoords[0],
+            this.courierCoords[1],
+            this.currentBearing,
+            65
+          );
+          this.map.setCenter(initCamTarget, 17.8, { duration: 450, checkZoomRange: false });
+        }
+
+        if (!this.routeCoords || this.routeCoords.length < 2) {
+          this.buildRealRoadRoute(this.activeOrder, () => {
+            this.startDrivingLoop();
+          });
+        } else {
+          this.startDrivingLoop();
+        }
+      },
+
+      // 60 FPS Smooth Movement following real curved road geometry (Yandex Taxi style)
+      startDrivingLoop: function() {
+        if (!this.routeCoords || this.routeCoords.length === 0) return;
+        let idx = 0;
+        let step = 0;
+
+        const animate = () => {
+          if (this.navStage !== 'DRIVING') return;
+
+          if (idx < this.routeCoords.length - 1) {
+            const p1 = this.routeCoords[idx];
+            const p2 = this.routeCoords[idx + 1];
+
+            // Consistent velocity (m/frame) calibrated per transport mode
+            const distPerFrame = this.vehicle === 'car' ? 0.38 : (this.vehicle === 'moto' ? 0.32 : (this.vehicle === 'bike' ? 0.22 : 0.14));
+            const segDist = this.calcDistance(p1[0], p1[1], p2[0], p2[1]);
+            const stepDelta = distPerFrame / Math.max(0.4, segDist);
+            step += stepDelta;
+
+            while (step >= 1 && idx < this.routeCoords.length - 1) {
+              step -= 1;
+              idx++;
+            }
+
+            const curLat = p1[0] + (p2[0] - p1[0]) * Math.min(1, step);
+            const curLng = p1[1] + (p2[1] - p1[1]) * Math.min(1, step);
+
+            this.updateVehiclePosition(curLat, curLng);
+
+            // Natural road tangent orientation with smooth turn easing
+            const segBearing = this.calcBearing(p1[0], p1[1], p2[0], p2[1]);
+            let targetBearing = segBearing;
+            if (idx < this.routeCoords.length - 2) {
+              const p3 = this.routeCoords[idx + 2];
+              const nextSegBearing = this.calcBearing(p2[0], p2[1], p3[0], p3[1]);
+              if (step > 0.65) {
+                const t = (step - 0.65) / 0.35;
+                const smoothT = t * t * (3 - 2 * t);
+                let diff = (nextSegBearing - segBearing) % 360;
+                if (diff > 180) diff -= 360;
+                if (diff < -180) diff += 360;
+                targetBearing = segBearing + diff * smoothT;
+              }
+            }
+            this.updateVehicleAngle(targetBearing);
+
+            // Calculate remaining distance & duration
+            const destP = this.routeCoords[this.routeCoords.length - 1];
+            const remainingMeters = this.calcDistance(curLat, curLng, destP[0], destP[1]);
+            this.distanceRemaining = remainingMeters;
+            this.durationRemaining = Math.max(1, Math.round(remainingMeters / 8.33));
+
+            // Dynamic live speedometer (from sketch: 0 KM/Ч)
+            const baseKmh = this.vehicle === 'car' ? 44 : (this.vehicle === 'moto' ? 38 : (this.vehicle === 'bike' ? 22 : 12));
+            const liveKmh = Math.max(0, Math.round(baseKmh + Math.sin(idx * 0.7 + step * 3) * 6));
+            this.currentSpeed = liveKmh;
+            const speedEl = document.getElementById('navSpeedBadge');
+            if (speedEl) speedEl.innerText = `${liveKmh} ${this.t('speedUnit')}`;
+
+            // Camera follow: Forward lookahead focus & dynamic approach zoom (Yandex Taxi style)
+            if (this.map && this.followCamera) {
+              const now = performance.now();
+              if (now - this.lastCameraUpdate >= 90) {
+                this.lastCameraUpdate = now;
+                
+                // Focus camera directly ahead of courier along road direction (matching sketch)
+                const lookaheadDist = Math.min(65, Math.max(15, this.distanceRemaining * 0.45));
+                const camTarget = this.getForwardCameraCoords(curLat, curLng, targetBearing, lookaheadDist);
+
+                let targetZoom = 17.8;
+                if (this.distanceRemaining <= 70) targetZoom = 18.2;
+                else if (this.distanceRemaining <= 180) targetZoom = 18.0;
+
+                const curZoom = this.map.getZoom();
+                if (Math.abs(curZoom - targetZoom) >= 0.25) {
+                  this.map.setCenter(camTarget, targetZoom, {
+                    duration: 350,
+                    checkZoomRange: false
+                  });
+                } else {
+                  this.map.panTo(camTarget, {
+                    flying: false,
+                    duration: 85,
+                    timingFunction: 'linear',
+                    delay: 0
+                  });
+                }
+              }
+            }
+
+            this.updateManeuverHUD();
+            this.checkArrivalUnlock();
+
+            this.animFrameId = requestAnimationFrame(animate);
+          } else {
+            this.markArrived();
+          }
+        };
+
+        this.animFrameId = requestAnimationFrame(animate);
+      },
+
+      checkArrivalUnlock: function() {
+        const btn = document.getElementById('btnArrivedAtDest');
+        const text = document.getElementById('btnArrivedText');
+
+        if (this.distanceRemaining <= 150) {
+          btn.disabled = false;
+          btn.className = 'w-full btn-lime py-2.5 px-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 pulse-glow shadow-md cursor-pointer';
+          text.innerText = this.t('btnArrivedUnlocked');
+        } else {
+          btn.disabled = true;
+          btn.className = 'w-full py-2.5 px-3 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all opacity-50 bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
+          const template = this.t('btnArrivedLocked');
+          text.innerText = template.replace('{m}', Math.round(this.distanceRemaining));
+        }
+      },
+
+      testApproachDestination: function() {
+        if (!this.activeOrder) return;
+        const destLat = parseFloat(this.activeOrder.dest_lat || this.activeOrder.delivery_lat || (this.courierCoords[0] + 0.007));
+        const destLng = parseFloat(this.activeOrder.dest_lng || this.activeOrder.delivery_lng || (this.courierCoords[1] + 0.006));
+
+        const closeLat = destLat - 0.0005;
+        const closeLng = destLng - 0.0004;
+
+        this.updateVehiclePosition(closeLat, closeLng);
+        const heading = this.calcBearing(closeLat, closeLng, destLat, destLng);
+        this.updateVehicleAngle(heading);
+
+        this.distanceRemaining = 65;
+        this.durationRemaining = 8;
+
+        this.followCamera = true;
+        this.updateRecenterBtn(false);
+        if (this.map) {
+          const camTarget = this.getForwardCameraCoords(closeLat, closeLng, heading, 25);
+          this.map.setCenter(camTarget, 18.2, { duration: 300 });
+        }
+
+        this.updateManeuverHUD();
+        this.checkArrivalUnlock();
+      },
+
+      // STAGE 2 -> 3: Mark Arrived
+      markArrived: function() {
+        if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+        this.navStage = 'ARRIVED';
+        this.followCamera = false;
+        this.currentSpeed = 0;
+
+        const speedEl = document.getElementById('navSpeedBadge');
+        if (speedEl) speedEl.innerText = `0 ${this.t('speedUnit')}`;
+
+        document.getElementById('stage2Container').classList.add('hidden');
+        document.getElementById('btnCompleteDelivery').classList.remove('hidden');
+
+        document.getElementById('maneuverTitle').innerText = this.t('maneuverArrived');
+        document.getElementById('maneuverSubtitle').innerText = (this.activeOrder ? this.activeOrder.delivery_address : '');
+        document.getElementById('navDistBadge').innerText = '0 м';
+        document.getElementById('navTimeBadge').innerText = this.t('arrivedBadge');
+
+        if (this.map && this.destMarker) {
+          this.map.setCenter(this.destMarker.geometry.getCoordinates(), 18.2, { duration: 300 });
+        }
+      },
+
+      // STAGE 3: Complete Delivery
+      completeCurrentOrder: function() {
+        if (!this.activeOrder) return;
+        const orderId = this.activeOrder.id;
+        const amount = this.activeOrder.total_amount;
+
+        const formData = new FormData();
+        formData.append('order_id', orderId);
+        formData.append('status', 'COMPLETED');
+        if (this.courier && this.courier.id) formData.append('courier_id', this.courier.id);
+
+        fetch('/dashboard/api/courier-update-order/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('celebrationAmount').innerText = `+${Math.round(amount).toLocaleString('ru-RU')} UZS`;
+          document.getElementById('celebrationToast').classList.remove('hidden');
+
+          setTimeout(() => {
+            document.getElementById('celebrationToast').classList.add('hidden');
+            this.pollUpdates();
+          }, 1300);
+        })
+        .catch(err => alert('Ошибка при завершении заказа'));
+      },
+
+      takeOrder: function(orderId) {
+        const formData = new FormData();
+        formData.append('order_id', orderId);
+        formData.append('action', 'take');
+        if (this.courier && this.courier.id) formData.append('courier_id', this.courier.id);
+
+        fetch('/dashboard/api/courier-update-order/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          this.activeOrderId = orderId;
+          this.switchMainTab('map');
+          this.pollUpdates();
+        });
+      },
+
+      openInNavigator: function(orderId) {
+        const found = this.deliveringOrders.find(o => o.id === orderId);
+        if (found) {
+          this.activeOrder = found;
+          this.switchMainTab('map');
+          this.resetNavState();
+          this.buildRealRoadRoute(this.activeOrder);
+        }
+      },
+
+      createTestOrder: function() {
+        const formData = new FormData();
+        formData.append('action', 'create_demo_order');
+        formData.append('lat', this.courierCoords[0]);
+        formData.append('lng', this.courierCoords[1]);
+        if (this.courier && this.courier.id) formData.append('courier_id', this.courier.id);
+
+        fetch('/dashboard/api/courier-update-order/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          this.pollUpdates();
+          this.switchMainTab('orders');
+          this.setOrdersSubTab('available');
+        });
+      },
+
+      toggleShift: function() {
+        const formData = new FormData();
+        formData.append('action', 'toggle_shift');
+        if (this.courier && this.courier.id) formData.append('courier_id', this.courier.id);
+
+        fetch('/dashboard/api/courier-update-order/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (this.courier) this.courier.is_active = data.is_active;
+          this.updateHeaderUI();
+          this.updateProfileUI();
+        });
+      },
+
+      // ===============================================================
+      // 4. SETTINGS & PROFILE TOGGLES
+      // ===============================================================
+      setVehicle: function(v) {
+        this.vehicle = v;
+        ['car', 'moto', 'bike', 'foot'].forEach(k => {
+          const btn = document.getElementById(`veh-${k}`);
+          if (k === v) {
+            btn.className = 'py-2 rounded-xl bg-slate-900 text-white font-bold shadow-sm';
+          } else {
+            btn.className = 'py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium';
+          }
+        });
+      },
+
+      toggleAutoAccept: function() {
+        this.autoAccept = !this.autoAccept;
+        const btn = document.getElementById('autoAcceptBtn');
+        const knob = document.getElementById('autoAcceptKnob');
+        if (this.autoAccept) {
+          btn.className = 'w-11 h-6 rounded-full bg-emerald-500 relative transition-colors';
+          knob.className = 'w-5 h-5 rounded-full bg-white absolute top-0.5 right-0.5 transition-transform shadow-sm';
+        } else {
+          btn.className = 'w-11 h-6 rounded-full bg-slate-200 relative transition-colors';
+          knob.className = 'w-5 h-5 rounded-full bg-white absolute top-0.5 left-0.5 transition-transform shadow-sm';
+        }
+      },
+
+      toggleSound: function() {
+        this.soundEnabled = !this.soundEnabled;
+        const btn = document.getElementById('soundBtn');
+        const knob = document.getElementById('soundKnob');
+        if (this.soundEnabled) {
+          btn.className = 'w-11 h-6 rounded-full bg-emerald-500 relative transition-colors';
+          knob.className = 'w-5 h-5 rounded-full bg-white absolute top-0.5 right-0.5 transition-transform shadow-sm';
+        } else {
+          btn.className = 'w-11 h-6 rounded-full bg-slate-200 relative transition-colors';
+          knob.className = 'w-5 h-5 rounded-full bg-white absolute top-0.5 left-0.5 transition-transform shadow-sm';
+        }
+      },
+
+      setLanguage: function(l) {
+        this.applyLanguage(l);
+        this.pollUpdates();
+      },
+
+      pollUpdates: function() {
+        fetch(`/dashboard/courier/?format=json&lang=${this.lang}`)
+          .then(res => res.json())
+          .then(data => {
+            this.deliveringOrders = data.delivering_orders || [];
+            this.pendingOrders = data.pending_orders || [];
+            this.completedOrders = data.completed_orders || [];
+            if (data.courier) this.courier = data.courier;
+
+            this.updateHeaderUI();
+            this.updateProfileUI();
+            this.renderAllOrderLists();
+
+            if (this.deliveringOrders.length > 0) {
+              const curId = this.activeOrderId || (this.activeOrder ? this.activeOrder.id : null);
+              const found = this.deliveringOrders.find(o => o.id === curId);
+              this.activeOrder = found || this.deliveringOrders[0];
+              this.activeOrderId = null;
+              this.buildRealRoadRoute(this.activeOrder);
+            } else {
+              this.activeOrder = null;
+              this.resetNavState();
+            }
+            this.updateActiveOrderCardUI();
+          })
+          .catch(() => {});
+      },
+
+      resetNavState: function() {
+        this.navStage = 'PREVIEW';
+        if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+        document.getElementById('navManeuverBanner').classList.add('hidden');
+        document.getElementById('btnStartRoute').classList.remove('hidden');
+        document.getElementById('stage2Container').classList.add('hidden');
+        document.getElementById('btnCompleteDelivery').classList.add('hidden');
+        if (this.destMarker) this.destMarker.options.set('visible', false);
+        if (this.activePolyline && this.map) this.map.geoObjects.remove(this.activePolyline);
+      },
+
+      onGpsUpdate: function(lat, lng) {
+        if (this.navStage !== 'DRIVING') {
+          this.updateVehiclePosition(lat, lng);
+        }
+        fetch('/dashboard/api/courier-location/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ lat: lat, lng: lng, courier_id: this.courier?.id })
+        }).catch(() => {});
+      },
+
+      // ===============================================================
+      // 5. UI UPDATERS & RENDERERS
+      // ===============================================================
+      updateHeaderUI: function() {
+        const earningsEl = document.getElementById('courierEarningsDisplay');
+        if (earningsEl && this.courier) {
+          earningsEl.innerText = `${Math.round(this.courier.total_earned || 0).toLocaleString('ru-RU')} UZS`;
+        }
+
+        const dot = document.getElementById('shiftStatusDot');
+        const text = document.getElementById('shiftStatusText');
+        const isActive = this.courier ? this.courier.is_active : true;
+        if (isActive) {
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+          text.innerText = this.t('shiftOnline');
+        } else {
+          dot.className = 'w-2 h-2 rounded-full bg-slate-500';
+          text.innerText = this.t('shiftBreak');
+        }
+
+        // Dock badge
+        const badge = document.getElementById('dockOrdersBadge');
+        const count = this.deliveringOrders.length + this.pendingOrders.length;
+        if (count > 0) {
+          badge.innerText = count;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      },
+
+      updateProfileUI: function() {
+        if (!this.courier) return;
+        document.getElementById('profCourierName').innerText = this.courier.name || 'Курьер';
+        document.getElementById('profCourierPhone').innerText = this.courier.phone || '';
+        document.getElementById('profCourierStore').innerText = this.courier.store_name || 'StoreBox';
+        document.getElementById('profCompletedCount').innerText = this.completedOrders.length;
+
+        // Shift button in profile
+        const btn = document.getElementById('profShiftBtn');
+        const knob = document.getElementById('profShiftKnob');
+        if (this.courier.is_active) {
+          btn.className = 'w-11 h-6 rounded-full bg-emerald-500 relative transition-colors';
+          knob.className = 'w-5 h-5 rounded-full bg-white absolute top-0.5 right-0.5 transition-transform shadow-sm';
+        } else {
+          btn.className = 'w-11 h-6 rounded-full bg-slate-200 relative transition-colors';
+          knob.className = 'w-5 h-5 rounded-full bg-white absolute top-0.5 left-0.5 transition-transform shadow-sm';
+        }
+      },
+
+      updateActiveOrderCardUI: function() {
+        const card = document.getElementById('activeOrderCard');
+        const chip = document.getElementById('noActiveOrderChip');
+
+        if (!this.activeOrder) {
+          card.classList.add('hidden');
+          chip.classList.remove('hidden');
+          return;
+        }
+
+        chip.classList.add('hidden');
+        card.classList.remove('hidden');
+
+        document.getElementById('activeOrderNumber').innerText = `#${this.activeOrder.order_number}`;
+        document.getElementById('activeCustomerName').innerText = this.activeOrder.customer_name || 'Клиент';
+        document.getElementById('activeDeliveryAddress').innerText = this.activeOrder.delivery_address || 'Адрес не указан';
+
+        const phoneBtn = document.getElementById('activeCustomerPhoneBtn');
+        if (this.activeOrder.customer_phone) {
+          phoneBtn.href = `tel:${this.activeOrder.customer_phone}`;
+          phoneBtn.classList.remove('hidden');
+        } else {
+          phoneBtn.classList.add('hidden');
+        }
+
+        const isCash = this.activeOrder.payment_method === 'CASH';
+        const payMethodLabel = isCash ? this.t('paymentCash') : this.t('paymentPaid');
+        document.getElementById('activePaymentBadge').innerText = `${payMethodLabel} • ${Math.round(this.activeOrder.total_amount).toLocaleString('ru-RU')} UZS`;
+
+        this.updateManeuverHUD();
+      },
+
+      updateManeuverHUD: function() {
+        const distEl = document.getElementById('navDistBadge');
+        const timeEl = document.getElementById('navTimeBadge');
+        if (!distEl || !timeEl) return;
+
+        distEl.innerText = this.distanceRemaining < 1000 ? `${Math.round(this.distanceRemaining)} м` : `${(this.distanceRemaining/1000).toFixed(1)} км`;
+        timeEl.innerText = `~${Math.max(1, Math.round(this.durationRemaining/60))} мин`;
+
+        if (this.navStage === 'DRIVING') {
+          document.getElementById('maneuverSubtitle').innerText = this.activeOrder ? this.activeOrder.delivery_address : '';
+        }
+      },
+
+      renderAllOrderLists: function() {
+        // 1. Orders Screen: Delivering List
+        const delContainer = document.getElementById('ordersListDelivering');
+        const delEmpty = document.getElementById('emptyDelivering');
+        document.getElementById('deliveringBadgeCount').innerText = this.deliveringOrders.length;
+        delContainer.innerHTML = '';
+
+        if (this.deliveringOrders.length === 0) {
+          delEmpty.classList.remove('hidden');
+          const t1 = delEmpty.querySelector('.font-semibold');
+          const t2 = delEmpty.querySelector('.text-\\[11px\\]');
+          if (t1) t1.innerText = this.t('emptyDeliveringTitle');
+          if (t2) t2.innerText = this.t('emptyDeliveringSub');
+        } else {
+          delEmpty.classList.add('hidden');
+          this.deliveringOrders.forEach(o => {
+            const card = document.createElement('div');
+            card.className = 'glass-card rounded-2xl p-3.5 space-y-2 border border-slate-200/90 shadow-sm';
+            card.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-black text-slate-900">#${o.order_number}</span>
+                  <span class="text-slate-300">•</span>
+                  <span class="text-xs font-bold text-slate-800">${o.customer_name}</span>
+                </div>
+                <span class="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">${this.t('subDelivering')}</span>
+              </div>
+              <div class="text-[11px] text-slate-600 flex items-center gap-1">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500 shrink-0"></i>
+                <span class="truncate">${o.delivery_address}</span>
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                <span class="font-extrabold text-slate-900">${Math.round(o.total_amount).toLocaleString('ru-RU')} UZS</span>
+                <button onclick="app.openInNavigator(${o.id})" class="btn-lime py-1 px-3 rounded-xl text-xs font-bold flex items-center gap-1">
+                  <i data-lucide="navigation" class="w-3 h-3"></i>
+                  <span>${this.t('navBtn')}</span>
+                </button>
+              </div>
+            `;
+            delContainer.appendChild(card);
+          });
+        }
+
+        // 2. Orders Screen: Available List
+        const availContainer = document.getElementById('ordersListAvailable');
+        const availEmpty = document.getElementById('emptyAvailable');
+        document.getElementById('availableBadgeCount').innerText = this.pendingOrders.length;
+        availContainer.innerHTML = '';
+
+        if (this.pendingOrders.length === 0) {
+          availEmpty.classList.remove('hidden');
+          const t1 = availEmpty.querySelector('.font-semibold');
+          const t2 = availEmpty.querySelector('.text-\\[11px\\]');
+          if (t1) t1.innerText = this.t('emptyAvailableTitle');
+          if (t2) t2.innerText = this.t('emptyAvailableSub');
+        } else {
+          availEmpty.classList.add('hidden');
+          this.pendingOrders.forEach(o => {
+            const card = document.createElement('div');
+            card.className = 'glass-card rounded-2xl p-3.5 space-y-2 border border-slate-200/90 shadow-sm';
+            card.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-black text-slate-900">#${o.order_number}</span>
+                  <span class="text-slate-300">•</span>
+                  <span class="text-xs font-bold text-slate-800">${o.customer_name}</span>
+                </div>
+                <span class="text-[10px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200">${this.t('readyStatus')}</span>
+              </div>
+              <div class="text-[11px] text-slate-600 flex items-center gap-1">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500 shrink-0"></i>
+                <span class="truncate">${o.delivery_address}</span>
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                <span class="font-extrabold text-slate-900">${Math.round(o.total_amount).toLocaleString('ru-RU')} UZS</span>
+                <button onclick="app.takeOrder(${o.id})" class="btn-lime py-1 px-3 rounded-xl text-xs font-bold">
+                  ${this.t('takeBtn')}
+                </button>
+              </div>
+            `;
+            availContainer.appendChild(card);
+          });
+        }
+
+        // 3. History Screen List
+        const histContainer = document.getElementById('historyListContainer');
+        const histEmpty = document.getElementById('emptyHistory');
+        histContainer.innerHTML = '';
+
+        let totalAmount = 0;
+        this.completedOrders.forEach(o => totalAmount += o.total_amount);
+        document.getElementById('historyTotalEarned').innerText = `${Math.round(totalAmount).toLocaleString('ru-RU')} UZS`;
+        document.getElementById('historyTotalCount').innerText = this.completedOrders.length;
+
+        if (this.completedOrders.length === 0) {
+          histEmpty.classList.remove('hidden');
+          histEmpty.innerText = this.t('historyEmpty');
+        } else {
+          histEmpty.classList.add('hidden');
+          this.completedOrders.forEach(o => {
+            const card = document.createElement('div');
+            card.className = 'glass-card rounded-2xl p-3 space-y-1.5 border border-slate-200/90 shadow-sm';
+            const payText = o.payment_method === 'CASH' ? this.t('paymentCash') : this.t('paymentPaid');
+            card.innerHTML = `
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-900">#${o.order_number}</span>
+                <span class="font-black text-emerald-600">+${Math.round(o.total_amount).toLocaleString('ru-RU')} UZS</span>
+              </div>
+              <div class="text-[11px] text-slate-500 truncate">${o.delivery_address}</div>
+              <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+                <span class="text-emerald-700 font-semibold">${this.t('orderDeliveredBadge')}</span>
+                <span>${payText}</span>
+              </div>
+            `;
+            histContainer.appendChild(card);
+          });
+        }
+
+        lucide.createIcons();
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => app.init());
+  </script>
 </body>
 </html>

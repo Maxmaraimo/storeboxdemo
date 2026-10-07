@@ -1,7 +1,25 @@
 import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Trash2, Edit2, Package, X, Check, Upload, Image as ImageIcon, Loader2, Sliders } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Trash2,
+  Edit2,
+  Package,
+  X,
+  Check,
+  Upload,
+  Image as ImageIcon,
+  Loader2,
+  Sliders,
+  ArrowLeft,
+  DollarSign,
+  Layers,
+  Globe,
+  Send,
+  AlertCircle
+} from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Product, Category } from "../../types";
@@ -13,6 +31,7 @@ export const ProductsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft">("all");
 
   const getCategoryName = (c?: Category | null) => {
     if (!c) return "";
@@ -28,7 +47,7 @@ export const ProductsPage: React.FC = () => {
     return p.name_uz || p.name_ru || p.name_en || "";
   };
 
-  // Modal state
+  // Modal / Editor state
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formNameUz, setFormNameUz] = useState("");
@@ -43,6 +62,7 @@ export const ProductsPage: React.FC = () => {
   const [formIkpu, setFormIkpu] = useState("");
   const [formImage, setFormImage] = useState("");
   const [formDescUz, setFormDescUz] = useState("");
+  const [formIsActive, setFormIsActive] = useState(true);
   const [formError, setFormError] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -50,7 +70,7 @@ export const ProductsPage: React.FC = () => {
 
   const uploadImageFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      setFormError("Faqat rasm formatidagi fayllarni yuklash mumkin (JPG, PNG, WEBP)");
+      setFormError("Файл должен быть изображением (JPG, PNG, WEBP)");
       return;
     }
     const previewUrl = URL.createObjectURL(file);
@@ -71,7 +91,7 @@ export const ProductsPage: React.FC = () => {
         setFormImage(res.data.image_url);
       }
     } catch (err: any) {
-      setFormError("Rasm yuklashda xatolik yuz berdi: " + (err.response?.data?.error || err.message));
+      setFormError("Ошибка загрузки изображения: " + (err.response?.data?.error || err.message));
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -125,8 +145,8 @@ export const ProductsPage: React.FC = () => {
   const saveMutation = useMutation({
     mutationFn: async () => {
       setFormError("");
-      if (!formNameUz.trim()) throw new Error("Mahsulot nomini kiriting");
-      if (!formPrice || Number(formPrice) <= 0) throw new Error("Sotuv narxini to'g'ri kiriting");
+      if (!formNameUz.trim()) throw new Error("Укажите название товара");
+      if (!formPrice || Number(formPrice) <= 0) throw new Error("Укажите цену товара");
 
       const payload: any = {
         name_uz: formNameUz.trim(),
@@ -142,7 +162,7 @@ export const ProductsPage: React.FC = () => {
         primary_image_url: formImage.trim() || null,
         description_uz: formDescUz.trim(),
         category: formCategory ? Number(formCategory) : null,
-        is_active: true,
+        is_active: formIsActive,
       };
 
       if (editingProduct) {
@@ -157,7 +177,7 @@ export const ProductsPage: React.FC = () => {
       closeModal();
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.error || err.response?.data?.detail || err.message || "Xatolik yuz berdi";
+      const msg = err.response?.data?.error || err.response?.data?.detail || err.message || "Ошибка сохранения";
       setFormError(typeof msg === "object" ? JSON.stringify(msg) : msg);
     },
   });
@@ -171,7 +191,7 @@ export const ProductsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (err: any) => {
-      alert(err.response?.data?.error || "Mahsulotni o'chirish huquqingiz yo'q");
+      alert(err.response?.data?.error || "Не удалось удалить товар");
     },
   });
 
@@ -189,6 +209,7 @@ export const ProductsPage: React.FC = () => {
     setFormIkpu("");
     setFormImage("");
     setFormDescUz("");
+    setFormIsActive(true);
     setFormError("");
     setUploadingImage(false);
     setIsDragging(false);
@@ -210,6 +231,7 @@ export const ProductsPage: React.FC = () => {
     setFormIkpu(p.ikpu_code || "");
     setFormImage(p.primary_image_url || "");
     setFormDescUz(p.description_uz || "");
+    setFormIsActive(p.is_active ?? true);
     setFormError("");
     setUploadingImage(false);
     setIsDragging(false);
@@ -226,89 +248,533 @@ export const ProductsPage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const products = productsData?.products || [];
+  const rawProducts = productsData?.products || [];
   const categories = categoriesData?.categories || [];
 
+  const products = rawProducts.filter((p) => {
+    if (statusFilter === "active") return p.is_active;
+    if (statusFilter === "draft") return !p.is_active;
+    return true;
+  });
+
+  const numPrice = Number(formPrice) || 0;
+  const numCost = Number(formCostPrice) || 0;
+  const profit = numPrice > numCost && numCost > 0 ? numPrice - numCost : 0;
+  const margin = numPrice > 0 && numCost > 0 ? Math.round(((numPrice - numCost) / numPrice) * 100) : 0;
+
+  // --------------------------------------------------------------------------
+  // SHOPIFY 2-COLUMN FULL-PAGE PRODUCT EDITOR
+  // --------------------------------------------------------------------------
+  if (modalOpen) {
+    return (
+      <div className="space-y-6 pb-12 max-w-5xl mx-auto">
+        {/* Sticky Action Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h1 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white tracking-tight">
+                {editingProduct
+                  ? (lang === "ru" ? "Редактирование товара" : "Mahsulotni tahrirlash")
+                  : (lang === "ru" ? "Новый товар" : "Yangi mahsulot")}
+              </h1>
+              <div className="text-xs text-slate-500 font-normal">
+                {lang === "ru" ? "Заполните данные о товаре для витрины" : "Mahsulot ma'lumotlarini kiriting"}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 transition-colors"
+            >
+              {lang === "ru" ? "Отмена" : "Bekor qilish"}
+            </button>
+            <button
+              type="button"
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending}
+              className="px-4 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-medium transition-colors shadow-2xs flex items-center gap-1.5"
+            >
+              {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              <span>{lang === "ru" ? "Сохранить" : "Saqlash"}</span>
+            </button>
+          </div>
+        </div>
+
+        {formError && (
+          <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{formError}</span>
+          </div>
+        )}
+
+        {/* 2-Column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* LEFT COLUMN: Main Information (8 cols) */}
+          <div className="lg:col-span-8 space-y-4">
+            {/* Title & Description Card */}
+            <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-3.5">
+              <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
+                {lang === "ru" ? "Название и описание" : "Nomi va tavsifi"}
+              </h2>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Название товара (Узбекский) *" : "Mahsulot nomi (O'zbekcha) *"}
+                  </label>
+                  <input
+                    type="text"
+                    value={formNameUz}
+                    onChange={(e) => setFormNameUz(e.target.value)}
+                    placeholder="Masalan: Klassik Lavash, iPhone 15 Pro..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-normal text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Название товара (Русский)" : "Mahsulot nomi (Ruscha)"}
+                  </label>
+                  <input
+                    type="text"
+                    value={formNameRu}
+                    onChange={(e) => setFormNameRu(e.target.value)}
+                    placeholder="Например: Классический Лаваш, iPhone 15 Pro..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-normal text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Описание товара" : "Mahsulot ta'rifi"}
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formDescUz}
+                    onChange={(e) => setFormDescUz(e.target.value)}
+                    placeholder={lang === "ru" ? "Подробное описание характеристик, состава..." : "Mahsulot haqida ma'lumot..."}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-normal text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-slate-900 resize-y"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Media Upload Card */}
+            <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-3.5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
+                  {lang === "ru" ? "Медиафайлы" : "Mahsulot rasmlari"}
+                </h2>
+                {formImage && (
+                  <button
+                    type="button"
+                    onClick={() => setFormImage("")}
+                    className="text-xs text-rose-500 hover:text-rose-600 font-normal flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{lang === "ru" ? "Удалить фото" : "O'chirish"}</span>
+                  </button>
+                )}
+              </div>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+
+              {formImage ? (
+                <div className="flex items-center gap-4 p-3 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50/50">
+                  <div className="w-20 h-20 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
+                    <img src={formImage} alt="Product" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-slate-800">
+                      {lang === "ru" ? "Основное изображение товара" : "Asosiy rasm"}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-50 text-xs text-slate-700 transition-colors"
+                    >
+                      {lang === "ru" ? "Заменить" : "Almashtirish"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                    isDragging
+                      ? "border-blue-600 bg-blue-50/50"
+                      : "border-slate-300 dark:border-zinc-700 hover:border-slate-400 bg-slate-50/30"
+                  }`}
+                >
+                  {uploadingImage ? (
+                    <div className="py-2 flex flex-col items-center gap-1.5">
+                      <Loader2 className="w-5 h-5 text-slate-600 animate-spin" />
+                      <span className="text-xs text-slate-600">{lang === "ru" ? "Загрузка..." : "Yuklanmoqda..."}</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-1.5">
+                      <Upload className="w-5 h-5 text-slate-400" />
+                      <div className="text-xs font-medium text-slate-800 dark:text-zinc-200">
+                        {lang === "ru" ? "Нажмите для загрузки или перетащите фото" : "Rasm yuklash uchun bosing"}
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        PNG, JPG, WEBP (рекомендуется 1:1)
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Pricing Card */}
+            <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-3.5">
+              <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
+                {lang === "ru" ? "Ценообразование" : "Narxlar"}
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Цена продажи (UZS) *" : "Sotuv narxi (UZS) *"}
+                  </label>
+                  <input
+                    type="number"
+                    value={formPrice}
+                    onChange={(e) => setFormPrice(e.target.value)}
+                    placeholder="35000"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Старая цена (Скидка)" : "Eski narxi (Chegirma)"}
+                  </label>
+                  <input
+                    type="number"
+                    value={formOldPrice}
+                    onChange={(e) => setFormOldPrice(e.target.value)}
+                    placeholder="40000"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Себестоимость" : "Tan narxi"}
+                  </label>
+                  <input
+                    type="number"
+                    value={formCostPrice}
+                    onChange={(e) => setFormCostPrice(e.target.value)}
+                    placeholder="22000"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-900"
+                  />
+                </div>
+              </div>
+
+              {numPrice > 0 && numCost > 0 && (
+                <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500">
+                  <span>{lang === "ru" ? "Маржинальность:" : "Marja:"} <strong className="text-emerald-600">{margin}%</strong></span>
+                  <span>{lang === "ru" ? "Прибыль с единицы:" : "Birlikdan foyda:"} <strong className="text-emerald-600">{profit.toLocaleString()} UZS</strong></span>
+                </div>
+              )}
+            </div>
+
+            {/* Inventory Card */}
+            <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-3.5">
+              <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
+                {lang === "ru" ? "Склад и инвентарь" : "Ombor va hisob"}
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Остаток на складе" : "Mavjud qoldiq"}
+                  </label>
+                  <input
+                    type="number"
+                    value={formStock}
+                    onChange={(e) => setFormStock(e.target.value)}
+                    placeholder="10"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Единица измерения" : "O'lchov birligi"}
+                  </label>
+                  <select
+                    value={formUnit}
+                    onChange={(e) => setFormUnit(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-900"
+                  >
+                    <option value="dona">Штука (dona)</option>
+                    <option value="kg">Килограмм (kg)</option>
+                    <option value="litr">Литр (litr)</option>
+                    <option value="metr">Метр (metr)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Штрихкод (Barcode / SKU)" : "Shtrix-kod"}
+                  </label>
+                  <input
+                    type="text"
+                    value={formBarcode}
+                    onChange={(e) => setFormBarcode(e.target.value)}
+                    placeholder="478000..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-900 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+                    {lang === "ru" ? "Код ИКПУ (MXIK)" : "MXIK (IKPU) kodi"}
+                  </label>
+                  <input
+                    type="text"
+                    value={formIkpu}
+                    onChange={(e) => setFormIkpu(e.target.value)}
+                    placeholder="10101001001000000"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-900 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Status, Category & Publishing (4 cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Status Card */}
+            <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-3">
+              <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
+                {lang === "ru" ? "Статус товара" : "Holati"}
+              </h2>
+
+              <select
+                value={formIsActive ? "active" : "draft"}
+                onChange={(e) => setFormIsActive(e.target.value === "active")}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-900"
+              >
+                <option value="active">🟢 {lang === "ru" ? "Активен (В продаже)" : "Faol (Sotuvda)"}</option>
+                <option value="draft">⚪ {lang === "ru" ? "Черновик / Скрыт" : "Qoralama (To'xtatilgan)"}</option>
+              </select>
+              <p className="text-[11px] text-slate-400">
+                {lang === "ru"
+                  ? "Активные товары отображаются во всех подключенных каналах продаж."
+                  : "Faol mahsulotlar xaridorlarga ko'rinadi."}
+              </p>
+            </div>
+
+            {/* Category Card */}
+            <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-3">
+              <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
+                {lang === "ru" ? "Категория" : "Kategoriya"}
+              </h2>
+
+              <select
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value ? Number(e.target.value) : "")}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-900"
+              >
+                <option value="">{lang === "ru" ? "Без категории" : "Tanlanmagan"}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {getCategoryName(c)}
+                  </option>
+                ))}
+              </select>
+              <Link
+                to="/categories"
+                className="text-xs text-blue-600 hover:underline inline-block"
+              >
+                {lang === "ru" ? "Управление категориями →" : "Kategoriyalarni sozlash →"}
+              </Link>
+            </div>
+
+            {/* Sales Channels Card */}
+            <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-3">
+              <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
+                {lang === "ru" ? "Каналы продаж" : "Sotuv kanallari"}
+              </h2>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 dark:border-zinc-800 bg-slate-50/50">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{lang === "ru" ? "Интернет-магазин" : "Online-do'kon"}</span>
+                  </div>
+                  <span className="text-[11px] text-emerald-600 font-medium">✓ {lang === "ru" ? "Активен" : "Faol"}</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 dark:border-zinc-800 bg-slate-50/50">
+                  <div className="flex items-center gap-2">
+                    <Send className="w-3.5 h-3.5 text-sky-500" />
+                    <span>Telegram Bot</span>
+                  </div>
+                  <span className="text-[11px] text-emerald-600 font-medium">✓ {lang === "ru" ? "Активen" : "Faol"}</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg border border-slate-100 dark:border-zinc-800 bg-slate-50/50">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-3.5 h-3.5 text-slate-500" />
+                    <span>YES POS</span>
+                  </div>
+                  <span className="text-[11px] text-slate-600 font-medium">{lang === "ru" ? "Синхронизировано" : "Ulangan"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // PRODUCTS LIST VIEW: CLEAN SHOPIFY TABLE
+  // --------------------------------------------------------------------------
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            {t("products_list_title") || "Mahsulotlar ro`yxati"}
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {t("products_list_subtitle") || "Katalogdagi tovarlar, narxlar va qoldiqlar"}
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">
+              {lang === "ru" ? "Товары" : "Mahsulotlar"}
+            </h1>
+            <span className="text-xs text-slate-500 font-normal">
+              ({productsData?.total ?? rawProducts.length})
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 font-normal mt-0.5">
+            {lang === "ru"
+              ? "Управление каталогом товаров, ценами и складскими остатками"
+              : "Katalogdagi tovarlar, narxlar va qoldiqlar"}
           </p>
         </div>
+
         {canEditProduct && (
           <button
             type="button"
             data-testid="create-product-btn"
             onClick={openCreateModal}
-            className="px-4 py-2.5 bg-brand text-white rounded-2xl text-xs font-bold hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs"
+            className="px-3.5 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 shadow-2xs self-start sm:self-auto cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>{t("new_product") || "Yangi mahsulot"}</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>{lang === "ru" ? "Добавить товар" : "Yangi mahsulot"}</span>
           </button>
         )}
       </div>
 
-      {/* FILTER & SEARCH */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-2xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex-1 max-w-md relative">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("search_product_ph") || "Mahsulot nomi bo`yicha qidirish..."}
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold placeholder-slate-400 focus:outline-none focus:border-brand"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-bold">
+      {/* Filter Card: Status Tabs, Search & Category */}
+      <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-xs divide-y divide-slate-100 dark:divide-zinc-800">
+        {/* Status Tabs */}
+        <div className="px-3 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar text-xs">
           <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all ${
-              selectedCategory === null ? "bg-brand text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={`px-3 py-1 rounded-md transition-colors font-normal cursor-pointer ${
+              statusFilter === "all"
+                ? "bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-medium"
+                : "text-slate-600 dark:text-zinc-400 hover:text-slate-900"
             }`}
           >
-            {t("all_filter") || "Barchasi"}
+            {lang === "ru" ? "Все товары" : "Barchasi"} ({rawProducts.length})
           </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all ${
-                selectedCategory === cat.id ? "bg-brand text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              {getCategoryName(cat)}
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={() => setStatusFilter("active")}
+            className={`px-3 py-1 rounded-md transition-colors font-normal cursor-pointer ${
+              statusFilter === "active"
+                ? "bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-medium"
+                : "text-slate-600 dark:text-zinc-400 hover:text-slate-900"
+            }`}
+          >
+            {lang === "ru" ? "В наличии" : "Sotuvda"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("draft")}
+            className={`px-3 py-1 rounded-md transition-colors font-normal cursor-pointer ${
+              statusFilter === "draft"
+                ? "bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-medium"
+                : "text-slate-600 dark:text-zinc-400 hover:text-slate-900"
+            }`}
+          >
+            {lang === "ru" ? "Стоп-лист" : "Stop-list"}
+          </button>
         </div>
-      </div>
 
-      {/* PRODUCTS TABLE */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+        {/* Search & Category Filter Row */}
+        <div className="p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="w-full sm:max-w-md relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={lang === "ru" ? "Поиск по названию или штрихкоду..." : "Mahsulot qidirish..."}
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-slate-900"
+            />
+          </div>
+
+          <div className="w-full sm:w-auto flex items-center gap-2">
+            <select
+              value={selectedCategory || ""}
+              onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
+              className="w-full sm:w-48 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-slate-900"
+            >
+              <option value="">{lang === "ru" ? "Все категории" : "Barcha kategoriyalar"}</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {getCategoryName(c)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Clean Polaris Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+            <thead className="bg-slate-50/75 dark:bg-zinc-900 text-slate-500 font-medium border-b border-slate-200/80 dark:border-zinc-800">
               <tr>
-                <th className="py-3.5 px-4">{t("th_photo") || "Tovar"}</th>
-                <th className="py-3.5 px-4">{t("th_category") || "Kategoriya"}</th>
-                <th className="py-3.5 px-4">{t("th_price") || "Sotuv narxi"}</th>
-                <th className="py-3.5 px-4">{t("th_stock") || "Qoldiq"}</th>
-                <th className="py-3.5 px-4">{t("th_unit") || "Birligi"}</th>
-                <th className="py-3.5 px-4">{t("th_status_col") || "Holat"}</th>
-                <th className="py-3.5 px-4 text-right">{t("actions") || "Amallar"}</th>
+                <th className="py-2.5 px-4">{lang === "ru" ? "Товар" : "Tovar"}</th>
+                <th className="py-2.5 px-4">{lang === "ru" ? "Категория" : "Kategoriya"}</th>
+                <th className="py-2.5 px-4">{lang === "ru" ? "Цена" : "Narx"}</th>
+                <th className="py-2.5 px-4">{lang === "ru" ? "Остаток" : "Qoldiq"}</th>
+                <th className="py-2.5 px-4">{lang === "ru" ? "Статус" : "Holat"}</th>
+                <th className="py-2.5 px-4 text-right">{lang === "ru" ? "Действия" : "Amallar"}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80 font-normal text-slate-700 dark:text-zinc-300">
               {products.map((p) => (
-                <tr key={p.id} className={`hover:bg-slate-50/60 transition-colors ${p.stock === 0 ? "opacity-60" : ""}`}>
-                  <td className="py-3.5 px-4 flex items-center gap-3">
+                <tr
+                  key={p.id}
+                  className={`hover:bg-slate-50/75 dark:hover:bg-zinc-800/50 transition-colors ${
+                    !p.is_active || p.stock === 0 ? "opacity-75" : ""
+                  }`}
+                >
+                  <td className="py-3 px-4 flex items-center gap-3">
                     {p.primary_image_url ? (
                       <img
                         src={p.primary_image_url}
@@ -317,43 +783,49 @@ export const ProductsPage: React.FC = () => {
                           e.currentTarget.onerror = null;
                           e.currentTarget.src = "/static/images/placeholder.svg";
                         }}
-                        className="w-12 h-12 rounded-xl object-cover border border-slate-100 shrink-0"
+                        className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-zinc-700 shrink-0 bg-white"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-                        <Package className="w-5 h-5" />
+                      <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-400 flex items-center justify-center shrink-0 border border-slate-200/60 dark:border-zinc-700">
+                        <Package className="w-4 h-4" />
                       </div>
                     )}
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-slate-900 text-sm">{getProductName(p)}</span>
+                        <span className="font-medium text-slate-900 dark:text-white truncate">
+                          {getProductName(p)}
+                        </span>
+                        {p.is_yespos && (
+                          <span className="text-[10px] font-normal px-1 py-0.2 rounded border border-slate-200 bg-slate-50 text-slate-600">
+                            YES POS
+                          </span>
+                        )}
                         {(p as any).has_constructor && (
                           <Link
                             to="/constructor"
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-2xs"
-                            title={lang === "ru" ? "Товар-конструктор (настроить)" : "Konstruktor tovar"}
+                            className="text-[10px] text-blue-600 hover:underline"
+                            title={lang === "ru" ? "Конструктор" : "Konstruktor"}
                           >
-                            <Sliders className="w-2.5 h-2.5" />
-                            <span>{lang === "ru" ? "Конструктор" : "Konstruktor"}</span>
+                            [Конструктор]
                           </Link>
                         )}
                       </div>
-                      {p.name_ru && p.name_uz !== p.name_ru && lang !== "ru" && (
-                        <div className="text-[10px] text-slate-400">{p.name_ru}</div>
-                      )}
-                      {p.name_uz && p.name_uz !== p.name_ru && lang === "ru" && (
-                        <div className="text-[10px] text-slate-400">{p.name_uz}</div>
-                      )}
                       {p.barcode && (
-                        <div className="text-[10px] text-slate-400">#{p.barcode}</div>
+                        <div className="text-[11px] text-slate-400 font-mono">
+                          #{p.barcode}
+                        </div>
                       )}
                     </div>
                   </td>
 
-                  <td className="py-3.5 px-4 text-slate-500">{p.category_name || "—"}</td>
+                  <td className="py-3 px-4 text-slate-500">
+                    {p.category_name || "—"}
+                  </td>
 
-                  <td className="py-3.5 px-4">
-                    <div className="font-bold text-slate-900">{Number(p.price).toLocaleString()} UZS</div>
+                  <td className="py-3 px-4">
+                    <div className="font-medium text-slate-900 dark:text-white">
+                      {Number(p.price).toLocaleString()} UZS
+                    </div>
                     {p.old_price && (
                       <div className="text-[10px] text-slate-400 line-through">
                         {Number(p.old_price).toLocaleString()} UZS
@@ -361,43 +833,40 @@ export const ProductsPage: React.FC = () => {
                     )}
                   </td>
 
-                  <td className="py-3.5 px-4">
-                    <span className={`font-bold ${p.stock === 0 ? "text-rose-500" : "text-slate-900"}`}>
-                      {p.stock}
+                  <td className="py-3 px-4">
+                    <span className={p.stock === 0 ? "text-rose-500 font-medium" : "text-slate-800 dark:text-zinc-200"}>
+                      {p.stock} {p.unit || "dona"}
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-4 text-slate-500">{t("unit_pcs") || p.unit || "dona"}</td>
-
-                  <td className="py-3.5 px-4">
+                  <td className="py-3 px-4">
                     {canEditProduct ? (
                       <button
                         type="button"
                         onClick={() => toggleStatusMutation.mutate({ id: p.id, is_active: !p.is_active })}
                         disabled={toggleStatusMutation.isPending}
-                        title={p.is_active ? "В стоп-лист (выключить)" : "Включить (в наличии)"}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all active:scale-95 shadow-2xs border ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors cursor-pointer border ${
                           p.is_active
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 hover:bg-emerald-100/80"
-                            : "bg-rose-50 text-rose-700 border-rose-200/80 hover:bg-rose-100/80"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-slate-100 text-slate-600 border-slate-200"
                         }`}
                       >
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${p.is_active ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`}></span>
+                        <span className={`w-1.5 h-1.5 rounded-full ${p.is_active ? "bg-emerald-500" : "bg-slate-400"}`}></span>
                         <span>
                           {p.is_active
-                            ? (lang === "ru" ? "В наличии" : lang === "uz" ? "Sotuvda" : "In Stock")
-                            : (lang === "ru" ? "Стоп-лист" : lang === "uz" ? "Stop-list" : "Stop-list")}
+                            ? (lang === "ru" ? "В наличии" : "Sotuvda")
+                            : (lang === "ru" ? "Стоп-лист" : "Stop-list")}
                         </span>
                       </button>
                     ) : (
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border ${
                           p.is_active
                             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : "bg-rose-50 text-rose-700 border-rose-200"
+                            : "bg-slate-100 text-slate-600 border-slate-200"
                         }`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${p.is_active ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                        <span className={`w-1.5 h-1.5 rounded-full ${p.is_active ? "bg-emerald-500" : "bg-slate-400"}`}></span>
                         <span>
                           {p.is_active
                             ? (lang === "ru" ? "В наличии" : "Sotuvda")
@@ -407,49 +876,41 @@ export const ProductsPage: React.FC = () => {
                     )}
                   </td>
 
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {(p as any).has_constructor && (
-                        <Link
-                          to="/constructor"
-                          className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors"
-                          title={lang === "ru" ? "Настроить конструктор" : "Konstruktorni sozlash"}
-                        >
-                          <Sliders className="w-4 h-4" />
-                        </Link>
-                      )}
                       {canEditProduct && (
                         <button
                           type="button"
                           onClick={() => openEditModal(p)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                          title={t("edit") || "Tahrirlash"}
+                          className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 hover:text-slate-800 transition-colors"
+                          title={lang === "ru" ? "Редактировать" : "Tahrirlash"}
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
                       )}
                       {canDeleteProduct && (
                         <button
                           type="button"
                           onClick={() => {
-                            if (confirm(`'${p.name_uz || p.name_ru}' mahsulotini o'chirishni tasdiqlaysizmi?`)) {
+                            if (confirm(lang === "ru" ? `Удалить товар "${p.name_ru || p.name_uz}"?` : `'${p.name_uz}' mahsulotini o'chirishni tasdiqlaysizmi?`)) {
                               deleteMutation.mutate(p.id);
                             }
                           }}
-                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
-                          title={t("delete") || "O'chirish"}
+                          className="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors"
+                          title={lang === "ru" ? "Удалить" : "O'chirish"}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
                   </td>
                 </tr>
               ))}
+
               {products.length === 0 && !isLoading && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    {t("no_products_found") || "Mahsulotlar topilmadi"}
+                  <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                    {lang === "ru" ? "Товары не найдены" : "Mahsulotlar topilmadi"}
                   </td>
                 </tr>
               )}
@@ -457,281 +918,6 @@ export const ProductsPage: React.FC = () => {
           </table>
         </div>
       </div>
-
-      {/* CREATE / EDIT PRODUCT MODAL */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 my-8 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900">
-                {editingProduct ? (t("edit_product") || "Mahsulotni tahrirlash") : (t("new_product") || "Yangi mahsulot qo'shish")}
-              </h3>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {formError && (
-              <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold">
-                {formError}
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto pr-1">
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("product_name_uz") || "Mahsulot nomi (O'zbekcha) *"}
-                </label>
-                <input
-                  type="text"
-                  data-testid="product-name-uz-input"
-                  value={formNameUz}
-                  onChange={(e) => setFormNameUz(e.target.value)}
-                  placeholder="Lavash, Burger, etc."
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("th_category") || "Kategoriya"}
-                </label>
-                <select
-                  value={formCategory}
-                  onChange={(e) => setFormCategory(e.target.value ? Number(e.target.value) : "")}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                >
-                  <option value="">{t("not_selected") || "Tanlanmagan"}</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {getCategoryName(c)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("unit_label") || "O'lchov birligi"}
-                </label>
-                <select
-                  value={formUnit}
-                  onChange={(e) => setFormUnit(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                >
-                  <option value="dona">{t("unit_pcs") || "dona"}</option>
-                  <option value="kg">kg</option>
-                  <option value="metr">m</option>
-                  <option value="litr">l</option>
-                  <option value="portsiya">portion</option>
-                  <option value="pachka">pack</option>
-                  <option value="korobka">box</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("retail_price_label") || "Sotuv narxi (UZS) *"}
-                </label>
-                <input
-                  type="number"
-                  data-testid="product-price-input"
-                  value={formPrice}
-                  onChange={(e) => setFormPrice(e.target.value)}
-                  placeholder="35000"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("old_price_label") || "Eski narxi (Chegirma uchun)"}
-                </label>
-                <input
-                  type="number"
-                  value={formOldPrice}
-                  onChange={(e) => setFormOldPrice(e.target.value)}
-                  placeholder="40000"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("cost_price_label") || "Tan narxi (Ombor hisobi uchun)"}
-                </label>
-                <input
-                  type="number"
-                  value={formCostPrice}
-                  onChange={(e) => setFormCostPrice(e.target.value)}
-                  placeholder="22000"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("stock_label") || "Mavjud qoldiq"}
-                </label>
-                <input
-                  type="number"
-                  value={formStock}
-                  onChange={(e) => setFormStock(e.target.value)}
-                  placeholder="10"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("barcode_label") || "Shtrix-kod (Barcode)"}
-                </label>
-                <input
-                  type="text"
-                  value={formBarcode}
-                  onChange={(e) => setFormBarcode(e.target.value)}
-                  placeholder="478000..."
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("ikpu_label") || "MXIK (IKPU) kodi"}
-                </label>
-                <input
-                  type="text"
-                  value={formIkpu}
-                  onChange={(e) => setFormIkpu(e.target.value)}
-                  placeholder="10101001001000000"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-brand" />
-                    <span>{t("product_image_label") || "Mahsulot rasmi"}</span>
-                  </label>
-                  {formImage && (
-                    <button
-                      type="button"
-                      onClick={() => setFormImage("")}
-                      className="text-[11px] text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1 cursor-pointer"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                      <span>{t("delete") || "Rasmni o'chirish"}</span>
-                    </button>
-                  )}
-                </div>
-
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageFileChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-
-                {formImage ? (
-                  <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                    <div className="relative w-20 h-24 rounded-xl overflow-hidden border border-slate-200 bg-white shrink-0 group">
-                      <img
-                        src={formImage}
-                        alt="Mahsulot rasmi"
-                        className="w-full h-full object-cover"
-                      />
-                      {uploadingImage && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <Loader2 className="w-5 h-5 text-white animate-spin" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingImage}
-                        className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                      >
-                        <Upload className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{t("upload_image_hint") || "Rasmni almashtirish"}</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setIsDragging(true);
-                    }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
-                      isDragging
-                        ? "border-brand bg-brand/5 scale-[0.99]"
-                        : "border-slate-200 hover:border-brand/60 hover:bg-slate-50/80 bg-white"
-                    }`}
-                  >
-                    {uploadingImage ? (
-                      <div className="py-2 flex flex-col items-center gap-2">
-                        <Loader2 className="w-6 h-6 text-brand animate-spin" />
-                        <span className="text-xs font-bold text-slate-600">{t("uploading") || "Rasm yuklanmoqda..."}</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1.5">
-                        <div className="w-10 h-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center mb-1">
-                          <Upload className="w-5 h-5" />
-                        </div>
-                        <div className="text-xs font-bold text-slate-800">
-                          {t("upload_image_hint") || "Rasm yuklash uchun bosing yoki faylni bu yerga tashlang"}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t("description_label") || "Mahsulot ta'rifi"}
-                </label>
-                <textarea
-                  rows={2}
-                  value={formDescUz}
-                  onChange={(e) => setFormDescUz(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
-              >
-                {t("cancel") || "Bekor qilish"}
-              </button>
-              <button
-                type="button"
-                data-testid="save-product-btn"
-                onClick={() => saveMutation.mutate()}
-                disabled={saveMutation.isPending}
-                className="px-5 py-2 bg-brand text-white rounded-xl text-xs font-bold hover:bg-brand-dark transition-colors disabled:opacity-50"
-              >
-                {saveMutation.isPending ? (t("saving") || "Saqlanmoqda...") : (t("save") || "Saqlash")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

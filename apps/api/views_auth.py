@@ -34,9 +34,9 @@ def get_merchant_store(request):
             return store
 
     # Check store owned by user
-    store = Store.objects.filter(owner=user, is_active=True).first()
+    store = Store.objects.filter(owner=user, is_active=True).order_by("id").first()
     if not store:
-        store = Store.objects.filter(owner=user).first()
+        store = Store.objects.filter(owner=user).order_by("id").first()
     
     # If not owner, check if user is staff or courier in a store
     if not store:

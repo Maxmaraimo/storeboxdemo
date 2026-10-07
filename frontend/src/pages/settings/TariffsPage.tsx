@@ -235,7 +235,7 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center shadow-xs">
+            <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
               <BadgePercent className="w-4 h-4" />
             </span>
             <span>{t("tariffs") || "Tarif rejalari va obuna"}</span>
@@ -247,13 +247,13 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
 
         {storeInfo && (
           <div className="flex items-center gap-3">
-            <div className="bg-white dark:bg-[#161b26] rounded-2xl border border-slate-200/80 dark:border-white/10 px-4 py-2.5 shadow-xs flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center font-bold shadow-xs">
+            <div className="bg-white rounded-xl border border-slate-200/80 px-4 py-2.5 shadow-2xs flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                 <Wallet className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400">{t("store_balance_label") || "Do'kon balansi"}</div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white">
+                <div className="text-[10px] uppercase font-semibold text-slate-400">{t("store_balance_label") || "Do'kon balansi"}</div>
+                <div className="text-sm font-semibold text-slate-900">
                   {storeInfo.balance.toLocaleString()} <span className="text-[11px] font-medium text-slate-500">UZS</span>
                 </div>
               </div>
@@ -261,7 +261,7 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
             <button
               onClick={fetchTariffInfo}
               title={t("refresh_btn") || "Yangilash"}
-              className="p-2.5 rounded-2xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-[#211b2e] dark:hover:text-[#c8ff6a] hover:bg-slate-50 dark:hover:bg-white/5 transition shadow-xs cursor-pointer"
+              className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
@@ -270,14 +270,14 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
       </div>
 
       {/* Tabs Navigation: Tarif rejalari vs To'lovlar tarixi */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl w-fit border border-slate-200/70 dark:border-white/10 shadow-2xs">
+      <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-fit border border-slate-200/70 shadow-2xs">
         <button
           type="button"
           onClick={() => handleTabChange("plans")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
             activeTab === "plans"
-              ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              ? "bg-white text-slate-900 shadow-2xs"
+              : "text-slate-600 hover:text-slate-900"
           }`}
         >
           <Zap className="w-4 h-4" />
@@ -287,20 +287,20 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
         <button
           type="button"
           onClick={() => handleTabChange("history")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
             activeTab === "history"
-              ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              ? "bg-white text-slate-900 shadow-2xs"
+              : "text-slate-600 hover:text-slate-900"
           }`}
         >
           <Clock className="w-4 h-4" />
           <span>{lang === "ru" ? "История платежей" : lang === "en" ? "Payment History" : "To'lovlar tarixi"}</span>
           {billingHistory.length > 0 && (
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                 activeTab === "history"
-                  ? "bg-[#c8ff6a]/25 text-[#c8ff6a] dark:bg-[#211b2e]/25 dark:text-[#211b2e]"
-                  : "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300"
+                  ? "bg-slate-100 text-slate-800"
+                  : "bg-slate-200 text-slate-700"
               }`}
             >
               {billingHistory.length}
@@ -312,22 +312,22 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
       {/* Subscription Status Alert Banner */}
       {storeInfo && (
         <div
-          className={`p-4 rounded-3xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
+          className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs ${
             isExpired
               ? "bg-rose-50 border-rose-200 text-rose-900"
               : isExpiringSoon
               ? "bg-amber-50 border-amber-200 text-amber-900"
-              : "bg-[#211b2e] border-[#211b2e]/20 text-white"
+              : "bg-slate-900 border-slate-800 text-white"
           }`}
         >
           <div className="flex items-start sm:items-center gap-3">
             <div
-              className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                 isExpired
                   ? "bg-rose-100 text-rose-600"
                   : isExpiringSoon
-                  ? "bg-amber-100 text-amber-600 animate-bounce"
-                  : "bg-[#c8ff6a] text-[#211b2e]"
+                  ? "bg-amber-100 text-amber-600"
+                  : "bg-blue-600 text-white"
               }`}
             >
               {isExpired ? (
@@ -409,7 +409,7 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
                 }`}
               >
                 <span>{t("month_6_simple") || (lang === "ru" ? "6 месяцев" : lang === "en" ? "6 months" : "6 oy")}</span>
-                <span className="px-1.5 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
+                <span className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">
                   -10%
                 </span>
               </button>
@@ -421,7 +421,7 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
                 }`}
               >
                 <span>{t("month_12_simple") || (lang === "ru" ? "12 месяцев" : lang === "en" ? "12 months" : "12 oy")}</span>
-                <span className="px-1.5 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
+                <span className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">
                   -20%
                 </span>
               </button>
@@ -514,16 +514,16 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
           return (
             <div
               key={p.code}
-              className={`bg-white rounded-3xl border transition-all duration-300 flex flex-col justify-between p-6 relative hover:-translate-y-2 hover:shadow-2xl hover:border-slate-300 ${
+              className={`bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between p-6 relative hover:shadow-md hover:border-slate-300 ${
                 p.recommended
-                  ? "border-2 border-brand shadow-xl ring-2 ring-brand/10 scale-[1.02]"
+                  ? "border-2 border-blue-600 shadow-md ring-1 ring-blue-600/20"
                   : isCurrentPlan
-                  ? "border-[#211b2e] shadow-md ring-1 ring-[#211b2e]/20"
-                  : "border-slate-200/90 shadow-xs"
+                  ? "border-blue-600 shadow-xs ring-1 ring-blue-600/30"
+                  : "border-slate-200/90 shadow-2xs"
               }`}
             >
               {p.recommended && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-brand text-white font-bold text-[10px] uppercase tracking-wider shadow-sm">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-blue-600 text-white font-semibold text-[10px] uppercase tracking-wider shadow-2xs">
                   {t("recommended_badge") || "Tavsiya etiladi"}
                 </div>
               )}
@@ -531,15 +531,15 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between">
-                    <h2 className="text-base font-bold text-slate-900">{planTitle}</h2>
+                    <h2 className="text-base font-semibold text-slate-900">{planTitle}</h2>
                     {isCurrentPlan && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
                         {t("current_plan_badge") || "Joriy tarif"}
                       </span>
                     )}
                   </div>
                   {planDesc && (
-                    <p className="text-xs text-slate-500 font-medium mt-1 leading-snug">
+                    <p className="text-xs text-slate-500 font-normal mt-1 leading-snug">
                       {planDesc}
                     </p>
                   )}
@@ -551,22 +551,22 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
                     <span className="text-2xl font-bold text-slate-900">
                       {Math.round(totalPrice / duration).toLocaleString()}
                     </span>
-                    <span className="text-xs text-slate-400 font-bold">{t("per_month") || "UZS / oy"}</span>
+                    <span className="text-xs text-slate-400 font-semibold">{t("per_month") || "UZS / oy"}</span>
                   </div>
 
-                  <div className="mt-2 text-[11px] font-bold text-slate-500 bg-slate-50 rounded-xl p-2 border border-slate-100 flex items-center justify-between">
+                  <div className="mt-2 text-[11px] font-medium text-slate-500 bg-slate-50 rounded-lg p-2 border border-slate-100 flex items-center justify-between">
                     <span>{t("total_for_months").replace("{duration}", String(duration))}</span>
-                    <span className="font-bold text-slate-900">{totalPrice.toLocaleString()} UZS</span>
+                    <span className="font-semibold text-slate-900">{totalPrice.toLocaleString()} UZS</span>
                   </div>
                 </div>
 
                 {/* Features List */}
                 <div className="border-t border-slate-100 pt-3">
-                  <div className="text-xxs font-bold text-slate-400 uppercase tracking-wider mb-2">{t("features_label") || "Imkoniyatlar:"}</div>
+                  <div className="text-xxs font-semibold text-slate-400 uppercase tracking-wider mb-2">{t("features_label") || "Imkoniyatlar:"}</div>
                   <ul className="space-y-2.5">
                     {p.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600 font-medium">
-                        <Check className="w-4 h-4 text-[#211b2e] dark:text-[#c8ff6a] shrink-0 mt-0.5" />
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600 font-normal">
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                         <span>{featMap[f]?.[lang] || f}</span>
                       </li>
                     ))}
@@ -615,11 +615,11 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
                     ? "Search by plan, amount or payment method..."
                     : "Tarif, summa yoki to'lov turi bo'yicha qidirish..."
                 }
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] transition-all"
+                className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
               />
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-bold text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-medium text-slate-500">
               <Receipt className="w-4 h-4 text-slate-400" />
               <span>
                 {lang === "ru"
@@ -632,25 +632,25 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
           </div>
 
           {/* Table Container */}
-          <div className="bg-white dark:bg-[#161b26] rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-white/10 bg-slate-50/60 dark:bg-white/5 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-400">
-                    <th className="py-3.5 px-5">ID / {lang === "ru" ? "Дата" : lang === "en" ? "Date" : "Sana"}</th>
-                    <th className="py-3.5 px-5">{lang === "ru" ? "Тарифный план" : lang === "en" ? "Pricing Plan" : "Tarif rejasi"}</th>
-                    <th className="py-3.5 px-5">{lang === "ru" ? "Срок действия" : lang === "en" ? "Period" : "Muddati"}</th>
-                    <th className="py-3.5 px-5">{lang === "ru" ? "Способ оплаты" : lang === "en" ? "Payment Method" : "To'lov turi"}</th>
-                    <th className="py-3.5 px-5">{lang === "ru" ? "Сумма" : lang === "en" ? "Amount" : "Summa"}</th>
-                    <th className="py-3.5 px-5 text-right">{lang === "ru" ? "Статус" : lang === "en" ? "Status" : "Holati"}</th>
+                  <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <th className="py-3 px-4">ID / {lang === "ru" ? "Дата" : lang === "en" ? "Date" : "Sana"}</th>
+                    <th className="py-3 px-4">{lang === "ru" ? "Тарифный план" : lang === "en" ? "Pricing Plan" : "Tarif rejasi"}</th>
+                    <th className="py-3 px-4">{lang === "ru" ? "Срок действия" : lang === "en" ? "Period" : "Muddati"}</th>
+                    <th className="py-3 px-4">{lang === "ru" ? "Способ оплаты" : lang === "en" ? "Payment Method" : "To'lov turi"}</th>
+                    <th className="py-3 px-4">{lang === "ru" ? "Сумма" : lang === "en" ? "Amount" : "Summa"}</th>
+                    <th className="py-3 px-4 text-right">{lang === "ru" ? "Статус" : lang === "en" ? "Status" : "Holati"}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
                   {filteredHistory.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-14 text-center text-slate-400 dark:text-slate-500">
+                      <td colSpan={6} className="py-14 text-center text-slate-400">
                         <Clock className="w-8 h-8 mx-auto mb-2 opacity-35" />
-                        <div className="font-bold">
+                        <div className="font-medium">
                           {lang === "ru"
                             ? "История платежей пуста"
                             : lang === "en"
@@ -661,19 +661,19 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
                     </tr>
                   ) : (
                     filteredHistory.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
-                        <td className="py-4 px-5">
-                          <div className="font-bold text-slate-900 dark:text-white">#{item.id}</div>
+                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-slate-900">#{item.id}</div>
                           <div className="text-[11px] text-slate-400 font-normal">{item.created_at}</div>
                         </td>
-                        <td className="py-4 px-5">
+                        <td className="py-3 px-4">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-extrabold ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium ${
                               item.plan === "PRO" || item.plan === "ENTERPRISE"
-                                ? "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300"
+                                ? "bg-purple-50 text-purple-700 border border-purple-200"
                                 : item.plan === "STANDARD"
-                                ? "bg-[#211b2e] text-[#c8ff6a]"
-                                : "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200"
+                                ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                : "bg-slate-100 text-slate-700 border border-slate-200"
                             }`}
                           >
                             <Zap className="w-3 h-3" />
@@ -769,9 +769,9 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
                   )}
                 </span>
               </div>
-              <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-sm font-bold">
+              <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-sm font-semibold">
                 <span className="text-slate-800">Jami to'lov:</span>
-                <span className="text-[#211b2e] dark:text-[#c8ff6a] font-bold text-base">
+                <span className="text-slate-900 font-semibold text-base">
                   {calculateDiscountedPrice(selectedPlan.monthly_price, duration).toLocaleString()} UZS
                 </span>
               </div>
@@ -780,7 +780,7 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
             {/* Feedback Alert */}
             {feedbackMessage && (
               <div
-                className={`p-3.5 rounded-2xl text-xs font-bold flex items-start gap-2.5 ${
+                className={`p-3.5 rounded-xl text-xs font-medium flex items-start gap-2.5 ${
                   feedbackMessage.type === "success"
                     ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                     : "bg-rose-50 text-rose-800 border border-rose-200"
@@ -799,14 +799,14 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
             <form onSubmit={handleSubmitTariffRequest} className="space-y-4 text-xs">
               {/* Payment Methods */}
               <div>
-                <label className="block font-bold text-slate-700 mb-2">To'lov usulini tanlang:</label>
+                <label className="block font-semibold text-slate-700 mb-2">To'lov usulini tanlang:</label>
                 <div className="space-y-2">
                   {/* Balance Option */}
                   <label
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
                       paymentMethod === "BALANCE"
-                        ? "border-[#211b2e] dark:border-[#c8ff6a] bg-[#211b2e]/5 dark:bg-[#c8ff6a]/5 ring-1 ring-[#211b2e] dark:ring-[#c8ff6a]"
-                        : "border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
+                        ? "border-blue-600 bg-blue-50/40 ring-1 ring-blue-600/30"
+                        : "border-slate-200 hover:bg-slate-50"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -816,14 +816,14 @@ export const TariffsPage: React.FC<TariffsPageProps> = ({ initialTab = "plans" }
                         value="BALANCE"
                         checked={paymentMethod === "BALANCE"}
                         onChange={() => setPaymentMethod("BALANCE")}
-                        className="text-[#211b2e] focus:ring-[#211b2e]"
+                        className="text-blue-600 focus:ring-blue-600"
                       />
-                      <div className="w-8 h-8 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center shrink-0 shadow-xs">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                         <Wallet className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-white">Do'kon balansi</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">Mablag' balansdan bir zumda yechiladi</div>
+                        <div className="font-semibold text-slate-900">Do'kon balansi</div>
+                        <div className="text-[10px] text-slate-500">Mablag' balansdan bir zumda yechiladi</div>
                       </div>
                     </div>
                     <div className="text-right">

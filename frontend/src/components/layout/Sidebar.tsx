@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -17,26 +17,30 @@ import {
   Monitor,
   Wand2,
   Store as StoreIcon,
-  CreditCard,
-  Truck,
-  MapPin,
-  UserCheck,
-  BadgePercent,
   Settings,
   ChevronLeft,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  BarChart3,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseMobile }) => {
   const location = useLocation();
-  const { store, t, lang } = useAuth();
+  const { store, lang } = useAuth();
   const { newOrdersCount, unreadChatsCount } = useNotifications();
   const storefrontUrl = store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#");
 
-  // Expanded by default for clear readability, with toggle to collapse
+  // Expanded by default, saved in localStorage
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
     const saved = localStorage.getItem("storebox_sidebar_expanded");
     return saved !== null ? saved === "true" : true;
@@ -50,418 +54,368 @@ export const Sidebar: React.FC = () => {
     });
   };
 
-  // Accordion open/close state for nested menu items (staff & tariffs)
-  const [staffAccordionOpen, setStaffAccordionOpen] = useState<boolean>(() => {
-    return location.pathname.startsWith("/settings/staff") || location.pathname.startsWith("/settings/roles") || location.pathname.startsWith("/settings/couriers");
-  });
-  const [tariffAccordionOpen, setTariffAccordionOpen] = useState<boolean>(() => {
-    return location.pathname.startsWith("/settings/tariffs");
-  });
-
-  useEffect(() => {
-    if (location.pathname.startsWith("/settings/staff") || location.pathname.startsWith("/settings/roles") || location.pathname.startsWith("/settings/couriers")) {
-      setStaffAccordionOpen(true);
-    }
-    if (location.pathname.startsWith("/settings/tariffs")) {
-      setTariffAccordionOpen(true);
-    }
-  }, [location.pathname]);
-
   const navSections = useMemo(
     () => [
       {
-        title: t("main_section") || "Asosiy",
+        title: lang === "ru" ? "Главное" : lang === "en" ? "Overview" : "Asosiy",
         items: [
-          { path: "/", icon: LayoutDashboard, label: t("dashboard") || "Boshqaruv paneli", badge: null, permissionModule: "dashboard" },
+          {
+            path: "/",
+            icon: LayoutDashboard,
+            label: lang === "ru" ? "Главная" : lang === "en" ? "Dashboard" : "Boshqaruv paneli",
+            badge: null,
+          },
           {
             path: "/orders",
             icon: ShoppingCart,
-            label: t("orders") || "Buyurtmalar",
+            label: lang === "ru" ? "Заказы" : lang === "en" ? "Orders" : "Buyurtmalar",
             badge: newOrdersCount > 0 ? String(newOrdersCount) : null,
-            permissionModule: "orders",
           },
-          { path: "/customers", icon: Users, label: t("customers") || "Mijozlar", badge: null, permissionModule: "customers" },
+          {
+            path: "/products",
+            icon: Package,
+            label: lang === "ru" ? "Товары" : lang === "en" ? "Products" : "Mahsulotlar",
+            badge: null,
+          },
+          {
+            path: "/customers",
+            icon: Users,
+            label: lang === "ru" ? "Клиенты" : lang === "en" ? "Customers" : "Mijozlar",
+            badge: null,
+          },
+          {
+            path: "/analytics",
+            icon: BarChart3,
+            label: lang === "ru" ? "Аналитика" : lang === "en" ? "Analytics" : "Tahlil",
+            badge: null,
+          },
+        ],
+      },
+      {
+        title: lang === "ru" ? "Каталог и склад" : lang === "en" ? "Catalog & Stock" : "Katalog & Ombor",
+        items: [
+          {
+            path: "/categories",
+            icon: FolderTree,
+            label: lang === "ru" ? "Категории" : lang === "en" ? "Categories" : "Kategoriyalar",
+            badge: null,
+          },
+          {
+            path: "/discounts",
+            icon: Tag,
+            label: lang === "ru" ? "Скидки" : lang === "en" ? "Discounts" : "Chegirmalar",
+            badge: null,
+          },
+          {
+            path: "/warehouse",
+            icon: Boxes,
+            label: lang === "ru" ? "Складской учет" : lang === "en" ? "Warehouse" : "Omborxona",
+            badge: null,
+          },
+          {
+            path: "/constructor",
+            icon: Wand2,
+            label: lang === "ru" ? "Конструктор" : lang === "en" ? "Constructor" : "Konstruktor",
+            badge: null,
+          },
+          {
+            path: "/ikpu",
+            icon: Barcode,
+            label: lang === "ru" ? "Коды ИКПУ" : lang === "en" ? "IKPU Codes" : "IKPU kodlari",
+            badge: null,
+          },
+        ],
+      },
+      {
+        title: lang === "ru" ? "Каналы продаж" : lang === "en" ? "Sales Channels" : "Savdo kanallari",
+        items: [
+          {
+            path: "/robo-market",
+            icon: StoreIcon,
+            label: lang === "ru" ? "Интернет-магазин" : lang === "en" ? "Online Store" : "Internet do'kon",
+            badge: null,
+          },
+          {
+            path: "/platforms",
+            icon: Bot,
+            label: lang === "ru" ? "Telegram-бот" : lang === "en" ? "Telegram Bot" : "Telegram Bot",
+            badge: null,
+          },
+          {
+            path: "/yespos",
+            icon: Monitor,
+            label: lang === "ru" ? "YES POS импорт" : lang === "en" ? "YES POS Sync" : "YesPOS integratsiya",
+            badge: null,
+          },
+          {
+            path: "/marketing",
+            icon: Megaphone,
+            label: lang === "ru" ? "Маркетинг" : lang === "en" ? "Marketing" : "Marketing & Aksiya",
+            badge: null,
+          },
+          {
+            path: "/platforms/qr",
+            icon: QrCode,
+            label: lang === "ru" ? "QR-меню" : lang === "en" ? "QR Menu" : "QR Menyu",
+            badge: null,
+          },
+          {
+            path: "/design",
+            icon: Sparkles,
+            label: lang === "ru" ? "Дизайн витрины" : lang === "en" ? "Design Studio" : "Dizayn vitrina",
+            badge: null,
+          },
           {
             path: "/chats",
             icon: MessageSquare,
-            label: t("chat") || "Xabarlar & Chat",
+            label: lang === "ru" ? "Сообщения" : lang === "en" ? "Customer Chats" : "Xabarlar",
             badge: unreadChatsCount > 0 ? String(unreadChatsCount) : null,
-            permissionModule: "chats",
           },
         ],
       },
       {
-        title: t("catalog_section") || "Mahsulotlar & Ombor",
+        title: lang === "ru" ? "Настройки" : lang === "en" ? "Settings" : "Sozlamalar",
         items: [
-          { path: "/products", icon: Package, label: t("all_products") || "Barcha mahsulotlar", badge: null, permissionModule: "products" },
-          { path: "/constructor", icon: Wand2, label: lang === "ru" ? "Конструктор" : lang === "uz" ? "Konstruktor" : "Constructor", badge: "NEW", permissionModule: "products" },
-          { path: "/categories", icon: FolderTree, label: t("categories") || "Kategoriyalar", badge: null, permissionModule: "categories" },
-          { path: "/discounts", icon: Tag, label: t("discounts") || "Chegirmalar", badge: null, permissionModule: "discounts" },
-          { path: "/ikpu", icon: Barcode, label: t("ikpu") || "IKPU kodlari", badge: null, permissionModule: "ikpu" },
-          { path: "/warehouse", icon: Boxes, label: t("warehouse") || "Omborxona", badge: null, permissionModule: "warehouse" },
-        ],
-      },
-      {
-        title: t("marketing_section") || "Marketing & Integratsiyalar",
-        items: [
-          { path: "/marketing", icon: Megaphone, label: t("marketing") || "Marketing & Aksiya", badge: null, permissionModule: "broadcast" },
-          { path: "/platforms", icon: Bot, label: t("telegram_bot") || "Telegram Bot", badge: null, permissionModule: "telegram" },
-          { path: "/design", icon: Sparkles, label: t("design_ai") || "Dizayn & AI vitrina", badge: "AI", permissionModule: "banners" },
-          { path: "/platforms/qr", icon: QrCode, label: t("qr_catalog") || "QR Menyu & Katalog", badge: null, permissionModule: "analytics" },
-          { path: "/yespos", icon: Monitor, label: t("yespos_import") || "YesPOS integratsiya", badge: "POS", permissionModule: "dashboard" },
-          { path: "/robo-market", icon: StoreIcon, label: t("storebox_market") || "StoreBox Market", badge: null, permissionModule: "channels" },
-        ],
-      },
-      {
-        title: t("settings_section") || "Sozlamalar",
-        items: [
-          { path: "/settings/payments", icon: CreditCard, label: t("payment_methods") || "To'lov tizimlari", badge: null, permissionModule: "payments" },
-          { path: "/settings/delivery", icon: Truck, label: t("delivery") || "Yetkazib berish", badge: null, permissionModule: "delivery" },
-          { path: "/settings/branches", icon: MapPin, label: t("branches") || "Filiallar", badge: null, permissionModule: "branches" },
           {
-            path: "/settings/staff",
-            icon: UserCheck,
-            label: t("staff") || "Xodimlar",
+            path: "/settings",
+            icon: Settings,
+            label: lang === "ru" ? "Настройки магазина" : lang === "en" ? "Store Settings" : "Do'kon sozlamalari",
             badge: null,
-            permissionModule: "staff",
-            isAccordion: true,
-            accordionKey: "staff",
-            subItems: [
-              { path: "/settings/staff", label: lang === "ru" ? "Сотрудники" : lang === "en" ? "Staff" : "Xodimlar", permissionModule: "staff" },
-              { path: "/settings/staff/roles", label: lang === "ru" ? "Роли и права" : lang === "en" ? "Roles" : "Rollar", permissionModule: "roles" },
-              { path: "/settings/staff/couriers", label: lang === "ru" ? "Курьеры" : lang === "en" ? "Couriers" : "Kuryer", permissionModule: "delivery" },
-            ],
           },
-          {
-            path: "/settings/tariffs",
-            icon: BadgePercent,
-            label: t("tariffs") || "Tarif rejalari",
-            badge: null,
-            permissionModule: "settings",
-            isAccordion: true,
-            accordionKey: "tariffs",
-            subItems: [
-              {
-                path: "/settings/tariffs",
-                label: lang === "ru" ? "Тарифные планы" : lang === "en" ? "Pricing Plans" : "Tarif rejalari",
-                permissionModule: "settings",
-              },
-              {
-                path: "/settings/tariffs/history",
-                label: lang === "ru" ? "История платежей" : lang === "en" ? "Payment History" : "To'lovlar tarixi",
-                permissionModule: "settings",
-              },
-            ],
-          },
-          { path: "/settings", icon: Settings, label: t("settings") || "Asosiy sozlamalar", badge: null, permissionModule: "settings" },
         ],
       },
     ],
-    [t, lang, newOrdersCount, unreadChatsCount]
+    [lang, newOrdersCount, unreadChatsCount]
   );
 
-  const allNavPaths = useMemo(
-    () =>
-      navSections.flatMap((section) =>
-        section.items.flatMap((item) =>
-          item.subItems ? item.subItems.map((s) => s.path) : [item.path]
-        )
-      ),
-    [navSections]
-  );
-
-  const isActive = (path: string, exact: boolean = false) => {
+  const isActive = (path: string) => {
     const current = location.pathname.replace(/\/+$/, "") || "/";
     const target = path.replace(/\/+$/, "") || "/";
 
     if (target === "/") {
       return current === "/";
     }
-
     if (current === target) {
       return true;
     }
-
-    if (exact) {
-      return false;
-    }
-
     if (current.startsWith(target + "/")) {
-      const hasMoreSpecific = allNavPaths.some((otherPath) => {
-        const other = otherPath.replace(/\/+$/, "") || "/";
-        return (
-          other !== target &&
-          other.length > target.length &&
-          (current === other || current.startsWith(other + "/"))
-        );
-      });
-      return !hasMoreSpecific;
+      return true;
     }
-
     return false;
   };
 
-  return (
-    <aside
-      className={`bg-white/75 dark:bg-[#12141a] backdrop-blur-2xl border border-white/85 dark:border-white/10 rounded-[28px] shadow-[0_20px_50px_-15px_rgba(15,23,42,0.07),inset_0_1.5px_2px_rgba(255,255,255,0.95)] shrink-0 hidden lg:flex flex-col justify-between py-4 px-3 sticky top-4 h-[calc(100vh-32px)] transition-all duration-300 z-40 ${
-        isExpanded ? "w-64" : "w-[72px]"
-      }`}
-    >
-      {/* 1. TOP LOGO & STORE SUBDOMAIN */}
-      <div className="flex flex-col gap-3 pb-3 border-b border-black/[0.06] dark:border-white/10">
-        <div className={`flex items-center ${isExpanded ? "justify-between px-1" : "flex-col gap-2 items-center"}`}>
-          {isExpanded ? (
+  const renderNavContent = (isMobile: boolean = false) => {
+    const expanded = isMobile ? true : isExpanded;
+
+    return (
+      <div className="flex flex-col h-full justify-between bg-[#18181B] text-zinc-300">
+        {/* Top Header: Brand Logo & Store Info */}
+        <div className="p-3.5 border-b border-zinc-800/90">
+          <div className="flex items-center justify-between">
             <Link
               to="/"
-              className="flex items-center gap-2.5 group overflow-hidden"
-              title="StoreBox Dashboard"
+              onClick={() => isMobile && onCloseMobile && onCloseMobile()}
+              className="flex items-center gap-2.5 overflow-hidden group"
+              title="StoreBox"
             >
-              {/* StoreBox Official Brand Cube Logo */}
-              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] flex items-center justify-center shadow-lg shadow-[#211b2e]/25 border border-white/10 shrink-0 group-hover:scale-105 transition-transform">
-                <svg viewBox="0 0 32 32" className="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
+              {/* Native StoreBox Cube Logo */}
+              <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-700/80 flex items-center justify-center shrink-0 shadow-xs">
+                <svg
+                  viewBox="0 0 32 32"
+                  className="w-5 h-5 stroke-blue-500 fill-none stroke-[2] stroke-linejoin-round"
+                >
                   <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
                   <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
                 </svg>
               </div>
 
-              <div className="text-left truncate">
-                <div className="text-[17px] font-[850] tracking-[-0.6px] text-neutral-900 dark:text-white leading-none">
-                  StoreBox
+              {expanded && (
+                <div className="text-left truncate">
+                  <div className="text-sm font-semibold tracking-tight text-white leading-tight">
+                    StoreBox
+                  </div>
+                  <div className="text-[11px] text-zinc-400 truncate">
+                    {store?.name || "Commerce SaaS"}
+                  </div>
                 </div>
-                <div className="text-[9px] font-bold text-neutral-400 mt-1 tracking-wider">
-                  STUDIO 2.0
-                </div>
-              </div>
+              )}
             </Link>
-          ) : (
-            <Link to="/" title="StoreBox" className="group">
-              <div className="w-9 h-9 rounded-xl bg-[#211b2e] flex items-center justify-center shadow-md border border-white/10 group-hover:scale-105 transition-transform">
-                <svg viewBox="0 0 32 32" className="w-5 h-5 stroke-[#c8ff6a] fill-none stroke-[1.8]">
-                  <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
-                  <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
-                </svg>
+
+            {/* Mobile Close Button */}
+            {isMobile && (
+              <button
+                type="button"
+                onClick={onCloseMobile}
+                className="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Active Store Subdomain Pill */}
+          {expanded && store?.subdomain && (
+            <a
+              href={storefrontUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2.5 px-2.5 py-1.5 rounded-md bg-zinc-900/80 border border-zinc-800 flex items-center justify-between text-xs text-zinc-300 hover:text-white hover:border-zinc-700 transition-all group"
+              title={lang === "ru" ? "Открыть витрину" : "Open storefront"}
+            >
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <span className="truncate text-[11px] font-normal">{store.subdomain}.storebox.uz</span>
               </div>
-            </Link>
+              <ExternalLink className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
+            </a>
           )}
-
-          {/* Collapse/Expand Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleExpand}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-            title={isExpanded ? (t("collapse") || "Kichraytirish") : (t("expand") || "Kengaytirish")}
-          >
-            {isExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </button>
         </div>
 
-        {/* Live Store Subdomain Pill */}
-        {isExpanded && store?.subdomain && (
-          <a
-            href={storefrontUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-2.5 py-1.5 rounded-xl bg-neutral-100 dark:bg-white/5 border border-black/[0.04] dark:border-white/10 flex items-center justify-between text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors group"
-            title={t("view_storefront_tooltip") || "Do'kon vitrinasini ochish"}
-          >
-            <div className="flex items-center gap-1.5 truncate">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#c8ff6a] animate-pulse"></span>
-              <span className="truncate">{store.subdomain}.storebox.uz</span>
-            </div>
-            <ExternalLink className="w-3 h-3 text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white shrink-0" />
-          </a>
-        )}
-      </div>
+        {/* Scrollable Navigation List */}
+        <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-3.5 text-xs no-scrollbar">
+          {navSections.map((section, sIdx) => (
+            <div key={sIdx} className="space-y-0.5">
+              {expanded && (
+                <div className="px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+                  {section.title}
+                </div>
+              )}
 
-      {/* 2. SCROLLABLE NAVIGATION LIST */}
-      <nav className="flex-1 overflow-y-auto no-scrollbar py-2 space-y-4">
-        {navSections.map((section, sIdx) => (
-          <div key={sIdx} className="space-y-1">
-            {isExpanded && (
-              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                {section.title}
-              </div>
-            )}
+              {section.items.map((item) => {
+                const isItemActive = isActive(item.path);
+                const Icon = item.icon;
 
-            {section.items.map((item) => {
-              const isAccordionOpen =
-                item.accordionKey === "tariffs"
-                  ? tariffAccordionOpen
-                  : staffAccordionOpen;
-
-              const isItemActive = item.isAccordion
-                ? item.accordionKey === "tariffs"
-                  ? location.pathname.startsWith("/settings/tariffs")
-                  : location.pathname.startsWith("/settings/staff") ||
-                    location.pathname.startsWith("/settings/roles") ||
-                    location.pathname.startsWith("/settings/couriers")
-                : isActive(item.path);
-              const Icon = item.icon;
-
-              if (item.isAccordion && item.subItems) {
                 return (
-                  <div key={item.path} className="space-y-1">
-                    {/* Accordion parent trigger */}
-                    <div
-                      onClick={() => {
-                        if (!isExpanded) {
-                          setIsExpanded(true);
-                          if (item.accordionKey === "tariffs") {
-                            setTariffAccordionOpen(true);
-                          } else {
-                            setStaffAccordionOpen(true);
-                          }
-                        } else {
-                          if (item.accordionKey === "tariffs") {
-                            setTariffAccordionOpen((prev) => !prev);
-                          } else {
-                            setStaffAccordionOpen((prev) => !prev);
-                          }
-                        }
-                      }}
-                      className={`relative flex items-center rounded-2xl transition-all duration-150 cursor-pointer group select-none ${
-                        isExpanded
-                          ? "px-3 py-2 gap-2.5 w-full text-xs"
-                          : "w-11 h-11 mx-auto justify-center"
-                      } ${
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => isMobile && onCloseMobile && onCloseMobile()}
+                    className={`relative flex items-center rounded-lg transition-colors group ${
+                      expanded
+                        ? "px-2.5 py-1.5 gap-2.5 w-full text-[13px]"
+                        : "w-9 h-9 mx-auto justify-center"
+                    } ${
+                      isItemActive
+                        ? "bg-white/10 text-white font-medium"
+                        : "text-zinc-400 hover:text-white hover:bg-white/[0.05] font-normal"
+                    }`}
+                    title={!expanded ? item.label : undefined}
+                  >
+                    <Icon
+                      className={`w-4 h-4 shrink-0 transition-colors ${
                         isItemActive
-                          ? "bg-[#211b2e] dark:bg-[#c8ff6a] text-white dark:text-[#211b2e] font-bold shadow-md shadow-[#211b2e]/20"
-                          : "text-neutral-600 dark:text-neutral-400 hover:text-white dark:hover:text-[#211b2e] hover:bg-[#211b2e] dark:hover:bg-[#c8ff6a] font-medium"
+                          ? "text-white"
+                          : "text-zinc-400 group-hover:text-white"
                       }`}
-                      title={!isExpanded ? item.label : undefined}
-                    >
-                      <Icon
-                        className={`w-4 h-4 shrink-0 transition-transform ${
-                          isItemActive
-                            ? "scale-105 text-[#c8ff6a] dark:text-[#211b2e]"
-                            : "group-hover:scale-105 group-hover:text-[#c8ff6a] dark:group-hover:text-[#211b2e]"
-                        }`}
-                      />
+                      strokeWidth={1.6}
+                    />
 
-                      {isExpanded && (
-                        <>
-                          <span className="truncate flex-1">{item.label}</span>
-                          <ChevronRight
-                            className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                              isAccordionOpen
-                                ? "rotate-90 text-[#c8ff6a] dark:text-[#211b2e]"
-                                : "text-neutral-400 group-hover:text-white dark:group-hover:text-[#211b2e]"
-                            }`}
-                          />
-                        </>
-                      )}
+                    {expanded && <span className="truncate flex-1">{item.label}</span>}
 
-                      {!isExpanded && (
-                        <div className="absolute left-full ml-3 px-2.5 py-1 rounded-xl bg-neutral-900 dark:bg-neutral-800 border border-transparent dark:border-white/10 text-white text-[11px] font-semibold whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
-                          {item.label}
-                        </div>
-                      )}
-                    </div>
+                    {item.badge && (
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.2 rounded-full ${
+                          expanded ? "ml-auto shrink-0" : "absolute -top-1 -right-1"
+                        } bg-zinc-800 text-zinc-200 border border-zinc-700`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
 
-                    {/* Accordion Subitems */}
-                    {isExpanded && isAccordionOpen && (
-                      <div className="pl-6 pr-1 space-y-1 border-l-2 border-slate-100 dark:border-neutral-800 ml-4 my-1">
-                        {item.subItems.map((sub) => {
-                          const subActive = location.pathname.replace(/\/+$/, "") === sub.path.replace(/\/+$/, "");
-                          return (
-                            <Link
-                              key={sub.path}
-                              to={sub.path}
-                              className={`flex items-center px-3 py-1.5 rounded-xl text-xs transition-colors ${
-                                subActive
-                                  ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] font-bold"
-                                  : "text-neutral-500 dark:text-neutral-400 hover:text-[#211b2e] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 font-medium"
-                              }`}
-                            >
-                              <span className="truncate">{sub.label}</span>
-                            </Link>
-                          );
-                        })}
+                    {/* Floating Tooltip when collapsed */}
+                    {!expanded && (
+                      <div className="absolute left-full ml-2 px-2 py-1 rounded bg-zinc-900 border border-zinc-800 text-white text-[11px] whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-md">
+                        {item.label}
                       </div>
                     )}
-                  </div>
+                  </Link>
                 );
-              }
-
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`relative flex items-center rounded-2xl transition-all duration-150 group ${
-                    isExpanded
-                      ? "px-3 py-2 gap-2.5 w-full text-xs"
-                      : "w-11 h-11 mx-auto justify-center"
-                  } ${
-                    isItemActive
-                      ? "bg-[#211b2e] dark:bg-[#c8ff6a] text-white dark:text-[#211b2e] shadow-md shadow-[#211b2e]/20 font-bold"
-                      : "text-neutral-600 dark:text-neutral-400 hover:text-white dark:hover:text-[#211b2e] hover:bg-[#211b2e] dark:hover:bg-[#c8ff6a] font-medium"
-                  }`}
-                  title={!isExpanded ? item.label : undefined}
-                >
-                  <Icon
-                    className={`w-4 h-4 shrink-0 transition-transform ${
-                      isItemActive
-                        ? "scale-105 text-[#c8ff6a] dark:text-[#211b2e]"
-                        : "group-hover:scale-105 group-hover:text-[#c8ff6a] dark:group-hover:text-[#211b2e]"
-                    }`}
-                  />
-
-                  {isExpanded && (
-                    <span className="truncate flex-1">{item.label}</span>
-                  )}
-
-                  {/* Badges */}
-                  {item.badge && (
-                    <span
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                        isExpanded ? "shrink-0 ml-auto" : "absolute -top-1 -right-1"
-                      } ${
-                        isItemActive
-                          ? "bg-white/20 text-[#c8ff6a] dark:bg-[#211b2e]/20 dark:text-[#211b2e]"
-                          : "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 group-hover:bg-white/20 group-hover:text-[#c8ff6a]"
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-
-                  {/* Tooltip for collapsed view */}
-                  {!isExpanded && (
-                    <div className="absolute left-full ml-3 px-2.5 py-1 rounded-xl bg-neutral-900 dark:bg-neutral-800 border border-transparent dark:border-white/10 text-white text-[11px] font-semibold whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-xl">
-                      {item.label}
-                    </div>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* 3. FOOTER: STOREFRONT LINK */}
-      {store?.subdomain && (
-        <div className="pt-2 border-t border-black/[0.06] dark:border-white/10">
-          <a
-            href={storefrontUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`flex items-center rounded-2xl bg-neutral-100/80 dark:bg-white/5 border border-black/[0.06] dark:border-white/10 hover:bg-neutral-200/60 dark:hover:bg-white/10 text-neutral-700 dark:text-neutral-300 transition-all ${
-              isExpanded ? "p-2.5 gap-2.5 justify-between" : "w-11 h-11 mx-auto justify-center"
-            }`}
-            title={t("view_storefront_tooltip") || "Do'kon saytini ko'rish"}
-          >
-            <div className="flex items-center gap-2 truncate">
-              <StoreIcon className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" />
-              {isExpanded && (
-                <span className="text-xs font-bold truncate">{t("view_website") || "Veb-saytni ko'rish"}</span>
-              )}
+              })}
             </div>
-            {isExpanded && (
-              <ExternalLink className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-            )}
-          </a>
+          ))}
+        </nav>
+
+        {/* Bottom Section: Storefront Link & Collapse/Expand Button */}
+        <div className="p-2 border-t border-zinc-800/90 space-y-1">
+          {/* Storefront Link */}
+          {store?.subdomain && (
+            <a
+              href={storefrontUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors ${
+                expanded ? "px-2.5 py-1.5 gap-2.5 justify-between text-xs" : "w-9 h-9 mx-auto justify-center"
+              }`}
+              title={lang === "ru" ? "Открыть витрину" : "View Storefront"}
+            >
+              <div className="flex items-center gap-2 truncate">
+                <StoreIcon className="w-4 h-4 text-zinc-400" strokeWidth={1.6} />
+                {expanded && (
+                  <span className="truncate font-normal">
+                    {lang === "ru" ? "Открыть магазин" : lang === "en" ? "View store" : "Do'kon vitrinasi"}
+                  </span>
+                )}
+              </div>
+              {expanded && <ExternalLink className="w-3 h-3 text-zinc-500 shrink-0" />}
+            </a>
+          )}
+
+          {/* Dedicated Working Collapse / Expand Toggle Button */}
+          {!isMobile && (
+            <button
+              type="button"
+              onClick={toggleExpand}
+              className={`w-full flex items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer ${
+                expanded ? "px-2.5 py-1.5 gap-2.5 text-xs font-normal" : "w-9 h-9 mx-auto justify-center"
+              }`}
+              title={
+                expanded
+                  ? (lang === "ru" ? "Свернуть навигацию" : "Collapse navigation")
+                  : (lang === "ru" ? "Развернуть навигацию" : "Expand navigation")
+              }
+            >
+              {expanded ? (
+                <>
+                  <PanelLeftClose className="w-4 h-4 text-zinc-400 shrink-0" strokeWidth={1.6} />
+                  <span className="truncate">
+                    {lang === "ru" ? "Свернуть навигацию" : lang === "en" ? "Collapse navigation" : "Navigatsiyani yopish"}
+                  </span>
+                </>
+              ) : (
+                <PanelLeftOpen className="w-4 h-4 text-zinc-400 shrink-0" strokeWidth={1.6} />
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {/* 1. Desktop Docked Sidebar (sticky full height) */}
+      <aside
+        className={`bg-[#18181B] border-r border-zinc-800 shrink-0 hidden lg:flex flex-col h-screen sticky top-0 transition-all duration-200 z-40 select-none ${
+          isExpanded ? "w-60" : "w-16"
+        }`}
+      >
+        {renderNavContent(false)}
+      </aside>
+
+      {/* 2. Mobile Slide-Over Drawer */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in"
+            onClick={onCloseMobile}
+          />
+          {/* Drawer content */}
+          <div className="relative w-64 max-w-[80vw] h-full bg-[#18181B] border-r border-zinc-800 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+            {renderNavContent(true)}
+          </div>
         </div>
       )}
-    </aside>
+    </>
   );
 };

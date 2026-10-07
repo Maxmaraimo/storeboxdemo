@@ -1,0 +1,1878 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ lang|default:'uz' }}" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>{{ store.name }} — Tashkent Streetwear Flagship</title>
+    <meta name="description" content="AURA ATELIER — zamonaviy erkaklar ko'cha modasi. Sara tabiiy matolar, mualliflik bichimi. Toshkent, Mirobod.">
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/streetwear/logo_emblem.svg' %}">
+
+    <!-- Fonts: Barlow Condensed, Inter, Manrope -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Base Tailwind & 222 FMA CSS -->
+    <link rel="stylesheet" href="{% static 'css/storefront-tailwind.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/222fma.css' %}">
+    <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
+    <script src="{% static 'vendor/lucide.min.js' %}"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+
+        :root {
+            --ink: #0c0d0b;
+            --paper: #ffffff;
+            --paper-warm: #ffffff;
+            --olive: #737861;
+            --olive-soft: #777c64;
+            --line: rgba(12, 13, 11, 0.08);
+            --muted: #74756f;
+            --ease: cubic-bezier(.2, .75, .2, 1);
+            --font-display: 'Barlow Condensed', 'Manrope', Inter, sans-serif;
+            --font-serif: Georgia, serif;
+            --font-sans: Inter, sans-serif;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #0c0d0b;
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Essential Scroll Margin to prevent sticky navbar from cutting titles */
+        section[id], div[id] {
+            scroll-margin-top: 85px !important;
+        }
+
+        .font-condensed {
+            font-family: 'Barlow Condensed', sans-serif;
+            text-transform: uppercase;
+        }
+
+        .font-serif-italic {
+            font-family: var(--font-serif);
+            font-style: italic;
+        }
+
+        /* Running Ticker Marquee */
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 24s linear infinite;
+        }
+        .animate-marquee:hover {
+            animation-play-state: paused;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(12, 13, 11, 0.15);
+            border-radius: 999px;
+        }
+
+        /* Smooth Dragging Lookbook */
+        .lookbook-slider {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 12px;
+        }
+        .lookbook-slider::-webkit-scrollbar { display: none; }
+        .lb-card-item {
+            flex: 0 0 clamp(280px, 28vw, 420px);
+            scroll-snap-align: start;
+        }
+        @media (max-width: 640px) {
+            .lb-card-item {
+                flex: 0 0 78vw;
+            }
+        }
+
+        /* Fixed Navigation Bar - Crisp Light Architectural Header */
+        .fma-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 60;
+            height: 72px;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 0 4vw !important;
+            transition: all 0.35s var(--ease);
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(12, 13, 11, 0.08);
+            color: #0c0d0b;
+        }
+        .fma-nav.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .fma-nav-left {
+            display: flex !important;
+            align-items: center !important;
+            gap: 36px !important;
+        }
+        .fma-nav-links {
+            display: none !important;
+        }
+        @media (min-width: 768px) {
+            .fma-nav-links {
+                display: flex !important;
+                align-items: center !important;
+                gap: 24px !important;
+            }
+        }
+        .fma-nav-links a {
+            color: rgba(12, 13, 11, 0.75) !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.04em !important;
+            text-transform: uppercase !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            text-decoration: none !important;
+            transition: color 0.2s ease !important;
+            padding: 6px 2px !important;
+            white-space: nowrap !important;
+        }
+        .fma-nav-links a:hover {
+            color: #0c0d0b !important;
+        }
+
+        /* Language Switcher Pill - Crystal Clear High Contrast */
+        .lang-switcher-pill {
+            display: inline-flex !important;
+            align-items: center !important;
+            background: rgba(12, 13, 11, 0.06) !important;
+            border: 1px solid rgba(12, 13, 11, 0.12) !important;
+            border-radius: 999px !important;
+            padding: 3px !important;
+            gap: 2px !important;
+        }
+        .lang-btn-item {
+            padding: 6px 14px !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.04em !important;
+            border-radius: 999px !important;
+            transition: all 0.2s ease !important;
+            border: none !important;
+            cursor: pointer !important;
+            line-height: 1 !important;
+            text-transform: uppercase !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+        }
+        .lang-btn-item.active,
+        button.lang-btn-item.active {
+            background-color: #0c0d0b !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+        }
+        .lang-btn-item.inactive,
+        button.lang-btn-item.inactive {
+            background-color: transparent !important;
+            color: rgba(12, 13, 11, 0.6) !important;
+            -webkit-text-fill-color: rgba(12, 13, 11, 0.6) !important;
+        }
+        .lang-btn-item.inactive:hover {
+            color: #0c0d0b !important;
+            -webkit-text-fill-color: #0c0d0b !important;
+        }
+
+        /* High-Contrast Cart Pill Button (Header) */
+        .fma-cart-pill {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            background: #0c0d0b !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 999px !important;
+            padding: 8px 18px !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.02em !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+            transition: all 0.25s ease !important;
+            text-decoration: none !important;
+        }
+        .fma-cart-pill * {
+            color: #ffffff !important;
+        }
+        .fma-cart-pill:hover {
+            background: #222222 !important;
+            transform: translateY(-1px) !important;
+        }
+
+        /* Profile Pill Button */
+        .fma-profile-pill {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            background: rgba(12, 13, 11, 0.06) !important;
+            border: 1px solid rgba(12, 13, 11, 0.12) !important;
+            color: #0c0d0b !important;
+            border-radius: 999px !important;
+            padding: 8px 16px !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+            transition: all 0.25s ease !important;
+        }
+        .fma-profile-pill * {
+            color: #0c0d0b !important;
+        }
+        .fma-profile-pill:hover {
+            background: #0c0d0b !important;
+            color: #ffffff !important;
+            border-color: #0c0d0b !important;
+        }
+        .fma-profile-pill:hover * {
+            color: #ffffff !important;
+        }
+
+        /* High-Contrast Hero CTA Buttons */
+        .fma-hero-btn-primary {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            background: #0c0d0b !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 999px !important;
+            padding: 14px 28px !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.06em !important;
+            text-transform: uppercase !important;
+            text-decoration: none !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+        .fma-hero-btn-primary * {
+            color: #ffffff !important;
+        }
+        .fma-hero-btn-primary:hover {
+            background: #222222 !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .fma-hero-btn-secondary {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            background: rgba(12, 13, 11, 0.06) !important;
+            color: #0c0d0b !important;
+            border: 1px solid rgba(12, 13, 11, 0.15) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border-radius: 999px !important;
+            padding: 14px 28px !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.06em !important;
+            text-transform: uppercase !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+        }
+        .fma-hero-btn-secondary * {
+            color: #0c0d0b !important;
+        }
+        .fma-hero-btn-secondary:hover {
+            background: rgba(12, 13, 11, 0.12) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        /* High-Fashion Split Hero Section (Pure CSS - Zero dependency) */
+        .fma-hero-section {
+            background-color: #ffffff !important;
+            color: #0c0d0b !important;
+            position: relative;
+            width: 100%;
+            min-height: calc(100vh - 40px);
+            display: flex;
+            align-items: center;
+            padding: 110px 5vw 50px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .fma-hero-container {
+            width: 100%;
+            max-width: 1380px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .fma-hero-text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 22px;
+            max-width: 620px;
+            z-index: 2;
+        }
+        .fma-hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(12, 13, 11, 0.05);
+            border: 1px solid rgba(12, 13, 11, 0.1);
+            border-radius: 999px;
+            padding: 6px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-family: 'Barlow Condensed', sans-serif;
+            color: #0c0d0b;
+            align-self: flex-start;
+        }
+        .fma-hero-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(48px, 5.5vw, 84px);
+            font-weight: 900;
+            line-height: 0.92;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            color: #0c0d0b;
+            margin: 0;
+        }
+        .fma-hero-sub {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #55574f;
+            font-weight: 500;
+            margin: 0;
+            max-width: 520px;
+        }
+        .fma-hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .fma-hero-features {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(12, 13, 11, 0.08);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #737861;
+        }
+        .fma-hero-card {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(12, 13, 11, 0.08);
+            background: #f0eee9;
+        }
+        .fma-hero-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+            transition: transform 0.8s ease;
+        }
+        .fma-hero-card:hover img {
+            transform: scale(1.03);
+        }
+        .fma-hero-card-badge {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(16px);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* High-Fashion Manifesto Section (Pure CSS - Zero dependency) */
+        .fma-manifesto-section {
+            background-color: #f7f6f2 !important;
+            border-top: 1px solid rgba(12, 13, 11, 0.08);
+            border-bottom: 1px solid rgba(12, 13, 11, 0.08);
+            padding: 90px 5vw;
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .fma-manifesto-container {
+            width: 100%;
+            max-width: 1380px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .fma-manifesto-text {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .fma-manifesto-kicker {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #737861;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .fma-manifesto-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(34px, 4.2vw, 56px);
+            font-weight: 900;
+            line-height: 1.02;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            color: #0c0d0b;
+            margin: 0;
+        }
+        .fma-manifesto-desc {
+            font-size: 15px;
+            line-height: 1.65;
+            color: #55574f;
+            margin: 0;
+        }
+        .fma-manifesto-bento {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .fma-bento-card {
+            background: #ffffff;
+            border: 1px solid rgba(12, 13, 11, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .fma-bento-val {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: #0c0d0b;
+            line-height: 1;
+        }
+        .fma-bento-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #737861;
+            margin-top: 6px;
+        }
+        .fma-bento-sub {
+            font-size: 10.5px;
+            color: #8c8f85;
+            margin-top: 2px;
+        }
+        .fma-manifesto-photo-wrap {
+            position: relative;
+            width: 100%;
+            height: 520px;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(12, 13, 11, 0.08);
+            background: #ffffff;
+        }
+        .fma-manifesto-photo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+            transition: transform 0.8s ease;
+        }
+        .fma-manifesto-photo-wrap:hover img {
+            transform: scale(1.03);
+        }
+        .fma-manifesto-photo-badge {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(16px);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Kinetic Typography for Brand Manifesto */
+        .ink-text {
+            max-width: 1080px;
+            letter-spacing: -0.04em;
+            color: #0c0d0b;
+        }
+        .ink-text span {
+            opacity: clamp(0.18, calc(var(--p, 0) * (var(--n, 12) + 4) - var(--w, 0)), 1);
+            transition: opacity 0.2s linear;
+            display: inline-block;
+            margin-right: 0.22em;
+        }
+
+        /* Lookbook Cards */
+        .lb-card {
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            transform: none !important;
+        }
+        .lb-media {
+            background: #ffffff !important;
+            border: 1px solid rgba(12, 13, 11, 0.08) !important;
+            transition: all 0.3s ease;
+        }
+        .lb-card:hover .lb-media {
+            border-color: rgba(12, 13, 11, 0.22) !important;
+            box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.08) !important;
+        }
+        .lb-index {
+            background: #0c0d0b !important;
+            color: #ffffff !important;
+            font-weight: 900 !important;
+        }
+        .lb-badge {
+            background: rgba(12, 13, 11, 0.06) !important;
+            color: #0c0d0b !important;
+            font-weight: 700 !important;
+            border: 1px solid rgba(12, 13, 11, 0.1) !important;
+        }
+        .lb-bar {
+            background: rgba(12, 13, 11, 0.88) !important;
+            backdrop-filter: blur(14px) !important;
+            color: #ffffff !important;
+        }
+
+        /* Outfit Builder Stage & Full Mannequin Scaling */
+        .stage-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-height: 520px;
+            aspect-ratio: 2/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        .mannequin-img-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        /* Hand layers clip-paths */
+        .hand-layer-left {
+            clip-path: polygon(26.3% 48.2%, 34.5% 48.2%, 34.5% 56.8%, 31.5% 59%, 27.2% 56.6%);
+            z-index: 25;
+        }
+        .hand-layer-right {
+            clip-path: polygon(65.5% 48.2%, 73.7% 48.2%, 72.8% 56.6%, 68.5% 59%, 65.5% 56.8%);
+            z-index: 25;
+        }
+
+        /* High-Contrast Outfit Add Button */
+        .fma-outfit-add-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            background: #ffffff !important;
+            color: #0c0d0b !important;
+            border: none !important;
+            border-radius: 999px !important;
+            padding: 14px 28px !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.06em !important;
+            text-transform: uppercase !important;
+            cursor: pointer !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+            transition: all 0.25s ease !important;
+        }
+        .fma-outfit-add-btn * {
+            color: #0c0d0b !important;
+        }
+        .fma-outfit-add-btn:hover {
+            background: #ece7db !important;
+            transform: translateY(-1px) !important;
+        }
+
+        /* Craft Section - Solid Architectural Black Contrast */
+        #craft {
+            background-color: #0c0d0b !important;
+            color: #ffffff !important;
+        }
+        .craft-card {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            backdrop-filter: blur(12px) !important;
+            border-radius: 24px !important;
+            padding: 32px 28px !important;
+            transition: all 0.35s ease !important;
+        }
+        .craft-card:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.25) !important;
+            transform: translateY(-4px) !important;
+        }
+
+        /* Clean Streetwear Badge */
+        .fma-brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(12, 13, 11, 0.06);
+            border: 1px solid rgba(12, 13, 11, 0.12);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #0c0d0b;
+        }
+
+        /* Mobile bottom dock overrides */
+        @media (min-width: 901px) {
+            .mnav { display: none !important; }
+        }
+        @media (max-width: 900px) {
+            .mnav {
+                display: block !important;
+                z-index: 70;
+            }
+            body {
+                padding-bottom: calc(76px + env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Mobile Adjustments for Hero, Manifesto, and Fitting Room */
+        @media (max-width: 900px) {
+            .fma-hero-section {
+                padding: 90px 20px 40px !important;
+                min-height: auto !important;
+            }
+            .fma-hero-container {
+                grid-template-columns: 1fr !important;
+                gap: 28px !important;
+            }
+            .fma-hero-card {
+                height: 380px !important;
+                border-radius: 20px !important;
+                order: 1 !important;
+            }
+            .fma-hero-text {
+                order: 2 !important;
+                gap: 16px !important;
+            }
+            .fma-hero-title {
+                font-size: clamp(38px, 10vw, 54px) !important;
+            }
+            .fma-hero-actions a {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+            .fma-hero-btn-primary, .fma-hero-btn-secondary {
+                width: 100% !important;
+                justify-content: center !important;
+                padding: 13px 20px !important;
+                font-size: 13px !important;
+            }
+            .fma-manifesto-section {
+                padding: 60px 20px !important;
+            }
+            .fma-manifesto-container {
+                grid-template-columns: 1fr !important;
+                gap: 32px !important;
+            }
+            .fma-manifesto-photo-wrap {
+                height: 340px !important;
+                border-radius: 20px !important;
+            }
+            .fma-manifesto-bento {
+                grid-template-columns: 1fr !important;
+                gap: 8px !important;
+            }
+            .fitting-room {
+                min-height: 580px !important;
+            }
+            .model-stage {
+                inset: 54px 10px 145px !important;
+            }
+            .stage-wrapper {
+                max-height: 380px !important;
+                height: 100% !important;
+                width: auto !important;
+            }
+            .look-summary {
+                padding: 12px 16px !important;
+                gap: 8px !important;
+            }
+            .look-summary .look-chips {
+                display: none !important;
+            }
+            .fma-outfit-add-btn {
+                padding: 12px 20px !important;
+                font-size: 13px !important;
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body x-data="streetwear222App()" x-init="init()" class="selection:bg-[#737861] selection:text-white bg-white">
+
+    <!-- RUNNING TICKER MARQUEE (Top Header Bar) -->
+    <div class="bg-[#0c0d0b] text-white/80 py-2.5 overflow-hidden select-none border-b border-white/10">
+        <div class="animate-marquee whitespace-nowrap text-[11px] font-bold tracking-widest uppercase font-condensed">
+            <span class="mx-6 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> AURA ATELIER · STOREBOX APPAREL ARCHITECTURE
+            </span>
+            <span class="mx-6 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> SARA TABIIY MATOLAR VA MUALLIFLIK BICHIMI
+            </span>
+            <span class="mx-6 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> INTERAKTIV OBRAZLAR KONSTRUKTORI
+            </span>
+            <span class="mx-6 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> TOSHKENT, MIROBOD FLAGSHIP SHOWROOM
+            </span>
+            <span class="mx-6 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> BUTUN O'ZBEKISTON BO'YLAB TEZKOR YETKAZISH
+            </span>
+            <span class="mx-6 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> AURA ATELIER · DROP 01 NEW ARRIVALS
+            </span>
+        </div>
+    </div>
+
+    <!-- MAIN FIXED NAVIGATION BAR -->
+    <header :class="isScrolled ? 'fma-nav scrolled' : 'fma-nav'">
+        <!-- Left: Brand Logo & Links with guaranteed separation -->
+        <div class="fma-nav-left">
+            <a href="#home" class="flex items-center group">
+                <img src="{% static 'images/streetwear/logo_wordmark_dark.svg' %}" alt="AURA ATELIER" class="h-8 w-auto">
+            </a>
+
+            <!-- Desktop Links -->
+            <nav class="hidden md:flex fma-nav-links">
+                <a href="#collection" x-text="t('navCollection')"></a>
+                <a href="#outfit-builder" class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span>
+                    <span x-text="t('navOutfit')"></span>
+                </a>
+                <a href="#manifesto" x-text="t('navAbout')"></a>
+                <a href="#craft" x-text="t('navCraft')"></a>
+                <a href="#location" x-text="t('navStore')"></a>
+            </nav>
+        </div>
+
+        <!-- Right: Actions (Language, Profile, Cart) -->
+        <div class="flex items-center gap-3">
+            <!-- Language Switcher Pill (Guaranteed high-contrast segmented control) -->
+            <div class="lang-switcher-pill">
+                <button type="button" @click="switchLang('uz')" :class="lang === 'uz' ? 'lang-btn-item active' : 'lang-btn-item inactive'">UZ</button>
+                <button type="button" @click="switchLang('ru')" :class="lang === 'ru' ? 'lang-btn-item active' : 'lang-btn-item inactive'">RU</button>
+            </div>
+
+            <!-- Profile / Customer Page Link -->
+            <a href="/store/{{ store.subdomain }}/profile/" class="hidden sm:inline-flex fma-profile-pill">
+                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                <span x-text="t('profile')"></span>
+            </a>
+
+            <!-- Slide-over Cart Trigger (Ultra high contrast black pill with white text) -->
+            <button @click="cartDrawerOpen = true" class="fma-cart-pill group">
+                <i data-lucide="shopping-bag" class="w-4 h-4 group-hover:scale-105 transition-transform"></i>
+                <span x-text="t('cart') + ' (' + cartCount + ')'"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- SECTION 1: HERO (Luxury Architectural Daylight Campaign) -->
+    <section id="home" class="fma-hero-section">
+        <div class="fma-hero-container">
+            
+            <!-- Left: High-Fashion Typography & Actions -->
+            <div class="fma-hero-text">
+                <!-- Eyebrow Pill -->
+                <div class="fma-hero-eyebrow">
+                    <span style="width: 8px; height: 8px; border-radius: 999px; background: #737861; display: inline-block;"></span>
+                    <span x-text="t('heroEyebrow')"></span>
+                    <span style="color: #737861;">· DROP 01 / NEW ARRIVALS</span>
+                </div>
+
+                <!-- Big Headline (High-Contrast, Perfectly Sized) -->
+                <h1 class="fma-hero-title">
+                    <span x-html="t('heroTitle')"></span>
+                </h1>
+
+                <!-- Subtitle -->
+                <p class="fma-hero-sub" x-text="t('heroSubtitle')"></p>
+
+                <!-- Action Buttons: Primary & Secondary -->
+                <div class="fma-hero-actions">
+                    <a href="#collection" class="fma-hero-btn-primary group">
+                        <span x-text="t('viewCollection')"></span>
+                        <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                    <a href="#outfit-builder" class="fma-hero-btn-secondary group">
+                        <span style="width: 8px; height: 8px; border-radius: 999px; background: #737861; display: inline-block;"></span>
+                        <span x-text="t('navOutfit')"></span>
+                    </a>
+                </div>
+
+                <!-- Trust Badges (Fills space with luxury brand credibility) -->
+                <div class="fma-hero-features">
+                    <span style="display: flex; align-items: center; gap: 6px;"><span style="color: #0c0d0b;">✦</span> 100% Sara Paxta</span>
+                    <span style="display: flex; align-items: center; gap: 6px;"><span style="color: #0c0d0b;">✦</span> Mualliflik Bichimi</span>
+                    <span style="display: flex; align-items: center; gap: 6px;"><span style="color: #0c0d0b;">✦</span> Toshkent Flagship</span>
+                </div>
+            </div>
+
+            <!-- Right: The Editorial Campaign Photography (Full Head, Full Clarity, No Fog) -->
+            <div class="fma-hero-card">
+                <img src="{% static 'images/streetwear/hero_editorial_light.jpg' %}" alt="AURA ATELIER Daylight Campaign">
+                
+                <!-- Floating Corner Card -->
+                <div class="fma-hero-card-badge">
+                    <div>
+                        <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #737861;">CAMPAIGN 2026 · TOSHKENT</div>
+                        <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; text-transform: uppercase; color: #0c0d0b;">URBAN ARCHITECTURE & TAILORING</div>
+                    </div>
+                    <span style="font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #0c0d0b; background: rgba(12, 13, 11, 0.06); padding: 6px 14px; border-radius: 999px;">DROP 01</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECTION 2: BRAND MANIFESTO (Pure Studio Editorial Atelier) -->
+    <section id="manifesto" class="fma-manifesto-section">
+        <div class="fma-manifesto-container">
+            
+            <!-- Left: Editorial Philosophy & Bento Metric Cards (NO EMPTY SPACE!) -->
+            <div class="fma-manifesto-text">
+                <!-- Kicker -->
+                <div class="fma-manifesto-kicker">
+                    <span style="width: 6px; height: 6px; border-radius: 999px; background: #737861; display: inline-block;"></span>
+                    <span x-text="t('manifestoKicker')"></span>
+                </div>
+
+                <!-- Big Headline (Natural, balanced multi-word flow) -->
+                <h2 class="fma-manifesto-title" x-text="t('manifestoTitle')"></h2>
+
+                <!-- Rich Paragraph -->
+                <p class="fma-manifesto-desc" x-text="t('manifestoText')"></p>
+
+                <!-- Bento Metrics Grid (Eliminates ALL empty space!) -->
+                <div class="fma-manifesto-bento">
+                    <div class="fma-bento-card">
+                        <div class="fma-bento-val">100%</div>
+                        <div>
+                            <div class="fma-bento-label">Sara Paxta</div>
+                            <div class="fma-bento-sub">Heavyweight 320g</div>
+                        </div>
+                    </div>
+                    <div class="fma-bento-card">
+                        <div class="fma-bento-val">ATELIER</div>
+                        <div>
+                            <div class="fma-bento-label">Mualliflik</div>
+                            <div class="fma-bento-sub">Maxsus lekala</div>
+                        </div>
+                    </div>
+                    <div class="fma-bento-card">
+                        <div class="fma-bento-val">TOSHKENT</div>
+                        <div>
+                            <div class="fma-bento-label">Showroom</div>
+                            <div class="fma-bento-sub">Mirobod tumani</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location note -->
+                <div style="display: flex; align-items: center; gap: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #737861; padding-top: 4px;">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#0c0d0b]"></i>
+                    <span>Toshkent, Mirobod Flagship Showroom & Studio</span>
+                </div>
+            </div>
+
+            <!-- Right: Beautiful High-Resolution Atelier Photo Card -->
+            <div class="fma-manifesto-photo-wrap">
+                <img src="{% static 'images/streetwear/manifesto_editorial_light.jpg' %}" alt="AURA Editorial Studio">
+                
+                <!-- Bottom Editorial Glass Pill -->
+                <div class="fma-manifesto-photo-badge">
+                    <div>
+                        <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #737861;">ATELIER & CRAFT</div>
+                        <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; text-transform: uppercase; color: #0c0d0b;">NATURAL FABRICS & TAILORING</div>
+                    </div>
+                    <span style="font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #0c0d0b; background: rgba(12, 13, 11, 0.06); padding: 6px 14px; border-radius: 999px;">HANDCRAFTED</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- KINETIC RUNNING TICKER -->
+    <div class="kinetic select-none bg-[#0c0d0b]">
+        <div class="kinetic-track animate-marquee">
+            <span class="mx-6 font-condensed font-bold tracking-tight text-white uppercase text-4xl sm:text-6xl">
+                AURA ATELIER · STOREBOX APPAREL · TASHKENT FLAGSHIP · DROP 01 · CLEAN STREETWEAR ·
+            </span>
+            <span class="mx-6 font-condensed font-bold tracking-tight text-white uppercase text-4xl sm:text-6xl">
+                AURA ATELIER · STOREBOX APPAREL · TASHKENT FLAGSHIP · DROP 01 · CLEAN STREETWEAR ·
+            </span>
+        </div>
+    </div>
+
+    <!-- SECTION 3: COLLECTION LOOKBOOK (Pure White Studio Backdrop & Direct Product Navigation) -->
+    <section id="collection" class="collection bg-white relative py-20">
+        <div class="collection-head">
+            <div class="collection-title">
+                <span class="text-xs font-bold uppercase tracking-widest text-[#737861] font-condensed block mb-2" x-text="t('collectionKicker')"></span>
+                <h2 class="font-condensed font-black text-4xl sm:text-6xl lg:text-7xl uppercase tracking-tight text-[#0c0d0b]" x-text="t('collectionTitle')"></h2>
+            </div>
+
+            <!-- Category Filter Tabs -->
+            <div class="collection-meta">
+                <div class="filters">
+                    <button @click="activeCategory = 'all'" :class="activeCategory === 'all' ? 'active' : ''" x-text="t('catAll')"></button>
+                    <button @click="activeCategory = 'tops'" :class="activeCategory === 'tops' ? 'active' : ''" x-text="t('catTops')"></button>
+                    <button @click="activeCategory = 'bottoms'" :class="activeCategory === 'bottoms' ? 'active' : ''" x-text="t('catBottoms')"></button>
+                    <button @click="activeCategory = 'shoes'" :class="activeCategory === 'shoes' ? 'active' : ''" x-text="t('catShoes')"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HORIZONTAL SWIPER CONTAINER -->
+        <div class="lookbook-slider mt-8" id="lookbook-carousel">
+            <template x-for="(p, index) in filteredProducts" :key="p.id">
+                <div class="lb-card-item">
+                    <!-- Direct Navigation to Dedicated Product Page -->
+                    <a :href="'/store/{{ store.subdomain }}/product/' + p.id + '/'" class="lb-card h-full flex flex-col justify-between block group text-inherit no-underline">
+                        <!-- Product Media Box: 100% Isolated Transparent Packshot -->
+                        <div class="lb-media aspect-square rounded-[22px] overflow-hidden relative group cursor-pointer border border-[#0c0d0b]/8 shadow-sm hover:border-[#0c0d0b]/20 hover:shadow-md transition-all">
+                            <img :src="p.image || p.photo" :alt="p.name" class="product-photo w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500">
+
+                            <!-- Top-Left Index Pill (01, 02, 03...) -->
+                            <div class="lb-index font-condensed font-black" x-text="String(index + 1).padStart(2, '0')"></div>
+
+                            <!-- Top-Right Badge -->
+                            <div class="lb-badge font-condensed font-bold">NEW</div>
+
+                            <!-- Floating Bottom Glass Bar with Price and Expandable Sizes -->
+                            <div class="lb-bar" :class="activeCardId === p.id ? 'picking' : ''" @click.prevent.stop>
+                                <!-- Price display when not picking sizes -->
+                                <div x-show="activeCardId !== p.id" class="lb-price font-condensed font-bold" x-text="formatMoney(p.price) + ' UZS'"></div>
+
+                                <!-- Sizes list when picking sizes -->
+                                <div x-show="activeCardId === p.id" class="lb-sizes">
+                                    <template x-for="v in p.variations" :key="v.id">
+                                        <button @click.prevent.stop="quickAddSize(p, v)" class="hover:bg-white hover:text-black">
+                                            <span x-text="v.name"></span>
+                                        </button>
+                                    </template>
+                                </div>
+
+                                <!-- The Toggle Plus Button -->
+                                <button @click.prevent.stop="toggleCardPicker(p.id)" class="lb-add" :class="[activeCardId === p.id ? 'close' : '', justAddedId === p.id ? 'done' : '']" :title="t('add')">
+                                    <template x-if="justAddedId === p.id">
+                                        <i data-lucide="check" class="w-4 h-4 text-black stroke-[3]"></i>
+                                    </template>
+                                    <template x-if="justAddedId !== p.id">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                    </template>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card Info -->
+                        <div class="lb-info pt-4">
+                            <h3 class="font-condensed font-bold text-base sm:text-lg text-[#0c0d0b] uppercase group-hover:text-[#737861] transition-colors" x-text="p.name"></h3>
+                            <small class="text-xs text-[#74756f] block" x-text="p.label || 'AURA Atelier'"></small>
+                        </div>
+                    </a>
+                </div>
+            </template>
+        </div>
+
+        <!-- Controls: Progress Bar and Scroll Arrows -->
+        <div class="lookbook-controls">
+            <div class="lookbook-progress">
+                <i :style="'width: ' + scrollProgress + '%'"></i>
+            </div>
+            <div class="lookbook-arrows">
+                <button @click="scrollLookbook(-1)" aria-label="Previous">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </button>
+                <button @click="scrollLookbook(1)" aria-label="Next">
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: FLAGSHIP FEATURE «СОБЕРИ СВОЙ ОБРАЗ» / OUTFIT BUILDER (Architectural Dark Atelier Stage) -->
+    <section id="outfit-builder" class="look-section bg-[#0c0d0b] text-white relative">
+        <!-- Left: Category Tabs & Selectable Garment Cards -->
+        <div class="look-intro">
+            <div class="space-y-3">
+                <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed block" x-text="t('builderKicker')"></span>
+                <h2 class="font-condensed font-black text-4xl sm:text-6xl lg:text-7xl uppercase leading-[0.9] text-white">
+                    <span x-html="t('builderTitle')"></span>
+                </h2>
+                <p class="text-xs sm:text-sm text-[#8f918a] leading-relaxed max-w-md" x-text="t('builderText')"></p>
+            </div>
+
+            <!-- Slot Category Tabs (Ustki • Shim • Oyoq kiyim) -->
+            <div class="look-tabs mt-8">
+                <button @click="activeSlot = 'top'" :class="activeSlot === 'top' ? 'active' : ''">
+                    <span class="tab-dot"></span>
+                    <span x-text="t('slotTop')"></span>
+                </button>
+                <button @click="activeSlot = 'bottom'" :class="activeSlot === 'bottom' ? 'active' : ''">
+                    <span class="tab-dot"></span>
+                    <span x-text="t('slotBottom')"></span>
+                </button>
+                <button @click="activeSlot = 'shoes'" :class="activeSlot === 'shoes' ? 'active' : ''">
+                    <span class="tab-dot"></span>
+                    <span x-text="t('slotShoes')"></span>
+                </button>
+            </div>
+
+            <!-- 3-Column Garment Cards for the Active Slot -->
+            <div class="look-options">
+                <template x-for="item in currentSlotProducts" :key="item.id">
+                    <button @click="selectSlotProduct(item)" class="look-option group rounded-xl" :class="isProductSelected(item) ? 'active' : ''">
+                        <!-- Cutout Thumbnail on Clean Studio Backdrop -->
+                        <div class="look-option-media cutout rounded-lg relative overflow-hidden bg-[#1a1c17]">
+                            <img :src="item.cutout || item.photo || item.image" :alt="item.name" class="w-full h-full object-contain p-1">
+                            <div x-show="isProductSelected(item)" class="look-option-check">
+                                <i data-lucide="check" class="w-3 h-3 stroke-[3]"></i>
+                            </div>
+                        </div>
+                        <div class="look-option-name font-condensed font-bold text-xs uppercase line-clamp-1" x-text="item.name"></div>
+                        <div class="look-option-price font-condensed text-[11px]" x-text="formatMoney(item.price) + ' UZS'"></div>
+                    </button>
+                </template>
+            </div>
+
+            <!-- Quick Preset Looks Pills -->
+            <div class="pt-6 flex flex-wrap items-center gap-2">
+                <span class="text-[11px] font-condensed font-bold uppercase text-[#8f918a] mr-1" x-text="t('presets') + ':'"></span>
+                <template x-for="(pr, pIdx) in outfitPresets" :key="pIdx">
+                    <button @click="applyOutfitPreset(pIdx)" class="px-3.5 py-1.5 rounded-full border border-white/10 hover:border-white/30 text-xs font-condensed uppercase tracking-wider text-white/80 hover:text-white transition-all bg-white/5 hover:bg-white/10">
+                        <span x-text="pr.title"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+
+        <!-- Right: THE 3D MANNEQUIN FITTING ROOM -->
+        <div class="fitting-room rounded-3xl overflow-hidden relative shadow-2xl flex flex-col justify-between">
+            <!-- Top Toolbar: Title & Reset Button -->
+            <div class="fitting-toolbar">
+                <div class="flex items-center gap-2 font-condensed font-bold text-xs tracking-widest text-[#0c0d0b]">
+                    <span class="w-2 h-2 rounded-full bg-[#737861]"></span>
+                    <span x-text="t('previewTitle')"></span>
+                </div>
+                <button @click="resetOutfit()" class="font-condensed font-bold tracking-wider text-[#0c0d0b]" x-text="t('reset')"></button>
+            </div>
+
+            <!-- The Visual Stage (Base Standing White Mannequin + Layered Clothing) -->
+            <div class="model-stage flex items-center justify-center">
+                <div class="stage-wrapper">
+                    <!-- Base Standing White Mannequin Model -->
+                    <img src="/static/images/222fma/uploads/models/mannequin-3b30f3cb4662.webp" alt="Mannequin Base" class="mannequin-img-layer z-0">
+
+                    <!-- Layer 1: Bottom / Pants Fitted WebP -->
+                    <template x-if="selectedBottom && selectedBottom.fitted">
+                        <img :src="selectedBottom.fitted" alt="Bottom Fitted" class="mannequin-img-layer z-10 animate-fade">
+                    </template>
+
+                    <!-- Layer 2: Shoes Fitted WebP (Only covers feet, Y >= 1060) -->
+                    <template x-if="selectedShoes && selectedShoes.fitted">
+                        <img :src="selectedShoes.fitted" alt="Shoes Fitted" class="mannequin-img-layer z-15 animate-fade">
+                    </template>
+
+                    <!-- Layer 3: Top / Cardigan / Sweater Fitted WebP -->
+                    <template x-if="selectedTop && selectedTop.fitted">
+                        <img :src="selectedTop.fitted" alt="Top Fitted" class="mannequin-img-layer z-20 animate-fade">
+                    </template>
+
+                    <!-- Layer 4: Natural Left & Right Hand Overlays so fingers remain over the shirt -->
+                    <img src="/static/images/222fma/uploads/models/mannequin-3b30f3cb4662.webp" alt="Hands" class="mannequin-img-layer hand-layer-left">
+                    <img src="/static/images/222fma/uploads/models/mannequin-3b30f3cb4662.webp" alt="Hands" class="mannequin-img-layer hand-layer-right">
+                </div>
+            </div>
+
+            <!-- Bottom Live Price & Batch Add to Cart Bar -->
+            <div class="look-summary">
+                <div>
+                    <small x-text="t('yourLook')"></small>
+                    <strong class="font-condensed font-black text-xl text-[#0c0d0b]" x-text="formatMoney(outfitTotalPrice) + ' UZS'"></strong>
+                    <!-- Chips of chosen items (hidden on narrow mobile screens) -->
+                    <div class="look-chips">
+                        <template x-if="selectedTop">
+                            <span><i :style="'background: ' + selectedTop.color"></i> <span x-text="selectedTop.name"></span></span>
+                        </template>
+                        <template x-if="selectedBottom">
+                            <span><i :style="'background: ' + selectedBottom.color"></i> <span x-text="selectedBottom.name"></span></span>
+                        </template>
+                        <template x-if="selectedShoes">
+                            <span><i :style="'background: ' + selectedShoes.color"></i> <span x-text="selectedShoes.name"></span></span>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Add Complete Outfit to Cart Button (Solid White Pill with Black Bold Text) -->
+                <button @click="addCompleteOutfitToCart()" class="fma-outfit-add-btn group">
+                    <i data-lucide="shopping-bag" class="w-4 h-4 text-[#737861] group-hover:scale-110 transition-transform"></i>
+                    <span x-text="t('addOutfitToCart')"></span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: CRAFT & HERITAGE («SIFAT VA BICHIM» - Architectural Black Contrast) -->
+    <section id="craft" class="py-24 sm:py-32 px-6 sm:px-12 md:px-16 relative overflow-hidden">
+        <!-- Ambient Radial Glow -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-radial from-[#737861]/15 to-transparent pointer-events-none rounded-full blur-3xl"></div>
+
+        <div class="max-w-6xl mx-auto relative z-10 space-y-16">
+            <!-- Header Block -->
+            <div class="text-center max-w-2xl mx-auto space-y-4">
+                <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed" x-text="t('craftKicker')"></span>
+                <h2 class="font-condensed font-black text-4xl sm:text-6xl uppercase tracking-tight text-white leading-none" x-text="t('craftTitle')"></h2>
+                <p class="text-xs sm:text-sm text-[#b5b8ad] leading-relaxed" x-text="t('craftSubtitle')"></p>
+            </div>
+
+            <!-- 3 Pillars Feature Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Pillar 1: Fabric -->
+                <div class="craft-card space-y-4">
+                    <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[#cfd2bd]">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed block">01 / DENSITY</span>
+                    <h3 class="font-condensed font-bold text-2xl uppercase text-white" x-text="t('craftPillar1Title')"></h3>
+                    <p class="text-xs sm:text-sm text-[#b5b8ad] leading-relaxed" x-text="t('craftPillar1Text')"></p>
+                </div>
+
+                <!-- Pillar 2: Hardware -->
+                <div class="craft-card space-y-4">
+                    <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[#cfd2bd]">
+                        <i data-lucide="shield" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed block">02 / HARDWARE</span>
+                    <h3 class="font-condensed font-bold text-2xl uppercase text-white" x-text="t('craftPillar2Title')"></h3>
+                    <p class="text-xs sm:text-sm text-[#b5b8ad] leading-relaxed" x-text="t('craftPillar2Text')"></p>
+                </div>
+
+                <!-- Pillar 3: Atelier -->
+                <div class="craft-card space-y-4">
+                    <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[#cfd2bd]">
+                        <i data-lucide="sparkles" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed block">03 / ATELIER</span>
+                    <h3 class="font-condensed font-bold text-2xl uppercase text-white" x-text="t('craftPillar3Title')"></h3>
+                    <p class="text-xs sm:text-sm text-[#b5b8ad] leading-relaxed" x-text="t('craftPillar3Text')"></p>
+                </div>
+            </div>
+
+            <!-- Atelier Quote Banner -->
+            <div class="border-t border-white/10 pt-12 text-center max-w-xl mx-auto space-y-3">
+                <blockquote class="font-serif-italic text-lg sm:text-2xl text-[#e8e5dc]" x-text="t('craftQuote')"></blockquote>
+                <span class="text-[11px] font-condensed uppercase tracking-widest text-[#a7ae8f] block">— STOREBOX APPAREL ARCHITECTURE</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 6: FLAGSHIP STORE & LOCATION (Clean StoreBox Coordinates on Light Ground) -->
+    <section id="location" class="location bg-white border-t border-[#141512]/10 py-20">
+        <div class="location-copy">
+            <div class="loc-address space-y-4">
+                <span class="loc-chip font-condensed font-bold" x-text="t('locationBadge')"></span>
+                <h2 class="font-condensed font-black text-4xl sm:text-6xl uppercase tracking-tight text-[#0c0d0b]" x-text="t('locationTitle')"></h2>
+                <p class="font-condensed text-2xl text-[#0c0d0b]">Toshkent, Mirobod, Oybek ko'chasi 14</p>
+            </div>
+
+            <div class="loc-rows">
+                <div class="loc-row">
+                    <div class="loc-status open">
+                        <i></i>
+                    </div>
+                    <div>
+                        <small x-text="t('hours')"></small>
+                        <b>10:00 — 22:00</b>
+                    </div>
+                    <div class="loc-badge open" x-text="t('openNow')"></div>
+                </div>
+
+                <a href="tel:+998712005555" class="loc-row">
+                    <div class="loc-icon">
+                        <i data-lucide="phone" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <small x-text="t('phone')"></small>
+                        <b>+998 71 200 55 55</b>
+                    </div>
+                    <div class="loc-row-arrow">
+                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                    </div>
+                </a>
+
+                <a href="https://t.me/aura_atelier_uz" target="_blank" class="loc-row">
+                    <div class="loc-icon">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <small>Telegram</small>
+                        <b>@aura_atelier_uz</b>
+                    </div>
+                    <div class="loc-row-arrow">
+                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                    </div>
+                </a>
+
+                <a href="https://instagram.com/aura.atelier" target="_blank" class="loc-row">
+                    <div class="loc-icon">
+                        <i data-lucide="instagram" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <small>Instagram</small>
+                        <b>@aura.atelier</b>
+                    </div>
+                    <div class="loc-row-arrow">
+                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Interactive Map Container -->
+        <div class="map">
+            <iframe class="ymap is-ready" src="https://yandex.com/map-widget/v1/?ll=69.277884%2C41.298944&z=15&pt=69.277884%2C41.298944%2Cpm2dgl" frameborder="0" allowfullscreen="true"></iframe>
+            <div class="map-card">
+                <div class="map-card-logo">
+                    <img src="{% static 'images/streetwear/logo_emblem.svg' %}" alt="AURA">
+                </div>
+                <div class="map-card-info">
+                    <b>AURA Atelier Flagship</b>
+                    <span>Tashkent, Mirobod, Oybek 14</span>
+                </div>
+                <a href="https://yandex.uz/maps/?rtext=~41.298944%2C69.277884&rtt=auto" target="_blank" class="map-route">
+                    <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                    <span x-text="t('route')"></span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 7: FOOTER -->
+    <footer class="footer bg-[#0c0d0b] text-white">
+        <div class="footer-main">
+            <div class="footer-brand">
+                <a href="#home" class="footer-logo">
+                    <img src="{% static 'images/streetwear/logo_wordmark.svg' %}" alt="AURA ATELIER" class="h-8 w-auto">
+                </a>
+                <p>StoreBox zamonaviy ko'cha kiyimlari flagmani. Mirobod, Oybek ko'chasi 14.</p>
+            </div>
+            <div class="footer-col">
+                <small x-text="t('navCollection')"></small>
+                <a href="#collection" x-text="t('catAll')"></a>
+                <a href="#outfit-builder" x-text="t('navOutfit')"></a>
+            </div>
+            <div class="footer-col">
+                <small x-text="t('navAbout')"></small>
+                <a href="#manifesto" x-text="t('navAbout')"></a>
+                <a href="#craft" x-text="t('navCraft')"></a>
+            </div>
+            <div class="footer-col">
+                <small x-text="t('navStore')"></small>
+                <a href="#location">Mirobod, Oybek ko'chasi 14</a>
+                <a href="tel:+998712005555">+998 71 200 55 55</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 AURA ATELIER. Barcha huquqlar himoyalangan.</span>
+            <div class="footer-credit">
+                <span>Platforma: <b>StoreBox</b></span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MOBILE FIXED BOTTOM DOCK -->
+    <nav class="mnav" style="--count: 5;">
+        <div class="mnav-track">
+            <!-- Sliding spring highlight pill -->
+            <div class="mnav-slider" :style="'--count: 5; --index: ' + mobileNavIndex"></div>
+
+            <a href="#home" @click="mobileNavIndex = 0" class="mnav-item" :class="mobileNavIndex === 0 ? 'active' : ''">
+                <i data-lucide="home" class="w-4 h-4"></i>
+                <span x-text="t('mHome')"></span>
+            </a>
+            <a href="#collection" @click="mobileNavIndex = 1" class="mnav-item" :class="mobileNavIndex === 1 ? 'active' : ''">
+                <i data-lucide="grid" class="w-4 h-4"></i>
+                <span x-text="t('mCollection')"></span>
+            </a>
+            <a href="#outfit-builder" @click="mobileNavIndex = 2" class="mnav-item" :class="mobileNavIndex === 2 ? 'active' : ''">
+                <i data-lucide="shirt" class="w-4 h-4"></i>
+                <span x-text="t('mOutfit')"></span>
+            </a>
+            <a href="#craft" @click="mobileNavIndex = 3" class="mnav-item" :class="mobileNavIndex === 3 ? 'active' : ''">
+                <i data-lucide="layers" class="w-4 h-4"></i>
+                <span x-text="t('mCraft')"></span>
+            </a>
+            <a href="#location" @click="mobileNavIndex = 4" class="mnav-item" :class="mobileNavIndex === 4 ? 'active' : ''">
+                <i data-lucide="map-pin" class="w-4 h-4"></i>
+                <span x-text="t('mStore')"></span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- SLIDE-OVER CART DRAWER -->
+    <div :class="cartDrawerOpen ? 'backdrop show' : 'backdrop'" @click="cartDrawerOpen = false"></div>
+    <div :class="cartDrawerOpen ? 'drawer open' : 'drawer'">
+        <!-- Drawer Header -->
+        <div class="drawer-head">
+            <div>
+                <small x-text="t('cart')"></small>
+                <h3 x-text="t('yourCart') + ' (' + cartCount + ')'"></h3>
+            </div>
+            <button @click="cartDrawerOpen = false" class="remove" aria-label="Close">✕</button>
+        </div>
+
+        <!-- Items List -->
+        <div class="cart-items">
+            <template x-if="Object.keys(cartItems).length === 0">
+                <div class="empty text-center py-16 space-y-3">
+                    <p x-text="t('cartEmpty')"></p>
+                    <button @click="cartDrawerOpen = false" class="px-5 py-2 rounded-full bg-[#0c0d0b] text-white font-condensed font-bold text-xs uppercase" x-text="t('continueShopping')"></button>
+                </div>
+            </template>
+
+            <template x-for="(item, key) in cartItems" :key="key">
+                <div class="cart-item">
+                    <img :src="item.image || item.image_url" :alt="item.name" class="w-16 h-16 rounded-xl object-contain bg-white p-1 border border-[#0c0d0b]/10">
+                    <div>
+                        <h4 class="font-condensed font-bold text-xs uppercase text-[#0c0d0b]" x-text="item.name"></h4>
+                        <small x-show="item.variation_name" x-text="'O\'lcham: ' + item.variation_name"></small>
+                        <div class="font-condensed font-bold text-xs text-[#0c0d0b] mt-1" x-text="formatMoney(item.unit_price || item.price) + ' UZS'"></div>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <button @click="updateCart(key, -item.quantity)" class="text-red-500 hover:text-red-700 text-xs">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <div class="qty rounded-full bg-white border border-[#141512]/15">
+                            <button @click="updateCart(key, -1)">−</button>
+                            <span x-text="item.quantity"></span>
+                            <button @click="updateCart(key, 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Footer & Checkout -->
+        <div x-show="Object.keys(cartItems).length > 0" class="cart-footer">
+            <div class="total">
+                <span class="font-condensed font-bold uppercase text-sm" x-text="t('total')"></span>
+                <b class="font-condensed font-black text-xl text-[#0c0d0b]" x-text="formatMoney(cartTotal) + ' UZS'"></b>
+            </div>
+            <a href="/store/{{ store.subdomain }}/checkout/" class="w-full bg-[#0c0d0b] text-white hover:bg-black font-condensed font-bold text-sm uppercase py-4 rounded-full flex items-center justify-center gap-2 shadow-lg transition-all">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span x-text="t('checkout')"></span>
+            </a>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div x-show="toastMessage" x-cloak class="fixed bottom-20 sm:bottom-8 right-6 z-50 bg-[#0c0d0b] text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transition-all border border-white/20" x-transition>
+        <span class="w-2 h-2 rounded-full bg-[#737861]"></span>
+        <span class="font-condensed font-bold text-xs uppercase tracking-wider" x-text="toastMessage"></span>
+    </div>
+
+    <!-- JAVASCRIPT APP STATE & LOGIC -->
+    <script>
+        function streetwear222App() {
+            return {
+                lang: '{{ current_lang|default:"uz" }}',
+                isScrolled: false,
+                cartDrawerOpen: false,
+                toastMessage: '',
+                activeCategory: 'all',
+                activeCardId: null,
+                justAddedId: null,
+                mobileNavIndex: 0,
+                scrollProgress: 30,
+
+                // All Products from Storebox backend
+                allProducts: {{ outfit_products_json|default:'[]'|safe }},
+                cartItems: {{ cart_json|default:'{}'|safe }},
+
+                // Virtual Try-on Outfit Builder State
+                activeSlot: 'top',
+                selectedTop: null,
+                selectedBottom: null,
+                selectedShoes: null,
+
+                // Outfit Presets matching real styles
+                outfitPresets: [
+                    {
+                        title: '01. Graphite & Cognac',
+                        topSlug: 'zip-hudi-kakao',
+                        bottomSlug: 'jogger-shim-kakao',
+                        shoesSlug: 'krossovka-espresso'
+                    },
+                    {
+                        title: '02. Ecru Cardigan & Denim',
+                        topSlug: 'kardigan-kabu72-08',
+                        bottomSlug: 'shim-shimo-76160',
+                        shoesSlug: 'krossovka-kulrang'
+                    },
+                    {
+                        title: '03. Terracotta & Graphite',
+                        topSlug: 'polzamok-trikotaj-grafit',
+                        bottomSlug: 'shim-grafit',
+                        shoesSlug: 'krossovka-espresso'
+                    }
+                ],
+
+                // UI Translations Dictionary
+                translations: {
+                    uz: {
+                        navCollection: "Kolleksiya",
+                        navOutfit: "Obraz yig'ish",
+                        navAbout: "Konseptsiya",
+                        navCraft: "Sifat & Mato",
+                        navStore: "Showroom",
+                        profile: "Profil",
+                        cart: "Savat",
+                        size: "O'lcham",
+                        addToCart: "Savatga qo'shish",
+                        heroEyebrow: "Toshkent · Erkaklar kiyimi",
+                        heroTitle: "SHAHAR RUHI <br>VA ERKIN <br>QOMAT.",
+                        heroSubtitle: "Mualliflik ko'cha modasi va mustahkam bichim. Tabiiy sara matolar, toza chiziqlar va har bir harakatdagi mutlaq erkinlik.",
+                        viewCollection: "Kolleksiyani ko'rish",
+                        buildOutfit: "Obraz yig'ish",
+                        manifestoKicker: "/ Yangi madaniyat",
+                        manifestoTitle: "SARA MATOLAR, TOZA CHIZIQLAR VA SHAHARNING ERKIN NAFASI",
+                        manifestoText: "AURA ATELIER — shahar ritmi, mualliflik bichimi va sifat uyg'unligi. Har bir detal va toza siluet zamonaviy qulaylik va o'ziga xos uslub uchun yaratilgan.",
+                        collectionKicker: "/ Drop 01",
+                        collectionTitle: "Yangi kolleksiya",
+                        catAll: "Barchasi",
+                        catTops: "Top",
+                        catBottoms: "Shim",
+                        catShoes: "Poyabzal",
+                        builderKicker: "/ Virtual kiyinish",
+                        builderTitle: "O‘z obrazingni <br>yig‘.",
+                        builderText: "Elementlarni tanlang, kombinatsiyani ko‘ring va tayyor look’ni bir bosishda savatga qo‘shing.",
+                        slotTop: "Ustki",
+                        slotBottom: "Shim",
+                        slotShoes: "Oyoq kiyim",
+                        previewTitle: "OBRAZ KO‘RINISHI",
+                        reset: "Tozalash",
+                        yourLook: "Sizning look'ingiz",
+                        addOutfitToCart: "Look’ni savatga +",
+                        presets: "Tayyor obrazlar",
+                        craftKicker: "Atelye & Sifat",
+                        craftTitle: "Sara matolar va benuqson tikuv san'ati",
+                        craftSubtitle: "Biz bir mavsumlik kiyim yaratmaymiz. O'zbekistonning eng sara paxtasi, mustahkam furnitura va poytaxt atelyesining mahoratli ijrosi.",
+                        craftPillar1Title: "Premium sifatli trikotaj",
+                        craftPillar1Text: "100% tabiiy uzoq tolali paxta. Qalin, nafas oluvchi va shaklini uzoq vaqt yo'qotmaydigan oliy sifatli mato.",
+                        craftPillar2Title: "Oliy toifali furnitura",
+                        craftPillar2Text: "Sayqallangan metall elementlar va mustahkam fermuarlar. Yumshoq sirpanish va ko'p yillik chidamlilik kafolati.",
+                        craftPillar3Title: "Toshkent Atelyesi",
+                        craftPillar3Text: "Har bir kiyim tajribali ustalar tomonidan nazoratdan o'tadi. Mustahkamlangan choklar va qulay qomat bichimi.",
+                        craftQuote: "«Haqiqiy uslub bu — qulaylik va toza shaklning uyg'unligidir.»",
+                        locationBadge: "Flagship do'kon",
+                        locationTitle: "TOSHKENT FLAGSHIP SHOWROOM",
+                        hours: "Ish vaqti",
+                        openNow: "Ochiq",
+                        phone: "Telefon",
+                        route: "Yo'nalish",
+                        mHome: "Asosiy",
+                        mCollection: "Kolleksiya",
+                        mOutfit: "Obraz",
+                        mCraft: "Sifat",
+                        mStore: "Manzil",
+                        yourCart: "Savatdagi mahsulotlar",
+                        cartEmpty: "Savatingiz hozircha bo'sh",
+                        continueShopping: "Xarid qilish",
+                        total: "Jami to'lov:",
+                        checkout: "Buyurtmani rasmiylashtirish",
+                        add: "Qo'shish"
+                    },
+                    ru: {
+                        navCollection: "Коллекция",
+                        navOutfit: "Собери образ",
+                        navAbout: "Концепция",
+                        navCraft: "Качество и Крой",
+                        navStore: "Магазин",
+                        profile: "Профиль",
+                        cart: "Корзина",
+                        size: "Размер",
+                        addToCart: "Добавить в корзину",
+                        heroEyebrow: "Ташкент · Мужская одежда",
+                        heroTitle: "ФОРМА <br>И СВОБОДА <br>УЛИЦ.",
+                        heroSubtitle: "Авторский стритвир с безупречным кроем. Премиальные натуральные ткани, чистые линии и свобода самовыражения в каждом движении.",
+                        viewCollection: "Смотреть коллекцию",
+                        buildOutfit: "Собрать образ",
+                        manifestoKicker: "/ Новая культура",
+                        manifestoTitle: "ПРЕМИАЛЬНЫЕ МАТЕРИАЛЫ, ЧИСТЫЕ ЛИНИИ И СВОБОДНЫЙ ДУХ ГОРОДА",
+                        manifestoText: "AURA ATELIER — синергия авторского кроя и эстетики современного города. Мы переосмысливаем стритвир, объединяя чистый силуэт, долговечные ткани и комфорт каждого движения.",
+                        collectionKicker: "/ Drop 01",
+                        collectionTitle: "Новая коллекция",
+                        catAll: "Все",
+                        catTops: "Топы",
+                        catBottoms: "Брюки",
+                        catShoes: "Обувь",
+                        builderKicker: "/ Виртуальная примерка",
+                        builderTitle: "Собери свой <br>образ.",
+                        builderText: "Выберите вещи, посмотрите сочетание на манекене и добавьте готовый образ в корзину в один клик.",
+                        slotTop: "Верх",
+                        slotBottom: "Брюки",
+                        slotShoes: "Обувь",
+                        previewTitle: "ПРЕДПРОСМОТР ОБРАЗА",
+                        reset: "Сбросить",
+                        yourLook: "Ваш образ",
+                        addOutfitToCart: "Образ в корзину +",
+                        presets: "Готовые луки",
+                        craftKicker: "Ателье и Мастерство",
+                        craftTitle: "Безупречные материалы и авторский пошив",
+                        craftSubtitle: "Мы создаем вещи вне времени. Отборный длинноволокнистый хлопок, премиальная фурнитура и ручной контроль каждого шва в ташкентском ателье.",
+                        craftPillar1Title: "Премиальный плотный трикотаж",
+                        craftPillar1Text: "100% натуральный отборный хлопок. Дышащий, тактильно приятный материал, сохраняющий форму и структуру после многочисленных стирок.",
+                        craftPillar2Title: "Премиальная фурнитура",
+                        craftPillar2Text: "Металлические замки и усиленные элементы высшей категории с плавным ходом и долговечной надежностью.",
+                        craftPillar3Title: "Ташкентское Ателье",
+                        craftPillar3Text: "Локальный пошив с контролем качества каждого изделия. Усиленные строчки, идеальная посадка и внимание к каждой детали.",
+                        craftQuote: "«Истинный стиль рождается там, где форма встречается с абсолютным комфортом.»",
+                        locationBadge: "Флагманский шоурум",
+                        locationTitle: "ТАШКЕНТ ФЛАГМАНСКИЙ ШОУРУМ",
+                        hours: "Часы работы",
+                        openNow: "Открыто",
+                        phone: "Телефон",
+                        route: "Маршрут",
+                        mHome: "Главная",
+                        mCollection: "Коллекция",
+                        mOutfit: "Образ",
+                        mCraft: "Качество",
+                        mStore: "Магазин",
+                        yourCart: "Корзина покупок",
+                        cartEmpty: "Корзина пока пуста",
+                        continueShopping: "Перейти к покупкам",
+                        total: "Итого к оплате:",
+                        checkout: "Оформить заказ",
+                        add: "Добавить"
+                    }
+                },
+
+                t(key) {
+                    const l = this.translations[this.lang] || this.translations['uz'];
+                    return l[key] || this.translations['uz'][key] || key;
+                },
+
+                get manifestoHtml() {
+                    const text = this.t('manifestoTitle');
+                    const words = text.split(/\s+/);
+                    return words.map((w, idx) => `<span style="--w: ${idx}">${w}</span>`).join(' ');
+                },
+
+                get filteredProducts() {
+                    if (this.activeCategory === 'all') return this.allProducts;
+                    return this.allProducts.filter(p => p.category_slug === this.activeCategory);
+                },
+
+                get currentSlotProducts() {
+                    return this.allProducts.filter(p => p.slot === this.activeSlot);
+                },
+
+                get outfitTotalPrice() {
+                    let sum = 0;
+                    if (this.selectedTop) sum += this.selectedTop.price;
+                    if (this.selectedBottom) sum += this.selectedBottom.price;
+                    if (this.selectedShoes) sum += this.selectedShoes.price;
+                    return sum;
+                },
+
+                get cartCount() {
+                    return Object.values(this.cartItems).reduce((sum, it) => sum + (it.quantity || 1), 0);
+                },
+
+                get cartTotal() {
+                    return Object.values(this.cartItems).reduce((sum, it) => sum + (it.total_price || (it.price * (it.quantity || 1))), 0);
+                },
+
+                formatMoney(val) {
+                    if (!val) return '0';
+                    return Math.round(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                },
+
+                init() {
+                    // Check URL parameter for initial language
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const qLang = urlParams.get('lang');
+                    if (qLang && (qLang === 'uz' || qLang === 'ru')) {
+                        this.lang = qLang;
+                    }
+
+                    const updateScroll = () => {
+                        this.isScrolled = window.scrollY > 40;
+                        this.updateActiveSectionIndex();
+                        this.updateManifestoScroll();
+                    };
+                    window.addEventListener('scroll', updateScroll);
+
+                    const carousel = document.getElementById('lookbook-carousel');
+                    if (carousel) {
+                        carousel.addEventListener('scroll', () => {
+                            const maxScroll = carousel.scrollWidth - carousel.clientWidth;
+                            if (maxScroll > 0) {
+                                this.scrollProgress = Math.min(100, Math.max(10, (carousel.scrollLeft / maxScroll) * 100));
+                            }
+                        });
+                    }
+
+                    this.$nextTick(() => {
+                        if (window.lucide) lucide.createIcons();
+                        this.applyOutfitPreset(0);
+                        this.updateManifestoScroll();
+                    });
+                },
+
+                updateManifestoScroll() {
+                    const el = document.getElementById('manifesto-heading');
+                    if (!el) return;
+                    const rect = el.getBoundingClientRect();
+                    const windowH = window.innerHeight;
+                    const progress = Math.min(1.2, Math.max(0, (windowH - rect.top) / (rect.height + windowH * 0.4)));
+                    el.style.setProperty('--p', progress);
+                    const words = this.t('manifestoTitle').split(/\s+/).length;
+                    el.style.setProperty('--n', words);
+                },
+
+                updateActiveSectionIndex() {
+                    const sections = ['home', 'collection', 'outfit-builder', 'craft', 'location'];
+                    const scrollY = window.scrollY + 200;
+                    for (let i = sections.length - 1; i >= 0; i--) {
+                        const el = document.getElementById(sections[i]);
+                        if (el && el.offsetTop <= scrollY) {
+                            this.mobileNavIndex = i;
+                            break;
+                        }
+                    }
+                },
+
+                switchLang(newLang) {
+                    this.lang = newLang;
+                    document.cookie = "storebox_lang=" + newLang + "; path=/; max-age=" + (365*24*3600);
+                    document.cookie = "django_language=" + newLang + "; path=/; max-age=" + (365*24*3600);
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('lang', newLang);
+                    window.location.href = url.toString();
+                },
+
+                scrollLookbook(direction) {
+                    const el = document.getElementById('lookbook-carousel');
+                    if (el) {
+                        el.scrollBy({ left: direction * 350, behavior: 'smooth' });
+                    }
+                },
+
+                toggleCardPicker(id) {
+                    if (this.activeCardId === id) {
+                        this.activeCardId = null;
+                    } else {
+                        this.activeCardId = id;
+                    }
+                },
+
+                async quickAddSize(product, variation) {
+                    try {
+                        const res = await fetch('/store/{{ store.subdomain }}/cart/add/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                product_id: product.id,
+                                variation_id: variation ? variation.id : null,
+                                quantity: 1
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.cartItems = data.cart;
+                            this.justAddedId = product.id;
+                            this.activeCardId = null;
+                            this.showToast(product.name + " (" + (variation ? variation.name : '') + ") " + (this.lang === 'ru' ? "добавлен в корзину!" : "savatga qo'shildi!"));
+                            setTimeout(() => { this.justAddedId = null; }, 2000);
+                            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                        }
+                    } catch (e) {
+                        console.error("Quick add error", e);
+                    }
+                },
+
+                isProductSelected(item) {
+                    if (item.slot === 'top' && this.selectedTop && this.selectedTop.id === item.id) return true;
+                    if (item.slot === 'bottom' && this.selectedBottom && this.selectedBottom.id === item.id) return true;
+                    if (item.slot === 'shoes' && this.selectedShoes && this.selectedShoes.id === item.id) return true;
+                    return false;
+                },
+
+                selectSlotProduct(item) {
+                    if (item.slot === 'top') this.selectedTop = item;
+                    if (item.slot === 'bottom') this.selectedBottom = item;
+                    if (item.slot === 'shoes') this.selectedShoes = item;
+                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                },
+
+                resetOutfit() {
+                    this.selectedTop = null;
+                    this.selectedBottom = null;
+                    this.selectedShoes = null;
+                    this.showToast(this.lang === 'ru' ? "Образ сброшен" : "Obraz tozalandi");
+                },
+
+                applyOutfitPreset(idx) {
+                    const preset = this.outfitPresets[idx];
+                    if (!preset) return;
+                    this.selectedTop = this.allProducts.find(p => p.slug === preset.topSlug) || null;
+                    this.selectedBottom = this.allProducts.find(p => p.slug === preset.bottomSlug) || null;
+                    this.selectedShoes = this.allProducts.find(p => p.slug === preset.shoesSlug) || null;
+                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                },
+
+                async addCompleteOutfitToCart() {
+                    const itemsToAdd = [];
+                    if (this.selectedTop) {
+                        const vId = (this.selectedTop.variations && this.selectedTop.variations.length) ? this.selectedTop.variations[0].id : null;
+                        itemsToAdd.push({ product_id: this.selectedTop.id, variation_id: vId, quantity: 1 });
+                    }
+                    if (this.selectedBottom) {
+                        const vId = (this.selectedBottom.variations && this.selectedBottom.variations.length) ? this.selectedBottom.variations[0].id : null;
+                        itemsToAdd.push({ product_id: this.selectedBottom.id, variation_id: vId, quantity: 1 });
+                    }
+                    if (this.selectedShoes) {
+                        const vId = (this.selectedShoes.variations && this.selectedShoes.variations.length) ? this.selectedShoes.variations[0].id : null;
+                        itemsToAdd.push({ product_id: this.selectedShoes.id, variation_id: vId, quantity: 1 });
+                    }
+
+                    if (itemsToAdd.length === 0) {
+                        this.showToast(this.lang === 'ru' ? "Выберите вещи для образа" : "Look uchun kiyim tanlang");
+                        return;
+                    }
+
+                    try {
+                        const res = await fetch('/store/{{ store.subdomain }}/cart/add/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ items: itemsToAdd })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.cartItems = data.cart;
+                            this.showToast(this.lang === 'ru' ? "Готовый образ добавлен в корзину! ⚡️" : "Tayyor look savatga qo'shildi! ⚡️");
+                            this.cartDrawerOpen = true;
+                            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                        }
+                    } catch (e) {
+                        console.error("Batch add error", e);
+                    }
+                },
+
+                async updateCart(key, delta) {
+                    try {
+                        const res = await fetch('/store/{{ store.subdomain }}/cart/update/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ item_key: key, quantity_delta: delta })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.cartItems = data.cart;
+                            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                        }
+                    } catch (e) {}
+                },
+
+                showToast(msg) {
+                    this.toastMessage = msg;
+                    setTimeout(() => { this.toastMessage = ''; }, 3000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

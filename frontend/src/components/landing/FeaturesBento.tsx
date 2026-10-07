@@ -245,8 +245,8 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
 
       {/* SECTION HEADER */}
       <div className="text-center max-w-3xl mx-auto mb-14 md:mb-20 relative z-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-white/10 text-xs font-black text-[#c8ff6a] uppercase tracking-wider backdrop-blur-md mb-4 shadow-sm">
-          <Zap className="w-3.5 h-3.5 text-[#c8ff6a]" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-white/10 text-xs font-semibold text-emerald-400 uppercase tracking-wider backdrop-blur-md mb-4 shadow-sm">
+          <Zap className="w-3.5 h-3.5 text-emerald-400" />
           <span>{str.kicker}</span>
         </div>
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.15] mb-5">
@@ -331,7 +331,7 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-white truncate">{str.card1Product1}</h4>
-                    <p className="text-xs font-black text-[#c8ff6a]">{str.card1Price1}</p>
+                    <p className="text-xs font-semibold text-emerald-400">{str.card1Price1}</p>
                   </div>
                   <button
                     type="button"
@@ -349,7 +349,7 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-white truncate">{str.card1Product2}</h4>
-                    <p className="text-xs font-black text-[#c8ff6a]">{str.card1Price2}</p>
+                    <p className="text-xs font-semibold text-emerald-400">{str.card1Price2}</p>
                   </div>
                   <button
                     type="button"
@@ -430,7 +430,7 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
 
             {/* AI Speed & Accuracy Badge */}
             <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#c8ff6a]/15 border border-[#c8ff6a]/30 text-[#c8ff6a] font-black text-[10px]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 font-semibold text-[10px]">
                 {str.card2AiSpeed}
               </span>
               <span className="text-[10px] font-medium text-slate-400">
@@ -447,7 +447,7 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
             <div className="flex flex-wrap gap-1 pt-1">
               <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-bold text-fuchsia-300">{str.card2Tag1}</span>
               <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-bold text-cyan-300">{str.card2Tag2}</span>
-              <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-bold text-[#c8ff6a]">{str.card2Tag3}</span>
+              <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-bold text-emerald-400">{str.card2Tag3}</span>
             </div>
 
             {/* Floating VIP Customer Chip */}
@@ -547,7 +547,7 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
                 <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span>{str.card3FiscalReceipt}</span>
               </span>
-              <span className="text-[#c8ff6a] font-mono text-[10px] font-black">0% сборов</span>
+              <span className="text-emerald-400 font-mono text-[10px] font-semibold">0% сборов</span>
             </div>
 
             {/* Live POS Sync Footer */}
@@ -658,8 +658,8 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
               </div>
 
               {/* Customer Destination Pin */}
-              <div className="absolute right-6 top-4 flex items-center gap-1.5 bg-[#c8ff6a]/15 border border-[#c8ff6a]/40 px-2 py-1 rounded-lg text-[10px] text-[#c8ff6a] font-bold shadow-md">
-                <MapPin className="w-3 h-3 text-[#c8ff6a]" />
+              <div className="absolute right-6 top-4 flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-400/40 px-2 py-1 rounded-lg text-[10px] text-emerald-300 font-bold shadow-md">
+                <MapPin className="w-3 h-3 text-emerald-400" />
                 <span>Toshkent</span>
               </div>
 
@@ -673,7 +673,7 @@ export const FeaturesBento: React.FC<FeaturesBentoProps> = ({ lang = "ru" }) => 
               </div>
               <div className="flex flex-col sm:items-end justify-center">
                 <div className="text-[11px] text-slate-400 font-medium">{str.card4TimerLabel}</div>
-                <div className="text-sm font-black font-mono text-[#c8ff6a] flex items-center gap-1.5">
+                <div className="text-sm font-semibold font-mono text-emerald-400 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5" />
                   <span>{formatTimer(deliverySeconds)}</span>
                 </div>

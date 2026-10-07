@@ -56,17 +56,17 @@ export const DeliveryPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("delivery") || "Yetkazib berish"}</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">{t("delivery_subtitle") || "Yetkazib berish narxlari, shartlari va olib ketish zonalari"}</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">{t("delivery") || "Yetkazib berish"}</h1>
+          <p className="text-xs text-slate-500 mt-1 font-normal">{t("delivery_subtitle") || "Yetkazib berish narxlari, shartlari va olib ketish zonalari"}</p>
         </div>
         <button
           type="button"
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending}
-          className="px-5 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs disabled:opacity-50"
+          className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-2xs disabled:opacity-50 cursor-pointer"
         >
           <Save className="w-4 h-4" />
           <span>{saveMutation.isPending ? (t("saving") || "Saqlanmoqda...") : (t("save_changes") || "O'zgarishlarni saqlash")}</span>
@@ -74,30 +74,30 @@ export const DeliveryPage: React.FC = () => {
       </div>
 
       {successMsg && (
-        <div className="p-3 rounded-2xl bg-[#211b2e] text-[#c8ff6a] text-xs font-bold border border-[#211b2e]/30 flex items-center gap-2">
-          <Check className="w-4 h-4" />
+        <div className="p-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200 flex items-center gap-2">
+          <Check className="w-4 h-4 text-emerald-600" />
           <span>{successMsg}</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* KURYER DOSTAVKA */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-bold shadow-xs">
-                <Truck className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/60 flex items-center justify-center font-medium shadow-2xs">
+                <Truck className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-black text-slate-900">{t("courier_service") || "Kuryer orqali yetkazish"}</h2>
-                <p className="text-[11px] text-slate-400">{t("courier_service_desc") || "Eshikkacha yetkazib berish xizmati"}</p>
+                <h2 className="text-xs font-semibold text-slate-900">{t("courier_service") || "Kuryer orqali yetkazish"}</h2>
+                <p className="text-[11px] text-slate-500">{t("courier_service_desc") || "Eshikkacha yetkazib berish xizmati"}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setCourierEnabled(!courierEnabled)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
-                courierEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border-slate-200"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                courierEnabled ? "bg-slate-900 text-white shadow-2xs" : "bg-slate-100 text-slate-400 border border-slate-200"
               }`}
             >
               {courierEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -106,7 +106,7 @@ export const DeliveryPage: React.FC = () => {
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 {t("delivery_price_label") || "Yetkazib berish narxi (UZS)"}
               </label>
               <input
@@ -114,12 +114,12 @@ export const DeliveryPage: React.FC = () => {
                 value={deliveryPrice}
                 onChange={(e) => setDeliveryPrice(e.target.value)}
                 disabled={!courierEnabled}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold font-mono focus:outline-none focus:border-brand disabled:opacity-50"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal font-mono focus:outline-none focus:border-blue-600 disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 {t("free_threshold_label") || "Bepul yetkazib berish chegarasi (UZS)"}
               </label>
               <input
@@ -127,12 +127,12 @@ export const DeliveryPage: React.FC = () => {
                 value={freeThreshold}
                 onChange={(e) => setFreeThreshold(e.target.value)}
                 disabled={!courierEnabled}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold font-mono focus:outline-none focus:border-brand disabled:opacity-50"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal font-mono focus:outline-none focus:border-blue-600 disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 {t("time_estimate_label") || "Taxminiy yetkazish vaqti"}
               </label>
               <input
@@ -141,29 +141,29 @@ export const DeliveryPage: React.FC = () => {
                 onChange={(e) => setTimeEstimate(e.target.value)}
                 disabled={!courierEnabled}
                 placeholder="Masalan: 30-45 daqiqa, 2 soat"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand disabled:opacity-50"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal focus:outline-none focus:border-blue-600 disabled:opacity-50"
               />
             </div>
           </div>
         </div>
 
         {/* SAMOVIVOZ / OLIB KETISH */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-bold shadow-xs">
-                <MapPin className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/60 flex items-center justify-center font-medium shadow-2xs">
+                <MapPin className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-black text-slate-900">{t("pickup_service") || "Olib ketish (Samovivoz)"}</h2>
-                <p className="text-[11px] text-slate-400">{t("pickup_service_desc") || "Mijoz o'zi do'kondan olib ketadi"}</p>
+                <h2 className="text-xs font-semibold text-slate-900">{t("pickup_service") || "Olib ketish (Samovivoz)"}</h2>
+                <p className="text-[11px] text-slate-500">{t("pickup_service_desc") || "Mijoz o'zi do'kondan olib ketadi"}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setPickupEnabled(!pickupEnabled)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
-                pickupEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border-slate-200"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                pickupEnabled ? "bg-slate-900 text-white shadow-2xs" : "bg-slate-100 text-slate-400 border border-slate-200"
               }`}
             >
               {pickupEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -172,7 +172,7 @@ export const DeliveryPage: React.FC = () => {
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 {t("pickup_address_label") || "Olib ketish manzili (Do'kon joylashuvi)"}
               </label>
               <textarea
@@ -181,7 +181,7 @@ export const DeliveryPage: React.FC = () => {
                 onChange={(e) => setAddress(e.target.value)}
                 disabled={!pickupEnabled}
                 placeholder="Toshkent sh., Chilonzor tumani, Bunyodkor ko'chasi 15-uy"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand disabled:opacity-50"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal focus:outline-none focus:border-blue-600 disabled:opacity-50"
               />
             </div>
           </div>

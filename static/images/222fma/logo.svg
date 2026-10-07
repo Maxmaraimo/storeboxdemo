@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120" fill="none">
+  <rect width="400" height="120" fill="#0C0D0B" rx="16"/>
+  <!-- Geometric Badge -->
+  <g transform="translate(24, 26)">
+    <rect width="68" height="68" rx="14" fill="#141613" stroke="#C8FF6A" stroke-width="2.5"/>
+    <text x="34" y="44" font-family="'Barlow Condensed', 'Inter', -apple-system, sans-serif" font-size="34" font-weight="900" fill="#C8FF6A" text-anchor="middle" letter-spacing="-1">222</text>
+  </g>
+  <!-- Brand Text -->
+  <text x="110" y="58" font-family="'Barlow Condensed', 'Inter', -apple-system, sans-serif" font-size="38" font-weight="900" fill="#FFFFFF" letter-spacing="3">222 FMA</text>
+  <text x="112" y="82" font-family="'Manrope', 'Inter', -apple-system, sans-serif" font-size="12" font-weight="700" fill="#A1A1AA" letter-spacing="2.5">ERKAKLAR KIYIMI · TASHKENT</text>
+</svg>

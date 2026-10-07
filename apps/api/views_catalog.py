@@ -81,7 +81,7 @@ def products_list_create_view(request):
     category_id = request.GET.get("category")
     query = request.GET.get("q", "").strip()
 
-    qs = Product.objects.filter(store=store).select_related("category").order_by("-created_at", "-id")
+    qs = Product.objects.filter(store=store).select_related("category").prefetch_related("yespos_links").order_by("-created_at", "-id")
 
     if category_id:
         qs = qs.filter(category_id=category_id)

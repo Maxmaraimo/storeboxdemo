@@ -15,3 +15,6 @@ scratch/
 *.lock
 .telegram_polling.lock
 .anima/
+static/images/candidates/
+static/images/candidates_curated/
+примерыстиль/

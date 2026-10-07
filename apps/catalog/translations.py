@@ -1738,6 +1738,8 @@ def auto_populate_product_translations(product, save: bool = False):
     Automatically detects language and translates all product names and descriptions
     across UZ, RU, EN, and TR.
     """
+    if getattr(product, '_skip_auto_translation', False):
+        return
     candidates = [
         (product.name_ru, 'ru'),
         (product.name_uz, 'uz'),
@@ -1836,6 +1838,8 @@ def auto_populate_category_translations(category, save: bool = False):
     """
     Automatically detects language and translates category names across UZ, RU, EN, and TR.
     """
+    if getattr(category, '_skip_auto_translation', False):
+        return
     candidates = [
         (category.name_ru, 'ru'),
         (category.name_uz, 'uz'),

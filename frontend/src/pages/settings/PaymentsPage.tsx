@@ -77,17 +77,17 @@ export const PaymentsPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("payment_methods") || "To'lov usullari"}</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">{t("payments_subtitle") || "Onlayn to'lov tizimlari va naqd pul / terminal sozlamalari"}</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">{t("payment_methods") || "To'lov usullari"}</h1>
+          <p className="text-xs text-slate-500 mt-1 font-normal">{t("payments_subtitle") || "Onlayn to'lov tizimlari va naqd pul / terminal sozlamalari"}</p>
         </div>
         <button
           type="button"
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending}
-          className="px-5 py-2.5 bg-brand text-white rounded-2xl text-xs font-black hover:bg-brand-dark transition-colors flex items-center gap-2 shadow-xs disabled:opacity-50"
+          className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-2xs disabled:opacity-50 cursor-pointer"
         >
           <Save className="w-4 h-4" />
           <span>{saveMutation.isPending ? (t("saving") || "Saqlanmoqda...") : (t("save_changes") || "O'zgarishlarni saqlash")}</span>
@@ -95,29 +95,29 @@ export const PaymentsPage: React.FC = () => {
       </div>
 
       {successMsg && (
-        <div className="p-3 rounded-2xl bg-[#211b2e] text-[#c8ff6a] text-xs font-bold border border-[#211b2e]/30 flex items-center gap-2">
-          <Check className="w-4 h-4" />
+        <div className="p-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200 flex items-center gap-2">
+          <Check className="w-4 h-4 text-emerald-600" />
           <span>{successMsg}</span>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* CASH */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-bold shadow-xs">
-              <Banknote className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/60 flex items-center justify-center font-medium shadow-2xs">
+              <Banknote className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xs font-black text-slate-900">{t("cash_label") || "Naqd pul"}</h2>
+              <h2 className="text-xs font-semibold text-slate-900">{t("cash_label") || "Naqd pul"}</h2>
               <p className="text-[11px] text-slate-500">{t("cash_desc") || "Kuryerga yetkazilganda to'lash"}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setCashEnabled(!cashEnabled)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-              cashEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+              cashEnabled ? "bg-slate-900 text-white shadow-2xs" : "bg-slate-100 text-slate-400 border border-slate-200"
             }`}
           >
             {cashEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -125,21 +125,21 @@ export const PaymentsPage: React.FC = () => {
         </div>
 
         {/* TERMINAL */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-bold shadow-xs">
-              <CreditCard className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/60 flex items-center justify-center font-medium shadow-2xs">
+              <CreditCard className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xs font-black text-slate-900">{t("terminal_label") || "Karta orqali terminalda"}</h2>
+              <h2 className="text-xs font-semibold text-slate-900">{t("terminal_label") || "Karta orqali terminalda"}</h2>
               <p className="text-[11px] text-slate-500">{t("terminal_desc") || "Kuryer terminali orqali qabul qilish"}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setTerminalEnabled(!terminalEnabled)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-              terminalEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+              terminalEnabled ? "bg-slate-900 text-white shadow-2xs" : "bg-slate-100 text-slate-400 border border-slate-200"
             }`}
           >
             {terminalEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -147,22 +147,22 @@ export const PaymentsPage: React.FC = () => {
         </div>
 
         {/* PAYME */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 md:col-span-2">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs space-y-3 md:col-span-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-black text-xs shadow-xs">
+              <div className="w-9 h-9 rounded-lg bg-sky-50 text-sky-700 border border-sky-100 flex items-center justify-center font-semibold text-xs shadow-2xs">
                 Payme
               </div>
               <div>
-                <h2 className="text-xs font-black text-slate-900">Payme</h2>
+                <h2 className="text-xs font-semibold text-slate-900">Payme</h2>
                 <p className="text-[11px] text-slate-500">{t("payme_desc") || "Payme ilovasi orqali onlayn to'lov"}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setPaymeEnabled(!paymeEnabled)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                paymeEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                paymeEnabled ? "bg-slate-900 text-white shadow-2xs" : "bg-slate-100 text-slate-400 border border-slate-200"
               }`}
             >
               {paymeEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -170,7 +170,7 @@ export const PaymentsPage: React.FC = () => {
           </div>
           {paymeEnabled && (
             <div className="pt-2 border-t border-slate-100">
-              <label className="block text-[11px] font-bold text-slate-600 mb-1">
+              <label className="block text-[11px] font-medium text-slate-600 mb-1">
                 Payme Merchant ID
               </label>
               <input
@@ -178,29 +178,29 @@ export const PaymentsPage: React.FC = () => {
                 value={paymeMerchantId}
                 onChange={(e) => setPaymeMerchantId(e.target.value)}
                 placeholder="64a..."
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-brand"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-600"
               />
             </div>
           )}
         </div>
 
         {/* CLICK */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 md:col-span-2">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs space-y-3 md:col-span-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-black text-xs shadow-xs">
+              <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center justify-center font-semibold text-xs shadow-2xs">
                 Click
               </div>
               <div>
-                <h2 className="text-xs font-black text-slate-900">Click Up</h2>
+                <h2 className="text-xs font-semibold text-slate-900">Click Up</h2>
                 <p className="text-[11px] text-slate-500">{t("click_desc") || "Click ilovasi yoki USSD orqali to'lov"}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setClickEnabled(!clickEnabled)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                clickEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                clickEnabled ? "bg-slate-900 text-white shadow-2xs" : "bg-slate-100 text-slate-400 border border-slate-200"
               }`}
             >
               {clickEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -209,23 +209,23 @@ export const PaymentsPage: React.FC = () => {
           {clickEnabled && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Click Service ID</label>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Click Service ID</label>
                 <input
                   type="text"
                   value={clickServiceId}
                   onChange={(e) => setClickServiceId(e.target.value)}
                   placeholder="34567"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-brand"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-600"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Click Merchant ID</label>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Click Merchant ID</label>
                 <input
                   type="text"
                   value={clickMerchantId}
                   onChange={(e) => setClickMerchantId(e.target.value)}
                   placeholder="23456"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-brand"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-600"
                 />
               </div>
             </div>
@@ -233,21 +233,21 @@ export const PaymentsPage: React.FC = () => {
         </div>
 
         {/* UZUM PAY */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4 md:col-span-2">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between gap-4 md:col-span-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 flex items-center justify-center font-black text-xs shadow-xs">
+            <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-700 border border-purple-100 flex items-center justify-center font-semibold text-xs shadow-2xs">
               Uzum
             </div>
             <div>
-              <h2 className="text-xs font-black text-slate-900">Uzum Pay</h2>
+              <h2 className="text-xs font-semibold text-slate-900">Uzum Pay</h2>
               <p className="text-[11px] text-slate-500">{t("uzum_desc") || "Uzum ilovasi orqali QR-kod va tezkor to'lov"}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setUzumEnabled(!uzumEnabled)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-              uzumEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+              uzumEnabled ? "bg-slate-900 text-white shadow-2xs" : "bg-slate-100 text-slate-400 border border-slate-200"
             }`}
           >
             {uzumEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -255,22 +255,22 @@ export const PaymentsPage: React.FC = () => {
         </div>
 
         {/* MULTICARD */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3 md:col-span-2">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs space-y-3 md:col-span-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-black text-xs shadow-xs">
+              <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center justify-center font-semibold text-xs shadow-2xs">
                 MC
               </div>
               <div>
-                <h2 className="text-xs font-black text-slate-900">Multicard Payment Gateway</h2>
+                <h2 className="text-xs font-semibold text-slate-900">Multicard Payment Gateway</h2>
                 <p className="text-[11px] text-slate-500">{t("multicard_desc") || "Uzcard, Humo, Visa, Mastercard, PaymeGo, ClickPass to'lovlari"}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setMulticardEnabled(!multicardEnabled)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                multicardEnabled ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30" : "bg-slate-100 text-slate-400 border border-slate-200"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                multicardEnabled ? "bg-slate-900 text-white shadow-2xs" : "bg-slate-100 text-slate-400 border border-slate-200"
               }`}
             >
               {multicardEnabled ? (t("status_active") || "Faol") : (t("status_disabled") || "O'chirilgan")}
@@ -279,33 +279,33 @@ export const PaymentsPage: React.FC = () => {
           {multicardEnabled && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Application ID</label>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Application ID</label>
                 <input
                   type="text"
                   value={multicardAppId}
                   onChange={(e) => setMulticardAppId(e.target.value)}
                   placeholder="rhmt_test"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-brand"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-600"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Secret Key</label>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Secret Key</label>
                 <input
                   type="password"
                   value={multicardSecret}
                   onChange={(e) => setMulticardSecret(e.target.value)}
                   placeholder="Pw18axeBFo8V7NamKHXX"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-brand"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-600"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Store ID</label>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Store ID</label>
                 <input
                   type="text"
                   value={multicardStoreId}
                   onChange={(e) => setMulticardStoreId(e.target.value)}
                   placeholder="6"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-brand"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-600"
                 />
               </div>
               <div className="flex items-center gap-2 pt-5">
@@ -314,9 +314,9 @@ export const PaymentsPage: React.FC = () => {
                   id="mcTestMode"
                   checked={multicardTestMode}
                   onChange={(e) => setMulticardTestMode(e.target.checked)}
-                  className="rounded border-slate-300 text-brand focus:ring-brand"
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
-                <label htmlFor="mcTestMode" className="text-xs font-bold text-slate-700 cursor-pointer">
+                <label htmlFor="mcTestMode" className="text-xs font-medium text-slate-700 cursor-pointer">
                   Test / Dev rejimi (dev-mesh.multicard.uz)
                 </label>
               </div>

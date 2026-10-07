@@ -222,16 +222,16 @@ export const TelegramBotPage: React.FC = () => {
       {/* HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Bot className="w-6 h-6 text-[#211b2e] dark:text-[#c8ff6a]" />
+          <h1 className="text-xl font-semibold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <Bot className="w-5 h-5 text-blue-600" />
             <span>{t("telegram_bot_title") || "Telegram Bot & Mini App (TMA)"}</span>
             {isConnected ? (
-              <span className="px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 text-[10px] font-black flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#c8ff6a] dark:bg-[#211b2e] animate-pulse"></span>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[11px] font-medium flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>{t("telegram_active_badge") || "Faol • Web App yoqilgan"}</span>
               </span>
             ) : (
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-black">
+              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-medium">
                 {t("telegram_not_connected") || "Ulanmagan"}
               </span>
             )}
@@ -245,14 +245,14 @@ export const TelegramBotPage: React.FC = () => {
       {/* ALERT MESSAGE */}
       {msg && (
         <div
-          className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-2xs ${
+          className={`p-3.5 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-2xs ${
             msg.type === "success"
-              ? "bg-[#211b2e] border border-[#211b2e]/30 text-[#c8ff6a]"
+              ? "bg-emerald-50 border border-emerald-200/80 text-emerald-800"
               : "bg-rose-50 border border-rose-200 text-rose-900"
           }`}
         >
           {msg.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-[#c8ff6a] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           ) : (
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
           )}
@@ -262,13 +262,13 @@ export const TelegramBotPage: React.FC = () => {
 
       {/* NOT CONNECTED STATE: BOT CREATION GUIDE & FORM */}
       {!isConnected ? (
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-10 shadow-xs space-y-6">
+        <div className="bg-white rounded-xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-3xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center font-black text-2xl shadow-sm shrink-0">
-              <Bot className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl shrink-0">
+              <Bot className="w-6 h-6 stroke-[1.8]" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">{t("telegram_create_guide_title")}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 tracking-tight">{t("telegram_create_guide_title")}</h3>
               <p className="text-xs text-slate-500 mt-1">
                 {t("telegram_create_guide_desc")}
               </p>
@@ -347,33 +347,33 @@ export const TelegramBotPage: React.FC = () => {
         /* CONNECTED STATE */
         <div className="space-y-6">
           {/* CONNECTED BOT CARD */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center justify-center font-bold text-lg shrink-0">
-                <Bot className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                <Bot className="w-5 h-5 stroke-[1.8]" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-black text-base text-slate-900">
+                  <h3 className="font-semibold text-sm text-slate-900">
                     @{status?.bot_username}
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 text-[10px] font-black flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#c8ff6a] dark:bg-[#211b2e] animate-pulse"></span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[10px] font-medium flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span>{t("telegram_active_badge")}</span>
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-400 mt-0.5">
                   {t("telegram_created_label")} {status?.created_at ? new Date(status.created_at).toLocaleString() : t("telegram_just_now")}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
               <a
                 href={`https://t.me/${status?.bot_username}`}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] flex items-center gap-1.5 shadow-xs transition-colors"
+                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-2xs transition-colors"
               >
                 <Bot className="w-3.5 h-3.5" />
                 <span>{t("telegram_open_bot")}</span>
@@ -382,7 +382,7 @@ export const TelegramBotPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setChangeBotOpen(!changeBotOpen)}
-                className="px-3.5 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>{t("telegram_change_bot")}</span>
@@ -392,7 +392,7 @@ export const TelegramBotPage: React.FC = () => {
                 type="button"
                 onClick={handleDisconnect}
                 disabled={disconnecting}
-                className="px-3 py-2 rounded-2xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Unlink className="w-3.5 h-3.5" />
                 <span>{disconnecting ? t("telegram_disconnecting") : t("telegram_disconnect")}</span>
@@ -435,7 +435,7 @@ export const TelegramBotPage: React.FC = () => {
                   type="button"
                   onClick={() => handleSave(changeTokenInput)}
                   disabled={saving}
-                  className="px-6 py-2.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] font-black text-xs shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {saving ? t("telegram_connecting") : t("telegram_change_bot_btn")}
                 </button>
@@ -506,9 +506,9 @@ export const TelegramBotPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleCopyUrl}
-                    className="px-3 py-1.5 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] text-white font-bold text-xs inline-flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs inline-flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
                   >
-                    {copiedUrl ? <Check className="w-3.5 h-3.5 text-[#c8ff6a]" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedUrl ? t("telegram_copied") : t("telegram_copy")}</span>
                   </button>
                 </div>
@@ -517,13 +517,13 @@ export const TelegramBotPage: React.FC = () => {
               {/* Bot Form */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">{t("telegram_token_input_label")}</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">{t("telegram_token_input_label")}</label>
                   <input
                     type="text"
                     value={tokenInput}
                     onChange={(e) => setTokenInput(e.target.value)}
                     placeholder="123456:ABC-DEF1234ghIkl..."
-                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:border-brand"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono font-medium focus:outline-none focus:border-blue-600 focus:bg-white"
                   />
                   <span className="text-[10px] text-slate-400 block mt-1">
                     {t("telegram_token_active_hint")}
@@ -531,7 +531,7 @@ export const TelegramBotPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
                     {t("telegram_menu_btn_field")}
                   </label>
                   <input
@@ -539,7 +539,7 @@ export const TelegramBotPage: React.FC = () => {
                     value={buttonName}
                     onChange={(e) => setButtonName(e.target.value)}
                     placeholder={t("telegram_menu_btn_placeholder")}
-                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-brand"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-600 focus:bg-white"
                   />
                   <span className="text-[10px] text-slate-400 block mt-1">
                     {t("telegram_menu_btn_hint")}
@@ -547,7 +547,7 @@ export const TelegramBotPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
                     {t("telegram_welcome_msg_field")}
                   </label>
                   <textarea
@@ -555,7 +555,7 @@ export const TelegramBotPage: React.FC = () => {
                     onChange={(e) => setWelcomeMessage(e.target.value)}
                     rows={3}
                     placeholder={t("telegram_welcome_msg_placeholder")}
-                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-brand leading-relaxed"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-blue-600 focus:bg-white leading-relaxed"
                   />
                   <span className="text-[10px] text-slate-400 block mt-1">
                     {t("telegram_welcome_msg_hint")}
@@ -567,7 +567,7 @@ export const TelegramBotPage: React.FC = () => {
                     type="button"
                     onClick={() => handleSave()}
                     disabled={saving}
-                    className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] text-[#c8ff6a] font-black text-xs shadow-md shadow-[#211b2e]/20 transition-all cursor-pointer disabled:opacity-50"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer disabled:opacity-50"
                   >
                     {saving ? t("telegram_saving") : t("telegram_save_changes_btn")}
                   </button>
@@ -580,7 +580,7 @@ export const TelegramBotPage: React.FC = () => {
                   type="button"
                   onClick={handleSetupMenu}
                   disabled={settingUpMenu}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <Smartphone className="w-4 h-4" />
                   <span>{settingUpMenu ? t("telegram_setting_up") : t("telegram_setup_tma_menu")}</span>
@@ -590,7 +590,7 @@ export const TelegramBotPage: React.FC = () => {
                   type="button"
                   onClick={handleTestConnection}
                   disabled={testingConnection}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                   <span>{testingConnection ? t("telegram_testing") : t("telegram_test_connection")}</span>
@@ -601,55 +601,55 @@ export const TelegramBotPage: React.FC = () => {
 
           {/* SUB TAB 2: AMALLAR (COMMANDS) */}
           {activeTab === "actions" && (
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-4 max-w-3xl">
-              <h3 className="font-black text-base text-slate-900">{t("telegram_actions_title")}</h3>
+            <div className="bg-white rounded-xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-4 max-w-3xl">
+              <h3 className="font-semibold text-base text-slate-900">{t("telegram_actions_title")}</h3>
               <p className="text-xs text-slate-500">
                 {t("telegram_actions_desc")}
               </p>
               <div className="divide-y divide-slate-100 text-xs">
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-900">
+                    <div className="font-medium text-slate-900">
                       {t("telegram_cmd_menu_name").replace("{name}", status?.button_name || t("telegram_menu_btn_placeholder"))}
                     </div>
                     <div className="text-[11px] text-slate-400">
                       {t("telegram_cmd_menu_desc")}
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[10px] font-medium">
                     {t("telegram_badge_active")}
                   </span>
                 </div>
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-900">{t("telegram_cmd_lang_name")}</div>
+                    <div className="font-medium text-slate-900">{t("telegram_cmd_lang_name")}</div>
                     <div className="text-[11px] text-slate-400">
                       {t("telegram_cmd_lang_desc")}
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[10px] font-medium">
                     {t("telegram_badge_active")}
                   </span>
                 </div>
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-900">{t("telegram_cmd_chat_name")}</div>
+                    <div className="font-medium text-slate-900">{t("telegram_cmd_chat_name")}</div>
                     <div className="text-[11px] text-slate-400">
                       {t("telegram_cmd_chat_desc")}
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[10px] font-medium">
                     {t("telegram_badge_active")}
                   </span>
                 </div>
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-slate-900">{t("telegram_cmd_orders_name")}</div>
+                    <div className="font-medium text-slate-900">{t("telegram_cmd_orders_name")}</div>
                     <div className="text-[11px] text-slate-400">
                       {t("telegram_cmd_orders_desc")}
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-[10px] font-black">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[10px] font-medium">
                     {t("telegram_badge_active")}
                   </span>
                 </div>

@@ -16,6 +16,7 @@ urlpatterns = [
     path('constructor/<path:subpath>', views.dashboard_spa_view, name='constructor_sub_noslash'),
     path('categories/', views.dashboard_spa_view, name='categories'),
     path('customers/', views.dashboard_spa_view, name='customers'),
+    path('analytics/', views.dashboard_spa_view, name='analytics'),
     path('chats/', views.dashboard_spa_view, name='chats'),
     path('warehouse/', views.dashboard_spa_view, name='warehouse'),
     path('discounts/', views.dashboard_spa_view, name='discounts'),
@@ -31,6 +32,8 @@ urlpatterns = [
     path('settings/', views.dashboard_spa_view, name='settings_general'),
     path('settings/<path:subpath>/', views.dashboard_spa_view, name='settings_sub'),
     path('robo-market/', views.dashboard_spa_view, name='robo_market'),
+    path('demo-store/<path:subpath>/', views.dashboard_spa_view, name='demo_store'),
+    path('demo-store/<path:subpath>', views.dashboard_spa_view, name='demo_store_noslash'),
 
     # Async Dashboard Stats / Summary APIs (pure JSON, <50ms response)
     path('summary/', views_dashboard.dashboard_summary_view, name='summary_alias'),
@@ -74,6 +77,7 @@ urlpatterns = [
     path('api/order-assign-courier/', views.order_assign_courier_api, name='order_assign_courier_api'),
     path('api/courier-update-order/', views.courier_update_order_api, name='courier_update_order_api'),
     path('api/courier-location/', views.courier_location_update_api, name='courier_location_update'),
+    path('api/courier-route/', views.courier_route_api, name='courier_route_api'),
     path('api/order/<int:order_id>/tracking/', views.order_tracking_api, name='order_tracking_api'),
     path('courier/', views.courier_panel_view, name='courier_panel'),
     path('settings/staff/', views.dashboard_spa_view, name='settings_staff'),

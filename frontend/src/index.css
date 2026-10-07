@@ -4,93 +4,51 @@
 
 @layer base {
   html {
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: #F6F6F7;
   }
   body {
-    background: #F8FAFC fixed;
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    background-color: #F6F6F7;
+    font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    @apply text-neutral-900 font-sans antialiased transition-colors duration-300;
+    @apply text-slate-900 antialiased transition-colors duration-200;
     min-height: 100vh;
   }
   button, input, select, textarea {
     font-family: inherit;
   }
   .dark body {
-    background: #0c0e17 fixed;
-    @apply text-neutral-100;
+    background-color: #111213;
+    @apply text-zinc-100;
   }
 }
 
-/* StoreBox True Frosted Glass Panels */
-.apple-glass,
-.storebox-glass {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.06), 
-              inset 0 1.5px 2px rgba(255, 255, 255, 0.95), 
-              inset 0 -1px 2px rgba(255, 255, 255, 0.25);
+/* Shopify Polaris Card & Surface Standards */
+.polaris-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E1E3E5;
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
 }
 
-.dark .apple-glass,
-.dark .storebox-glass {
-  background: #141722;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+.dark .polaris-card {
+  background-color: #1A1A1A;
+  border-color: #2E2E2E;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
 }
 
-/* StoreBox Tactile Neumorphic Elements */
-.storebox-neu-icon {
-  background: linear-gradient(135deg, #ffffff 0%, #edf3f9 100%);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.1),
-              inset 0 2px 3px #ffffff,
-              inset 0 -2px 3px rgba(148, 163, 184, 0.2);
+/* Strict Typography Normalization: Eliminate heavy bold/black fonts */
+.font-black,
+.font-extrabold {
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
 }
 
-.dark .storebox-neu-icon {
-  background: #1c202e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.4);
-}
-
-/* Remove milky white inset glass highlight in dark mode */
-.dark [class*="inset_0_1.5px_2px_rgba(255"] {
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5) !important;
-}
-
-.apple-pill-btn {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.apple-pill-btn:hover {
-  transform: translateY(-1px);
-}
-.apple-pill-btn:active {
-  transform: scale(0.98);
-}
-
-.font-dot-matrix {
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}
-
-/* StoreBox Unified Typography: No cartoonish 900 font-black, restrained bold weights */
-.font-black {
-  font-weight: 750 !important;
-  letter-spacing: -0.025em;
-}
-
-.font-mono {
-  font-family: Inter, "Segoe UI", Arial, sans-serif !important;
-  font-variant-numeric: tabular-nums;
+h1, h2, h3, h4 {
+  letter-spacing: -0.015em;
 }
 
 /* Custom minimal scrollbar */
@@ -106,7 +64,7 @@
   border-radius: 9999px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: #3f3f46;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
@@ -120,30 +78,30 @@
   scrollbar-width: none;
 }
 
-/* Universal Apple Dark Theme system overrides */
+/* Clean dark mode surface overrides */
 .dark .bg-white {
-  background-color: rgba(24, 24, 27, 0.85);
-  border-color: rgba(255, 255, 255, 0.08);
+  background-color: #18181B;
+  border-color: #27272A;
 }
 .dark .bg-slate-50,
 .dark .bg-slate-50\/50,
 .dark .bg-slate-50\/60,
 .dark .bg-slate-50\/80 {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: #202023;
 }
 .dark .bg-slate-100 {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: #27272A;
 }
 .dark .border-slate-100,
 .dark .border-slate-200,
 .dark .border-slate-200\/60,
 .dark .border-slate-200\/80,
 .dark .border-slate-300 {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: #27272A;
 }
 .dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
 .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
-  border-color: rgba(255, 255, 255, 0.06);
+  border-color: #27272A;
 }
 .dark .text-slate-900 {
   color: #FFFFFF;
@@ -166,8 +124,8 @@
 .dark input:not([type="checkbox"]):not([type="radio"]),
 .dark textarea,
 .dark select {
-  background-color: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+  background-color: #18181B;
+  border-color: #27272A;
   color: #FFFFFF;
 }
 .dark input::placeholder,
@@ -175,12 +133,12 @@
   color: #71717A;
 }
 .dark table thead {
-  background-color: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.08);
+  background-color: #1F1F23;
+  border-color: #27272A;
 }
 .dark table thead th {
   color: #A1A1AA;
 }
 .dark table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: #202024;
 }

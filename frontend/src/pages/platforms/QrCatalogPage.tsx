@@ -286,14 +286,14 @@ export const QrCatalogPage: React.FC = () => {
       {/* ALERT MESSAGE */}
       {msg && (
         <div
-          className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-2xs ${
+          className={`p-3.5 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-2xs ${
             msg.type === "success"
-              ? "bg-[#211b2e] border border-[#211b2e]/30 text-[#c8ff6a]"
+              ? "bg-emerald-50 border border-emerald-200/80 text-emerald-800"
               : "bg-rose-50 border border-rose-200 text-rose-900"
           }`}
         >
           {msg.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-[#c8ff6a] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           ) : (
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
           )}
@@ -530,9 +530,9 @@ export const QrCatalogPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full py-3.5 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-white hover:text-[#10b981] font-black text-xs shadow-lg shadow-[#211b2e]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 border border-white/10"
+                className="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                <Save className="w-4 h-4 text-[#10b981]" />
+                <Save className="w-4 h-4 text-white" />
                 <span>{saving ? t("qr_saving") : t("telegram_save_btn")}</span>
               </button>
             </div>
@@ -623,7 +623,7 @@ export const QrCatalogPage: React.FC = () => {
             <button
               type="button"
               onClick={handleDownloadPDF}
-              className="py-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+              className="py-2.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-medium flex items-center justify-center gap-2 shadow-2xs transition-colors cursor-pointer"
             >
               <FileText className="w-4 h-4 text-rose-500" />
               <span>{t("qr_download_pdf")}</span>
@@ -631,9 +631,9 @@ export const QrCatalogPage: React.FC = () => {
             <button
               type="button"
               onClick={handlePrint}
-              className="py-3 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-[#211b2e]/25 transition-colors cursor-pointer border border-white/10"
+              className="py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium flex items-center justify-center gap-2 shadow-2xs transition-colors cursor-pointer"
             >
-              <Printer className="w-4 h-4 text-[#10b981]" />
+              <Printer className="w-4 h-4 text-white" />
               <span>{t("telegram_qr_print")}</span>
             </button>
           </div>

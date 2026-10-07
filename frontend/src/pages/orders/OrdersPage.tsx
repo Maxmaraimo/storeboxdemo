@@ -118,23 +118,23 @@ export const OrdersPage: React.FC = () => {
       </div>
 
       {/* STATUS TABS */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-black/[0.06] dark:border-white/10 text-xs font-bold">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-slate-200 dark:border-neutral-800 text-xs font-medium">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setStatus(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
               status === tab.id
-                ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 shadow-xs font-bold"
-                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
+                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-medium"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800"
             }`}
           >
             <span>{tab.label}</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${
                 status === tab.id
-                  ? "bg-[#c8ff6a]/20 text-[#c8ff6a] dark:bg-[#211b2e]/20 dark:text-[#211b2e]"
-                  : "bg-black/10 dark:bg-white/10 text-neutral-700 dark:text-neutral-300"
+                  ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
+                  : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-slate-300"
               }`}
             >
               {tab.count}
@@ -144,27 +144,27 @@ export const OrdersPage: React.FC = () => {
       </div>
 
       {/* SEARCH BAR */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white rounded-xl border border-slate-200/80 p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
         <div className="flex-1 max-w-md relative">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("search_order_ph") || "Buyurtma ID si (#RB-...), mijoz ismi yoki telefon..."}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold placeholder-slate-400 focus:outline-none focus:border-[#211b2e] focus:bg-white transition-all"
+            className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
           />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
         </div>
-        <div className="text-xs font-bold text-slate-500">
+        <div className="text-xs font-medium text-slate-500">
           {t("showing_orders_format") ? t("showing_orders_format").replace("{count}", String(orders.length)) : `Ko'rsatilmoqda: ${orders.length} ta buyurtma`}
         </div>
       </div>
 
       {/* ORDERS TABLE */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80 text-[10px] uppercase tracking-wider">
+            <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200/80 text-[10px] uppercase tracking-wider">
               <tr>
                 <th className="py-3 px-4">{t("th_order_num") || "Buyurtma"}</th>
                 <th className="py-3 px-4">{t("th_client") || "Mijoz"}</th>
@@ -175,24 +175,24 @@ export const OrdersPage: React.FC = () => {
                 <th className="py-3 px-4 text-right">{t("th_action") || "Amal"}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+            <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
               {orders.map((order) => (
                 <tr
                   key={order.id}
                   onClick={() => setSelectedOrder(order)}
-                  className="hover:bg-slate-500/5 transition-colors cursor-pointer group"
+                  className="hover:bg-slate-50 transition-colors cursor-pointer group"
                 >
-                  <td className="py-3.5 px-4">
+                  <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 group-hover:text-[#211b2e] transition-colors">
+                      <span className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                         #{order.order_number}
                       </span>
                       {order.source === "TMA" ? (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-sky-50 text-sky-700 border border-sky-200">
                           <Send className="w-2.5 h-2.5" /> TG
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30">
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
                           <Globe className="w-2.5 h-2.5" /> {t("website_channel") || "Sayt"}
                         </span>
                       )}
@@ -201,13 +201,13 @@ export const OrdersPage: React.FC = () => {
                       {new Date(order.created_at).toLocaleString()}
                     </div>
                   </td>
-                  <td className="py-3.5 px-4">
-                    <div className="font-bold text-slate-900">{order.customer_name}</div>
+                  <td className="py-3 px-4">
+                    <div className="font-medium text-slate-900">{order.customer_name}</div>
                     <div className="text-[11px] text-slate-500">{order.customer_phone}</div>
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="py-3 px-4">
                     {order.branch_name ? (
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 max-w-[170px] truncate" title={order.branch_name}>
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 max-w-[170px] truncate" title={order.branch_name}>
                         <Building2 className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                         <span className="truncate">{order.branch_name}</span>
                       </div>
@@ -270,18 +270,18 @@ export const OrdersPage: React.FC = () => {
           <div
             className={`w-full ${
               isWideModal ? "max-w-5xl" : "max-w-xl"
-            } bg-white dark:bg-[#18181b] border border-black/[0.08] dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] transition-all duration-200`}
+            } bg-white dark:bg-[#18181b] border border-slate-200/80 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] transition-all duration-200`}
           >
             {/* Modal Header */}
-            <div className="p-4 sm:p-6 border-b border-black/[0.06] dark:border-white/10 flex items-center justify-between gap-4 bg-slate-50/70 dark:bg-zinc-900/50">
+            <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-4 bg-slate-50/70 dark:bg-zinc-900/50">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <span className="font-bold text-xl sm:text-2xl text-neutral-900 dark:text-white">
+                <span className="font-semibold text-xl text-neutral-900 dark:text-white">
                   #{selectedOrder.order_number}
                 </span>
                 <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                  className={`px-2.5 py-0.5 rounded-md text-xs font-medium border ${
                     selectedOrder.status === "COMPLETED"
-                      ? "bg-[#211b2e] text-[#c8ff6a] border-[#211b2e]/30 dark:bg-[#c8ff6a] dark:text-[#211b2e]"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300"
                       : selectedOrder.status === "CANCELLED"
                       ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800"
                       : selectedOrder.status === "IN_DELIVERY"
@@ -294,11 +294,11 @@ export const OrdersPage: React.FC = () => {
                   {getOrderStatusLabel(selectedOrder.status) || selectedOrder.status_display}
                 </span>
                 {selectedOrder.source === "TMA" ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-sky-50 text-sky-700 border border-sky-200">
                     <Send className="w-3 h-3" /> Telegram Bot
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
                     <Globe className="w-3 h-3" /> {t("website_channel") || "Veb-sayt"}
                   </span>
                 )}
@@ -659,7 +659,7 @@ export const OrdersPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "COMPLETED" })}
-                        className="py-2.5 px-3 rounded-xl bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] font-bold text-xs hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5"
+                        className="py-2.5 px-3 rounded-lg bg-emerald-600 text-white font-medium text-xs hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
                       >
                         <CheckCircle className="w-3.5 h-3.5" /> {t("delivered") || "Yetkazildi"}
                       </button>
@@ -778,9 +778,9 @@ export const OrdersPage: React.FC = () => {
                             href={`https://yandex.uz/maps/?rtext=~${selectedOrder.delivery_lat},${selectedOrder.delivery_lng}&rtt=auto`}
                             target="_blank"
                             rel="noreferrer"
-                            className="py-2.5 px-3 rounded-xl bg-[#211b2e] hover:bg-[#2c243d] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                            className="py-2 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
                           >
-                            <MapPin className="w-3.5 h-3.5" />
+                            <MapPin className="w-3.5 h-3.5 text-amber-400" />
                             <span>{t("yandex_navigator") || "Yandex Navigator"}</span>
                           </a>
                           <a

@@ -279,22 +279,30 @@
              class="bg-white rounded-2xl p-4 shadow-[0_4px_16px_rgba(0,0,0,0.06)] border border-slate-100 flex items-center justify-between gap-3 cursor-pointer active:scale-[0.99] transition-all hover:border-slate-200">
             <div class="min-w-0 space-y-1.5">
                 <div class="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
-                    Buyurtma №{{ first_active_order.order_number }}
+                    {% if current_lang == 'ru' %}Заказ №{{ first_active_order.order_number }}{% elif current_lang == 'en' %}Order #{{ first_active_order.order_number }}{% elif current_lang == 'tr' %}Sipariş №{{ first_active_order.order_number }}{% else %}Buyurtma №{{ first_active_order.order_number }}{% endif %}
                 </div>
                 
-                <!-- Status Pill (Sky Blue pill from Uzum screenshot) -->
+                <!-- Status Pill (Sky Blue pill) -->
                 <div>
                     {% if first_active_order.status == 'NEW' %}
-                    <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
-                        QABUL QILINDI
+                    <span class="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/80 text-[10px] font-bold tracking-wide uppercase">
+                        {% if current_lang == 'ru' %}Ожидает подтверждения{% elif current_lang == 'en' %}Pending{% elif current_lang == 'tr' %}Bekliyor{% else %}Kutilmoqda{% endif %}
                     </span>
                     {% elif first_active_order.status == 'IN_DELIVERY' %}
                     <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
-                        YETKAZIB BERILYAPTI
+                        {% if current_lang == 'ru' %}В доставке{% elif current_lang == 'en' %}In delivery{% elif current_lang == 'tr' %}Teslimatta{% else %}Yetkazilmoqda{% endif %}
+                    </span>
+                    {% elif first_active_order.status == 'COMPLETED' or first_active_order.status == 'DELIVERED' %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-wide uppercase">
+                        {% if current_lang == 'ru' %}Доставлен{% elif current_lang == 'en' %}Delivered{% elif current_lang == 'tr' %}Teslim edildi{% else %}Yetkazildi{% endif %}
+                    </span>
+                    {% elif first_active_order.status == 'CANCELLED' %}
+                    <span class="px-2.5 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-bold tracking-wide uppercase">
+                        {% if current_lang == 'ru' %}Отменен{% elif current_lang == 'en' %}Cancelled{% elif current_lang == 'tr' %}İptal edildi{% else %}Bekor qilindi{% endif %}
                     </span>
                     {% else %}
                     <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
-                        YIG'ILYAPTI
+                        {% if current_lang == 'ru' %}В процессе{% elif current_lang == 'en' %}Processing{% elif current_lang == 'tr' %}Hazırlanıyor{% else %}Tayyorlanmoqda{% endif %}
                     </span>
                     {% endif %}
                 </div>
@@ -476,24 +484,24 @@
                 <!-- Status Pill (Cyan / Sky) -->
                 <div>
                     {% if order.status == 'NEW' %}
-                    <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
-                        QABUL QILINDI
+                    <span class="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/80 text-[10px] font-bold tracking-wide uppercase">
+                        {% if current_lang == 'ru' %}Ожидает подтверждения{% elif current_lang == 'en' %}Pending{% elif current_lang == 'tr' %}Bekliyor{% else %}Kutilmoqda{% endif %}
                     </span>
                     {% elif order.status == 'IN_DELIVERY' %}
                     <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
-                        YETKAZIB BERILYAPTI
+                        {% if current_lang == 'ru' %}В доставке{% elif current_lang == 'en' %}In delivery{% elif current_lang == 'tr' %}Teslimatta{% else %}Yetkazilmoqda{% endif %}
                     </span>
                     {% elif order.status == 'DELIVERED' or order.status == 'COMPLETED' %}
                     <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-wide uppercase">
-                        YETKAZILDI
+                        {% if current_lang == 'ru' %}Доставлен{% elif current_lang == 'en' %}Delivered{% elif current_lang == 'tr' %}Teslim edildi{% else %}Yetkazildi{% endif %}
                     </span>
                     {% elif order.status == 'CANCELLED' %}
                     <span class="px-2.5 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-bold tracking-wide uppercase">
-                        BEKOR QILINDI
+                        {% if current_lang == 'ru' %}Отменен{% elif current_lang == 'en' %}Cancelled{% elif current_lang == 'tr' %}İptal edildi{% else %}Bekor qilindi{% endif %}
                     </span>
                     {% else %}
                     <span class="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold tracking-wide uppercase">
-                        YIG'ILYAPTI
+                        {% if current_lang == 'ru' %}В процессе{% elif current_lang == 'en' %}Processing{% elif current_lang == 'tr' %}Hazırlanıyor{% else %}Tayyorlanmoqda{% endif %}
                     </span>
                     {% endif %}
                 </div>
@@ -501,7 +509,7 @@
                 <!-- Order Number + Copy Icon (media_1790500839089.jpg) -->
                 <div class="space-y-0.5">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-sm font-bold text-slate-900 tracking-tight">Buyurtma №{{ order.order_number }}</span>
+                        <span class="text-sm font-bold text-slate-900 tracking-tight">{% if current_lang == 'ru' %}Заказ №{{ order.order_number }}{% elif current_lang == 'en' %}Order #{{ order.order_number }}{% elif current_lang == 'tr' %}Sipariş №{{ order.order_number }}{% else %}Buyurtma №{{ order.order_number }}{% endif %}</span>
                         <button type="button" @click="copyToClipboard('{{ order.order_number }}')" 
                                 class="text-brand hover:text-brand-dark p-0.5 rounded transition-colors"
                                 title="Nusxalash">

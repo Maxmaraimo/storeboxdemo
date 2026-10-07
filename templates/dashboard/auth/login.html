@@ -139,10 +139,10 @@
          }">
 
         <!-- Top Row: Logo & Language Toggle -->
-        <div class="flex items-center justify-between">
+        <div className="flex items-center justify-between">
             <a href="{{ platform_site_url }}/" class="inline-flex items-center gap-2 group">
-                <div class="w-10 h-10 rounded-2xl bg-[#211b2e] flex items-center justify-center border border-white/10 shadow-lg shadow-[#211b2e]/25 group-hover:scale-105 transition transform">
-                    <svg viewBox="0 0 32 32" class="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[1.8] stroke-linejoin-round">
+                <div class="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center border border-slate-800 shadow-md group-hover:scale-105 transition transform">
+                    <svg viewBox="0 0 32 32" class="w-6 h-6 stroke-blue-500 fill-none stroke-[1.8] stroke-linejoin-round">
                         <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
                         <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
                     </svg>
@@ -155,13 +155,13 @@
             <!-- Quick Language Switcher -->
             <div class="inline-flex items-center bg-slate-100 dark:bg-white/10 p-1 rounded-xl text-[11px] font-extrabold border border-slate-200/60 dark:border-white/10">
                 <button type="button" @click="changeLang('uz')"
-                        :class="lang === 'uz' ? 'bg-[#211b2e] text-[#c8ff6a] shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                        :class="lang === 'uz' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
                         class="px-2 py-1 rounded-lg transition-all cursor-pointer">UZ</button>
                 <button type="button" @click="changeLang('ru')"
-                        :class="lang === 'ru' ? 'bg-[#211b2e] text-[#c8ff6a] shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                        :class="lang === 'ru' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
                         class="px-2 py-1 rounded-lg transition-all cursor-pointer">RU</button>
                 <button type="button" @click="changeLang('en')"
-                        :class="lang === 'en' ? 'bg-[#211b2e] text-[#c8ff6a] shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                        :class="lang === 'en' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
                         class="px-2 py-1 rounded-lg transition-all cursor-pointer">EN</button>
             </div>
         </div>
@@ -182,13 +182,13 @@
         <!-- Mode Switcher Tabs -->
         <div class="p-1 rounded-2xl bg-slate-100 dark:bg-white/5 flex gap-1 text-xs font-bold">
             <button type="button" @click="mode = 'phone'"
-                    :class="mode === 'phone' ? 'bg-[#211b2e] text-white shadow-md shadow-[#211b2e]/25 font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                    :class="mode === 'phone' ? 'bg-slate-900 text-white shadow-md font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
                     class="flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer">
                 <i data-lucide="phone" class="w-3.5 h-3.5"></i>
                 <span x-text="t('tabPhone')">Telefon raqam</span>
             </button>
             <button type="button" @click="mode = 'login'"
-                    :class="mode === 'login' ? 'bg-[#211b2e] text-white shadow-md shadow-[#211b2e]/25 font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                    :class="mode === 'login' ? 'bg-slate-900 text-white shadow-md font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
                     class="flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer">
                 <i data-lucide="user" class="w-3.5 h-3.5"></i>
                 <span x-text="t('tabLogin')">Login / Email</span>
@@ -205,13 +205,13 @@
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
                         <span x-text="mode === 'phone' ? t('labelPhone') : t('labelLogin')"></span>
                     </label>
-                    <button type="button" @click="mode = (mode === 'phone' ? 'login' : 'phone')" class="text-[11px] font-bold text-slate-700 dark:text-[#c8ff6a] hover:underline cursor-pointer">
+                    <button type="button" @click="mode = (mode === 'phone' ? 'login' : 'phone')" class="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer">
                         <span x-text="mode === 'phone' ? t('switchLogin') : t('switchPhone')"></span>
                     </button>
                 </div>
 
                 <!-- Case 1: Phone Mode -->
-                <div x-show="mode === 'phone'" class="relative flex rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus-within:border-[#211b2e] dark:focus-within:border-[#c8ff6a] focus-within:ring-2 focus-within:ring-[#c8ff6a]/30 transition-all overflow-visible">
+                <div x-show="mode === 'phone'" class="relative flex rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/20 transition-all overflow-visible">
                     <div class="relative shrink-0">
                         <button type="button" @click="countryOpen = !countryOpen" class="h-full px-3 py-3 flex items-center gap-1.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200/70 rounded-l-2xl border-r border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-white transition-colors cursor-pointer">
                             <span class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/20 text-slate-800 dark:text-white text-[10px] font-black tracking-wider" x-text="country.flag"></span>
@@ -242,7 +242,7 @@
                         <i data-lucide="user" class="w-4 h-4"></i>
                     </div>
                     <input type="text" x-model="usernameText" :placeholder="t('loginPlaceholder')"
-                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] focus:ring-2 focus:ring-[#211b2e]/10 dark:focus:ring-[#c8ff6a]/30 transition-all">
+                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all">
                 </div>
             </div>
 
@@ -250,7 +250,7 @@
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300" x-text="t('password')">Parol</label>
-                    <a href="https://t.me/storebox_support" target="_blank" class="text-[11px] font-bold text-slate-600 dark:text-[#c8ff6a] hover:underline" x-text="t('forgot')">Unutdingizmi?</a>
+                    <a href="https://t.me/storebox_support" target="_blank" class="text-[11px] font-bold text-blue-600 hover:underline" x-text="t('forgot')">Unutdingizmi?</a>
                 </div>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -258,22 +258,22 @@
                     </div>
                     <input :type="showPass ? 'text' : 'password'" name="password" required
                            placeholder="••••••••"
-                           class="block w-full pl-10 pr-10 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#211b2e] dark:focus:border-[#c8ff6a] focus:ring-2 focus:ring-[#211b2e]/10 dark:focus:ring-[#c8ff6a]/30 transition-all">
+                           class="block w-full pl-10 pr-10 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all">
                     <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
                         <i :data-lucide="showPass ? 'eye-off' : 'eye'" class="w-4 h-4"></i>
                     </button>
                 </div>
             </div>
 
-            <button type="submit" class="w-full py-3.5 px-4 rounded-2xl bg-[#211b2e] hover:bg-[#2c243d] text-white font-bold text-xs transition-all shadow-lg shadow-[#211b2e]/25 transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
+            <button type="submit" class="w-full py-3.5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-600/20 transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
                 <span x-text="t('submit')">Tizimga kirish</span>
-                <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-white"></i>
             </button>
         </form>
 
         <div class="pt-4 border-t border-slate-100 dark:border-white/10 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span x-text="t('noStore')">Hali do'koningiz yo'qmi?</span>
-            <a href="{{ app_site_url }}/dashboard/register/" class="font-bold text-[#211b2e] dark:text-[#c8ff6a] hover:underline ml-1" x-text="t('createStore')">15 daqiqada yaratish</a>
+            <a href="{{ app_site_url }}/dashboard/register/" class="font-bold text-blue-600 hover:underline ml-1" x-text="t('createStore')">15 daqiqada yaratish</a>
         </div>
     </div>
 </div>

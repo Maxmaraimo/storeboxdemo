@@ -63,7 +63,7 @@ const createBranchMarkerIcon = (isAccepting: boolean, isMain: boolean) =>
       </div>
       ${
         isMain
-          ? '<div style="position: absolute; top: -6px; right: -6px; background: #211b2e; color: #c8ff6a; border: 1.5px solid white; border-radius: 9999px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900;">★</div>'
+          ? '<div style="position: absolute; top: -6px; right: -6px; background: #2563eb; color: #ffffff; border: 1.5px solid white; border-radius: 9999px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">★</div>'
           : ''
       }
     </div>`,
@@ -75,16 +75,16 @@ const createBranchMarkerIcon = (isAccepting: boolean, isMain: boolean) =>
 const pickerPinIcon = L.divIcon({
   className: "custom-picker-pin",
   html: `<div style="position: relative; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(200, 255, 106, 0.45); animation: pulse 1.8s infinite;"></div>
-    <div style="width: 42px; height: 42px; border-radius: 50%; background: #211b2e; border: 3px solid #c8ff6a; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 22px rgba(0,0,0,0.4);">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8ff6a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(37, 99, 235, 0.25); animation: pulse 1.8s infinite;"></div>
+    <div style="width: 38px; height: 38px; border-radius: 50%; background: #2563eb; border: 2.5px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
         <circle cx="12" cy="10" r="3"></circle>
       </svg>
     </div>
   </div>`,
-  iconSize: [42, 42],
-  iconAnchor: [21, 42],
+  iconSize: [38, 38],
+  iconAnchor: [19, 38],
 });
 
 // Interactive Map Picker Component for Modal with fly-to zoom
@@ -756,10 +756,10 @@ export const BranchesPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setViewMode("map")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 viewMode === "map"
-                  ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
               <MapIcon className="w-3.5 h-3.5" />
@@ -770,7 +770,7 @@ export const BranchesPage: React.FC = () => {
           <button
             type="button"
             onClick={openCreateModal}
-            className="px-4 py-2.5 bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 rounded-2xl text-xs font-black hover:opacity-90 transition-opacity flex items-center gap-2 shadow-xs cursor-pointer"
+            className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>{t("add_branch_btn") || "Filial qo'shish"}</span>
@@ -825,11 +825,11 @@ export const BranchesPage: React.FC = () => {
                     <Popup className="custom-branch-popup">
                       <div className="p-1 space-y-2 min-w-[200px]">
                         <div className="flex items-start justify-between gap-1 border-b border-slate-100 pb-1.5">
-                          <div className="font-extrabold text-sm text-slate-900 leading-tight">
+                          <div className="font-semibold text-sm text-slate-900 leading-tight">
                             {b.name}
                           </div>
                           {b.is_main && (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#211b2e] text-[#c8ff6a]">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
                               ★ Asosiy
                             </span>
                           )}
@@ -888,7 +888,7 @@ export const BranchesPage: React.FC = () => {
               <div
                 key={b.id}
                 onClick={() => setSelectedBranch(b)}
-                className="group relative bg-white dark:bg-[#151824] rounded-[26px] border border-slate-200/90 dark:border-white/10 p-5 space-y-3.5 transition-all duration-200 hover:shadow-xl hover:border-[#211b2e]/30 dark:hover:border-[#c8ff6a]/40 cursor-pointer flex flex-col justify-between"
+                className="group relative bg-white rounded-xl border border-slate-200/80 p-5 space-y-3.5 transition-all duration-150 hover:shadow-xs hover:border-slate-300 cursor-pointer flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   {/* Card Top: Status Pill + Actions & Switch */}
@@ -922,7 +922,7 @@ export const BranchesPage: React.FC = () => {
                       </span>
 
                       {b.is_main && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-[#211b2e] text-[#c8ff6a] border border-[#c8ff6a]/30 shadow-2xs">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60 shadow-2xs">
                           ★ {t("is_main_branch") || "Asosiy"}
                         </span>
                       )}
@@ -941,12 +941,12 @@ export const BranchesPage: React.FC = () => {
                           });
                         }}
                         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                          isAccepting ? "bg-[#211b2e] dark:bg-[#c8ff6a]" : "bg-slate-300 dark:bg-zinc-700"
+                          isAccepting ? "bg-blue-600" : "bg-slate-300 dark:bg-zinc-700"
                         }`}
                         title={isAccepting ? (t("branch_action_close") || "Yopish") : (t("branch_action_open") || "Ochish")}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-[#211b2e] shadow-md ring-0 transition duration-200 ease-in-out ${
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
                             isAccepting ? "translate-x-4" : "translate-x-0"
                           }`}
                         />
@@ -994,14 +994,14 @@ export const BranchesPage: React.FC = () => {
 
                   {/* Branch Name */}
                   <div>
-                    <h2 className="text-base font-black text-slate-900 dark:text-white line-clamp-1 group-hover:text-[#211b2e] dark:group-hover:text-[#c8ff6a] transition-colors">
+                    <h2 className="text-base font-semibold text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 transition-colors">
                       {b.name}
                     </h2>
                   </div>
 
                   {/* Working Hours Badge */}
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-xs">
-                    <Clock className="w-3.5 h-3.5 text-[#211b2e] dark:text-[#c8ff6a] shrink-0" />
+                    <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                     <span className="font-semibold text-slate-700 dark:text-slate-200 line-clamp-1">
                       {t("today_schedule") || "Bugun"}: {todaySched.text}
                     </span>
@@ -1040,7 +1040,7 @@ export const BranchesPage: React.FC = () => {
                             setMapTarget([Number(b.latitude), Number(b.longitude)]);
                             setViewMode("map");
                           }}
-                          className="text-[10px] text-[#211b2e] dark:text-[#c8ff6a] font-bold bg-[#211b2e]/5 dark:bg-white/10 hover:bg-[#211b2e]/10 px-2 py-1 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          className="text-[10px] text-blue-600 font-medium bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
                         >
                           <span>{t("branch_pick_on_map") || "Xaritada"}</span>
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -1054,15 +1054,15 @@ export const BranchesPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Manager Login Info Box in StoreBox Brand Style */}
-                  <div className="p-3 rounded-2xl bg-[#211b2e] text-white space-y-1.5 border border-white/10 shadow-xs text-xs">
-                    <div className="flex items-center justify-between text-[10px] uppercase font-black tracking-wider text-[#c8ff6a]">
+                  {/* Manager Login Info Box */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-800 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between text-[10px] uppercase font-semibold tracking-wider text-slate-500">
                       <div className="flex items-center gap-1.5">
-                        <Key className="w-3.5 h-3.5 text-[#c8ff6a]" />
+                        <Key className="w-3.5 h-3.5 text-blue-600" />
                         <span>{t("branch_login_title") || "Filial hisobi"}</span>
                       </div>
                       {b.orders_count !== undefined && (
-                        <span className="inline-flex items-center gap-1 font-bold text-[#211b2e] bg-[#c8ff6a] px-2 py-0.5 rounded-md text-[10px]">
+                        <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-slate-200/70 px-2 py-0.5 rounded-md text-[10px]">
                           <ShoppingBag className="w-2.5 h-2.5" />
                           <span>
                             {b.orders_count} {t("orders_count_label") || "buyurtma"}
@@ -1071,8 +1071,8 @@ export const BranchesPage: React.FC = () => {
                       )}
                     </div>
                     <div className="flex items-center justify-between pt-0.5">
-                      <span className="text-neutral-300 text-[11px]">{t("branch_login_label") || "Login"}:</span>
-                      <span className="font-mono font-bold text-[#c8ff6a] bg-white/10 px-2 py-0.5 rounded-lg border border-white/10 text-xs">
+                      <span className="text-slate-500 text-[11px]">{t("branch_login_label") || "Login"}:</span>
+                      <span className="font-mono font-medium text-slate-900 bg-white px-2 py-0.5 rounded-lg border border-slate-200 text-xs">
                         {b.manager_username ? (formatUzPhone(b.manager_username) || b.manager_username) : (b as any).manager_user?.username ? (formatUzPhone((b as any).manager_user?.username) || (b as any).manager_user?.username) : "—"}
                       </span>
                     </div>
@@ -1080,7 +1080,7 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 {/* Card Footer: Clickable hint */}
-                <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] font-bold text-slate-500 group-hover:text-[#211b2e] dark:group-hover:text-[#c8ff6a] transition-colors">
+                <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] font-medium text-slate-500 group-hover:text-blue-600 transition-colors">
                   <span>{t("branch_view_full") || "To'liq ko'rish"}</span>
                   <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -1103,16 +1103,16 @@ export const BranchesPage: React.FC = () => {
             {/* Header */}
             <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shadow-md border border-white/10 shrink-0">
-                  <Building2 className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Building2 className="w-5 h-5 stroke-[1.8]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                    <h3 className="text-base font-semibold text-slate-900 dark:text-white leading-tight">
                       {selectedBranch.name}
                     </h3>
                     {selectedBranch.is_main && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#211b2e] text-[#c8ff6a] border border-[#c8ff6a]/30">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
                         ★ {t("is_main_branch") || "Asosiy"}
                       </span>
                     )}
@@ -1278,7 +1278,7 @@ export const BranchesPage: React.FC = () => {
                     </a>
                     <a
                       href={`tel:${selectedBranch.phone}`}
-                      className="px-2 py-0.5 rounded-md bg-[#211b2e] text-[#c8ff6a] text-[10px] font-bold"
+                      className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-medium transition-colors"
                     >
                       {t("call_customer") || "Qo'ng'iroq"}
                     </a>
@@ -1289,40 +1289,40 @@ export const BranchesPage: React.FC = () => {
               </div>
 
               {/* Box 3: Manager Credentials */}
-              <div className="p-4 rounded-2xl bg-[#211b2e] text-white space-y-1.5 border border-white/10 shadow-xs">
-                <div className="text-[10px] uppercase font-black tracking-wider text-[#c8ff6a] flex items-center gap-1">
-                  <Key className="w-3.5 h-3.5 text-[#c8ff6a]" />
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                <div className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-blue-600" />
                   <span>{t("branch_login_title") || "Filial kirish hisobi"}</span>
                 </div>
                 <div className="flex items-center justify-between pt-0.5">
-                  <span className="text-neutral-300 text-[11px]">{t("branch_login_label") || "Login"}:</span>
-                  <span className="font-mono font-bold text-[#c8ff6a] bg-white/10 px-2.5 py-0.5 rounded-md border border-white/10 text-xs">
+                  <span className="text-slate-600 text-xs">{t("branch_login_label") || "Login"}:</span>
+                  <span className="font-mono font-medium text-slate-900 bg-white px-2.5 py-0.5 rounded-md border border-slate-200 text-xs">
                     {selectedBranch.manager_username ? (formatUzPhone(selectedBranch.manager_username) || selectedBranch.manager_username) : (selectedBranch as any).manager_user?.username ? (formatUzPhone((selectedBranch as any).manager_user?.username) || (selectedBranch as any).manager_user?.username) : "—"}
                   </span>
                 </div>
-                <div className="text-[10px] text-neutral-400">
+                <div className="text-[11px] text-slate-500">
                   {t("branch_restricted_badge") || "Menejer faqat shu filial buyurtmalarini ko'radi"}
                 </div>
               </div>
 
               {/* Box 4: Orders Statistics */}
-              <div className="p-4 rounded-2xl bg-[#211b2e] text-white space-y-1.5 border border-white/10 shadow-xs">
-                <div className="text-[10px] uppercase font-black tracking-wider text-[#c8ff6a] flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <ShoppingBag className="w-3.5 h-3.5 text-[#c8ff6a]" />
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                <div className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
                     <span>{t("orders") || "Buyurtmalar"}</span>
                   </div>
-                  <span className="bg-[#c8ff6a] text-[#211b2e] text-[10px] font-black px-2 py-0.5 rounded-md">
+                  <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-medium px-2 py-0.5 rounded-md">
                     {selectedBranch.orders_count || 0} {t("orders_count_label") || "buyurtma"}
                   </span>
                 </div>
-                <div className="text-xs text-neutral-300">
+                <div className="text-xs text-slate-600">
                   Ushbu filialga biriktirilgan jami buyurtmalar soni
                 </div>
                 <button
                   type="button"
                   onClick={() => navigate(`/orders?branch=${selectedBranch.id}`)}
-                  className="w-full text-center py-1.5 mt-1 rounded-xl bg-white/10 hover:bg-white/20 text-[#c8ff6a] text-xs font-bold transition-colors cursor-pointer"
+                  className="w-full text-center py-1.5 mt-1 rounded-lg bg-white hover:bg-slate-100 text-blue-600 border border-slate-200 text-xs font-medium transition-colors cursor-pointer"
                 >
                   {t("branch_orders_btn") || "Buyurtmalarni ko'rish →"}
                 </button>
@@ -1330,13 +1330,13 @@ export const BranchesPage: React.FC = () => {
             </div>
 
             {/* Box 5: Full 7-Day Working Schedule */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-2.5">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
               <div className="flex items-center justify-between">
-                <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[#211b2e] dark:text-[#c8ff6a]" />
+                <div className="text-[10px] uppercase font-semibold text-slate-500 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-blue-600" />
                   <span>{t("branch_schedule_title") || "Haftalik ish jadvali (Dush — Yak)"}</span>
                 </div>
-                <div className="text-[11px] font-bold text-[#211b2e] dark:text-[#c8ff6a]">
+                <div className="text-[11px] font-medium text-slate-900">
                   {selectedBranch.working_hours || "09:00 — 23:00"}
                 </div>
               </div>
@@ -1357,26 +1357,26 @@ export const BranchesPage: React.FC = () => {
                   return (
                     <div
                       key={d.key}
-                      className={`p-2 rounded-xl text-center flex flex-col items-center justify-center transition-all ${
+                      className={`p-2 rounded-lg text-center flex flex-col items-center justify-center transition-all ${
                         isToday
-                          ? "bg-[#211b2e] text-[#c8ff6a] shadow-xs ring-1 ring-[#c8ff6a]/50"
-                          : "bg-white dark:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/10"
+                          ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs"
+                          : "bg-white text-slate-700 border border-slate-200/60"
                       }`}
                     >
-                      <div className="text-[10px] font-black uppercase tracking-wider">
+                      <div className="text-[10px] font-semibold uppercase tracking-wider">
                         {t(d.labelKey) || d.shortUz}
                       </div>
                       <div
-                        className={`text-[10px] font-bold mt-1 ${
+                        className={`text-[10px] font-medium mt-1 ${
                           isClosed
-                            ? isToday ? "text-rose-300" : "text-rose-500"
-                            : isToday ? "text-[#c8ff6a]" : "text-slate-900 dark:text-white"
+                            ? isToday ? "text-rose-600" : "text-rose-500"
+                            : isToday ? "text-blue-700" : "text-slate-900"
                         }`}
                       >
                         {timeText}
                       </div>
                       {isToday && (
-                        <span className="text-[8px] uppercase tracking-widest font-black opacity-80 mt-0.5">
+                        <span className="text-[8px] uppercase tracking-wider font-semibold opacity-80 mt-0.5">
                           {t("today_schedule") || "Bugun"}
                         </span>
                       )}
@@ -1387,11 +1387,11 @@ export const BranchesPage: React.FC = () => {
             </div>
 
             {/* Bottom Actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setSelectedBranch(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 {t("cancel") || "Yopish"}
               </button>
@@ -1403,14 +1403,14 @@ export const BranchesPage: React.FC = () => {
                     setSelectedBranch(null);
                     openEditModal(b);
                   }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-900 dark:text-white transition-colors cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors cursor-pointer"
                 >
                   {t("edit_branch_btn") || "Tahrirlash"}
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate(`/orders?branch=${selectedBranch.id}`)}
-                  className="px-5 py-2.5 bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 rounded-xl text-xs font-black hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer shadow-2xs"
                 >
                   {t("branch_orders_btn") || "Buyurtmalar ro'yxati"}
                 </button>
@@ -1426,10 +1426,10 @@ export const BranchesPage: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 my-8 border border-slate-200/80">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shadow-xs border border-white/10">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
                   <Building2 className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-black text-slate-900">
+                <h3 className="text-sm font-semibold text-slate-900">
                   {editingBranch
                     ? (t("edit_branch_btn") || "Filialni tahrirlash")
                     : (t("add_branch_btn") || "Yangi filial qo'shish")}
@@ -1438,14 +1438,14 @@ export const BranchesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={closeModal}
-                className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold">
+              <div className="p-3 rounded-lg bg-rose-50 text-rose-700 text-xs font-medium">
                 {formError}
               </div>
             )}
@@ -1453,11 +1453,11 @@ export const BranchesPage: React.FC = () => {
             <div className="space-y-4 max-h-[72vh] overflow-y-auto pr-1">
               {/* Section 1: Basic Info */}
               <div className="space-y-3">
-                <div className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                   {t("basic_info_title") || "Asosiy ma'lumotlar"}
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     {t("branch_name_label") || "Filial nomi"} *
                   </label>
                   <input
@@ -1465,14 +1465,14 @@ export const BranchesPage: React.FC = () => {
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="Burger & Co. — Samarqand Vokzal"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-[#211b2e]"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal focus:outline-none focus:border-blue-600 focus:bg-white transition-colors"
                   />
                 </div>
 
                 {/* ADDRESS WITH REAL-TIME MAP SEARCH & AUTOCOMPLETE */}
                 <div className="relative">
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-slate-700">
+                    <label className="block text-xs font-medium text-slate-700">
                       {t("branch_address_label") || "Manzil"} *
                     </label>
                     <span className="text-[10px] text-slate-400">
@@ -1492,7 +1492,7 @@ export const BranchesPage: React.FC = () => {
                         }
                       }}
                       placeholder="Burger & Co., Samarqand v., Rudakiy ko'chasi 45"
-                      className="w-full pl-3.5 pr-28 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-[#211b2e]"
+                      className="w-full pl-3.5 pr-28 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal focus:outline-none focus:border-blue-600 focus:bg-white transition-colors"
                     />
 
                     {/* Quick Search and Clear Action Buttons inside input */}
@@ -1506,7 +1506,7 @@ export const BranchesPage: React.FC = () => {
                             setShowResultsDropdown(false);
                             setSearchFeedback("");
                           }}
-                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60"
+                          className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-200/60"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -1515,13 +1515,13 @@ export const BranchesPage: React.FC = () => {
                         type="button"
                         onClick={() => searchLocation(formAddress, true)}
                         disabled={isSearchingLocation}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#211b2e] text-[#c8ff6a] hover:bg-black text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                        className="px-2.5 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
                         title={t("search_on_map") || "Xaritadan qidirish"}
                       >
                         {isSearchingLocation ? (
-                          <Loader2 className="w-3 h-3 text-[#c8ff6a] animate-spin" />
+                          <Loader2 className="w-3 h-3 text-white animate-spin" />
                         ) : (
-                          <Search className="w-3 h-3 text-[#c8ff6a]" />
+                          <Search className="w-3 h-3 text-white" />
                         )}
                         <span>{t("search_on_map") || "Qidirish"}</span>
                       </button>
@@ -1530,15 +1530,15 @@ export const BranchesPage: React.FC = () => {
 
                   {/* Search Feedback / Error */}
                   {searchFeedback && (
-                    <div className="text-[10px] font-semibold text-emerald-600 mt-1">
+                    <div className="text-[10px] font-medium text-emerald-600 mt-1">
                       {searchFeedback}
                     </div>
                   )}
 
                   {/* Autocomplete Suggestions Dropdown */}
                   {showResultsDropdown && searchResults.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
-                      <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden divide-y divide-slate-100">
+                      <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center justify-between">
                         <span>Topilgan joylar ({searchResults.length})</span>
                         <button
                           type="button"
@@ -1554,13 +1554,13 @@ export const BranchesPage: React.FC = () => {
                             key={idx}
                             type="button"
                             onClick={() => selectSearchResult(res)}
-                            className="w-full text-left px-3.5 py-2.5 hover:bg-[#211b2e]/5 flex items-start gap-2.5 transition-colors cursor-pointer group"
+                            className="w-full text-left px-3.5 py-2.5 hover:bg-slate-50 flex items-start gap-2.5 transition-colors cursor-pointer group"
                           >
-                            <div className="w-7 h-7 rounded-xl bg-[#211b2e] text-[#c8ff6a] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
                               <MapPin className="w-3.5 h-3.5" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-xs font-bold text-slate-900 line-clamp-1 group-hover:text-[#211b2e]">
+                              <div className="text-xs font-medium text-slate-900 line-clamp-1 group-hover:text-blue-600">
                                 {res.name}
                               </div>
                               <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
@@ -1579,7 +1579,7 @@ export const BranchesPage: React.FC = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-slate-700">
+                    <label className="block text-xs font-medium text-slate-700">
                       {t("branch_phone_label") || "Telefon raqami"}
                     </label>
                     <span className="text-[10px] text-slate-400 font-mono">
@@ -1602,7 +1602,7 @@ export const BranchesPage: React.FC = () => {
                         }
                       }}
                       placeholder="+998 (90) 123-45-67"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold font-mono text-slate-900 focus:outline-none focus:border-[#211b2e] focus:bg-white transition-colors"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-medium font-mono text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-colors"
                     />
                   </div>
                   <p className="text-[10px] text-slate-400 mt-1">
@@ -1615,8 +1615,8 @@ export const BranchesPage: React.FC = () => {
               <div className="space-y-3 pt-3 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-[#211b2e]" />
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-blue-600" />
                       <span>{t("working_hours_label") || "Ish vaqti (Dush — Yak)"}</span>
                     </div>
                     <p className="text-[10px] text-slate-400 mt-0.5">
@@ -1626,11 +1626,11 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 {/* 3 Preset Mode Tabs */}
-                <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/80">
+                <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200/80">
                   <button
                     type="button"
                     onClick={() => setScheduleMode("daily")}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`py-2 px-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       scheduleMode === "daily"
                         ? "bg-white text-slate-900 shadow-2xs"
                         : "text-slate-500 hover:text-slate-900"
@@ -1642,9 +1642,9 @@ export const BranchesPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setScheduleMode("247")}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`py-2 px-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       scheduleMode === "247"
-                        ? "bg-[#211b2e] text-[#c8ff6a] shadow-2xs"
+                        ? "bg-white text-slate-900 shadow-2xs"
                         : "text-slate-500 hover:text-slate-900"
                     }`}
                   >
@@ -1654,7 +1654,7 @@ export const BranchesPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setScheduleMode("custom")}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`py-2 px-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       scheduleMode === "custom"
                         ? "bg-white text-slate-900 shadow-2xs"
                         : "text-slate-500 hover:text-slate-900"
@@ -1667,17 +1667,17 @@ export const BranchesPage: React.FC = () => {
 
                 {/* Mode 1: Daily */}
                 {scheduleMode === "daily" && (
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                        <label className="block text-[11px] font-medium text-slate-600 mb-1">
                           {t("open_time") || "Ochilish vaqti"}
                         </label>
                         <input
                           type="time"
                           value={dailyOpenTime}
                           onChange={(e) => setDailyOpenTime(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold font-mono text-slate-900 focus:outline-none focus:border-[#211b2e]"
+                          className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs font-medium font-mono text-slate-900 focus:outline-none focus:border-blue-600"
                         />
                       </div>
                       <div>
@@ -1688,14 +1688,14 @@ export const BranchesPage: React.FC = () => {
                           type="time"
                           value={dailyCloseTime}
                           onChange={(e) => setDailyCloseTime(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold font-mono text-slate-900 focus:outline-none focus:border-[#211b2e]"
+                          className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-medium font-mono text-slate-900 focus:outline-none focus:border-blue-600"
                         />
                       </div>
                     </div>
 
                     {/* Quick Presets */}
                     <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                      <span className="text-[10px] text-slate-400 font-semibold mr-1">Shablonlar:</span>
+                      <span className="text-[10px] text-slate-400 font-medium mr-1">Shablonlar:</span>
                       {[
                         { label: "08:00 — 22:00", open: "08:00", close: "22:00" },
                         { label: "09:00 — 23:00", open: "09:00", close: "23:00" },
@@ -1709,10 +1709,10 @@ export const BranchesPage: React.FC = () => {
                             setDailyOpenTime(p.open);
                             setDailyCloseTime(p.close);
                           }}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
                             dailyOpenTime === p.open && dailyCloseTime === p.close
-                              ? "bg-[#211b2e] text-[#c8ff6a]"
-                              : "bg-white text-slate-600 hover:bg-slate-200/70 border border-slate-200"
+                              ? "bg-blue-600 text-white"
+                              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
                           }`}
                         >
                           {p.label}
@@ -1724,13 +1724,13 @@ export const BranchesPage: React.FC = () => {
 
                 {/* Mode 2: 24/7 */}
                 {scheduleMode === "247" && (
-                  <div className="p-3.5 rounded-2xl bg-[#211b2e] text-[#c8ff6a] border border-[#c8ff6a]/20 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-[#c8ff6a]/15 text-[#c8ff6a] flex items-center justify-center shrink-0">
+                  <div className="p-3.5 rounded-xl bg-blue-50 text-blue-900 border border-blue-200/60 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div className="text-xs">
-                      <div className="font-black text-white">24/7 Kechayu-kunduz rejim</div>
-                      <div className="text-[11px] text-neutral-300 mt-0.5">
+                      <div className="font-semibold text-blue-900">24/7 Kechayu-kunduz rejim</div>
+                      <div className="text-[11px] text-blue-700/80 mt-0.5">
                         Filial haftaning barcha 7 kunida to'xtovsiz ishlaydi va har qanday vaqtda buyurtmalarni qabul qiladi
                       </div>
                     </div>
@@ -1759,11 +1759,11 @@ export const BranchesPage: React.FC = () => {
                                   [d.key]: { ...prev[d.key], closed: isClosed },
                                 }));
                               }}
-                              className="w-4 h-4 rounded text-[#211b2e] focus:ring-[#211b2e] cursor-pointer"
+                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-600 cursor-pointer"
                             />
                             <label
                               htmlFor={`day_check_${d.key}`}
-                              className="font-bold text-slate-800 cursor-pointer select-none"
+                              className="font-medium text-slate-800 cursor-pointer select-none"
                             >
                               {t(d.labelKey) || d.shortUz}
                             </label>
@@ -1781,9 +1781,9 @@ export const BranchesPage: React.FC = () => {
                                     [d.key]: { ...prev[d.key], open: val },
                                   }));
                                 }}
-                                className="px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono font-bold text-slate-900 focus:outline-none focus:border-[#211b2e]"
+                                className="px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono font-medium text-slate-900 focus:outline-none focus:border-blue-600"
                               />
-                              <span className="text-slate-400 font-bold text-[10px]">—</span>
+                              <span className="text-slate-400 font-medium text-[10px]">—</span>
                               <input
                                 type="time"
                                 value={cur.close}
@@ -1794,11 +1794,11 @@ export const BranchesPage: React.FC = () => {
                                     [d.key]: { ...prev[d.key], close: val },
                                   }));
                                 }}
-                                className="px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono font-bold text-slate-900 focus:outline-none focus:border-[#211b2e]"
+                                className="px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono font-medium text-slate-900 focus:outline-none focus:border-blue-600"
                               />
                             </div>
                           ) : (
-                            <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 font-bold text-[10px] border border-rose-200/80">
+                            <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 font-medium text-[10px] border border-rose-200/80">
                               {t("day_off") || "Dam olish kuni"}
                             </span>
                           )}
@@ -1813,7 +1813,7 @@ export const BranchesPage: React.FC = () => {
               <div className="space-y-3 pt-3 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-rose-500" />
                       <span>{t("branch_coordinates_label") || "Xaritadagi aniq nuqta (Koordinatalar)"}</span>
                     </div>
@@ -1825,7 +1825,7 @@ export const BranchesPage: React.FC = () => {
                     type="button"
                     onClick={handleLocateMe}
                     disabled={isLocating}
-                    className="px-2.5 py-1.5 rounded-xl bg-[#211b2e] text-[#c8ff6a] hover:bg-black text-[11px] font-bold border border-white/10 flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                   >
                     <Crosshair className={`w-3.5 h-3.5 ${isLocating ? "animate-spin" : ""}`} />
                     <span>{t("locate_me") || "Joylashuvim"}</span>
@@ -1833,7 +1833,7 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 {/* Leaflet interactive map */}
-                <div className="w-full h-56 rounded-2xl overflow-hidden border border-slate-200 relative shadow-inner z-0">
+                <div className="w-full h-56 rounded-xl overflow-hidden border border-slate-200 relative shadow-inner z-0">
                   <MapContainer
                     center={pickerPosition}
                     zoom={mapPickerZoom}
@@ -1850,8 +1850,8 @@ export const BranchesPage: React.FC = () => {
                       onPositionChange={handlePickerPositionChange}
                     />
                   </MapContainer>
-                  <div className="absolute bottom-2 left-2 z-[400] bg-[#211b2e]/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold text-[#c8ff6a] shadow-xs border border-white/10 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-[#c8ff6a]" />
+                  <div className="absolute bottom-2 left-2 z-[400] bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-medium text-white shadow-xs border border-white/10 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     <span>
                       {parseFloat(formLat).toFixed(4)}, {parseFloat(formLng).toFixed(4)}
                     </span>
@@ -1860,9 +1860,9 @@ export const BranchesPage: React.FC = () => {
 
                 {/* Detected reverse-geocoded address prompt */}
                 {detectedAddress && (
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#211b2e]/[0.04] border border-[#211b2e]/10 text-xs">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                     <div className="flex items-center gap-1.5 text-slate-700 min-w-0 pr-2">
-                      <MapPin className="w-3.5 h-3.5 text-[#211b2e] shrink-0" />
+                      <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                       <span className="truncate text-[11px] font-medium">{detectedAddress}</span>
                     </div>
                     <button
@@ -1871,7 +1871,7 @@ export const BranchesPage: React.FC = () => {
                         setFormAddress(detectedAddress);
                         setSearchFeedback(`📍 ${detectedAddress}`);
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-[#211b2e] text-[#c8ff6a] hover:bg-black text-[10px] font-bold shrink-0 transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-medium shrink-0 transition-colors cursor-pointer"
                     >
                       {t("use_this_address") || "Manzilni qo'yish"}
                     </button>
@@ -1880,25 +1880,25 @@ export const BranchesPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Latitude (Lat)</label>
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">Latitude (Lat)</label>
                     <input
                       type="number"
                       step="any"
                       value={formLat}
                       onChange={(e) => setFormLat(e.target.value)}
                       placeholder="39.6843"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-semibold focus:outline-none focus:border-[#211b2e]"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-medium focus:outline-none focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Longitude (Lng)</label>
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">Longitude (Lng)</label>
                     <input
                       type="number"
                       step="any"
                       value={formLng}
                       onChange={(e) => setFormLng(e.target.value)}
                       placeholder="66.9272"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-semibold focus:outline-none focus:border-[#211b2e]"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-medium focus:outline-none focus:border-blue-600"
                     />
                   </div>
                 </div>
@@ -1908,16 +1908,16 @@ export const BranchesPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Section 3: Manager Credentials (StoreBox Purple/Lime Card) */}
+              {/* Section 3: Manager Credentials */}
               <div className="pt-3 border-t border-slate-100">
-                <div className="p-4 rounded-2xl bg-[#211b2e] text-white space-y-3.5 border border-white/10 shadow-xs">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 space-y-3.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="text-[11px] font-black uppercase tracking-wider text-[#c8ff6a] flex items-center gap-1.5">
-                        <Key className="w-3.5 h-3.5 text-[#c8ff6a]" />
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                        <Key className="w-3.5 h-3.5 text-blue-600" />
                         <span>{t("branch_login_title") || "Filial kirish hisobi (Dashboard)"}</span>
                       </div>
-                      <p className="text-[11px] text-neutral-300 mt-0.5 leading-relaxed">
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
                         {t("branch_login_desc") ||
                           "Menejer ushbu login va parol bilan tizimga kirib, faqat o'z filialining buyurtmalarini ko'radi"}
                       </p>
@@ -1937,11 +1937,11 @@ export const BranchesPage: React.FC = () => {
                           setFormManagerUsername(formPhone);
                         }
                       }}
-                      className="w-4 h-4 rounded text-[#c8ff6a] focus:ring-[#c8ff6a] accent-[#c8ff6a] cursor-pointer"
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-600 cursor-pointer"
                     />
                     <label
                       htmlFor="use_phone_as_login"
-                      className="text-xs font-bold text-[#c8ff6a] cursor-pointer select-none"
+                      className="text-xs font-medium text-slate-700 cursor-pointer select-none"
                     >
                       {t("use_phone_as_login_label") || "Filial telefonini login sifatida ishlatish"}
                     </label>
@@ -1949,7 +1949,7 @@ export const BranchesPage: React.FC = () => {
 
                   {/* Login input */}
                   <div>
-                    <label className="block text-[11px] font-bold text-neutral-300 mb-1">
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">
                       {t("branch_login_label") || "Login (Foydalanuvchi nomi)"} *
                     </label>
                     <input
@@ -1958,14 +1958,14 @@ export const BranchesPage: React.FC = () => {
                       value={usePhoneAsLogin ? (formPhone || t("branch_phone_label") || "Filial telefoni") : formManagerUsername}
                       onChange={(e) => setFormManagerUsername(e.target.value.trim())}
                       placeholder={usePhoneAsLogin ? "+998 (90) 123-45-67" : "filial_vokzal"}
-                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono font-bold transition-all focus:outline-none ${
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono font-medium transition-all focus:outline-none ${
                         usePhoneAsLogin
-                          ? "bg-white/10 border-white/10 text-neutral-300 cursor-not-allowed opacity-90"
-                          : "bg-white/15 border-[#c8ff6a]/40 text-white focus:border-[#c8ff6a] focus:bg-white/20"
+                          ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                          : "bg-white border-slate-300 text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20"
                       }`}
                     />
                     {usePhoneAsLogin && (
-                      <span className="text-[10px] text-neutral-400 mt-1 block">
+                      <span className="text-[10px] text-slate-400 mt-1 block">
                         💡 {t("login_synced_with_phone_hint") || "Login yuqoridagi filial telefoni bilan avtomatik bog'langan"}
                       </span>
                     )}
@@ -1974,7 +1974,7 @@ export const BranchesPage: React.FC = () => {
                   {/* Password input with show/hide and generator */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-[11px] font-bold text-neutral-300">
+                      <label className="block text-[11px] font-medium text-slate-700">
                         {t("branch_password_label") || "Parol"} *
                       </label>
                       <button
@@ -1984,9 +1984,9 @@ export const BranchesPage: React.FC = () => {
                           setFormManagerPassword(randPin);
                           setShowPassword(true);
                         }}
-                        className="text-[10px] font-bold text-[#c8ff6a] hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-[10px] font-medium text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
                       >
-                        <Sparkles className="w-3 h-3 text-[#c8ff6a]" />
+                        <Sparkles className="w-3 h-3 text-blue-600" />
                         <span>{t("generate_pin") || "PIN generatsiya"}</span>
                       </button>
                     </div>
@@ -2001,19 +2001,19 @@ export const BranchesPage: React.FC = () => {
                             ? (t("branch_password_hint") || "O'zgartirmaslik uchun bo'sh qoldiring")
                             : "Masalan: 123456 yoki yangi parol"
                         }
-                        className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-white/15 border border-white/20 text-xs font-mono font-bold text-white placeholder:text-neutral-400 focus:outline-none focus:border-[#c8ff6a]"
+                        className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-white border border-slate-300 text-xs font-mono font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                         title={showPassword ? "Yashirish" : "Ko'rsatish"}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                     {editingBranch && (
-                      <span className="text-[10px] text-neutral-400 mt-1 block">
+                      <span className="text-[10px] text-slate-400 mt-1 block">
                         {t("branch_password_hint") || "O'zgartirmaslik uchun bo'sh qoldiring"}
                       </span>
                     )}
@@ -2029,9 +2029,9 @@ export const BranchesPage: React.FC = () => {
                     id="is_accepting_orders"
                     checked={formIsAcceptingOrders}
                     onChange={(e) => setFormIsAcceptingOrders(e.target.checked)}
-                    className="w-4 h-4 rounded-md text-[#211b2e] focus:ring-[#211b2e]"
+                    className="w-4 h-4 rounded-md text-blue-600 focus:ring-blue-600"
                   />
-                  <label htmlFor="is_accepting_orders" className="text-xs font-bold text-slate-700 cursor-pointer">
+                  <label htmlFor="is_accepting_orders" className="text-xs font-medium text-slate-700 cursor-pointer">
                     {t("branch_toggle_orders") || "Buyurtmalarni qabul qilish (Ochiq)"}
                   </label>
                 </div>
@@ -2042,9 +2042,9 @@ export const BranchesPage: React.FC = () => {
                     id="is_main_branch"
                     checked={formIsMain}
                     onChange={(e) => setFormIsMain(e.target.checked)}
-                    className="w-4 h-4 rounded-md text-[#211b2e] focus:ring-[#211b2e]"
+                    className="w-4 h-4 rounded-md text-blue-600 focus:ring-blue-600"
                   />
-                  <label htmlFor="is_main_branch" className="text-xs font-bold text-slate-700 cursor-pointer">
+                  <label htmlFor="is_main_branch" className="text-xs font-medium text-slate-700 cursor-pointer">
                     {t("is_main_branch") || "Asosiy filial sifatida belgilash"}
                   </label>
                 </div>
@@ -2055,7 +2055,7 @@ export const BranchesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                className="px-4 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 {t("cancel") || "Bekor qilish"}
               </button>
@@ -2063,7 +2063,7 @@ export const BranchesPage: React.FC = () => {
                 type="button"
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending}
-                className="px-5 py-2.5 bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 rounded-xl text-xs font-black hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer shadow-xs"
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
               >
                 {saveMutation.isPending
                   ? t("saving") || "Saqlanmoqda..."

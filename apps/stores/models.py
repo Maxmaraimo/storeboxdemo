@@ -126,6 +126,7 @@ class Store(models.Model):
         RESTAURANT = 'restaurant', 'Restoran & Yetkazib berish'
         UNIVERSAL = 'universal', "Universal do'kon"
         BOUTIQUE = 'boutique', 'Vizual Butik & Moda'
+        STREETWEAR = 'streetwear', 'Streetwear & Lookbook (222 FMA)'
 
     theme_template = models.CharField(
         max_length=30,
@@ -531,11 +532,13 @@ class Store(models.Model):
 
         if not self.working_hours:
             return True, lbls['open']
+        if not isinstance(self.working_hours, dict):
+            return True, lbls['open']
         now = timezone.localtime(timezone.now())
         weekday_keys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         today_key = weekday_keys[now.weekday()]
         day_info = self.working_hours.get(today_key)
-        if not day_info or day_info.get('closed'):
+        if not day_info or (isinstance(day_info, dict) and day_info.get('closed')):
             return False, lbls['day_off']
 
         try:

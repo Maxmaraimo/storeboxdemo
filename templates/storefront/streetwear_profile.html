@@ -1,0 +1,236 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="{{ lang|default:'uz' }}" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>{{ store.name }} — {% if lang == 'ru' %}Личный кабинет{% else %}Mijoz profili{% endif %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Base Tailwind & Icons -->
+    <link rel="stylesheet" href="{% static 'css/storefront-tailwind.min.css' %}">
+    <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
+    <script src="{% static 'vendor/lucide.min.js' %}"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body {
+            background-color: #ffffff;
+            color: #0c0d0b;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .font-condensed {
+            font-family: 'Barlow Condensed', sans-serif;
+            text-transform: uppercase;
+        }
+        .profile-card {
+            background: #fafaf8;
+            border: 1px solid rgba(12, 13, 11, 0.08);
+            border-radius: 24px;
+            box-shadow: 0 4px 20px -8px rgba(0, 0, 0, 0.04);
+        }
+        .profile-input {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid rgba(12, 13, 11, 0.15);
+            border-radius: 16px;
+            padding: 14px 18px;
+            color: #0c0d0b;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .profile-input:focus {
+            border-color: #0c0d0b;
+            box-shadow: 0 0 0 3px rgba(12, 13, 11, 0.05);
+        }
+        .profile-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #0c0d0b;
+            color: #ffffff;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 16px 28px;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        .profile-btn-primary:hover {
+            background: #222222;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between selection:bg-[#737861] selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="h-20 border-b border-[#0c0d0b]/8 px-6 sm:px-12 flex items-center justify-between bg-white/95 backdrop-blur-md sticky top-0 z-40">
+        <a href="/store/{{ store.subdomain }}/" class="flex items-center gap-3 group">
+            <i data-lucide="arrow-left" class="w-5 h-5 text-[#0c0d0b]/70 group-hover:text-[#0c0d0b] group-hover:-translate-x-1 transition-all"></i>
+            <span class="font-condensed font-bold text-sm tracking-wider text-[#0c0d0b]/80 group-hover:text-[#0c0d0b]">
+                {% if lang == 'ru' %}Назад в магазин{% else %}Do'konga qaytish{% endif %}
+            </span>
+        </a>
+        <div class="flex items-center gap-2">
+            <span class="font-condensed font-black tracking-widest text-lg text-[#0c0d0b]">AURA ATELIER</span>
+            <span class="text-[10px] uppercase tracking-widest text-[#737861] border border-[#737861]/40 px-2 py-0.5 rounded-full font-bold">STUDIO</span>
+        </div>
+        <a href="/store/{{ store.subdomain }}/checkout/" class="flex items-center gap-2 bg-[#0c0d0b]/5 hover:bg-[#0c0d0b]/10 px-4 py-2 rounded-full text-xs font-bold text-[#0c0d0b] transition-all">
+            <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+            <span>{{ cart_count|default:'0' }}</span>
+        </a>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-xl mx-auto w-full px-6 py-12 flex-1">
+        {% if not customer_phone %}
+        <!-- ================= GUEST SIGN IN ================= -->
+        <div class="space-y-8 animate-in fade-in duration-300">
+            <!-- Header Title -->
+            <div class="text-center space-y-3">
+                <div class="w-16 h-16 rounded-3xl bg-[#0c0d0b]/5 flex items-center justify-center mx-auto text-[#0c0d0b] border border-[#0c0d0b]/10">
+                    <i data-lucide="user" class="w-8 h-8"></i>
+                </div>
+                <h1 class="font-condensed font-black text-3xl sm:text-4xl uppercase tracking-tight text-[#0c0d0b]">
+                    {% if lang == 'ru' %}Вход в личный кабинет{% else %}Profilga kirish{% endif %}
+                </h1>
+                <p class="text-xs sm:text-sm text-[#74756f] max-w-sm mx-auto leading-relaxed">
+                    {% if lang == 'ru' %}
+                    Введите ваше имя и номер телефона для отслеживания статуса заказов и истории покупок.
+                    {% else %}
+                    Buyurtmalar tarixi va yetkazib berish holatini kuzatish uchun telefon raqamingizni kiriting.
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="profile-card p-8 space-y-6">
+                <form method="POST" action="" class="space-y-5">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="login">
+
+                    <!-- Name Field -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-condensed font-bold uppercase tracking-wider text-[#0c0d0b]/80">
+                            {% if lang == 'ru' %}Ваше имя *{% else %}Ismingiz *{% endif %}
+                        </label>
+                        <input type="text" name="name" required placeholder="{% if lang == 'ru' %}Например: Азиз{% else %}Masalan: Azizbek{% endif %}" class="profile-input">
+                    </div>
+
+                    <!-- Phone Field -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-condensed font-bold uppercase tracking-wider text-[#0c0d0b]/80">
+                            {% if lang == 'ru' %}Номер телефона *{% else %}Telefon raqami *{% endif %}
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-[#0c0d0b]/5 border border-[#0c0d0b]/10 px-3.5 py-3.5 rounded-2xl text-xs font-mono font-bold text-[#0c0d0b]/80">+998</span>
+                            <input type="tel" name="phone" required placeholder="90 123 45 67" class="profile-input">
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="profile-btn-primary">
+                        <span>{% if lang == 'ru' %}Войти в аккаунт{% else %}Hisobga kirish{% endif %}</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- ================= LOGGED IN PROFILE & ORDERS ================= -->
+        <div class="space-y-8 animate-in fade-in duration-300">
+            <!-- Customer Card -->
+            <div class="profile-card p-8 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-[#0c0d0b]/5 flex items-center justify-center text-[#0c0d0b] border border-[#0c0d0b]/10">
+                        <i data-lucide="user-check" class="w-7 h-7"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-condensed font-black text-2xl uppercase text-[#0c0d0b]">{{ customer_name|default:'Mijoz' }}</h2>
+                        <span class="text-xs font-mono text-[#74756f]">{{ customer_phone }}</span>
+                    </div>
+                </div>
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="logout">
+                    <button type="submit" class="px-4 py-2 rounded-full border border-[#0c0d0b]/15 hover:border-[#0c0d0b] text-xs font-condensed font-bold uppercase tracking-wider text-[#0c0d0b]/70 hover:text-[#0c0d0b] transition-all">
+                        {% if lang == 'ru' %}Выйти{% else %}Chiqish{% endif %}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Orders Section -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-[#0c0d0b]/10 pb-3">
+                    <h3 class="font-condensed font-bold text-lg uppercase tracking-wider text-[#0c0d0b]">
+                        {% if lang == 'ru' %}История заказов ({{ orders_count }}){% else %}Buyurtmalar tarixi ({{ orders_count }}){% endif %}
+                    </h3>
+                </div>
+
+                {% if not orders %}
+                <div class="profile-card p-12 text-center space-y-4">
+                    <div class="w-12 h-12 rounded-full bg-[#0c0d0b]/5 flex items-center justify-center mx-auto text-[#0c0d0b]/40">
+                        <i data-lucide="package-open" class="w-6 h-6"></i>
+                    </div>
+                    <p class="text-xs text-[#74756f]">
+                        {% if lang == 'ru' %}У вас пока нет оформленных заказов{% else %}Sizda hali buyurtmalar mavjud emas{% endif %}
+                    </p>
+                    <a href="/store/{{ store.subdomain }}/#collection" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#0c0d0b] text-white font-condensed font-bold text-xs uppercase tracking-wider hover:bg-[#222] transition-all shadow-md">
+                        {% if lang == 'ru' %}Перейти к покупкам{% else %}Kolleksiyaga o'tish{% endif %}
+                    </a>
+                </div>
+                {% else %}
+                <div class="space-y-4">
+                    {% for order in orders %}
+                    <div class="profile-card p-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-condensed font-black text-base text-[#0c0d0b]">№ {{ order.order_number }}</span>
+                                <small class="block text-[11px] text-[#74756f]">{{ order.created_at|date:"d.m.Y H:i" }}</small>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-[10px] font-condensed font-bold uppercase tracking-wider bg-[#0c0d0b]/5 text-[#737861] border border-[#737861]/30">
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="border-t border-[#0c0d0b]/6 pt-3 flex items-center justify-between">
+                            <span class="text-xs text-[#74756f]">{% if lang == 'ru' %}Итого к оплате:{% else %}Jami to'lov:{% endif %}</span>
+                            <span class="font-condensed font-black text-lg text-[#0c0d0b]">{{ order.total_price|intcomma }} UZS</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-[#0c0d0b]/8 py-6 px-6 text-center text-xs text-[#74756f] font-condensed tracking-wider">
+        <span>© 2026 {{ store.name }}. STOREBOX APPAREL PLATFORM.</span>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

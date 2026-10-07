@@ -187,58 +187,58 @@ export const CategoriesPage: React.FC = () => {
       </div>
 
       {/* BANNER */}
-      <div className="p-4 rounded-2xl bg-[#211b2e] text-white border border-[#211b2e]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+      <div className="p-4 rounded-xl bg-white border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#c8ff6a] text-[#211b2e] flex items-center justify-center shrink-0 shadow-xs">
+          <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <Store className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-xs font-black text-white">
+            <h4 className="text-xs font-semibold text-slate-900">
               {t("category_visibility_banner") || "Saytda qaysi kategoriyalar ko`rinishini boshqaring"}
             </h4>
-            <p className="text-[11px] text-slate-300 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               {t("category_visibility_desc") || "«Saytda ko`rsatish» tugmasi orqali kategoriyani bir zumda saytga qo`shishingiz mumkin"}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-bold text-white bg-white/10 px-3 py-1.5 rounded-xl border border-white/20 shadow-2xs">
-            {t("total_categories") || "Jami:"} <b className="font-mono text-[#c8ff6a]">{categories.length}</b> {t("categories_unit") || "ta kategoriya"}
+          <span className="text-xs font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
+            {t("total_categories") || "Jami:"} <b className="font-mono text-slate-900">{categories.length}</b> {t("categories_unit") || "ta kategoriya"}
           </span>
         </div>
       </div>
 
       {/* CATEGORIES TABLE */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+            <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200/80 text-[10px] uppercase tracking-wider">
               <tr>
-                <th className="py-3.5 px-4 w-16">{t("th_cat_image") || "Rasm"}</th>
-                <th className="py-3.5 px-4">{t("th_cat_name") || "Kategoriya nomi"}</th>
-                <th className="py-3.5 px-4">{t("th_cat_products") || "Tovarlar"}</th>
-                <th className="py-3.5 px-4 text-center">{t("th_show_on_site") || "Saytda ko`rsatish"}</th>
-                <th className="py-3.5 px-4 text-right">{t("actions") || "Amallar"}</th>
+                <th className="py-3 px-4 w-16">{t("th_cat_image") || "Rasm"}</th>
+                <th className="py-3 px-4">{t("th_cat_name") || "Kategoriya nomi"}</th>
+                <th className="py-3 px-4">{t("th_cat_products") || "Tovarlar"}</th>
+                <th className="py-3 px-4 text-center">{t("th_show_on_site") || "Saytda ko`rsatish"}</th>
+                <th className="py-3 px-4 text-right">{t("actions") || "Amallar"}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+            <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
               {categories.map((cat) => (
-                <tr key={cat.id} className="hover:bg-slate-50/60 transition-colors">
+                <tr key={cat.id} className="hover:bg-slate-50 transition-colors">
                   <td className="py-3 px-4">
                     {cat.primary_image_url ? (
-                      <img src={cat.primary_image_url} alt="" className="w-10 h-10 rounded-xl object-cover border border-slate-100" />
+                      <img src={cat.primary_image_url} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-100" />
                     ) : (
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center">
                         <FolderTree className="w-5 h-5" />
                       </div>
                     )}
                   </td>
                   <td className="py-3 px-4">
-                    <div className="font-bold text-slate-900 text-sm">{cat.name_uz || cat.name_ru}</div>
+                    <div className="font-medium text-slate-900 text-sm">{cat.name_uz || cat.name_ru}</div>
                     <div className="text-[10px] text-slate-400 font-mono">/{cat.slug}</div>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 font-mono font-bold">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-mono text-[11px] font-medium">
                       <Package className="w-3.5 h-3.5 text-slate-500" />
                       {cat.active_products_count} {t("products_count_unit") || "ta tovar"}
                     </span>
@@ -248,11 +248,11 @@ export const CategoriesPage: React.FC = () => {
                       type="button"
                       disabled={!canEditCategory}
                       onClick={() => toggleActiveMutation.mutate(cat.id)}
-                      className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors ${
+                      className={`px-2.5 py-1 rounded-md font-medium text-xs transition-colors cursor-pointer ${
                         !canEditCategory ? "cursor-not-allowed opacity-80 " : ""
                       }${
                         cat.is_active
-                          ? "bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e]"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                           : "bg-slate-100 text-slate-500 border border-slate-200"
                       }`}
                     >

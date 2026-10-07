@@ -322,14 +322,13 @@
                     const bounds = L.latLngBounds([[destLat, destLng], [cLat, cLng]]);
                     customerMap.fitBounds(bounds, { padding: [35, 35], maxZoom: 16 });
 
-                    // Draw OSRM route
-                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${cLng},${cLat};${destLng},${destLat}?overview=full&geometries=geojson`;
-                    const rRes = await fetch(osrmUrl);
+                    // Draw route via StoreBox routing API
+                    const routeApiUrl = `/dashboard/api/courier-route/?start_lat=${cLat}&start_lng=${cLng}&dest_lat=${destLat}&dest_lng=${destLng}`;
+                    const rRes = await fetch(routeApiUrl);
                     if (rRes.ok) {
                         const rData = await rRes.json();
-                        if (rData.routes && rData.routes[0]) {
-                            const r = rData.routes[0];
-                            const coords = r.geometry.coordinates.map(pt => [pt[1], pt[0]]);
+                        if (rData.success && rData.coordinates && rData.coordinates.length >= 2) {
+                            const coords = rData.coordinates;
                             if (routePolyline) customerMap.removeLayer(routePolyline);
                             routePolyline = L.polyline(coords, {
                                 color: '#10b981',
@@ -339,8 +338,8 @@
                                 lineJoin: 'round'
                             }).addTo(customerMap);
 
-                            const distKm = (r.distance / 1000).toFixed(1);
-                            const durationMin = Math.max(1, Math.round(r.duration / 60));
+                            const distKm = (rData.distance / 1000).toFixed(1);
+                            const durationMin = Math.max(1, Math.round(rData.duration / 60));
                             const etaEl = document.getElementById('etaText');
                             if (etaEl) {
                                 etaEl.textContent = `${distKm} km • taxminan ${durationMin} daqiqa`;

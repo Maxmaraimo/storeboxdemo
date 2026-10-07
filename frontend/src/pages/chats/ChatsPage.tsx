@@ -169,44 +169,44 @@ export const ChatsPage: React.FC = () => {
                     className={`flex ${isMerchant ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-md rounded-2xl px-4 py-2.5 text-xs font-medium shadow-2xs ${
+                      className={`max-w-md rounded-xl px-4 py-2.5 text-xs font-medium shadow-2xs ${
                         isMerchant
-                          ? "bg-[#211b2e] text-white dark:bg-[#c8ff6a] dark:text-[#211b2e] rounded-tr-xs"
-                          : "bg-white dark:bg-[#1e2330] text-neutral-900 dark:text-white border border-black/[0.06] dark:border-white/10 rounded-tl-xs"
+                          ? "bg-blue-600 text-white rounded-tr-xs"
+                          : "bg-white dark:bg-[#1e2330] text-slate-900 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-tl-xs"
                       }`}
                     >
                       <p className="leading-relaxed">{m.message}</p>
                       <div
                         className={`text-[9px] mt-1 flex items-center justify-end gap-1 ${
-                          isMerchant ? "text-slate-300 dark:text-[#211b2e]/70" : "text-neutral-400"
+                          isMerchant ? "text-blue-100" : "text-slate-400"
                         }`}
                       >
                         <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                        {isMerchant && <CheckCheck className="w-3 h-3 text-[#c8ff6a] dark:text-[#211b2e]" />}
+                        {isMerchant && <CheckCheck className="w-3 h-3 text-blue-200" />}
                       </div>
                     </div>
                   </div>
                 );
               })}
               {messages.length === 0 && (
-                <div className="text-center py-12 text-neutral-400 text-xs">
+                <div className="text-center py-12 text-slate-400 text-xs">
                   {t("chat_not_started") || "Suhbat hali boshlanmagan. Birinchi xabarni yuboring!"}
                 </div>
               )}
             </div>
 
-            <form onSubmit={handleSend} className="p-3 bg-white/90 dark:bg-[#18181b]/90 border-t border-black/[0.06] dark:border-white/10 flex items-center gap-2">
+            <form onSubmit={handleSend} className="p-3 bg-white dark:bg-[#18181b] border-t border-slate-200/80 dark:border-white/10 flex items-center gap-2">
               <input
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder={t("type_message_ph") || "Xabaringizni yozing..."}
-                className="flex-1 px-4 py-2.5 bg-neutral-100 dark:bg-white/5 border border-transparent dark:border-white/10 rounded-xl text-xs font-medium text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-neutral-400"
+                className="flex-1 px-4 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-xs font-normal text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-600"
               />
               <button
                 type="submit"
                 disabled={!inputText.trim() || sendMessageMutation.isPending}
-                className="p-2.5 bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 cursor-pointer"
+                className="p-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
               >
                 <Send className="w-4 h-4" />
               </button>

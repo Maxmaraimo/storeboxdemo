@@ -1,8 +1,10 @@
+import os
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
+from django.views.static import serve
 from apps.dashboard import views as dashboard_views
 from apps.core import views as core_views
 from apps.api import views_dashboard
@@ -38,6 +40,10 @@ urlpatterns = [
     path('api/v1/', include('apps.api.urls')),
     path('api/', include(('apps.api.urls', 'api_legacy'), namespace='api_legacy')),
 
+    # Demo Store Showcase Routes (Direct & Public)
+    path('demo-store/<path:subpath>/', dashboard_views.dashboard_spa_view, name='root_demo_store'),
+    path('demo-store/<path:subpath>', dashboard_views.dashboard_spa_view, name='root_demo_store_noslash'),
+
     # Merchant Dashboard
     path('dashboard/', include('apps.dashboard.urls')),
 
@@ -53,6 +59,9 @@ urlpatterns = [
 
     # Super-Admin Billing & Global System Operations (billing.ibox.io architecture)
     path('super-admin/', include('apps.super_admin.urls')),
+
+    # Images static alias for frontend SPA assets
+    re_path(r'^images/(?P<path>.*)$', serve, {'document_root': os.path.join(settings.BASE_DIR, 'static', 'images')}),
 
     # Public Storefront & TMA (includes root fallback)
     path('', include('apps.storefront.urls')),

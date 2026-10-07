@@ -4,6 +4,8 @@ export interface User {
   first_name: string;
   last_name: string;
   role: string;
+  username?: string;
+  email?: string;
 }
 
 export interface Store {
@@ -119,6 +121,7 @@ export interface Product {
   primary_image_url?: string | null;
   category?: number | null;
   category_name?: string | null;
+  is_yespos?: boolean;
   created_at?: string;
 }
 

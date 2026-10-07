@@ -112,6 +112,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     primary_image_url = serializers.ReadOnlyField()
     category_name = serializers.SerializerMethodField()
+    is_yespos = serializers.SerializerMethodField()
     slug = serializers.CharField(required=False, allow_blank=True)
     image_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
@@ -122,8 +123,15 @@ class ProductSerializer(serializers.ModelSerializer):
             "cost_price", "margin", "stock", "unit", "is_active", "is_featured",
             "primary_image_url", "image_url", "category", "category_name",
             "description_uz", "description_ru", "description_en",
-            "barcode", "ikpu_code", "created_at"
+            "barcode", "ikpu_code", "is_yespos", "created_at"
         ]
+
+    def get_is_yespos(self, obj):
+        if hasattr(obj, 'is_yespos_annotated'):
+            return bool(obj.is_yespos_annotated)
+        if hasattr(obj, '_prefetched_objects_cache') and 'yespos_links' in obj._prefetched_objects_cache:
+            return len(obj.yespos_links.all()) > 0
+        return obj.yespos_links.exists()
 
     def get_category_name(self, obj):
         if obj.category:

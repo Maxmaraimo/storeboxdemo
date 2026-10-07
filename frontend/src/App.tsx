@@ -14,6 +14,7 @@ import { CategoriesPage } from "./pages/catalog/CategoriesPage";
 import { CustomersPage } from "./pages/customers/CustomersPage";
 import { YesPosPage } from "./pages/yespos/YesPosPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
+import { AnalyticsPage } from "./pages/analytics/AnalyticsPage";
 
 import { DesignStudioPage } from "./pages/design/DesignStudioPage";
 import { QrCatalogPage } from "./pages/platforms/QrCatalogPage";
@@ -30,6 +31,8 @@ import { TariffsPage } from "./pages/settings/TariffsPage";
 import { DeliveryPage } from "./pages/settings/DeliveryPage";
 import { PaymentsPage } from "./pages/settings/PaymentsPage";
 import { RoboMarketPage } from "./pages/settings/RoboMarketPage";
+import { StandaloneStorePage } from "./pages/settings/StandaloneStorePage";
+import { CourierDashboardPage } from "./pages/courier/CourierDashboardPage";
 
 import { ShieldAlert } from "lucide-react";
 import { queryClient } from "./queryClient";
@@ -69,6 +72,8 @@ export const App: React.FC = () => {
           <BrowserRouter basename={basename}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/courier" element={<CourierDashboardPage />} />
+              <Route path="/demo-store/:themeId" element={<StandaloneStorePage />} />
 
               <Route path="/" element={<AppLayout />}>
                 <Route
@@ -148,6 +153,14 @@ export const App: React.FC = () => {
                   element={
                     <PermissionGuard module="customers">
                       <CustomersPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="analytics"
+                  element={
+                    <PermissionGuard module="analytics">
+                      <AnalyticsPage />
                     </PermissionGuard>
                   }
                 />

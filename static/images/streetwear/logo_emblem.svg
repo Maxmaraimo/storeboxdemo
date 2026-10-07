@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+    <rect width="160" height="160" rx="32" fill="#0C0D0B"/>
+    <rect x="1" y="1" width="158" height="158" rx="31" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+    <!-- Geometric Monogram A -->
+    <path d="M80 32L116 112H98L90 92H70L62 112H44L80 32Z" fill="#FFFFFF"/>
+    <polygon points="80,56 74,78 86,78" fill="#0C0D0B"/>
+    <circle cx="80" cy="126" r="3" fill="#A7AE8F"/>
+</svg>

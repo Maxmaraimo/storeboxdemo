@@ -101,13 +101,13 @@ export const DiscountsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("discounts_title") || "Chegirmalar va Promokodlar"}</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">{t("discounts_subtitle") || "Mijozlarni jalb qilish uchun chegirmalar va aksiyalar"}</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">{t("discounts_title") || "Chegirmalar va Promokodlar"}</h1>
+          <p className="text-xs text-slate-500 mt-1 font-normal">{t("discounts_subtitle") || "Mijozlarni jalb qilish uchun chegirmalar va aksiyalar"}</p>
         </div>
         <button
           type="button"
           onClick={openModal}
-          className="px-4 py-2.5 bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border border-[#211b2e]/30 dark:border-[#c8ff6a]/30 rounded-2xl text-xs font-black hover:opacity-90 transition-opacity flex items-center gap-2 shadow-xs"
+          className="px-3.5 py-2 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-2xs cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>{t("add_promocode") || "Yangi promokod"}</span>
@@ -116,18 +116,18 @@ export const DiscountsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {promos.map((p) => (
-          <div key={p.id} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+          <div key={p.id} className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4 text-[#211b2e] dark:text-[#c8ff6a]" />
-                <span className="font-mono font-black text-base text-slate-900">{p.code}</span>
+                <Tag className="w-4 h-4 text-blue-600" />
+                <span className="font-mono font-semibold text-sm text-slate-900">{p.code}</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => toggleMutation.mutate({ id: p.id, is_active: p.is_active })}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
-                    p.is_active ? 'bg-[#211b2e] text-[#c8ff6a] dark:bg-[#c8ff6a] dark:text-[#211b2e] border-[#211b2e]/30 dark:border-[#c8ff6a]/30' : 'bg-slate-50 text-slate-400 border-slate-200'
+                  className={`px-2 py-0.5 rounded text-[10px] font-medium border transition-colors cursor-pointer ${
+                    p.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'
                   }`}
                 >
                   {p.is_active ? (t("status_active") || 'Faol') : (t("status_disabled") || 'O`chirilgan')}
@@ -139,25 +139,25 @@ export const DiscountsPage: React.FC = () => {
                       deleteMutation.mutate(p.id);
                     }
                   }}
-                  className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                  className="p-1 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            <div className="text-2xl font-black text-brand">
+            <div className="text-xl font-semibold text-slate-900">
               {p.discount_type === 'PERCENT' ? `${p.discount_value}%` : `${Number(p.discount_value).toLocaleString()} UZS`}
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-normal">
               <span>{t("min_order") || "Minimal buyurtma:"}</span>
-              <span className="font-bold text-slate-700">{Number(p.min_order_amount).toLocaleString()} UZS</span>
+              <span className="font-medium text-slate-700">{Number(p.min_order_amount).toLocaleString()} UZS</span>
             </div>
 
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+            <div className="flex items-center justify-between text-xs text-slate-500 font-normal">
               <span>{t("uses") || "Foydalanishlar:"}</span>
-              <span className="font-bold text-slate-700">{p.times_used} / {p.max_uses} {t("times_used_format") || "marta"}</span>
+              <span className="font-medium text-slate-700">{p.times_used} / {p.max_uses} {t("times_used_format") || "marta"}</span>
             </div>
           </div>
         ))}

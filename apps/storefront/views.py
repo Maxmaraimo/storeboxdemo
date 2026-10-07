@@ -672,7 +672,7 @@ def storefront_home_view(request, subdomain=None):
 
     # Template override (for direct testing and preview)
     req_template = request.GET.get('template')
-    if req_template in ['restaurant', 'universal', 'boutique']:
+    if req_template in ['restaurant', 'universal', 'boutique', 'streetwear']:
         store.theme_template = req_template
 
     # Live Preview overrides for interactive dashboard design customizer
@@ -694,16 +694,16 @@ def storefront_home_view(request, subdomain=None):
     req_card_style = request.GET.get('card_style')
     if req_card_style in ['modern', 'minimal', 'compact']:
         effective_card_style = req_card_style
-    elif req_template in ['restaurant', 'boutique', 'universal']:
+    elif req_template in ['restaurant', 'boutique', 'universal', 'streetwear']:
         if req_template == 'restaurant':
             effective_card_style = 'compact'
-        elif req_template == 'boutique':
+        elif req_template in ['boutique', 'streetwear']:
             effective_card_style = 'minimal'
         else:
             effective_card_style = 'modern'
     elif store.theme_template == 'restaurant':
         effective_card_style = 'compact'
-    elif store.theme_template == 'boutique':
+    elif store.theme_template in ['boutique', 'streetwear']:
         effective_card_style = 'minimal'
     else:
         effective_card_style = store.theme_card_style or 'modern'
@@ -888,6 +888,112 @@ def storefront_home_view(request, subdomain=None):
         'delivery_fee': delivery_fee,
         'first_constructor_product_id': first_constructor_product_id,
     }
+    if store.theme_template == 'streetwear':
+        OUTFIT_GARMENT_MAP = {
+            'zip-hudi-kakao': {
+                'slot': 'top',
+                'label': 'Half-Zip Knit / Atelier',
+                'color': '#11120f',
+                'cutout': '/static/images/streetwear/packshot_zip_knit.png',
+                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-8-2ab5f6cefeaf.webp',
+                'photo': '/static/images/streetwear/packshot_zip_knit.png',
+            },
+            'kardigan-kabu72-08': {
+                'slot': 'top',
+                'label': 'Ecru Knit / Atelier',
+                'color': '#dfd6c8',
+                'cutout': '/static/images/streetwear/packshot_cardigan_ecru.png',
+                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-6-2b837adf18d7.webp',
+                'photo': '/static/images/streetwear/packshot_cardigan_ecru.png',
+            },
+            'polzamok-trikotaj-grafit': {
+                'slot': 'top',
+                'label': 'Terracotta / Earth Tone',
+                'color': '#7e5647',
+                'cutout': '/static/images/streetwear/packshot_knit_terracotta.png',
+                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-7-c880eb50df5a.webp',
+                'photo': '/static/images/streetwear/packshot_knit_terracotta.png',
+            },
+            'shim-grafit': {
+                'slot': 'bottom',
+                'label': 'Graphite / Relaxed Twill',
+                'color': '#2a2c2e',
+                'cutout': '/static/images/streetwear/packshot_pants_graphite.png',
+                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-5-a5984d772803.webp',
+                'photo': '/static/images/streetwear/packshot_pants_graphite.png',
+            },
+            'shim-shimo-76160': {
+                'slot': 'bottom',
+                'label': 'Stone Wash / Wide Denim',
+                'color': '#4a4d52',
+                'cutout': '/static/images/streetwear/packshot_denim_stone.png',
+                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-3-e11676191ff0.webp',
+                'photo': '/static/images/streetwear/packshot_denim_stone.png',
+            },
+            'jogger-shim-kakao': {
+                'slot': 'bottom',
+                'label': 'Cognac / Tailored Cut',
+                'color': '#6a493d',
+                'cutout': '/static/images/streetwear/packshot_trousers_cognac.png',
+                'fitted': '/static/images/222fma/uploads/models/mannequin-fit-4-6e8ff4158faa.webp',
+                'photo': '/static/images/streetwear/packshot_trousers_cognac.png',
+            },
+            'krossovka-espresso': {
+                'slot': 'shoes',
+                'label': 'Espresso / Chunky Runner',
+                'color': '#141414',
+                'cutout': '/static/images/streetwear/packshot_sneakers_runner.png',
+                'fitted': '/static/images/streetwear/shoes_fit_runner.webp',
+                'photo': '/static/images/streetwear/packshot_sneakers_runner.png',
+            },
+            'krossovka-kulrang': {
+                'slot': 'shoes',
+                'label': 'Shadow Grey / Urban Runner',
+                'color': '#938f8d',
+                'cutout': '/static/images/streetwear/packshot_sneakers_grey.png',
+                'fitted': '/static/images/streetwear/shoes_fit_grey.webp',
+                'photo': '/static/images/streetwear/packshot_sneakers_grey.png',
+            },
+        }
+
+        outfit_prods = []
+        for p in products.order_by('id'):
+            p_cat = p.category.slug if getattr(p, 'category', None) else ''
+            p_img = p.image_url or (p.primary_image_url if hasattr(p, 'primary_image_url') else '') or ''
+            p_slug = getattr(p, 'slug', '')
+            g_meta = OUTFIT_GARMENT_MAP.get(p_slug, {})
+
+            p_vars = []
+            if hasattr(p, 'variations'):
+                for v in p.variations.filter(is_active=True).order_by('sort_order', 'id'):
+                    p_vars.append({
+                        'id': v.id,
+                        'name': v.get_name(lang),
+                        'price': float(v.price)
+                    })
+
+            default_slot = 'top' if p_cat in ['tops', 'outerwear'] else ('bottom' if p_cat == 'bottoms' else 'shoes')
+            outfit_prods.append({
+                'id': p.id,
+                'slug': p_slug,
+                'name': getattr(p, 'display_name', '') or p.get_name(lang),
+                'category_slug': p_cat,
+                'slot': g_meta.get('slot', default_slot),
+                'label': g_meta.get('label', ''),
+                'color': g_meta.get('color', '#333333'),
+                'cutout': g_meta.get('cutout', ''),
+                'fitted': g_meta.get('fitted', ''),
+                'photo': g_meta.get('photo', p_img),
+                'price': float(p.price),
+                'old_price': float(p.old_price) if getattr(p, 'old_price', None) else None,
+                'image': g_meta.get('photo', p_img),
+                'description': getattr(p, 'display_description', '') or p.get_description(lang),
+                'variations': p_vars,
+            })
+        context['outfit_products_json'] = json.dumps(outfit_prods, ensure_ascii=False)
+        context['mannequin_base_url'] = '/static/images/222fma/uploads/models/mannequin-3b30f3cb4662.webp'
+        return render(request, 'storefront/streetwear_home.html', context)
+
     return render(request, 'storefront/home.html', context)
 
 
@@ -979,77 +1085,85 @@ def cart_add_view(request, subdomain=None):
     except Exception:
         data = request.POST
 
-    product_id = data.get('product_id')
-    variation_id = data.get('variation_id')
-    quantity = int(data.get('quantity', 1))
-
-    product = get_object_or_404(Product, id=product_id, is_active=True)
-    variation = None
-    if variation_id:
-        variation = product.variations.filter(id=variation_id, is_active=True).first()
-
-    lang = get_storefront_lang(request, getattr(request, 'store', None))
-    name = product.get_name(lang) if hasattr(product, 'get_name') else (getattr(product, f'name_{lang}', None) or getattr(product, 'name_uz', '') or getattr(product, 'name_ru', ''))
+    items_payload = data.get('items')
+    if isinstance(items_payload, list) and items_payload:
+        raw_items = items_payload
+    else:
+        raw_items = [data]
 
     cart = request.session.get('cart', {})
-    custom_options = data.get('custom_options')
-    custom_summary = (data.get('custom_summary') or '').strip()
-    custom_price = data.get('custom_price')
+    lang = get_storefront_lang(request, getattr(request, 'store', None))
 
-    custom_image_url = ''
-    if custom_summary or custom_options:
-        import hashlib
-        config_hash = hashlib.md5((custom_summary + str(custom_price)).encode()).hexdigest()[:8]
-        item_key = f"{product.id}_c_{config_hash}"
-        unit_price = float(custom_price) if custom_price is not None else float(product.price)
-        
-        # Determine concise variation label for cart display
-        opts = custom_options or {}
-        if opts.get('style') == 'spicy':
-            var_name = "Острый (Sriracha)" if lang == 'ru' else ("Spicy (Sriracha)" if lang == 'en' else "Achchiq (Sriracha)")
-        elif opts.get('crust'):
-            var_name = str(opts.get('crust'))
+    for item_data in raw_items:
+        product_id = item_data.get('product_id')
+        if not product_id:
+            continue
+        variation_id = item_data.get('variation_id')
+        quantity = int(item_data.get('quantity', 1))
+
+        product = Product.objects.filter(id=product_id, is_active=True).first()
+        if not product:
+            continue
+        variation = None
+        if variation_id:
+            variation = product.variations.filter(id=variation_id, is_active=True).first()
+
+        name = product.get_name(lang) if hasattr(product, 'get_name') else (getattr(product, f'name_{lang}', None) or getattr(product, 'name_uz', '') or getattr(product, 'name_ru', ''))
+
+        custom_options = item_data.get('custom_options')
+        custom_summary = (item_data.get('custom_summary') or '').strip()
+        custom_price = item_data.get('custom_price')
+
+        custom_image_url = ''
+        if custom_summary or custom_options:
+            import hashlib
+            config_hash = hashlib.md5((custom_summary + str(custom_price)).encode()).hexdigest()[:8]
+            item_key = f"{product.id}_c_{config_hash}"
+            unit_price = float(custom_price) if custom_price is not None else float(product.price)
+            opts = custom_options or {}
+            if opts.get('style') == 'spicy':
+                var_name = "Острый (Sriracha)" if lang == 'ru' else ("Spicy (Sriracha)" if lang == 'en' else "Achchiq (Sriracha)")
+            elif opts.get('crust'):
+                var_name = str(opts.get('crust'))
+            else:
+                var_name = "Свой рецепт" if lang == 'ru' else ("Custom recipe" if lang == 'en' else "Maxsus retsept")
+            try:
+                from apps.orders.burger_image_service import render_custom_burger_image
+                custom_image_url = render_custom_burger_image(custom_options)
+            except Exception as e:
+                pass
         else:
-            var_name = "Свой рецепт" if lang == 'ru' else ("Custom recipe" if lang == 'en' else "Maxsus retsept")
+            item_key = f"{product.id}_{variation.id if variation else 0}"
+            unit_price = float(variation.price if variation else product.price)
+            var_name = variation.get_name(lang) if variation else ''
 
-        try:
-            from apps.orders.burger_image_service import render_custom_burger_image
-            custom_image_url = render_custom_burger_image(custom_options)
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning("Burger image render error: %s", e)
-    else:
-        item_key = f"{product.id}_{variation.id if variation else 0}"
-        unit_price = float(variation.price if variation else product.price)
-        var_name = variation.get_name(lang) if variation else ''
-
-    if item_key in cart:
-        cart[item_key]['quantity'] += quantity
-        cart[item_key]['total_price'] = cart[item_key]['quantity'] * unit_price
-        cart[item_key]['price'] = unit_price
-        cart[item_key]['unit_price'] = unit_price
-        if custom_image_url:
-            cart[item_key]['image'] = custom_image_url
-            cart[item_key]['image_url'] = custom_image_url
-            cart[item_key]['custom_image_url'] = custom_image_url
-    else:
-        img_to_use = custom_image_url or (product.primary_image_url or '')
-        cart[item_key] = {
-            'product_id': product.id,
-            'variation_id': variation.id if variation else None,
-            'name': name,
-            'variation_name': var_name,
-            'custom_summary': custom_summary,
-            'custom_options': custom_options or {},
-            'custom_image_url': custom_image_url,
-            'is_constructor': bool(custom_summary or custom_options),
-            'unit_price': unit_price,
-            'price': unit_price,
-            'quantity': quantity,
-            'total_price': quantity * unit_price,
-            'image': img_to_use,
-            'image_url': img_to_use,
-        }
+        if item_key in cart:
+            cart[item_key]['quantity'] += quantity
+            cart[item_key]['total_price'] = cart[item_key]['quantity'] * unit_price
+            cart[item_key]['price'] = unit_price
+            cart[item_key]['unit_price'] = unit_price
+            if custom_image_url:
+                cart[item_key]['image'] = custom_image_url
+                cart[item_key]['image_url'] = custom_image_url
+                cart[item_key]['custom_image_url'] = custom_image_url
+        else:
+            img_to_use = custom_image_url or (product.primary_image_url or '')
+            cart[item_key] = {
+                'product_id': product.id,
+                'variation_id': variation.id if variation else None,
+                'name': name,
+                'variation_name': var_name,
+                'custom_summary': custom_summary,
+                'custom_options': custom_options or {},
+                'custom_image_url': custom_image_url,
+                'is_constructor': bool(custom_summary or custom_options),
+                'unit_price': unit_price,
+                'price': unit_price,
+                'quantity': quantity,
+                'total_price': quantity * unit_price,
+                'image': img_to_use,
+                'image_url': img_to_use,
+            }
 
     request.session['cart'] = cart
     request.session.modified = True
@@ -2109,6 +2223,8 @@ def product_detail_page_view(request, product_id, subdomain=None):
         'effective_card_style': effective_card_style,
         'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
     }
+    if store.theme_template == 'streetwear':
+        return render(request, 'storefront/streetwear_product_detail.html', context)
     return render(request, 'storefront/product_detail.html', context)
 
 
@@ -2259,6 +2375,8 @@ def customer_profile_page_view(request, subdomain=None):
         'current_lang': current_lang,
         't': t,
     }
+    if store.theme_template == 'streetwear':
+        return render(request, 'storefront/streetwear_profile.html', context)
     return render(request, 'storefront/customer_profile.html', context)
 
 
