@@ -640,3 +640,91 @@ class MerchantCard(models.Model):
 
     def __str__(self):
         return f"•••• {self.card_number[-4:]} ({self.store.name})"
+
+
+class StoreIntegration(models.Model):
+    class Categories(models.TextChoices):
+        POS = 'pos', 'POS tizimlari'
+        WAREHOUSE = 'warehouse', 'Omborxona'
+        DELIVERY = 'delivery', 'Yetkazib berish'
+        PAYMENT = 'payment', "To'lov tizimlari"
+        TELEPHONY_SOCIAL = 'telephony_social', 'IP-telefoniya va Ijtimoiy tarmoqlar'
+
+    store = models.ForeignKey(
+        Store,
+        on_delete=models.CASCADE,
+        related_name='integrations',
+        verbose_name='Do\'kon'
+    )
+    service_slug = models.CharField(
+        max_length=50,
+        db_index=True,
+        verbose_name='Servis identifikatori'
+    )
+    category = models.CharField(
+        max_length=30,
+        choices=Categories.choices,
+        default=Categories.POS,
+        verbose_name='Kategoriya'
+    )
+    name = models.CharField(max_length=100, verbose_name='Servis nomi')
+    is_connected = models.BooleanField(default=False, verbose_name='Ulandi')
+    is_active = models.BooleanField(default=False, verbose_name='Faol')
+    config = models.JSONField(default=dict, blank=True, verbose_name='Ochiq parametrlar')
+    encrypted_credentials = models.TextField(blank=True, default='', verbose_name='Shifrlangan maxfiy kalitlar')
+    credentials_preview = models.JSONField(default=dict, blank=True, verbose_name='Niqoblangan kalitlar ko\'rinishi')
+    last_sync_at = models.DateTimeField(null=True, blank=True, verbose_name='Oxirgi sinxronizatsiya')
+    last_sync_status = models.CharField(max_length=30, default='idle', verbose_name='Sinxronizatsiya holati')
+    last_sync_message = models.TextField(blank=True, default='', verbose_name='Xabar')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Do\'kon integratsiyasi'
+        verbose_name_plural = 'Do\'kon integratsiyalari'
+        unique_together = ('store', 'service_slug')
+        ordering = ['category', 'name']
+
+    def __str__(self):
+        status = 'Faol' if self.is_active else ('Ulandi' if self.is_connected else 'Ulanmagan')
+        return f"{self.name} ({self.service_slug}) — {self.store.name} [{status}]"
+
+    def set_credentials(self, creds: dict):
+        from apps.stores.security import encrypt_data, mask_secret
+        if not creds:
+            self.encrypted_credentials = ""
+            self.credentials_preview = {}
+            return
+        self.encrypted_credentials = encrypt_data(creds)
+        self.credentials_preview = {k: mask_secret(v) for k, v in creds.items() if v}
+
+    def get_credentials(self) -> dict:
+        from apps.stores.security import decrypt_data
+        if not self.encrypted_credentials:
+            return {}
+        decrypted = decrypt_data(self.encrypted_credentials)
+        return decrypted if isinstance(decrypted, dict) else {}
+
+
+class StoreIntegrationLog(models.Model):
+    store = models.ForeignKey(
+        Store,
+        on_delete=models.CASCADE,
+        related_name='integration_logs',
+        verbose_name="Do'kon"
+    )
+    service_slug = models.CharField(max_length=50, db_index=True, verbose_name="Servis")
+    service_name = models.CharField(max_length=100, verbose_name="Nomi")
+    event_type = models.CharField(max_length=50, verbose_name="Voqea turi")  # 'HANDSHAKE', 'SYNC', 'CONFIG', 'TOGGLE', 'DISCONNECT'
+    status = models.CharField(max_length=20, default='SUCCESS', verbose_name="Holat")  # 'SUCCESS', 'ERROR', 'WARNING'
+    message = models.TextField(verbose_name="Xabar")
+    details = models.JSONField(default=dict, blank=True, verbose_name="Batafsil ma'lumotlar")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Integratsiya jurnali"
+        verbose_name_plural = "Integratsiya jurnallari"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.created_at.strftime('%d.%m %H:%M')}] {self.service_name} ({self.event_type}) - {self.status}"

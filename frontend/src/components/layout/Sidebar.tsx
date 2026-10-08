@@ -25,7 +25,9 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
-  Search
+  Search,
+  Blocks,
+  Palette
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
@@ -143,9 +145,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
         items: [
           {
             path: "/robo-market",
-            icon: StoreIcon,
-            label: lang === "ru" ? "Интернет-магазин" : lang === "en" ? "Online Store" : "Internet do'kon",
+            icon: Blocks,
+            label: lang === "ru" ? "Маркет интеграций" : lang === "en" ? "StoreBox Market" : "StoreBox Market",
             badge: null,
+          },
+          {
+            path: "/themes",
+            icon: Palette,
+            label: lang === "ru" ? "Темы витрин" : lang === "en" ? "Storefront Themes" : "Vitrina mavzulari",
+            badge: "13",
           },
           {
             path: "/platforms",

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Package, Search, Plus, AlertCircle, ArrowDownUp, X } from "lucide-react";
+import { Package, Search, Plus, AlertCircle, ArrowDownUp, X, RefreshCw, SlidersHorizontal, CheckCircle2 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Product } from "../../types";
 
 export const WarehousePage: React.FC = () => {
-  const { t } = useAuth();
+  const { t, lang } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
@@ -22,6 +23,28 @@ export const WarehousePage: React.FC = () => {
     queryFn: async () => {
       const res = await api.get(`/products/?q=${encodeURIComponent(search)}`);
       return res.data as { products: Product[]; total: number };
+    },
+  });
+
+  const { data: integrationsData } = useQuery({
+    queryKey: ["integrations-list"],
+    queryFn: async () => {
+      const res = await api.get("/integrations/");
+      return res.data as { integrations: any[] };
+    },
+  });
+
+  const connectedIntegration = (integrationsData?.integrations || []).find(
+    (i: any) => i.is_connected && (i.category === "warehouse" || i.category === "pos")
+  );
+
+  const syncMutation = useMutation({
+    mutationFn: async (slug: string) => {
+      return (await api.post(`/integrations/${slug}/sync/`)).data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["integrations-list"] });
     },
   });
 
@@ -82,6 +105,61 @@ export const WarehousePage: React.FC = () => {
           <span>{t("stock_in") || "Kirim qilish"}</span>
         </button>
       </div>
+
+      {/* Active Warehouse Integration Live Sync Banner */}
+      {connectedIntegration && (
+        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-950/30 dark:to-neutral-900 border border-emerald-200/90 dark:border-emerald-800/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0 shadow-2xs">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                  {connectedIntegration.name} {lang === 'ru' ? 'интеграция активна' : 'integratsiyasi faol'}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  LIVE SYNC
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                {lang === 'ru'
+                  ? `Остатки и товары синхронизируются с ${connectedIntegration.name}. Последнее обновление: `
+                  : `Qoldiqlar va mahsulotlar ${connectedIntegration.name} bilan sinxronlanmoqda. Oxirgi yangilanish: `}
+                <span className="font-mono font-medium text-slate-700 dark:text-neutral-300">
+                  {connectedIntegration.last_synced
+                    ? new Date(connectedIntegration.last_synced).toLocaleString(lang === 'ru' ? 'ru-RU' : 'uz-UZ', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+                    : (lang === 'ru' ? 'Недавно' : 'Yaqinda')}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => syncMutation.mutate(connectedIntegration.slug)}
+              disabled={syncMutation.isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 hover:bg-slate-50 text-slate-700 dark:text-neutral-200 text-xs font-medium transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+              <span>
+                {syncMutation.isPending
+                  ? (lang === 'ru' ? 'Синхронизация...' : 'Sinxronlanmoqda...')
+                  : (lang === 'ru' ? 'Синхронизировать' : 'Sinxronlash')}
+              </span>
+            </button>
+            <Link
+              to="/settings/integrations"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 text-xs font-medium hover:bg-white/60 transition-colors"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{lang === 'ru' ? 'Настройки' : 'Sozlamalar'}</span>
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="p-3.5 border-b border-slate-100 flex items-center justify-between gap-4">

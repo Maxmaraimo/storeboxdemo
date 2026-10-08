@@ -32,6 +32,8 @@ urlpatterns = [
     path('settings/', views.dashboard_spa_view, name='settings_general'),
     path('settings/<path:subpath>/', views.dashboard_spa_view, name='settings_sub'),
     path('robo-market/', views.dashboard_spa_view, name='robo_market'),
+    path('integrations/', views.dashboard_spa_view, name='integrations'),
+    path('themes/', views.dashboard_spa_view, name='themes'),
     path('demo-store/<path:subpath>/', views.dashboard_spa_view, name='demo_store'),
     path('demo-store/<path:subpath>', views.dashboard_spa_view, name='demo_store_noslash'),
 

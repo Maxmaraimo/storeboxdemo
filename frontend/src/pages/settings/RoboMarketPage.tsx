@@ -56,7 +56,8 @@ import {
   Calendar,
   Gift,
   HelpCircle,
-  Download
+  Download,
+  Blocks
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
@@ -1289,6 +1290,13 @@ export const RoboMarketPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <Link
+              to="/robo-market"
+              className="px-4 py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 transition-all inline-flex items-center gap-2 shadow-2xs"
+            >
+              <Blocks className="w-4 h-4 text-emerald-400" />
+              <span>Маркетплейс интеграций (32)</span>
+            </Link>
             <div className="px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-3 dark:bg-neutral-900 dark:border-neutral-800">
               <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-semibold text-xs dark:bg-emerald-950/60 dark:text-emerald-400">
                 13

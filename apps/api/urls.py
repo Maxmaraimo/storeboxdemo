@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.dashboard import views as old_views
-from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations, views_telegram, views_yespos, views_constructor
+from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations, views_telegram, views_yespos, views_constructor, views_integrations
 
 app_name = "api_v1"
 
@@ -88,6 +88,16 @@ urlpatterns = [
     path("billing/calculate/", views_settings.calculate_tariff_view, name="billing_calculate"),
     path("billing/tariff-request/", views_settings.tariff_request_view, name="billing_tariff_request"),
     path("translations/<str:lang_code>/", views_settings.translations_view, name="translations"),
+
+    # Integrations Marketplace (StoreBox Market / fix16.mov)
+    path("integrations/", views_integrations.integrations_list_view, name="integrations_list"),
+    path("integrations/<str:slug>/", views_integrations.integration_detail_view, name="integration_detail"),
+    path("integrations/<str:slug>/save/", views_integrations.integration_save_view, name="integration_save"),
+    path("integrations/<str:slug>/toggle/", views_integrations.integration_toggle_view, name="integration_toggle"),
+    path("integrations/<str:slug>/disconnect/", views_integrations.integration_disconnect_view, name="integration_disconnect"),
+    path("integrations/<str:slug>/test/", views_integrations.integration_test_view, name="integration_test"),
+    path("integrations/<str:slug>/sync/", views_integrations.integration_sync_view, name="integration_sync"),
+    path("integrations/<str:slug>/logs/", views_integrations.integration_logs_view, name="integration_logs"),
 
     # Chats & Messages
     path("chats/", views_operations.chats_list_view, name="chats_list"),

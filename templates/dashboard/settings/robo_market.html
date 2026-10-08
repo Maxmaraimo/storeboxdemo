@@ -1,140 +1,706 @@
 {% extends 'dashboard/base_dashboard.html' %}
 
 {% block dashboard_content %}
-<div class="space-y-6" x-data="marketApp()">
-    <div>
-        <h1 class="text-xl font-black text-slate-900 tracking-tight">StoreBox Market</h1>
-        <p class="text-xs text-slate-500 mt-1">{{ t.market_subtitle }}</p>
-    </div>
-
-    <!-- Filter Tabs -->
-    <div class="flex gap-2 overflow-x-auto pb-1 border-b border-slate-200 text-xs font-bold">
-        <button type="button" @click="activeTab = 'all'" :class="activeTab === 'all' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">{{ t.tab_all_chats }}</button>
-        <button type="button" @click="activeTab = 'pos'" :class="activeTab === 'pos' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">{{ t.tab_pos }}</button>
-        <button type="button" @click="activeTab = 'warehouse'" :class="activeTab === 'warehouse' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">{{ t.tab_warehouse }}</button>
-        <button type="button" @click="activeTab = 'delivery'" :class="activeTab === 'delivery' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">{{ t.tab_delivery }}</button>
-        <button type="button" @click="activeTab = 'payments'" :class="activeTab === 'payments' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">{{ t.tab_payments }}</button>
-        <button type="button" @click="activeTab = 'crm'" :class="activeTab === 'crm' ? 'border-b-2 border-brand text-brand font-black' : 'text-slate-500'" class="pb-2.5 px-3">{{ t.tab_crm }}</button>
-    </div>
-
-    <!-- Integration Cards Grid -->
-    <div class="space-y-6">
-        <!-- POS Tizimlari -->
-        <div x-show="activeTab === 'all' || activeTab === 'pos'" class="space-y-3">
-            <h3 class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.tab_pos }}</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                <template x-for="item in posList" :key="item.name">
-                    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-                        <div>
-                            <div class="font-black text-sm text-slate-900" x-text="item.name"></div>
-                            <div class="text-[10px] text-amber-500 font-bold flex items-center gap-1 mt-0.5">
-                                <i data-lucide="star" class="w-3 h-3 fill-amber-400 text-amber-400"></i>
-                                <span x-text="item.rating"></span>
-                            </div>
-                        </div>
-                        <button type="button" @click="openModal(item.name)" class="mt-4 w-full py-1.5 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-50">{{ t.open_btn }}</button>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        <!-- Omborxona -->
-        <div x-show="activeTab === 'all' || activeTab === 'warehouse'" class="space-y-3">
-            <h3 class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.tab_warehouse }}</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                <template x-for="item in whList" :key="item.name">
-                    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-                        <div>
-                            <div class="font-black text-sm text-slate-900" x-text="item.name"></div>
-                            <div class="text-[10px] text-amber-500 font-bold flex items-center gap-1 mt-0.5">
-                                <i data-lucide="star" class="w-3 h-3 fill-amber-400 text-amber-400"></i>
-                                <span x-text="item.rating"></span>
-                            </div>
-                        </div>
-                        <button type="button" @click="openModal(item.name)" class="mt-4 w-full py-1.5 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-50">{{ t.open_btn }}</button>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        <!-- Yetkazib berish -->
-        <div x-show="activeTab === 'all' || activeTab === 'delivery'" class="space-y-3">
-            <h3 class="font-bold text-xs text-slate-500 uppercase tracking-wider">{{ t.tab_delivery }}</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                <template x-for="item in delList" :key="item.name">
-                    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-                        <div>
-                            <div class="font-black text-sm text-slate-900" x-text="item.name"></div>
-                            <div class="text-[10px] text-amber-500 font-bold flex items-center gap-1 mt-0.5">
-                                <i data-lucide="star" class="w-3 h-3 fill-amber-400 text-amber-400"></i>
-                                <span x-text="item.rating"></span>
-                            </div>
-                        </div>
-                        <button type="button" @click="openModal(item.name)" class="mt-4 w-full py-1.5 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-50">{{ t.open_btn }}</button>
-                    </div>
-                </template>
-            </div>
-        </div>
-    </div>
-
-    <!-- CONNECTION MODAL -->
-    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-        <div @click.away="modalOpen = false" class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-black text-base text-slate-900" x-text="selectedApp + ' {{ t.integration_with }}'"></h3>
-                <button type="button" @click="modalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
-            </div>
-            <div class="space-y-3 text-xs">
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">{{ t.api_key_or_url }}</label>
-                    <input type="password" placeholder="api_key_..." class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono">
+<div class="space-y-6" x-data="integrationsMarketApp()">
+    <!-- Top Header (Shopify Polaris aesthetic) -->
+    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div class="space-y-1.5 max-w-2xl">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">
+                        <i data-lucide="sparkles" class="w-3 h-3 text-amber-500"></i>
+                        StoreBox Market
+                    </span>
+                    <span x-show="connectedCount > 0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span x-text="connectedCount + ' ulangan'"></span>
+                    </span>
                 </div>
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">{{ t.store_id_label }}</label>
-                    <input type="text" value="{{ store.subdomain }}" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono" readonly>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    {% if current_lang == 'ru' %}Маркетплейс интеграций{% else %}Integratsiyalar bozori{% endif %}
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
+                    {% if current_lang == 'ru' %}Подключайте кассы, склады, службы доставки, платежные системы и соцсети в один клик{% else %}Kassa, omborxona, to'lov va yetkazib berish xizmatlarini bir klikda do'konga ulang{% endif %}
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="/dashboard/themes/" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200/80 transition-all shadow-2xs">
+                    <i data-lucide="palette" class="w-4 h-4 text-purple-600"></i>
+                    <span>{% if current_lang == 'ru' %}Темы витрин (13){% else %}Vitrina mavzulari (13){% endif %}</span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="mt-8 pt-6 border-t border-slate-100">
+            <div class="flex items-center gap-2 overflow-x-auto pb-2">
+                <button type="button" @click="activeTab = 'all'" :class="activeTab === 'all' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                    <span>{% if current_lang == 'ru' %}Все{% else %}Barchasi{% endif %}</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded-md font-bold" :class="activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-500'" x-text="items.length"></span>
+                </button>
+                <button type="button" @click="activeTab = 'pos'" :class="activeTab === 'pos' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                    <span>{% if current_lang == 'ru' %}POS системы{% else %}POS tizimlari{% endif %}</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded-md font-bold" :class="activeTab === 'pos' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-500'" x-text="counts.pos"></span>
+                </button>
+                <button type="button" @click="activeTab = 'warehouse'" :class="activeTab === 'warehouse' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                    <span>{% if current_lang == 'ru' %}Склады{% else %}Omborxona{% endif %}</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded-md font-bold" :class="activeTab === 'warehouse' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-500'" x-text="counts.warehouse"></span>
+                </button>
+                <button type="button" @click="activeTab = 'delivery'" :class="activeTab === 'delivery' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                    <span>{% if current_lang == 'ru' %}Доставка{% else %}Yetkazib berish{% endif %}</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded-md font-bold" :class="activeTab === 'delivery' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-500'" x-text="counts.delivery"></span>
+                </button>
+                <button type="button" @click="activeTab = 'payment'" :class="activeTab === 'payment' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                    <span>{% if current_lang == 'ru' %}Оплата{% else %}To'lov tizimlari{% endif %}</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded-md font-bold" :class="activeTab === 'payment' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-500'" x-text="counts.payment"></span>
+                </button>
+                <button type="button" @click="activeTab = 'telephony_social'" :class="activeTab === 'telephony_social' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                    <span>{% if current_lang == 'ru' %}IP-телефония и Соцсети{% else %}IP-telefoniya va Ijtimoiy tarmoqlar{% endif %}</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded-md font-bold" :class="activeTab === 'telephony_social' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-500'" x-text="counts.telephony_social"></span>
+                </button>
+            </div>
+
+            <!-- Search and Filter Bar -->
+            <div class="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div class="relative flex-1 max-w-md">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" x-model="searchQuery" placeholder="{% if current_lang == 'ru' %}Поиск сервисов и интеграций...{% else %}Xizmat va integratsiyalarni qidirish...{% endif %}" class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10">
                 </div>
             </div>
-            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button type="button" @click="modalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">{{ t.cancel_btn }}</button>
-                <button type="button" @click="modalOpen = false; if (typeof showToast === 'function') showToast(selectedApp + ' {{ t.connected_successfully|escapejs }}')" class="px-5 py-2 rounded-xl bg-brand text-white text-xs font-black">{{ t.activate_btn }}</button>
-            </div>
         </div>
     </div>
+
+    <!-- Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+        <template x-for="item in filteredItems" :key="item.slug">
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:border-slate-300 hover:shadow-md transition-all duration-200 flex flex-col justify-between group">
+                <div>
+                    <!-- Top: Badge + Status -->
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center p-1.5 shadow-2xs font-black text-white text-xs select-none" :style="'background-color:' + item.icon_color">
+                            <span x-text="item.name.slice(0, 3).toUpperCase()"></span>
+                        </div>
+                        <template x-if="item.is_connected">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                                <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-600"></i>
+                                <span>{% if current_lang == 'ru' %}Подключено{% else %}Ulangan{% endif %}</span>
+                            </span>
+                        </template>
+                        <template x-if="!item.is_connected">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500" x-text="item.badge"></span>
+                        </template>
+                    </div>
+
+                    <!-- Title & Rating -->
+                    <div class="mt-4">
+                        <h3 class="font-bold text-sm sm:text-base text-slate-900" x-text="item.name"></h3>
+                        <div class="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500">
+                            <div class="flex items-center gap-0.5 text-amber-500">
+                                <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                                <span class="font-bold text-slate-900" x-text="item.rating.toFixed(1)"></span>
+                            </div>
+                            <span class="text-slate-300">•</span>
+                            <span x-text="'(' + item.reviews_count + ' sharh)'"></span>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-slate-500 line-clamp-2 mt-2 leading-relaxed" x-text="item.short_desc"></p>
+                </div>
+
+                <!-- Action Button -->
+                <div class="mt-5 pt-3.5 border-t border-slate-100">
+                    <template x-if="item.is_connected">
+                        <button type="button" @click="openModal(item)" class="w-full py-2 px-3 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+                            <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-slate-500"></i>
+                            <span>{% if current_lang == 'ru' %}Настроить{% else %}Sozlash{% endif %}</span>
+                        </button>
+                    </template>
+                    <template x-if="!item.is_connected">
+                        <button type="button" @click="openModal(item)" class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs">
+                            <span>{% if current_lang == 'ru' %}Подключить{% else %}Ochish{% endif %}</span>
+                            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- CONNECTION MODAL (Wrapped in x-if to completely mount/unmount state with zero caching) -->
+    <template x-if="modalOpen && selectedItem">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+             @keydown.escape.window="closeModal()">
+            <div @click.away="closeModal()" class="bg-white rounded-3xl border border-slate-200 max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                <!-- Modal Header -->
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center p-1.5 font-black text-white text-sm shadow-xs select-none" :style="'background-color:' + (selectedItem ? selectedItem.icon_color : '#0F172A')">
+                            <span x-text="selectedItem ? selectedItem.name.slice(0, 3).toUpperCase() : ''"></span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="font-black text-base text-slate-900" x-text="selectedItem.name"></h2>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600" x-text="selectedItem.category_title"></span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
+                                <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                                <span class="font-bold text-slate-900" x-text="selectedItem.rating.toFixed(1)"></span>
+                                <span class="text-slate-300">•</span>
+                                <span x-text="'(' + selectedItem.reviews_count + ' sharh)'"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" @click="closeModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Content -->
+                <div class="p-6 overflow-y-auto space-y-5">
+                    <!-- Security Notice -->
+                    <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex items-start gap-3">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>{% if current_lang == 'ru' %}Безопасное 256-битное шифрование{% else %}Xavfsiz 256-bitli shifrlash{% endif %}</span>
+                                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-mono font-bold">AES/HMAC</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-relaxed font-normal">
+                                {% if current_lang == 'ru' %}Безопасное 256-битное шифрование StoreBox: Ваши API-ключи надежно защищены.{% else %}StoreBox 256-bitli shifrlash: Maxfiy API kalitlar xavfsiz shifrlanadi va uchinchi shaxslarga berilmaydi.{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Live Status & Sync Inspection Card -->
+                    <template x-if="selectedItem && selectedItem.is_connected">
+                        <div class="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-4 space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span class="text-xs font-bold text-emerald-950">
+                                        {% if current_lang == 'ru' %}Интеграция успешно подключена и работает{% else %}Integratsiya muvaffaqiyatli ulandi va ishlamoqda{% endif %}
+                                    </span>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-mono">
+                                    ACTIVE
+                                </span>
+                            </div>
+                            <div class="text-[11px] text-slate-600 space-y-1.5 pt-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">{% if current_lang == 'ru' %}Последняя синхронизация:{% else %}Oxirgi sinxronizatsiya:{% endif %}</span>
+                                    <span class="font-mono font-bold text-slate-800" x-text="formatDate(selectedItem.last_synced)"></span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">{% if current_lang == 'ru' %}Связанный магазин:{% else %}Bog'langan do'kon:{% endif %}</span>
+                                    <span class="font-medium text-slate-800">{{ store.name|default:"Burger & Co." }} ({{ store.subdomain|default:"burger-co" }}.storebox.uz)</span>
+                                </div>
+
+                                <template x-if="selectedItem.category === 'warehouse'">
+                                    <div class="mt-2.5 pt-2 border-t border-emerald-200/60 flex items-center justify-between">
+                                        <span class="text-slate-600 font-medium">{% if current_lang == 'ru' %}Складской учет и остатки:{% else %}Omborxona va qoldiqlar:{% endif %}</span>
+                                        <a href="/dashboard/warehouse/" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-bold underline">
+                                            <span>{% if current_lang == 'ru' %}Перейти в Складской учет{% else %}Omborxonaga o'tish{% endif %}</span>
+                                            <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                        </a>
+                                    </div>
+                                </template>
+
+                                <template x-if="selectedItem.category === 'pos'">
+                                    <div class="mt-2.5 pt-2 border-t border-emerald-200/60 flex items-center justify-between">
+                                        <span class="text-slate-600 font-medium">{% if current_lang == 'ru' %}Касса и заказы с витрины:{% else %}Kassa va buyurtmalar oqimi:{% endif %}</span>
+                                        <a href="/dashboard/orders/" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-bold underline">
+                                            <span>{% if current_lang == 'ru' %}Перейти в Заказы{% else %}Buyurtmalarga o'tish{% endif %}</span>
+                                            <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                        </a>
+                                    </div>
+                                </template>
+
+                                <template x-if="selectedItem.category === 'payment'">
+                                    <div class="mt-2.5 pt-2 border-t border-emerald-200/60 flex items-center justify-between">
+                                        <span class="text-slate-600 font-medium">{% if current_lang == 'ru' %}Онлайн-оплата на витрине:{% else %}Onlayn to'lov usuli:{% endif %}</span>
+                                        <a href="/dashboard/orders/" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-bold underline">
+                                            <span>{% if current_lang == 'ru' %}Активно на чекауте витрины{% else %}Vitrina chekautida faol{% endif %}</span>
+                                            <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                        </a>
+                                    </div>
+                                </template>
+
+                                <template x-if="selectedItem.category === 'delivery'">
+                                    <div class="mt-2.5 pt-2 border-t border-emerald-200/60 flex items-center justify-between">
+                                        <span class="text-slate-600 font-medium">{% if current_lang == 'ru' %}Курьерская доставка:{% else %}Kuryerlik xizmati:{% endif %}</span>
+                                        <a href="/dashboard/orders/" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-bold underline">
+                                            <span>{% if current_lang == 'ru' %}Авто-вызов в Заказах{% else %}Buyurtmalarda avto-chaqiruv{% endif %}</span>
+                                            <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                        </a>
+                                    </div>
+                                </template>
+
+                                <!-- Sync Now & Event Logs Action Buttons -->
+                                <div class="pt-2.5 mt-2 border-t border-emerald-200/60 flex flex-wrap items-center justify-between gap-2">
+                                    <button type="button" @click="syncIntegration()" :disabled="syncing" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50">
+                                        <i data-lucide="refresh-cw" class="w-3 h-3" :class="syncing ? 'animate-spin' : ''"></i>
+                                        <span x-text="syncing ? '{% if current_lang == 'ru' %}Синхронизация...{% else %}Sinxronlanmoqda...{% endif %}' : '{% if current_lang == 'ru' %}🔄 Синхронизировать сейчас{% else %}🔄 Hozir sinxronlash{% endif %}'"></span>
+                                    </button>
+
+                                    <button type="button" @click="toggleLogs()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-medium transition-all cursor-pointer">
+                                        <i data-lucide="history" class="w-3 h-3 text-slate-500"></i>
+                                        <span>{% if current_lang == 'ru' %}Журнал событий{% else %}Voqealar jurnali{% endif %} <span x-show="logs.length > 0" x-text="'(' + logs.length + ')'"></span></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Sync Result Banner -->
+                    <template x-if="syncResult">
+                        <div class="p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2.5"
+                             :class="syncResult.success ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'">
+                            <i :data-lucide="syncResult.success ? 'check-circle-2' : 'alert-circle'" class="w-4 h-4 shrink-0" :class="syncResult.success ? 'text-emerald-600' : 'text-rose-600'"></i>
+                            <span x-text="syncResult.message"></span>
+                        </div>
+                    </template>
+
+                    <!-- Event Logs Timeline -->
+                    <template x-if="showLogs">
+                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="history" class="w-4 h-4 text-slate-600"></i>
+                                    <h4 class="text-xs font-bold text-slate-900">{% if current_lang == 'ru' %}История обмена и события{% else %}Almashinuv tarixi va jurnali{% endif %}</h4>
+                                </div>
+                                <button type="button" @click="fetchLogs()" :disabled="loadingLogs" class="text-[10px] text-blue-600 hover:underline flex items-center gap-1 cursor-pointer">
+                                    <i data-lucide="refresh-cw" class="w-2.5 h-2.5" :class="loadingLogs ? 'animate-spin' : ''"></i>
+                                    <span>{% if current_lang == 'ru' %}Обновить{% else %}Yangilash{% endif %}</span>
+                                </button>
+                            </div>
+
+                            <template x-if="logs.length === 0">
+                                <div class="p-3 text-center text-xs text-slate-400">
+                                    {% if current_lang == 'ru' %}Пока нет записанных событий{% else %}Hozircha yozuvlar mavjud emas{% endif %}
+                                </div>
+                            </template>
+
+                            <div class="space-y-2 max-h-48 overflow-y-auto pr-1" x-show="logs.length > 0">
+                                <template x-for="log in logs" :key="log.id">
+                                    <div class="p-2.5 rounded-xl bg-white border border-slate-200 text-[11px] space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="px-1.5 py-0.5 rounded font-mono text-[9px] font-bold bg-slate-100 text-slate-700" x-text="log.event_type"></span>
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="w-1.5 h-1.5 rounded-full" :class="log.status === 'SUCCESS' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                                                <span class="text-[10px] font-mono text-slate-400" x-text="log.created_at"></span>
+                                            </div>
+                                        </div>
+                                        <p class="text-slate-700 leading-snug" x-text="log.message"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Status Switch -->
+                    <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                        <div class="space-y-0.5">
+                            <span class="text-xs font-bold text-slate-900">{% if current_lang == 'ru' %}Активировать модуль в магазине{% else %}Modulni do'konda faollashtirish{% endif %}</span>
+                            <p class="text-[11px] text-slate-500">{% if current_lang == 'ru' %}Модуль работает в синхронизации заказов{% else %}Modul xaridlar va sinxronizatsiyada ishlaydi{% endif %}</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" x-model="formValues.is_active" class="sr-only peer">
+                            <div class="w-10 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Dynamic Form Fields -->
+                    <div class="space-y-4">
+                        <template x-for="f in (selectedItem.fields || [])" :key="f.key">
+                            <div>
+                                <!-- Checkbox Field -->
+                                <template x-if="f.type === 'checkbox'">
+                                    <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                                        <span class="text-xs font-medium text-slate-700" x-text="f.label"></span>
+                                        <input type="checkbox" x-model="formValues[f.key]" class="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300 cursor-pointer">
+                                    </div>
+                                </template>
+
+                                <!-- Select Field -->
+                                <template x-if="f.type === 'select'">
+                                    <div class="space-y-1">
+                                        <label class="block text-xs font-bold text-slate-700" x-text="f.label"></label>
+                                        <select x-model="formValues[f.key]" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                                            <template x-for="opt in (f.options || [])" :key="opt">
+                                                <option :value="opt" x-text="opt"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </template>
+
+                                <!-- Readonly URL Field (Webhook) -->
+                                <template x-if="f.type === 'readonly'">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <label class="block text-xs font-bold text-slate-700" x-text="f.label"></label>
+                                            <span x-show="copiedUrlKey === f.key" class="text-[10px] text-emerald-600 font-bold">{% if current_lang == 'ru' %}Скопировано!{% else %}Nusxalandi!{% endif %}</span>
+                                        </div>
+                                        <div class="relative">
+                                            <input type="text" :value="window.location.origin + (f.default || formValues[f.key] || '')" readonly class="w-full p-2.5 pr-10 rounded-xl bg-slate-100 border border-slate-200 font-mono text-[11px] text-slate-600 select-all">
+                                            <button type="button" @click="copyText(window.location.origin + (f.default || formValues[f.key] || ''), f.key)" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition-colors">
+                                                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Text & Secret Password Input Field -->
+                                <template x-if="f.type !== 'checkbox' && f.type !== 'select' && f.type !== 'readonly'">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <label class="block text-xs font-bold text-slate-700">
+                                                <span x-text="f.label"></span>
+                                                <span x-show="f.required" class="text-rose-500">*</span>
+                                            </label>
+                                            <span x-show="f.secret" class="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                                                <i data-lucide="lock" class="w-2.5 h-2.5"></i> {% if current_lang == 'ru' %}Шифруется{% else %}Shifrlanadi{% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="relative">
+                                            <input :type="f.secret ? (showPasswordMap[f.key] ? 'text' : 'password') : 'text'"
+                                                   x-model="formValues[f.key]"
+                                                   :placeholder="f.placeholder || ''"
+                                                   class="w-full p-2.5 pr-10 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                                            <template x-if="f.secret">
+                                                <button type="button" @click="showPasswordMap[f.key] = !showPasswordMap[f.key]" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                                    <i :data-lucide="showPasswordMap[f.key] ? 'eye-off' : 'eye'" class="w-4 h-4"></i>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Test Ping Result -->
+                    <template x-if="testResult">
+                        <div class="p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2.5"
+                             :class="testResult.success ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'">
+                            <i :data-lucide="testResult.success ? 'check-circle-2' : 'alert-circle'" class="w-4 h-4 shrink-0" :class="testResult.success ? 'text-emerald-600' : 'text-rose-600'"></i>
+                            <span x-text="testResult.message"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <!-- Test Connection Button -->
+                    <button type="button" @click="testConnection()" :disabled="testing" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-white text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500" :class="testing ? 'animate-spin' : ''"></i>
+                        <span x-text="testing ? '{% if current_lang == 'ru' %}Проверка...{% else %}Tekshirilmoqda...{% endif %}' : '{% if current_lang == 'ru' %}Проверить связь{% else %}Aloqani tekshirish{% endif %}'"></span>
+                    </button>
+
+                    <div class="flex items-center gap-2 justify-end">
+                        <template x-if="selectedItem.is_connected">
+                            <button type="button" @click="disconnectIntegration()" :disabled="disconnecting" class="px-3.5 py-2 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all flex items-center gap-1.5">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                <span>{% if current_lang == 'ru' %}Отключить{% else %}Ulanishni uzish{% endif %}</span>
+                            </button>
+                        </template>
+
+                        <button type="button" @click="closeModal()" class="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-300 transition-colors">
+                            {% if current_lang == 'ru' %}Отмена{% else %}Bekor qilish{% endif %}
+                        </button>
+
+                        <button type="button" @click="saveIntegration()" :disabled="saving" class="px-5 py-2 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-800 disabled:opacity-50 flex items-center gap-2">
+                            <i data-lucide="check" class="w-3.5 h-3.5" x-show="!saving"></i>
+                            <span x-text="saving ? '{% if current_lang == 'ru' %}Сохранение...{% else %}Saqlanmoqda...{% endif %}' : '{% if current_lang == 'ru' %}Сохранить и подключить{% else %}Saqlash va ulash{% endif %}'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <!-- Pre-rendered initial integrations JSON for instant zero-lag rendering -->
+    <script id="initial-integrations-data" type="application/json">{{ initial_integrations_json|safe }}</script>
 </div>
 
 <script>
-    function marketApp() {
-        return {
-            activeTab: 'all',
-            modalOpen: false,
-            selectedApp: '',
+function integrationsMarketApp() {
+    let initialData = { integrations: [], counts: {} };
+    try {
+        const rawEl = document.getElementById('initial-integrations-data');
+        if (rawEl && rawEl.textContent.trim()) {
+            initialData = JSON.parse(rawEl.textContent);
+        }
+    } catch(e) {
+        console.warn("Failed parsing initial integrations payload", e);
+    }
 
-            posList: [
-                { name: 'iiko', rating: '5.0' },
-                { name: 'Poster', rating: '5.0' },
-                { name: 'Jowi', rating: '5.0' },
-                { name: 'Clopos', rating: '5.0' },
-                { name: 'Allpos', rating: '5.0' }
-            ],
-            whList: [
-                { name: '1C: Korxona', rating: '5.0' },
-                { name: 'Bito', rating: '5.0' },
-                { name: 'MoySklad', rating: '5.0' }
-            ],
-            delList: [
-                { name: 'Uzpost', rating: '5.0' },
-                { name: 'Yandex Delivery', rating: '5.0' },
-                { name: 'Fargo', rating: '5.0' },
-                { name: 'BTS Express', rating: '5.0' },
-                { name: 'Noor Delivery', rating: '5.0' }
-            ],
+    return {
+        activeTab: 'all',
+        searchQuery: '',
+        modalOpen: false,
+        selectedItem: null,
+        formValues: {},
+        showPasswordMap: {},
+        testResult: null,
+        syncResult: null,
+        syncing: false,
+        testing: false,
+        saving: false,
+        disconnecting: false,
+        showLogs: false,
+        logs: [],
+        loadingLogs: false,
+        copiedUrlKey: null,
+        items: initialData.integrations || [],
+        counts: initialData.counts || { pos: 0, warehouse: 0, delivery: 0, payment: 0, telephony_social: 0, connected: 0 },
+        connectedCount: initialData.counts ? (initialData.counts.connected || 0) : 0,
 
-            openModal(name) {
-                this.selectedApp = name;
+        async init() {
+            // Immediate vector icon render for instantly available cards
+            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            // Background sync with API
+            await this.refreshData();
+        },
+
+        async refreshData() {
+            try {
+                const res = await fetch('/api/v1/integrations/');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.integrations) && data.integrations.length > 0) {
+                        this.items = data.integrations;
+                        this.counts = data.counts || {};
+                        this.connectedCount = data.counts ? (data.counts.connected || 0) : 0;
+                        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                    }
+                }
+            } catch (e) {
+                console.warn("Background refresh failed", e);
+            }
+        },
+
+        get filteredItems() {
+            return this.items.filter(item => {
+                if (this.activeTab !== 'all' && item.category !== this.activeTab) return false;
+                if (this.searchQuery.trim()) {
+                    const q = this.searchQuery.toLowerCase().trim();
+                    return item.name.toLowerCase().includes(q) || (item.short_desc || '').toLowerCase().includes(q);
+                }
+                return true;
+            });
+        },
+
+        // Reset state completely when closing modal
+        closeModal() {
+            this.modalOpen = false;
+            this.selectedItem = null;
+            this.formValues = {};
+            this.showPasswordMap = {};
+            this.testResult = null;
+            this.syncResult = null;
+            this.syncing = false;
+            this.testing = false;
+            this.saving = false;
+            this.disconnecting = false;
+            this.showLogs = false;
+            this.logs = [];
+            this.loadingLogs = false;
+            this.copiedUrlKey = null;
+        },
+
+        // Clean opening: wipes old state first, deep clones item, initializes clean fields
+        openModal(item) {
+            // 1. Wipe old state
+            this.closeModal();
+
+            // 2. Deep clone item
+            const cloned = JSON.parse(JSON.stringify(item));
+
+            // 3. Prepare fresh form values strictly for this item
+            const initialValues = {
+                is_active: cloned.is_connected ? (cloned.is_active ?? true) : true
+            };
+
+            if (cloned.fields && Array.isArray(cloned.fields)) {
+                cloned.fields.forEach(f => {
+                    if (cloned.saved_config && cloned.saved_config[f.key] !== undefined) {
+                        initialValues[f.key] = cloned.saved_config[f.key];
+                    } else if (f.secret && cloned.masked_credentials && cloned.masked_credentials[f.key]) {
+                        initialValues[f.key] = cloned.masked_credentials[f.key];
+                    } else if (f.default !== undefined) {
+                        initialValues[f.key] = f.default;
+                    } else {
+                        initialValues[f.key] = f.type === 'checkbox' ? false : '';
+                    }
+                });
+            }
+
+            // 4. Mount cleanly after DOM tick
+            setTimeout(() => {
+                this.selectedItem = cloned;
+                this.formValues = initialValues;
                 this.modalOpen = true;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            }, 30);
+        },
+
+        formatDate(iso) {
+            if (!iso) return "{% if current_lang == 'ru' %}Недавно подключено{% else %}Yaqinda ulandi{% endif %}";
+            try {
+                const d = new Date(iso);
+                return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch(e) {
+                return iso;
+            }
+        },
+
+        copyText(text, key) {
+            navigator.clipboard.writeText(text);
+            this.copiedUrlKey = key;
+            setTimeout(() => { this.copiedUrlKey = null; }, 2500);
+        },
+
+        async testConnection() {
+            if (!this.selectedItem) return;
+            this.testing = true;
+            this.testResult = null;
+            try {
+                const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                const res = await fetch(`/api/v1/integrations/${this.selectedItem.slug}/test/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                    body: JSON.stringify(this.formValues)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.testResult = { success: true, message: data.message || "Aloqa muvaffaqiyatli o'rnatildi! (200 OK)" };
+                    if (data.last_synced && this.selectedItem) {
+                        this.selectedItem.last_synced = data.last_synced;
+                    }
+                    await this.fetchLogs();
+                } else {
+                    this.testResult = { success: false, message: data.error || "Server bilan aloqa o'rnatib bo'lmadi." };
+                    await this.fetchLogs();
+                }
+            } catch (e) {
+                this.testResult = { success: false, message: "Tarmoq xatosi" };
+            } finally {
+                this.testing = false;
                 this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            }
+        },
+
+        async syncIntegration() {
+            if (!this.selectedItem) return;
+            this.syncing = true;
+            this.syncResult = null;
+            try {
+                const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                const res = await fetch(`/api/v1/integrations/${this.selectedItem.slug}/sync/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.syncResult = { success: true, message: data.message || "Sinxronizatsiya muvaffaqiyatli yakunlandi!" };
+                    if (data.last_synced && this.selectedItem) {
+                        this.selectedItem.last_synced = data.last_synced;
+                    }
+                    await this.fetchLogs();
+                } else {
+                    this.syncResult = { success: false, message: data.error || data.message || "Sinxronizatsiyada xatolik yuz berdi" };
+                }
+            } catch (e) {
+                this.syncResult = { success: false, message: "Tarmoq xatosi" };
+            } finally {
+                this.syncing = false;
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            }
+        },
+
+        async fetchLogs() {
+            if (!this.selectedItem) return;
+            this.loadingLogs = true;
+            try {
+                const res = await fetch(`/api/v1/integrations/${this.selectedItem.slug}/logs/`);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.logs = data.logs || [];
+                }
+            } catch (e) {
+                console.warn("Failed fetching logs", e);
+            } finally {
+                this.loadingLogs = false;
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            }
+        },
+
+        async toggleLogs() {
+            this.showLogs = !this.showLogs;
+            if (this.showLogs) {
+                await this.fetchLogs();
+            }
+        },
+
+        async disconnectIntegration() {
+            if (!this.selectedItem) return;
+            if (!confirm(this.selectedItem.name + " ulanishini haqiqatan ham uzmoqchimisiz?")) return;
+            this.disconnecting = true;
+            try {
+                const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                const res = await fetch(`/api/v1/integrations/${this.selectedItem.slug}/disconnect/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }
+                });
+                if (res.ok) {
+                    const itemName = this.selectedItem.name;
+                    this.closeModal();
+                    await this.refreshData();
+                    alert(itemName + " muvaffaqiyatli o'chirildi.");
+                } else {
+                    alert("Xatolik yuz berdi");
+                }
+            } catch (e) {
+                alert("Tarmoq xatosi");
+            } finally {
+                this.disconnecting = false;
+            }
+        },
+
+        async saveIntegration() {
+            if (!this.selectedItem) return;
+            this.saving = true;
+            try {
+                const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                const res = await fetch(`/api/v1/integrations/${this.selectedItem.slug}/save/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrf
+                    },
+                    body: JSON.stringify(this.formValues)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const itemName = this.selectedItem.name;
+                    this.closeModal();
+                    await this.refreshData();
+                    const syncNote = data.sync_result?.message ? ` (${data.sync_result.message})` : '';
+                    alert(itemName + " muvaffaqiyatli ulandi va sozlandi!" + syncNote);
+                } else {
+                    const err = await res.json();
+                    alert(err.error || "Xatolik yuz berdi");
+                }
+            } catch (e) {
+                alert("Tarmoq xatosi");
+            } finally {
+                this.saving = false;
             }
         }
     }
+}
 </script>
 {% endblock %}

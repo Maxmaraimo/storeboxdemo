@@ -10,6 +10,7 @@ import {
   MapPin,
   Users,
   Bot,
+  Blocks,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -59,6 +60,11 @@ export const SettingsLayout: React.FC<SettingsLayoutProps> = ({ children }) => {
       path: "/platforms",
       label: "Telegram",
       icon: Bot,
+    },
+    {
+      path: "/robo-market",
+      label: lang === "ru" ? "Интеграции" : lang === "en" ? "Integrations" : "Integratsiyalar",
+      icon: Blocks,
     },
   ];
 

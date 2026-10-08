@@ -2507,7 +2507,19 @@ def settings_tariffs_view(request):
 @login_required
 def robo_market_view(request):
     store = get_merchant_store(request)
-    return render(request, 'dashboard/settings/robo_market.html', {'store': store})
+    if not store and request.user.is_authenticated:
+        store = Store.objects.filter(owner=request.user, is_active=True).first() or Store.objects.filter(owner=request.user).first()
+    if not store and request.user.is_superuser:
+        store = Store.objects.filter(is_active=True).first() or Store.objects.first()
+
+    from apps.api.views_integrations import INTEGRATIONS_CATALOG, build_integrations_payload
+    payload = build_integrations_payload(store)
+
+    return render(request, 'dashboard/settings/robo_market.html', {
+        'store': store,
+        'integrations_catalog': INTEGRATIONS_CATALOG,
+        'initial_integrations_json': json.dumps(payload, cls=DjangoJSONEncoder),
+    })
 
 
 @login_required

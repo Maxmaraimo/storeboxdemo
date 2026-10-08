@@ -31,6 +31,7 @@ import { TariffsPage } from "./pages/settings/TariffsPage";
 import { DeliveryPage } from "./pages/settings/DeliveryPage";
 import { PaymentsPage } from "./pages/settings/PaymentsPage";
 import { RoboMarketPage } from "./pages/settings/RoboMarketPage";
+import { IntegrationsMarketPage } from "./pages/settings/IntegrationsMarketPage";
 import { StandaloneStorePage } from "./pages/settings/StandaloneStorePage";
 import { CourierDashboardPage } from "./pages/courier/CourierDashboardPage";
 
@@ -305,7 +306,15 @@ export const App: React.FC = () => {
                   path="robo-market"
                   element={
                     <PermissionGuard module="channels">
-                      <RoboMarketPage />
+                      <IntegrationsMarketPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="integrations"
+                  element={
+                    <PermissionGuard module="channels">
+                      <IntegrationsMarketPage />
                     </PermissionGuard>
                   }
                 />
@@ -313,12 +322,28 @@ export const App: React.FC = () => {
                   path="settings/robomarket"
                   element={
                     <PermissionGuard module="channels">
-                      <RoboMarketPage />
+                      <IntegrationsMarketPage />
                     </PermissionGuard>
                   }
                 />
                 <Route
                   path="settings/robo-market"
+                  element={
+                    <PermissionGuard module="channels">
+                      <IntegrationsMarketPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/integrations"
+                  element={
+                    <PermissionGuard module="channels">
+                      <IntegrationsMarketPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="themes"
                   element={
                     <PermissionGuard module="channels">
                       <RoboMarketPage />
