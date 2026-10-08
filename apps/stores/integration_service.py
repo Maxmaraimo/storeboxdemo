@@ -51,40 +51,26 @@ class IntegrationSyncService:
         try:
             # 1. BILLZ
             if slug == "billz":
+                from apps.stores.billz_client import BillzClient
                 api_key = creds.get("api_key") or ""
                 company_id = config.get("company_id") or "cmp_main"
                 shop_id = config.get("shop_id") or "shop_1"
+                server_url = config.get("server_url")
 
-                if not api_key:
-                    return cls._fail(store, slug, service_name, "API kalit (Token) kiritilmadi.")
-
-                if api_key.startswith("test_") or api_key.startswith("demo_"):
-                    latency = max(28, int((time.time() - start_time) * 1000))
-                    msg = f"Billz serveri bilan aloqa muvaffaqiyatli tekshirildi (Test rejim, Shop #{shop_id}, Company #{company_id})! (200 OK)"
-                    return cls._success(store, slug, service_name, msg, latency, {"shop_id": shop_id, "company_id": company_id})
-
-                # Try real API call if reachable
-                try:
-                    res = requests.get(
-                        "https://api.billz.io/v1/shops",
-                        headers={"Authorization": f"Bearer {api_key}", "X-Company-Id": str(company_id)},
-                        timeout=3
+                test_res = BillzClient.test_connection(api_key, company_id, shop_id, server_url)
+                if test_res.get("success"):
+                    return cls._success(
+                        store, slug, service_name,
+                        test_res.get("message"),
+                        test_res.get("latency_ms", 30),
+                        test_res.get("details")
                     )
-                    latency = int((time.time() - start_time) * 1000)
-                    if res.status_code in (200, 201):
-                        msg = f"Billz API muvaffaqiyatli bog'landi (Shop #{shop_id}, Company #{company_id})! (200 OK)"
-                        return cls._success(store, slug, service_name, msg, latency, {"status": res.status_code})
-                    elif res.status_code in (401, 403):
-                        # If unauthorized by external server
-                        msg = f"Billz API ruxsat bermadi (HTTP {res.status_code}). API kalit yoki Kompaniya ID tekshiring."
-                        return cls._fail(store, slug, service_name, msg, {"status": res.status_code})
-                except Exception:
-                    pass
-
-                # Diagnostic validation fallback
-                latency = max(28, int((time.time() - start_time) * 1000))
-                msg = f"Billz serveri bilan aloqa muvaffaqiyatli o'rnatildi (Shop #{shop_id}, Company #{company_id})!"
-                return cls._success(store, slug, service_name, msg, latency, {"shop_id": shop_id, "company_id": company_id})
+                else:
+                    return cls._fail(
+                        store, slug, service_name,
+                        test_res.get("message"),
+                        test_res.get("details")
+                    )
 
             # 2. TELEGRAM BOT
             elif slug == "telegram":
@@ -240,6 +226,61 @@ class IntegrationSyncService:
         # A) WAREHOUSE & POS CATALOG / STOCK SYNC
         # -------------------------------------------------------------
         if category in ("warehouse", "pos"):
+            # 1. SPECIALIZED BILLZ CLIENT SYNC (Full multi-page pagination & complete inventory)
+            if slug == "billz":
+                from apps.stores.billz_client import BillzClient
+                api_key = creds.get("api_key") or ""
+                company_id = config.get("company_id") or "cmp_main"
+                shop_id = config.get("shop_id") or "shop_1"
+                server_url = config.get("server_url")
+
+                fetch_res = BillzClient.fetch_all_products(
+                    api_key=api_key,
+                    company_id=company_id,
+                    shop_id=shop_id,
+                    server_url=server_url,
+                )
+                products_data = fetch_res.get("products", [])
+                pages_count = fetch_res.get("pages", 1)
+
+                sync_res = BillzClient.sync_to_storebox(store, products_data)
+                synced_products = sync_res["total_synced"]
+
+                integ.last_sync_at = now
+                integ.last_sync_status = "success"
+                integ.last_sync_message = (
+                    f"{synced_products} ta tovar ({pages_count} ta sahifa) va ombor qoldiqlari muvaffaqiyatli sinxronlandi"
+                )
+                integ.save(update_fields=["last_sync_at", "last_sync_status", "last_sync_message", "updated_at"])
+
+                record_integration_log(
+                    store=store,
+                    slug=slug,
+                    name=service_name,
+                    event_type="SYNC_CATALOG",
+                    status="SUCCESS",
+                    message=integ.last_sync_message,
+                    details={
+                        "synced_products_count": synced_products,
+                        "created_count": sync_res.get("created_count", 0),
+                        "updated_count": sync_res.get("updated_count", 0),
+                        "categories_count": sync_res.get("categories_count", 0),
+                        "pages": pages_count,
+                        "source": fetch_res.get("source", "billz"),
+                        "shop_id": str(shop_id),
+                        "company_id": str(company_id),
+                    },
+                )
+
+                return {
+                    "success": True,
+                    "message": f"Billz (ZBILLZ) ombori bilan to'liq sinxronizatsiya yakunlandi! {synced_products} ta tovar ({pages_count} ta sahifa) va qoldiqlar yuklandi.",
+                    "synced_count": synced_products,
+                    "pages": pages_count,
+                    "categories_count": sync_res.get("categories_count", 0),
+                    "last_synced": now.isoformat(),
+                }
+
             synced_products = 0
             cat_name = f"{service_name} Ombordan"
             category_obj, _ = Category.objects.get_or_create(

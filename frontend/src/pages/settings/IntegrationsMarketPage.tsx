@@ -401,12 +401,18 @@ const IntegrationConfigModal: React.FC<ModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  const queryClient = useQueryClient();
+
   // Handle Save
   const handleSave = async () => {
     setIsSaving(true);
     setSyncResult(null);
     try {
       const res = await api.post(`/integrations/${integration.slug}/save/`, formValues);
+      queryClient.invalidateQueries({ queryKey: ['integrations'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouse'] });
       onSuccess(res.data?.message || `${integration.name} muvaffaqiyatli ulandi!`);
       if (res.data?.sync_result) {
         setSyncResult({
@@ -429,6 +435,10 @@ const IntegrationConfigModal: React.FC<ModalProps> = ({
     setSyncResult(null);
     try {
       const res = await api.post(`/integrations/${integration.slug}/sync/`);
+      queryClient.invalidateQueries({ queryKey: ['integrations'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouse'] });
       setSyncResult({
         success: true,
         message: res.data?.message || "Sinxronizatsiya muvaffaqiyatli yakunlandi!",

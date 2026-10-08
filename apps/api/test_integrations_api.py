@@ -147,7 +147,7 @@ class IntegrationsApiTests(TestCase):
         # 3. Verify Products and Warehouse sync occurred
         from apps.catalog.models import Product
         synced_products = Product.objects.filter(store=self.store, name_uz__startswith="Billz:")
-        self.assertGreaterEqual(synced_products.count(), 6)
+        self.assertGreaterEqual(synced_products.count(), 100)
         first_product = synced_products.first()
         self.assertGreater(first_product.stock, 0)
         self.assertGreater(first_product.price, 0)
@@ -158,7 +158,8 @@ class IntegrationsApiTests(TestCase):
         res_sync = self.client.post("/api/v1/integrations/billz/sync/")
         self.assertEqual(res_sync.status_code, 200)
         self.assertTrue(res_sync.json()["success"])
-        self.assertGreaterEqual(res_sync.json()["synced_count"], 6)
+        self.assertGreaterEqual(res_sync.json()["synced_count"], 100)
+        self.assertGreaterEqual(res_sync.json()["pages"], 5)
 
         # 5. Fetch audit logs
         res_logs = self.client.get("/api/v1/integrations/billz/logs/")
