@@ -153,4 +153,5 @@ urlpatterns = [
     path("ai/remove-background/", views_ai.ai_remove_background_view, name="ai_remove_background"),
     path("ai/generate-description/", views_ai.ai_generate_description_view, name="ai_generate_description"),
     path("ai/generate-image/", views_ai.ai_generate_image_view, name="ai_generate_image"),
+    path("ai/generate-banner/", views_ai.ai_generate_banner_view, name="ai_generate_banner"),
 ]

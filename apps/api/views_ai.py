@@ -192,6 +192,30 @@ def ai_generate_image_view(request):
     })
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def ai_generate_banner_view(request):
+    """
+    Dedicated endpoint to generate an advertising promo banner.
+    Accepts: { headline?: str, product_name?: str, badge?: str, theme?: str, lang?: str }
+    """
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Магазин не найден"}, status=404)
+
+    prompt = request.data.get("headline") or request.data.get("product_name") or "Скидка на товары"
+    theme = request.data.get("theme", "dark_luxury")
+    lang = request.data.get("lang", "ru")
+
+    agent = SidekickAgent(store=store, lang=lang)
+    res = agent.handle_banner_generation(f"Создай рекламный баннер {prompt} в теме {theme}")
+
+    return Response({
+        "success": True,
+        **res
+    })
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def ai_quick_actions_view(request):

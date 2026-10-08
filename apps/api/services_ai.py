@@ -100,6 +100,122 @@ def call_ollama(prompt: str, system_prompt: str, model: str = None) -> str:
 
 
 # -------------------------------------------------------------------------
+# STRUCTURED TOOLS SCHEMA (FUNCTION CALLING)
+# -------------------------------------------------------------------------
+TOOLS_SCHEMA = [
+    {
+        "name": "get_sales_analytics",
+        "description": "Get sales revenue, order volumes, average check, and business dynamics",
+        "parameters": {"period": "today | 7d | 30d"}
+    },
+    {
+        "name": "get_inventory_health",
+        "description": "Check warehouse inventory, low stock and out-of-stock items",
+        "parameters": {}
+    },
+    {
+        "name": "apply_store_discount",
+        "description": "Apply a storewide or catalog discount percentage",
+        "parameters": {"discount_percent": "integer (e.g. 10, 15, 20)"}
+    },
+    {
+        "name": "create_promocode",
+        "description": "Create a discount coupon / promo code in database",
+        "parameters": {"code": "string", "discount_percent": "integer"}
+    },
+    {
+        "name": "create_product",
+        "description": "Create a new catalog product with name, price, and stock",
+        "parameters": {"name": "string", "price": "number", "stock": "integer"}
+    },
+    {
+        "name": "generate_banner",
+        "description": "Create a promotional marketing banner or ad card for storefront",
+        "parameters": {"headline": "string", "badge": "string", "product_name": "string", "theme": "string"}
+    },
+    {
+        "name": "generate_product_image",
+        "description": "Generate 1024x1024 studio product photography artwork",
+        "parameters": {"product_name": "string", "theme": "dark_luxury | clean_white"}
+    },
+    {
+        "name": "remove_background",
+        "description": "Remove background from product photo using local rembg AI",
+        "parameters": {"product_name": "string"}
+    },
+    {
+        "name": "generate_seo_description",
+        "description": "Generate selling marketing copy, key benefits, and SEO tags",
+        "parameters": {"product_name": "string"}
+    },
+    {
+        "name": "get_recent_orders",
+        "description": "View recent orders, customer names, and fulfillment status",
+        "parameters": {"limit": "integer"}
+    },
+    {
+        "name": "find_product",
+        "description": "Search product price, inventory, and status in store",
+        "parameters": {"query": "string"}
+    },
+    {
+        "name": "general_business_advice",
+        "description": "Strategic e-commerce growth advice and business recommendations",
+        "parameters": {"topic": "string"}
+    }
+]
+
+
+def call_ollama_function_call(user_message: str, store_context: dict, lang: str = "ru") -> dict:
+    """
+    Invokes Ollama in structured JSON Function Calling mode.
+    Returns: { "thought": str, "tool": str, "parameters": dict } or {}
+    """
+    is_avail, models = check_ollama_available()
+    if not is_avail:
+        return {}
+
+    selected_model = models[0] if models else "llama3"
+    system_instruction = (
+        f"You are the cognitive Function-Calling engine for StoreBox Sidekick.\n"
+        f"Store context: {store_context['store_name']} ({store_context['total_products']} products, {store_context['total_orders']} orders, 7d rev: {store_context['revenue_7d']} UZS).\n"
+        f"Tools Schema: {json.dumps(TOOLS_SCHEMA, ensure_ascii=False)}\n\n"
+        f"Rules:\n"
+        f"1. You MUST respond ONLY with a single valid JSON object, no other words or markdown wrappers.\n"
+        f"2. Format:\n"
+        f'{{"thought": "<concise reasoning in {lang.upper()}>", "tool": "<tool_name or chat_reply>", "parameters": {{ ... }}}}\n'
+    )
+
+    payload = {
+        "model": selected_model,
+        "prompt": user_message,
+        "system": system_instruction,
+        "stream": False,
+        "format": "json",
+        "options": {"temperature": 0.2}
+    }
+
+    try:
+        req = urllib.request.Request(
+            f"{OLLAMA_API_BASE}/api/generate",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json", "User-Agent": "StoreBox-AI"}
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            if resp.status == 200:
+                raw = json.loads(resp.read().decode("utf-8")).get("response", "").strip()
+                match = re.search(r'\{.*\}', raw, re.DOTALL)
+                if match:
+                    parsed = json.loads(match.group(0))
+                    if isinstance(parsed, dict) and "tool" in parsed:
+                        return parsed
+    except Exception as e:
+        logger.debug(f"Ollama function call error: {e}")
+
+    return {}
+
+
+# -------------------------------------------------------------------------
 # REMBG IMAGE PROCESSING WITH LOCAL FALLBACK
 # -------------------------------------------------------------------------
 def remove_image_background(input_path_or_bytes) -> bytes:
@@ -432,6 +548,8 @@ class SidekickAgent:
             )
 
         return {
+            "thought": f"Сгенерирован студийный визуал 1024x1024 для {item_title}",
+            "tool_called": "generate_product_image",
             "text": text,
             "action_type": "image_generated",
             "action_data": {
@@ -441,6 +559,104 @@ class SidekickAgent:
                 "theme": theme,
             },
             "suggestions": ["Удали фон с фото товара", "Сгенерируй SEO описание для товара", "Отчет по продажам"]
+        }
+
+    def handle_banner_generation(self, query: str) -> dict:
+        """Generates 1200x630 e-commerce promotional banner both as image and HTML5 Canvas spec."""
+        from .services_image import generate_store_banner_image
+
+        prod_qs = Product.objects.filter(store=self.store)
+        target = None
+        for p in prod_qs:
+            p_name = (p.name_ru or p.name_uz or "").lower()
+            if p_name and p_name in query.lower():
+                target = p
+                break
+        if not target and prod_qs.exists():
+            target = prod_qs.first()
+
+        item_title = (target.name_ru or target.name_uz) if target else "Хит Сезона"
+        price = float(target.price) if target else 280000
+        old_price = float(target.old_price) if target and target.old_price else price * 1.25
+
+        q_low = query.lower()
+        if any(k in q_low for k in ["emerald", "зелен", "yashil", "green"]):
+            theme = "emerald_fresh"
+        elif any(k in q_low for k in ["sunset", "оранж", "sunset", "qizil", "red"]):
+            theme = "sunset_gradient"
+        elif any(k in q_low for k in ["white", "светл", "бел", "oq"]):
+            theme = "clean_white"
+        else:
+            theme = "dark_luxury"
+
+        badge_match = re.search(r'(\d+)\s*%', query)
+        discount_num = badge_match.group(1) if badge_match else "20"
+
+        if self.lang == "uz":
+            headline = f"YANGI TO'PLAM 2026"
+            subheadline = f"{item_title} — Maxsus narxda premium sifat"
+            badge = f"-{discount_num}% CHEGIRMA"
+            text = (
+                f"🎨 **«{item_title}» uchun zamonaviy reklama banneri yaratildi!**\n\n"
+                f"• **O'lchami:** 1200x630 E-Commerce HD Banner\n"
+                f"• **Format:** Vitrina va ijtimoiy tarmoqlar (Telegram, Instagram) uchun mos\n"
+                f"• **Chegirma tegi:** {badge}\n"
+                f"• **Interaktiv Studio:** Quyidagi HTML5 Canvas orqali ranglarni o'zgartirishingiz va yuklab olishingiz mumkin."
+            )
+        elif self.lang == "en":
+            headline = f"LIMITED DROP 2026"
+            subheadline = f"{item_title} — Premium craftsmanship and comfort"
+            badge = f"-{discount_num}% OFF SALE"
+            text = (
+                f"🎨 **Promotional Advertising Banner generated for «{item_title}»!**\n\n"
+                f"• **Resolution:** 1200x630 E-Commerce HD Banner\n"
+                f"• **Badge:** {badge}\n"
+                f"• **Interactive Studio:** Rendered on live HTML5 Canvas below with instant PNG download and theme switcher."
+            )
+        else:
+            headline = f"ГОРЯЧЕЕ ПРЕДЛОЖЕНИЕ 2026"
+            subheadline = f"{item_title} — Премиальное качество по специальной цене"
+            badge = f"-{discount_num}% СКИДКА"
+            text = (
+                f"🎨 **Рекламный баннер для «{item_title}» успешно сгенерирован!**\n\n"
+                f"• **Разрешение:** 1200x630 E-Commerce HD Promo Banner\n"
+                f"• **Формат:** Для витрины магазина, промо-рассылок и соцсетей\n"
+                f"• **Скидочный бейдж:** {badge}\n"
+                f"• **Интерактивный холст:** Ниже доступен живой HTML5 Canvas рендер с возможностью смены темы и скачивания в PNG."
+            )
+
+        banner_url = generate_store_banner_image(
+            headline=headline,
+            subheadline=subheadline,
+            badge=badge,
+            product_name=item_title,
+            price=price,
+            old_price=old_price,
+            store_name=self.store.name,
+            theme=theme
+        )
+
+        return {
+            "thought": f"Сгенерирован рекламный баннер для {item_title} со скидкой {discount_num}%",
+            "tool_called": "generate_banner",
+            "text": text,
+            "action_type": "banner_generated",
+            "action_data": {
+                "headline": headline,
+                "subheadline": subheadline,
+                "badge": badge,
+                "product_name": item_title,
+                "price": price,
+                "old_price": old_price,
+                "theme": theme,
+                "image_url": banner_url,
+                "store_name": self.store.name,
+            },
+            "suggestions": [
+                "Сделай скидку 10% на все товары",
+                "Создать промокод на 15%",
+                "Удали фон у товара"
+            ]
         }
 
     def handle_studio_background_removal(self, query: str) -> dict:
@@ -983,53 +1199,135 @@ class SidekickAgent:
 
         # Auto-detect language
         self.lang = detect_query_language(msg, default_lang=self.lang)
+        ctx = self.get_store_context()
 
-        # 1. Background removal / studio enhance
-        if re.search(r'(?:удали|убрать|очисти|вырежи|remove|fon|bg).*(?:фон|background|fonini)', msg, re.IGNORECASE):
+        # Phase 1: Try Structured Function Calling via Ollama if LLM daemon is running
+        fc = call_ollama_function_call(msg, ctx, self.lang)
+        if fc and fc.get("tool") and fc["tool"] != "chat_reply":
+            tool_name = fc["tool"]
+            if tool_name == "generate_banner":
+                res = self.handle_banner_generation(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "generate_product_image":
+                res = self.handle_image_generation(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "remove_background":
+                res = self.handle_studio_background_removal(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "get_sales_analytics":
+                res = self.handle_analytics_insight(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "get_inventory_health":
+                res = self.handle_inventory_insight(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "apply_store_discount":
+                res = self.handle_bulk_discount(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "create_promocode":
+                res = self.handle_create_promocode(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "create_product":
+                res = self.handle_create_product(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "generate_seo_description":
+                res = self.handle_generate_description(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "get_recent_orders":
+                res = self.handle_recent_orders(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "find_product":
+                res = self.handle_product_lookup(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+            elif tool_name == "general_business_advice":
+                res = self.handle_growth_strategy(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
+
+        # Phase 2: High-Precision Multilingual Intent Recognizer (UZ, RU, EN)
+        msg_low = msg.lower()
+
+        # 1. Promotional Banner & Visualizer generation
+        if (
+            any(k in msg_low for k in ["баннер", "banner", "плакат", "постер", "poster"])
+            or re.search(r'(?:создай|сделай|сгенерируй|yarat|create|make).*(?:реклам|баннер|banner|poster|плакат)', msg, re.IGNORECASE)
+            or re.search(r'(?:реклам|баннер|banner|poster|плакат).*(?:создай|сделай|сгенерируй|yarat|create|make|скидк|chegirma)', msg, re.IGNORECASE)
+        ):
+            return self.handle_banner_generation(msg)
+
+        # 2. Background removal / studio enhance (rembg)
+        if (
+            "rembg" in msg_low
+            or re.search(r'(?:удали|убрать|убери|очисти|вырежи|remove|tozala|olib\s*tashla).*(?:фон|background|fonini)', msg, re.IGNORECASE)
+            or re.search(r'(?:фон|background|fonini).*(?:удали|убрать|убери|очисти|вырежи|remove|tozala|tashla)', msg, re.IGNORECASE)
+        ):
             return self.handle_studio_background_removal(msg)
 
-        # 2. Image generation command
-        if re.search(r'(?:сгенерируй|создай|сделай|нарисуй|generate|create|rasm|foto).*(?:изображени|фото|картинк|баннер|арт|image|photo|artwork)', msg, re.IGNORECASE):
+        # 3. Studio product image generation command
+        if (
+            any(k in msg_low for k in ["студийн", "studio photo", "studio image", "studio rasm", "студийное фото"])
+            or re.search(r'(?:сгенерируй|создай|сделай|нарисуй|generate|create|yarat).*(?:изображени|фото|картинк|арт|image|photo|artwork|rasm)', msg, re.IGNORECASE)
+            or re.search(r'(?:изображени|фото|картинк|арт|image|photo|artwork|rasm).*(?:сгенерируй|создай|сделай|нарисуй|generate|create|yarat)', msg, re.IGNORECASE)
+        ):
             return self.handle_image_generation(msg)
 
-        # 3. Bulk discount (storewide)
-        if re.search(r'(?:сделай\s+скидку|скидка|chegirma|discount).*(?:все|barcha|all|hamma|katalog)', msg, re.IGNORECASE):
+        # 4. Bulk discount (storewide)
+        if (
+            re.search(r'(?:скидк|chegirma|discount).*(?:все|всех|barcha|all|hamma|katalog|каталог)', msg, re.IGNORECASE)
+            or re.search(r'(?:все|всех|barcha|all|hamma|katalog|каталог).*(?:скидк|chegirma|discount)', msg, re.IGNORECASE)
+            or "скидка на все" in msg_low or "скидку на все" in msg_low
+        ):
             return self.handle_bulk_discount(msg)
 
-        # 4. Promocodes
+        # 5. Promocodes
         if re.search(r'(?:промокод|скидочн|promokod|promocode|kupon|coupon)', msg, re.IGNORECASE):
             return self.handle_create_promocode(msg)
 
-        # 5. SEO description generation
-        if re.search(r'(?:описани|seo|текст|matn|tavsif|description)', msg, re.IGNORECASE):
+        # 6. SEO description generation
+        if (
+            re.search(r'(?:описани|seo|tavsif|description)', msg, re.IGNORECASE)
+            or re.search(r'(?:продающ|sotuvchi).*(?:текст|matn|описани)', msg, re.IGNORECASE)
+        ):
             return self.handle_generate_description(msg)
 
-        # 6. Product creation
-        if re.search(r'(?:создай|добавь|добавить|yangi|qo\'sh|create|add).*(?:товар|продукт|mahsulot|product)', msg, re.IGNORECASE):
+        # 7. Product creation
+        if (
+            re.search(r'(?:создай|добавь|добавить|yangi|qo\'sh|create|add).*(?:товар|продукт|mahsulot|product)', msg, re.IGNORECASE)
+            or re.search(r'(?:товар|продукт|mahsulot|product).*(?:создай|добавь|добавить|yangi|qo\'sh|create|add)', msg, re.IGNORECASE)
+        ):
             return self.handle_create_product(msg)
 
-        # 7. Sales and business analytics
-        if re.search(r'(?:отчет|выручк|статистик|аналитик|динамик|hisobot|tushum|daromad|analytics|sales\s+report|revenue)', msg, re.IGNORECASE):
+        # 8. Sales and business analytics
+        if re.search(r'(?:отчет|выручк|статистик|аналитик|динамик|hisobot|tushum|daromad|analytics|sales\s*report|revenue)', msg, re.IGNORECASE):
             return self.handle_analytics_insight(msg)
 
-        # 8. Recent orders
+        # 9. Recent orders
         if re.search(r'(?:заказ|buyurtma|order)', msg, re.IGNORECASE):
             return self.handle_recent_orders(msg)
 
-        # 9. Inventory and warehouse
+        # 10. Inventory and warehouse
         if re.search(r'(?:остатк|склад|заканчива|закончил|мало|zaxira|qoldiq|ombor|tugay|tugagan|inventory|stock)', msg, re.IGNORECASE):
             return self.handle_inventory_insight(msg)
 
-        # 10. Growth strategy & scaling advice
+        # 11. Growth strategy & scaling advice
         if re.search(r'(?:как\s+увеличить|совет|рост|стратеги|qanday\s+oshir|tavsiya|strategiya|growth|advice|scale)', msg, re.IGNORECASE):
             return self.handle_growth_strategy(msg)
 
-        # 11. Product lookup / price inquiry
+        # 12. Product lookup / price inquiry
         if re.search(r'(?:сколько\s+стоит|цена|narxi|bormi|how\s+much)', msg, re.IGNORECASE):
             return self.handle_product_lookup(msg)
 
-        # 12. LLM Reasoning Integration (Ollama if running)
-        ctx = self.get_store_context()
+        # Phase 3: Conversational LLM Reasoning via Ollama
         sys_prompt = (
             f"You are StoreBox Sidekick, an elite e-commerce AI co-founder for '{ctx['store_name']}'.\n"
             f"Store Data: {ctx['total_products']} products, {ctx['total_orders']} orders, 7-day revenue: {int(ctx['revenue_7d'])} UZS.\n"
@@ -1039,9 +1337,11 @@ class SidekickAgent:
         llm_reply = call_ollama(msg, sys_prompt)
         if llm_reply:
             return {
+                "thought": "Сгенерирован аналитический ответ от локальной LLM",
+                "tool_called": "chat_reply",
                 "text": llm_reply,
                 "action_type": "chat_reply",
-                "suggestions": ["Отчет по продажам за неделю", "Какие товары заканчиваются?", "Сгенерируй фото товара"]
+                "suggestions": ["Отчет по продажам за неделю", "Создай рекламный баннер", "Какие товары заканчиваются?"]
             }
 
         # 13. Intelligent Cognitive Dialogue Fallback (Dynamic Business Brain)

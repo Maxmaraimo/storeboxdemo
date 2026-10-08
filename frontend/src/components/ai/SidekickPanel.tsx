@@ -29,9 +29,11 @@ import {
   TrendingUp,
   FileText,
   ZoomIn,
+  Paperclip,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
+import { BannerCanvas } from "./BannerCanvas";
 
 export interface SidekickMessage {
   id: string;
@@ -383,6 +385,90 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const userMsg: SidekickMessage = {
+      id: "u_" + Date.now(),
+      sender: "user",
+      text:
+        activeLang === "uz"
+          ? `📷 Mahsulot rasmi yuklandi: «${file.name}». Fonni tozalash (rembg AI)...`
+          : activeLang === "en"
+          ? `📷 Uploaded photo: «${file.name}». Removing background (rembg AI)...`
+          : `📷 Загружено фото: «${file.name}». Удаление фона (rembg AI)...`,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsLoading(true);
+
+    // Reset file input so user can re-upload if needed
+    e.target.value = "";
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await api.post("/ai/remove-background/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const data = res.data;
+      const cleanName = file.name.replace(/\.[^/.]+$/, "");
+
+      const botMsg: SidekickMessage = {
+        id: "a_" + Date.now(),
+        sender: "assistant",
+        text:
+          activeLang === "uz"
+            ? `✨ **«${file.name}» fotosi muvaffaqiyatli tozalandi!**\n\n• Mahsulot obyekti fonidan ajratildi (rembg AI).\n• Shaffof studiya PNG fayli tayyor. Uni yuklab olishingiz yoki tovar kartasiga biriktirishingiz mumkin.`
+            : activeLang === "en"
+            ? `✨ **Background removed successfully for «${file.name}»!**\n\n• Subject isolated with clean edges using local rembg AI.\n• Transparent studio PNG is ready to download or assign to your catalog.`
+            : `✨ **Фон у фото «${file.name}» успешно удален!**\n\n• Нейросеть rembg аккуратно вырезала объект с сохранением четких краев.\n• Готов прозрачный студийный PNG для каталога или баннера.`,
+        action_type: "image_processed",
+        action_data: {
+          new_image_url: data.image_url,
+          product_name: cleanName,
+        },
+        suggestions: [
+          activeLang === "uz"
+            ? `Ushbu tovar uchun reklama banneri yarat`
+            : activeLang === "en"
+            ? `Create promo banner for this product`
+            : `Создай рекламный баннер для этого товара`,
+          activeLang === "uz"
+            ? `Sotuvchi SEO matn yoz`
+            : activeLang === "en"
+            ? `Generate SEO description`
+            : `Сгенерируй продающее SEO описание`,
+        ],
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setMessages((prev) => [...prev, botMsg]);
+      speakText(botMsg.text);
+    } catch (err: any) {
+      console.error("Upload & rembg error:", err);
+      const errMsg: SidekickMessage = {
+        id: "err_" + Date.now(),
+        sender: "assistant",
+        text:
+          activeLang === "uz"
+            ? "Rasmni qayta ishlashda xatolik yuz berdi. Iltimos, boshqa rasm yuklab ko'ring."
+            : activeLang === "en"
+            ? "Error processing image. Please try uploading another image."
+            : "Произошла ошибка при обработке фото. Пожалуйста, попробуйте другое изображение.",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, errMsg]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleClearHistory = () => {
     setMessages([]);
     localStorage.removeItem("storebox_sidekick_messages");
@@ -403,6 +489,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       { label: "📊 Отчет по продажам за неделю", text: "Покажи отчет по продажам за неделю" },
       { label: "📦 Какие товары заканчиваются?", text: "Какие товары заканчиваются на складе?" },
       { label: "🎨 Создать студийное фото товара", text: "Создай студийное фото товара Худи черная" },
+      { label: "🖼️ Создать рекламный баннер (Canvas)", text: "Создай рекламный баннер со скидкой 20%" },
       { label: "✂️ Удалить фон у товара (rembg)", text: "Удали фон у товара" },
       { label: "🏷️ Создать промокод на 15%", text: "Создай промокод DISCOUNT15 на скидку 15%" },
       { label: "⚡ Сделай скидку 10% на все товары", text: "Сделай скидку 10% на все товары" },
@@ -414,6 +501,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       { label: "📊 7 kunlik savdo hisoboti", text: "Oxirgi 7 kunlik savdo hisobotini ko'rsat" },
       { label: "📦 Qaysi tovarlar tugayapti?", text: "Qaysi tovarlar omborda kam qoldi?" },
       { label: "🎨 Xudi uchun studiya rasmi", text: "Qora xudi uchun studiya rasmini yarat" },
+      { label: "🖼️ Reklama bannerini yaratish (Canvas)", text: "20% chegirmali reklama bannerini yarat" },
       { label: "✂️ Tovardan fonni tozalash", text: "Tovar fotosidan fonni olib tashla" },
       { label: "🏷️ 15% li promokod yaratish", text: "Yangi 15% chegirmali promokod yarat" },
       { label: "⚡ Barcha tovarlarga 10% chegirma", text: "Barcha tovarlarga 10% chegirma ber" },
@@ -425,6 +513,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       { label: "📊 Weekly sales report", text: "Show me weekly sales insights" },
       { label: "📦 Low stock alert", text: "Which products are running low on stock?" },
       { label: "🎨 Generate studio product image", text: "Create a studio product artwork for Hoodie" },
+      { label: "🖼️ Generate promo banner (Canvas)", text: "Create promotional banner with 20% discount" },
       { label: "✂️ Remove background (rembg)", text: "Remove background from product photo" },
       { label: "🏷️ Create a 15% promo code", text: "Create promo code SAVE15 with 15% discount" },
       { label: "⚡ Apply 10% storewide discount", text: "Apply 10% discount across all products" },
@@ -835,7 +924,25 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                     </div>
                   )}
 
-                  {/* 3. PRODUCT CREATED CARD */}
+                  {/* 3. BANNER GENERATED CARD (HTML5 Canvas + Theme Switcher + Download) */}
+                  {m.action_type === "banner_generated" && m.action_data && (
+                    <div className="space-y-2">
+                      <BannerCanvas
+                        data={m.action_data}
+                        onRemoveBg={() =>
+                          handleSend(
+                            activeLang === "uz"
+                              ? `Tovardan fonni tozalash: ${m.action_data.product_name}`
+                              : activeLang === "en"
+                              ? `Remove background from: ${m.action_data.product_name}`
+                              : `Удали фон у товара ${m.action_data.product_name}`
+                          )
+                        }
+                      />
+                    </div>
+                  )}
+
+                  {/* 4. PRODUCT CREATED CARD */}
                   {m.action_type === "product_created" && m.action_data && (
                     <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-emerald-200/80 dark:border-emerald-800/40 shadow-xs space-y-2.5">
                       <div className="flex items-center justify-between">
@@ -1090,6 +1197,31 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             }}
             className="flex items-center gap-2"
           >
+            {/* Hidden File Input for Image Upload / rembg */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+
+            {/* Upload Product Photo Button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2.5 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-violet-100 dark:hover:bg-violet-950/40 hover:text-violet-700 transition cursor-pointer"
+              title={
+                activeLang === "uz"
+                  ? "Mahsulot rasmini yuklash (Fonni tozalash)"
+                  : activeLang === "en"
+                  ? "Upload product photo (Remove background)"
+                  : "Загрузить фото товара (Удаление фона)"
+              }
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
+
             {/* Voice Mic Button */}
             {speechSupported && (
               <button

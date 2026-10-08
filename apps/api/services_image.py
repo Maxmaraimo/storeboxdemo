@@ -255,3 +255,103 @@ def remove_and_studio_composite(image_path_or_bytes: any, studio_style: str = "c
     canvas.save(abs_path, format="PNG", quality=95)
 
     return f"{settings.MEDIA_URL}{rel_path}"
+
+
+def generate_store_banner_image(
+    headline: str,
+    subheadline: str = "",
+    badge: str = "",
+    product_name: str = "",
+    price: float = None,
+    old_price: float = None,
+    store_name: str = "StoreBox",
+    theme: str = "dark_luxury"
+) -> str:
+    """
+    Generates a 1200x630 high-resolution promotional e-commerce banner.
+    Saves to media/banners/ and returns relative URL.
+    """
+    width, height = 1200, 630
+
+    if theme == "emerald_fresh":
+        bg = create_radial_studio_background(width, height, center_color=(16, 85, 58), edge_color=(6, 28, 20))
+        accent_color = (16, 185, 129, 255) # emerald
+        badge_bg = (5, 150, 105, 255)
+        text_color = (255, 255, 255, 255)
+        mockup_color = (20, 60, 45, 255)
+    elif theme == "sunset_gradient":
+        bg = create_radial_studio_background(width, height, center_color=(124, 45, 18), edge_color=(24, 10, 30))
+        accent_color = (249, 115, 22, 255) # orange
+        badge_bg = (234, 88, 12, 255)
+        text_color = (255, 255, 255, 255)
+        mockup_color = (45, 25, 40, 255)
+    elif theme == "clean_white":
+        bg = create_radial_studio_background(width, height, center_color=(255, 255, 255), edge_color=(226, 232, 240))
+        accent_color = (99, 102, 241, 255) # indigo
+        badge_bg = (79, 70, 229, 255)
+        text_color = (15, 23, 42, 255)
+        mockup_color = (241, 245, 249, 255)
+    else: # dark_luxury
+        bg = create_radial_studio_background(width, height, center_color=(38, 42, 54), edge_color=(12, 13, 16))
+        accent_color = (139, 92, 246, 255) # violet
+        badge_bg = (124, 58, 237, 255)
+        text_color = (255, 255, 255, 255)
+        mockup_color = (28, 30, 38, 255)
+
+    draw = ImageDraw.Draw(bg)
+
+    # 1. Background geometric accents
+    draw.ellipse([-80, -80, 280, 280], outline=(accent_color[0], accent_color[1], accent_color[2], 30), width=3)
+    draw.ellipse([width - 250, height - 250, width + 100, height + 100], outline=(accent_color[0], accent_color[1], accent_color[2], 40), width=4)
+
+    # 2. Store Watermark / Header
+    draw.rounded_rectangle([60, 45, 340, 85], radius=12, fill=(accent_color[0], accent_color[1], accent_color[2], 40))
+    draw.text((75, 57), f"STOREBOX  •  {store_name.upper()[:18]}", fill=(text_color[0], text_color[1], text_color[2], 220))
+
+    # 3. Promo Badge (e.g. "-20% СКИДКА")
+    if badge:
+        badge_text = badge.upper()[:24]
+        draw.rounded_rectangle([60, 115, 300, 165], radius=14, fill=badge_bg)
+        draw.text((80, 132), badge_text, fill=(255, 255, 255, 255))
+
+    # 4. Main Headline
+    hl_text = (headline or "СЕЗОННАЯ РАСПРОДАЖА")[:36]
+    draw.text((60, 195), hl_text, fill=text_color)
+
+    # 5. Subheadline
+    sub_text = (subheadline or "Премиальные предложения со скидкой только на этой неделе")[:55]
+    sub_color = (180, 190, 205, 255) if theme != "clean_white" else (100, 116, 139, 255)
+    draw.text((60, 250), sub_text, fill=sub_color)
+
+    # 6. Price Card on Left
+    if price and price > 0:
+        price_card_box = [60, 310, 440, 395]
+        card_fill = (25, 27, 34, 230) if theme != "clean_white" else (248, 250, 252, 230)
+        draw.rounded_rectangle(price_card_box, radius=18, fill=card_fill, outline=(accent_color[0], accent_color[1], accent_color[2], 60), width=2)
+        
+        draw.text((85, 330), "СПЕЦИАЛЬНАЯ ЦЕНА:", fill=sub_color)
+        draw.text((85, 355), f"{int(price):,} UZS", fill=text_color)
+
+        if old_price and old_price > price:
+            draw.text((290, 355), f"~{int(old_price):,} UZS~", fill=(148, 163, 184, 255))
+
+    # 7. CTA Button Mockup
+    cta_box = [60, 430, 280, 495]
+    draw.rounded_rectangle(cta_box, radius=16, fill=accent_color)
+    draw.text((95, 452), "КУПИТЬ СЕЙЧАС", fill=(255, 255, 255, 255))
+
+    # 8. Product Silhouette Mockup on Right Side
+    prod_cx = 880
+    prod_cy = 340
+    # Pedestal under product
+    draw.ellipse([prod_cx - 240, 490, prod_cx + 240, 570], fill=(0, 0, 0, 70))
+    draw_product_mockup(draw, f"{product_name} {headline}", prod_cx, prod_cy, mockup_color)
+
+    # Save to media/banners
+    rel_path = f"banners/banner_{uuid.uuid4().hex[:8]}.png"
+    abs_path = os.path.join(settings.MEDIA_ROOT, rel_path)
+    os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+    bg.save(abs_path, format="PNG", quality=95)
+
+    return f"{settings.MEDIA_URL}{rel_path}"
+
