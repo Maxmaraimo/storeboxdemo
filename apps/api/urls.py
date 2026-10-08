@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.dashboard import views as old_views
-from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations, views_telegram, views_yespos, views_constructor, views_integrations
+from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations, views_telegram, views_yespos, views_billz, views_constructor, views_integrations
 
 app_name = "api_v1"
 
@@ -129,6 +129,15 @@ urlpatterns = [
     path("yespos/catalog/", views_yespos.yespos_catalog_view, name="yespos_catalog"),
     path("yespos/import/", views_yespos.yespos_import_view, name="yespos_import"),
     path("yespos/sync/", views_yespos.yespos_sync_view, name="yespos_sync"),
+
+    # Billz Integration endpoints
+    path("billz/status/", views_billz.billz_status_view, name="billz_status"),
+    path("billz/test/", views_billz.billz_test_view, name="billz_test"),
+    path("billz/connect/", views_billz.billz_connect_view, name="billz_connect"),
+    path("billz/disconnect/", views_billz.billz_disconnect_view, name="billz_disconnect"),
+    path("billz/catalog/", views_billz.billz_catalog_view, name="billz_catalog"),
+    path("billz/import/", views_billz.billz_import_view, name="billz_import"),
+    path("billz/sync/", views_billz.billz_sync_view, name="billz_sync"),
 
     # Telegram Bot & TMA Integration endpoints
     path("telegram/status/", views_telegram.telegram_status_view, name="telegram_status"),

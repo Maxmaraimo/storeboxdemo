@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
   Check,
@@ -942,11 +942,87 @@ const IntegrationConfigModal: React.FC<ModalProps> = ({
 };
 
 // -----------------------------------------------------------------
+// RUSSIAN TRANSLATIONS DICTIONARIES
+// -----------------------------------------------------------------
+const RU_BADGES: Record<string, string> = {
+  'HoReCa Flagman': 'Флагман HoReCa',
+  'Avtomatlashtirish': 'Автоматизация',
+  'Bulutli kassa': 'Облачная касса',
+  'HoReCa Pro': 'HoReCa Pro',
+  'Smart Retail': 'Умный ритейл',
+  'Universal POS': 'Универсальная POS',
+  'Distributsiya': 'Дистрибуция',
+  'Retail Pro': 'Retail Pro',
+  'Bulutli ombor': 'МойСклад Cloud',
+  'Korxona 8.3': '1С: Предприятие',
+  'Kalkulyatsiya': 'Калькуляция',
+  'Yengil sanoat': 'Легпром / Обувь',
+  'Kichik biznes': 'Малый бизнес',
+  'Ekspress': 'Экспресс-доставка',
+  'Restoran yetkazish': 'Ресторанная доставка',
+  'Respublika bo\'ylab': 'По всей республике',
+  'Kuryerlik': 'Курьерская служба',
+  'Milliy pochta': 'Национальная почта',
+  'Tezkor EMS': 'Экспресс EMS',
+  'B2B Logistika': 'B2B Логистика',
+  'Lokal kuryer': 'Городской курьер',
+  'Ommabop': 'Популярный',
+  'Milliy to\'lov': 'Платежная система',
+  'Kombinatsiyalashgan': 'Мультикарта',
+  'Ekosistema': 'Экосистема Uzum',
+  'Muddatli to\'lov': 'Рассрочка',
+  'BNPL': 'BNPL рассрочка',
+  'Savdo boti': 'Telegram Магазин',
+  'Direct savdo': 'Продажи в Direct',
+  'Korporativ CRM': 'Корпоративная CRM',
+  'Savdo voronkasi': 'Воронка продаж',
+  'SMS shlyuz': 'SMS шлюз',
+  'Rasmiy WABA': 'Официальный WhatsApp',
+};
+
+const RU_DESCRIPTIONS: Record<string, string> = {
+  iiko: 'Профессиональная кассовая система и учет меню для ресторанов и кафе',
+  r_keeper: 'Традиционная надежная кассовая платформа для ресторанов и баров',
+  poster: 'Современная облачная касса для планшетов и смартфонов',
+  jowi: 'Управление ресторанами и интеграция доставки еды',
+  clopos: 'Быстрая кассовая система для ритейла и общепита',
+  allpos: 'Простая и удобная торговая система для малого и среднего бизнеса',
+  smartup: 'Контроль крупных складов, торговых агентов и дистрибуции',
+  billz: 'Складской учет и автоматизация магазинов одежды, косметики и ритейла',
+  moysklad: 'Учет складских остатков, продаж, закупок и финансов онлайн',
+  '1c': 'Синхронизация номенклатуры, складских остатков и бухгалтерии',
+  rkeeper_storehouse: 'Калькуляционные и технологические карты для ресторанов',
+  ziko: 'Специализированный складской учет для обуви и текстиля',
+  tiptop: 'Легкая и понятная инвентаризация для розничных магазинов',
+  yandex_delivery: 'Быстрая экспресс-доставка курьерами Яндекс Go за 30-60 минут',
+  express24: 'Крупнейший сервис экспресс-доставки еды и товаров в Узбекистане',
+  fargo: 'Надежная курьерская доставка во все регионы и районы Узбекистана',
+  bts_express: 'Междугородняя экспресс-перевозка грузов, документов и посылок',
+  uzpost: 'Национальный почтовый оператор с самой широкой сетью отделений',
+  ems: 'Международная и локальная экспресс-доставка почты и грузов',
+  delex: 'Умная складская логистика и курьерская сеть для e-commerce',
+  bringo: 'Пешие и авто-курьеры по городу Ташкенту и области',
+  payme: 'Мгновенная и безопасная онлайн-оплата картами Uzcard и Humo',
+  click: 'Оплата через популярное приложение Click Up и систему USSD',
+  multicard: 'Единый эквайринг для карт Uzcard, Humo, Visa и Mastercard',
+  uzumpay: 'Быстрая оплата и кешбэк через экосистему Uzum',
+  alif_nasiya: 'Халяльная беспроцентная рассрочка для покупателей (BNPL)',
+  paymart: 'Быстрое оформление рассрочки и оплата покупок частями',
+  telegram: 'Полноценный интернет-магазин внутри Telegram и мгновенные уведомления',
+  instagram: 'Автоматические ответы, витрина и прием заказов в Direct',
+  bitrix24: 'Единая база клиентов, воронка продаж и управление сделками',
+  amocrm: 'Увеличение продаж через мессенджеры и автоматические воронки',
+  eskiz: 'Быстрые SMS-уведомления о заказах и OTP-коды по Узбекистану',
+  whatsapp: 'Официальные уведомления и продажи через WhatsApp Cloud API',
+};
+
+// -----------------------------------------------------------------
 // MAIN PAGE COMPONENT
 // -----------------------------------------------------------------
 export const IntegrationsMarketPage: React.FC = () => {
   const { lang, store } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // State
   const [activeTab, setActiveTab] = useState<'all' | 'pos' | 'warehouse' | 'delivery' | 'payment' | 'telephony_social'>('all');
@@ -955,6 +1031,45 @@ export const IntegrationsMarketPage: React.FC = () => {
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Navigation to dedicated integration page
+  const handleOpenIntegration = (item: IntegrationItem) => {
+    if (item.slug === 'billz') {
+      navigate('/billz');
+    } else if (item.slug === 'yespos') {
+      navigate('/yespos');
+    } else {
+      navigate(`/integrations/${item.slug}`);
+    }
+  };
+
+  const getItemCategoryTitle = (item: IntegrationItem) => {
+    if (lang === 'ru') {
+      switch (item.category) {
+        case 'pos': return 'POS системы';
+        case 'warehouse': return 'Складской учет';
+        case 'delivery': return 'Службы доставки';
+        case 'payment': return 'Платежные системы';
+        case 'telephony_social': return 'Телефония и соцсети';
+        default: return item.category_title;
+      }
+    }
+    return item.category_title;
+  };
+
+  const getItemBadge = (item: IntegrationItem) => {
+    if (lang === 'ru') {
+      return RU_BADGES[item.badge] || item.badge;
+    }
+    return item.badge;
+  };
+
+  const getItemShortDesc = (item: IntegrationItem) => {
+    if (lang === 'ru') {
+      return RU_DESCRIPTIONS[item.slug] || item.short_desc;
+    }
+    return item.short_desc;
+  };
 
   // Translations dictionary
   const t = {
@@ -1018,16 +1133,20 @@ export const IntegrationsMarketPage: React.FC = () => {
       }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
+        const localizedDesc = getItemShortDesc(item).toLowerCase();
+        const localizedCat = getItemCategoryTitle(item).toLowerCase();
+        const localizedBadge = getItemBadge(item).toLowerCase();
         const matchesName = item.name.toLowerCase().includes(q);
-        const matchesDesc = (item.desc || '').toLowerCase().includes(q) || (item.short_desc || '').toLowerCase().includes(q);
-        const matchesCategory = (item.category_title || '').toLowerCase().includes(q);
-        if (!matchesName && !matchesDesc && !matchesCategory) {
+        const matchesDesc = (item.desc || '').toLowerCase().includes(q) || (item.short_desc || '').toLowerCase().includes(q) || localizedDesc.includes(q);
+        const matchesCategory = (item.category_title || '').toLowerCase().includes(q) || localizedCat.includes(q);
+        const matchesBadge = (item.badge || '').toLowerCase().includes(q) || localizedBadge.includes(q);
+        if (!matchesName && !matchesDesc && !matchesCategory && !matchesBadge) {
           return false;
         }
       }
       return true;
     });
-  }, [allItems, activeTab, statusFilter, searchQuery]);
+  }, [allItems, activeTab, statusFilter, searchQuery, lang]);
 
   // Counts
   const counts = useMemo(() => {
@@ -1161,15 +1280,23 @@ export const IntegrationsMarketPage: React.FC = () => {
 
           {/* SEARCH & STATUS FILTER TOOLBAR */}
           <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
+            {/* Search Input (Full width, no gap, with autocomplete disabled) */}
+            <div className="relative flex-1 w-full">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
-                type="text"
+                type="search"
+                name="market_search_query"
+                id="market_search_query"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-form-type="other"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full pl-10 pr-9 py-2 rounded-xl bg-slate-50 dark:bg-neutral-850 border border-slate-200 dark:border-neutral-700/80 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-white/10"
+                className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-850 border border-slate-200 dark:border-neutral-700/80 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-white/10 transition-all"
               />
               {searchQuery && (
                 <button
@@ -1183,12 +1310,12 @@ export const IntegrationsMarketPage: React.FC = () => {
             </div>
 
             {/* Status Filter */}
-            <div className="flex items-center gap-2 self-end sm:self-auto">
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
                 aria-label={t.filterStatusAll}
-                className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-neutral-850 border border-slate-200 dark:border-neutral-700/80 text-xs font-bold text-slate-700 dark:text-neutral-200 focus:outline-none cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-neutral-850 border border-slate-200 dark:border-neutral-700/80 text-xs font-bold text-slate-700 dark:text-neutral-200 focus:outline-none cursor-pointer"
               >
                 <option value="all">{t.filterStatusAll}</option>
                 <option value="connected">{t.filterStatusConnected}</option>
@@ -1222,12 +1349,18 @@ export const IntegrationsMarketPage: React.FC = () => {
             {isError ? <RotateCw className="w-6 h-6 text-amber-500" /> : <Search className="w-6 h-6" />}
           </div>
           <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-            {isError ? "Xizmatlarni yuklashda xatolik yuz berdi" : "Xizmatlar topilmadi"}
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-neutral-400 max-w-sm mx-auto">
             {isError
-              ? "Server bilan aloqada uzilish bo'ldi. Qayta yuklash tugmasini bosing."
-              : "Qidiruv so'rovi yoki tanlangan filtrlar bo'yicha hech qanday integratsiya topilmadi. Qidiruvni tozalab ko'ring."}
+              ? (lang === 'ru' ? 'Ошибка загрузки сервисов' : 'Xizmatlarni yuklashda xatolik yuz berdi')
+              : (lang === 'ru' ? 'Интеграции не найдены' : 'Xizmatlar topilmadi')}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-neutral-400 max-w-sm mx-auto leading-relaxed">
+            {isError
+              ? (lang === 'ru'
+                  ? 'Произошел сбой при соединении с сервером. Попробуйте обновить страницу.'
+                  : "Server bilan aloqada uzilish bo'ldi. Qayta yuklash tugmasini bosing.")
+              : (lang === 'ru'
+                  ? 'По вашему запросу ничего не найдено. Попробуйте изменить поиск или сбросить фильтры.'
+                  : "Qidiruv so'rovi yoki tanlangan filtrlar bo'yicha hech qanday integratsiya topilmadi. Qidiruvni tozalab ko'ring.")}
           </p>
           <button
             type="button"
@@ -1242,7 +1375,9 @@ export const IntegrationsMarketPage: React.FC = () => {
             }}
             className="px-5 py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            {isError ? "Qayta yuklash" : "Barchasini ko'rsatish"}
+            {isError
+              ? (lang === 'ru' ? 'Повторить попытку' : 'Qayta yuklash')
+              : (lang === 'ru' ? 'Показать все интеграции' : "Barchasini ko'rsatish")}
           </button>
         </div>
       ) : (
@@ -1254,7 +1389,8 @@ export const IntegrationsMarketPage: React.FC = () => {
             return (
               <div
                 key={item.slug}
-                className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/90 dark:border-neutral-800 p-5 shadow-xs hover:border-slate-300 dark:hover:border-neutral-700 hover:shadow-md transition-all duration-200 flex flex-col justify-between group"
+                onClick={() => handleOpenIntegration(item)}
+                className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200/90 dark:border-neutral-800 p-5 shadow-xs hover:border-slate-300 dark:hover:border-neutral-700 hover:shadow-md transition-all duration-200 flex flex-col justify-between group cursor-pointer"
               >
                 <div>
                   {/* Top card row: Logo + Status Badge */}
@@ -1273,16 +1409,21 @@ export const IntegrationsMarketPage: React.FC = () => {
                       </div>
                     ) : (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400">
-                        {item.badge}
+                        {getItemBadge(item)}
                       </span>
                     )}
                   </div>
 
                   {/* Service Title & Rating */}
                   <div className="mt-4">
-                    <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white group-hover:text-slate-950 dark:group-hover:text-white transition-colors">
-                      {item.name}
-                    </h3>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {item.name}
+                      </h3>
+                      <span className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500">
+                        {getItemCategoryTitle(item)}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500 dark:text-neutral-400">
                       <div className="flex items-center gap-0.5 text-amber-500">
                         <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -1295,7 +1436,7 @@ export const IntegrationsMarketPage: React.FC = () => {
 
                   {/* Description */}
                   <p className="text-xs text-slate-500 dark:text-neutral-400 line-clamp-2 mt-2 leading-relaxed">
-                    {item.short_desc}
+                    {getItemShortDesc(item)}
                   </p>
                 </div>
 
@@ -1306,8 +1447,11 @@ export const IntegrationsMarketPage: React.FC = () => {
                       {/* Active Toggle */}
                       <button
                         type="button"
-                        onClick={() => toggleMutation.mutate(item.slug)}
-                        title={isActive ? "Faoliyatni to'xtatish" : "Faollashtirish"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMutation.mutate(item.slug);
+                        }}
+                        title={isActive ? (lang === 'ru' ? 'Выключить' : "Faoliyatni to'xtatish") : (lang === 'ru' ? 'Включить' : "Faollashtirish")}
                         className={`p-2 rounded-xl border transition-all cursor-pointer ${
                           isActive
                             ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-600'
@@ -1319,7 +1463,10 @@ export const IntegrationsMarketPage: React.FC = () => {
 
                       <button
                         type="button"
-                        onClick={() => handleOpenModal(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenIntegration(item);
+                        }}
                         className="flex-1 py-2 px-3 rounded-xl border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                       >
                         <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
@@ -1329,7 +1476,10 @@ export const IntegrationsMarketPage: React.FC = () => {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => handleOpenModal(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenIntegration(item);
+                      }}
                       className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-neutral-100 dark:text-slate-900 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs group-hover:shadow-sm"
                     >
                       <span>{t.btnConnect}</span>

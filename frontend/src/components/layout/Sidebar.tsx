@@ -10,6 +10,7 @@ import {
   Tag,
   Barcode,
   Boxes,
+  Database,
   Megaphone,
   Bot,
   Sparkles,
@@ -165,6 +166,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
             path: "/yespos",
             icon: Monitor,
             label: lang === "ru" ? "YES POS импорт" : lang === "en" ? "YES POS Sync" : "YesPOS integratsiya",
+            badge: null,
+          },
+          {
+            path: "/billz",
+            icon: Database,
+            label: lang === "ru" ? "Billz импорт" : lang === "en" ? "Billz Sync" : "Billz integratsiya",
             badge: null,
           },
           {

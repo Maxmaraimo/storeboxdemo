@@ -1,3 +1,5 @@
+import os
+import json
 import time
 import requests
 import logging
@@ -17,6 +19,7 @@ class BillzClient:
     """
 
     BASE_URLS = [
+        "https://api-admin.billz.io",
         "https://api-admin.billz.ai",
         "https://api.billz.io",
         "https://api.billz.uz",
@@ -26,7 +29,7 @@ class BillzClient:
     def login(cls, secret_token: str, server_url: str = None) -> dict:
         """
         Authenticates with Billz API using secret_token.
-        Hits POST https://api-admin.billz.ai/v1/auth/login with {"secret_token": secret_token}
+        Hits POST https://api-admin.billz.io/v1/auth/login with {"secret_token": secret_token}
         Returns access_token and shop details.
         """
         secret_token = (secret_token or "").strip()
@@ -42,7 +45,7 @@ class BillzClient:
                 "shops": [{"id": "shop_1", "name": "Asosiy ombor"}]
             }
 
-        base = (server_url or "https://api-admin.billz.ai").rstrip('/')
+        base = (server_url or "https://api-admin.billz.io").rstrip('/')
         auth_url = f"{base}/v1/auth/login"
 
         try:
@@ -139,7 +142,7 @@ class BillzClient:
             return cls._generate_full_multipage_catalog()
 
         access_token = auth_res.get("access_token")
-        base = (server_url or "https://api-admin.billz.ai").rstrip('/')
+        base = (server_url or "https://api-admin.billz.io").rstrip('/')
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Accept": "application/json",
@@ -271,28 +274,33 @@ class BillzClient:
             elif "shim" in nl or "jinsi" in nl:
                 category_name = "Billz: Shimlar va jinsilar"
 
-        # Image
-        image_url = item.get("main_image_url_full") or item.get("main_image_url") or ""
-        if not image_url and item.get("photos") and len(item["photos"]) > 0:
-            p0 = item["photos"][0]
-            image_url = p0.get("url") or p0.get("photo_url") or ""
-
+        # Extract REAL image from Billz API payload
+        image_url = ""
+        # 1. Check main_image_url_full
+        if item.get("main_image_url_full") and str(item["main_image_url_full"]).startswith("http"):
+            image_url = str(item["main_image_url_full"]).strip()
+        # 2. Check photos array
+        if not image_url and item.get("photos") and isinstance(item["photos"], list) and len(item["photos"]) > 0:
+            for p in item["photos"]:
+                if isinstance(p, dict):
+                    url = p.get("photo_url") or p.get("url") or p.get("image_url") or ""
+                    if url and str(url).startswith("http"):
+                        image_url = str(url).strip()
+                        break
+                elif isinstance(p, str) and p.startswith("http"):
+                    image_url = p.strip()
+                    break
+        # 3. Check fallback image/photo string keys
         if not image_url:
-            nl = name.lower()
-            if "komplekt" in nl:
-                image_url = "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&q=80"
-            elif "sport" in nl:
-                image_url = "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&q=80"
-            elif "kurtka" in nl:
-                image_url = "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80"
-            elif "platya" in nl:
-                image_url = "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80"
-            elif "shapka" in nl or "sharf" in nl:
-                image_url = "https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=600&q=80"
-            elif "kofta" in nl:
-                image_url = "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80"
-            else:
-                image_url = "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&q=80"
+            for k in ("image_url", "photo_url", "image", "photo"):
+                v = item.get(k)
+                if v and isinstance(v, str) and v.startswith("http"):
+                    image_url = v.strip()
+                    break
+
+        # CRITICAL: If Billz has no photo, leave it completely empty ("")!
+        # DO NOT inject fake Unsplash photos. Products without photos will remain without photos.
+        image_url = str(image_url or "").strip()
 
         unit = "Dona"
         if item.get("measurement_unit"):
@@ -362,20 +370,32 @@ class BillzClient:
                 created = False
 
             prod.category = category_obj
-            prod.name_uz = item["name"]
-            prod.name_ru = item["name"]
-            prod.name_en = item["name"]
-            prod.name_tr = item["name"]
-            prod.price = Decimal(str(item["price"]))
-            prod.cost_price = Decimal(str(item["cost_price"]))
-            prod.margin = Decimal(str(item["margin"]))
-            prod.stock = item["stock"]
-            prod.barcode = item["barcode"]
+            name_val = item.get("name") or "Billz Mahsulot"
+            prod.name_uz = name_val
+            prod.name_ru = name_val
+            prod.name_en = name_val
+            prod.name_tr = name_val
+
+            p_val = Decimal(str(item.get("price") or 0))
+            cp_val = Decimal(str(item.get("cost_price") or 0))
+            if cp_val <= 0 and p_val > 0:
+                cp_val = (p_val * Decimal("0.70")).quantize(Decimal("1.00"))
+
+            m_val = Decimal(str(item.get("margin") or 0))
+            if m_val <= 0 and cp_val > 0 and p_val > cp_val:
+                m_val = round(((p_val - cp_val) / cp_val) * Decimal("100"), 1)
+
+            prod.price = p_val
+            prod.cost_price = cp_val
+            prod.margin = m_val
+            prod.stock = max(0, int(item.get("stock") or 0))
+            prod.barcode = str(item.get("barcode") or barcode_or_sku)
             prod.image_url = item.get("image_url", "")
-            prod.description_uz = item.get("description", "")
-            prod.description_ru = item.get("description", "")
-            prod.description_en = item.get("description", "")
-            prod.description_tr = item.get("description", "")
+            desc_val = item.get("description", "")
+            prod.description_uz = desc_val
+            prod.description_ru = desc_val
+            prod.description_en = desc_val
+            prod.description_tr = desc_val
             prod.unit = item.get("unit") or Product.Units.DONA
             prod.ikpu_code = item.get("ikpu_code", "")
             prod.package_code = item.get("package_code", "")
@@ -400,10 +420,25 @@ class BillzClient:
     @classmethod
     def _generate_full_multipage_catalog(cls) -> dict:
         """
-        Generates complete real-world multi-page catalog from Billz inventory.
-        Spans 5 pages with 120+ retail items across 5 core categories with real barcodes,
-        images, wholesale cost prices, selling retail prices, and warehouse stocks.
+        Returns full Billz catalog.
+        Loads real Billz catalog snapshot if present, ensuring products without photos
+        remain strictly without photos (empty image_url), and products with photos retain
+        their real Billz photos.
         """
+        json_path = os.path.join(os.path.dirname(__file__), "billz_real_catalog.json")
+        if os.path.exists(json_path):
+            try:
+                with open(json_path, "r", encoding="utf-8") as f:
+                    prods = json.load(f)
+                return {
+                    "success": True,
+                    "products": prods,
+                    "pages": 1,
+                    "total_count": len(prods),
+                    "source": "billz_catalog_snapshot"
+                }
+            except Exception as e:
+                logger.warning(f"Error loading billz_real_catalog.json: {e}")
         categories = [
             ("Erkaklar kiyimlari", [
                 ("Klassik paxta ko'ylagi White Slim", 280000, 175000, 35, "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80"),

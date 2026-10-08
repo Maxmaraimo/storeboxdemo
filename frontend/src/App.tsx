@@ -13,6 +13,8 @@ import { ConstructorPage } from "./pages/catalog/ConstructorPage";
 import { CategoriesPage } from "./pages/catalog/CategoriesPage";
 import { CustomersPage } from "./pages/customers/CustomersPage";
 import { YesPosPage } from "./pages/yespos/YesPosPage";
+import { BillzPage } from "./pages/billz/BillzPage";
+import { IntegrationDetailPage } from "./pages/integrations/IntegrationDetailPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { AnalyticsPage } from "./pages/analytics/AnalyticsPage";
 
@@ -226,6 +228,22 @@ export const App: React.FC = () => {
                   element={
                     <PermissionGuard module="dashboard">
                       <YesPosPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="billz"
+                  element={
+                    <PermissionGuard module="dashboard">
+                      <BillzPage />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="integrations/:slug"
+                  element={
+                    <PermissionGuard module="dashboard">
+                      <IntegrationDetailPage />
                     </PermissionGuard>
                   }
                 />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Database,
@@ -12,7 +13,8 @@ import {
   Check,
   Search,
   ShieldCheck,
-  DownloadCloud
+  DownloadCloud,
+  ArrowLeft
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
@@ -64,6 +66,7 @@ interface RemoteCategory {
 
 export const YesPosPage: React.FC = () => {
   const { t, lang, store } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Status & notifications
@@ -402,6 +405,24 @@ export const YesPosPage: React.FC = () => {
 
   return (
     <div className="space-y-5 max-w-5xl">
+      {/* BACK NAVIGATION */}
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate("/robo-market")}
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors text-xs font-bold shadow-2xs cursor-pointer group"
+        >
+          <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
+          <span>
+            {lang === "ru"
+              ? "Назад в Маркет интеграций"
+              : lang === "en"
+              ? "Back to Integrations Market"
+              : "Orqaga: Integratsiyalar marketi"}
+          </span>
+        </button>
+      </div>
+
       {/* HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
