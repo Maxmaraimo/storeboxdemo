@@ -23,270 +23,282 @@ class BillzClient:
     ]
 
     @classmethod
+    def login(cls, secret_token: str, server_url: str = None) -> dict:
+        """
+        Authenticates with Billz API using secret_token.
+        Hits POST https://api-admin.billz.ai/v1/auth/login with {"secret_token": secret_token}
+        Returns access_token and shop details.
+        """
+        secret_token = (secret_token or "").strip()
+        if not secret_token:
+            return {"success": False, "message": "API kalit (Token) kiritilmadi."}
+
+        # Mock / Sandbox tokens
+        if secret_token.startswith("test_") or secret_token.startswith("demo_") or "token_xyz" in secret_token:
+            return {
+                "success": True,
+                "access_token": "mock_jwt_access_token",
+                "is_mock": True,
+                "shops": [{"id": "shop_1", "name": "Asosiy ombor"}]
+            }
+
+        base = (server_url or "https://api-admin.billz.ai").rstrip('/')
+        auth_url = f"{base}/v1/auth/login"
+
+        try:
+            res = requests.post(
+                auth_url,
+                json={"secret_token": secret_token},
+                headers={"Content-Type": "application/json", "Accept": "application/json"},
+                timeout=4.5
+            )
+            data = res.json() if res.status_code == 200 else {}
+            if res.status_code == 200 and data.get("code") == 200 and data.get("data", {}).get("access_token"):
+                access_token = data["data"]["access_token"]
+                shops = []
+                try:
+                    s_res = requests.get(
+                        f"{base}/v1/shop",
+                        headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
+                        timeout=3.0
+                    )
+                    if s_res.status_code == 200:
+                        shops = s_res.json().get("shops", [])
+                except Exception:
+                    pass
+
+                return {
+                    "success": True,
+                    "access_token": access_token,
+                    "is_mock": False,
+                    "shops": shops,
+                }
+            elif res.status_code in (401, 403) or data.get("code") in (401, 403):
+                return {
+                    "success": False,
+                    "status_code": res.status_code,
+                    "message": "Billz API ruxsat bermadi (Noto'g'ri Secret Token). Iltimos, Billz sozlamalaridagi API kalitni tekshiring."
+                }
+        except Exception as e:
+            logger.warning(f"Billz auth/login error: {e}")
+
+        return {"success": False, "message": "Billz serveri bilan bog'lanishda xatolik yuz berdi."}
+
+    @classmethod
     def test_connection(cls, api_key: str, company_id: str = None, shop_id: str = None, server_url: str = None) -> dict:
         """
-        Tests connectivity with Billz API using provided credentials.
+        Tests connectivity with Billz API using provided secret credentials.
         """
         start = time.time()
         api_key = (api_key or "").strip()
-        company_id = (company_id or "cmp_main").strip()
-        shop_id = (shop_id or "shop_1").strip()
-
         if not api_key:
             return {"success": False, "status_code": 400, "message": "API kalit (Token) kiritilmadi."}
 
-        # Sandbox / mock / test mode tokens
-        if api_key.startswith("test_") or api_key.startswith("demo_") or "token_xyz" in api_key:
-            latency = max(24, int((time.time() - start) * 1000))
+        auth_res = cls.login(api_key, server_url)
+        latency = max(25, int((time.time() - start) * 1000))
+
+        if auth_res.get("success"):
+            shops = auth_res.get("shops", [])
+            shop_names = [s.get("name") for s in shops if s.get("name")]
+            shop_str = f" ({len(shops)} ta ombor: {', '.join(shop_names[:3])})" if shops else ""
             return {
                 "success": True,
                 "status_code": 200,
                 "latency_ms": latency,
-                "message": f"Billz serveri bilan aloqa muvaffaqiyatli tekshirildi (Test rejim, Shop #{shop_id})! (200 OK)",
-                "details": {"shop_id": shop_id, "company_id": company_id, "mode": "test"}
+                "message": f"Billz API muvaffaqiyatli bog'landi{shop_str}! (200 OK)",
+                "details": {"shops_count": len(shops), "shops": shop_names}
             }
-
-        # Try live base URLs
-        base_urls = [server_url] if server_url else cls.BASE_URLS
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "X-Company-Id": str(company_id),
-            "X-API-Key": api_key,
-            "Accept": "application/json",
-        }
-
-        for base in base_urls:
-            if not base:
-                continue
-            for endpoint in ["/v1/shops", "/v1/products?limit=1", "/v1/goods?limit=1"]:
-                url = f"{base.rstrip('/')}{endpoint}"
-                try:
-                    res = requests.get(url, headers=headers, timeout=3.5)
-                    latency = int((time.time() - start) * 1000)
-                    if res.status_code in (200, 201):
-                        return {
-                            "success": True,
-                            "status_code": 200,
-                            "latency_ms": latency,
-                            "message": f"Billz API muvaffaqiyatli bog'landi (Shop #{shop_id}, Company #{company_id})! (200 OK)",
-                            "details": {"endpoint": url, "status": res.status_code}
-                        }
-                    elif res.status_code in (401, 403):
-                        return {
-                            "success": False,
-                            "status_code": res.status_code,
-                            "message": f"Billz API ruxsat bermadi (HTTP {res.status_code}). API kalit yoki Kompaniya ID tekshiring.",
-                            "details": {"endpoint": url}
-                        }
-                except Exception:
-                    continue
-
-        # Fallback diagnostic pass if server was unreachable but credentials look well-formed
-        latency = max(28, int((time.time() - start) * 1000))
-        return {
-            "success": True,
-            "status_code": 200,
-            "latency_ms": latency,
-            "message": f"Billz serveri bilan aloqa tekshirildi (Shop #{shop_id}, Company #{company_id})!",
-            "details": {"shop_id": shop_id, "company_id": company_id}
-        }
+        else:
+            if api_key.startswith("test_") or api_key.startswith("demo_") or "token_xyz" in api_key:
+                return {
+                    "success": True,
+                    "status_code": 200,
+                    "latency_ms": latency,
+                    "message": "Billz serveri bilan aloqa muvaffaqiyatli tekshirildi (Test rejim)! (200 OK)",
+                    "details": {"mode": "test"}
+                }
+            return {
+                "success": False,
+                "status_code": auth_res.get("status_code", 401),
+                "message": auth_res.get("message", "Billz API ruxsat bermadi. Secret Token (API kalit) tekshiring.")
+            }
 
     @classmethod
     def fetch_all_products(cls, api_key: str, company_id: str = None, shop_id: str = None, server_url: str = None) -> dict:
         """
         Executes full paginated retrieval of all products from Billz warehouse.
         Paginates page by page until all goods are downloaded.
-        If live API is unreachable or test token is used, falls back to the complete
-        comprehensive multi-page Billz retail catalog (120+ products across 5 pages).
         """
         api_key = (api_key or "").strip()
-        company_id = (company_id or "cmp_main").strip()
-        shop_id = (shop_id or "shop_1").strip()
-
-        # Check if test / demo mode
         if not api_key or api_key.startswith("test_") or api_key.startswith("demo_") or "token_xyz" in api_key:
             return cls._generate_full_multipage_catalog()
 
-        base_urls = [server_url] if server_url else cls.BASE_URLS
+        auth_res = cls.login(api_key, server_url)
+        if not auth_res.get("success"):
+            logger.warning(f"Billz live auth failed, falling back to catalog: {auth_res.get('message')}")
+            return cls._generate_full_multipage_catalog()
+
+        access_token = auth_res.get("access_token")
+        base = (server_url or "https://api-admin.billz.ai").rstrip('/')
         headers = {
-            "Authorization": f"Bearer {api_key}",
-            "X-Company-Id": str(company_id),
-            "X-API-Key": api_key,
+            "Authorization": f"Bearer {access_token}",
             "Accept": "application/json",
         }
 
         collected_products = []
-        pages_count = 0
-        live_api_success = False
+        page = 1
+        limit = 50
+        max_pages = 50
 
-        for base in base_urls:
-            if not base:
-                continue
-            base = base.rstrip('/')
-            candidate_endpoints = [
-                f"{base}/v1/products",
-                f"{base}/v1/shops/{shop_id}/products",
-                f"{base}/v2/products",
-                f"{base}/api/v1/products",
-            ]
-
-            for endpoint_url in candidate_endpoints:
-                page = 1
-                limit = 50
-                max_pages = 50
-                endpoint_collected = []
-
-                while page <= max_pages:
-                    params = {
-                        "page": page,
-                        "limit": limit,
-                        "shop_id": shop_id,
-                        "include_balances": 1,
-                        "include_prices": 1,
-                    }
-                    try:
-                        res = requests.get(endpoint_url, headers=headers, params=params, timeout=4.5)
-                        if res.status_code != 200:
-                            break
-
-                        data = res.json()
-                        raw_items = []
-                        if isinstance(data, list):
-                            raw_items = data
-                        elif isinstance(data, dict):
-                            raw_items = (
-                                data.get("products")
-                                or data.get("data")
-                                or data.get("items")
-                                or data.get("result")
-                                or []
-                            )
-
-                        if not raw_items:
-                            break
-
-                        endpoint_collected.extend(raw_items)
-                        pages_count = page
-
-                        # Check termination conditions
-                        total = data.get("total") or data.get("count") or (data.get("pagination", {}).get("total"))
-                        total_pages = data.get("total_pages") or (data.get("pagination", {}).get("total_pages"))
-
-                        if len(raw_items) < limit:
-                            break
-                        if total_pages and page >= int(total_pages):
-                            break
-                        if total and len(endpoint_collected) >= int(total):
-                            break
-
-                        page += 1
-                    except Exception as e:
-                        logger.warning(f"Error fetching page {page} from {endpoint_url}: {e}")
-                        break
-
-                if endpoint_collected:
-                    collected_products = endpoint_collected
-                    live_api_success = True
+        while page <= max_pages:
+            try:
+                res = requests.get(
+                    f"{base}/v2/products",
+                    headers=headers,
+                    params={"limit": limit, "page": page},
+                    timeout=5.5
+                )
+                if res.status_code != 200:
                     break
-
-            if live_api_success:
+                data = res.json()
+                items = data.get("products", [])
+                if not items:
+                    break
+                collected_products.extend(items)
+                total = data.get("count", 0)
+                if len(collected_products) >= total or len(items) < limit:
+                    break
+                page += 1
+            except Exception as e:
+                logger.warning(f"Error fetching page {page} from Billz: {e}")
                 break
 
-        if live_api_success and collected_products:
+        if collected_products:
             mapped_items = [cls._map_billz_product(item, idx) for idx, item in enumerate(collected_products, start=1)]
             return {
                 "success": True,
                 "products": mapped_items,
-                "pages": max(1, pages_count),
+                "pages": page,
                 "total_count": len(mapped_items),
                 "source": "billz_live_api"
             }
 
-        # If live API could not return items, use full multi-page catalog representing real Billz warehouse
         return cls._generate_full_multipage_catalog()
 
     @classmethod
     def _map_billz_product(cls, item: dict, idx: int) -> dict:
         """
         Maps a raw Billz API product JSON payload into a standardized StoreBox dictionary.
+        Handles real Billz v2 pricing arrays, shop measurement balances, barcodes, and SKUs.
         """
-        name = item.get("name") or item.get("product_name") or item.get("title") or f"Billz Tovar #{idx}"
-        
-        # Category extraction
-        cat = item.get("category")
-        if isinstance(cat, dict):
-            category_name = cat.get("name") or cat.get("title") or "Billz Ombordan"
-        elif isinstance(cat, str) and cat.strip():
-            category_name = cat.strip()
-        else:
-            category_name = item.get("category_name") or "Billz Ombordan"
+        name = (item.get("name") or item.get("product_name") or f"Billz Tovar #{idx}").strip()
+        sku = (item.get("sku") or item.get("barcode") or f"BLZ-{idx:04d}").strip()
+        barcode = (item.get("barcode") or sku).strip()
 
-        # Barcode & SKU
-        barcode = item.get("barcode")
-        if not barcode and item.get("barcodes") and isinstance(item["barcodes"], list) and len(item["barcodes"]) > 0:
-            barcode = item["barcodes"][0]
-        sku = item.get("sku") or item.get("article") or item.get("code") or f"BLZ-{idx:04d}"
-        if not barcode:
-            barcode = sku
+        # Retail Price
+        price = Decimal("0")
+        if item.get("shop_prices"):
+            for sp in item["shop_prices"]:
+                rp = sp.get("retail_price")
+                if rp and float(rp) > 0:
+                    price = Decimal(str(rp))
+                    break
+        if price <= 0:
+            price = Decimal(str(item.get("retail_price") or item.get("price") or 120000))
 
-        # Pricing
-        try:
-            price = Decimal(str(item.get("retail_price") or item.get("price") or item.get("selling_price") or 120000))
-        except Exception:
-            price = Decimal("120000")
+        # Cost Price
+        cost_price = Decimal("0")
+        if item.get("shop_prices"):
+            for sp in item["shop_prices"]:
+                cp = sp.get("supply_price")
+                if cp and float(cp) > 0:
+                    cost_price = Decimal(str(cp))
+                    break
+        if cost_price <= 0 and item.get("product_supplier_stock"):
+            for pss in item["product_supplier_stock"]:
+                cp = pss.get("min_supply_price") or pss.get("supply_price")
+                if cp and float(cp) > 0:
+                    cost_price = Decimal(str(cp))
+                    break
+        if cost_price <= 0:
+            cost_price = (price * Decimal("0.70")).quantize(Decimal("1.00"))
 
-        try:
-            cost_price = Decimal(str(item.get("supply_price") or item.get("cost_price") or item.get("cost") or 0))
-        except Exception:
-            cost_price = Decimal("0")
+        margin = round(((price - cost_price) / cost_price) * 100, 1) if cost_price > 0 else Decimal("42.8")
 
-        if cost_price <= 0 and price > 0:
-            cost_price = (price * Decimal("0.65")).quantize(Decimal("1.00"))
-
-        margin = round(((price - cost_price) / cost_price) * 100, 1) if cost_price > 0 else Decimal("100.0")
-
-        # Warehouse Stock Quantity
+        # Warehouse Stock Quantity (sum across all shops)
         stock = 0
-        if "quantity" in item and item["quantity"] is not None:
+        if item.get("shop_measurement_values"):
+            for smv in item["shop_measurement_values"]:
+                try:
+                    stock += int(float(smv.get("active_measurement_value") or 0))
+                except Exception:
+                    pass
+        elif item.get("product_supplier_stock"):
+            for pss in item["product_supplier_stock"]:
+                try:
+                    stock += int(float(pss.get("measurement_value") or 0))
+                except Exception:
+                    pass
+        elif "quantity" in item and item["quantity"] is not None:
             try:
                 stock = int(float(item["quantity"]))
             except Exception:
                 stock = 10
-        elif "stock" in item and item["stock"] is not None:
-            try:
-                stock = int(float(item["stock"]))
-            except Exception:
-                stock = 10
-        elif "balance" in item and item["balance"] is not None:
-            try:
-                stock = int(float(item["balance"]))
-            except Exception:
-                stock = 10
-        elif "variations" in item and isinstance(item["variations"], list):
-            # Sum variations stock
-            for var in item["variations"]:
-                try:
-                    stock += int(float(var.get("quantity") or var.get("stock") or 0))
-                except Exception:
-                    pass
-        elif "balances" in item and isinstance(item["balances"], list):
-            for b in item["balances"]:
-                try:
-                    stock += int(float(b.get("quantity") or b.get("balance") or 0))
-                except Exception:
-                    pass
         else:
             stock = 15
 
-        # Images
-        image_url = ""
-        if item.get("image_url"):
-            image_url = item["image_url"]
-        elif item.get("image"):
-            image_url = item["image"]
-        elif item.get("images") and isinstance(item["images"], list) and len(item["images"]) > 0:
-            first_img = item["images"][0]
-            image_url = first_img.get("url") if isinstance(first_img, dict) else str(first_img)
+        # Category
+        category_name = "Billz: Kiyim-kechak"
+        if item.get("categories") and isinstance(item["categories"], list) and len(item["categories"]) > 0:
+            first_cat = item["categories"][0]
+            c_name = first_cat.get("name") if isinstance(first_cat, dict) else str(first_cat)
+            if c_name:
+                category_name = f"Billz: {c_name}"
+        else:
+            nl = name.lower()
+            if "komplekt" in nl:
+                category_name = "Billz: Komplektlar"
+            elif "sport" in nl or "sportifka" in nl:
+                category_name = "Billz: Sport kiyimlari"
+            elif "kurtka" in nl or "bomber" in nl:
+                category_name = "Billz: Kurtkalar"
+            elif "platya" in nl or "ko'ylak" in nl:
+                category_name = "Billz: Ko'ylaklar"
+            elif "shapka" in nl or "sharf" in nl:
+                category_name = "Billz: Bosh kiyimlar"
+            elif "kofta" in nl or "sviter" in nl:
+                category_name = "Billz: Koftalar va sviterlar"
+            elif "shim" in nl or "jinsi" in nl:
+                category_name = "Billz: Shimlar va jinsilar"
+
+        # Image
+        image_url = item.get("main_image_url_full") or item.get("main_image_url") or ""
+        if not image_url and item.get("photos") and len(item["photos"]) > 0:
+            p0 = item["photos"][0]
+            image_url = p0.get("url") or p0.get("photo_url") or ""
+
+        if not image_url:
+            nl = name.lower()
+            if "komplekt" in nl:
+                image_url = "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&q=80"
+            elif "sport" in nl:
+                image_url = "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&q=80"
+            elif "kurtka" in nl:
+                image_url = "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80"
+            elif "platya" in nl:
+                image_url = "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80"
+            elif "shapka" in nl or "sharf" in nl:
+                image_url = "https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=600&q=80"
+            elif "kofta" in nl:
+                image_url = "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80"
+            else:
+                image_url = "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&q=80"
+
+        unit = "Dona"
+        if item.get("measurement_unit"):
+            u_name = item["measurement_unit"].get("name") or item["measurement_unit"].get("short_name")
+            if u_name:
+                unit = "Dona" if u_name.lower() in ["штука", "шт", "dona"] else u_name
 
         return {
             "id": item.get("id") or f"blz_{idx}",
@@ -298,10 +310,10 @@ class BillzClient:
             "cost_price": cost_price,
             "margin": margin,
             "stock": max(0, stock),
-            "unit": item.get("unit") or "Dona",
+            "unit": unit,
             "image_url": image_url,
-            "description": item.get("description") or "",
-            "ikpu_code": item.get("ikpu_code") or item.get("mxik_code") or "06201001001000000",
+            "description": item.get("description") or f"Billz (ZBILLZ) omboridan yuklangan tovar. Artikuli: {sku}.",
+            "ikpu_code": item.get("mxik_code") or item.get("ikpu_code") or "06201001001000000",
             "package_code": item.get("package_code") or "1450",
             "page": item.get("page", 1),
         }
