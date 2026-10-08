@@ -9,14 +9,29 @@ import {
   ShoppingCart,
   Package,
   BarChart3,
-  Menu
+  Menu,
+  Sparkles,
 } from "lucide-react";
+import { SidekickPanel } from "../ai/SidekickPanel";
 
 export const AppLayout: React.FC = () => {
   const { user, loading, lang: language } = useAuth();
   const { newOrdersCount } = useNotifications();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidekickOpen, setSidekickOpen] = useState(false);
+
+  // Global keyboard shortcut (Cmd+J / Ctrl+J) to toggle Sidekick
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        setSidekickOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   React.useEffect(() => {
     if (language === "ru") {
@@ -65,11 +80,35 @@ export const AppLayout: React.FC = () => {
 
       {/* 2. Main Workspace Column */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        <Header onOpenMobileMenu={() => setMobileMenuOpen(true)} />
+        <Header
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          onOpenSidekick={() => setSidekickOpen(true)}
+        />
 
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-12 max-w-[1400px] w-full mx-auto">
           <Outlet />
         </main>
+
+        {/* Floating Quick AI Button (Shopify Sidekick) */}
+        <button
+          type="button"
+          onClick={() => setSidekickOpen(true)}
+          className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-35 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-violet-600 via-indigo-600 to-pink-500 text-white shadow-xl shadow-violet-500/30 hover:scale-105 active:scale-95 transition-all cursor-pointer group border border-white/20"
+          title="Открыть StoreBox Sidekick AI (Cmd+J)"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-300 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-200"></span>
+          </span>
+          <Sparkles className="w-4 h-4 text-white group-hover:rotate-12 transition-transform" />
+          <span className="text-xs font-bold tracking-tight pr-0.5 hidden sm:inline">Sidekick AI</span>
+        </button>
+
+        {/* 3. Shopify Sidekick AI Drawer */}
+        <SidekickPanel
+          isOpen={sidekickOpen}
+          onClose={() => setSidekickOpen(false)}
+        />
 
         {/* 3. Mobile Bottom Navigation Bar */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-14 bg-white/95 dark:bg-[#18181B]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-zinc-800 flex items-center justify-around z-30 px-2 shadow-xs">

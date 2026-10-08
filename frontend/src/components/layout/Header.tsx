@@ -28,9 +28,10 @@ import { Language } from "../../i18n/translations";
 
 interface HeaderProps {
   onOpenMobileMenu?: () => void;
+  onOpenSidekick?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, onOpenSidekick }) => {
   const { user, store, stores, switchStore, logout, lang, setLang, t } = useAuth();
   const { totalUnread, notifications, markAllRead } = useNotifications();
   const navigate = useNavigate();
@@ -201,6 +202,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
 
       {/* 2. Right: Theme, Notifications, Language, Profile */}
       <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        {/* Shopify Sidekick AI Assistant Trigger */}
+        <button
+          type="button"
+          onClick={onOpenSidekick}
+          className="h-8 px-2.5 sm:px-3 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white flex items-center gap-1.5 text-xs font-semibold shadow-xs shadow-violet-500/25 transition-all cursor-pointer active:scale-95 group"
+          title="Открыть StoreBox Sidekick (ИИ-Ассистент)"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-pink-200 group-hover:rotate-12 transition-transform" />
+          <span className="hidden sm:inline">Sidekick</span>
+          <span className="text-[10px] px-1 py-0.2 rounded-full bg-white/20 text-white font-mono font-bold">AI</span>
+        </button>
+
         {/* Dark/Light mode toggle */}
         <button
           type="button"

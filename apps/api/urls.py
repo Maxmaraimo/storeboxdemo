@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.dashboard import views as old_views
-from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations, views_telegram, views_yespos, views_billz, views_constructor, views_integrations
+from . import views_auth, views_dashboard, views_orders, views_catalog, views_customers, views_settings, views_design, views_operations, views_telegram, views_yespos, views_billz, views_constructor, views_integrations, views_ai
 
 app_name = "api_v1"
 
@@ -145,4 +145,12 @@ urlpatterns = [
     path("telegram/disconnect/", views_telegram.telegram_disconnect_view, name="telegram_disconnect"),
     path("telegram/setup-menu/", views_telegram.telegram_setup_menu_view, name="telegram_setup_menu"),
     path("telegram/test/", views_telegram.telegram_test_view, name="telegram_test"),
+
+    # AI Assistant (Shopify Sidekick Style)
+    path("ai/chat/", views_ai.ai_chat_view, name="ai_chat"),
+    path("ai/status/", views_ai.ai_status_view, name="ai_status"),
+    path("ai/quick-actions/", views_ai.ai_quick_actions_view, name="ai_quick_actions"),
+    path("ai/remove-background/", views_ai.ai_remove_background_view, name="ai_remove_background"),
+    path("ai/generate-description/", views_ai.ai_generate_description_view, name="ai_generate_description"),
+    path("ai/generate-image/", views_ai.ai_generate_image_view, name="ai_generate_image"),
 ]
