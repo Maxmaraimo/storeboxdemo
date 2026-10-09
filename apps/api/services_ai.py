@@ -504,8 +504,8 @@ class SidekickAgent:
     # IMAGE GENERATION & STUDIO EDITING
     # ---------------------------------------------------------------------
     def handle_image_generation(self, query: str) -> dict:
-        """Creates professional 1024x1024 studio product images on Apple Silicon M2."""
-        from .services_image import generate_studio_product_image
+        """Creates professional 1024x1024 studio product images using Apple Silicon M2 Neural Diffusion."""
+        from .services_krea import generate_real_ai_photo
 
         q_low = query.lower()
         if any(k in q_low for k in ["деревянн", "стол", "wood", "table"]):
@@ -565,15 +565,12 @@ class SidekickAgent:
                 break
 
         item_title = cleaned if cleaned else (target.name_ru if target else "Премиальный товар")
-        cat_title = target.category.name_ru if target and target.category else ("Еда & Меню" if theme == "gourmet_warm" else "Коллекция 2026")
-        price_val = float(target.price) if target else 240000
 
-        image_url = generate_studio_product_image(
-            product_name=item_title,
-            category_name=cat_title,
-            price=price_val,
-            store_name=self.store.name,
+        # Generate authentic photorealistic product photo via Apple Silicon M2 Diffusers Engine
+        image_url = generate_real_ai_photo(
+            prompt=query,
             theme=theme,
+            product_name=item_title,
             store=self.store
         )
 
@@ -1574,22 +1571,22 @@ class SidekickAgent:
         ):
             return self.handle_studio_background_removal(msg)
 
-        # 2.5 Image-to-Image / Inpaint Studio processing (wood table, marble, studio cyclorama, cafe bokeh, dark luxury)
+        # 2.5 Studio product image generation command (Text-to-Image Diffusion on M2)
         if (
-            re.search(r'(?:деревянн\w*\s+стол|мрамор\w*|циклорам\w*|помести.*на\s+стол|стол\w*|свет\w*\s+студи|студийн\w*\s+свет|фона.*студи|улучши.*свет|замени.*фон|помести.*в|inpaint|image-to-image|img2img|yog\'och\s+stol|marmar|studiya\s+yorug|wooden\s+table|marble)', msg, re.IGNORECASE)
-            or (re.search(r'(?:помести|перенеси|поставь|joylashtir|put|place).*(?:товар|предмет|mahsulot|product|на|ustiga|on)', msg, re.IGNORECASE) and any(k in msg_low for k in ["стол", "фон", "мрамор", "дерев", "студи", "stol", "marmar", "table", "marble"]))
-            or any(k in msg_low for k in ["деревянный стол", "белый мрамор", "улучши свет и сделай фон", "сделай фон профессиональной студии", "на деревянный стол", "на мраморный стол"])
-        ):
-            return self.handle_image_to_image_command(msg)
-
-        # 3. Studio product image generation command
-        if (
-            any(k in msg_low for k in ["студийн", "studio photo", "studio image", "studio rasm", "студийное фото"])
-            or re.search(r'(?:сгенерируй|создай|сделай|нарисуй|generate|create|yarat).*(?:изображени|фото|картинк|арт|image|photo|artwork|rasm)', msg, re.IGNORECASE)
-            or re.search(r'(?:изображени|фото|картинк|арт|image|photo|artwork|rasm).*(?:сгенерируй|создай|сделай|нарисуй|generate|create|yarat)', msg, re.IGNORECASE)
-            or any(k in msg_low for k in ["рубашк", "сорочк", "ты сам придумай", "придумай что нибудь", "dress shirt", "белая рубашка", "белый рубашка", "oq ko'ylak"])
+            re.search(r'(?:сгенерируй|создай|сделай|нарисуй|generate|create|yarat)\s*(?:мне\s+)?(?:студийн\w*\s+)?(?:изображени\w*|фото\w*|картинк\w*|арт\w*|image\w*|photo\w*|artwork\w*|rasm\w*)', msg, re.IGNORECASE)
+            or re.search(r'(?:изображени\w*|фото\w*|картинк\w*|арт\w*|image\w*|photo\w*|artwork\w*|rasm\w*).*(?:сгенерируй|создай|сделай|нарисуй|generate|create|yarat)', msg, re.IGNORECASE)
+            or any(k in msg_low for k in ["студийное фото", "studio photo", "studio image", "studio rasm", "белая рубашка", "белый рубашка", "oq ko'ylak", "сочный бургер"])
         ):
             return self.handle_image_generation(msg)
+
+        # 2.6 Image-to-Image / Inpaint Studio processing (wood table, marble, studio cyclorama, cafe bokeh, dark luxury)
+        if (
+            re.search(r'(?:помести|перенеси|поставь|joylashtir|put|place).*(?:товар|предмет|mahsulot|product|на|ustiga|on)', msg, re.IGNORECASE)
+            or re.search(r'(?:замени|поменяй|смени).*(?:фон|окружени)', msg, re.IGNORECASE)
+            or re.search(r'(?:улучши|добавь).*(?:свет|освещени|тени)', msg, re.IGNORECASE)
+            or any(k in msg_low for k in ["помести товар на деревянный стол", "улучши свет и сделай фон", "сделай фон профессиональной студии", "на деревянный стол", "на мраморный стол"])
+        ):
+            return self.handle_image_to_image_command(msg)
 
         # 4. Bulk discount (storewide)
         if (

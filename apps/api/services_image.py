@@ -373,34 +373,6 @@ def generate_studio_product_image(
     else:
         bg.paste(subject_img, (sx, sy))
 
-    # 6. Commercial Framing & Metadata Overlay
-    draw = ImageDraw.Draw(bg)
-
-    # Top Brand Header Pill
-    draw.rounded_rectangle([50, 45, width - 50, 115], radius=20, fill=card_bg, outline=(255, 255, 255, 35), width=1)
-    draw.text((80, 66), f"STOREBOX STUDIO  •  {store_name.upper()}", fill=text_secondary)
-    draw.text((width - 290, 66), "AI COMMERCIAL 1024x1024", fill=accent_color)
-
-    # Bottom Product Plaque
-    plaque_box = [50, 835, width - 50, 965]
-    draw.rounded_rectangle(plaque_box, radius=26, fill=card_bg, outline=(255, 255, 255, 45), width=1)
-
-    # Title
-    name_display = product_name[:38] + ("..." if len(product_name) > 38 else "")
-    draw.text((85, 860), name_display, fill=text_primary)
-
-    # Tagline
-    sub_tag = f"Категория: {category_name or 'Витрина'}  •  Студийный свет и глубина (Apple Silicon M2)"
-    draw.text((85, 910), sub_tag, fill=text_secondary)
-
-    # Price Badge
-    if price and price > 0:
-        price_str = f"{int(price):,} UZS"
-        badge_w = 230
-        badge_box = [width - 80 - badge_w, 865, width - 80, 935]
-        draw.rounded_rectangle(badge_box, radius=18, fill=accent_color)
-        draw.text((width - 80 - badge_w + 25, 885), price_str, fill=(255, 255, 255, 255))
-
     # 7. Save to media/products
     rel_path = f"products/studio_gen_{uuid.uuid4().hex[:8]}.png"
     abs_path = os.path.join(settings.MEDIA_ROOT, rel_path)
