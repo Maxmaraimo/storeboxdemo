@@ -238,6 +238,9 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const studioFileInputRef = useRef<HTMLInputElement>(null);
+  // Direct Chat Attachment State (Image-to-Image / Inpaint from Chat)
+  const [chatAttachedFile, setChatAttachedFile] = useState<File | null>(null);
+  const [chatAttachedPreview, setChatAttachedPreview] = useState<string | null>(null);
 
   // AI Studio (Image-to-Image / Inpaint) State
   const [activeTab, setActiveTab] = useState<"chat" | "studio">("chat");
@@ -648,8 +651,21 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   };
 
   // Send standard message
+  // Send standard message or image attachment
   const handleSend = async (textToSend?: string, isVoiceInput = false) => {
-    const query = (textToSend !== undefined ? textToSend : input).trim();
+    let query = (textToSend !== undefined ? textToSend : input).trim();
+    const hasAttachment = Boolean(chatAttachedFile);
+
+    // If query is empty but an image is attached, provide a sensible default prompt
+    if (!query && hasAttachment) {
+      query =
+        activeLang === "uz"
+          ? "Mahsulotni yog'och stolga joylashtir va studiya nuri qo'sh"
+          : activeLang === "en"
+          ? "Place the product on a wooden table with studio lighting"
+          : "Помести товар на деревянный стол и добавь студийный свет";
+    }
+
     if (!query || isLoading) return;
 
     if (isListening && recognitionRef.current) {
@@ -660,30 +676,53 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     const detected = detectTextLanguage(query);
     setActiveLang(detected);
 
-    const isImageQuery = /сделай.*(?:изображен|фото)|создай.*(?:изображен|фото)|белая рубашка|белый рубашка|рубашк|rasm\s+yarat|create\s+image|studio/i.test(
-      query
-    );
+    const isImageQuery =
+      hasAttachment ||
+      /^\/(?:photo|image|foto|img|rasm)\b/i.test(query) ||
+      /сделай.*(?:изображен|фото)|создай.*(?:изображен|фото)|белая рубашка|белый рубашка|рубашк|rasm\s+yarat|create\s+image|studio/i.test(
+        query
+      );
     if (isImageQuery) {
       setGeneratingSkeleton(true);
     }
+
+    // Save attachment references before clearing state
+    const currentAttachmentFile = chatAttachedFile;
+    const currentAttachmentPreview = chatAttachedPreview;
 
     const userMsg: SidekickMessage = {
       id: "u_" + Date.now(),
       sender: "user",
       text: query,
       isVoice: isVoiceInput || isListening,
+      action_data: currentAttachmentPreview
+        ? { attached_image_url: currentAttachmentPreview }
+        : undefined,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setChatAttachedFile(null);
+    setChatAttachedPreview(null);
     setIsLoading(true);
 
     try {
-      const res = await api.post("/ai/chat/", {
-        message: query,
-        lang: detected,
-      });
+      let res;
+      if (currentAttachmentFile) {
+        const formData = new FormData();
+        formData.append("message", query);
+        formData.append("lang", detected);
+        formData.append("image", currentAttachmentFile);
+        res = await api.post("/ai/chat/", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        res = await api.post("/ai/chat/", {
+          message: query,
+          lang: detected,
+        });
+      }
 
       const data = res.data;
 
@@ -726,100 +765,31 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // File upload directly attaches to chat input instead of executing blind background removal
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const userMsg: SidekickMessage = {
-      id: "u_" + Date.now(),
-      sender: "user",
-      text:
-        activeLang === "uz"
-          ? `📷 Mahsulot rasmi yuklandi: «${file.name}». Fonni tozalash (rembg AI)...`
-          : activeLang === "en"
-          ? `📷 Uploaded photo: «${file.name}». Removing background (rembg AI)...`
-          : `📷 Загружено фото: «${file.name}». Удаление фона (rembg AI)...`,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setIsLoading(true);
+    setChatAttachedFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setChatAttachedPreview(previewUrl);
 
-    // Reset file input so user can re-upload if needed
+    // Also prefill studio tab state in case seller switches to it
+    setStudioImageFile(file);
+    setStudioImagePreview(previewUrl);
+
+    // Reset input so seller can re-attach same file if needed
     e.target.value = "";
+  };
 
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const res = await api.post("/ai/remove-background/", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      const data = res.data;
-      const cleanName = file.name.replace(/\.[^/.]+$/, "");
-
-      const botMsg: SidekickMessage = {
-        id: "a_" + Date.now(),
-        sender: "assistant",
-        text:
-          activeLang === "uz"
-            ? `✨ **«${file.name}» fotosi muvaffaqiyatli tozalandi!**\n\n• Mahsulot obyekti fonidan ajratildi (rembg AI).\n• Shaffof studiya PNG fayli tayyor. Uni yuklab olishingiz yoki tovar kartasiga biriktirishingiz mumkin.`
-            : activeLang === "en"
-            ? `✨ **Background removed successfully for «${file.name}»!**\n\n• Subject isolated with clean edges using local rembg AI.\n• Transparent studio PNG is ready to download or assign to your catalog.`
-            : `✨ **Фон у фото «${file.name}» успешно удален!**\n\n• Нейросеть rembg аккуратно вырезала объект с сохранением четких краев.\n• Готов прозрачный студийный PNG для каталога или баннера.`,
-        action_type: "image_processed",
-        action_data: {
-          new_image_url: data.image_url,
-          product_name: cleanName,
-        },
-        suggestions: [
-          activeLang === "uz"
-            ? `🪵 Tovarni yog'och stolga joylashtir`
-            : activeLang === "en"
-            ? `🪵 Place on wooden table`
-            : `🪵 Помести на деревянный стол`,
-          activeLang === "uz"
-            ? `📸 Studiya yorug'ligi va foni`
-            : activeLang === "en"
-            ? `📸 Studio lighting & background`
-            : `📸 Сделай студийный свет и фон`,
-          activeLang === "uz"
-            ? `🏛️ Oq marmar foni`
-            : activeLang === "en"
-            ? `🏛️ White marble backdrop`
-            : `🏛️ Помести на белый мрамор`,
-          activeLang === "uz"
-            ? `Ushbu tovar uchun reklama banneri yarat`
-            : activeLang === "en"
-            ? `Create promo banner for this product`
-            : `Создай рекламный баннер для этого товара`,
-        ],
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-
-      // Also prefill the AI Studio with the uploaded image
-      setStudioImagePreview(data.image_url);
-      setStudioImageFile(file);
-
-      setMessages((prev) => [...prev, botMsg]);
-      speakText(botMsg.text);
-    } catch (err: any) {
-      console.error("Upload & rembg error:", err);
-      const errMsg: SidekickMessage = {
-        id: "err_" + Date.now(),
-        sender: "assistant",
-        text:
-          activeLang === "uz"
-            ? "Rasmni qayta ishlashda xatolik yuz berdi. Iltimos, boshqa rasm yuklab ko'ring."
-            : activeLang === "en"
-            ? "Error processing image. Please try uploading another image."
-            : "Произошла ошибка при обработке фото. Пожалуйста, попробуйте другое изображение.",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, errMsg]);
-    } finally {
-      setIsLoading(false);
+  const handleRemoveAttachment = () => {
+    if (chatAttachedPreview) {
+      try {
+        URL.revokeObjectURL(chatAttachedPreview);
+      } catch (_) {}
     }
+    setChatAttachedFile(null);
+    setChatAttachedPreview(null);
   };
 
   // -----------------------------------------------------------------------
@@ -2025,6 +1995,19 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                         <span>Голосовой запрос</span>
                       </div>
                     )}
+                    {m.action_data?.attached_image_url && (
+                      <div
+                        className="mb-2.5 rounded-xl overflow-hidden max-w-[220px] border border-white/20 dark:border-slate-800 bg-slate-950 cursor-pointer shadow-xs group"
+                        onClick={() => setPreviewImageModal(m.action_data.attached_image_url)}
+                        title="Нажмите для увеличения"
+                      >
+                        <img
+                          src={m.action_data.attached_image_url}
+                          alt="Attached product"
+                          className="w-full h-28 object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                    )}
                     <div className="whitespace-pre-line select-text">{m.text}</div>
                   </div>
 
@@ -2672,6 +2655,131 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
         {/* 4. Input Footer */}
         <div className="p-3 sm:p-4 border-t border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-[#0c0d0e]">
+          {/* Slash Commands Dropdown Menu */}
+          {input.startsWith("/") && (
+            <div className="mb-2 p-1.5 rounded-2xl bg-white dark:bg-zinc-900 border border-violet-200 dark:border-violet-800/60 shadow-xl space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-150">
+              <div className="px-2.5 py-1 text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Команды Sidekick AI
+                </span>
+                <span className="text-slate-400 font-normal">Нажмите для выбора</span>
+              </div>
+              {[
+                {
+                  cmd: "/photo",
+                  label: "Сгенерировать фото товара",
+                  desc: "1024x1024 коммерческое фото со студийным светом",
+                  example: "/photo Белая футболка на деревянном столе",
+                },
+                {
+                  cmd: "/banner",
+                  label: "Рекламный баннер",
+                  desc: "Маркетинговый промо-баннер со скидкой и акцией",
+                  example: "/banner Скидка 20% на весь ассортимент",
+                },
+                {
+                  cmd: "/stock",
+                  label: "Остатки на складе",
+                  desc: "Проверить товары с низким остатком на складе",
+                  example: "Какие товары заканчиваются на складе?",
+                },
+                {
+                  cmd: "/report",
+                  label: "Отчет по продажам",
+                  desc: "Сводка заказов, выручки и динамики за период",
+                  example: "Покажи отчет по продажам за сегодня",
+                },
+              ]
+                .filter((sc) => sc.cmd.toLowerCase().startsWith(input.split(" ")[0].toLowerCase()))
+                .map((item) => (
+                  <button
+                    key={item.cmd}
+                    type="button"
+                    onClick={() => {
+                      if (item.cmd === "/photo" || item.cmd === "/banner") {
+                        setInput(item.cmd + " ");
+                      } else {
+                        handleSend(item.example);
+                      }
+                    }}
+                    className="w-full p-2 text-left rounded-xl hover:bg-violet-50 dark:hover:bg-violet-950/40 flex items-center justify-between transition cursor-pointer group"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="px-1.5 py-0.5 rounded-md bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 font-mono text-[11px] font-bold">
+                          {item.cmd}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                          {item.label}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate mt-0.5 pl-0.5 font-normal">
+                        {item.desc}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-violet-600 transition shrink-0" />
+                  </button>
+                ))}
+            </div>
+          )}
+
+          {/* Chat Photo Attachment Preview Pill */}
+          {chatAttachedPreview && (
+            <div className="mb-2.5 p-2.5 rounded-2xl bg-violet-50/90 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 shadow-xs space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-950 border border-violet-300 dark:border-violet-700 shrink-0 shadow-xs">
+                    <img
+                      src={chatAttachedPreview}
+                      alt="Attached"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-violet-700 dark:text-violet-300">
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Фото товара прикреплено</span>
+                    </div>
+                    <p className="text-[11px] text-slate-700 dark:text-zinc-300 truncate font-medium">
+                      {chatAttachedFile?.name || "photo.jpg"}
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
+                      Задайте пожелание к фону или нажмите Отправить
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveAttachment}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer shrink-0"
+                  title="Удалить прикрепленное фото"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Quick Preset Wish Chips */}
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-violet-200/60 dark:border-violet-800/40">
+                {[
+                  "🪵 Помести на деревянный стол",
+                  "🏛️ Помести на белый мрамор",
+                  "📸 Студийный свет циклорама",
+                  "Удали фон (rembg)",
+                ].map((chipText, cIdx) => (
+                  <button
+                    key={cIdx}
+                    type="button"
+                    onClick={() => setInput(chipText)}
+                    className="px-2 py-1 rounded-lg bg-white dark:bg-zinc-900 border border-violet-200/80 dark:border-violet-800/50 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-[10px] font-medium text-violet-900 dark:text-violet-200 transition cursor-pointer shadow-2xs"
+                  >
+                    {chipText}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -2679,7 +2787,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             }}
             className="flex items-center gap-2"
           >
-            {/* Hidden File Input for Image Upload / rembg */}
+            {/* Hidden File Input for Direct Chat Image Attachment */}
             <input
               type="file"
               ref={fileInputRef}
@@ -2692,13 +2800,17 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-violet-100 dark:hover:bg-violet-950/40 hover:text-violet-700 transition cursor-pointer"
+              className={`p-2.5 rounded-xl transition cursor-pointer ${
+                chatAttachedFile
+                  ? "bg-violet-600 text-white shadow-xs"
+                  : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-violet-100 dark:hover:bg-violet-950/40 hover:text-violet-700"
+              }`}
               title={
                 activeLang === "uz"
-                  ? "Mahsulot rasmini yuklash (Fonni tozalash)"
+                  ? "Mahsulot rasmini biriktirish (Inpaint / Fon)"
                   : activeLang === "en"
-                  ? "Upload product photo (Remove background)"
-                  : "Загрузить фото товара (Удаление фона)"
+                  ? "Attach product photo (Inpaint / Background)"
+                  : "Прикрепить фото товара (Inpaint / Замена фона)"
               }
             >
               <Paperclip className="w-4 h-4" />
@@ -2728,11 +2840,17 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
               placeholder={
                 isListening
                   ? "Слушаю ваш голос..."
+                  : chatAttachedFile
+                  ? activeLang === "uz"
+                    ? "Rasm uchun tilak (masalan, yog‘och stol)..."
+                    : activeLang === "en"
+                    ? "Describe placement (e.g. on wooden table)..."
+                    : "Пожелание к фото (напр. на деревянный стол)..."
                   : activeLang === "uz"
-                  ? "Sidekick'ga savol bering yoki buyruq ayting..."
+                  ? "Sidekick'ga savol bering yoki /photo yozing..."
                   : activeLang === "en"
-                  ? "Ask Sidekick or speak command..."
-                  : "Спросите Sidekick или скажите команду..."
+                  ? "Ask Sidekick or type /photo..."
+                  : "Спросите Sidekick или напишите /photo..."
               }
               className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs font-normal text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-zinc-900 transition-all"
             />
@@ -2740,15 +2858,20 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             {/* Send Button */}
             <button
               type="submit"
-              disabled={!input.trim() || isLoading}
+              disabled={(!input.trim() && !chatAttachedFile) || isLoading}
               className="p-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white disabled:opacity-40 hover:from-violet-500 hover:to-indigo-500 shadow-sm shadow-violet-500/20 transition-all flex items-center justify-center cursor-pointer active:scale-95"
+              title={
+                !input.trim() && chatAttachedFile
+                  ? "Отправить фото на студийную обработку"
+                  : "Отправить"
+              }
             >
               <Send className="w-4 h-4" />
             </button>
           </form>
 
           <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 px-1 font-normal">
-            <span>Enter для отправки • Язык: {activeLang.toUpperCase()}</span>
+            <span>Enter для отправки • / для команд • 📎 для фото</span>
             <span>StoreBox AI Engine</span>
           </div>
         </div>

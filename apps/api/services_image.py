@@ -199,7 +199,25 @@ def generate_studio_product_image(
     # 2. Studio Palette Configuration
     is_food = any(w in (product_name + " " + category_name).lower() for w in ["бургер", "пицц", "еда", "кофе", "burger", "pizza", "food"])
     
-    if theme == "clean_white":
+    if theme == "wood":
+        from .services_fooocus import generate_wood_table_backdrop
+        bg = generate_wood_table_backdrop(width, height)
+        spot_color = (255, 200, 140, 50)
+        card_bg = (28, 20, 16, 235)
+        text_primary = (255, 255, 255, 255)
+        text_secondary = (220, 190, 160, 255)
+        accent_color = (217, 119, 6, 255)
+        shadow_opacity = 180
+    elif theme == "marble":
+        from .services_fooocus import generate_studio_backdrop
+        bg = generate_studio_backdrop(width, height, theme="marble")
+        spot_color = (255, 255, 255, 60)
+        card_bg = (255, 255, 255, 245)
+        text_primary = (15, 23, 42, 255)
+        text_secondary = (100, 116, 139, 255)
+        accent_color = (99, 102, 241, 255)
+        shadow_opacity = 100
+    elif theme == "clean_white":
         bg = create_radial_studio_background(width, height, center_color=(255, 255, 255), edge_color=(234, 238, 245))
         spot_color = (255, 255, 255, 60)
         card_bg = (255, 255, 255, 245)

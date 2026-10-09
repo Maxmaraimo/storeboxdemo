@@ -17,12 +17,17 @@ logger = logging.getLogger(__name__)
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def ai_chat_view(request):
     """
     Main Sidekick AI Chat endpoint.
-    Accepts: { message: str, lang?: str }
+    Accepts:
+      - text: { message: str, lang?: str }
+      - slash command: e.g. "/photo белая футболка на деревянном столе"
+      - image attachment: multipart "image" file or "image_url"
     Returns: { text: str, action_type: str, action_data: dict, suggestions: list }
     """
+    import re
     store = get_merchant_store(request)
     if not store:
         return Response({"error": "Магазин не найден"}, status=404)
@@ -30,6 +35,141 @@ def ai_chat_view(request):
     data = request.data or {}
     message = (data.get("message") or "").strip()
     lang = data.get("lang") or request.GET.get("lang") or "ru"
+    image_file = request.FILES.get("image")
+    image_url_param = data.get("image_url")
+
+    # 1. Direct Image Attachment in Chat (Image-to-Image / Inpaint from chat input)
+    if image_file or image_url_param:
+        input_bytes = None
+        if image_file:
+            input_bytes = image_file.read()
+        elif image_url_param:
+            rel = image_url_param.replace(settings.MEDIA_URL, "").lstrip("/")
+            full_p = os.path.join(settings.MEDIA_ROOT, rel)
+            if os.path.exists(full_p):
+                with open(full_p, "rb") as f:
+                    input_bytes = f.read()
+
+        if input_bytes:
+            clean_prompt = re.sub(r'^\/(?:photo|image|foto|img|rasm)\s*', '', message, flags=re.IGNORECASE).strip()
+            if re.search(r'(?:удали\w*\s+фон|прозрачн\w*|tozala|remove\s+bg|remove\s+background)', clean_prompt, re.IGNORECASE):
+                from .services_ai import remove_image_background
+                cutout_bytes = remove_image_background(input_bytes)
+                rel_path = f"products/ai_rembg_{uuid.uuid4().hex[:8]}.png"
+                full_path = os.path.join(settings.MEDIA_ROOT, rel_path)
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                with open(full_path, "wb") as f:
+                    f.write(cutout_bytes)
+                new_url = f"{settings.MEDIA_URL}{rel_path}"
+                clean_name = data.get("product_name") or "Товар"
+                return Response({
+                    "success": True,
+                    "store": {"id": store.id, "name": store.name, "subdomain": store.subdomain},
+                    "text": (
+                        "✨ **Фон у фото успешно удален (rembg AI)!**\n\n"
+                        "• Объект аккуратно изолирован с сохранением четких краев.\n"
+                        "• Прозрачный студийный PNG готов для каталога."
+                    ),
+                    "action_type": "image_processed",
+                    "action_data": {
+                        "new_image_url": new_url,
+                        "product_name": clean_name
+                    },
+                    "suggestions": [
+                        "🪵 Помести на деревянный стол",
+                        "🏛️ Помести на белый мрамор",
+                        "📸 Сделай студийный свет и фон"
+                    ]
+                })
+
+            from .services_fooocus import process_image_to_image
+            prompt = clean_prompt or "Помести товар на деревянный стол и добавь студийный свет"
+            res = process_image_to_image(
+                image_bytes=input_bytes,
+                prompt=prompt,
+                product_name=data.get("product_name") or "Товар",
+                store=store
+            )
+
+            theme_title = res.get("theme_title", "Студийный снимок")
+            engine = res.get("engine", "Neural Inpaint Studio M2")
+            exec_time = res.get("execution_time", "0.6s")
+
+            if lang == "uz":
+                reply_text = (
+                    f"📸 **«{prompt}» bo'yicha studiya fotosi tayyorlandi!**\n\n"
+                    f"• **Rejim:** Image-to-Image / Inpaint ({theme_title})\n"
+                    f"• **AI Dvigatel:** {engine} ({exec_time})\n"
+                    f"• **Effektlar:** Fon tozalash (rembg), kontakt soyalar (AO) va studiya nuri."
+                )
+            elif lang == "en":
+                reply_text = (
+                    f"📸 **Studio visual generated for «{prompt}»!**\n\n"
+                    f"• **Mode:** Image-to-Image / Inpaint ({theme_title})\n"
+                    f"• **AI Engine:** {engine} ({exec_time})\n"
+                    f"• **Effects:** Background removal (rembg), contact shadows (AO), and studio lighting."
+                )
+            else:
+                reply_text = (
+                    f"📸 **Студийное фото по запросу «{prompt}» готово!**\n\n"
+                    f"• **Режим:** Image-to-Image / Inpaint ({theme_title})\n"
+                    f"• **Движок:** {engine} ({exec_time})\n"
+                    f"• **Эффекты:** Удаление исходного фона (rembg), прорисовка контактных теней (AO) и направленный свет."
+                )
+
+            return Response({
+                "success": True,
+                "store": {
+                    "id": store.id,
+                    "name": store.name,
+                    "subdomain": store.subdomain,
+                },
+                "text": reply_text,
+                "action_type": "image_to_image",
+                "action_data": res,
+                "suggestions": res.get("suggestions", [
+                    "🪵 Помести на деревянный стол",
+                    "🏛️ Белый мрамор",
+                    "📸 Студийный свет циклорама",
+                    "Сохранить в каталог"
+                ])
+            })
+
+    # 2. Slash Command /photo, /image, /img, /foto, /rasm in Chat
+    if re.match(r'^\/(?:photo|image|foto|img|rasm)\b', message, flags=re.IGNORECASE):
+        clean_prompt = re.sub(r'^\/(?:photo|image|foto|img|rasm)\s*', '', message, flags=re.IGNORECASE).strip()
+        agent = SidekickAgent(store=store, lang=lang)
+
+        if clean_prompt:
+            result = agent.handle_image_generation(clean_prompt)
+        else:
+            result = {
+                "thought": "Справка по команде /photo",
+                "text": (
+                    "📸 **Команда генерации фото StoreBox (/photo)**\n\n"
+                    "Вы можете мгновенно создать фото товара прямо в чате:\n"
+                    "• Напишите: `/photo Белая футболка на деревянном столе`\n"
+                    "• Напишите: `/photo Сочный бургер BBQ со студийным светом`\n"
+                    "• Или прикрепите фото через скрепку 📎 и напишите пожелание (например: *«Помести на деревянный стол»*)!"
+                ),
+                "action_type": "clarify_image",
+                "suggestions": [
+                    "/photo Белая рубашка на деревянном столе",
+                    "/photo Черное оверсайз худи",
+                    "/photo Сочный бургер BBQ",
+                    "/photo Студийные кроссовки на мраморе"
+                ]
+            }
+
+        return Response({
+            "success": True,
+            "store": {
+                "id": store.id,
+                "name": store.name,
+                "subdomain": store.subdomain,
+            },
+            **result
+        })
 
     agent = SidekickAgent(store=store, lang=lang)
     result = agent.process_message(message)

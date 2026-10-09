@@ -508,7 +508,11 @@ class SidekickAgent:
         from .services_image import generate_studio_product_image
 
         q_low = query.lower()
-        if any(k in q_low for k in ["светл", "бел", "white", "oq", "light"]):
+        if any(k in q_low for k in ["деревянн", "стол", "wood", "table"]):
+            theme = "wood"
+        elif any(k in q_low for k in ["мрамор", "marble"]):
+            theme = "marble"
+        elif any(k in q_low for k in ["светл", "бел", "white", "oq", "light"]):
             theme = "clean_white"
         elif any(k in q_low for k in ["бургер", "пицц", "еда", "кофе", "burger", "pizza", "food", "стейк", "кухн"]):
             theme = "gourmet_warm"
@@ -531,7 +535,7 @@ class SidekickAgent:
         ).strip()
         cleaned = re.sub(r'\s*(?:for\s+ecommerce|studio\s+shot|packshot).*$', '', cleaned, flags=re.IGNORECASE).strip()
         cleaned = re.sub(r'\s*(?:остальное\s+ты\s+сам\s+придумай.*|ты\s+сам\s+придумай.*|придумай\s+что\s+нибудь.*|qolganini\s+o\'zing\s+o\'yla.*|you\s+decide\s+the\s+rest.*)', '', cleaned, flags=re.IGNORECASE).strip()
-        cleaned = re.sub(r'\b(?:в\s+светлом\s+стиле|в\s+темном\s+стиле|светлое|темное|oq\s+stil|dark|white)\b', '', cleaned, flags=re.IGNORECASE).strip()
+        cleaned = re.sub(r'\b(?:в\s+светлом\s+стиле|в\s+темном\s+стиле|светлое|темное|oq\s+stil|dark|white|на\s+деревянном\s+столе|на\s+столе|на\s+мраморе|деревянный\s+стол|мраморный\s+стол|со\s+студийным\s+освещением|со\s+студийным\s+светом|студийный\s+свет)\b', '', cleaned, flags=re.IGNORECASE).strip()
         cleaned = re.sub(r'[«»"\'\.]', '', cleaned).strip()
 
         # Check if bare request without product context (Shopify Sidekick behavior)
