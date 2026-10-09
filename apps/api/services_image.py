@@ -11,6 +11,23 @@ logger = logging.getLogger(__name__)
 
 # Map of high-resolution commercial product packshots available locally
 COMMERCIAL_ASSETS_MAP = {
+    "phone_red": [
+        "media/products/packshots/phone_iphone_red.png",
+        "media/products/packshots/phone_iphone_red.jpg",
+    ],
+    "phone": [
+        "media/products/packshots/phone_iphone_15.png",
+        "media/products/packshots/phone_iphone_black.png",
+        "media/products/packshots/phone_iphone_15.jpg",
+    ],
+    "headphones": [
+        "media/products/packshots/headphones_wireless.png",
+        "media/products/packshots/headphones_wireless.jpg",
+    ],
+    "smartwatch": [
+        "media/products/packshots/smartwatch_black.png",
+        "media/products/packshots/smartwatch_black.jpg",
+    ],
     "burger": [
         "media/products/burger_co/real_steak_burger.jpg",
         "media/products/burger_co/real_cheeseburger.jpg",
@@ -26,6 +43,7 @@ COMMERCIAL_ASSETS_MAP = {
         "media/products/packshots/laptop_macbook.jpg",
     ],
     "watch": [
+        "media/products/packshots/smartwatch_black.jpg",
         "media/products/packshots/watch_luxury.jpg",
     ],
     "hoodie": [
@@ -89,7 +107,15 @@ def resolve_commercial_product_asset(product_name: str, category_name: str = "",
 
     # 2. Match against pre-indexed high-resolution commercial asset categories
     matched_key = None
-    if any(k in query for k in ["рубашк", "сорочк", "shirt", "button-down", "dress shirt", "ko'ylak"]):
+    is_red = any(k in query for k in ["красн", "red", "qizil"])
+
+    if any(k in query for k in ["айфон", "iphone", "телефон", "смартфон", "phone", "apple", "гаджет", "смарт", "18 про", "15 про", "16 про"]):
+        matched_key = "phone_red" if is_red else "phone"
+    elif any(k in query for k in ["наушник", "airpods", "headphone", "headphones", "гарнитур"]):
+        matched_key = "headphones"
+    elif any(k in query for k in ["smartwatch", "эппл вотч", "смарт-час"]):
+        matched_key = "smartwatch"
+    elif any(k in query for k in ["рубашк", "сорочк", "shirt", "button-down", "dress shirt", "ko'ylak"]):
         matched_key = "shirt"
     elif any(k in query for k in ["бургер", "чизбургер", "котлет", "сэндвич", "burger", "cheeseburger"]):
         matched_key = "burger"
@@ -125,33 +151,70 @@ def resolve_commercial_product_asset(product_name: str, category_name: str = "",
                 except Exception as e:
                     logger.warning(f"Error loading {asset_full}: {e}")
 
-    # 3. Dynamic search for any unmapped product via Openverse commercial library
+    # 3. Dynamic search for any unmapped product via Openverse & commercial discovery
     try:
         import requests
-        clean_keywords = re.sub(r'[^a-zA-Zа-яА-Я0-9\s]', '', product_name).strip()
-        search_q = clean_keywords or "commercial product"
+        try:
+            import certifi
+            ssl_verify = certifi.where()
+        except ImportError:
+            ssl_verify = False
+
+        TRANSLATE_MAP = {
+            "красный": "red", "красная": "red", "красное": "red", "черный": "black", "черная": "black",
+            "белый": "white", "белая": "white", "синий": "blue", "зеленый": "green", "желтый": "yellow",
+            "айфон": "iphone", "телефон": "smartphone", "смартфон": "smartphone", "часы": "luxury watch",
+            "наушники": "wireless headphones", "куртка": "jacket", "кроссовки": "sneakers",
+            "платье": "dress", "сумка": "handbag", "рюкзак": "backpack", "кружка": "ceramic mug",
+            "очки": "sunglasses", "бургер": "burger", "пицца": "pizza", "кофе": "coffee cup"
+        }
+        en_words = []
+        for word in re.findall(r'[a-zA-Zа-яА-Я0-9]+', query):
+            w_low = word.lower()
+            en_words.append(TRANSLATE_MAP.get(w_low, w_low))
+        search_q = "+".join(en_words[:4]) or "commercial+product"
+
         r = requests.get(
-            f"https://api.openverse.org/v1/images/?q={search_q}&page_size=2",
-            headers={"User-Agent": "StoreBoxAI/1.0"},
-            timeout=4
+            f"https://api.openverse.org/v1/images/?q={search_q}&page_size=3",
+            headers={"User-Agent": "Mozilla/5.0 (StoreBox Commercial Studio)"},
+            timeout=5,
+            verify=ssl_verify
         )
         if r.status_code == 200:
             results = r.json().get("results", [])
             for res in results:
                 img_url = res.get("url")
-                if img_url:
-                    r_img = requests.get(img_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
+                if img_url and not img_url.endswith(".svg"):
+                    r_img = requests.get(img_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6, verify=ssl_verify)
                     if r_img.status_code == 200:
-                        return Image.open(BytesIO(r_img.content)).convert("RGBA")
+                        raw_im = Image.open(BytesIO(r_img.content)).convert("RGBA")
+                        try:
+                            from .services_ai import remove_image_background
+                            out_b = BytesIO()
+                            raw_im.save(out_b, format="PNG")
+                            cut_b = remove_image_background(out_b.getvalue())
+                            return Image.open(BytesIO(cut_b)).convert("RGBA")
+                        except Exception:
+                            return raw_im
     except Exception as e:
         logger.debug(f"Dynamic commercial discovery skipped: {e}")
 
-    # 4. Fallback to default high-res commercial packshot
-    default_packshot = os.path.join(settings.BASE_DIR, "media/products/packshots/perfume_baccarat_rouge.jpg")
+    # 4. Contextual fallback (never default to perfume for tech, clothing or food!)
+    if any(k in query for k in ["телефон", "айфон", "смарт", "гаджет", "phone", "tech", "device", "apple"]):
+        fallback_file = "media/products/packshots/phone_iphone_red.png" if is_red else "media/products/packshots/phone_iphone_15.png"
+    elif any(k in query for k in ["еда", "бургер", "блюдо", "food", "snack"]):
+        fallback_file = "media/products/burger_co/real_steak_burger.jpg"
+    elif any(k in query for k in ["парфюм", "духи", "аромат", "perfume"]):
+        fallback_file = "media/products/packshots/perfume_baccarat_rouge.jpg"
+    else:
+        fallback_file = "media/products/packshots/white_shirt.jpg"
+
+    default_packshot = os.path.join(settings.BASE_DIR, fallback_file)
+    if not os.path.exists(default_packshot):
+        default_packshot = default_packshot.replace(".png", ".jpg")
     if os.path.exists(default_packshot):
         return Image.open(default_packshot).convert("RGBA")
 
-    # Extreme fallback: Minimalist aesthetic canvas
     fallback = Image.new("RGBA", (600, 600), (28, 30, 38, 255))
     return fallback
 
