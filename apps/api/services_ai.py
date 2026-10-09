@@ -742,8 +742,9 @@ class SidekickAgent:
                 "suggestions": suggs
             }
 
-        # Process Image-to-Image via dual Fooocus / Apple Silicon M2 engine
-        res = process_image_to_image(
+        # Process Image-to-Image via Krea-2-Turbo Diffusers on Apple Silicon M2 (MPS)
+        from .services_krea import run_krea_image_to_image
+        res = run_krea_image_to_image(
             image_bytes=img_bytes,
             prompt=query,
             product_name=item_title,
@@ -751,7 +752,7 @@ class SidekickAgent:
         )
 
         theme_title = res.get("theme_title", "Студийное окружение")
-        engine = res.get("engine", "Neural Inpaint Studio M2")
+        engine = res.get("engine", "Krea-2-Turbo Studio (mps)")
         exec_time = res.get("execution_time", "0.5s")
 
         if self.lang == "uz":
@@ -1480,8 +1481,11 @@ class SidekickAgent:
         self.lang = detect_query_language(msg, default_lang=self.lang)
         ctx = self.get_store_context()
 
-        # Phase 1: Try Structured Function Calling via Ollama if LLM daemon is running
-        fc = call_ollama_function_call(msg, ctx, self.lang)
+        # Phase 1: Try Structured Function Calling via Hybrid LLM (Groq primary, Gemini backup) or Ollama
+        from .services_llm import call_hybrid_function_call, call_hybrid_chat_reply
+        fc = call_hybrid_function_call(msg, ctx, TOOLS_SCHEMA, self.lang)
+        if not fc:
+            fc = call_ollama_function_call(msg, ctx, self.lang)
         if fc and fc.get("tool") and fc["tool"] != "chat_reply":
             tool_name = fc["tool"]
             if tool_name == "generate_banner":
@@ -1633,17 +1637,20 @@ class SidekickAgent:
         if re.search(r'(?:сколько\s+стоит|цена|narxi|bormi|how\s+much)', msg, re.IGNORECASE):
             return self.handle_product_lookup(msg)
 
-        # Phase 3: Conversational LLM Reasoning via Ollama
-        sys_prompt = (
-            f"You are StoreBox Sidekick, an elite e-commerce AI co-founder for '{ctx['store_name']}'.\n"
-            f"Store Data: {ctx['total_products']} products, {ctx['total_orders']} orders, 7-day revenue: {int(ctx['revenue_7d'])} UZS.\n"
-            f"Respond in language: {self.lang.upper()} (fluent, friendly, professional business strategist).\n"
-            f"Provide insightful, non-robotic business advice, growth ideas, and actionable steps."
-        )
-        llm_reply = call_ollama(msg, sys_prompt)
+        # Phase 3: Conversational LLM Reasoning via Hybrid LLM (Groq / Gemini) or Ollama
+        llm_reply = call_hybrid_chat_reply(msg, ctx, self.lang)
+        if not llm_reply:
+            sys_prompt = (
+                f"You are StoreBox Sidekick, an elite e-commerce AI co-founder for '{ctx['store_name']}'.\n"
+                f"Store Data: {ctx['total_products']} products, {ctx['total_orders']} orders, 7-day revenue: {int(ctx['revenue_7d'])} UZS.\n"
+                f"Respond in language: {self.lang.upper()} (fluent, friendly, professional business strategist).\n"
+                f"Provide insightful, non-robotic business advice, growth ideas, and actionable steps."
+            )
+            llm_reply = call_ollama(msg, sys_prompt)
+
         if llm_reply:
             return {
-                "thought": "Сгенерирован аналитический ответ от локальной LLM",
+                "thought": "Сгенерирован стратегический бизнес-ответ от ИИ-ассистента",
                 "tool_called": "chat_reply",
                 "text": llm_reply,
                 "action_type": "chat_reply",

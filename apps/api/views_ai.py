@@ -82,9 +82,9 @@ def ai_chat_view(request):
                     ]
                 })
 
-            from .services_fooocus import process_image_to_image
+            from .services_krea import run_krea_image_to_image
             prompt = clean_prompt or "Помести товар на деревянный стол и добавь студийный свет"
-            res = process_image_to_image(
+            res = run_krea_image_to_image(
                 image_bytes=input_bytes,
                 prompt=prompt,
                 product_name=data.get("product_name") or "Товар",
@@ -92,7 +92,7 @@ def ai_chat_view(request):
             )
 
             theme_title = res.get("theme_title", "Студийный снимок")
-            engine = res.get("engine", "Neural Inpaint Studio M2")
+            engine = res.get("engine", "Krea-2-Turbo Studio (mps)")
             exec_time = res.get("execution_time", "0.6s")
 
             if lang == "uz":
@@ -207,9 +207,28 @@ def ai_status_view(request):
     agent = SidekickAgent(store=store)
     ctx = agent.get_store_context()
 
+    from .services_krea import get_krea_device
+    diffusers_device = str(get_krea_device())
+
+    has_groq = bool(getattr(settings, "GROQ_API_KEY", ""))
+    has_gemini = bool(getattr(settings, "GEMINI_API_KEY", ""))
+
     return Response({
         "status": "online",
-        "provider": "Ollama (Local LLM)" if ollama_ok else "StoreBox Deterministic AI Engine (Zero Cost)",
+        "provider": "Groq + Gemini Hybrid Agent" if (has_groq or has_gemini) else ("Ollama (Local LLM)" if ollama_ok else "StoreBox Deterministic AI Engine"),
+        "groq": {
+            "available": has_groq,
+            "model": getattr(settings, "GROQ_MODEL", "qwen/qwen3.8-27b"),
+        },
+        "gemini": {
+            "available": has_gemini,
+            "model": getattr(settings, "GEMINI_MODEL", "models/gemini-3.5-flash-lite"),
+        },
+        "diffusers": {
+            "model": getattr(settings, "KREA_MODEL_ID", "krea/Krea-2-Turbo"),
+            "device": diffusers_device,
+            "hardware": "Apple Silicon M2 (Metal Performance Shaders)",
+        },
         "ollama": {
             "available": ollama_ok,
             "models": models,
@@ -218,6 +237,7 @@ def ai_status_view(request):
         "rembg_ready": rembg_ready,
         "store_context": ctx,
     })
+
 
 
 @api_view(["POST"])
@@ -320,8 +340,8 @@ def ai_image_to_image_view(request):
         return Response({"error": "Изображение товара не предоставлено. Пожалуйста, прикрепите фото."}, status=400)
 
     try:
-        from .services_fooocus import process_image_to_image
-        res = process_image_to_image(
+        from .services_krea import run_krea_image_to_image
+        res = run_krea_image_to_image(
             image_bytes=input_bytes,
             prompt=prompt,
             product_name=product_name,

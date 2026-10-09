@@ -4,6 +4,20 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load local environment variables from .env if present
+_env_path = BASE_DIR / '.env'
+if _env_path.exists():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(_env_path)
+    except ImportError:
+        with open(_env_path, 'r', encoding='utf-8') as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith('#') and '=' in _line:
+                    _k, _v = _line.split('=', 1)
+                    os.environ.setdefault(_k.strip(), _v.strip())
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-0s7_r4)^z7a@68q4r^)ue2%logi%7^s92ltyzcok5^p#t51')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
@@ -253,4 +267,16 @@ ESKIZ_PASSWORD = os.environ.get('ESKIZ_PASSWORD', 'MbPlBKpGyqCeg2W6wcqZdkqiq6Nvv
 ESKIZ_FROM = os.environ.get('ESKIZ_FROM', '4546')
 ESKIZ_API_URL = os.environ.get('ESKIZ_API_URL', 'https://notify.eskiz.uz/api')
 ESKIZ_TEST_MODE = os.environ.get('ESKIZ_TEST_MODE', 'False') == 'True' or ('test' in sys.argv)
+
+# StoreBox AI Sidekick Hybrid Architecture (Groq + Gemini + Krea Diffusers on Apple Silicon M2)
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'qwen/qwen3.8-27b')
+
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'models/gemini-3.5-flash-lite')
+
+HF_TOKEN = os.environ.get('HF_TOKEN', os.environ.get('HUGGING_FACE_HUB_TOKEN', ''))
+KREA_MODEL_ID = os.environ.get('KREA_MODEL_ID', 'krea/Krea-2-Turbo')
+DIFFUSERS_DEVICE = os.environ.get('DIFFUSERS_DEVICE', 'mps')
+
 
