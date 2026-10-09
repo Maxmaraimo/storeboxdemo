@@ -76,16 +76,92 @@ const cleanTextForSpeech = (text: string, currentLang: string): string => {
 
   // 5. Enhance currency pronunciation so it reads natural words instead of abbreviation
   if (currentLang === "uz") {
-    clean = clean.replace(/UZS/gi, "so'm");
+    clean = clean.replace(/\bUZS\b/gi, "so'm");
+    clean = clean.replace(/\b(\d+)\s*%/g, "$1 foiz");
   } else if (currentLang === "en") {
-    clean = clean.replace(/UZS/gi, "sums");
+    clean = clean.replace(/\bUZS\b/gi, "sums");
+    clean = clean.replace(/\b(\d+)\s*%/g, "$1 percent");
   } else {
-    clean = clean.replace(/UZS/gi, "сум");
+    clean = clean.replace(/\bUZS\b/gi, "сум");
+    clean = clean.replace(/\bсум\./gi, "сум");
+    clean = clean.replace(/\b(\d+)\s*%/g, "$1 процентов");
+    clean = clean.replace(/\bшт\./gi, "штук");
   }
 
   // 6. Normalize multiple spaces and line breaks
   clean = clean.replace(/\s+/g, " ").trim();
   return clean;
+};
+
+// Programmatic Quality Scorer for Neural / Natural / Premium WebSpeech voices
+export const scoreVoice = (
+  voice: SpeechSynthesisVoice,
+  targetLang: "ru" | "uz" | "en",
+  preferredGender: "female" | "male"
+): number => {
+  const name = voice.name.toLowerCase();
+  const uri = voice.voiceURI.toLowerCase();
+  const lang = voice.lang.toLowerCase();
+
+  // 1. HARD BAN: Immediately disqualify legacy, robotic, and low-bitrate synthesizers
+  if (
+    /compact|eloquence|espeak|klatt|whisper|zarvox|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|pipe organ|trinoids|wobble|junior|albert|fred|ralph/i.test(
+      name
+    ) ||
+    /compact|eloquence/i.test(uri)
+  ) {
+    return -10000;
+  }
+
+  let score = 0;
+
+  // 2. Language Matching
+  if (targetLang === "ru") {
+    if (lang.startsWith("ru")) score += 200;
+    else return -5000;
+  } else if (targetLang === "en") {
+    if (lang.startsWith("en")) score += 200;
+    else return -5000;
+  } else if (targetLang === "uz") {
+    if (lang.startsWith("uz")) {
+      score += 300; // Native Uzbek voice is gold standard
+    } else if (lang.startsWith("tr")) {
+      // High-quality Turkish neural voice fallback (authentic Turkic vowel harmony for Uzbek Latin text)
+      score += 150;
+    } else {
+      return -5000;
+    }
+  }
+
+  // 3. Neural & High-Fidelity Multipliers
+  // Microsoft Azure 48kHz Natural voices (Edge / Chromium)
+  if (/natural|online \(natural\)/i.test(name)) score += 120;
+  // Neural / WaveNet / Cloud / Studio
+  if (/neural|wavenet|studio|cloud/i.test(name)) score += 100;
+  // Apple Silicon Enhanced & Premium voices (Milena Enhanced, Samantha Enhanced, Ava Premium)
+  if (/enhanced|premium/i.test(name) || /enhanced|premium/i.test(uri)) score += 90;
+  // Google Neural Voices (Chrome)
+  if (/google/i.test(name)) score += 80;
+  // Apple Siri voices
+  if (/siri/i.test(name) || /siri/i.test(uri)) score += 75;
+
+  // 4. Gender Matching
+  const isFemaleName = /svetlana|milena|katya|anna|victoria|jenny|madina|emel|filiz|yelda|samantha|ava|zoe|aria|female|woman|девушк|женск/i.test(
+    name
+  );
+  const isMaleName = /dmitry|yuri|pavel|guy|sardor|ahmet|cem|daniel|evan|nathan|male|man|мужск/i.test(
+    name
+  );
+
+  if (preferredGender === "female") {
+    if (isFemaleName) score += 60;
+    else if (isMaleName) score -= 40;
+  } else {
+    if (isMaleName) score += 60;
+    else if (isFemaleName) score -= 40;
+  }
+
+  return score;
 };
 
 export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose }) => {
@@ -107,7 +183,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
 
-  // Voice Settings & TTS
+  // Voice Settings & Neural TTS
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(() => {
     return localStorage.getItem("storebox_sidekick_tts") === "true";
   });
@@ -115,7 +191,10 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>(() => {
     return localStorage.getItem("storebox_sidekick_voice_uri") || "";
   });
-  const [speechRate, setSpeechRate] = useState<number>(0.96);
+  const [preferredGender, setPreferredGender] = useState<"female" | "male">(() => {
+    return (localStorage.getItem("storebox_sidekick_gender") as "female" | "male") || "female";
+  });
+  const [speechRate, setSpeechRate] = useState<number>(0.98);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [previewImageModal, setPreviewImageModal] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -138,7 +217,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     window.speechSynthesis.onvoiceschanged = updateVoices;
   }, []);
 
-  // 2. Select highest-tier natural voice for active language
+  // 2. Select highest-tier neural voice for active language and gender
   const getBestVoiceForLanguage = (targetLang: "ru" | "uz" | "en") => {
     if (!availableVoices.length) return null;
 
@@ -148,54 +227,25 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       if (chosen) return chosen;
     }
 
-    if (targetLang === "ru") {
-      const ruVoices = availableVoices.filter((v) => v.lang.startsWith("ru"));
-      // Priority keywords: natural, enhanced, premium, google, milena, yuri
-      const bestRu = ruVoices.find(
-        (v) =>
-          /google/i.test(v.name) ||
-          /milena/i.test(v.name) ||
-          /yuri/i.test(v.name) ||
-          /enhanced/i.test(v.name) ||
-          /premium/i.test(v.name) ||
-          /natural/i.test(v.name)
-      );
-      return bestRu || ruVoices[0] || null;
+    // Rank all voices with neural scoring system
+    const scored = availableVoices
+      .map((v) => ({ voice: v, score: scoreVoice(v, targetLang, preferredGender) }))
+      .filter((item) => item.score > -1000)
+      .sort((a, b) => b.score - a.score);
+
+    if (scored.length > 0) {
+      return scored[0].voice;
     }
 
-    if (targetLang === "en") {
-      const enVoices = availableVoices.filter((v) => v.lang.startsWith("en"));
-      const bestEn = enVoices.find(
-        (v) =>
-          /google/i.test(v.name) ||
-          /samantha/i.test(v.name) ||
-          /daniel/i.test(v.name) ||
-          /jenny/i.test(v.name) ||
-          /natural/i.test(v.name) ||
-          /enhanced/i.test(v.name)
-      );
-      return bestEn || enVoices[0] || null;
-    }
-
-    // Uzbek language:
-    // Check for native Uzbek voice first
-    const uzVoice = availableVoices.find(
-      (v) => v.lang.startsWith("uz") || /uzbek/i.test(v.name)
+    // Fallback if no voice passed strict neural filter: pick matching language
+    const fallback = availableVoices.find((v) =>
+      targetLang === "ru"
+        ? v.lang.startsWith("ru")
+        : targetLang === "en"
+        ? v.lang.startsWith("en")
+        : v.lang.startsWith("uz") || v.lang.startsWith("tr")
     );
-    if (uzVoice) return uzVoice;
-
-    // Fallback: Turkish voice provides authentic Turkic vowel harmony and phonetics
-    // for Latin Uzbek words, sounding exceptionally natural and pleasant!
-    const trVoices = availableVoices.filter((v) => v.lang.startsWith("tr"));
-    const bestTr = trVoices.find(
-      (v) =>
-        /google/i.test(v.name) ||
-        /yelda/i.test(v.name) ||
-        /filiz/i.test(v.name) ||
-        /cem/i.test(v.name) ||
-        /enhanced/i.test(v.name)
-    );
-    return bestTr || trVoices[0] || null;
+    return fallback || null;
   };
 
   // 3. Initialize Speech Recognition
@@ -276,7 +326,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     }
   };
 
-  // Natural Voice TTS Speaker
+  // Natural Voice TTS Speaker with smooth sentence cadence
   const speakText = (text: string, forceLang?: "ru" | "uz" | "en") => {
     if (!ttsEnabled || !("speechSynthesis" in window)) return;
     try {
@@ -285,34 +335,56 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       const clean = cleanTextForSpeech(text, currentTargetLang);
       if (!clean) return;
 
-      const utterance = new SpeechSynthesisUtterance(clean);
       const voice = getBestVoiceForLanguage(currentTargetLang);
-      if (voice) {
-        utterance.voice = voice;
-        utterance.lang = voice.lang;
-      } else {
-        utterance.lang =
-          currentTargetLang === "ru" ? "ru-RU" : currentTargetLang === "en" ? "en-US" : "tr-TR";
-      }
+      const voiceLang = voice
+        ? voice.lang
+        : currentTargetLang === "ru"
+        ? "ru-RU"
+        : currentTargetLang === "en"
+        ? "en-US"
+        : "tr-TR";
 
-      utterance.rate = speechRate;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
+      // Split into clean sentence chunks for natural breathing cadence and to prevent browser buffer cutoffs
+      const sentenceChunks = clean
+        .replace(/([.!?])\s+/g, "$1|#|")
+        .split("|#|")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
 
-      window.speechSynthesis.speak(utterance);
+      // Keep voice delivery concise and impactful (up to 3 key sentences)
+      const speechQueue = sentenceChunks.slice(0, 3);
+
+      speechQueue.forEach((chunk) => {
+        const utterance = new SpeechSynthesisUtterance(chunk);
+        if (voice) {
+          utterance.voice = voice;
+        }
+        utterance.lang = voiceLang;
+        utterance.rate = speechRate;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        window.speechSynthesis.speak(utterance);
+      });
     } catch (e) {
       console.warn("TTS speak failed:", e);
     }
   };
 
-  // Test voice preview
+  // Test voice preview (gender- and language-aware)
   const handleTestVoice = () => {
     const sample =
       activeLang === "uz"
-        ? "Assalomu alaykum! Men sizning StoreBox intellektual biznes yordamchingizman."
+        ? (preferredGender === "male"
+            ? "Assalomu alaykum! Men StoreBox biznes yordamchingiz Sardorman."
+            : "Assalomu alaykum! Men sizning StoreBox intellektual biznes yordamchingizman.")
         : activeLang === "en"
-        ? "Hello! I am your StoreBox intelligent e-commerce co-founder."
-        : "Здравствуйте! Я ваш персональный бизнес-ассистент StoreBox.";
+        ? (preferredGender === "male"
+            ? "Hello! I am your StoreBox intelligent co-founder David."
+            : "Hello! I am your StoreBox intelligent e-commerce co-founder.")
+        : (preferredGender === "male"
+            ? "Здравствуйте! Я Дмитрий, ваш персональный бизнес-ассистент StoreBox."
+            : "Здравствуйте! Я Милена, ваш персональный бизнес-ассистент StoreBox.");
     speakText(sample);
   };
 
@@ -644,11 +716,68 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
               <button
                 type="button"
                 onClick={handleTestVoice}
-                className="px-2.5 py-1 rounded-md bg-violet-600 text-white font-semibold hover:bg-violet-700 transition cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1 rounded-md bg-violet-600 text-white font-semibold hover:bg-violet-700 transition cursor-pointer flex items-center gap-1 shadow-xs"
               >
                 <Sparkles className="w-3 h-3" />
                 <span>Прослушать</span>
               </button>
+            </div>
+
+            {/* Active Neural Voice Indicator Badge */}
+            {(() => {
+              const activeVoice = getBestVoiceForLanguage(activeLang);
+              return (
+                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-between text-[11px]">
+                  <span className="text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 font-medium truncate max-w-[280px]">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span className="truncate">
+                      Голос: <b>{activeVoice ? activeVoice.name : "Neural Default"}</b>
+                    </span>
+                  </span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 shrink-0">
+                    Neural 48kHz
+                  </span>
+                </div>
+              );
+            })()}
+
+            {/* Gender / Timbre Switcher */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-slate-400">
+                Тембр и персонаж ассистента:
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreferredGender("female");
+                    localStorage.setItem("storebox_sidekick_gender", "female");
+                  }}
+                  className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                    preferredGender === "female"
+                      ? "bg-violet-600 text-white shadow-xs"
+                      : "bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <span>👩</span>
+                  <span>Женский тембр</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreferredGender("male");
+                    localStorage.setItem("storebox_sidekick_gender", "male");
+                  }}
+                  className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                    preferredGender === "male"
+                      ? "bg-violet-600 text-white shadow-xs"
+                      : "bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <span>👨</span>
+                  <span>Мужской тембр</span>
+                </button>
+              </div>
             </div>
 
             {/* Voice Selector */}
@@ -664,7 +793,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                 }}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none"
               >
-                <option value="">Автоматический лучший мягкий голос (Рекомендуется)</option>
+                <option value="">✨ Автоматический отбор нейросетевых голосов (Neural)</option>
                 {availableVoices
                   .filter((v) =>
                     activeLang === "ru"
@@ -673,9 +802,15 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                       ? v.lang.startsWith("en")
                       : v.lang.startsWith("uz") || v.lang.startsWith("tr")
                   )
-                  .map((v) => (
-                    <option key={v.voiceURI} value={v.voiceURI}>
-                      {v.name} ({v.lang})
+                  .map((v) => ({
+                    voice: v,
+                    score: scoreVoice(v, activeLang, preferredGender),
+                  }))
+                  .sort((a, b) => b.score - a.score)
+                  .map(({ voice, score }) => (
+                    <option key={voice.voiceURI} value={voice.voiceURI}>
+                      {score > 150 ? "✨ [Neural] " : score > 50 ? "⭐ " : ""}
+                      {voice.name} ({voice.lang})
                     </option>
                   ))}
               </select>
@@ -794,11 +929,20 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
                           <Wand2 className="w-4 h-4" />
-                          <span>AI Studio Visual (1024x1024 HD)</span>
+                          <span>AI Commercial Studio (1024x1024 HD)</span>
                         </div>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200/60">
-                          {m.action_data.theme === "clean_white" ? "Светлая студия" : "Dark Luxury"}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                            ⚡ M2 Fast (0.04s)
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200/60">
+                            {m.action_data.theme === "clean_white"
+                              ? "Светлая студия"
+                              : m.action_data.theme === "gourmet_warm"
+                              ? "Gourmet Warm"
+                              : "Dark Luxury"}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Image Preview with Hover Zoom */}

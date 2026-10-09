@@ -484,37 +484,54 @@ class SidekickAgent:
     # IMAGE GENERATION & STUDIO EDITING
     # ---------------------------------------------------------------------
     def handle_image_generation(self, query: str) -> dict:
-        """Creates professional 1024x1024 studio product images."""
+        """Creates professional 1024x1024 studio product images on Apple Silicon M2."""
         from .services_image import generate_studio_product_image
 
-        theme = "clean_white" if any(k in query.lower() for k in ["светл", "бел", "white", "oq", "light"]) else "dark_luxury"
+        q_low = query.lower()
+        if any(k in q_low for k in ["светл", "бел", "white", "oq", "light"]):
+            theme = "clean_white"
+        elif any(k in q_low for k in ["бургер", "пицц", "еда", "кофе", "burger", "pizza", "food", "стейк", "кухн"]):
+            theme = "gourmet_warm"
+        else:
+            theme = "dark_luxury"
 
-        # Clean query to extract target product title
-        pattern = r'^(?:сгенерируй|создай|сделай|нарисуй|rasm\s+yarat|generate|create)\s*(?:студийное|промо|красивое|новое|studio)?\s*(?:изображение|фото|картинку|баннер|арт|image|photo|artwork)?\s*(?:для\s+товара|товара|для|uchun|for)?\s*'
-        cleaned = re.sub(pattern, '', query, flags=re.IGNORECASE).strip()
-        cleaned = re.sub(r'[«»"\'\.]', '', cleaned).strip()
+        # Clean query to extract target product title across RU, UZ, EN
+        cleaned = re.sub(
+            r'^(?:сгенерируй|создай|сделай|нарисуй|rasm\s+yarat|generate|create)\s*(?:студийное|промо|коммерческое|красивое|новое|studio|a\s+studio)?\s*(?:изображение|фото|картинку|баннер|арт|image|photo|artwork|product\s+artwork)?\s*(?:для\s+товара|товара|для|uchun|for)?\s*',
+            '',
+            query,
+            flags=re.IGNORECASE
+        ).strip()
+        # Strip suffix commands (Uzbek / English / Russian grammar)
+        cleaned = re.sub(
+            r'\s*(?:uchun)?\s*(?:studiya\s+)?(?:rasmi(?:ni)?|foto(?:si|sini)?|rasm(?:ini)?)\s*(?:yarat(?:ish)?|tayyorla(?:sh)?|qil).*$',
+            '',
+            cleaned,
+            flags=re.IGNORECASE
+        ).strip()
+        cleaned = re.sub(r'\s*(?:for\s+ecommerce|studio\s+shot|packshot).*$', '', cleaned, flags=re.IGNORECASE).strip()
         cleaned = re.sub(r'\b(?:в\s+светлом\s+стиле|в\s+темном\s+стиле|светлое|темное|oq\s+stil|dark|white)\b', '', cleaned, flags=re.IGNORECASE).strip()
+        cleaned = re.sub(r'[«»"\'\.]', '', cleaned).strip()
 
         prod_qs = Product.objects.filter(store=self.store)
         target = None
         for p in prod_qs:
             p_name = (p.name_ru or p.name_uz or "").lower()
-            if p_name and (p_name in cleaned.lower() or cleaned.lower() in p_name):
+            if p_name and cleaned and (p_name in cleaned.lower() or cleaned.lower() in p_name):
                 target = p
                 break
-        if not target and prod_qs.exists():
-            target = prod_qs.first()
 
-        item_title = cleaned or (target.name_ru if target else "Премиальный товар")
-        cat_title = target.category.name_ru if target and target.category else "Коллекция 2026"
-        price_val = float(target.price) if target else 250000
+        item_title = cleaned if cleaned else (target.name_ru if target else "Премиальный товар")
+        cat_title = target.category.name_ru if target and target.category else ("Еда & Меню" if theme == "gourmet_warm" else "Коллекция 2026")
+        price_val = float(target.price) if target else 240000
 
         image_url = generate_studio_product_image(
             product_name=item_title,
             category_name=cat_title,
             price=price_val,
             store_name=self.store.name,
-            theme=theme
+            theme=theme,
+            store=self.store
         )
 
         # Attach as primary image if product exists
@@ -526,25 +543,28 @@ class SidekickAgent:
             target.save(update_fields=["image_url"])
 
         if self.lang == "uz":
+            theme_name = "Oq studiya" if theme == "clean_white" else ("Issiq gourmet studiya" if theme == "gourmet_warm" else "Dark Luxury studiya")
             text = (
-                f"🎨 **«{item_title}» uchun студия sifatidagi rasm tayyorlandi!**\n\n"
-                f"• **O'lchami:** 1024x1024 HD Studio E-Commerce\n"
-                f"• **Mavzu:** {'Oq minimalist studio' if theme == 'clean_white' else 'Qorong\'u premium studio'}\n"
-                f"• **Holat:** Tovar kartochkasiga asosiy rasm sifatida biriktirildi."
+                f"🎨 **«{item_title}» uchun tijoriy sifatdagi studiya rasmi yaratildi!**\n\n"
+                f"• **O'lchami:** 1024x1024 HD E-Commerce Commercial Visual\n"
+                f"• **Uslub:** {theme_name} (Apple Silicon M2)\n"
+                f"• **Holat:** Tovar kartochkasi uchun tayyor."
             )
         elif self.lang == "en":
+            theme_name = "Clean White Studio" if theme == "clean_white" else ("Gourmet Warm Studio" if theme == "gourmet_warm" else "Dark Luxury Showcase")
             text = (
-                f"🎨 **Studio Product Artwork generated for «{item_title}»!**\n\n"
-                f"• **Resolution:** 1024x1024 HD Studio Grade\n"
-                f"• **Theme:** {'Clean White Studio' if theme == 'clean_white' else 'Dark Luxury Showcase'}\n"
-                f"• **Status:** Successfully linked to the product card."
+                f"🎨 **Commercial Studio Artwork generated for «{item_title}»!**\n\n"
+                f"• **Resolution:** 1024x1024 HD Commercial Grade\n"
+                f"• **Atmosphere:** {theme_name} (Apple Silicon M2)\n"
+                f"• **Status:** Ready for your storefront and promotions."
             )
         else:
+            theme_name = "Светлая минималистичная студия" if theme == "clean_white" else ("Теплая студия Gourmet" if theme == "gourmet_warm" else "Темная витрина Dark Luxury")
             text = (
-                f"🎨 **Создан профессиональный студийный визуал для «{item_title}»!**\n\n"
+                f"🎨 **Коммерческий студийный визуал для «{item_title}» создан!**\n\n"
                 f"• **Разрешение:** 1024x1024 HD Studio E-Commerce\n"
-                f"• **Стиль:** {'Светлая минималистичная студия' if theme == 'clean_white' else 'Темная премиальная витрина'}\n"
-                f"• **Статус:** Автоматически прикреплено к товару в каталоге."
+                f"• **Атмосфера:** {theme_name} (Apple Silicon M2)\n"
+                f"• **Статус:** Высокое качество, реалистичный свет и тени."
             )
 
         return {
@@ -633,7 +653,8 @@ class SidekickAgent:
             price=price,
             old_price=old_price,
             store_name=self.store.name,
-            theme=theme
+            theme=theme,
+            store=self.store
         )
 
         return {
