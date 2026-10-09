@@ -35,6 +35,11 @@ import {
   Maximize2,
   Minimize2,
   Eye,
+  Camera,
+  UploadCloud,
+  CheckCircle2,
+  SlidersHorizontal,
+  Layers,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
@@ -230,9 +235,47 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [previewImageModal, setPreviewImageModal] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const studioFileInputRef = useRef<HTMLInputElement>(null);
+
+  // AI Studio (Image-to-Image / Inpaint) State
+  const [activeTab, setActiveTab] = useState<"chat" | "studio">("chat");
+  const [studioPrompt, setStudioPrompt] = useState<string>(
+    "Помести товар на деревянный стол и добавь студийный свет"
+  );
+  const [studioImageFile, setStudioImageFile] = useState<File | null>(null);
+  const [studioImagePreview, setStudioImagePreview] = useState<string | null>(null);
+  const [studioIsListening, setStudioIsListening] = useState<boolean>(false);
+  const [studioIsProcessing, setStudioIsProcessing] = useState<boolean>(false);
+  const [studioResult, setStudioResult] = useState<any>(null);
+  const [studioComparisonMode, setStudioComparisonMode] = useState<"after" | "before" | "split">("after");
+  const [studioSavedSuccess, setStudioSavedSuccess] = useState<boolean>(false);
+  const [catalogProducts, setCatalogProducts] = useState<any[]>([]);
+  const [showCatalogPicker, setShowCatalogPicker] = useState<boolean>(false);
+  const [fooocusStatus, setFooocusStatus] = useState<any>({
+    available: false,
+    engine: "Neural Inpaint Studio (Apple Silicon M2)",
+    url: null,
+  });
+
+  // Fetch Fooocus Status & Catalog Products on Mount
+  useEffect(() => {
+    if (!isOpen) return;
+
+    api.get("/ai/fooocus-status/")
+      .then((res) => {
+        if (res.data) setFooocusStatus(res.data);
+      })
+      .catch((_) => {});
+
+    api.get("/products/?page_size=20")
+      .then((res) => {
+        const items = res.data?.results || res.data || [];
+        setCatalogProducts(Array.isArray(items) ? items : []);
+      })
+      .catch((_) => {});
+  }, [isOpen]);
 
   // Live call duration timer
   useEffect(() => {
@@ -731,18 +774,32 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
         },
         suggestions: [
           activeLang === "uz"
+            ? `🪵 Tovarni yog'och stolga joylashtir`
+            : activeLang === "en"
+            ? `🪵 Place on wooden table`
+            : `🪵 Помести на деревянный стол`,
+          activeLang === "uz"
+            ? `📸 Studiya yorug'ligi va foni`
+            : activeLang === "en"
+            ? `📸 Studio lighting & background`
+            : `📸 Сделай студийный свет и фон`,
+          activeLang === "uz"
+            ? `🏛️ Oq marmar foni`
+            : activeLang === "en"
+            ? `🏛️ White marble backdrop`
+            : `🏛️ Помести на белый мрамор`,
+          activeLang === "uz"
             ? `Ushbu tovar uchun reklama banneri yarat`
             : activeLang === "en"
             ? `Create promo banner for this product`
             : `Создай рекламный баннер для этого товара`,
-          activeLang === "uz"
-            ? `Sotuvchi SEO matn yoz`
-            : activeLang === "en"
-            ? `Generate SEO description`
-            : `Сгенерируй продающее SEO описание`,
         ],
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
+
+      // Also prefill the AI Studio with the uploaded image
+      setStudioImagePreview(data.image_url);
+      setStudioImageFile(file);
 
       setMessages((prev) => [...prev, botMsg]);
       speakText(botMsg.text);
@@ -765,6 +822,124 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     }
   };
 
+  // -----------------------------------------------------------------------
+  // AI STUDIO (IMAGE-TO-IMAGE / INPAINT) ACTION HANDLERS
+  // -----------------------------------------------------------------------
+  const handleStudioFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setStudioImageFile(file);
+    const localUrl = URL.createObjectURL(file);
+    setStudioImagePreview(localUrl);
+    setStudioResult(null);
+    setStudioSavedSuccess(false);
+    e.target.value = "";
+  };
+
+  const handleSelectCatalogProduct = (prod: any) => {
+    if (prod.image_url) {
+      setStudioImagePreview(prod.image_url);
+      setStudioImageFile(null);
+      setStudioResult(null);
+      setStudioSavedSuccess(false);
+      setShowCatalogPicker(false);
+      const name = prod.name_ru || prod.name_uz || "Товар";
+      setStudioPrompt(`Помести ${name} на деревянный стол и добавь студийный свет`);
+    }
+  };
+
+  const handleToggleStudioMic = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Голосовой ввод не поддерживается в этом браузере");
+      return;
+    }
+
+    if (studioIsListening) {
+      setStudioIsListening(false);
+      return;
+    }
+
+    try {
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = activeLang === "ru" ? "ru-RU" : activeLang === "en" ? "en-US" : "uz-UZ";
+
+      rec.onstart = () => setStudioIsListening(true);
+      rec.onresult = (evt: any) => {
+        const transcript = evt.results[0][0].transcript;
+        if (transcript) {
+          setStudioPrompt(transcript);
+        }
+      };
+      rec.onerror = () => setStudioIsListening(false);
+      rec.onend = () => setStudioIsListening(false);
+      rec.start();
+    } catch (e) {
+      console.warn("Studio mic error:", e);
+      setStudioIsListening(false);
+    }
+  };
+
+  const handleRunStudioInpaint = async (overridePrompt?: string) => {
+    const promptToUse = (overridePrompt !== undefined ? overridePrompt : studioPrompt).trim();
+    if (!promptToUse) return;
+    if (!studioImageFile && !studioImagePreview) {
+      alert("Пожалуйста, загрузите фото товара или выберите его из каталога");
+      return;
+    }
+
+    setStudioIsProcessing(true);
+    setStudioSavedSuccess(false);
+
+    try {
+      const formData = new FormData();
+      formData.append("prompt", promptToUse);
+      formData.append("product_name", "Товар");
+
+      if (studioImageFile) {
+        formData.append("image", studioImageFile);
+      } else if (studioImagePreview) {
+        formData.append("image_url", studioImagePreview);
+      }
+
+      const res = await api.post("/ai/image-to-image/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (res.data && res.data.success) {
+        setStudioResult(res.data);
+        setStudioComparisonMode("after");
+      } else {
+        alert(res.data?.error || "Ошибка генерации студийного фото");
+      }
+    } catch (err: any) {
+      console.error("Studio inpaint error:", err);
+      alert(err.response?.data?.error || "Ошибка обработки фото");
+    } finally {
+      setStudioIsProcessing(false);
+    }
+  };
+
+  const handleSaveStudioResultToCatalog = async () => {
+    if (!studioResult || !studioResult.image_url) return;
+    try {
+      await api.post("/ai/save-to-catalog/", {
+        image_url: studioResult.image_url,
+        name: `${studioResult.product_name || "Товар"} (${studioResult.theme_title || "AI Studio"})`,
+        price: 250000,
+        stock: 25,
+      });
+      setStudioSavedSuccess(true);
+      setTimeout(() => setStudioSavedSuccess(false), 4000);
+    } catch (e) {
+      console.error("Save to catalog error:", e);
+      alert("Ошибка при сохранении в каталог");
+    }
+  };
+
   const handleClearHistory = () => {
     setMessages([]);
     localStorage.removeItem("storebox_sidekick_messages");
@@ -778,6 +953,34 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
+
+  const studioPresetChips = [
+    {
+      label: "🪵 Деревянный стол",
+      prompt: "Помести товар на деревянный стол и добавь студийный свет",
+      theme: "wood",
+    },
+    {
+      label: "📸 Студийный свет (Циклорама)",
+      prompt: "Сделай профессиональный белый студийный фон циклораму и чистый свет",
+      theme: "clean_white",
+    },
+    {
+      label: "🏛️ Белый мрамор",
+      prompt: "Помести товар на премиальный белый мраморный стол",
+      theme: "marble",
+    },
+    {
+      label: "☕ Уютное кафе (Боке)",
+      prompt: "Помести товар в атмосферу теплого кафе с мягким боке",
+      theme: "cafe_warm",
+    },
+    {
+      label: "⚡ Темный люкс (Неон)",
+      prompt: "Создай темный люксовый подиум со стильной неоновой подсветкой",
+      theme: "dark_luxury",
+    },
+  ];
 
   // Quick Action Chips in 3 Languages
   const quickPromptsByLang = {
@@ -1091,7 +1294,41 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
           </div>
         )}
 
-        {/* 2. Body: Either Shopify Live Voice Call Mode OR Standard Chat Messages */}
+        {/* Mode Switcher Tabs (Chat vs AI Studio) */}
+        {!isVoiceCallMode && (
+          <div className="flex border-b border-slate-200/80 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/60 p-1.5 gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab("chat")}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
+                activeTab === "chat"
+                  ? "bg-white dark:bg-zinc-800 text-violet-700 dark:text-violet-300 shadow-xs border border-slate-200/60 dark:border-zinc-700"
+                  : "text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+              <span>Ассистент & Чат</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("studio")}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
+                activeTab === "studio"
+                  ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60"
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>AI Фотостудия (Img2Img)</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-emerald-400/20 text-emerald-600 dark:text-emerald-300">
+                M2
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* 2. Body: Either Shopify Live Voice Call Mode OR Dedicated AI Studio OR Standard Chat */}
         {isVoiceCallMode ? (
           <div className="flex-1 flex flex-col justify-between p-6 bg-gradient-to-b from-[#090a0f] via-[#10121a] to-[#090a0f] text-white relative overflow-hidden select-none">
             {/* Ambient Glowing Background Blobs */}
@@ -1288,6 +1525,417 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                 </button>
               </div>
             </div>
+          </div>
+        ) : activeTab === "studio" ? (
+          /* =============================================================== */
+          /* DEDICATED AI PHOTO STUDIO WORKSPACE (IMAGE-TO-IMAGE / INPAINT)  */
+          /* =============================================================== */
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* 1. Studio Status & Architecture Card */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-violet-500/10 via-indigo-500/10 to-pink-500/10 border border-violet-500/20 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  <span className="font-bold text-xs text-slate-900 dark:text-white">
+                    AI Фотостудия (Image-to-Image / Inpaint)
+                  </span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{fooocusStatus.engine || "Apple Silicon M2"}</span>
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-zinc-300 font-normal leading-relaxed">
+                {activeLang === "uz"
+                  ? "Haqiqiy tovar rasmini yuklang (kiyim, taom, gadjet). AI fonni tozalaydi, yog'och stol, marmar yoki studiya fonini soyalar va nur bilan hosil qilib beradi."
+                  : activeLang === "en"
+                  ? "Upload a product photo (food, fashion, tech). AI isolates the subject and synthesizes photorealistic studio backdrops, contact shadows, and lighting."
+                  : "Загрузите реальное фото товара (еда, одежда, гаджет). ИИ удалит исходный фон и достроит реалистичное студийное окружение со светом и контактными тенями."}
+              </p>
+            </div>
+
+            {/* 2. Photo Upload or Catalog Selector */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <span>1. Фотография товара</span>
+                  <span className="text-[10px] font-normal text-slate-400">
+                    (реальный снимок без обработки)
+                  </span>
+                </label>
+                {catalogProducts.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCatalogPicker(!showCatalogPicker)}
+                    className="text-[11px] font-semibold text-violet-600 hover:text-violet-700 dark:text-violet-400 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    <span>{showCatalogPicker ? "Скрыть каталог" : "Выбрать из каталога"}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Catalog Horizontal Quick Picker */}
+              {showCatalogPicker && catalogProducts.length > 0 && (
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900/80 border border-slate-200/80 dark:border-zinc-800 space-y-1.5 animate-in fade-in">
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Товары вашего магазина:
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {catalogProducts
+                      .filter((p) => p.image_url)
+                      .slice(0, 10)
+                      .map((p) => (
+                        <div
+                          key={p.id}
+                          onClick={() => handleSelectCatalogProduct(p)}
+                          className="shrink-0 w-24 p-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-violet-500 cursor-pointer text-center group transition"
+                        >
+                          <img
+                            src={p.image_url}
+                            alt={p.name_ru || p.name_uz}
+                            className="w-full h-16 object-contain rounded-md mb-1 bg-slate-100 dark:bg-zinc-900"
+                          />
+                          <div className="text-[10px] font-medium text-slate-800 dark:text-zinc-200 truncate group-hover:text-violet-600">
+                            {p.name_ru || p.name_uz}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={studioFileInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={handleStudioFileUpload}
+              />
+
+              {studioImagePreview ? (
+                <div className="p-3 rounded-2xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={studioImagePreview}
+                      alt="Product Preview"
+                      className="w-16 h-16 object-contain rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700"
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">
+                        {studioImageFile ? studioImageFile.name : "Выбранный товар"}
+                      </div>
+                      <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                        <Check className="w-3 h-3" />
+                        <span>Фото готово к обработке</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => studioFileInputRef.current?.click()}
+                      className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-50 text-slate-700 dark:text-zinc-300 text-xs font-semibold border border-slate-200 dark:border-zinc-700 transition cursor-pointer"
+                    >
+                      Заменить
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStudioImagePreview(null);
+                        setStudioImageFile(null);
+                        setStudioResult(null);
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                      title="Удалить фото"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => studioFileInputRef.current?.click()}
+                  className="p-6 rounded-2xl border-2 border-dashed border-slate-300 dark:border-zinc-700 hover:border-violet-500 dark:hover:border-violet-500 bg-slate-50/50 dark:bg-zinc-900/40 hover:bg-violet-50/20 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer text-center group"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <UploadCloud className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
+                      Нажмите для загрузки фото товара
+                    </span>
+                    <p className="text-[11px] text-slate-400 font-normal mt-0.5">
+                      PNG, JPG, WEBP (еда, одежда, аксессуары, гаджеты)
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Prompt & Voice Input */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <span>2. Пожелания к фото (Текст или Голос)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleToggleStudioMic}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                    studioIsListening
+                      ? "bg-rose-500 text-white animate-pulse"
+                      : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-violet-100 hover:text-violet-700"
+                  }`}
+                >
+                  {studioIsListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                  <span>{studioIsListening ? "Слушаю..." : "Голосовой ввод"}</span>
+                </button>
+              </div>
+
+              <textarea
+                rows={2}
+                value={studioPrompt}
+                onChange={(e) => setStudioPrompt(e.target.value)}
+                placeholder="Опишите фон и свет (например: «Помести товар на деревянный стол и добавь студийный свет»)..."
+                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 transition resize-none font-normal"
+              />
+
+              {/* Preset Chips */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Быстрые студийные стили:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {studioPresetChips.map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setStudioPrompt(chip.prompt);
+                        if (studioImagePreview) {
+                          handleRunStudioInpaint(chip.prompt);
+                        }
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-700 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-700 hover:border-violet-300 transition cursor-pointer"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Generate Button */}
+            <button
+              type="button"
+              disabled={studioIsProcessing || (!studioImageFile && !studioImagePreview)}
+              onClick={() => handleRunStudioInpaint()}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-pink-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-violet-600/25 hover:opacity-95 disabled:opacity-40 transition transform active:scale-98 cursor-pointer"
+            >
+              {studioIsProcessing ? (
+                <>
+                  <Sparkles className="w-4 h-4 animate-spin" />
+                  <span>Синтез студийного фото (Inpaint M2)...</span>
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4" />
+                  <span>Сгенерировать фото (Image-to-Image / Inpaint)</span>
+                </>
+              )}
+            </button>
+
+            {/* Processing State */}
+            {studioIsProcessing && (
+              <div className="p-4 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200/80 dark:border-violet-800/40 shadow-md space-y-3 animate-pulse">
+                <div className="flex items-center justify-between text-xs font-bold text-violet-600 dark:text-violet-400">
+                  <span className="flex items-center gap-1.5">
+                    <Wand2 className="w-4 h-4 animate-spin" />
+                    <span>Синтез окружения и контактных теней...</span>
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200">
+                    Neural Studio M2
+                  </span>
+                </div>
+                <div className="h-44 rounded-xl bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 dark:from-zinc-800 dark:via-zinc-700 dark:to-zinc-800 flex items-center justify-center text-xs text-slate-400">
+                  <div className="flex flex-col items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-violet-500 animate-bounce" />
+                    <span>Удаление фона • Прорисовка студийного стола и света...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 5. Result Showcase */}
+            {studioResult && !studioIsProcessing && (
+              <div className="p-4 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200 dark:border-violet-800/60 shadow-lg space-y-3 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span>Результат фотостудии (Image-to-Image)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200">
+                      {studioResult.execution_time || "0.6s"}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200">
+                      {studioResult.theme_title || "Студия"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Comparison Mode Switcher */}
+                <div className="flex bg-slate-100 dark:bg-zinc-800/80 rounded-xl p-1 gap-1 text-[11px] font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setStudioComparisonMode("after")}
+                    className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
+                      studioComparisonMode === "after"
+                        ? "bg-white dark:bg-zinc-700 text-violet-700 dark:text-violet-300 shadow-xs"
+                        : "text-slate-500 hover:text-slate-800 dark:text-zinc-400"
+                    }`}
+                  >
+                    ✨ Студийный снимок (После)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStudioComparisonMode("before")}
+                    className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
+                      studioComparisonMode === "before"
+                        ? "bg-white dark:bg-zinc-700 text-violet-700 dark:text-violet-300 shadow-xs"
+                        : "text-slate-500 hover:text-slate-800 dark:text-zinc-400"
+                    }`}
+                  >
+                    📷 Исходное фото (До)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStudioComparisonMode("split")}
+                    className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
+                      studioComparisonMode === "split"
+                        ? "bg-white dark:bg-zinc-700 text-violet-700 dark:text-violet-300 shadow-xs"
+                        : "text-slate-500 hover:text-slate-800 dark:text-zinc-400"
+                    }`}
+                  >
+                    ↔️ Сравнить рядом
+                  </button>
+                </div>
+
+                {/* Visual View */}
+                {studioComparisonMode === "split" ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1 text-center">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">До (Исходное)</span>
+                      <div
+                        className="h-44 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 cursor-pointer"
+                        onClick={() =>
+                          setPreviewImageModal(studioResult.original_url || studioImagePreview)
+                        }
+                      >
+                        <img
+                          src={studioResult.original_url || studioImagePreview || ""}
+                          alt="Before"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-center">
+                      <span className="text-[10px] font-bold text-emerald-500 uppercase">После (Inpaint)</span>
+                      <div
+                        className="h-44 rounded-xl overflow-hidden bg-slate-950 border border-emerald-500/40 shadow-sm cursor-pointer"
+                        onClick={() => setPreviewImageModal(studioResult.image_url)}
+                      >
+                        <img
+                          src={studioResult.image_url}
+                          alt="After"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group cursor-pointer"
+                    onClick={() =>
+                      setPreviewImageModal(
+                        studioComparisonMode === "before"
+                          ? studioResult.original_url || studioImagePreview
+                          : studioResult.image_url
+                      )
+                    }
+                  >
+                    <img
+                      src={
+                        studioComparisonMode === "before"
+                          ? studioResult.original_url || studioImagePreview || ""
+                          : studioResult.image_url
+                      }
+                      alt="Studio Inpaint"
+                      className="w-full h-60 sm:h-72 object-contain transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 text-white backdrop-blur-xs">
+                      {studioComparisonMode === "before" ? "📷 Исходное фото" : "✨ Студийный снимок"}
+                    </div>
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-medium text-xs">
+                      <ZoomIn className="w-4 h-4" />
+                      <span>Нажмите для увеличения (HD)</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Success Notification */}
+                {studioSavedSuccess && (
+                  <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span>Фотография успешно сохранена в файлы и каталог магазина!</span>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleSaveStudioResultToCatalog}
+                    className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Сохранить в каталог</span>
+                  </button>
+
+                  <a
+                    href={studioResult.image_url}
+                    download="storebox_studio_photo.png"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Скачать PNG</span>
+                  </a>
+                </div>
+
+                {/* Quick Reroll Chips */}
+                <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-1.5">
+                  <span className="text-[10px] font-semibold text-slate-400">
+                    Сгенерировать другой фон для этого же товара:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {studioPresetChips.map((c, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleRunStudioInpaint(c.prompt)}
+                        className="px-2 py-1 rounded-md text-[10px] font-medium bg-slate-50 dark:bg-zinc-900 hover:bg-violet-50 dark:hover:bg-violet-950/40 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 transition cursor-pointer"
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -1583,6 +2231,153 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                           <ChevronRight className="w-3 h-3" />
                         </Link>
                       </div>
+                    </div>
+                  )}
+
+                  {/* 2.5 IMAGE-TO-IMAGE / INPAINT STUDIO CARD */}
+                  {m.action_type === "image_to_image" && m.action_data && (
+                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200 dark:border-violet-800/50 shadow-md space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
+                          <Camera className="w-4 h-4" />
+                          <span>AI Фотостудия • Image-to-Image (Inpaint)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                            {m.action_data.execution_time || "0.6s"}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200/60">
+                            {m.action_data.theme_title || "Студия"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Image Preview with Hover Zoom */}
+                      <div
+                        className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group cursor-pointer"
+                        onClick={() => setPreviewImageModal(m.action_data.image_url)}
+                      >
+                        <img
+                          src={m.action_data.image_url}
+                          alt={m.action_data.product_name}
+                          className="w-full h-56 sm:h-64 object-contain transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 text-white backdrop-blur-xs flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-violet-400" />
+                          <span>Студийный снимок</span>
+                        </div>
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-medium text-xs">
+                          <ZoomIn className="w-4 h-4" />
+                          <span>Нажмите для увеличения (HD)</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-900 dark:text-white">
+                        <span>{m.action_data.product_name}</span>
+                        <span className="text-[11px] text-slate-400 font-normal">
+                          {m.action_data.engine || "Apple Silicon M2"}
+                        </span>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="grid grid-cols-3 gap-1.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImageModal(m.action_data.image_url)}
+                          className="p-2 rounded-lg bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-violet-600" />
+                          <span>Просмотр</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await api.post("/ai/save-to-catalog/", {
+                                image_url: m.action_data.image_url,
+                                name: `${m.action_data.product_name || "Товар"} (AI Studio)`,
+                                price: 250000,
+                                stock: 20,
+                              });
+                              alert("Товар с этим фото успешно сохранен в каталог!");
+                            } catch (e) {
+                              alert("Ошибка сохранения в каталог");
+                            }
+                          }}
+                          className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer border border-emerald-200/60 dark:border-emerald-800/40"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>В каталог</span>
+                        </button>
+
+                        <a
+                          href={m.action_data.image_url}
+                          download={`storebox_studio_${m.action_data.product_name}.png`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400" />
+                          <span>Скачать</span>
+                        </a>
+                      </div>
+
+                      {/* Theme variation chips */}
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleSend(
+                              m.action_data.theme === "wood"
+                                ? "Помести товар на белый мрамор"
+                                : "Помести товар на деревянный стол"
+                            )
+                          }
+                          className="text-violet-600 hover:text-violet-700 dark:text-violet-400 font-semibold flex items-center gap-1 cursor-pointer"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>Сменить стиль фона</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTab("studio");
+                            setStudioImagePreview(m.action_data.image_url);
+                          }}
+                          className="text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>Открыть в студии</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2.6 OPEN STUDIO CTA CARD */}
+                  {m.action_type === "open_studio" && (
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-pink-500/5 border border-violet-500/20 space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-bold text-violet-600 dark:text-violet-400">
+                        <Camera className="w-4 h-4" />
+                        <span>AI Фотостудия (Image-to-Image / Inpaint)</span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-zinc-300 font-normal leading-relaxed">
+                        Загрузите фото товара или выберите его из каталога, чтобы перенести его на деревянный стол, мрамор или студийную циклораму.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("studio");
+                          if (m.action_data?.suggested_prompt) {
+                            setStudioPrompt(m.action_data.suggested_prompt);
+                          }
+                        }}
+                        className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md hover:opacity-95 transition cursor-pointer"
+                      >
+                        <Wand2 className="w-4 h-4" />
+                        <span>Перейти в AI Фотостудию</span>
+                      </button>
                     </div>
                   )}
 

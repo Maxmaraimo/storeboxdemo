@@ -141,6 +141,150 @@ def ai_remove_background_view(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
+def ai_image_to_image_view(request):
+    """
+    Image-to-Image & Inpaint Studio endpoint (Fooocus SDXL / Neural Inpaint Studio M2).
+    """
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Магазин не найден"}, status=404)
+
+    prompt = request.data.get("prompt") or request.data.get("message") or "Сделай красивый студийный свет и фон"
+    product_name = request.data.get("product_name") or "Товар"
+    product_id = request.data.get("product_id")
+    image_file = request.FILES.get("image")
+    image_url_param = request.data.get("image_url")
+
+    target_product = None
+    if product_id:
+        target_product = Product.objects.filter(store=store, id=product_id).first()
+        if target_product and not request.data.get("product_name"):
+            product_name = target_product.name_ru or target_product.name_uz
+
+    input_bytes = None
+    if image_file:
+        input_bytes = image_file.read()
+    elif image_url_param:
+        rel = image_url_param.replace(settings.MEDIA_URL, "").lstrip("/")
+        full_p = os.path.join(settings.MEDIA_ROOT, rel)
+        if os.path.exists(full_p):
+            with open(full_p, "rb") as f:
+                input_bytes = f.read()
+    elif target_product and target_product.primary_image:
+        if os.path.exists(target_product.primary_image.path):
+            with open(target_product.primary_image.path, "rb") as f:
+                input_bytes = f.read()
+
+    if not input_bytes:
+        return Response({"error": "Изображение товара не предоставлено. Пожалуйста, прикрепите фото."}, status=400)
+
+    try:
+        from .services_fooocus import process_image_to_image
+        res = process_image_to_image(
+            image_bytes=input_bytes,
+            prompt=prompt,
+            product_name=product_name,
+            store=store
+        )
+
+        if target_product and res.get("image_url"):
+            rel_path = res["image_url"].replace(settings.MEDIA_URL, "").lstrip("/")
+            pi = ProductImage.objects.create(
+                product=target_product,
+                image=rel_path,
+                is_primary=True,
+                sort_order=0
+            )
+            target_product.images.exclude(id=pi.id).update(is_primary=False)
+            target_product.image_url = res["image_url"]
+            target_product.save(update_fields=["image_url"])
+            res["attached_to_product_id"] = target_product.id
+
+        return Response(res)
+    except Exception as e:
+        logger.error(f"Image-to-Image inpaint failed: {e}", exc_info=True)
+        return Response({"error": f"Ошибка обработки Image-to-Image: {str(e)}"}, status=500)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def ai_save_to_catalog_view(request):
+    """
+    Saves generated studio artwork directly into the merchant catalog as a ready product.
+    """
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Магазин не найден"}, status=404)
+
+    image_url = request.data.get("image_url")
+    name = request.data.get("name") or "Премиальный товар (AI Studio)"
+    price = request.data.get("price") or 250000
+    stock = request.data.get("stock") or 25
+
+    if not image_url:
+        return Response({"error": "URL изображения обязателен"}, status=400)
+
+    from decimal import Decimal
+    from django.utils.text import slugify
+    from apps.catalog.models import Category
+
+    first_cat = Category.objects.filter(store=store, is_active=True).first()
+    slug = f"{slugify(name) or 'item'}-{uuid.uuid4().hex[:4]}"
+
+    product = Product.objects.create(
+        store=store,
+        category=first_cat,
+        name_ru=name,
+        name_uz=name,
+        name_en=name,
+        slug=slug,
+        price=Decimal(str(price)),
+        stock=int(stock),
+        track_stock=True,
+        is_active=True,
+        image_url=image_url,
+        unit=Product.Units.DONA
+    )
+
+    rel_path = image_url.replace(settings.MEDIA_URL, "").lstrip("/")
+    if os.path.exists(os.path.join(settings.MEDIA_ROOT, rel_path)):
+        ProductImage.objects.create(
+            product=product,
+            image=rel_path,
+            is_primary=True,
+            sort_order=0
+        )
+
+    return Response({
+        "success": True,
+        "product": {
+            "id": product.id,
+            "name": product.name_ru,
+            "price": float(product.price),
+            "stock": product.stock,
+            "image_url": product.image_url
+        },
+        "message": f"Товар «{name}» успешно сохранен в каталог магазина!"
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def ai_fooocus_status_view(request):
+    """
+    Returns live connectivity status of Fooocus & SDXL Inpaint engines.
+    """
+    from .services_fooocus import check_fooocus_status
+    status = check_fooocus_status()
+    return Response({
+        "success": True,
+        **status
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def ai_generate_description_view(request):
     """
     Generates marketing description and SEO tags for a product.

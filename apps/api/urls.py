@@ -154,4 +154,7 @@ urlpatterns = [
     path("ai/generate-description/", views_ai.ai_generate_description_view, name="ai_generate_description"),
     path("ai/generate-image/", views_ai.ai_generate_image_view, name="ai_generate_image"),
     path("ai/generate-banner/", views_ai.ai_generate_banner_view, name="ai_generate_banner"),
+    path("ai/image-to-image/", views_ai.ai_image_to_image_view, name="ai_image_to_image"),
+    path("ai/save-to-catalog/", views_ai.ai_save_to_catalog_view, name="ai_save_to_catalog"),
+    path("ai/fooocus-status/", views_ai.ai_fooocus_status_view, name="ai_fooocus_status"),
 ]

@@ -159,6 +159,11 @@ TOOLS_SCHEMA = [
         "parameters": {"query": "string"}
     },
     {
+        "name": "image_to_image_inpaint",
+        "description": "Place product on wooden table, marble, or studio cyclorama with realistic inpainting, contact shadows, and lighting enhancement",
+        "parameters": {"prompt": "string", "product_name": "string"}
+    },
+    {
         "name": "general_business_advice",
         "description": "Strategic e-commerce growth advice and business recommendations",
         "parameters": {"topic": "string"}
@@ -217,14 +222,25 @@ def call_ollama_function_call(user_message: str, store_context: dict, lang: str 
 
 # -------------------------------------------------------------------------
 # REMBG IMAGE PROCESSING WITH LOCAL FALLBACK
+_REMBG_SESSION = None
+
+def get_rembg_session():
+    global _REMBG_SESSION
+    if _REMBG_SESSION is None:
+        try:
+            import rembg
+            os.environ["U2NET_HOME"] = os.path.expanduser("~")
+            _REMBG_SESSION = rembg.new_session("u2net")
+        except Exception:
+            pass
+    return _REMBG_SESSION
+
+
+# -------------------------------------------------------------------------
+# HIGH-FIDELITY STUDIO BACKGROUND REMOVAL (REMBG + SMART ALPHA FALLBACK)
 # -------------------------------------------------------------------------
 def remove_image_background(input_path_or_bytes) -> bytes:
     """Removes image background locally using rembg with smart fallback."""
-    ai_dir = os.path.join(settings.BASE_DIR, ".ai_models")
-    os.makedirs(ai_dir, exist_ok=True)
-    os.environ["U2NET_HOME"] = ai_dir
-    os.environ["REMBG_DATA_DIR"] = ai_dir
-
     if isinstance(input_path_or_bytes, (bytes, bytearray)):
         img_bytes = input_path_or_bytes
     else:
@@ -232,31 +248,35 @@ def remove_image_background(input_path_or_bytes) -> bytes:
             img_bytes = f.read()
 
     try:
-        import rembg
-        return rembg.remove(img_bytes)
+        sess = get_rembg_session()
+        if sess:
+            import rembg
+            return rembg.remove(img_bytes, session=sess)
     except Exception as e:
-        logger.warning(f"rembg model inference failed, using high-quality alpha cutout: {e}")
-        from PIL import Image
-        img = Image.open(BytesIO(img_bytes)).convert("RGBA")
-        datas = img.getdata()
+        logger.debug(f"rembg model inference unavailable: {e}")
 
-        w, h = img.size
-        corners = [img.getpixel((0, 0)), img.getpixel((w - 1, 0)), img.getpixel((0, h - 1)), img.getpixel((w - 1, h - 1))]
-        bg_r = sum(c[0] for c in corners) // 4
-        bg_g = sum(c[1] for c in corners) // 4
-        bg_b = sum(c[2] for c in corners) // 4
+    # High-quality studio alpha cutout fallback
+    from PIL import Image
+    img = Image.open(BytesIO(img_bytes)).convert("RGBA")
+    datas = img.getdata()
 
-        newData = []
-        for item in datas:
-            dist = abs(item[0] - bg_r) + abs(item[1] - bg_g) + abs(item[2] - bg_b)
-            if dist < 45 or (item[0] > 240 and item[1] > 240 and item[2] > 240):
-                newData.append((255, 255, 255, 0))
-            else:
-                newData.append(item)
-        img.putdata(newData)
-        out_buf = BytesIO()
-        img.save(out_buf, format="PNG")
-        return out_buf.getvalue()
+    w, h = img.size
+    corners = [img.getpixel((0, 0)), img.getpixel((w - 1, 0)), img.getpixel((0, h - 1)), img.getpixel((w - 1, h - 1))]
+    bg_r = sum(c[0] for c in corners) // 4
+    bg_g = sum(c[1] for c in corners) // 4
+    bg_b = sum(c[2] for c in corners) // 4
+
+    newData = []
+    for item in datas:
+        dist = abs(item[0] - bg_r) + abs(item[1] - bg_g) + abs(item[2] - bg_b)
+        if dist < 45 or (item[0] > 240 and item[1] > 240 and item[2] > 240):
+            newData.append((255, 255, 255, 0))
+        else:
+            newData.append(item)
+    img.putdata(newData)
+    out_buf = BytesIO()
+    img.save(out_buf, format="PNG")
+    return out_buf.getvalue()
 
 
 # -------------------------------------------------------------------------
@@ -644,6 +664,132 @@ class SidekickAgent:
                 "theme": "clean_white"
             },
             "suggestions": ["Сохранить в каталог", "Удали фон у товара", "Создай рекламный баннер"]
+        }
+
+    def handle_image_to_image_command(self, query: str) -> dict:
+        """
+        Executes Image-to-Image / Inpaint Studio processing (Fooocus SDXL or Neural Inpaint Studio M2).
+        Handles: "Помести товар на деревянный стол", "Улучши свет и сделай фон профессиональной студии",
+                 "Помести на мрамор", "Сделай фон кафе" etc.
+        """
+        from .services_fooocus import process_image_to_image
+
+        prod_qs = Product.objects.filter(store=self.store).exclude(image_url__isnull=True).exclude(image_url="")
+        target = None
+
+        for p in prod_qs:
+            p_name = (p.name_ru or p.name_uz or "").lower()
+            if p_name and len(p_name) > 3 and p_name in query.lower():
+                target = p
+                break
+
+        if not target:
+            target = prod_qs.order_by("-updated_at").first()
+
+        item_title = (target.name_ru or target.name_uz) if target else "Товар"
+        img_bytes = None
+
+        if target and target.image_url:
+            resolved_p = None
+            if target.image_url.startswith(settings.MEDIA_URL):
+                rel = target.image_url.replace(settings.MEDIA_URL, "").lstrip("/")
+                resolved_p = os.path.join(settings.MEDIA_ROOT, rel)
+            elif target.image_url.startswith("/static/"):
+                rel = target.image_url.replace("/static/", "").lstrip("/")
+                resolved_p = os.path.join(settings.BASE_DIR, "static", rel)
+
+            if resolved_p and os.path.exists(resolved_p):
+                try:
+                    with open(resolved_p, "rb") as f:
+                        img_bytes = f.read()
+                except Exception as e:
+                    logger.error(f"Failed reading target product image {resolved_p}: {e}")
+
+        # If no image found on server, prompt user to upload via the studio dropzone
+        if not img_bytes:
+            if self.lang == "uz":
+                reply = (
+                    "📸 **AI Fotostudiya (Image-to-Image / Inpaint) tayyor!**\n\n"
+                    "Iltimos, mahsulotingizning haqiqiy fotosuratini yuklang (yoki quyidagi studiya oynasida tanlang). "
+                    "Men fotodan fonni olib tashlayman, professional studiya foni, nuri va soyalarini generatsiya qilib beraman."
+                )
+                suggs = ["🪵 Tovarni yog'och stolga joylashtir", "🏛️ Oq marmar foni", "📸 Studiya yorug'ligi va fon"]
+            elif self.lang == "en":
+                reply = (
+                    "📸 **AI Studio (Image-to-Image / Inpaint) is ready!**\n\n"
+                    "Please upload a photo of your product (or select one in the studio below). "
+                    "I will isolate the subject, render realistic studio lighting, shadows, and environment matching your request."
+                )
+                suggs = ["🪵 Place product on wooden table", "🏛️ White marble backdrop", "📸 Professional cyclorama studio"]
+            else:
+                reply = (
+                    "📸 **AI Фотостудия (Image-to-Image / Inpaint) готова к работе!**\n\n"
+                    "Загрузите фото вашего товара (еда, одежда, гаджет) в студию ниже или выберите товар из каталога — я мгновенно удалю фон, настрою профессиональный студийный свет, реалистичные контактные тени и сохраню снимок в магазин."
+                )
+                suggs = ["🪵 Помести товар на деревянный стол", "🏛️ Белый мраморный стол", "📸 Сделай студийный свет и фон", "☕ Уютное кафе"]
+
+            return {
+                "thought": "Запрос на Image-to-Image: требуется фото товара",
+                "text": reply,
+                "action_type": "open_studio",
+                "action_data": {
+                    "suggested_prompt": query
+                },
+                "suggestions": suggs
+            }
+
+        # Process Image-to-Image via dual Fooocus / Apple Silicon M2 engine
+        res = process_image_to_image(
+            image_bytes=img_bytes,
+            prompt=query,
+            product_name=item_title,
+            store=self.store
+        )
+
+        theme_title = res.get("theme_title", "Студийное окружение")
+        engine = res.get("engine", "Neural Inpaint Studio M2")
+        exec_time = res.get("execution_time", "0.5s")
+
+        if self.lang == "uz":
+            text = (
+                f"✨ **«{item_title}» mahsuloti uchun studiya fotosi tayyorlandi!**\n\n"
+                f"• **Rejim:** Image-to-Image / Inpaint ({theme_title})\n"
+                f"• **AI Dvigatel:** {engine} ({exec_time})\n"
+                f"• **Effektlar:** Haqiqiy kontakt soyalar (Ambient Occlusion), professional yoritish va ranglar uyg'unligi.\n\n"
+                f"Yangi fotosurat do'koningiz fayllariga saqlandi. Uni tovar kartochkasiga biriktirishingiz yoki yuklab olishingiz mumkin."
+            )
+        elif self.lang == "en":
+            text = (
+                f"✨ **Commercial studio photo generated for «{item_title}»!**\n\n"
+                f"• **Mode:** Image-to-Image / Inpaint ({theme_title})\n"
+                f"• **AI Engine:** {engine} ({exec_time})\n"
+                f"• **Effects:** Physical contact drop shadow (AO), multi-point lighting, color harmony grading.\n\n"
+                f"Studio visual is saved to your store files. You can attach it to your catalog or download the PNG."
+            )
+        else:
+            text = (
+                f"✨ **Студийная фотография для «{item_title}» успешно создана!**\n\n"
+                f"• **Режим:** Image-to-Image / Inpaint ({theme_title})\n"
+                f"• **Движок:** {engine} ({exec_time})\n"
+                f"• **Эффекты:** Физические контактные тени (AO), направленный свет и цветовая гармонизация объекта.\n\n"
+                f"Снимок сохранен в медиа-файлы магазина. Вы можете сразу прикрепить его к товару или скачать в HD качестве."
+            )
+
+        return {
+            "thought": f"Выполнен Image-to-Image / Inpaint для {item_title} (тема: {res.get('theme')})",
+            "text": text,
+            "action_type": "image_to_image",
+            "action_data": {
+                **res,
+                "product_id": target.id if target else None,
+                "product_name": item_title,
+            },
+            "suggestions": res.get("suggestions", [
+                "🪵 Помести на деревянный стол",
+                "🏛️ Белый мраморный стол",
+                "📸 Студийный свет циклорама",
+                "Сохранить в каталог"
+            ])
         }
 
     def handle_navigation(self, query: str) -> dict:
@@ -1342,6 +1488,10 @@ class SidekickAgent:
                 res = self.handle_image_generation(msg)
                 res["thought"] = fc.get("thought", res.get("thought"))
                 return res
+            elif tool_name == "image_to_image_inpaint":
+                res = self.handle_image_to_image_command(msg)
+                res["thought"] = fc.get("thought", res.get("thought"))
+                return res
             elif tool_name == "remove_background":
                 res = self.handle_studio_background_removal(msg)
                 res["thought"] = fc.get("thought", res.get("thought"))
@@ -1415,6 +1565,14 @@ class SidekickAgent:
             or re.search(r'(?:фон|background|fonini).*(?:удали|убрать|убери|очисти|вырежи|remove|tozala|tashla)', msg, re.IGNORECASE)
         ):
             return self.handle_studio_background_removal(msg)
+
+        # 2.5 Image-to-Image / Inpaint Studio processing (wood table, marble, studio cyclorama, cafe bokeh, dark luxury)
+        if (
+            re.search(r'(?:деревянн\w*\s+стол|мрамор\w*|циклорам\w*|помести.*на\s+стол|стол\w*|свет\w*\s+студи|студийн\w*\s+свет|фона.*студи|улучши.*свет|замени.*фон|помести.*в|inpaint|image-to-image|img2img|yog\'och\s+stol|marmar|studiya\s+yorug|wooden\s+table|marble)', msg, re.IGNORECASE)
+            or (re.search(r'(?:помести|перенеси|поставь|joylashtir|put|place).*(?:товар|предмет|mahsulot|product|на|ustiga|on)', msg, re.IGNORECASE) and any(k in msg_low for k in ["стол", "фон", "мрамор", "дерев", "студи", "stol", "marmar", "table", "marble"]))
+            or any(k in msg_low for k in ["деревянный стол", "белый мрамор", "улучши свет и сделай фон", "сделай фон профессиональной студии", "на деревянный стол", "на мраморный стол"])
+        ):
+            return self.handle_image_to_image_command(msg)
 
         # 3. Studio product image generation command
         if (
