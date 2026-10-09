@@ -510,8 +510,27 @@ class SidekickAgent:
             flags=re.IGNORECASE
         ).strip()
         cleaned = re.sub(r'\s*(?:for\s+ecommerce|studio\s+shot|packshot).*$', '', cleaned, flags=re.IGNORECASE).strip()
+        cleaned = re.sub(r'\s*(?:остальное\s+ты\s+сам\s+придумай.*|ты\s+сам\s+придумай.*|придумай\s+что\s+нибудь.*|qolganini\s+o\'zing\s+o\'yla.*|you\s+decide\s+the\s+rest.*)', '', cleaned, flags=re.IGNORECASE).strip()
         cleaned = re.sub(r'\b(?:в\s+светлом\s+стиле|в\s+темном\s+стиле|светлое|темное|oq\s+stil|dark|white)\b', '', cleaned, flags=re.IGNORECASE).strip()
         cleaned = re.sub(r'[«»"\'\.]', '', cleaned).strip()
+
+        # Check if bare request without product context (Shopify Sidekick behavior)
+        if not cleaned or cleaned.lower() in ["изображение", "фото", "картинка", "rasm", "image", "photo", "сделай", "создай", "сделай изображение", "создай изображение"]:
+            if self.lang == "uz":
+                reply = "Albatta! Aynan nimani tasvirlash kerak? Qanday rasm yaratmoqchisiz — masalan, mahsulot (oq ko'ylak, burger, xudi), do'kon uchun reklama banneri yoki fon?"
+                suggs = ["Oq ko'ylak studiya rasmi", "Katta burger BBQ", "Qora xudi studiya", "20% chegirmali reklama banneri"]
+            elif self.lang == "en":
+                reply = "Certainly! What exactly would you like to depict? Describe the product (e.g. white dress shirt, burger, hoodie), promotional banner, or studio background."
+                suggs = ["White dress shirt flat-lay", "Juicy BBQ burger", "Black oversized hoodie", "Promotional 20% discount banner"]
+            else:
+                reply = "Конечно! Что именно нужно изобразить? Опишите, какое изображение вы хотите создать — например, продукт (белая рубашка, бургер, худи), баннер для магазина, фон и т.д."
+                suggs = ["Белая рубашка со студийным освещением", "Сочный бургер BBQ", "Черное оверсайз худи", "Рекламный баннер со скидкой 20%"]
+            return {
+                "thought": "Уточняющий вопрос о деталях изображения (как в Shopify Sidekick)",
+                "text": reply,
+                "action_type": "clarify_image",
+                "suggestions": suggs
+            }
 
         prod_qs = Product.objects.filter(store=self.store)
         target = None
@@ -545,23 +564,23 @@ class SidekickAgent:
         if self.lang == "uz":
             theme_name = "Oq studiya" if theme == "clean_white" else ("Issiq gourmet studiya" if theme == "gourmet_warm" else "Dark Luxury studiya")
             text = (
-                f"🎨 **«{item_title}» uchun tijoriy sifatdagi studiya rasmi yaratildi!**\n\n"
+                f"🎨 **Mana sizning rasmingiz — «{item_title}» studiya yoritgichi va minimalistik uslubda.**\n\n"
                 f"• **O'lchami:** 1024x1024 HD E-Commerce Commercial Visual\n"
                 f"• **Uslub:** {theme_name} (Apple Silicon M2)\n"
-                f"• **Holat:** Tovar kartochkasi uchun tayyor."
+                f"• **Holat:** Tovar kartochkasi va fayllar uchun tayyor."
             )
         elif self.lang == "en":
             theme_name = "Clean White Studio" if theme == "clean_white" else ("Gourmet Warm Studio" if theme == "gourmet_warm" else "Dark Luxury Showcase")
             text = (
-                f"🎨 **Commercial Studio Artwork generated for «{item_title}»!**\n\n"
+                f"🎨 **Here is your image — «{item_title}» in minimalist flat-lay style with studio lighting.**\n\n"
                 f"• **Resolution:** 1024x1024 HD Commercial Grade\n"
                 f"• **Atmosphere:** {theme_name} (Apple Silicon M2)\n"
-                f"• **Status:** Ready for your storefront and promotions."
+                f"• **Status:** Ready for storefront files and catalog."
             )
         else:
             theme_name = "Светлая минималистичная студия" if theme == "clean_white" else ("Теплая студия Gourmet" if theme == "gourmet_warm" else "Темная витрина Dark Luxury")
             text = (
-                f"🎨 **Коммерческий студийный визуал для «{item_title}» создан!**\n\n"
+                f"🎨 **Вот ваше изображение — «{item_title}» в минималистичном стиле со студийным освещением.**\n\n"
                 f"• **Разрешение:** 1024x1024 HD Studio E-Commerce\n"
                 f"• **Атмосфера:** {theme_name} (Apple Silicon M2)\n"
                 f"• **Статус:** Высокое качество, реалистичный свет и тени."
@@ -578,7 +597,96 @@ class SidekickAgent:
                 "image_url": image_url,
                 "theme": theme,
             },
-            "suggestions": ["Удали фон с фото товара", "Сгенерируй SEO описание для товара", "Отчет по продажам"]
+            "suggestions": ["Добавь надпись Белый УЗБ", "Удали фон у товара", "Сгенерируй SEO описание", "Создай баннер со скидкой"]
+        }
+
+    def handle_image_typography_edit(self, query: str) -> dict:
+        """Applies custom typography overlay onto product visual (Shopify Sidekick iterative editing)."""
+        from .services_image import add_typography_overlay_to_image
+        m = re.search(r'(?:надпись|текст|yozuv|text|words?)\s*(?:«|")?([^»"\n]+)(?:»|")?', query, re.IGNORECASE)
+        if m:
+            text_to_add = m.group(1).strip()
+        else:
+            text_to_add = re.sub(r'^(?:добавь|нанеси|напиши|yozuv\s+qo\'sh|add)\s*(?:надпись|текст|yozuv)?\s*', '', query, flags=re.IGNORECASE).strip()
+
+        if not text_to_add:
+            text_to_add = "Белый УЗБ"
+
+        # Search for recent product or default white shirt
+        last_img_url = "/media/products/packshots/white_shirt.jpg"
+        latest_prod = Product.objects.filter(store=self.store, image_url__isnull=False).order_by("-updated_at").first()
+        prod_title = "Белая рубашка"
+        if latest_prod and latest_prod.image_url:
+            last_img_url = latest_prod.image_url
+            prod_title = latest_prod.name_ru or latest_prod.name_uz or "Белая рубашка"
+
+        new_img_url = add_typography_overlay_to_image(
+            last_img_url,
+            overlay_text=text_to_add,
+            product_name=prod_title,
+            store=self.store
+        )
+
+        if self.lang == "uz":
+            text = f"✨ **Tayyor! «{prod_title}» ustiga «{text_to_add}» yozuvi tushirildi!**\n\n• Brendlangan studiya tasviri yangilandi va fayllarga saqlandi."
+        elif self.lang == "en":
+            text = f"✨ **Done! Custom lettering «{text_to_add}» added to {prod_title}!**\n\n• High definition studio artwork updated and ready."
+        else:
+            text = f"✨ **Готово! {prod_title} с надписью «{text_to_add}»!**\n\n• Брендированная надпись аккуратно нанесена на изделие в студийном качестве."
+
+        return {
+            "thought": f"Нанесена надпись {text_to_add} на изображение",
+            "text": text,
+            "action_type": "image_generated",
+            "action_data": {
+                "product_name": f"{prod_title} ({text_to_add})",
+                "image_url": new_img_url,
+                "theme": "clean_white"
+            },
+            "suggestions": ["Сохранить в каталог", "Удали фон у товара", "Создай рекламный баннер"]
+        }
+
+    def handle_navigation(self, query: str) -> dict:
+        """Navigates to store sections dynamically in voice or text mode."""
+        q_low = query.lower()
+        if any(k in q_low for k in ["заказ", "buyurtma", "order"]):
+            path = "/orders"
+            title = "Заказы" if self.lang == "ru" else ("Buyurtmalar" if self.lang == "uz" else "Orders")
+        elif any(k in q_low for k in ["товар", "каталог", "mahsulot", "product"]):
+            path = "/products"
+            title = "Товары" if self.lang == "ru" else ("Mahsulotlar" if self.lang == "uz" else "Products")
+        elif any(k in q_low for k in ["аналитик", "hisobot", "analytic", "выручк"]):
+            path = "/analytics"
+            title = "Аналитика" if self.lang == "ru" else ("Tahlil" if self.lang == "uz" else "Analytics")
+        elif any(k in q_low for k in ["настройк", "sozlama", "setting"]):
+            path = "/settings"
+            title = "Настройки" if self.lang == "ru" else ("Sozlamalar" if self.lang == "uz" else "Settings")
+        elif any(k in q_low for k in ["клиент", "покупател", "mijoz", "customer"]):
+            path = "/customers"
+            title = "Клиенты" if self.lang == "ru" else ("Mijozlar" if self.lang == "uz" else "Customers")
+        elif any(k in q_low for k in ["конструктор", "дизайн", "vidjet", "dizayn"]):
+            path = "/constructor"
+            title = "Конструктор витрины" if self.lang == "ru" else ("Dizayn konstruktori" if self.lang == "uz" else "Storefront Builder")
+        else:
+            path = "/orders"
+            title = "Заказы"
+
+        if self.lang == "uz":
+            text = f"«{title}» bo'limini ochmoqdaman..."
+        elif self.lang == "en":
+            text = f"Opening {title} section for you..."
+        else:
+            text = f"Проверяю текущую страницу... Открываю раздел «{title}»."
+
+        return {
+            "thought": f"Навигация на {path}",
+            "text": text,
+            "action_type": "navigate",
+            "action_data": {
+                "path": path,
+                "title": title
+            },
+            "suggestions": ["Покажи последние заказы", "Отчет по продажам", "Сделай фото товара"]
         }
 
     def handle_banner_generation(self, query: str) -> dict:
@@ -1278,6 +1386,20 @@ class SidekickAgent:
         # Phase 2: High-Precision Multilingual Intent Recognizer (UZ, RU, EN)
         msg_low = msg.lower()
 
+        # 0. Navigation / Open Section Command (Shopify Sidekick Tool Execution)
+        if (
+            re.search(r'(?:открой|перейди|покажи|och|o\'t|open|show|go\s*to)\s+(?:раздел|страницу|в)?\s*(?:заказ|товар|каталог|аналитик|настройк|клиент|покупател|конструктор|дизайн|buyurtma|mahsulot|hisobot|sozlama|mijoz|order|product|analytic|setting|customer)', msg, re.IGNORECASE)
+            or re.search(r'(?:заказ|товар|каталог|аналитик|настройк|клиент|buyurtma|mahsulot|hisobot|order|product|analytic).*(?:открой|перейди|покажи|och|open)', msg, re.IGNORECASE)
+        ):
+            return self.handle_navigation(msg)
+
+        # 0.1 Iterative Image Modification & Typography Overlay (e.g. 'добавь надпись белый узб')
+        if (
+            re.search(r'(?:добавь|нанеси|напиши|yozuv\s+qo\'sh|add|put).*(?:надпись|текст|буквы|yozuv|text|words?)', msg, re.IGNORECASE)
+            or re.search(r'(?:надпись|текст|yozuv|text).*(?:добавь|нанеси|yozuv\s+qo\'sh|add)', msg, re.IGNORECASE)
+        ):
+            return self.handle_image_typography_edit(msg)
+
         # 1. Promotional Banner & Visualizer generation
         if (
             any(k in msg_low for k in ["баннер", "banner", "плакат", "постер", "poster"])
@@ -1299,6 +1421,7 @@ class SidekickAgent:
             any(k in msg_low for k in ["студийн", "studio photo", "studio image", "studio rasm", "студийное фото"])
             or re.search(r'(?:сгенерируй|создай|сделай|нарисуй|generate|create|yarat).*(?:изображени|фото|картинк|арт|image|photo|artwork|rasm)', msg, re.IGNORECASE)
             or re.search(r'(?:изображени|фото|картинк|арт|image|photo|artwork|rasm).*(?:сгенерируй|создай|сделай|нарисуй|generate|create|yarat)', msg, re.IGNORECASE)
+            or any(k in msg_low for k in ["рубашк", "сорочк", "ты сам придумай", "придумай что нибудь", "dress shirt", "белая рубашка", "белый рубашка", "oq ko'ylak"])
         ):
             return self.handle_image_generation(msg)
 

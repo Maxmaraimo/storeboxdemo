@@ -4,7 +4,7 @@ import math
 import uuid
 import logging
 from io import BytesIO
-from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
+from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageFont
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -49,6 +49,10 @@ COMMERCIAL_ASSETS_MAP = {
         "media/products/streetwear/packshot_pants_graphite.png",
         "media/products/streetwear/packshot_denim_stone.png",
     ],
+    "shirt": [
+        "media/products/packshots/white_shirt.jpg",
+        "media/products/streetwear/packshot_cardigan_ecru.jpg",
+    ],
     "perfume": [
         "media/products/packshots/perfume_baccarat_rouge.jpg",
         "media/products/packshots/perfume_delina.jpg",
@@ -85,7 +89,9 @@ def resolve_commercial_product_asset(product_name: str, category_name: str = "",
 
     # 2. Match against pre-indexed high-resolution commercial asset categories
     matched_key = None
-    if any(k in query for k in ["бургер", "чизбургер", "котлет", "сэндвич", "burger", "cheeseburger"]):
+    if any(k in query for k in ["рубашк", "сорочк", "shirt", "button-down", "dress shirt", "ko'ylak"]):
+        matched_key = "shirt"
+    elif any(k in query for k in ["бургер", "чизбургер", "котлет", "сэндвич", "burger", "cheeseburger"]):
         matched_key = "burger"
     elif any(k in query for k in ["пицц", "пепперони", "маргарит", "pizza"]):
         matched_key = "pizza"
@@ -97,7 +103,7 @@ def resolve_commercial_product_asset(product_name: str, category_name: str = "",
         matched_key = "watch"
     elif any(k in query for k in ["худи", "толстовк", "свитшот", "кофт", "hoodie", "sweatshirt"]):
         matched_key = "hoodie"
-    elif any(k in query for k in ["футболк", "майк", "поло", "t-shirt", "tee", "shirt"]):
+    elif any(k in query for k in ["футболк", "майк", "поло", "t-shirt", "tee"]):
         matched_key = "tshirt"
     elif any(k in query for k in ["куртк", "бомбер", "пальто", "ветровк", "jacket", "coat", "bomber"]):
         matched_key = "jacket"
@@ -473,3 +479,85 @@ def generate_store_banner_image(
     bg.save(abs_path, format="PNG", quality=95)
 
     return f"{settings.MEDIA_URL}{rel_path}"
+
+
+def add_typography_overlay_to_image(
+    image_path_or_url: str,
+    overlay_text: str,
+    product_name: str = "Товар",
+    store=None
+) -> str:
+    """
+    Applies custom typography, brand graphics, or embroidery overlay onto a product visual.
+    Used for iterative Shopify Sidekick modifications (e.g. 'добавь надпись Белый УЗБ').
+    """
+    # 1. Resolve source image on disk
+    src_path = None
+    if image_path_or_url:
+        clean_rel = image_path_or_url.replace(settings.MEDIA_URL, "").lstrip("/")
+        candidate = os.path.join(settings.MEDIA_ROOT, clean_rel)
+        if os.path.exists(candidate):
+            src_path = candidate
+
+    if not src_path or not os.path.exists(src_path):
+        # Fallback to white shirt or default commercial packshot
+        src_path = os.path.join(settings.BASE_DIR, "media/products/packshots/white_shirt.jpg")
+
+    try:
+        base_img = Image.open(src_path).convert("RGBA")
+    except Exception as e:
+        logger.error(f"Failed to open source image for typography overlay: {e}")
+        return image_path_or_url
+
+    w, h = base_img.size
+    txt_clean = overlay_text.strip().replace("«", "").replace("»", "").replace('"', '').strip()
+
+    # Create overlay layer
+    txt_layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(txt_layer)
+
+    # Resolve crisp system font
+    font_size = max(28, int(w * 0.045))
+    font = None
+    candidate_fonts = [
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+        "/System/Library/Fonts/SFProDisplay-Bold.otf",
+        "/System/Library/Fonts/Supplemental/HelveticaNeue.ttc",
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+    ]
+    for cp in candidate_fonts:
+        if os.path.exists(cp):
+            try:
+                font = ImageFont.truetype(cp, font_size)
+                break
+            except Exception:
+                pass
+
+    if not font:
+        font = ImageFont.load_default()
+
+    # Measure text
+    bbox = draw.textbbox((0, 0), txt_clean, font=font)
+    t_w = bbox[2] - bbox[0]
+    t_h = bbox[3] - bbox[1]
+
+    # Target placement: Chest / center area of shirt (x: center, y: ~42-45% of height)
+    cx = (w - t_w) // 2
+    cy = int(h * 0.44)
+
+    # 1. Subtle fabric print shadow (screenprint depth)
+    draw.text((cx + 1, cy + 2), txt_clean, font=font, fill=(15, 23, 42, 70))
+    # 2. Main printed typography (stylish dark graphite or brand black)
+    draw.text((cx, cy), txt_clean, font=font, fill=(30, 41, 59, 230))
+
+    # Composite overlay onto base image
+    final_img = Image.alpha_composite(base_img, txt_layer).convert("RGB")
+
+    # Save to media/products/
+    out_rel = f"products/studio_gen_edit_{uuid.uuid4().hex[:8]}.png"
+    out_abs = os.path.join(settings.MEDIA_ROOT, out_rel)
+    os.makedirs(os.path.dirname(out_abs), exist_ok=True)
+    final_img.save(out_abs, format="PNG", quality=95)
+
+    return f"{settings.MEDIA_URL}{out_rel}"
+

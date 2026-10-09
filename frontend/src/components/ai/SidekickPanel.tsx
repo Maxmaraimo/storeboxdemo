@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Sparkles,
   Mic,
@@ -30,10 +30,31 @@ import {
   FileText,
   ZoomIn,
   Paperclip,
+  Phone,
+  PhoneOff,
+  Maximize2,
+  Minimize2,
+  Eye,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { BannerCanvas } from "./BannerCanvas";
+
+// Programmatically detects the language of text to prevent voice accent mismatch
+export const detectTextLanguage = (text: string): "ru" | "uz" | "en" => {
+  if (!text) return "ru";
+  if (/[а-яё]/i.test(text)) return "ru";
+  if (
+    /\b(va|uchun|do'kon|tovar|buyurtma|narx|chegirma|men|siz|boladi|yarat|qora|oq|haqida|yozuv|ko'rsat|rasm|salom|qil|qiling)\b/i.test(
+      text
+    ) ||
+    /[o‘g‘ʻʼ]/i.test(text)
+  ) {
+    return "uz";
+  }
+  if (/[a-z]/i.test(text)) return "en";
+  return "ru";
+};
 
 export interface SidekickMessage {
   id: string;
@@ -178,14 +199,25 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     return [];
   });
 
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
 
+  // Shopify Sidekick Live Voice Mode (Живой звонок со сферой)
+  const [isVoiceCallMode, setIsVoiceCallMode] = useState<boolean>(false);
+  const [voiceCallStatus, setVoiceCallStatus] = useState<"connecting" | "listening" | "thinking" | "speaking">("listening");
+  const [callDuration, setCallDuration] = useState<number>(0);
+  const [isCallMuted, setIsCallMuted] = useState<boolean>(false);
+  const [liveTranscript, setLiveTranscript] = useState<string>("");
+  const [liveAssistantText, setLiveAssistantText] = useState<string>("");
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [generatingSkeleton, setGeneratingSkeleton] = useState<boolean>(false);
+
   // Voice Settings & Neural TTS
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(() => {
-    return localStorage.getItem("storebox_sidekick_tts") === "true";
+    return localStorage.getItem("storebox_sidekick_tts") !== "false";
   });
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>(() => {
@@ -201,6 +233,19 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  // Live call duration timer
+  useEffect(() => {
+    let timer: any;
+    if (isVoiceCallMode) {
+      timer = setInterval(() => {
+        setCallDuration((d) => d + 1);
+      }, 1000);
+    } else {
+      setCallDuration(0);
+    }
+    return () => clearInterval(timer);
+  }, [isVoiceCallMode]);
 
   // 1. Enumerate and score natural voices
   useEffect(() => {
@@ -221,13 +266,11 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   const getBestVoiceForLanguage = (targetLang: "ru" | "uz" | "en") => {
     if (!availableVoices.length) return null;
 
-    // If user explicitly chose a voice in settings
     if (selectedVoiceURI) {
       const chosen = availableVoices.find((v) => v.voiceURI === selectedVoiceURI);
       if (chosen) return chosen;
     }
 
-    // Rank all voices with neural scoring system
     const scored = availableVoices
       .map((v) => ({ voice: v, score: scoreVoice(v, targetLang, preferredGender) }))
       .filter((item) => item.score > -1000)
@@ -237,7 +280,6 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       return scored[0].voice;
     }
 
-    // Fallback if no voice passed strict neural filter: pick matching language
     const fallback = availableVoices.find((v) =>
       targetLang === "ru"
         ? v.lang.startsWith("ru")
@@ -248,7 +290,69 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     return fallback || null;
   };
 
-  // 3. Initialize Speech Recognition
+  // 3. Natural Voice TTS Speaker with automatic language resolution
+  const speakText = (
+    text: string,
+    forceLang?: "ru" | "uz" | "en",
+    onEndCallback?: () => void
+  ) => {
+    if (!ttsEnabled || !("speechSynthesis" in window)) {
+      if (onEndCallback) onEndCallback();
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+
+      // CRITICAL FIX: Automatically detect text language so Russian is NEVER read by an Uzbek voice!
+      const currentTargetLang = forceLang || detectTextLanguage(text);
+      const clean = cleanTextForSpeech(text, currentTargetLang);
+      if (!clean) {
+        if (onEndCallback) onEndCallback();
+        return;
+      }
+
+      const voice = getBestVoiceForLanguage(currentTargetLang);
+      const voiceLang = voice
+        ? voice.lang
+        : currentTargetLang === "ru"
+        ? "ru-RU"
+        : currentTargetLang === "en"
+        ? "en-US"
+        : "tr-TR";
+
+      const sentenceChunks = clean
+        .replace(/([.!?])\s+/g, "$1|#|")
+        .split("|#|")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+      const speechQueue = sentenceChunks.slice(0, 3);
+
+      speechQueue.forEach((chunk, idx) => {
+        const utterance = new SpeechSynthesisUtterance(chunk);
+        if (voice) {
+          utterance.voice = voice;
+        }
+        utterance.lang = voiceLang;
+        utterance.rate = speechRate;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        if (idx === speechQueue.length - 1 && onEndCallback) {
+          utterance.onend = () => {
+            onEndCallback();
+          };
+        }
+
+        window.speechSynthesis.speak(utterance);
+      });
+    } catch (e) {
+      console.warn("TTS speak failed:", e);
+      if (onEndCallback) onEndCallback();
+    }
+  };
+
+  // 4. Initialize Speech Recognition with Hands-Free Live Call Loop
   useEffect(() => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -262,23 +366,44 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
         recognition.onstart = () => {
           setIsListening(true);
+          if (isVoiceCallMode) setVoiceCallStatus("listening");
         };
 
         recognition.onresult = (event: any) => {
           let transcript = "";
+          let isFinal = false;
           for (let i = event.resultIndex; i < event.results.length; i++) {
             transcript += event.results[i][0].transcript;
+            if (event.results[i].isFinal) isFinal = true;
           }
-          setInput(transcript);
+
+          if (isVoiceCallMode) {
+            setLiveTranscript(transcript);
+            if (isFinal && transcript.trim()) {
+              handleVoiceCallTurn(transcript.trim());
+            }
+          } else {
+            setInput(transcript);
+          }
         };
 
         recognition.onerror = (event: any) => {
           console.warn("Speech recognition error:", event.error);
           setIsListening(false);
+          if (isVoiceCallMode && !isCallMuted && event.error === "no-speech") {
+            try {
+              recognition.start();
+            } catch (_) {}
+          }
         };
 
         recognition.onend = () => {
           setIsListening(false);
+          if (isVoiceCallMode && !isCallMuted && voiceCallStatus === "listening") {
+            try {
+              recognition.start();
+            } catch (_) {}
+          }
         };
 
         recognitionRef.current = recognition;
@@ -286,23 +411,155 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
         console.warn("SpeechRecognition init failed:", e);
       }
     }
-  }, []);
+  }, [isVoiceCallMode, isCallMuted, voiceCallStatus]);
 
-  // 4. Save messages to LocalStorage
+  // Hands-free Voice Call Turn Handler
+  const handleVoiceCallTurn = async (spokenText: string) => {
+    if (!spokenText.trim()) return;
+
+    const detected = detectTextLanguage(spokenText);
+    setActiveLang(detected);
+    setVoiceCallStatus("thinking");
+    setLiveTranscript(spokenText);
+
+    const userMsg: SidekickMessage = {
+      id: "u_" + Date.now(),
+      sender: "user",
+      text: spokenText,
+      isVoice: true,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+
+    try {
+      const res = await api.post("/ai/chat/", {
+        message: spokenText,
+        lang: detected,
+      });
+
+      const data = res.data;
+      setLiveAssistantText(data.text);
+
+      // Execute navigation if user said "открой заказы" or similar
+      if (data.action_type === "navigate" && data.action_data?.path) {
+        navigate(data.action_data.path);
+      }
+
+      const botMsg: SidekickMessage = {
+        id: "a_" + Date.now(),
+        sender: "assistant",
+        text: data.text || "Команда выполнена.",
+        action_type: data.action_type,
+        action_data: data.action_data,
+        suggestions: data.suggestions || [],
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, botMsg]);
+
+      // Speak response back with animated orb pulsing, then resume listening!
+      setVoiceCallStatus("speaking");
+      speakText(data.text, detected, () => {
+        if (isVoiceCallMode && !isCallMuted) {
+          setVoiceCallStatus("listening");
+          setLiveTranscript("");
+          if (recognitionRef.current) {
+            try {
+              recognitionRef.current.lang =
+                detected === "ru" ? "ru-RU" : detected === "en" ? "en-US" : "uz-UZ";
+              recognitionRef.current.start();
+            } catch (_) {}
+          }
+        }
+      });
+    } catch (err) {
+      console.error("Voice turn error:", err);
+      setVoiceCallStatus("listening");
+    }
+  };
+
+  // Start Shopify Sidekick Live Voice Call
+  const startVoiceCall = () => {
+    setIsVoiceCallMode(true);
+    setVoiceCallStatus("listening");
+    setLiveTranscript("");
+    setLiveAssistantText("");
+    setCallDuration(0);
+
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.lang =
+          activeLang === "ru" ? "ru-RU" : activeLang === "en" ? "en-US" : "uz-UZ";
+        recognitionRef.current.start();
+      } catch (_) {}
+    }
+  };
+
+  // End Shopify Sidekick Live Voice Call
+  const endVoiceCall = () => {
+    setIsVoiceCallMode(false);
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (_) {}
+    }
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    const mins = Math.floor(callDuration / 60);
+    const secs = callDuration % 60;
+    const durStr = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+
+    const summaryMsg: SidekickMessage = {
+      id: "call_" + Date.now(),
+      sender: "assistant",
+      text:
+        activeLang === "uz"
+          ? `🎙️ **Ovozli muloqot yakunlandi (${durStr})**\nSidekick AI bilan jonli ovozli suhbat o'tkazildi. Barcha buyruqlar muvaffaqiyatli bajarildi.`
+          : activeLang === "en"
+          ? `🎙️ **Voice Call Finished (${durStr})**\nLive interactive call completed with Sidekick AI. Commands executed.`
+          : `🎙️ **Голосовой диалог завершен (${durStr})**\nЗавершен интерактивный голосовой сеанс с Sidekick AI. Все запросы и навигация обработаны.`,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    setMessages((prev) => [...prev, summaryMsg]);
+    setCallDuration(0);
+  };
+
+  // Toggle Live Call Mute State
+  const toggleCallMute = () => {
+    const next = !isCallMuted;
+    setIsCallMuted(next);
+    if (next) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (_) {}
+      }
+    } else {
+      if (isVoiceCallMode && recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch (_) {}
+      }
+    }
+  };
+
+  // Save messages to LocalStorage
   useEffect(() => {
     try {
       localStorage.setItem("storebox_sidekick_messages", JSON.stringify(messages.slice(-30)));
     } catch (_) {}
   }, [messages]);
 
-  // 5. Scroll to bottom
+  // Scroll to bottom
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isOpen, isLoading]);
+  }, [messages, isOpen, isLoading, generatingSkeleton]);
 
-  // Toggle Speech Recognition
+  // Toggle Standard Mic Input
   const toggleListening = () => {
     if (!recognitionRef.current) return;
 
@@ -311,63 +568,13 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       setIsListening(false);
     } else {
       try {
-        if (activeLang === "ru") {
-          recognitionRef.current.lang = "ru-RU";
-        } else if (activeLang === "en") {
-          recognitionRef.current.lang = "en-US";
-        } else {
-          recognitionRef.current.lang = "uz-UZ";
-        }
+        recognitionRef.current.lang =
+          activeLang === "ru" ? "ru-RU" : activeLang === "en" ? "en-US" : "uz-UZ";
         recognitionRef.current.start();
         setIsListening(true);
       } catch (err) {
         console.warn("Error starting speech recognition:", err);
       }
-    }
-  };
-
-  // Natural Voice TTS Speaker with smooth sentence cadence
-  const speakText = (text: string, forceLang?: "ru" | "uz" | "en") => {
-    if (!ttsEnabled || !("speechSynthesis" in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      const currentTargetLang = forceLang || activeLang;
-      const clean = cleanTextForSpeech(text, currentTargetLang);
-      if (!clean) return;
-
-      const voice = getBestVoiceForLanguage(currentTargetLang);
-      const voiceLang = voice
-        ? voice.lang
-        : currentTargetLang === "ru"
-        ? "ru-RU"
-        : currentTargetLang === "en"
-        ? "en-US"
-        : "tr-TR";
-
-      // Split into clean sentence chunks for natural breathing cadence and to prevent browser buffer cutoffs
-      const sentenceChunks = clean
-        .replace(/([.!?])\s+/g, "$1|#|")
-        .split("|#|")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-
-      // Keep voice delivery concise and impactful (up to 3 key sentences)
-      const speechQueue = sentenceChunks.slice(0, 3);
-
-      speechQueue.forEach((chunk) => {
-        const utterance = new SpeechSynthesisUtterance(chunk);
-        if (voice) {
-          utterance.voice = voice;
-        }
-        utterance.lang = voiceLang;
-        utterance.rate = speechRate;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-
-        window.speechSynthesis.speak(utterance);
-      });
-    } catch (e) {
-      console.warn("TTS speak failed:", e);
     }
   };
 
@@ -397,7 +604,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     }
   };
 
-  // Send message
+  // Send standard message
   const handleSend = async (textToSend?: string, isVoiceInput = false) => {
     const query = (textToSend !== undefined ? textToSend : input).trim();
     if (!query || isLoading) return;
@@ -405,6 +612,16 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     if (isListening && recognitionRef.current) {
       recognitionRef.current.stop();
       setIsListening(false);
+    }
+
+    const detected = detectTextLanguage(query);
+    setActiveLang(detected);
+
+    const isImageQuery = /сделай.*(?:изображен|фото)|создай.*(?:изображен|фото)|белая рубашка|белый рубашка|рубашк|rasm\s+yarat|create\s+image|studio/i.test(
+      query
+    );
+    if (isImageQuery) {
+      setGeneratingSkeleton(true);
     }
 
     const userMsg: SidekickMessage = {
@@ -422,10 +639,16 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     try {
       const res = await api.post("/ai/chat/", {
         message: query,
-        lang: activeLang,
+        lang: detected,
       });
 
       const data = res.data;
+
+      // Execute navigation if command was to open a section
+      if (data.action_type === "navigate" && data.action_data?.path) {
+        navigate(data.action_data.path);
+      }
+
       const botMsg: SidekickMessage = {
         id: "a_" + Date.now(),
         sender: "assistant",
@@ -437,16 +660,16 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       };
 
       setMessages((prev) => [...prev, botMsg]);
-      speakText(botMsg.text);
+      speakText(botMsg.text, detected);
     } catch (err: any) {
       console.error("Sidekick chat error:", err);
       const errMsg: SidekickMessage = {
         id: "err_" + Date.now(),
         sender: "assistant",
         text:
-          activeLang === "uz"
+          detected === "uz"
             ? "Kechirasiz, so'rovni bajarishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring."
-            : activeLang === "en"
+            : detected === "en"
             ? "Sorry, an error occurred while processing the command. Please try again."
             : "Извините, произошла ошибка обработки команды. Проверьте соединение или повторите запрос.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -454,6 +677,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       setMessages((prev) => [...prev, errMsg]);
     } finally {
       setIsLoading(false);
+      setGeneratingSkeleton(false);
     }
   };
 
@@ -609,7 +833,9 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
       {/* Slide-over Drawer Panel (Shopify Sidekick Standard) */}
       <aside
-        className={`fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[480px] lg:w-[500px] bg-white dark:bg-[#0c0d0e] shadow-2xl border-l border-slate-200/80 dark:border-zinc-800 flex flex-col transition-all duration-300 ease-in-out`}
+        className={`fixed right-0 top-0 bottom-0 z-50 ${
+          isExpanded ? "w-full sm:w-[680px] lg:w-[760px]" : "w-full sm:w-[480px] lg:w-[500px]"
+        } bg-white dark:bg-[#0c0d0e] shadow-2xl border-l border-slate-200/80 dark:border-zinc-800 flex flex-col transition-all duration-300 ease-in-out`}
       >
         {/* 1. Header */}
         <div className="p-3.5 sm:p-4 border-b border-slate-100 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0c0d0e]/95 backdrop-blur-md flex items-center justify-between">
@@ -632,9 +858,30 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            {/* Shopify Live Voice Call Mode Toggle */}
+            <button
+              type="button"
+              onClick={isVoiceCallMode ? endVoiceCall : startVoiceCall}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                isVoiceCallMode
+                  ? "bg-rose-500 text-white animate-pulse shadow-sm"
+                  : "bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-90 shadow-xs"
+              }`}
+              title={
+                isVoiceCallMode
+                  ? "Завершить интерактивный голосовой звонок"
+                  : "Начать интерактивный голосовой звонок (Shopify Sidekick Live)"
+              }
+            >
+              {isVoiceCallMode ? <PhoneOff className="w-3.5 h-3.5" /> : <Phone className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline font-bold">
+                {isVoiceCallMode ? "Завершить" : "Звонок"}
+              </span>
+            </button>
+
             {/* Language Switcher Pill */}
-            <div className="flex items-center bg-slate-100 dark:bg-zinc-800/80 rounded-lg p-0.5 text-[11px] font-semibold mr-1">
+            <div className="flex items-center bg-slate-100 dark:bg-zinc-800/80 rounded-lg p-0.5 text-[11px] font-semibold">
               {(["ru", "uz", "en"] as const).map((l) => (
                 <button
                   key={l}
@@ -681,6 +928,16 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
               title={ttsEnabled ? "Отключить озвучку" : "Включить естественную озвучку"}
             >
               {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+
+            {/* Expand / Maximize panel width toggle */}
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden sm:flex"
+              title={isExpanded ? "Свернуть панель (500px)" : "Развернуть панель (760px)"}
+            >
+              {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
 
             {/* Clear History */}
@@ -834,8 +1091,208 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
           </div>
         )}
 
-        {/* 2. Messages Canvas */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* 2. Body: Either Shopify Live Voice Call Mode OR Standard Chat Messages */}
+        {isVoiceCallMode ? (
+          <div className="flex-1 flex flex-col justify-between p-6 bg-gradient-to-b from-[#090a0f] via-[#10121a] to-[#090a0f] text-white relative overflow-hidden select-none">
+            {/* Ambient Glowing Background Blobs */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-violet-600/20 blur-3xl pointer-events-none animate-pulse" />
+            <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-72 h-72 rounded-full bg-indigo-600/15 blur-3xl pointer-events-none" />
+
+            {/* Top Bar of Call Mode */}
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+                <span className="text-xs font-bold text-rose-400 tracking-wider uppercase">
+                  Live Call
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-white/10 text-[11px] font-mono text-zinc-300">
+                  {Math.floor(callDuration / 60)}:{(callDuration % 60).toString().padStart(2, "0")}
+                </span>
+              </div>
+              <div className="text-[11px] font-medium text-zinc-400">
+                Hands-Free Voice Mode
+              </div>
+            </div>
+
+            {/* Center Orb Section */}
+            <div className="relative z-10 flex flex-col items-center justify-center my-auto py-8">
+              {/* Soundwave Ripple Rings */}
+              <div className="relative flex items-center justify-center">
+                {/* Outer Wave 3 */}
+                <div
+                  className={`absolute rounded-full transition-all duration-700 pointer-events-none ${
+                    voiceCallStatus === "speaking"
+                      ? "w-64 h-64 border border-violet-500/30 bg-violet-500/5 animate-ping opacity-60"
+                      : voiceCallStatus === "listening"
+                      ? "w-56 h-56 border border-emerald-500/25 bg-emerald-500/5 animate-pulse"
+                      : "w-48 h-48 border border-white/5 opacity-20"
+                  }`}
+                />
+                {/* Outer Wave 2 */}
+                <div
+                  className={`absolute rounded-full transition-all duration-500 pointer-events-none ${
+                    voiceCallStatus === "speaking"
+                      ? "w-52 h-52 border border-violet-400/40 bg-violet-500/10 scale-110"
+                      : voiceCallStatus === "listening"
+                      ? "w-44 h-44 border border-emerald-400/30 scale-105"
+                      : "w-40 h-40 border border-white/10 opacity-30"
+                  }`}
+                />
+                {/* Outer Wave 1 */}
+                <div
+                  className={`absolute rounded-full transition-all duration-300 pointer-events-none ${
+                    voiceCallStatus === "speaking"
+                      ? "w-40 h-40 border-2 border-fuchsia-400/50 shadow-lg shadow-fuchsia-500/30"
+                      : voiceCallStatus === "listening"
+                      ? "w-36 h-36 border-2 border-emerald-400/50 shadow-lg shadow-emerald-500/20"
+                      : "w-32 h-32 border border-white/15"
+                  }`}
+                />
+
+                {/* The Shopify 3D Luminous Orb */}
+                <div
+                  className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-full cursor-pointer transition-all duration-500 shadow-2xl flex items-center justify-center ${
+                    voiceCallStatus === "speaking"
+                      ? "scale-110 bg-gradient-to-tr from-fuchsia-600 via-violet-600 to-indigo-400 shadow-violet-500/60 ring-4 ring-violet-400/40"
+                      : voiceCallStatus === "thinking"
+                      ? "scale-95 bg-gradient-to-tr from-amber-500 via-orange-600 to-violet-600 shadow-amber-500/50 ring-4 ring-amber-400/40 animate-spin"
+                      : voiceCallStatus === "listening"
+                      ? "scale-100 bg-gradient-to-tr from-emerald-600 via-teal-500 to-indigo-500 shadow-emerald-500/50 ring-4 ring-emerald-400/40"
+                      : "bg-gradient-to-tr from-violet-700 via-indigo-700 to-slate-800 shadow-indigo-500/30"
+                  }`}
+                  onClick={toggleCallMute}
+                  title={isCallMuted ? "Включить микрофон" : "Отключить микрофон"}
+                >
+                  {/* Inner Light Core / Specular */}
+                  <div className="absolute inset-1.5 rounded-full bg-gradient-to-br from-white/40 via-transparent to-black/30 pointer-events-none" />
+                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center">
+                    {voiceCallStatus === "speaking" ? (
+                      <Volume2 className="w-6 h-6 text-white animate-pulse" />
+                    ) : voiceCallStatus === "thinking" ? (
+                      <Sparkles className="w-6 h-6 text-amber-200 animate-spin" />
+                    ) : isCallMuted ? (
+                      <MicOff className="w-6 h-6 text-rose-300" />
+                    ) : (
+                      <Mic className="w-6 h-6 text-white animate-pulse" />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Voice Status Pill */}
+              <div className="mt-8 flex flex-col items-center text-center space-y-2">
+                <div
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border transition-all ${
+                    voiceCallStatus === "speaking"
+                      ? "bg-violet-950/80 border-violet-500/50 text-violet-300 shadow-md shadow-violet-500/20"
+                      : voiceCallStatus === "thinking"
+                      ? "bg-amber-950/80 border-amber-500/50 text-amber-300 shadow-md shadow-amber-500/20"
+                      : voiceCallStatus === "listening"
+                      ? "bg-emerald-950/80 border-emerald-500/50 text-emerald-300 shadow-md shadow-emerald-500/20"
+                      : "bg-zinc-900 border-zinc-700 text-zinc-300"
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full animate-ping ${
+                      voiceCallStatus === "speaking"
+                        ? "bg-violet-400"
+                        : voiceCallStatus === "thinking"
+                        ? "bg-amber-400"
+                        : "bg-emerald-400"
+                    }`}
+                  />
+                  <span>
+                    {voiceCallStatus === "speaking"
+                      ? activeLang === "uz"
+                        ? "Sidekick javob bermoqda..."
+                        : activeLang === "en"
+                        ? "Sidekick is speaking..."
+                        : "Отвечаю..."
+                      : voiceCallStatus === "thinking"
+                      ? activeLang === "uz"
+                        ? "Do'kon tahlil qilinmoqda..."
+                        : activeLang === "en"
+                        ? "Analyzing store & data..."
+                        : "Анализирую данные магазина..."
+                      : activeLang === "uz"
+                      ? "Sizni tinglayapman... Erkin gapiring"
+                      : activeLang === "en"
+                      ? "Listening to your voice... Speak freely"
+                      : "Слушаю вас... Говорите свободно"}
+                  </span>
+                </div>
+
+                {/* Live Subtitle Transcript */}
+                <div className="max-w-sm min-h-[52px] px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-zinc-300 text-center flex items-center justify-center">
+                  {liveTranscript ? (
+                    <p className="italic text-white">«{liveTranscript}»</p>
+                  ) : liveAssistantText ? (
+                    <p className="line-clamp-2 text-zinc-200">{liveAssistantText}</p>
+                  ) : (
+                    <p className="text-zinc-500">
+                      {activeLang === "uz"
+                        ? "Masalan: «Buyurtmalarni och», «Oq ko'ylak yarat»"
+                        : activeLang === "en"
+                        ? "Try: «Open orders», «Create white shirt»"
+                        : "Скажите: «Открой заказы» или «Создай белую рубашку»"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Call Controls & Quick Suggestions */}
+            <div className="relative z-10 space-y-4">
+              {/* Quick Voice Prompt Suggestions */}
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                {[
+                  activeLang === "uz" ? "Buyurtmalarni och" : activeLang === "en" ? "Open orders" : "Открой заказы",
+                  activeLang === "uz" ? "Oq ko'ylak yarat" : activeLang === "en" ? "Create white shirt" : "Создай белую рубашку",
+                  activeLang === "uz" ? "Savdo hisoboti" : activeLang === "en" ? "Sales report" : "Отчет по продажам",
+                ].map((hint, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleVoiceCallTurn(hint)}
+                    className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-[11px] text-zinc-300 transition cursor-pointer"
+                  >
+                    💬 «{hint}»
+                  </button>
+                ))}
+              </div>
+
+              {/* Main Call Action Buttons */}
+              <div className="flex items-center justify-center gap-5 pt-2 border-t border-white/10">
+                {/* Mute Mic Button */}
+                <button
+                  type="button"
+                  onClick={toggleCallMute}
+                  className={`p-3.5 rounded-full transition cursor-pointer ${
+                    isCallMuted
+                      ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
+                      : "bg-white/10 hover:bg-white/20 text-zinc-300 border border-white/10"
+                  }`}
+                  title={isCallMuted ? "Включить микрофон" : "Заглушить микрофон"}
+                >
+                  {isCallMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
+
+                {/* End Call Button */}
+                <button
+                  type="button"
+                  onClick={endVoiceCall}
+                  className="p-4 rounded-full bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition transform hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
+                  title="Завершить голосовой звонок"
+                >
+                  <PhoneOff className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* 2. Messages Canvas */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="space-y-5 pt-3">
               {/* Welcome Card */}
@@ -923,6 +1380,46 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                     <div className="whitespace-pre-line select-text">{m.text}</div>
                   </div>
 
+                  {/* 0. CLARIFY IMAGE CARD (Shopify Sidekick Interactive Clarification) */}
+                  {m.action_type === "clarify_image" && (
+                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200 dark:border-violet-800/50 shadow-md space-y-3">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
+                        <Sparkles className="w-4 h-4" />
+                        <span>
+                          {activeLang === "uz"
+                            ? "Rasm yaratish bo'yicha aniqlashtirish"
+                            : activeLang === "en"
+                            ? "Image Creation Details"
+                            : "Уточнение для генерации изображения"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed font-normal">
+                        {m.text}
+                      </p>
+                      <div className="flex flex-col gap-1.5 pt-1">
+                        {(m.suggestions && m.suggestions.length > 0
+                          ? m.suggestions
+                          : [
+                              "Белая рубашка со студийным освещением",
+                              "Сочный бургер BBQ",
+                              "Черное худи оверсайз",
+                              "Рекламный баннер со скидкой 20%",
+                            ]
+                        ).map((chip, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleSend(chip)}
+                            className="p-2.5 text-left rounded-xl bg-slate-50 dark:bg-zinc-900/80 hover:bg-violet-50 dark:hover:bg-violet-950/30 border border-slate-200/70 dark:border-zinc-800 text-xs text-slate-800 dark:text-zinc-200 font-medium transition cursor-pointer flex items-center justify-between group"
+                          >
+                            <span>{chip}</span>
+                            <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-violet-600 transition" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* 1. IMAGE GENERATED CARD (1024x1024 Studio Showcase) */}
                   {m.action_type === "image_generated" && m.action_data && (
                     <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200 dark:border-violet-800/50 shadow-md space-y-3">
@@ -966,16 +1463,25 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                       </div>
 
                       {/* Studio Action Buttons */}
-                      <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="grid grid-cols-3 gap-1.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImageModal(m.action_data.image_url)}
+                          className="p-2 rounded-lg bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-violet-600" />
+                          <span>Просмотр</span>
+                        </button>
+
                         <button
                           type="button"
                           onClick={() =>
                             handleSend(`Удали фон у товара ${m.action_data.product_name}`)
                           }
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                          className="p-2 rounded-lg bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
                         >
                           <Scissors className="w-3.5 h-3.5 text-violet-600" />
-                          <span>Удалить фон (rembg)</span>
+                          <span>rembg</span>
                         </button>
 
                         <a
@@ -983,11 +1489,23 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                           download={`storebox_${m.action_data.product_name}.png`}
                           target="_blank"
                           rel="noreferrer"
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
                         >
                           <Download className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400" />
-                          <span>Скачать 1024x1024</span>
+                          <span>Скачать</span>
                         </a>
+                      </div>
+
+                      {/* Quick Iterative Typography Button */}
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleSend("Добавь надпись Белый УЗБ")}
+                          className="w-full p-2 rounded-lg bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 dark:hover:bg-violet-900/50 border border-violet-200 dark:border-violet-800/60 text-violet-700 dark:text-violet-300 font-semibold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                        >
+                          <Wand2 className="w-3.5 h-3.5" />
+                          <span>Добавить надпись «Белый УЗБ»</span>
+                        </button>
                       </div>
 
                       <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800 text-[11px]">
@@ -1303,6 +1821,31 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             </div>
           )}
 
+          {/* Skeleton Shimmer for Commercial Studio Image Generation */}
+          {generatingSkeleton && (
+            <div className="p-4 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200/80 dark:border-violet-800/40 shadow-md space-y-3 animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-violet-600 dark:text-violet-400">
+                  <Wand2 className="w-4 h-4 animate-spin" />
+                  <span>Генерация фото студийного качества (1024x1024)...</span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Apple Silicon M2
+                </span>
+              </div>
+              <div className="w-full h-56 sm:h-64 rounded-xl bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 dark:from-zinc-800 dark:via-zinc-700 dark:to-zinc-800 animate-pulse flex items-center justify-center text-slate-400 text-xs">
+                <div className="flex flex-col items-center gap-2">
+                  <Sparkles className="w-8 h-8 text-violet-500 animate-bounce" />
+                  <span className="font-medium text-slate-500 dark:text-zinc-400 text-center px-4">
+                    Прорисовка коммерческого света, ткани и студийных теней...
+                  </span>
+                </div>
+              </div>
+              <div className="h-4 bg-slate-200 dark:bg-zinc-800 rounded w-3/4"></div>
+              <div className="h-3 bg-slate-100 dark:bg-zinc-850 rounded w-1/2"></div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
@@ -1414,12 +1957,14 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             <span>StoreBox AI Engine</span>
           </div>
         </div>
+        </>
+        )}
       </aside>
 
-      {/* High Resolution Image Modal */}
+      {/* High Resolution Image Modal (Shopify Sidekick Preview) */}
       {previewImageModal && (
         <div
-          className="fixed inset-0 z-60 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setPreviewImageModal(null)}
         >
           <div
@@ -1427,33 +1972,58 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-3 border-b border-slate-800 text-white">
-              <span className="font-bold text-xs">AI Studio 1024x1024 Просмотр</span>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-violet-400" />
+                <span className="font-bold text-xs">
+                  AI Commercial Studio • Предпросмотр изображения (1024x1024 HD)
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setPreviewImageModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 flex justify-center bg-black/50">
+            <div className="p-4 flex justify-center bg-black/60">
               <img
                 src={previewImageModal}
                 alt="Enlarged Preview"
-                className="max-h-[70vh] object-contain rounded-xl"
+                className="max-h-[70vh] object-contain rounded-xl shadow-2xl"
               />
             </div>
-            <div className="p-3 border-t border-slate-800 flex justify-end gap-2">
-              <a
-                href={previewImageModal}
-                download="storebox_artwork.png"
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs flex items-center gap-1.5 transition"
+            <div className="p-3 border-t border-slate-800 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewImageModal(null);
+                  navigate("/products");
+                }}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
               >
-                <Download className="w-4 h-4" />
-                <span>Скачать оригинальный файл</span>
-              </a>
+                <Package className="w-4 h-4 text-violet-400" />
+                <span>Открыть в каталоге</span>
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreviewImageModal(null)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition cursor-pointer"
+                >
+                  Закрыть
+                </button>
+                <a
+                  href={previewImageModal}
+                  download="storebox_commercial_artwork.png"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Скачать оригинал</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
