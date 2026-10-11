@@ -183,6 +183,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+  const silenceTimerRef = useRef< ReturnType<typeof setTimeout> | null >(null);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const recentsMenuRef = useRef<HTMLDivElement>(null);
 
@@ -194,7 +195,11 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   isCallMutedRef.current = isCallMuted;
   const isSpeakingRef = useRef<boolean>(isSpeaking);
   isSpeakingRef.current = isSpeaking;
+  const uiLangRef = useRef(uiLang);
+  uiLangRef.current = uiLang;
   const voiceThinkingRef = useRef<boolean>(false);
+  const lastAssistantTextRef = useRef<string>("");
+  const lastSubmittedRef = useRef<{ text: string; time: number }>({ text: "", time: 0 });
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -223,10 +228,33 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     return () => clearInterval(timer);
   }, [isVoiceCallMode]);
 
-  // Stop any playing ElevenLabs audio immediately (used for Barge-in / Interruption)
+  // Cleanly stop any active SpeechRecognition instance & silence timer (prevents multiple parallel instances!)
+  const stopListeningSession = () => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (recognitionRef.current) {
+      const rec = recognitionRef.current;
+      recognitionRef.current = null;
+      try {
+        rec.onstart = null;
+        rec.onresult = null;
+        rec.onerror = null;
+        rec.onend = null;
+        rec.onspeechstart = null;
+        rec.abort();
+      } catch (_) {}
+    }
+    setIsListening(false);
+  };
+
+  // Stop any playing ElevenLabs audio immediately
   const stopAudio = () => {
     if (activeAudioRef.current) {
       try {
+        activeAudioRef.current.onended = null;
+        activeAudioRef.current.onerror = null;
         activeAudioRef.current.pause();
         activeAudioRef.current.currentTime = 0;
       } catch (_) {}
@@ -236,8 +264,167 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     setIsSpeaking(false);
   };
 
+  // Detect if microphone picked up residual speaker echo from Sidekick's own last response
+  const isLikelyEchoOfAssistant = (spoken: string, assistantText: string): boolean => {
+    if (!spoken || !assistantText) return false;
+    const normSpoken = spoken
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, "")
+      .trim();
+    const normAssistant = assistantText
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, "")
+      .trim();
+    if (normSpoken.length < 4 || normAssistant.length < 4) return false;
+    // If the recognized phrase is a direct substring of what Sidekick just spoke (and >= 10 chars), it's speaker echo
+    if (normSpoken.length >= 10 && normAssistant.includes(normSpoken)) {
+      return true;
+    }
+    return false;
+  };
+
+  // Start a single, clean SpeechRecognition session ("call" or "dictation")
+  const startListeningSession = (mode: "call" | "dictation") => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    // Always abort any existing recognition first so there is NEVER more than 1 instance
+    stopListeningSession();
+
+    if (mode === "call") {
+      if (
+        !isVoiceCallModeRef.current ||
+        isCallMutedRef.current ||
+        isSpeakingRef.current ||
+        voiceThinkingRef.current
+      ) {
+        return;
+      }
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      const currentLang = uiLangRef.current;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang =
+        currentLang === "uz" ? "uz-UZ" : currentLang === "en" ? "en-US" : "ru-RU";
+
+      let sessionTranscript = "";
+      let submitted = false;
+
+      const commitUtterance = (textToSubmit: string) => {
+        const cleaned = textToSubmit.trim();
+        if (!cleaned || submitted) return;
+        submitted = true;
+        stopListeningSession();
+
+        if (mode === "call") {
+          if (isLikelyEchoOfAssistant(cleaned, lastAssistantTextRef.current)) {
+            setLiveTranscript("");
+            setTimeout(() => {
+              if (
+                isVoiceCallModeRef.current &&
+                !isCallMutedRef.current &&
+                !isSpeakingRef.current &&
+                !voiceThinkingRef.current
+              ) {
+                startListeningSession("call");
+              }
+            }, 250);
+            return;
+          }
+          handleVoiceCallTurn(cleaned);
+        } else {
+          setInput(cleaned);
+          handleSend(cleaned, true);
+        }
+      };
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        if (mode === "call" && (isSpeakingRef.current || voiceThinkingRef.current)) {
+          return;
+        }
+
+        let fullText = "";
+        for (let i = 0; i < event.results.length; i++) {
+          fullText += event.results[i][0].transcript + " ";
+        }
+        sessionTranscript = fullText.replace(/\s+/g, " ").trim();
+
+        if (!sessionTranscript) return;
+
+        if (mode === "call") {
+          setLiveTranscript(sessionTranscript);
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+          }
+          // Wait 850ms of silence after the user finishes their thought before sending to Gemini
+          silenceTimerRef.current = setTimeout(() => {
+            commitUtterance(sessionTranscript);
+          }, 850);
+        } else {
+          setInput(sessionTranscript);
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+          }
+          silenceTimerRef.current = setTimeout(() => {
+            commitUtterance(sessionTranscript);
+          }, 950);
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        if (submitted) return;
+
+        if (sessionTranscript.trim()) {
+          commitUtterance(sessionTranscript);
+          return;
+        }
+
+        // If no speech was captured yet and we are still in active Voice Call listening state, keep listening
+        if (
+          mode === "call" &&
+          isVoiceCallModeRef.current &&
+          !isCallMutedRef.current &&
+          !isSpeakingRef.current &&
+          !voiceThinkingRef.current
+        ) {
+          setTimeout(() => {
+            if (
+              isVoiceCallModeRef.current &&
+              !isCallMutedRef.current &&
+              !isSpeakingRef.current &&
+              !voiceThinkingRef.current &&
+              !recognitionRef.current
+            ) {
+              startListeningSession("call");
+            }
+          }, 250);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (_) {
+      setIsListening(false);
+    }
+  };
+
   // Play strictly via ElevenLabs Base64 Audio (`new Audio('data:audio/mp3;base64,' + data.audio_base64)`)
+  // IMPORTANT: Pauses microphone recognition while audio plays so speakers NEVER feed Sidekick's own voice back into the mic!
   const playElevenLabsAudio = (audioBase64?: string | null, onEnded?: () => void) => {
+    stopListeningSession();
     stopAudio();
 
     if (!audioBase64) {
@@ -251,25 +438,24 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       isSpeakingRef.current = true;
       setIsSpeaking(true);
 
-      audio.onended = () => {
+      const finishPlayback = () => {
         isSpeakingRef.current = false;
         setIsSpeaking(false);
         activeAudioRef.current = null;
-        if (onEnded) onEnded();
+        if (onEnded) {
+          // Wait 250ms for speaker room reverb to fade before re-opening the microphone
+          setTimeout(() => {
+            onEnded();
+          }, 250);
+        }
       };
-      audio.onerror = () => {
-        isSpeakingRef.current = false;
-        setIsSpeaking(false);
-        activeAudioRef.current = null;
-        if (onEnded) onEnded();
-      };
+
+      audio.onended = finishPlayback;
+      audio.onerror = finishPlayback;
 
       audio.play().catch((err) => {
         console.warn("ElevenLabs audio play blocked or failed:", err);
-        isSpeakingRef.current = false;
-        setIsSpeaking(false);
-        activeAudioRef.current = null;
-        if (onEnded) onEnded();
+        finishPlayback();
       });
     } catch (e) {
       console.warn("ElevenLabs audio error:", e);
@@ -279,103 +465,37 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     }
   };
 
-  // Speech Recognition Setup with Continuous Barge-in Support in Voice Call Mode
+  // Manual Barge-In: User can tap the orb / wave / "Перебить" button at any moment to cut off Sidekick and speak immediately
+  const interruptAndListen = () => {
+    stopAudio();
+    voiceThinkingRef.current = false;
+    setLiveTranscript("");
+    if (isVoiceCallModeRef.current && !isCallMutedRef.current) {
+      const lang = uiLangRef.current;
+      setVoiceCallStatus("listening");
+      setVoiceStepText(
+        lang === "uz"
+          ? "Sizni eshityapman — gapiring..."
+          : lang === "en"
+          ? "Listening — speak now..."
+          : "Слушаю вас — говорите..."
+      );
+      setTimeout(() => {
+        startListeningSession("call");
+      }, 120);
+    }
+  };
+
+  // Check browser SpeechRecognition support once on mount & clean up on unmount
   useEffect(() => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-
-    setSpeechSupported(true);
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = isVoiceCallMode;
-      recognition.interimResults = true;
-      recognition.lang = uiLang === "uz" ? "uz-UZ" : uiLang === "en" ? "en-US" : "ru-RU";
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      // BARGE-IN: As soon as the user starts speaking, interrupt Sidekick's audio playback!
-      recognition.onspeechstart = () => {
-        if (isVoiceCallModeRef.current && isSpeakingRef.current) {
-          stopAudio();
-          setVoiceCallStatus("listening");
-          setVoiceStepText(
-            uiLang === "uz"
-              ? "Sizni eshityapman..."
-              : uiLang === "en"
-              ? "Listening to you..."
-              : "Слушаю вас..."
-          );
-        }
-      };
-
-      recognition.onresult = (event: any) => {
-        let interimTranscript = "";
-        let finalSegment = "";
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const piece = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalSegment += piece;
-          } else {
-            interimTranscript += piece;
-          }
-        }
-
-        const currentSpoken = (finalSegment || interimTranscript).trim();
-
-        // BARGE-IN: If Sidekick is currently talking and user speaks >= 2 chars, immediately stop ElevenLabs audio!
-        if (isVoiceCallModeRef.current && isSpeakingRef.current && currentSpoken.length >= 2) {
-          stopAudio();
-          setVoiceCallStatus("listening");
-          setVoiceStepText(
-            uiLang === "uz"
-              ? "Sizni eshityapman..."
-              : uiLang === "en"
-              ? "Listening to you..."
-              : "Слушаю вас..."
-          );
-        }
-
-        if (isVoiceCallModeRef.current) {
-          if (currentSpoken) {
-            setLiveTranscript(currentSpoken);
-          }
-          if (finalSegment.trim() && !voiceThinkingRef.current) {
-            handleVoiceCallTurn(finalSegment.trim());
-          }
-        } else {
-          setInput(currentSpoken);
-          if (finalSegment.trim()) {
-            setIsListening(false);
-            handleSend(finalSegment.trim(), true);
-          }
-        }
-      };
-
-      recognition.onerror = () => {
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-        // Keep recognition alive during hands-free Voice Call Mode so Barge-in works at any moment
-        if (isVoiceCallModeRef.current && !isCallMutedRef.current) {
-          setTimeout(() => {
-            if (isVoiceCallModeRef.current && !isCallMutedRef.current && recognitionRef.current) {
-              try {
-                recognitionRef.current.start();
-              } catch (_) {}
-            }
-          }, 250);
-        }
-      };
-
-      recognitionRef.current = recognition;
-    } catch (_) {}
-  }, [isVoiceCallMode, isCallMuted, uiLang, store?.id, voiceEnabled]);
+    setSpeechSupported(Boolean(SpeechRecognition));
+    return () => {
+      stopListeningSession();
+      stopAudio();
+    };
+  }, []);
 
   // Listen for custom event from anywhere in the app
   useEffect(() => {
@@ -404,15 +524,20 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   // Main Chat Submit -> POST `/api/v1/ai/assistant/chat/`
   const handleSend = async (overrideMessage?: string, isVoiceInput = false) => {
     const query = (overrideMessage !== undefined ? overrideMessage : input).trim();
-    if ((!query && !attachedFile) || isLoading) return;
+    if ((!query && !attachedFile) || isLoading || voiceThinkingRef.current) return;
 
-    if (isListening && recognitionRef.current && !isVoiceCallModeRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (_) {}
-      setIsListening(false);
+    // Prevent accidental duplicate submission of the exact same text within 2 seconds
+    const now = Date.now();
+    if (
+      query &&
+      lastSubmittedRef.current.text === query.toLowerCase() &&
+      now - lastSubmittedRef.current.time < 2000
+    ) {
+      return;
     }
+    lastSubmittedRef.current = { text: query.toLowerCase(), time: now };
 
+    stopListeningSession();
     stopAudio();
 
     const detectedLang = detectTextLanguage(query, uiLang);
@@ -441,6 +566,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     setAttachedFile(null);
     setAttachedPreview(null);
     setIsLoading(true);
+    voiceThinkingRef.current = true;
 
     try {
       let res;
@@ -463,6 +589,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       }
 
       const data = res.data;
+      lastAssistantTextRef.current = data.text || "";
 
       // 1. Execute Action if Gemini triggered `navigate_to`
       if (data.action && data.action.type === "NAVIGATE" && data.action.target) {
@@ -523,26 +650,39 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
         },
       ]);
     } finally {
+      voiceThinkingRef.current = false;
       setIsLoading(false);
     }
   };
 
   // Live Voice Call Turn -> POST `/api/v1/ai/assistant/chat/` with `voice_enabled: true`
   const handleVoiceCallTurn = async (spokenText: string) => {
-    if (!spokenText.trim()) return;
+    const cleaned = spokenText.trim();
+    if (!cleaned || voiceThinkingRef.current) return;
 
+    const now = Date.now();
+    if (
+      lastSubmittedRef.current.text === cleaned.toLowerCase() &&
+      now - lastSubmittedRef.current.time < 2200
+    ) {
+      return;
+    }
+    lastSubmittedRef.current = { text: cleaned.toLowerCase(), time: now };
+
+    stopListeningSession();
     stopAudio();
     voiceThinkingRef.current = true;
-    const detected = detectTextLanguage(spokenText, uiLang);
+
+    const detected = detectTextLanguage(cleaned, uiLangRef.current);
     setVoiceCallStatus("thinking");
     setVoiceStepText(
-      uiLang === "uz"
+      uiLangRef.current === "uz"
         ? "Sidekick o'ylamoqda..."
-        : uiLang === "en"
+        : uiLangRef.current === "en"
         ? "Sidekick is thinking..."
         : "Sidekick думает..."
     );
-    setLiveTranscript(spokenText);
+    setLiveTranscript(cleaned);
 
     const currentHistory = messagesRef.current
       .filter((m) => m.sender === "user" || m.sender === "assistant")
@@ -555,7 +695,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     const userMsg: SidekickMessage = {
       id: "u_" + Date.now(),
       sender: "user",
-      text: spokenText,
+      text: cleaned,
       isVoice: true,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
@@ -563,19 +703,22 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
     try {
       const res = await api.post("/ai/assistant/chat/", {
-        message: spokenText,
+        message: cleaned,
         voice_enabled: true,
         lang: detected,
         history: currentHistory,
       });
 
       voiceThinkingRef.current = false;
+      if (!isVoiceCallModeRef.current) return;
+
       const data = res.data;
+      lastAssistantTextRef.current = data.text || "";
 
       if (data.action && data.action.type === "NAVIGATE" && data.action.target) {
         const spaTarget = toSpaPath(data.action.target, data.action.spa_path);
         setVoiceStepText(
-          `${uiLang === "uz" ? "O'tildi" : uiLang === "en" ? "Navigated" : "Переход"}: ${
+          `${uiLangRef.current === "uz" ? "O'tildi" : uiLangRef.current === "en" ? "Navigated" : "Переход"}: ${
             data.action.title || spaTarget
           }`
         );
@@ -601,50 +744,50 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
       setVoiceCallStatus("speaking");
       setVoiceStepText(
-        uiLang === "uz"
-          ? "Sidekick gapirmoqda (gapirib bo'lishingiz mumkin)..."
-          : uiLang === "en"
-          ? "Sidekick speaking (speak anytime to interrupt)..."
-          : "Sidekick говорит (начните говорить, чтобы перебить)..."
+        uiLangRef.current === "uz"
+          ? "Sidekick gapirmoqda (bo'lish uchun bosing)..."
+          : uiLangRef.current === "en"
+          ? "Sidekick speaking (tap orb to interrupt)..."
+          : "Sidekick отвечает (нажмите на круг, чтобы перебить)..."
       );
 
-      // Keep speech recognition active while ElevenLabs speaks so user can barge in!
-      if (recognitionRef.current && !isCallMutedRef.current) {
-        try {
-          recognitionRef.current.start();
-        } catch (_) {}
-      }
-
+      // Play ElevenLabs audio with mic paused so Sidekick never hears its own speaker output!
+      // As soon as Sidekick finishes speaking, automatically re-open the microphone for the user's next question.
       playElevenLabsAudio(data.audio_base64, () => {
         if (isVoiceCallModeRef.current && !isCallMutedRef.current) {
           setVoiceCallStatus("listening");
           setVoiceStepText(
-            uiLang === "uz"
-              ? "Sizni eshityapman..."
-              : uiLang === "en"
-              ? "Listening..."
-              : "Слушаю вас..."
+            uiLangRef.current === "uz"
+              ? "Sizni eshityapman — gapiring..."
+              : uiLangRef.current === "en"
+              ? "Listening — speak now..."
+              : "Слушаю вас — говорите..."
           );
           setLiveTranscript("");
-          if (recognitionRef.current) {
-            try {
-              recognitionRef.current.start();
-            } catch (_) {}
-          }
+          startListeningSession("call");
         }
       });
     } catch (_) {
       voiceThinkingRef.current = false;
-      setVoiceCallStatus("listening");
-      setVoiceStepText(
-        uiLang === "uz" ? "Sizni eshityapman..." : uiLang === "en" ? "Listening..." : "Слушаю вас..."
-      );
+      if (isVoiceCallModeRef.current && !isCallMutedRef.current) {
+        setVoiceCallStatus("listening");
+        setVoiceStepText(
+          uiLangRef.current === "uz"
+            ? "Sizni eshityapman..."
+            : uiLangRef.current === "en"
+            ? "Listening..."
+            : "Слушаю вас..."
+        );
+        startListeningSession("call");
+      }
     }
   };
 
   const startVoiceCall = () => {
     setShowRecentsMenu(false);
+    stopListeningSession();
     stopAudio();
+    voiceThinkingRef.current = false;
     setIsVoiceCallMode(true);
     isVoiceCallModeRef.current = true;
     setIsCallMuted(false);
@@ -660,24 +803,20 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
       if (!isVoiceCallModeRef.current) return;
       setVoiceCallStatus("listening");
       setVoiceStepText(
-        uiLang === "uz"
+        uiLangRef.current === "uz"
           ? "Sizni eshityapman — gapiring..."
-          : uiLang === "en"
+          : uiLangRef.current === "en"
           ? "Listening — speak anytime..."
           : "Слушаю вас — говорите..."
       );
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.continuous = true;
-          recognitionRef.current.lang =
-            uiLang === "uz" ? "uz-UZ" : uiLang === "en" ? "en-US" : "ru-RU";
-          recognitionRef.current.start();
-        } catch (_) {}
-      }
-    }, 350);
+      startListeningSession("call");
+    }, 250);
   };
 
   const endVoiceCall = () => {
+    isVoiceCallModeRef.current = false;
+    voiceThinkingRef.current = false;
+    stopListeningSession();
     stopAudio();
     setVoiceCallStatus("ending");
     setVoiceStepText(
@@ -687,12 +826,6 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
         ? "Ending conversation..."
         : "Завершаем диалог..."
     );
-    isVoiceCallModeRef.current = false;
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (_) {}
-    }
 
     const durationLabel = `${Math.floor(callDuration / 60)}:${(callDuration % 60)
       .toString()
@@ -714,25 +847,15 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
-    }, 350);
+    }, 300);
   };
 
   const toggleMicDictation = () => {
-    if (!recognitionRef.current) return;
     stopAudio();
     if (isListening) {
-      try {
-        recognitionRef.current.stop();
-      } catch (_) {}
-      setIsListening(false);
+      stopListeningSession();
     } else {
-      try {
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.lang =
-          uiLang === "uz" ? "uz-UZ" : uiLang === "en" ? "en-US" : "ru-RU";
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (_) {}
+      startListeningSession("dictation");
     }
   };
 
@@ -1256,7 +1379,25 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
             {/* Center Avatar + Dynamic Status + Live Transcript */}
             <div className="flex flex-col items-center justify-center my-auto py-4 space-y-5 z-10">
-              <div className="relative flex items-center justify-center">
+              <div
+                onClick={() => {
+                  if (voiceCallStatus === "speaking" || isSpeaking) {
+                    interruptAndListen();
+                  } else if (voiceCallStatus === "listening" && !isListening && !isCallMuted) {
+                    startListeningSession("call");
+                  }
+                }}
+                className="relative flex items-center justify-center cursor-pointer group"
+                title={
+                  voiceCallStatus === "speaking"
+                    ? uiLang === "uz"
+                      ? "Sidekickni bo'lish va gapirish uchun bosing"
+                      : uiLang === "en"
+                      ? "Tap to interrupt Sidekick and speak"
+                      : "Нажмите, чтобы перебить Sidekick и сказать"
+                    : undefined
+                }
+              >
                 <div
                   className={`absolute rounded-full transition-all duration-500 pointer-events-none ${
                     voiceCallStatus === "speaking"
@@ -1266,7 +1407,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                       : "w-26 h-26 bg-emerald-500/10 dark:bg-zinc-800/40"
                   }`}
                 />
-                <div className="relative w-24 h-24 rounded-full bg-[#1c1d1f] text-white flex items-center justify-center shadow-xl border border-zinc-700">
+                <div className="relative w-24 h-24 rounded-full bg-[#1c1d1f] text-white flex items-center justify-center shadow-xl border border-zinc-700 group-hover:scale-105 transition-transform">
                   <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none">
                     <rect
                       x="7"
@@ -1313,6 +1454,24 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                       : voiceStepText}
                   </span>
                 </div>
+
+                {voiceCallStatus === "speaking" && (
+                  <button
+                    type="button"
+                    onClick={interruptAndListen}
+                    className="px-3.5 py-1.5 rounded-full bg-[#00a86b]/10 hover:bg-[#00a86b]/20 text-[#007f52] dark:text-emerald-300 border border-[#00a86b]/30 text-[11.5px] font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Mic className="w-3.5 h-3.5" />
+                    <span>
+                      {uiLang === "uz"
+                        ? "Bo'lish va gapirish"
+                        : uiLang === "en"
+                        ? "Interrupt & speak"
+                        : "Перебить и сказать"}
+                    </span>
+                  </button>
+                )}
+
                 {liveTranscript && (
                   <p className="text-[12.5px] font-medium text-[#202223] dark:text-zinc-100 bg-[#f6f6f7] dark:bg-zinc-800/90 px-3.5 py-2 rounded-2xl border border-[#e1e3e5] dark:border-zinc-700 shadow-2xs">
                     «{liveTranscript}»
@@ -1336,7 +1495,14 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             {/* Bottom Animated Glowing Waveform + Mute & Red End Call (×) Buttons */}
             <div className="space-y-4 z-10 pt-2">
               {/* Animated Multi-Color Glowing Equalizer Wave (Shopify Sidekick style) */}
-              <div className="relative h-14 flex items-center justify-center gap-1.5 px-6 overflow-hidden rounded-2xl bg-gradient-to-t from-sky-500/10 via-violet-500/5 to-transparent py-2">
+              <div
+                onClick={() => {
+                  if (voiceCallStatus === "speaking" || isSpeaking) {
+                    interruptAndListen();
+                  }
+                }}
+                className="relative h-14 flex items-center justify-center gap-1.5 px-6 overflow-hidden rounded-2xl bg-gradient-to-t from-sky-500/10 via-violet-500/5 to-transparent py-2 cursor-pointer"
+              >
                 {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((bar) => {
                   const isActiveWave =
                     !isCallMuted &&
@@ -1372,14 +1538,18 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                     const nextMuted = !isCallMuted;
                     setIsCallMuted(nextMuted);
                     isCallMutedRef.current = nextMuted;
-                    if (nextMuted && recognitionRef.current) {
-                      try {
-                        recognitionRef.current.stop();
-                      } catch (_) {}
-                    } else if (!nextMuted && recognitionRef.current) {
-                      try {
-                        recognitionRef.current.start();
-                      } catch (_) {}
+                    if (nextMuted) {
+                      stopListeningSession();
+                    } else if (!isSpeakingRef.current && !voiceThinkingRef.current) {
+                      setVoiceCallStatus("listening");
+                      setVoiceStepText(
+                        uiLang === "uz"
+                          ? "Sizni eshityapman — gapiring..."
+                          : uiLang === "en"
+                          ? "Listening — speak now..."
+                          : "Слушаю вас — говорите..."
+                      );
+                      startListeningSession("call");
                     }
                   }}
                   className={`w-12 h-12 rounded-full flex items-center justify-center transition shadow-sm cursor-pointer ${

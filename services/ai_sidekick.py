@@ -24,11 +24,16 @@ from apps.orders.models import Order, Customer
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logger = logging.getLogger(__name__)
 
+# Persistent HTTP session for Gemini API (reuses TLS connection for <0.5s latency)
+_GEMINI_SESSION = requests.Session()
+_GEMINI_SESSION.trust_env = False
+
 
 SYSTEM_INSTRUCTION = (
     "Ты — живой, умный AI-ассистент Sidekick для платформы StoreBox. "
     "Общайся естественно, свободно отвечай на любые вопросы продавца "
     "(от простых 'привет' и консультаций по бизнесу до аналитики) на языке пользователя (русский/узбекский/английский). "
+    "Отвечай четко, лаконично и по делу (обычно 1–3 предложения), чтобы твои ответы мгновенно читались и легко воспринимались на слух. "
     "Не повторяй шаблонные приветствия в каждом сообщении!"
 )
 
@@ -452,18 +457,19 @@ class SidekickBrain:
             logger.error("GEMINI_API_KEY is not configured.")
             return None
 
-        # Use active Google AI Studio Flash models that support v1beta generateContent + Function Calling
+        # Fastest active Google AI Studio Flash models supporting v1beta generateContent + Function Calling
         models = [
             "models/gemini-3.5-flash-lite",
-            "models/gemini-flash-latest",
-            "models/gemini-2.5-flash",
+            "models/gemini-flash-lite-latest",
+            "models/gemini-3.6-flash",
+            "models/gemini-3.5-flash",
         ]
 
         headers = {"Content-Type": "application/json"}
         for model_name in models:
             url = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={api_key}"
             try:
-                resp = self._http.post(url, headers=headers, json=payload, timeout=15.0, verify=False)
+                resp = _GEMINI_SESSION.post(url, headers=headers, json=payload, timeout=8.0, verify=False)
                 if resp.status_code == 200:
                     data = resp.json()
                     if isinstance(data, dict) and data.get("candidates"):

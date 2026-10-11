@@ -1,6 +1,7 @@
 """
 StoreBox Sidekick Voice Service — ElevenLabs API (`eleven_multilingual_v2`).
-Generates high-quality neural speech via ElevenLabs and returns a Base64 MP3 stream.
+Generates high-quality neural speech via ElevenLabs with low-latency connection pooling
+and returns a Base64 MP3 stream.
 """
 import re
 import base64
@@ -14,9 +15,13 @@ from django.conf import settings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logger = logging.getLogger(__name__)
 
+# Persistent HTTP session to reuse TLS connection to api.elevenlabs.io (saves ~500ms per call)
+_TTS_SESSION = requests.Session()
+_TTS_SESSION.trust_env = False
+
 
 def clean_text_for_tts(text: str) -> str:
-    """Strips markdown symbols and URLs so ElevenLabs reads clean natural sentences."""
+    """Strips markdown symbols, emojis, and URLs so ElevenLabs reads clean natural sentences fast."""
     if not text:
         return ""
 
@@ -32,7 +37,16 @@ def clean_text_for_tts(text: str) -> str:
     clean = re.sub(r"^[•\-\*]\s+", "", clean, flags=re.MULTILINE)
     clean = re.sub(r"\bUZS\b", "сум", clean, flags=re.IGNORECASE)
     clean = re.sub(r"\s+", " ", clean).strip()
-    return clean[:800]
+
+    # Keep spoken output natural and concise (up to ~380 chars) so TTS finishes in <0.7s
+    if len(clean) > 380:
+        cut = clean[:380]
+        last_punct = max(cut.rfind("."), cut.rfind("!"), cut.rfind("?"))
+        if last_punct > 120:
+            clean = cut[: last_punct + 1]
+        else:
+            clean = cut.rsplit(" ", 1)[0] + "."
+    return clean
 
 
 def generate_voice_response(text: str, voice_id: Optional[str] = None) -> Optional[str]:
@@ -56,7 +70,10 @@ def generate_voice_response(text: str, voice_id: Optional[str] = None) -> Option
         logger.error("ElevenLabs API key or Voice ID missing in settings.")
         return None
 
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{target_voice_id}"
+    url = (
+        f"https://api.elevenlabs.io/v1/text-to-speech/{target_voice_id}"
+        f"?optimize_streaming_latency=3&output_format=mp3_22050_32"
+    )
     headers = {
         "xi-api-key": api_key,
         "Content-Type": "application/json",
@@ -66,16 +83,13 @@ def generate_voice_response(text: str, voice_id: Optional[str] = None) -> Option
         "text": clean_text,
         "model_id": "eleven_multilingual_v2",
         "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.75,
+            "stability": 0.55,
+            "similarity_boost": 0.78,
         },
     }
 
     try:
-        session = requests.Session()
-        session.trust_env = False  # Bypass local environment proxy restrictions
-        response = session.post(url, headers=headers, json=payload, timeout=15.0, verify=False)
-
+        response = _TTS_SESSION.post(url, headers=headers, json=payload, timeout=10.0, verify=False)
         if response.status_code == 200 and response.content:
             return base64.b64encode(response.content).decode("utf-8")
 
