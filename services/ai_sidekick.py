@@ -458,8 +458,8 @@ class SidekickBrain:
             return None
 
         configured_model = (
-            getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash")
-            or "gemini-2.5-flash"
+            getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash")
+            or "gemini-3.8-flash"
         ).strip()
         if not configured_model.startswith("models/"):
             configured_model = f"models/{configured_model}"
@@ -470,9 +470,9 @@ class SidekickBrain:
             dict.fromkeys(
                 [
                     configured_model,
-                    "models/gemini-2.5-flash",
+                    "models/gemini-3.8-flash",
                     "models/gemini-flash-lite-latest",
-                    "models/gemini-2.5-flash-lite",
+                    "models/gemini-3.1-flash-lite",
                 ]
             )
         )
