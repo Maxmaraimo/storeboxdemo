@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from apps.api.views_auth import get_merchant_store
 from apps.catalog.models import Product, Category, ProductImage
 from services.ai_sidekick import SidekickBrain
-from services.tts_service import generate_voice_payload
+from services.tts_service import synthesize_voice
 from .services_ai import remove_image_background
 
 logger = logging.getLogger(__name__)
@@ -34,11 +34,11 @@ def ai_assistant_chat_view(request):
     Verifies current user permissions and active tenant (`store = get_merchant_store(request)`).
     Invokes Gemini (`services/ai_sidekick.py`) with Function Calling tools:
       - navigate_to(route)
-      - get_store_metrics(timeframe)
-      - search_orders(query_or_status)
+      - get_metrics(timeframe)
+      - search_orders(query)
       - generate_product_data(prompt)
-    When `voice_enabled=True`, synthesizes speech via ElevenLabs (`services/tts_service.py`)
-    and returns `audio_base64` (or `use_browser_tts: true` fallback).
+    When `voice_enabled=True`, synthesizes neural speech via Microsoft Azure Speech Services (`services/tts_service.py`)
+    and returns `audio_base64`.
     """
     store = get_merchant_store(request)
     if not store:
@@ -49,7 +49,7 @@ def ai_assistant_chat_view(request):
 
     data = request.data or {}
     message = (data.get("message") or "").strip()
-    lang = data.get("lang") or request.GET.get("lang") or "ru"
+    lang = data.get("lang") or request.GET.get("lang") or "auto"
     raw_voice = data.get("voice_enabled", False)
     if isinstance(raw_voice, str):
         voice_enabled = raw_voice.strip().lower() in ("true", "1", "yes")
@@ -88,7 +88,7 @@ def ai_assistant_chat_view(request):
                 store=store,
             )
             reply_text = f"Готово! Фото товара обработано в студийном стиле ({res.get('theme_title', 'Студия')})."
-            voice_payload = generate_voice_payload(reply_text) if voice_enabled else {"audio_base64": None, "use_browser_tts": False}
+            audio_b64 = synthesize_voice(reply_text, language=lang) if voice_enabled else None
             return Response({
                 "status": "success",
                 "text": reply_text,
@@ -99,23 +99,20 @@ def ai_assistant_chat_view(request):
                     "image_url": res.get("image_url"),
                     "product_name": data.get("product_name") or "Товар",
                 },
-                "audio_base64": voice_payload["audio_base64"],
-                "use_browser_tts": voice_payload["use_browser_tts"],
+                "audio_base64": audio_b64,
+                "use_browser_tts": False,
                 "store": {"id": store.id, "name": store.name, "subdomain": store.subdomain},
             })
 
     # Core Gemini + Function Calling Brain
-    brain = SidekickBrain(store=store, lang=lang)
+    brain = SidekickBrain(store=store, lang=lang if lang != "auto" else "ru")
     result = brain.process_chat(message=message, history=history)
 
-    # ElevenLabs TTS synthesis when voice_enabled=True
+    # Microsoft Azure Neural TTS synthesis when voice_enabled=True
     if voice_enabled and result.get("text"):
-        voice_payload = generate_voice_payload(result["text"])
-        audio_base64 = voice_payload["audio_base64"]
-        use_browser_tts = voice_payload["use_browser_tts"]
+        audio_base64 = synthesize_voice(result["text"], language=lang)
     else:
         audio_base64 = None
-        use_browser_tts = False
 
     response_payload = {
         "status": "success",
@@ -123,7 +120,7 @@ def ai_assistant_chat_view(request):
         "action": result.get("action"),
         "data_card": result.get("data_card"),
         "audio_base64": audio_base64,
-        "use_browser_tts": use_browser_tts,
+        "use_browser_tts": False,
         "store": {
             "id": store.id,
             "name": store.name,
@@ -142,28 +139,32 @@ ai_chat_view = ai_assistant_chat_view
 @permission_classes([IsAuthenticated])
 def ai_status_view(request):
     """
-    Returns Gemini + ElevenLabs AI Sidekick status for the current store tenant.
+    Returns Gemini + Microsoft Azure Speech Services status for the current store tenant.
     """
     store = get_merchant_store(request)
     if not store:
         return Response({"error": "Магазин не найден"}, status=404)
 
     has_gemini = bool(getattr(settings, "GEMINI_API_KEY", ""))
-    has_elevenlabs = bool(getattr(settings, "ELEVENLABS_API_KEY", ""))
+    has_azure_speech = bool(getattr(settings, "AZURE_SPEECH_KEY", ""))
     brain = SidekickBrain(store=store)
     metrics = brain.get_store_metrics("30d")["data_card"]
 
     return Response({
         "status": "online",
-        "provider": "Google Gemini 2.5 Flash + ElevenLabs Multilingual v2",
+        "provider": "Google Gemini 2.5 Flash + Microsoft Azure Speech Services",
         "gemini": {
             "available": has_gemini,
             "model": getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash"),
         },
-        "elevenlabs": {
-            "available": has_elevenlabs,
-            "voice_id": getattr(settings, "ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB"),
-            "model": "eleven_multilingual_v2",
+        "azure_speech": {
+            "available": has_azure_speech,
+            "region": getattr(settings, "AZURE_SPEECH_REGION", "eastus"),
+            "voices": {
+                "uz": "uz-UZ-MadinaNeural",
+                "ru": "ru-RU-DmitryNeural",
+                "en": "en-US-BrianMultilingualNeural",
+            },
         },
         "store_context": metrics,
     })

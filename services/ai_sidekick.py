@@ -27,14 +27,13 @@ logger = logging.getLogger(__name__)
 # Persistent HTTP session for Gemini API (reuses TLS connection for <0.5s latency)
 _GEMINI_SESSION = requests.Session()
 _GEMINI_SESSION.trust_env = False
+_RESOLVED_GEMINI_MODEL: Optional[str] = None
 
 
 SYSTEM_INSTRUCTION = (
-    "Ты — живой, умный AI-ассистент Sidekick для платформы StoreBox. "
-    "Общайся естественно, свободно отвечай на любые вопросы продавца "
-    "(от простых 'привет' и консультаций по бизнесу до аналитики) на языке пользователя (русский/узбекский/английский). "
-    "Отвечай четко, лаконично и по делу (обычно 1–3 предложения), чтобы твои ответы мгновенно читались и легко воспринимались на слух. "
-    "Не повторяй шаблонные приветствия в каждом сообщении!"
+    "Ты — StoreBox Sidekick, интеллектуальный персональный управляющий интернет-магазином на платформе StoreBox (аналог Shopify). "
+    "Общайся живо, лаконично, профессионально. Отвечай на том языке, на котором обратился продавец (узбекский, русский или английский). "
+    "Не повторяй формальные фразы о том, кто ты такой, при каждом сообщении. Управляй платформой через доступные инструменты."
 )
 
 # Native Gemini Function Calling Tools Schema
@@ -102,12 +101,12 @@ GEMINI_FUNCTION_DECLARATIONS = [
         "parameters": {
             "type": "OBJECT",
             "properties": {
-                "query_or_status": {
+                "query": {
                     "type": "STRING",
                     "description": "Номер заказа, имя клиента или статус ('новый', 'оплачен', 'доставлен', 'ALL').",
                 }
             },
-            "required": ["query_or_status"],
+            "required": ["query"],
         },
     },
     {
@@ -322,8 +321,11 @@ class SidekickBrain:
             "data_card": data_card,
         }
 
-    def search_orders(self, query_or_status: str = "") -> Dict[str, Any]:
-        q = (query_or_status or "").strip()
+    def get_metrics(self, timeframe: str = "30d") -> Dict[str, Any]:
+        return self.get_store_metrics(timeframe=timeframe)
+
+    def search_orders(self, query: str = "", query_or_status: str = "") -> Dict[str, Any]:
+        q = (query or query_or_status or "").strip()
         q_low = q.lower()
         qs = Order.objects.filter(store=self.store).select_related("customer").order_by("-created_at")
 
@@ -432,9 +434,12 @@ class SidekickBrain:
         if fn_name == "navigate_to":
             return self.navigate_to(fn_args.get("route", "home"))
         if fn_name in ("get_metrics", "get_store_metrics"):
-            return self.get_store_metrics(fn_args.get("timeframe", "30d"))
+            return self.get_metrics(fn_args.get("timeframe", "30d"))
         if fn_name == "search_orders":
-            return self.search_orders(fn_args.get("query_or_status", "ALL"))
+            return self.search_orders(
+                query=fn_args.get("query", ""),
+                query_or_status=fn_args.get("query_or_status", "ALL"),
+            )
         if fn_name == "generate_product_data":
             return self.generate_product_data(
                 title=fn_args.get("title", ""),
@@ -449,6 +454,8 @@ class SidekickBrain:
     # DIRECT GEMINI API CALL (`generativelanguage.googleapis.com`)
     # ------------------------------------------------------------------
     def _call_gemini(self, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        global _RESOLVED_GEMINI_MODEL
+
         api_key = (
             getattr(settings, "GEMINI_API_KEY", "")
             or os.environ.get("GEMINI_API_KEY", "")
@@ -458,24 +465,18 @@ class SidekickBrain:
             return None
 
         configured_model = (
-            getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash")
-            or "gemini-3.8-flash"
+            getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash")
+            or "gemini-2.5-flash"
         ).strip()
         if not configured_model.startswith("models/"):
             configured_model = f"models/{configured_model}"
 
-        # Try the explicitly configured model first. Keep only models that are
-        # currently exposed by Google AI Studio as fallbacks.
-        models = list(
-            dict.fromkeys(
-                [
-                    configured_model,
-                    "models/gemini-3.8-flash",
-                    "models/gemini-flash-lite-latest",
-                    "models/gemini-3.1-flash-lite",
-                ]
-            )
-        )
+        candidate_models = [
+            _RESOLVED_GEMINI_MODEL,
+            "models/gemini-flash-lite-latest",
+            "models/gemini-flash-latest",
+        ]
+        models = list(dict.fromkeys([m for m in candidate_models if m]))
 
         headers = {"Content-Type": "application/json"}
         for model_name in models:
@@ -485,6 +486,7 @@ class SidekickBrain:
                 if resp.status_code == 200:
                     data = resp.json()
                     if isinstance(data, dict) and data.get("candidates"):
+                        _RESOLVED_GEMINI_MODEL = model_name
                         return data
                 else:
                     logger.warning(
@@ -540,7 +542,7 @@ class SidekickBrain:
             "toolConfig": {"functionCallingConfig": {"mode": "AUTO"}},
             "generationConfig": {
                 "temperature": 0.6,
-                "maxOutputTokens": 800,
+                "maxOutputTokens": 450,
             },
         }
 
@@ -596,7 +598,7 @@ class SidekickBrain:
                 "tools": [{"functionDeclarations": GEMINI_FUNCTION_DECLARATIONS}],
                 "generationConfig": {
                     "temperature": 0.6,
-                    "maxOutputTokens": 800,
+                    "maxOutputTokens": 450,
                 },
             }
             second_response = self._call_gemini(second_payload)

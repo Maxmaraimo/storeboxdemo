@@ -146,7 +146,7 @@ urlpatterns = [
     path("telegram/setup-menu/", views_telegram.telegram_setup_menu_view, name="telegram_setup_menu"),
     path("telegram/test/", views_telegram.telegram_test_view, name="telegram_test"),
 
-    # AI Assistant (StoreBox Sidekick — Gemini + ElevenLabs)
+    # AI Assistant (StoreBox Sidekick — Gemini + Microsoft Azure Speech Services)
     path("ai/assistant/chat/", views_ai.ai_assistant_chat_view, name="ai_assistant_chat"),
     path("ai/chat/", views_ai.ai_assistant_chat_view, name="ai_chat"),
     path("ai/status/", views_ai.ai_status_view, name="ai_status"),

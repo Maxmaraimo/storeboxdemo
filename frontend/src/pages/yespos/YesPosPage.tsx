@@ -88,6 +88,7 @@ export const YesPosPage: React.FC = () => {
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all");
 
   // 1. Fetch current status
   const { data: status, isLoading: isStatusLoading } = useQuery<YesPosStatus>({
@@ -404,7 +405,7 @@ export const YesPosPage: React.FC = () => {
   const isConnected = status?.is_connected;
 
   return (
-    <div className="space-y-5 max-w-5xl">
+    <div className="space-y-5 max-w-7xl mx-auto pb-16">
       {/* BACK NAVIGATION */}
       <div>
         <button
@@ -675,21 +676,23 @@ export const YesPosPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. CATALOG EXPLORER & 1-CLICK IMPORT */}
-      <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-4">
+      {/* 3. CATALOG EXPLORER & 1-CLICK IMPORT (Structured Multi-Column Table like Billz) */}
+      <div className="bg-white dark:bg-[#18181B] rounded-2xl border border-slate-200/80 dark:border-zinc-800 p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-semibold text-xs text-slate-900 dark:text-white uppercase tracking-wider flex items-center flex-wrap gap-2">
-              <Package className="w-3.5 h-3.5 text-blue-600" />
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center flex-wrap gap-2">
+              <Package className="w-4 h-4 text-[#005bd3]" />
               <span>{lang === "ru" ? "Каталог товаров YES POS" : "YES POS Katalogi"}</span>
               {totalCatalogProducts > 0 && (
-                <span className="text-[10px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
+                <span className="text-[11px] font-semibold bg-blue-50 text-[#005bd3] px-2.5 py-0.5 rounded-full border border-blue-200">
                   {totalCatalogProducts} {lang === "ru" ? "товаров" : "ta tovar"}
                 </span>
               )}
             </h3>
             <p className="text-xs text-slate-500 font-normal mt-0.5">
-              {lang === "ru" ? "Просмотр товаров в кассе и импорт в интернет-магазин" : "Kassadagi tovarlarni ko'rish va nusxalash"}
+              {lang === "ru"
+                ? "Структурированная таблица товаров, категорий, артикулов, остатков и цен из кассы YES POS"
+                : "Kassadagi tovarlar, kategoriyalar, shtrix-kodlar va narxlar jadvali"}
             </p>
           </div>
 
@@ -708,10 +711,12 @@ export const YesPosPage: React.FC = () => {
                     setSelectedProductIds(allIds);
                   }
                 }}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 hover:bg-slate-50 text-slate-700 dark:text-zinc-300 text-xs font-medium transition-colors cursor-pointer"
+                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold transition-colors cursor-pointer"
               >
                 {selectedProductIds.size === totalCatalogProducts
-                  ? (lang === "ru" ? "Снять выбор" : "Bekor qilish")
+                  ? lang === "ru"
+                    ? "Снять выбор"
+                    : "Bekor qilish"
                   : `${lang === "ru" ? "Выбрать все" : "Barchasini tanlash"} (${totalCatalogProducts})`}
               </button>
             )}
@@ -720,13 +725,17 @@ export const YesPosPage: React.FC = () => {
               type="button"
               onClick={() => handleLoadCatalog()}
               disabled={isCatalogFetching}
-              className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-50 text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-50 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               <DownloadCloud className={`w-3.5 h-3.5 ${isCatalogFetching ? "animate-bounce" : ""}`} />
               <span>
                 {isCatalogFetching
-                  ? (lang === "ru" ? "Загрузка..." : "Yuklanmoqda...")
-                  : (lang === "ru" ? "Загрузить каталог" : "Katalogni yangilash")}
+                  ? lang === "ru"
+                    ? "Загрузка..."
+                    : "Yuklanmoqda..."
+                  : lang === "ru"
+                  ? "Обновить каталог"
+                  : "Katalogni yangilash"}
               </span>
             </button>
 
@@ -735,191 +744,235 @@ export const YesPosPage: React.FC = () => {
                 type="button"
                 onClick={handleImportSelected}
                 disabled={importing}
-                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
+                className="px-4 py-1.5 rounded-xl bg-[#005bd3] hover:bg-[#004bb0] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
               >
                 <Check className="w-3.5 h-3.5" />
-                <span>{importing ? (lang === "ru" ? "Импорт..." : "Yuklanmoqda...") : `${lang === "ru" ? "Импортировать" : "Yuklash"} (${selectedProductIds.size})`}</span>
+                <span>
+                  {importing
+                    ? lang === "ru"
+                      ? "Импорт..."
+                      : "Yuklanmoqda..."
+                    : `${lang === "ru" ? "Импортировать в магазин" : "Do'konga yuklash"} (${selectedProductIds.size})`}
+                </span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Search within catalog */}
+        {/* Search & Category Filter Toolbar (matching BillzPage.tsx) */}
         {catalog.length > 0 && (
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={catalogSearch}
-              onChange={(e) => setCatalogSearch(e.target.value)}
-              placeholder={t("yespos_search_catalog_ph") || "Yuklangan tovarlar ichidan qidirish..."}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-brand"
-            />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+                placeholder={
+                  lang === "ru"
+                    ? "Поиск по названию товара, артикулу (SKU) или штрихкоду..."
+                    : t("yespos_search_catalog_ph") || "Yuklangan tovarlar ichidan qidirish..."
+                }
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:border-[#005bd3]"
+              />
+            </div>
+
+            <div className="sm:w-64">
+              <select
+                value={selectedCategoryFilter}
+                onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-700 dark:text-zinc-200 focus:outline-none cursor-pointer"
+              >
+                <option value="all">
+                  {lang === "ru" ? "Все категории" : "Barcha kategoriyalar"} ({totalCatalogProducts})
+                </option>
+                {catalog.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name} ({cat.products?.length || 0})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
 
-        {/* Catalog Categories Grid */}
+        {/* Structured Multi-Column Products Table */}
         {isCatalogLoading ? (
-          <div className="text-center py-12 text-slate-500 space-y-3">
-            <RefreshCw className="w-8 h-8 mx-auto text-brand animate-spin" />
-            <p className="text-xs font-bold">{t("yespos_loading_catalog") || "YES POS katalogi yuklanmoqda..."}</p>
+          <div className="text-center py-14 text-slate-500 space-y-3">
+            <RefreshCw className="w-8 h-8 mx-auto text-[#005bd3] animate-spin" />
+            <p className="text-xs font-semibold">
+              {t("yespos_loading_catalog") || "YES POS katalogi yuklanmoqda..."}
+            </p>
           </div>
         ) : catalog.length > 0 ? (
-          <div className="space-y-6">
-            {catalog.map((cat) => {
-              const filteredProducts = cat.products.filter(
-                (p) =>
-                  !catalogSearch ||
-                  p.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
-                  (p.sku && p.sku.toLowerCase().includes(catalogSearch.toLowerCase()))
-              );
+          (() => {
+            const flatFilteredProducts: Array<{ product: RemoteProduct; category: RemoteCategory }> = [];
+            catalog.forEach((cat) => {
+              if (selectedCategoryFilter !== "all" && String(cat.id) !== String(selectedCategoryFilter)) {
+                return;
+              }
+              cat.products.forEach((p) => {
+                const q = catalogSearch.trim().toLowerCase();
+                const matchesSearch =
+                  !q ||
+                  p.name.toLowerCase().includes(q) ||
+                  (p.sku && p.sku.toLowerCase().includes(q)) ||
+                  (p.barcode && p.barcode.toLowerCase().includes(q)) ||
+                  cat.name.toLowerCase().includes(q);
+                if (matchesSearch) {
+                  flatFilteredProducts.push({ product: p, category: cat });
+                }
+              });
+            });
 
-              if (filteredProducts.length === 0) return null;
-
+            if (flatFilteredProducts.length === 0) {
               return (
-                <div key={cat.id} className="border border-slate-200 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      {cat.image ? (
-                        <img
-                          src={cat.image}
-                          alt={cat.name}
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.style.display = "none";
+                <div className="py-12 text-center text-slate-400 space-y-2">
+                  <Package className="w-8 h-8 mx-auto text-slate-300" />
+                  <p className="text-xs font-medium">
+                    {lang === "ru"
+                      ? "По вашему запросу товары не найдены"
+                      : "Qidiruv bo'yicha tovarlar topilmadi"}
+                  </p>
+                </div>
+              );
+            }
+
+            const allVisibleSelected =
+              flatFilteredProducts.length > 0 &&
+              flatFilteredProducts.every(({ product }) => selectedProductIds.has(product.id));
+
+            return (
+              <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                    <tr>
+                      <th className="p-3.5 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          checked={allVisibleSelected}
+                          onChange={(e) => {
+                            const next = new Set(selectedProductIds);
+                            flatFilteredProducts.forEach(({ product }) => {
+                              if (e.target.checked) next.add(product.id);
+                              else next.delete(product.id);
+                            });
+                            setSelectedProductIds(next);
                           }}
-                          className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0"
+                          className="rounded border-slate-300 text-[#005bd3] focus:ring-[#005bd3] cursor-pointer"
                         />
-                      ) : (
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
-                          <Layers className="w-4 h-4 text-slate-400" />
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-black text-xs text-slate-800 flex items-center gap-1.5">
-                          <span>{cat.name}</span>
-                          <span className="text-[10px] font-mono text-slate-400 font-normal">
-                            ({filteredProducts.length} {t("yespos_items_unit") || "tovar"})
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const allSelected = filteredProducts.every((p) => selectedProductIds.has(p.id));
-                        const next = new Set(selectedProductIds);
-                        filteredProducts.forEach((p) => {
-                          if (allSelected) next.delete(p.id);
-                          else next.add(p.id);
-                        });
-                        setSelectedProductIds(next);
-                      }}
-                      className="text-[11px] font-bold text-brand hover:underline cursor-pointer"
-                    >
-                      {filteredProducts.every((p) => selectedProductIds.has(p.id))
-                        ? (t("yespos_deselect_all") || "Tanlovni bekor qilish")
-                        : (t("yespos_select_all") || "Barchasini tanlash")}
-                    </button>
-                  </div>
-
-                  {/* Full-width horizontal row list as requested in video */}
-                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white">
-                    {filteredProducts.map((prod) => {
+                      </th>
+                      <th className="p-3.5">{lang === "ru" ? "Наименование товара" : "Tovar nomi"}</th>
+                      <th className="p-3.5">{lang === "ru" ? "Категория" : "Kategoriya"}</th>
+                      <th className="p-3.5">{lang === "ru" ? "Артикул / Штрихкод" : "Artikul / Shtrixkod"}</th>
+                      <th className="p-3.5 text-center">{lang === "ru" ? "Остаток" : "Qoldiq"}</th>
+                      <th className="p-3.5 text-right">{lang === "ru" ? "Цена" : "Narx"}</th>
+                      <th className="p-3.5 text-center">{lang === "ru" ? "Статус" : "Holat"}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
+                    {flatFilteredProducts.map(({ product: prod, category: cat }) => {
                       const isSelected = selectedProductIds.has(prod.id);
                       return (
-                        <div
+                        <tr
                           key={prod.id}
                           onClick={() => toggleSelect(prod.id)}
-                          className={`px-4 py-3 flex items-center justify-between gap-4 text-xs transition-colors cursor-pointer hover:bg-slate-50/80 ${
-                            isSelected ? "bg-blue-50/40" : "bg-white"
+                          className={`hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer ${
+                            isSelected ? "bg-blue-50/40 dark:bg-blue-950/20" : "bg-white dark:bg-[#18181B]"
                           }`}
                         >
-                          {/* Checkbox + Image + Title */}
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <td className="p-3.5 text-center" onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleSelect(prod.id)}
-                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer shrink-0"
+                              className="rounded border-slate-300 text-[#005bd3] focus:ring-[#005bd3] cursor-pointer"
                             />
-                            {prod.image ? (
-                              <img
-                                src={prod.image}
-                                alt={prod.name}
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.style.display = "none";
-                                }}
-                                className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
-                                <Package className="w-5 h-5" />
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <div className="font-bold text-slate-900 truncate text-sm">
-                                {prod.name}
-                              </div>
-                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
-                                {prod.sku && (
-                                  <span className="font-mono text-slate-400">
-                                    {lang === "ru" ? "Арт:" : "SKU:"} {prod.sku}
-                                  </span>
-                                )}
-                                {prod.barcode && (
-                                  <span className="font-mono text-slate-400">
-                                    {prod.barcode}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
+                          </td>
 
-                          {/* Inventory / Stock */}
-                          <div className="hidden sm:block text-right shrink-0 w-28">
-                            <div className="text-xs font-semibold text-slate-700">
-                              {prod.stock > 0 ? (
-                                <span className="text-emerald-600 font-bold">
-                                  {prod.stock} {lang === "ru" ? "в наличии" : "dona qoldiq"}
-                                </span>
+                          {/* Product Image & Name */}
+                          <td className="p-3.5 font-semibold text-slate-900 dark:text-white">
+                            <div className="flex items-center gap-3 min-w-[180px]">
+                              {prod.image ? (
+                                <img
+                                  src={prod.image}
+                                  alt={prod.name}
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                  className="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-zinc-700 shrink-0 bg-white"
+                                />
                               ) : (
-                                <span className="text-slate-400">
-                                  {lang === "ru" ? "Нет в наличии" : "Qoldiq yo'q"}
-                                </span>
+                                <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center text-slate-400 shrink-0">
+                                  <Package className="w-4 h-4" />
+                                </div>
                               )}
+                              <div className="min-w-0">
+                                <div className="font-semibold text-slate-900 dark:text-white line-clamp-1">
+                                  {prod.name}
+                                </div>
+                                {prod.ikpu && (
+                                  <div className="text-[10px] text-slate-400 font-mono truncate">
+                                    ИКПУ: {prod.ikpu}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          </td>
+
+                          {/* Category Badge */}
+                          <td className="p-3.5 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px] font-medium">
+                              <Layers className="w-3 h-3 text-slate-400" />
+                              <span>{cat.name}</span>
+                            </span>
+                          </td>
+
+                          {/* SKU / Barcode */}
+                          <td className="p-3.5 font-mono text-slate-600 dark:text-zinc-400 whitespace-nowrap">
+                            {prod.barcode || prod.sku || `YP-${prod.id}`}
+                          </td>
+
+                          {/* Stock */}
+                          <td className="p-3.5 text-center whitespace-nowrap">
+                            {prod.stock > 0 ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#e6f7f0] text-[#00a86b] border border-[#8ce0bf]">
+                                {prod.stock} {lang === "ru" ? "в наличии" : "dona"}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500">
+                                {lang === "ru" ? "Нет в наличии" : "Qoldiq yo'q"}
+                              </span>
+                            )}
+                          </td>
 
                           {/* Price */}
-                          <div className="text-right shrink-0 w-32">
-                            <div className="text-sm font-bold text-slate-900 font-mono">
-                              {prod.price?.toLocaleString()} UZS
-                            </div>
-                          </div>
+                          <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                            {Number(prod.price || 0).toLocaleString()} UZS
+                          </td>
 
-                          {/* Linked / Connection Badge */}
-                          <div className="shrink-0 w-28 text-right hidden md:block">
+                          {/* Sync Status */}
+                          <td className="p-3.5 text-center whitespace-nowrap">
                             {prod.is_linked ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                {lang === "ru" ? "В каталоге" : "Uланган"}
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#e6f7f0] text-[#00a86b] border border-[#8ce0bf]">
+                                <Check className="w-3 h-3" />
+                                <span>{lang === "ru" ? "В каталоге" : "Ulangan"}</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">
-                                {lang === "ru" ? "Не импортирован" : "Yangi"}
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-[#005bd3] border border-blue-200">
+                                {lang === "ru" ? "Новый" : "Yangi"}
                               </span>
                             )}
-                          </div>
-                        </div>
+                          </td>
+                        </tr>
                       );
                     })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()
         ) : (
           <div className="text-center py-10 text-slate-400 space-y-2">
             <Package className="w-8 h-8 mx-auto text-slate-300" />

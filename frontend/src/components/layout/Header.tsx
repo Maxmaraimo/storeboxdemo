@@ -33,7 +33,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, onOpenSidekick }) => {
   const { user, store, stores, switchStore, logout, lang, setLang, t } = useAuth();
-  const { totalUnread, notifications, markAllRead } = useNotifications();
+  const { totalUnread, notifications, markAllRead, markOneRead } = useNotifications();
   const navigate = useNavigate();
 
   const [langOpen, setLangOpen] = useState(false);
@@ -267,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, onOpenSidekick
                     </span>
                   )}
                 </div>
-                {totalUnread > 0 && (
+                {(totalUnread > 0 || notifications.length > 0) && (
                   <button
                     type="button"
                     onClick={async () => {
@@ -295,7 +295,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, onOpenSidekick
                     <Link
                       key={item.id}
                       to={item.url}
-                      onClick={() => setNotifOpen(false)}
+                      onClick={() => {
+                        markOneRead(item.id);
+                        setNotifOpen(false);
+                      }}
                       className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-colors"
                     >
                       <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5 text-slate-600 dark:text-zinc-400">

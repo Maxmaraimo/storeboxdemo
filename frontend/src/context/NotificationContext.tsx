@@ -9,6 +9,8 @@ export interface NotificationItem {
   body: string;
   created_at: string;
   url: string;
+  order_id?: number;
+  order_number?: string;
   is_read: boolean;
 }
 
@@ -27,10 +29,45 @@ interface NotificationContextType {
   isLoading: boolean;
   refreshNotifications: () => Promise<void>;
   markAllRead: () => Promise<void>;
+  markOneRead: (id: string) => void;
   notify: (message: string, type?: "success" | "error" | "info") => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+
+const DISMISSED_NOTIFS_STORAGE_KEY = "storebox_dismissed_notif_ids";
+
+const loadDismissedIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(DISMISSED_NOTIFS_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? new Set(parsed.map(String)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const saveDismissedIds = (ids: Set<string>) => {
+  try {
+    const arr = Array.from(ids).slice(-500);
+    localStorage.setItem(DISMISSED_NOTIFS_STORAGE_KEY, JSON.stringify(arr));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const normalizeNotificationUrl = (item: NotificationItem): string => {
+  if (item.type === "order") {
+    const orderIdFromId = item.id.startsWith("order_") ? item.id.slice("order_".length) : "";
+    const orderId = item.order_id ? String(item.order_id) : orderIdFromId;
+    if (orderId && !item.url.includes("orderId=")) {
+      const sep = item.url.includes("?") ? "&" : "?";
+      return `${item.url}${sep}orderId=${encodeURIComponent(orderId)}`;
+    }
+  }
+  return item.url;
+};
 
 const playOrderChime = () => {
   try {
@@ -66,6 +103,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isLoading, setIsLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const prevOrdersCountRef = React.useRef<number | null>(null);
+  const dismissedIdsRef = React.useRef<Set<string>>(loadDismissedIds());
 
   const notify = useCallback((message: string) => {
     setToastMsg(message);
@@ -85,11 +123,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
       prevOrdersCountRef.current = newOrders;
 
+      const rawNotifications = res.data.notifications || [];
+      const visibleNotifications = rawNotifications
+        .filter((n) => !dismissedIdsRef.current.has(n.id))
+        .map((n) => ({
+          ...n,
+          url: normalizeNotificationUrl(n),
+        }));
+
       setData({
         new_orders_count: newOrders,
         unread_chats_count: res.data.unread_chats_count || 0,
-        total_unread: res.data.total_unread || 0,
-        notifications: res.data.notifications || [],
+        total_unread: visibleNotifications.length,
+        notifications: visibleNotifications,
       });
     } catch (err) {
       // Silently fail to avoid UI disruptions
@@ -124,14 +170,37 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   }, [user, fetchNotifications]);
 
-  const markAllRead = async () => {
+  const markOneRead = useCallback((id: string) => {
+    if (!id) return;
+    dismissedIdsRef.current.add(id);
+    saveDismissedIds(dismissedIdsRef.current);
+    setData((prev) => {
+      const remaining = prev.notifications.filter((n) => n.id !== id);
+      return {
+        ...prev,
+        total_unread: remaining.length,
+        notifications: remaining,
+      };
+    });
+  }, []);
+
+  const markAllRead = useCallback(async () => {
+    setData((prev) => {
+      prev.notifications.forEach((n) => dismissedIdsRef.current.add(n.id));
+      saveDismissedIds(dismissedIdsRef.current);
+      return {
+        ...prev,
+        unread_chats_count: 0,
+        total_unread: 0,
+        notifications: [],
+      };
+    });
     try {
       await api.post("/dashboard/notifications/mark-read/");
-      await fetchNotifications();
     } catch (err) {
       console.error("Failed to mark notifications as read", err);
     }
-  };
+  }, []);
 
   return (
     <NotificationContext.Provider
@@ -143,6 +212,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         isLoading,
         refreshNotifications: fetchNotifications,
         markAllRead,
+        markOneRead,
         notify,
       }}
     >

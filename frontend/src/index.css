@@ -142,3 +142,19 @@ h1, h2, h3, h4 {
 .dark table tbody tr:hover {
   background-color: #202024;
 }
+
+/* Responsive layout adaptation when both Left Sidebar (240px) and Sidekick AI panel (380px) are open on laptop screens */
+@media (max-width: 1520px) {
+  .sidekick-open .sidekick-adaptive-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .sidekick-open .sidekick-adaptive-grid > * {
+    grid-column: span 1 / span 1 !important;
+  }
+  .sidekick-open table th,
+  .sidekick-open table td {
+    padding-left: 0.625rem !important;
+    padding-right: 0.625rem !important;
+  }
+}
+

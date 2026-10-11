@@ -372,9 +372,9 @@ export const ProductsPage: React.FC = () => {
         )}
 
         {/* 2-Column Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="sidekick-adaptive-grid grid grid-cols-1 xl:grid-cols-12 gap-5 min-w-0">
           {/* LEFT COLUMN: Main Information (8 cols) */}
-          <div className="lg:col-span-8 space-y-4">
+          <div className="xl:col-span-8 space-y-4 min-w-0">
             {/* Title & Description Card */}
             <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-3.5">
               <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
@@ -620,7 +620,7 @@ export const ProductsPage: React.FC = () => {
           </div>
 
           {/* RIGHT COLUMN: Status, Category & Publishing (4 cols) */}
-          <div className="lg:col-span-4 space-y-4">
+          <div className="xl:col-span-4 space-y-4 min-w-0">
             {/* Status Card */}
             <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-3">
               <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
@@ -900,7 +900,7 @@ export const ProductsPage: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-zinc-50/75 text-zinc-500 font-medium border-b border-zinc-200/80 select-none">
               <tr>
-                <th className="py-2.5 px-3 w-8 text-center">
+                <th className="py-2.5 px-2.5 w-8 text-center">
                   <input
                     type="checkbox"
                     checked={
@@ -916,12 +916,12 @@ export const ProductsPage: React.FC = () => {
                     className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer"
                   />
                 </th>
-                <th className="py-2.5 px-3">{lang === "ru" ? "Товар" : "Tovar"}</th>
-                <th className="py-2.5 px-3">{lang === "ru" ? "Категория" : "Kategoriya"}</th>
-                <th className="py-2.5 px-3">{lang === "ru" ? "Цена" : "Narx"}</th>
-                <th className="py-2.5 px-3">{lang === "ru" ? "Остаток" : "Qoldiq"}</th>
-                <th className="py-2.5 px-3">{lang === "ru" ? "Статус" : "Holat"}</th>
-                <th className="py-2.5 px-3 text-right">{lang === "ru" ? "Действия" : "Amallar"}</th>
+                <th className="py-2.5 px-2.5">{lang === "ru" ? "Товар" : "Tovar"}</th>
+                <th className="py-2.5 px-2.5">{lang === "ru" ? "Категория" : "Kategoriya"}</th>
+                <th className="py-2.5 px-2.5 whitespace-nowrap">{lang === "ru" ? "Цена" : "Narx"}</th>
+                <th className="py-2.5 px-2.5 whitespace-nowrap">{lang === "ru" ? "Остаток" : "Qoldiq"}</th>
+                <th className="py-2.5 px-2.5 whitespace-nowrap">{lang === "ru" ? "Статус" : "Holat"}</th>
+                <th className="py-2.5 px-2.5 text-right whitespace-nowrap">{lang === "ru" ? "Действия" : "Amallar"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 font-normal text-zinc-700">
@@ -934,7 +934,7 @@ export const ProductsPage: React.FC = () => {
                   } ${!p.is_active || p.stock === 0 ? "opacity-80" : ""}`}
                 >
                   <td
-                    className="py-3 px-3 text-center"
+                    className="py-2.5 px-2.5 text-center"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <input
@@ -952,80 +952,82 @@ export const ProductsPage: React.FC = () => {
                     />
                   </td>
 
-                  <td className="py-3 px-3 flex items-center gap-3">
-                    {p.primary_image_url ? (
-                      <img
-                        src={p.primary_image_url}
-                        alt=""
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = "/static/images/placeholder.svg";
-                        }}
-                        className="w-10 h-10 rounded-lg object-cover border border-zinc-200 shrink-0 bg-white"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-zinc-100 text-zinc-400 flex items-center justify-center shrink-0 border border-zinc-200/60">
-                        <Package className="w-4 h-4" />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-semibold text-zinc-900 group-hover:text-black truncate">
-                          {getProductName(p)}
-                        </span>
-                        {p.is_yespos && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.2 rounded border border-zinc-200 bg-zinc-50 text-zinc-600">
-                            YES POS
-                          </span>
-                        )}
-                        {(p as any).has_constructor && (
-                          <Link
-                            to="/constructor"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] text-zinc-500 hover:text-zinc-900 underline"
-                            title={lang === "ru" ? "Конструктор" : "Konstruktor"}
-                          >
-                            [Конструктор]
-                          </Link>
-                        )}
-                      </div>
-                      {p.barcode && (
-                        <div className="text-[11px] text-zinc-400 font-mono">
-                          #{p.barcode}
+                  <td className="py-2.5 px-2.5 max-w-[200px] sm:max-w-[260px] xl:max-w-[340px]">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {p.primary_image_url ? (
+                        <img
+                          src={p.primary_image_url}
+                          alt=""
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/static/images/placeholder.svg";
+                          }}
+                          className="w-9 h-9 rounded-lg object-cover border border-zinc-200 shrink-0 bg-white"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-lg bg-zinc-100 text-zinc-400 flex items-center justify-center shrink-0 border border-zinc-200/60">
+                          <Package className="w-4 h-4" />
                         </div>
                       )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-zinc-900 group-hover:text-black truncate max-w-full">
+                            {getProductName(p)}
+                          </span>
+                          {p.is_yespos && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.2 rounded border border-zinc-200 bg-zinc-50 text-zinc-600 shrink-0">
+                              YES POS
+                            </span>
+                          )}
+                          {(p as any).has_constructor && (
+                            <Link
+                              to="/constructor"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-[10px] text-zinc-500 hover:text-zinc-900 underline shrink-0"
+                              title={lang === "ru" ? "Конструктор" : "Konstruktor"}
+                            >
+                              [Конструктор]
+                            </Link>
+                          )}
+                        </div>
+                        {p.barcode && (
+                          <div className="text-[11px] text-zinc-400 font-mono truncate">
+                            #{p.barcode}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
 
-                  <td className="py-3 px-3 text-zinc-500">
+                  <td className="py-2.5 px-2.5 text-zinc-500 max-w-[120px] truncate">
                     {p.category_name || "—"}
                   </td>
 
-                  <td className="py-3 px-3">
-                    <div className="font-semibold text-zinc-900">
+                  <td className="py-2.5 px-2.5 whitespace-nowrap">
+                    <div className="font-semibold text-zinc-900 tabular-nums">
                       {Number(p.price).toLocaleString()} UZS
                     </div>
                     {p.old_price && (
-                      <div className="text-[10px] text-zinc-400 line-through">
+                      <div className="text-[10px] text-zinc-400 line-through tabular-nums">
                         {Number(p.old_price).toLocaleString()} UZS
                       </div>
                     )}
                   </td>
 
-                  <td className="py-3 px-3">
+                  <td className="py-2.5 px-2.5 whitespace-nowrap">
                     {p.stock === 0 ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FFE4E6] text-[#BE123C] border border-[#FECDD3]">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48]" />
                         0 {p.unit || "dona"}
                       </span>
                     ) : (
-                      <span className="text-zinc-800 font-medium">
+                      <span className="text-zinc-800 font-medium tabular-nums">
                         {p.stock} {p.unit || "dona"}
                       </span>
                     )}
                   </td>
 
-                  <td className="py-3 px-3">
+                  <td className="py-2.5 px-2.5 whitespace-nowrap">
                     {canEditProduct ? (
                       <button
                         type="button"
@@ -1073,7 +1075,7 @@ export const ProductsPage: React.FC = () => {
                     )}
                   </td>
 
-                  <td className="py-3 px-3 text-right">
+                  <td className="py-2.5 px-2.5 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-1">
                       {canEditProduct && (
                         <button
@@ -1082,7 +1084,7 @@ export const ProductsPage: React.FC = () => {
                             e.stopPropagation();
                             openEditModal(p);
                           }}
-                          className="p-1 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors"
+                          className="p-1 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer"
                           title={lang === "ru" ? "Редактировать" : "Tahrirlash"}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -1103,7 +1105,7 @@ export const ProductsPage: React.FC = () => {
                               deleteMutation.mutate(p.id);
                             }
                           }}
-                          className="p-1 rounded hover:bg-rose-50 text-zinc-400 hover:text-rose-600 transition-colors"
+                          className="p-1 rounded hover:bg-rose-50 text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer"
                           title={lang === "ru" ? "Удалить" : "O'chirish"}
                         >
                           <Trash2 className="w-3.5 h-3.5" />

@@ -94,7 +94,11 @@ export const AppLayout: React.FC = () => {
           onOpenSidekick={() => setSidekickOpen((prev) => !prev)}
         />
 
-        <main className="flex-1 px-3 sm:px-6 lg:px-8 py-5 pb-24 lg:pb-12 max-w-[1400px] w-full mx-auto min-w-0">
+        <main
+          className={`flex-1 px-3 sm:px-5 ${
+            sidekickOpen ? "sidekick-open lg:px-4 xl:px-5" : "lg:px-8"
+          } py-5 pb-24 lg:pb-12 max-w-[1440px] w-full mx-auto min-w-0 transition-all duration-300`}
+        >
           <PageBreadcrumbs />
           <Outlet />
         </main>

@@ -277,12 +277,12 @@ if _env_path.exists():
                 _k, _v = _line.split('=', 1)
                 os.environ[_k.strip()] = _v.strip().strip('"').strip("'")
 
-# StoreBox AI Sidekick Architecture (Gemini + ElevenLabs)
+# StoreBox AI Sidekick Architecture (Gemini + Microsoft Azure Speech Services)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
 
-ELEVENLABS_API_KEY = os.environ.get('ELEVENLABS_API_KEY', '')
-ELEVENLABS_VOICE_ID = os.environ.get('ELEVENLABS_VOICE_ID', 'pNInz6obpgDQGcFmaJgB')
+AZURE_SPEECH_KEY = os.environ.get('AZURE_SPEECH_KEY', '')
+AZURE_SPEECH_REGION = os.environ.get('AZURE_SPEECH_REGION', 'eastus')
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_MODEL = os.environ.get('GROQ_MODEL', 'qwen/qwen3.8-27b')

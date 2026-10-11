@@ -309,7 +309,7 @@ export const DashboardPage: React.FC = () => {
   const webTrafficPct = totalTraffic > 0 ? Math.round(((charts?.traffic?.web || 0) / totalTraffic) * 100) : 50;
   const tmaTrafficPct = totalTraffic > 0 ? 100 - webTrafficPct : 50;
 
-  // Chart configuration: Clean minimal Shopify Polaris style with vibrant #00a86b emerald accent
+  // Chart configuration: Clean minimal Shopify Polaris style with vibrant #005bd3 Shopify Blue accent
   const chartData = {
     labels: charts?.labels || [],
     datasets: [
@@ -318,13 +318,13 @@ export const DashboardPage: React.FC = () => {
         data: (charts?.revenue || []).map((val) =>
           currency === "USD" ? Number((val / UZS_TO_USD_RATE).toFixed(2)) : val
         ),
-        backgroundColor: chartType === "bar" ? "#00a86b" : "rgba(0, 168, 107, 0.14)",
-        borderColor: "#00a86b",
+        backgroundColor: chartType === "bar" ? "#005bd3" : "rgba(0, 91, 211, 0.14)",
+        borderColor: "#005bd3",
         borderWidth: chartType === "line" ? 2.5 : 0,
         borderRadius: chartType === "bar" ? 5 : 0,
         fill: chartType === "line",
         tension: 0.35,
-        pointBackgroundColor: "#00a86b",
+        pointBackgroundColor: "#005bd3",
         pointBorderColor: "#FFFFFF",
         pointBorderWidth: 1.5,
         pointRadius: chartType === "line" ? 3 : 0,
@@ -401,12 +401,12 @@ export const DashboardPage: React.FC = () => {
       {/* 1. Header Bar: Store Title & Period Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold text-[#202223] dark:text-white tracking-tight">
               {store?.name || (lang === "ru" ? "Панель управления" : "Boshqaruv paneli")}
             </h1>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#e3f1df] text-[#008060]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#008060]"></span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#e6f7f0] text-[#00a86b] border border-[#8ce0bf]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00a86b] animate-pulse"></span>
               {lang === "ru" ? "Активен" : "Faol"}
             </span>
           </div>
@@ -571,13 +571,13 @@ export const DashboardPage: React.FC = () => {
             className="w-8 h-8 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-[#5c5f62] dark:text-zinc-300 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 transition-colors shadow-[0_1px_0_rgba(0,0,0,0.05)] cursor-pointer"
             title={lang === "ru" ? "Обновить данные" : "Ma'lumotlarni yangilash"}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-[#008060]" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-[#00a86b]" : ""}`} />
           </button>
         </div>
       </div>
 
       {/* 2. Pure Shopify Polaris Metric Cards (4 cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 @3xl:grid-cols-4 gap-4">
         {/* Card 1: Total Revenue */}
         <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
           <div>
@@ -592,7 +592,7 @@ export const DashboardPage: React.FC = () => {
             <span className="truncate">
               {lang === "ru" ? "Оборот:" : "Aylanma:"} {formatMoney(metrics?.sales_sum || 0)}
             </span>
-            <span className="text-[#008060] font-medium">● Live</span>
+            <span className="text-[#00a86b] font-semibold">● Live</span>
           </div>
         </div>
 
@@ -611,7 +611,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5 text-[#6d7175]">
-              <span className="text-[#008060] font-medium">
+              <span className="text-[#00a86b] font-semibold">
                 {metrics?.new_orders || 0} {lang === "ru" ? "новых" : "yangi"}
               </span>
               <span>•</span>
@@ -619,7 +619,7 @@ export const DashboardPage: React.FC = () => {
                 {metrics?.ready_orders || 0} {lang === "ru" ? "готовых" : "tayyor"}
               </span>
             </div>
-            <Link to="/orders" className="text-[#008060] hover:underline font-medium">
+            <Link to="/orders" className="text-[#005bd3] hover:underline font-medium">
               {lang === "ru" ? "Все →" : "Barchasi →"}
             </Link>
           </div>
@@ -639,7 +639,7 @@ export const DashboardPage: React.FC = () => {
             <span className="text-[#6d7175]">
               {lang === "ru" ? "Покупатели магазина" : "Do'kon xaridorlari"}
             </span>
-            <Link to="/customers" className="text-[#008060] hover:underline font-medium">
+            <Link to="/customers" className="text-[#005bd3] hover:underline font-medium">
               CRM →
             </Link>
           </div>
@@ -657,7 +657,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#6d7175]">
             <span>{lang === "ru" ? "За одну покупку" : "Bitta xarid uchun"}</span>
-            <span className="text-[#008060] font-medium">✓ {lang === "ru" ? "В норме" : "Barqaror"}</span>
+            <span className="text-[#00a86b] font-semibold">✓ {lang === "ru" ? "В норме" : "Barqaror"}</span>
           </div>
         </div>
       </div>
@@ -735,7 +735,7 @@ export const DashboardPage: React.FC = () => {
                       <div
                         className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                           step.done
-                            ? "bg-[#008060] text-white"
+                            ? "bg-[#00a86b] text-white"
                             : "border-2 border-[#8c9196] text-transparent"
                         }`}
                       >
@@ -780,9 +780,9 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* 4. Middle Section: Revenue Dynamics Chart & Sales Channels */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="sidekick-adaptive-grid grid grid-cols-1 xl:grid-cols-12 gap-5">
         {/* Left: Revenue Dynamics Chart (8 cols) */}
-        <div className="lg:col-span-8 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
+        <div className="xl:col-span-8 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-w-0">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
@@ -878,7 +878,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Right: Channels & Distribution (4 cols) */}
-        <div className="lg:col-span-4 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
+        <div className="xl:col-span-4 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-w-0">
           <div>
             <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
               {lang === "ru" ? "Каналы продаж" : "Savdo kanallari"}
@@ -891,7 +891,7 @@ export const DashboardPage: React.FC = () => {
               {/* Telegram Bot */}
               <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] dark:bg-zinc-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Bot className="w-4 h-4 text-[#202223] dark:text-zinc-300" />
+                  <Bot className="w-4 h-4 text-[#005bd3]" />
                   <div>
                     <div className="text-xs font-medium text-[#202223] dark:text-white">Telegram Mini App</div>
                     <div className="text-[11px] text-[#6d7175]">
@@ -902,7 +902,7 @@ export const DashboardPage: React.FC = () => {
 
                 <Link
                   to="/platforms"
-                  className="text-xs text-[#008060] font-medium hover:underline flex items-center gap-1"
+                  className="text-xs text-[#005bd3] font-medium hover:underline flex items-center gap-1"
                 >
                   <span>{lang === "ru" ? "Бот →" : "Bot →"}</span>
                 </Link>
@@ -911,7 +911,7 @@ export const DashboardPage: React.FC = () => {
               {/* Web Storefront */}
               <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] dark:bg-zinc-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Globe className="w-4 h-4 text-[#008060]" />
+                  <Globe className="w-4 h-4 text-[#00a86b]" />
                   <div>
                     <div className="text-xs font-medium text-[#202223] dark:text-white">
                       {lang === "ru" ? "Веб-витрина" : "Veb-sayt"}
@@ -927,7 +927,7 @@ export const DashboardPage: React.FC = () => {
                     href={store.storefront_url || `/store/${store.subdomain}/`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-[#008060] font-medium hover:underline flex items-center gap-1"
+                    className="text-xs text-[#00a86b] font-medium hover:underline flex items-center gap-1"
                   >
                     <span>{lang === "ru" ? "Витрина" : "Sayt"}</span>
                     <ExternalLink className="w-3 h-3" />
@@ -965,9 +965,9 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* 5. Lower Row: Top Products & Uzbekistan Regional Activity / Map (Block 3.6) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="sidekick-adaptive-grid grid grid-cols-1 xl:grid-cols-12 gap-5">
         {/* Left: Top Products (6 cols) */}
-        <div className="lg:col-span-6 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
+        <div className="xl:col-span-6 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -1081,7 +1081,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Right: Uzbekistan Regional Activity & Delivery Map (6 cols) */}
-        <div className="lg:col-span-6 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
+        <div className="xl:col-span-6 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-w-0">
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <div>
@@ -1142,7 +1142,7 @@ export const DashboardPage: React.FC = () => {
                   >
                     <div className="flex items-center justify-between text-xs gap-2">
                       <div className="flex items-center gap-2 font-medium text-[#202223] dark:text-white truncate">
-                        <MapPin className="w-3.5 h-3.5 text-[#00a86b] shrink-0" />
+                        <MapPin className="w-3.5 h-3.5 text-[#005bd3] shrink-0" />
                         <span className="truncate">{lang === "ru" ? reg.name_ru : reg.name_uz}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs shrink-0">
@@ -1156,7 +1156,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-[#e1e3e5] dark:bg-zinc-800 overflow-hidden">
                       <div
-                        className="h-full bg-[#00a86b] rounded-full transition-all duration-300"
+                        className="h-full bg-[#005bd3] rounded-full transition-all duration-300"
                         style={{ width: `${Math.max(reg.orders > 0 ? 6 : 0, reg.share_pct)}%` }}
                       />
                     </div>

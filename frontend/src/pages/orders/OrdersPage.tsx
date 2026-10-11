@@ -56,10 +56,12 @@ export const OrdersPage: React.FC = () => {
   const branch = searchParams.get("branch") || "all";
   const urlQ = searchParams.get("q") || "";
   const urlTab = searchParams.get("tab") || "";
+  const urlOrderId = searchParams.get("orderId") || "";
 
   const [status, setStatus] = useState("ALL");
   const [search, setSearch] = useState(urlQ);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [highlightedOrderId, setHighlightedOrderId] = useState<number | null>(null);
   const [confirmCancelOrderId, setConfirmCancelOrderId] = useState<number | null>(null);
   const [isWideModal, setIsWideModal] = useState(true);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -174,6 +176,28 @@ export const OrdersPage: React.FC = () => {
 
   const counts = data?.counts || { all: 0, new: 0, processing: 0, ready: 0, in_delivery: 0, history: 0 };
   const orders = data?.orders || [];
+
+  useEffect(() => {
+    if (!urlOrderId || !orders.length) return;
+    const cleanTarget = urlOrderId.replace(/^#/, "").trim();
+    const matched = orders.find(
+      (o) => String(o.id) === cleanTarget || String(o.order_number) === cleanTarget
+    );
+    if (matched) {
+      setSelectedOrder(matched);
+      setHighlightedOrderId(matched.id);
+      setTimeout(() => {
+        const rowEl = document.getElementById(`order-row-${matched.id}`);
+        if (rowEl) {
+          rowEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 120);
+      // Clear orderId from URL so closing the modal doesn't immediately reopen it
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("orderId");
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [urlOrderId, orders, searchParams, setSearchParams]);
 
   const getOrderStatusLabel = (st: string) => {
     switch (st?.toUpperCase()) {
@@ -444,24 +468,30 @@ export const OrdersPage: React.FC = () => {
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200/80 text-[10px] uppercase tracking-wider">
                   <tr>
-                    <th className="py-3 px-4">{t("th_order_num") || "Заказ"}</th>
-                    <th className="py-3 px-4">{t("th_client") || "Клиент"}</th>
-                    <th className="py-3 px-4">{t("th_branch") || "Филиал"}</th>
-                    <th className="py-3 px-4">{t("th_payment") || "Оплата"}</th>
-                    <th className="py-3 px-4">{t("th_delivery") || "Доставка"}</th>
-                    <th className="py-3 px-4">{t("th_status") || "Статус"}</th>
-                    <th className="py-3 px-4 text-right">{t("th_action") || "Действие"}</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">{t("th_order_num") || "Заказ"}</th>
+                    <th className="py-2.5 px-3">{t("th_client") || "Клиент"}</th>
+                    <th className="py-2.5 px-3">{t("th_branch") || "Филиал"}</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">{t("th_payment") || "Оплата"}</th>
+                    <th className="py-2.5 px-3 hidden md:table-cell">{t("th_delivery") || "Доставка"}</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">{t("th_status") || "Статус"}</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">{t("th_action") || "Действие"}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
                   {orders.map((order) => (
                     <tr
+                      id={`order-row-${order.id}`}
                       key={order.id}
-                      onClick={() => setSelectedOrder(order)}
-                      className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                      onClick={() => {
+                        setHighlightedOrderId(order.id);
+                        setSelectedOrder(order);
+                      }}
+                      className={`hover:bg-slate-50 transition-colors cursor-pointer group ${
+                        highlightedOrderId === order.id ? "bg-[#f1f8f5] ring-1 ring-inset ring-[#00a86b]/40" : ""
+                      }`}
                     >
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
                           <span className="font-semibold text-slate-900 group-hover:text-[#008060] transition-colors">
                             #{order.order_number}
                           </span>
@@ -479,42 +509,42 @@ export const OrdersPage: React.FC = () => {
                           {new Date(order.created_at).toLocaleString()}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-slate-900">{order.customer_name}</div>
-                        <div className="text-[11px] text-slate-500">{order.customer_phone}</div>
+                      <td className="py-2.5 px-3 min-w-[115px] max-w-[160px]">
+                        <div className="font-medium text-slate-900 truncate">{order.customer_name}</div>
+                        <div className="text-[11px] text-slate-500 whitespace-nowrap">{order.customer_phone}</div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3">
                         {order.branch_name ? (
                           <div
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#f1f8f5] text-[#14532d] border border-[#bbf7d0] max-w-[170px] truncate"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#f1f8f5] text-[#14532d] border border-[#bbf7d0] max-w-[130px] xl:max-w-[165px] truncate"
                             title={order.branch_name}
                           >
-                            <Building2 className="w-3.5 h-3.5 shrink-0 text-[#16a34a]" />
+                            <Building2 className="w-3 h-3 shrink-0 text-[#16a34a]" />
                             <span className="truncate">{order.branch_name}</span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 text-[11px] italic">
+                          <span className="text-slate-400 text-[11px] italic whitespace-nowrap">
                             {t("branch_unassigned") || "Основной склад"}
                           </span>
                         )}
                       </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-900">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <div className="font-bold text-slate-900 tabular-nums">
                           {Number(order.total_amount).toLocaleString()} UZS
                         </div>
-                        <div className="text-[10px] text-slate-400 font-bold">{order.payment_method_display}</div>
+                        <div className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{order.payment_method_display}</div>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-500 text-[11px] max-w-xs truncate">
+                      <td className="py-2.5 px-3 text-slate-500 text-[11px] max-w-[130px] xl:max-w-[210px] truncate hidden md:table-cell">
                         {order.delivery_address || (t("address_not_specified") || "Адрес не указан")}
                       </td>
-                      <td className="py-3.5 px-4">{getOrderStatusBadge(order.status)}</td>
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-2.5 px-3 whitespace-nowrap">{getOrderStatusBadge(order.status)}</td>
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             title={t("view_details") || "Просмотр"}
                             onClick={() => setSelectedOrder(order)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                           >
                             <Eye className="w-4 h-4" />
                           </button>

@@ -633,9 +633,9 @@ export const AnalyticsPage: React.FC = () => {
 
       {/* 3. LIVE VIEW TAB (Exact Shopify 2026 "В реальном времени" Layout + Realistic 3D Earth Globe) */}
       {activeTab === "live" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div className="sidekick-adaptive-grid grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
           {/* Left Column (5 cols): Live Metrics, Customer Activity, Locations */}
-          <div className="lg:col-span-5 space-y-4">
+          <div className="xl:col-span-5 space-y-4 min-w-0">
             {/* Search location bar */}
             <div className="relative">
               <Search className="w-4 h-4 text-[#6d7175] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -644,7 +644,7 @@ export const AnalyticsPage: React.FC = () => {
                 value={liveSearch}
                 onChange={(e) => setLiveSearch(e.target.value)}
                 placeholder="Поиск местоположения (Ташкент, Самарканд, Бухара...)"
-                className="w-full pl-9 pr-4 py-2 rounded-[10px] bg-white dark:bg-[#18181B] border border-[#e1e3e5] dark:border-zinc-800 text-xs text-[#202223] dark:text-white placeholder-[#6d7175] focus:outline-none focus:border-[#202223]"
+                className="w-full pl-9 pr-4 py-2 rounded-[10px] bg-white dark:bg-[#18181B] border border-[#e1e3e5] dark:border-zinc-800 text-xs text-[#202223] dark:text-white placeholder-[#6d7175] focus:outline-none focus:border-[#005bd3]"
               />
             </div>
 
@@ -654,8 +654,11 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Посетители прямо сейчас
                 </div>
-                <div className="text-2xl font-bold text-[#202223] dark:text-white mt-3 tabular-nums">
-                  {((metrics?.total_customers || 1) * 3) + 7}
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#00a86b] animate-pulse shrink-0" />
+                  <span className="text-2xl font-bold text-[#202223] dark:text-white tabular-nums">
+                    {((metrics?.total_customers || 1) * 3) + 7}
+                  </span>
                 </div>
               </div>
 
@@ -663,7 +666,7 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Общий объем продаж
                 </div>
-                <div className="text-lg font-bold text-[#202223] dark:text-white mt-3 tabular-nums">
+                <div className="text-lg font-bold text-[#005bd3] dark:text-sky-400 mt-3 tabular-nums">
                   {formatMoney(totalSales)}
                 </div>
               </div>
@@ -681,7 +684,7 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Заказы
                 </div>
-                <div className="text-2xl font-bold text-[#202223] dark:text-white mt-3 tabular-nums">
+                <div className="text-2xl font-bold text-[#00a86b] mt-3 tabular-nums">
                   {metrics?.orders_count || 0}
                 </div>
               </div>
@@ -695,19 +698,19 @@ export const AnalyticsPage: React.FC = () => {
               <div className="grid grid-cols-3 divide-x divide-[#e3e5e7] dark:divide-zinc-800 pt-1">
                 <div className="pr-3">
                   <div className="text-[11px] text-[#6d7175]">Активных корзин</div>
-                  <div className="text-lg font-bold text-[#202223] dark:text-white mt-1">
+                  <div className="text-lg font-bold text-[#005bd3] mt-1">
                     {Math.max(4, (metrics?.total_customers || 1) * 2)}
                   </div>
                 </div>
                 <div className="px-3">
                   <div className="text-[11px] text-[#6d7175]">Оформление</div>
-                  <div className="text-lg font-bold text-[#202223] dark:text-white mt-1">
+                  <div className="text-lg font-bold text-indigo-600 mt-1">
                     {Math.max(2, metrics?.new_orders || 2)}
                   </div>
                 </div>
                 <div className="pl-3">
                   <div className="text-[11px] text-[#6d7175]">Куплено</div>
-                  <div className="text-lg font-bold text-emerald-600 mt-1">
+                  <div className="text-lg font-bold text-[#00a86b] mt-1">
                     {metrics?.orders_count || 0}
                   </div>
                 </div>
@@ -720,19 +723,25 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Сессии по локациям
                 </div>
-                <div className="space-y-2 text-xs">
+                <div className="space-y-1.5 text-xs">
                   {[
                     { city: "Ташкент", count: 42 },
                     { city: "Самарканд", count: 19 },
                     { city: "Андижан", count: 16 },
                     { city: "Бухара", count: 14 },
+                    { city: "Фергана", count: 12 },
                   ]
                     .filter((c) => !liveSearch || c.city.toLowerCase().includes(liveSearch.toLowerCase()))
                     .map((c, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <span className="text-[#4a4f55] dark:text-zinc-300">{c.city}</span>
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setLiveSearch(c.city)}
+                        className="w-full flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 transition-colors cursor-pointer text-left"
+                      >
+                        <span className="text-[#005bd3] dark:text-sky-400 font-medium">{c.city}</span>
                         <span className="font-semibold text-[#202223] dark:text-white">{c.count}</span>
-                      </div>
+                      </button>
                     ))}
                 </div>
               </div>
@@ -744,14 +753,14 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="space-y-2 text-xs pt-1">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1.5 text-[#4a4f55] dark:text-zinc-300">
-                      <span className="w-2 h-2 rounded-full bg-[#0ea5e9]" />
+                      <span className="w-2 h-2 rounded-full bg-[#005bd3]" />
                       Первая покупка
                     </span>
                     <span className="font-semibold text-[#202223] dark:text-white">75%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1.5 text-[#4a4f55] dark:text-zinc-300">
-                      <span className="w-2 h-2 rounded-full bg-violet-500" />
+                      <span className="w-2 h-2 rounded-full bg-[#00a86b]" />
                       Повторные
                     </span>
                     <span className="font-semibold text-[#202223] dark:text-white">25%</span>
@@ -762,8 +771,8 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Right Column (7 cols): Realistic 3D Earth Globe */}
-          <div className="lg:col-span-7 bg-white dark:bg-[#18181B] rounded-[14px] border border-[#e1e3e5] dark:border-zinc-800 p-4 sm:p-6 shadow-2xs flex flex-col items-center justify-center min-h-[540px]">
-            <InteractiveGlobe size={470} />
+          <div className="xl:col-span-7 bg-white dark:bg-[#18181B] rounded-[14px] border border-[#e1e3e5] dark:border-zinc-800 p-4 sm:p-6 shadow-2xs flex flex-col items-center justify-center min-h-[540px] min-w-0">
+            <InteractiveGlobe size={470} selectedCityName={liveSearch.trim()} />
           </div>
         </div>
       )}

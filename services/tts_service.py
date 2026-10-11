@@ -1,12 +1,14 @@
 """
-StoreBox Sidekick Voice Service — ElevenLabs API (`eleven_multilingual_v2`).
-Generates high-quality neural speech via ElevenLabs with low-latency connection pooling
-and returns a Base64 MP3 stream.
+StoreBox Sidekick Voice Service — Microsoft Azure Cognitive Services Speech REST API.
+Generates natural neural speech (`uz-UZ-MadinaNeural`, `ru-RU-DmitryNeural`, `en-US-BrianMultilingualNeural`)
+and returns a Base64-encoded MP3 stream.
 """
+import os
 import re
 import base64
 import logging
-from typing import Optional, Dict, Any
+from xml.sax.saxutils import escape as xml_escape
+from typing import Optional, Dict, Any, Tuple
 
 import requests
 import urllib3
@@ -15,13 +17,58 @@ from django.conf import settings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logger = logging.getLogger(__name__)
 
-# Persistent HTTP session to reuse TLS connection to api.elevenlabs.io (saves ~500ms per call)
-_TTS_SESSION = requests.Session()
-_TTS_SESSION.trust_env = False
+# Persistent HTTP session to reuse TLS connection to eastus.tts.speech.microsoft.com
+_AZURE_TTS_SESSION = requests.Session()
+_AZURE_TTS_SESSION.trust_env = False
+
+AZURE_VOICE_MAP: Dict[str, Tuple[str, str]] = {
+    "uz": ("uz-UZ", "uz-UZ-MadinaNeural"),
+    "ru": ("ru-RU", "ru-RU-DmitryNeural"),
+    "en": ("en-US", "en-US-BrianMultilingualNeural"),
+}
 
 
-def clean_text_for_tts(text: str) -> str:
-    """Strips markdown symbols, emojis, and URLs so ElevenLabs reads clean natural sentences fast."""
+def detect_tts_language(text: str, language: str = "auto") -> str:
+    """
+    Automatically determines the language ('uz', 'ru', 'en') from the text or passed flag.
+    """
+    t = (text or "").strip()
+    t_low = t.lower()
+
+    # Check for Uzbek Cyrillic characters
+    if re.search(r"[ўқғҳЎҚҒҲ]", t):
+        return "uz"
+
+    # Check for Russian Cyrillic characters
+    if re.search(r"[а-яА-ЯёЁ]", t):
+        return "ru"
+
+    # Check for Uzbek Latin words/apostrophes
+    if (
+        re.search(
+            r"\b(salom|buyurtma|buyurtmalar|mahsulot|mahsulotlar|so'm|do'kon|qanday|qancha|uchun|bo'lim|ko'rsat|ko'rib|tovar|mijoz|bugun|bugungi|hafta|oylik|tushum|yordam|kerak)\b",
+            t_low,
+        )
+        or re.search(r"[oOgG]['‘’ʻʼ]", t)
+    ):
+        return "uz"
+
+    lang_norm = (language or "auto").strip().lower()
+    if lang_norm.startswith("uz"):
+        return "uz"
+    if lang_norm.startswith("en"):
+        return "en"
+    if lang_norm.startswith("ru"):
+        return "ru"
+
+    if re.search(r"[a-zA-Z]", t):
+        return "en"
+
+    return "ru"
+
+
+def clean_text_for_tts(text: str, lang: str = "ru") -> str:
+    """Strips markdown symbols, emojis, URLs, and normalizes brand phonetics for natural Azure Neural TTS."""
     if not text:
         return ""
 
@@ -33,14 +80,33 @@ def clean_text_for_tts(text: str) -> str:
     )
     clean = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", clean)
     clean = re.sub(r"https?://\S+", "", clean)
-    clean = re.sub(r"[*#`_~]", "", clean)
+    clean = re.sub(r"[*#`_~«»\"']", "", clean)
     clean = re.sub(r"^[•\-\*]\s+", "", clean, flags=re.MULTILINE)
-    clean = re.sub(r"\bUZS\b", "сум", clean, flags=re.IGNORECASE)
+
+    # Phonetic normalization for brand names & symbols so Azure never says "Бергер амперсанд Цо" or "Бургер тсо"
+    if lang == "uz":
+        clean = re.sub(r"Burger\s*&\s*Co\.?", "Burger end Ko", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"&\s*Co\.?", "end Ko", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"\s*&\s*", " va ", clean)
+        clean = re.sub(r"\bUZS\b", "so'm", clean, flags=re.IGNORECASE)
+    elif lang == "en":
+        clean = re.sub(r"Burger\s*&\s*Co\.?", "Burger and Company", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"&\s*Co\.?", "and Company", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"\s*&\s*", " and ", clean)
+    else:
+        clean = re.sub(r"Burger\s*&\s*Co\.?", "Бургер энд Ко", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"\bBurger\b", "Бургер", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"&\s*Co\.?", "энд Ко", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"\bStoreBox\b", "СторБокс", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"\bSidekick\b", "Сайдкик", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"\s*&\s*", " и ", clean)
+        clean = re.sub(r"\bUZS\b", "сум", clean, flags=re.IGNORECASE)
+
     clean = re.sub(r"\s+", " ", clean).strip()
 
-    # Keep spoken output natural and concise (up to ~380 chars) so TTS finishes in <0.7s
-    if len(clean) > 380:
-        cut = clean[:380]
+    # Keep spoken output natural and concise (up to ~500 chars)
+    if len(clean) > 500:
+        cut = clean[:500]
         last_punct = max(cut.rfind("."), cut.rfind("!"), cut.rfind("?"))
         if last_punct > 120:
             clean = cut[: last_punct + 1]
@@ -49,63 +115,83 @@ def clean_text_for_tts(text: str) -> str:
     return clean
 
 
-def generate_voice_response(text: str, voice_id: Optional[str] = None) -> Optional[str]:
+def synthesize_voice(text: str, language: str = "auto") -> Optional[str]:
     """
-    Sends text to ElevenLabs API:
-      POST https://api.elevenlabs.io/v1/text-to-speech/{settings.ELEVENLABS_VOICE_ID}
-    Headers:
-      {"xi-api-key": settings.ELEVENLABS_API_KEY, "Content-Type": "application/json"}
-    Model:
-      eleven_multilingual_v2
+    Synthesizes neural speech via Microsoft Azure Cognitive Services Speech REST API:
+      POST https://{region}.tts.speech.microsoft.com/cognitiveservices/v1
+    Voices:
+      - Uzbek (uz): uz-UZ-MadinaNeural
+      - Russian (ru): ru-RU-DmitryNeural
+      - English (en): en-US-BrianMultilingualNeural
     Returns Base64-encoded MP3 audio string.
     """
-    clean_text = clean_text_for_tts(text)
+    detected_lang = detect_tts_language(text, language=language)
+    clean_text = clean_text_for_tts(text, lang=detected_lang)
     if not clean_text:
         return None
 
-    api_key = getattr(settings, "ELEVENLABS_API_KEY", "").strip()
-    target_voice_id = (voice_id or getattr(settings, "ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB")).strip()
+    azure_key = (
+        getattr(settings, "AZURE_SPEECH_KEY", "")
+        or os.environ.get("AZURE_SPEECH_KEY", "")
+    ).strip().strip('"').strip("'")
+    azure_region = (
+        getattr(settings, "AZURE_SPEECH_REGION", "eastus")
+        or os.environ.get("AZURE_SPEECH_REGION", "eastus")
+        or "eastus"
+    ).strip().strip('"').strip("'")
 
-    if not api_key or not target_voice_id:
-        logger.error("ElevenLabs API key or Voice ID missing in settings.")
+    if not azure_key:
+        logger.error("AZURE_SPEECH_KEY is missing in settings/.env.")
         return None
 
-    url = (
-        f"https://api.elevenlabs.io/v1/text-to-speech/{target_voice_id}"
-        f"?optimize_streaming_latency=3&output_format=mp3_22050_32"
-    )
+    lang_code, voice_name = AZURE_VOICE_MAP.get(detected_lang, AZURE_VOICE_MAP["ru"])
+    escaped_text = xml_escape(clean_text)
+
+    url = f"https://{azure_region}.tts.speech.microsoft.com/cognitiveservices/v1"
     headers = {
-        "xi-api-key": api_key,
-        "Content-Type": "application/json",
-        "Accept": "audio/mpeg",
+        "Ocp-Apim-Subscription-Key": azure_key,
+        "Content-Type": "application/ssml+xml",
+        "X-Microsoft-OutputFormat": "audio-16khz-128kbitrate-mono-mp3",
+        "User-Agent": "StoreBoxSidekick",
     }
-    payload = {
-        "text": clean_text,
-        "model_id": "eleven_multilingual_v2",
-        "voice_settings": {
-            "stability": 0.55,
-            "similarity_boost": 0.78,
-        },
-    }
+    ssml_body = (
+        f"<speak version='1.0' xml:lang='{lang_code}'>"
+        f"<voice xml:lang='{lang_code}' name='{voice_name}'>"
+        f"{escaped_text}"
+        f"</voice>"
+        f"</speak>"
+    )
 
     try:
-        response = _TTS_SESSION.post(url, headers=headers, json=payload, timeout=10.0, verify=False)
+        response = _AZURE_TTS_SESSION.post(
+            url,
+            headers=headers,
+            data=ssml_body.encode("utf-8"),
+            timeout=10.0,
+            verify=False,
+        )
         if response.status_code == 200 and response.content:
             return base64.b64encode(response.content).decode("utf-8")
 
         logger.error(
-            "ElevenLabs API error (%s): %s",
+            "Azure Speech TTS error (%s): %s",
             response.status_code,
             response.text[:300],
         )
         return None
     except Exception as exc:
-        logger.error("ElevenLabs TTS request exception: %s", exc)
+        logger.error("Azure Speech TTS request exception: %s", exc)
         return None
 
 
-def generate_voice_payload(text: str, voice_id: Optional[str] = None) -> Dict[str, Any]:
-    audio_b64 = generate_voice_response(text, voice_id=voice_id)
+def generate_voice_response(text: str, language: str = "auto") -> Optional[str]:
+    """Alias for synthesize_voice."""
+    return synthesize_voice(text=text, language=language)
+
+
+def generate_voice_payload(text: str, language: str = "auto") -> Dict[str, Any]:
+    """Returns voice payload dict with Base64 MP3 audio and browser TTS disabled."""
+    audio_b64 = synthesize_voice(text=text, language=language)
     return {
         "audio_base64": audio_b64,
         "use_browser_tts": False,
