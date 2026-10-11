@@ -457,13 +457,25 @@ class SidekickBrain:
             logger.error("GEMINI_API_KEY is not configured.")
             return None
 
-        # Fastest active Google AI Studio Flash models supporting v1beta generateContent + Function Calling
-        models = [
-            "models/gemini-3.5-flash-lite",
-            "models/gemini-flash-lite-latest",
-            "models/gemini-3.6-flash",
-            "models/gemini-3.5-flash",
-        ]
+        configured_model = (
+            getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash")
+            or "gemini-2.5-flash"
+        ).strip()
+        if not configured_model.startswith("models/"):
+            configured_model = f"models/{configured_model}"
+
+        # Try the explicitly configured model first. Keep only models that are
+        # currently exposed by Google AI Studio as fallbacks.
+        models = list(
+            dict.fromkeys(
+                [
+                    configured_model,
+                    "models/gemini-2.5-flash",
+                    "models/gemini-flash-lite-latest",
+                    "models/gemini-2.5-flash-lite",
+                ]
+            )
+        )
 
         headers = {"Content-Type": "application/json"}
         for model_name in models:
