@@ -138,10 +138,28 @@ interface MapOrder {
   status: string;
 }
 
+interface RegionBreakdown {
+  code: string;
+  name_ru: string;
+  name_uz: string;
+  orders: number;
+  revenue: number;
+  share_pct: number;
+}
+
+interface SetupGuideStatus {
+  has_products: boolean;
+  products_count: number;
+  has_theme: boolean;
+  has_payments: boolean;
+  has_delivery: boolean;
+  has_domain: boolean;
+}
+
 export const DashboardPage: React.FC = () => {
   const { store, lang, t } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const period = searchParams.get("period") || "today";
+  const period = searchParams.get("period") || "month";
   const branch = searchParams.get("branch") || "all";
   const startDateParam = searchParams.get("start_date") || "";
   const endDateParam = searchParams.get("end_date") || "";
@@ -149,6 +167,10 @@ export const DashboardPage: React.FC = () => {
   const [currency, setCurrency] = useState<"UZS" | "USD">("UZS");
   const [chartType, setChartType] = useState<"line" | "bar" | "heatmap">("line");
   const [productTab, setProductTab] = useState<"top" | "abc">("top");
+  const [geoTab, setGeoTab] = useState<"regions" | "map">("regions");
+  const [setupExpanded, setSetupExpanded] = useState<boolean>(true);
+  const [activeSetupStep, setActiveSetupStep] = useState<number>(0);
+  const [heroPrompt, setHeroPrompt] = useState<string>("");
 
   // Custom Date Range state
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -182,19 +204,25 @@ export const DashboardPage: React.FC = () => {
   };
 
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["dashboard-summary", period, branch, startDateParam, endDateParam, store?.id],
+    queryKey: ["dashboard-summary", store?.id, period, branch, startDateParam, endDateParam],
     queryFn: async () => {
+      const storeParam = store?.id ? `&store_id=${store.id}` : "";
       const branchParam = branch !== "all" ? `&branch=${branch}` : "";
-      const dateParams = (period === "custom" && startDateParam && endDateParam)
-        ? `&start_date=${startDateParam}&end_date=${endDateParam}`
-        : "";
-      const res = await api.get(`/dashboard/summary/?period=${period}${branchParam}${dateParams}`);
+      const dateParams =
+        period === "custom" && startDateParam && endDateParam
+          ? `&start_date=${startDateParam}&end_date=${endDateParam}`
+          : "";
+      const res = await api.get(
+        `/dashboard/summary/?period=${period}${storeParam}${branchParam}${dateParams}`
+      );
       return res.data as {
         metrics: DashboardMetrics;
         charts: DashboardCharts;
         top_products: TopProduct[];
         abc_analysis?: AbcAnalysis;
         map_orders: MapOrder[];
+        regions_breakdown?: RegionBreakdown[];
+        setup_guide?: SetupGuideStatus;
       };
     },
     refetchInterval: 30000,
@@ -205,6 +233,69 @@ export const DashboardPage: React.FC = () => {
   const topProducts = data?.top_products || [];
   const abcAnalysis = data?.abc_analysis;
   const mapOrders = data?.map_orders || [];
+  const regionsBreakdown = data?.regions_breakdown || [];
+  const setupGuide = data?.setup_guide;
+
+  const setupSteps = [
+    {
+      id: "product",
+      done: Boolean(setupGuide?.has_products),
+      title: lang === "ru" ? "Добавить первый товар" : lang === "en" ? "Add first product" : "Birinchi mahsulotni qo'shish",
+      desc:
+        lang === "ru"
+          ? "Загрузите фотографии, укажите цены в UZS, категории и остатки по филиалам."
+          : "Mahsulot rasmlari, narxi va qoldiqlarini kiriting.",
+      ctaLabel: lang === "ru" ? "Перейти к товарам" : "Mahsulotlarga o'tish",
+      ctaPath: "/products",
+    },
+    {
+      id: "theme",
+      done: Boolean(setupGuide?.has_theme),
+      title: lang === "ru" ? "Выбрать тему оформления витрины" : lang === "en" ? "Choose storefront theme" : "Vitrina mavzusini tanlash",
+      desc:
+        lang === "ru"
+          ? "Выберите одну из 13 готовых тем витрин и настройте цвета и баннеры под ваш бренд."
+          : "13 ta tayyor vitrina shablonlaridan birini tanlang.",
+      ctaLabel: lang === "ru" ? "Выбрать тему" : "Mavzu tanlash",
+      ctaPath: "/themes",
+    },
+    {
+      id: "payments",
+      done: Boolean(setupGuide?.has_payments),
+      title: lang === "ru" ? "Подключить платежные системы (Click / Payme / Uzum)" : lang === "en" ? "Connect payment providers" : "To'lov tizimlarini ulash (Click / Payme / Uzum)",
+      desc:
+        lang === "ru"
+          ? "Активируйте прием онлайн-оплат через Click, Payme, Uzum Bank и наличными при доставке."
+          : "Click, Payme, Uzum va naqd to'lovlarni faollashtiring.",
+      ctaLabel: lang === "ru" ? "Настроить оплату" : "To'lovlarni sozlash",
+      ctaPath: "/settings/payments",
+    },
+    {
+      id: "delivery",
+      done: Boolean(setupGuide?.has_delivery),
+      title: lang === "ru" ? "Настроить зоны доставки и филиалы" : lang === "en" ? "Configure delivery zones" : "Yetkazib berish hududlarini sozlash",
+      desc:
+        lang === "ru"
+          ? "Укажите стоимость курьерской доставки, условия бесплатной доставки и точки самовывоза."
+          : "Kuryerlik narxi va filiallarni belgilang.",
+      ctaLabel: lang === "ru" ? "Настроить доставку" : "Yetkazib berishni sozlash",
+      ctaPath: "/settings/delivery",
+    },
+    {
+      id: "domain",
+      done: Boolean(setupGuide?.has_domain),
+      title: lang === "ru" ? "Подключить домен (.storebox.uz или .uz)" : lang === "en" ? "Connect store domain" : "Domen ulash (.storebox.uz yoki .uz)",
+      desc:
+        lang === "ru"
+          ? "Проверьте системный поддомен или привяжите собственный домен с автоматическим SSL."
+          : "Tizim subdomeni yoki shaxsiy domeningizni ulang.",
+      ctaLabel: lang === "ru" ? "Управление доменами" : "Domenlarni boshqarish",
+      ctaPath: "/settings/domains",
+    },
+  ];
+
+  const completedStepsCount = setupSteps.filter((s) => s.done).length;
+  const setupProgressPct = Math.round((completedStepsCount / setupSteps.length) * 100);
 
   const periods = [
     { id: "today", label: t("today") || (lang === "ru" ? "Сегодня" : lang === "en" ? "Today" : "Bugun") },
@@ -218,26 +309,26 @@ export const DashboardPage: React.FC = () => {
   const webTrafficPct = totalTraffic > 0 ? Math.round(((charts?.traffic?.web || 0) / totalTraffic) * 100) : 50;
   const tmaTrafficPct = totalTraffic > 0 ? 100 - webTrafficPct : 50;
 
-  // Chart configuration: Clean minimal Shopify Analytics style with blue accent
+  // Chart configuration: Clean minimal Shopify Polaris style with vibrant #00a86b emerald accent
   const chartData = {
     labels: charts?.labels || [],
     datasets: [
       {
-        label: `${t("revenue") || (lang === "ru" ? "Выручка" : "Tushum")} (${currency})`,
+        label: `${t("revenue") || (lang === "ru" ? "Выручка" : lang === "en" ? "Revenue" : "Tushum")} (${currency})`,
         data: (charts?.revenue || []).map((val) =>
           currency === "USD" ? Number((val / UZS_TO_USD_RATE).toFixed(2)) : val
         ),
-        backgroundColor: chartType === "bar" ? "#2563EB" : "rgba(37, 99, 235, 0.06)",
-        borderColor: "#2563EB",
-        borderWidth: chartType === "line" ? 2 : 0,
-        borderRadius: chartType === "bar" ? 4 : 0,
+        backgroundColor: chartType === "bar" ? "#00a86b" : "rgba(0, 168, 107, 0.14)",
+        borderColor: "#00a86b",
+        borderWidth: chartType === "line" ? 2.5 : 0,
+        borderRadius: chartType === "bar" ? 5 : 0,
         fill: chartType === "line",
-        tension: 0.3,
-        pointBackgroundColor: "#2563EB",
+        tension: 0.35,
+        pointBackgroundColor: "#00a86b",
         pointBorderColor: "#FFFFFF",
         pointBorderWidth: 1.5,
-        pointRadius: chartType === "line" ? 2 : 0,
-        pointHoverRadius: 5,
+        pointRadius: chartType === "line" ? 3 : 0,
+        pointHoverRadius: 5.5,
       },
     ],
   };
@@ -248,7 +339,7 @@ export const DashboardPage: React.FC = () => {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#18181B",
+        backgroundColor: "#202223",
         titleColor: "#FFFFFF",
         bodyColor: "#E4E4E7",
         padding: 8,
@@ -270,11 +361,11 @@ export const DashboardPage: React.FC = () => {
         min: 0,
         suggestedMax: currency === "USD" ? 100 : 100000,
         grid: {
-          color: "rgba(226, 232, 240, 0.6)",
+          color: "rgba(225, 227, 229, 0.7)",
         },
         ticks: {
           font: { size: 11 },
-          color: "#94A3B8",
+          color: "#6d7175",
           callback: (value: any) => {
             if (currency === "USD") return `$${value}`;
             if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
@@ -287,7 +378,7 @@ export const DashboardPage: React.FC = () => {
         grid: { display: false },
         ticks: {
           font: { size: 11 },
-          color: "#94A3B8",
+          color: "#6d7175",
         },
       },
     },
@@ -298,32 +389,38 @@ export const DashboardPage: React.FC = () => {
     datasets: [
       {
         data: [charts?.traffic?.telegram || 0, charts?.traffic?.web || 0],
-        backgroundColor: ["#18181B", "#2563EB"],
+        backgroundColor: ["#005bd3", "#00a86b"],
         borderWidth: 0,
-        hoverOffset: 2,
+        hoverOffset: 3,
       },
     ],
   };
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-5 pb-8">
       {/* 1. Header Bar: Store Title & Period Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">
-            {store?.name || (lang === "ru" ? "Панель управления" : "Boshqaruv paneli")}
-          </h1>
-          <p className="text-xs text-slate-500 font-normal mt-0.5">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-[#202223] dark:text-white tracking-tight">
+              {store?.name || (lang === "ru" ? "Панель управления" : "Boshqaruv paneli")}
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#e3f1df] text-[#008060]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#008060]"></span>
+              {lang === "ru" ? "Активен" : "Faol"}
+            </span>
+          </div>
+          <p className="text-xs text-[#6d7175] font-normal mt-0.5">
             {lang === "ru"
-              ? "Сводка показателей продаж, заказов и каналов дистрибуции"
-              : "Savdo, buyurtmalar va kanallar ko'rsatkichlari"}
+              ? "Сводка показателей продаж, заказов и региональной активности по магазину"
+              : "Savdo, buyurtmalar va hududiy ko'rsatkichlar"}
           </p>
         </div>
 
         {/* Action Controls: Periods, Currency, Refresh */}
         <div className="flex flex-wrap items-center gap-2 max-w-full">
           {/* Period selector */}
-          <div className="inline-flex max-w-full overflow-x-auto no-scrollbar rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
+          <div className="inline-flex max-w-full overflow-x-auto no-scrollbar rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
             {periods.map((p) => (
               <button
                 key={p.id}
@@ -331,20 +428,16 @@ export const DashboardPage: React.FC = () => {
                   setShowDatePicker(false);
                   setSearchParams((prev) => {
                     const next = new URLSearchParams(prev);
-                    if (p.id === "today") {
-                      next.delete("period");
-                    } else {
-                      next.set("period", p.id);
-                    }
+                    next.set("period", p.id);
                     next.delete("start_date");
                     next.delete("end_date");
                     return next;
                   });
                 }}
-                className={`px-2.5 py-1 text-xs font-normal rounded-md transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                   period === p.id && !startDateParam
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium"
-                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
+                    : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] dark:hover:text-white font-normal"
                 }`}
               >
                 {p.label}
@@ -357,53 +450,55 @@ export const DashboardPage: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setCustomStart(startDateParam || metrics?.store_inception_date || "2026-05-10");
-                  setCustomEnd(endDateParam || metrics?.today_date || "2026-09-24");
+                  setCustomEnd(endDateParam || metrics?.today_date || "2026-10-11");
                   setShowDatePicker(!showDatePicker);
                 }}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap ${
+                className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap ${
                   period === "custom" || (startDateParam && endDateParam)
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium"
-                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white font-normal"
+                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
+                    : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] dark:hover:text-white font-normal"
                 }`}
               >
                 <Calendar className="w-3 h-3" />
                 <span>
                   {period === "custom" && startDateParam && endDateParam
                     ? `${startDateParam.slice(5)} - ${endDateParam.slice(5)}`
-                    : (lang === "ru" ? "Даты" : "Sana")}
+                    : lang === "ru"
+                    ? "Даты"
+                    : "Sana"}
                 </span>
               </button>
 
               {showDatePicker && (
-                <div className="absolute right-0 top-full mt-2 z-30 w-72 p-4 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl space-y-3">
-                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
+                <div className="absolute right-0 top-full mt-2 z-30 w-72 p-4 rounded-[10px] bg-white dark:bg-zinc-900 border border-[#e1e3e5] dark:border-zinc-800 shadow-xl space-y-3">
+                  <div className="text-xs font-semibold text-[#202223] dark:text-white">
                     {lang === "ru" ? "Выбор периода" : "Sana oralig'i"}
                   </div>
                   <div className="space-y-2 text-xs">
                     <div>
-                      <label className="block text-[11px] text-slate-500 mb-1">
+                      <label className="block text-[11px] text-[#6d7175] mb-1">
                         {lang === "ru" ? "От" : "Dan"}
                       </label>
                       <input
                         type="date"
                         value={customStart}
                         onChange={(e) => setCustomStart(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs"
+                        className="w-full px-2.5 py-1.5 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-slate-500 mb-1">
+                      <label className="block text-[11px] text-[#6d7175] mb-1">
                         {lang === "ru" ? "До" : "Gacha"}
                       </label>
                       <input
                         type="date"
                         value={customEnd}
                         onChange={(e) => setCustomEnd(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs"
+                        className="w-full px-2.5 py-1.5 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs"
                       />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                  <div className="flex items-center gap-2 pt-2 border-t border-[#e1e3e5] dark:border-zinc-800">
                     <button
                       type="button"
                       onClick={() => {
@@ -417,7 +512,7 @@ export const DashboardPage: React.FC = () => {
                         });
                         setShowDatePicker(false);
                       }}
-                      className="flex-1 py-1.5 rounded-lg bg-slate-900 text-white font-medium text-xs hover:bg-black transition-colors"
+                      className="flex-1 py-1.5 rounded-[8px] bg-[#202223] text-white font-medium text-xs hover:bg-black transition-colors cursor-pointer"
                     >
                       {lang === "ru" ? "Применить" : "Qo'llash"}
                     </button>
@@ -433,7 +528,7 @@ export const DashboardPage: React.FC = () => {
                         });
                         setShowDatePicker(false);
                       }}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs hover:bg-slate-50"
+                      className="px-2.5 py-1.5 rounded-[8px] border border-[#e1e3e5] text-[#5c5f62] text-xs hover:bg-[#f6f6f7] cursor-pointer"
                     >
                       {lang === "ru" ? "Сброс" : "Tozalash"}
                     </button>
@@ -444,14 +539,14 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Currency Switcher */}
-          <div className="inline-flex rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
+          <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
             <button
               type="button"
               onClick={() => setCurrency("UZS")}
-              className={`px-2 py-1 text-xs rounded-md transition-colors cursor-pointer ${
+              className={`px-2 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
                 currency === "UZS"
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium"
-                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 font-normal"
+                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
+                  : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
               }`}
             >
               UZS
@@ -459,10 +554,10 @@ export const DashboardPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setCurrency("USD")}
-              className={`px-2 py-1 text-xs rounded-md transition-colors cursor-pointer ${
+              className={`px-2 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
                 currency === "USD"
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium"
-                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 font-normal"
+                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
+                  : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
               }`}
             >
               USD
@@ -473,10 +568,10 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => refetch()}
-            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-2xs cursor-pointer"
+            className="w-8 h-8 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-[#5c5f62] dark:text-zinc-300 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 transition-colors shadow-[0_1px_0_rgba(0,0,0,0.05)] cursor-pointer"
             title={lang === "ru" ? "Обновить данные" : "Ma'lumotlarni yangilash"}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-blue-600" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-[#008060]" : ""}`} />
           </button>
         </div>
       </div>
@@ -484,221 +579,236 @@ export const DashboardPage: React.FC = () => {
       {/* 2. Pure Shopify Polaris Metric Cards (4 cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Revenue */}
-        <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
           <div>
-            <div className="text-xs font-normal text-slate-500 dark:text-zinc-400">
+            <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
               {lang === "ru" ? "Общая выручка" : "Jami tushum"}
             </div>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight mt-1">
-              {formatMoney(metrics?.revenue || 0)}
+            <div className="text-2xl font-semibold text-[#202223] dark:text-white tracking-tight mt-1">
+              {isLoading ? "..." : formatMoney(metrics?.revenue || 0)}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between text-xs text-slate-500">
+          <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#6d7175]">
             <span className="truncate">
-              {lang === "ru" ? "С учетом доставки:" : "Yetkazib berish:"} {formatMoney(metrics?.sales_sum || 0)}
+              {lang === "ru" ? "Оборот:" : "Aylanma:"} {formatMoney(metrics?.sales_sum || 0)}
             </span>
+            <span className="text-[#008060] font-medium">● Live</span>
           </div>
         </div>
 
         {/* Card 2: Orders Count */}
-        <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
           <div>
-            <div className="text-xs font-normal text-slate-500 dark:text-zinc-400">
+            <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
               {lang === "ru" ? "Всего заказов" : "Buyurtmalar"}
             </div>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight mt-1">
-              {metrics?.orders_count || 0}{" "}
-              <span className="text-sm font-normal text-slate-500">
+            <div className="text-2xl font-semibold text-[#202223] dark:text-white tracking-tight mt-1">
+              {isLoading ? "..." : metrics?.orders_count || 0}{" "}
+              <span className="text-sm font-normal text-[#6d7175]">
                 {lang === "ru" ? "заказов" : "ta"}
               </span>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-slate-500">
-              <span className="text-blue-600 font-medium">{metrics?.new_orders || 0} {lang === "ru" ? "новых" : "yangi"}</span>
+          <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 text-[#6d7175]">
+              <span className="text-[#008060] font-medium">
+                {metrics?.new_orders || 0} {lang === "ru" ? "новых" : "yangi"}
+              </span>
               <span>•</span>
-              <span>{metrics?.ready_orders || 0} {lang === "ru" ? "готовых" : "tayyor"}</span>
+              <span>
+                {metrics?.ready_orders || 0} {lang === "ru" ? "готовых" : "tayyor"}
+              </span>
             </div>
-            <Link to="/orders" className="text-blue-600 hover:underline font-normal">
+            <Link to="/orders" className="text-[#008060] hover:underline font-medium">
               {lang === "ru" ? "Все →" : "Barchasi →"}
             </Link>
           </div>
         </div>
 
         {/* Card 3: Customers */}
-        <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
           <div>
-            <div className="text-xs font-normal text-slate-500 dark:text-zinc-400">
+            <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
               {lang === "ru" ? "База клиентов" : "Mijozlar bazasi"}
             </div>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight mt-1">
-              {metrics?.total_customers || 0}
+            <div className="text-2xl font-semibold text-[#202223] dark:text-white tracking-tight mt-1">
+              {isLoading ? "..." : metrics?.total_customers || 0}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between text-xs">
-            <span className="text-slate-500">
-              {lang === "ru" ? "Постоянные клиенты" : "Doimiy xaridorlar"}
+          <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs">
+            <span className="text-[#6d7175]">
+              {lang === "ru" ? "Покупатели магазина" : "Do'kon xaridorlari"}
             </span>
-            <Link to="/customers" className="text-blue-600 hover:underline font-normal">
+            <Link to="/customers" className="text-[#008060] hover:underline font-medium">
               CRM →
             </Link>
           </div>
         </div>
 
         {/* Card 4: Average Order Value */}
-        <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
           <div>
-            <div className="text-xs font-normal text-slate-500 dark:text-zinc-400">
+            <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
               {lang === "ru" ? "Средний чек" : "O'rtacha chek"}
             </div>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight mt-1">
-              {formatMoney(metrics?.avg_order || 0)}
+            <div className="text-2xl font-semibold text-[#202223] dark:text-white tracking-tight mt-1">
+              {isLoading ? "..." : formatMoney(metrics?.avg_order || 0)}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between text-xs text-slate-500">
+          <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#6d7175]">
             <span>{lang === "ru" ? "За одну покупку" : "Bitta xarid uchun"}</span>
-            <span className="text-emerald-600 font-medium">✓ {lang === "ru" ? "Стабильно" : "Barqaror"}</span>
+            <span className="text-[#008060] font-medium">✓ {lang === "ru" ? "В норме" : "Barqaror"}</span>
           </div>
         </div>
       </div>
 
-      {/* 3. Setup & Onboarding Guide (Shopify Polaris Setup Cards) */}
-      <div className="bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white tracking-tight">
+      {/* 3. Interactive Shopify Polaris Setup Guide (Гайд по запуску на Главной — Block 3.1) */}
+      <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 shadow-[0_1px_0_rgba(0,0,0,0.05)] overflow-hidden">
+        <div
+          onClick={() => setSetupExpanded((prev) => !prev)}
+          className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 cursor-pointer hover:bg-[#f6f6f7]/60 dark:hover:bg-zinc-800/40 transition-colors"
+        >
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
+                {lang === "ru"
+                  ? `Гайд по запуску магазина «${store?.name || "StoreBox"}»`
+                  : lang === "en"
+                  ? `Setup Guide for «${store?.name || "StoreBox"}»`
+                  : `«${store?.name || "StoreBox"}» do'konini ishga tushirish qo'llanmasi`}
+              </h2>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#e6f7f0] text-[#00a86b] border border-[#8ce0bf]">
+                {lang === "ru"
+                  ? `${completedStepsCount} из ${setupSteps.length} выполнено`
+                  : lang === "en"
+                  ? `${completedStepsCount} of ${setupSteps.length} completed`
+                  : `${completedStepsCount} / ${setupSteps.length} bajarildi`}
+              </span>
+            </div>
+            <p className="text-xs text-[#6d7175]">
               {lang === "ru"
-                ? `Настройка магазина ${store?.name || "StoreBox"}`
-                : `Do'konni sozlash`}
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {lang === "ru"
-                ? "Завершите ключевые шаги для приема заказов и онлайн-оплат"
-                : "Savdo va to'lovlarni qabul qilish uchun asosiy qadamlar"}
+                ? "Пошаговый чек-лист настройки витрины, платежей, доставки и домена по стандартам Shopify"
+                : lang === "en"
+                ? "Step-by-step checklist to configure your storefront, payments, delivery, and domain"
+                : "Vitrina, to'lovlar, yetkazib berish va domenni bosqichma-bosqich sozlang"}
             </p>
           </div>
-          <Link
-            to="/analytics"
-            className="text-xs font-normal text-blue-600 hover:underline inline-flex items-center gap-1"
-          >
-            <span>{lang === "ru" ? "Перейти в полную аналитику →" : "Batafsil tahlil →"}</span>
-          </Link>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
-          {/* Step 1: Theme */}
-          <div className="rounded-lg border border-slate-200/80 dark:border-zinc-800 p-4 bg-slate-50/50 dark:bg-zinc-900/50 flex flex-col justify-between space-y-3">
-            <div>
-              <div className="text-xs font-medium text-slate-900 dark:text-white">
-                {lang === "ru" ? "1. Тема витрины" : "1. Do'kon dizayni"}
-              </div>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {lang === "ru"
-                  ? "13 премиальных тем StoreBox для десктопов и смартфонов."
-                  : "13 ta premium vitrina mavzusi."}
-              </p>
+          <div className="flex items-center gap-3">
+            {/* Progress Bar */}
+            <div className="w-28 sm:w-36 h-2 rounded-full bg-[#e1e3e5] dark:bg-zinc-800 overflow-hidden">
+              <div
+                className="h-full bg-[#00a86b] transition-all duration-300"
+                style={{ width: `${setupProgressPct}%` }}
+              />
             </div>
-            <Link
-              to="/robo-market"
-              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-medium hover:bg-slate-50 transition-colors shadow-2xs"
-            >
-              <span>{lang === "ru" ? "Выбрать тему" : "Mavzu tanlash"}</span>
-              <ArrowUpRight className="w-3 h-3 text-slate-400" />
-            </Link>
-          </div>
-
-          {/* Step 2: Payments */}
-          <div className="rounded-lg border border-slate-200/80 dark:border-zinc-800 p-4 bg-slate-50/50 dark:bg-zinc-900/50 flex flex-col justify-between space-y-3">
-            <div>
-              <div className="text-xs font-medium text-slate-900 dark:text-white">
-                {lang === "ru" ? "2. Способы оплаты" : "2. To'lov tizimlari"}
-              </div>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {lang === "ru"
-                  ? "Payme, Click, Uzum Pay и оплата картой или наличными."
-                  : "Payme, Click va Uzum Pay to'lovlarini sozlash."}
-              </p>
-            </div>
-            <Link
-              to="/settings/payments"
-              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-medium hover:bg-slate-50 transition-colors shadow-2xs"
-            >
-              <span>{lang === "ru" ? "Настроить" : "Sozlash"}</span>
-              <ArrowUpRight className="w-3 h-3 text-slate-400" />
-            </Link>
-          </div>
-
-          {/* Step 3: Delivery */}
-          <div className="rounded-lg border border-slate-200/80 dark:border-zinc-800 p-4 bg-slate-50/50 dark:bg-zinc-900/50 flex flex-col justify-between space-y-3">
-            <div>
-              <div className="text-xs font-medium text-slate-900 dark:text-white">
-                {lang === "ru" ? "3. Доставка" : "3. Yetkazib berish"}
-              </div>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {lang === "ru"
-                  ? "Зоны курьерской доставки, фиксированная цена и самовывоз."
-                  : "Kuryerlik zonalari va o'zi olib ketish tariflari."}
-              </p>
-            </div>
-            <Link
-              to="/settings/delivery"
-              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-medium hover:bg-slate-50 transition-colors shadow-2xs"
-            >
-              <span>{lang === "ru" ? "Тарифы" : "Tariflar"}</span>
-              <ArrowUpRight className="w-3 h-3 text-slate-400" />
-            </Link>
-          </div>
-
-          {/* Step 4: Launch */}
-          <div className="rounded-lg border border-slate-200/80 dark:border-zinc-800 p-4 bg-slate-50/50 dark:bg-zinc-900/50 flex flex-col justify-between space-y-3">
-            <div>
-              <div className="text-xs font-medium text-slate-900 dark:text-white">
-                {lang === "ru" ? "4. Витрина магазина" : "4. Do'kon vitrinasi"}
-              </div>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {lang === "ru"
-                  ? "Проверьте как витрина выглядит для ваших покупателей."
-                  : "Xaridorlar uchun vitrina qanday ko'rinishini tekshiring."}
-              </p>
-            </div>
-            <a
-              href={store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-black transition-colors shadow-2xs"
-            >
-              <span>{lang === "ru" ? "Открыть витрину" : "Vitrinasini ochish"}</span>
-              <ExternalLink className="w-3 h-3 text-slate-300" />
-            </a>
+            <span className="text-xs font-medium text-[#202223] dark:text-zinc-300">
+              {setupExpanded
+                ? lang === "ru"
+                  ? "Свернуть ▲"
+                  : lang === "en"
+                  ? "Collapse ▲"
+                  : "Yopish ▲"
+                : lang === "ru"
+                ? "Развернуть ▼"
+                : lang === "en"
+                ? "Expand ▼"
+                : "Ochish ▼"}
+            </span>
           </div>
         </div>
+
+        {setupExpanded && (
+          <div className="border-t border-[#e1e3e5] dark:border-zinc-800 divide-y divide-[#e1e3e5] dark:divide-zinc-800">
+            {setupSteps.map((step, idx) => {
+              const isSelected = activeSetupStep === idx;
+              return (
+                <div
+                  key={step.id}
+                  onClick={() => setActiveSetupStep(idx)}
+                  className={`p-4 transition-colors cursor-pointer ${
+                    isSelected ? "bg-[#f6f6f7] dark:bg-zinc-900/70" : "hover:bg-[#f6f6f7]/40"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                          step.done
+                            ? "bg-[#008060] text-white"
+                            : "border-2 border-[#8c9196] text-transparent"
+                        }`}
+                      >
+                        ✓
+                      </div>
+                      <div>
+                        <div
+                          className={`text-xs font-semibold ${
+                            step.done
+                              ? "text-[#202223] dark:text-white"
+                              : "text-[#202223] dark:text-zinc-200"
+                          }`}
+                        >
+                          {idx + 1}. {step.title}
+                        </div>
+                        {isSelected && (
+                          <p className="text-xs text-[#6d7175] mt-1 max-w-xl leading-relaxed">
+                            {step.desc}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <Link
+                      to={step.ctaPath}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`px-3 py-1.5 rounded-[8px] text-xs font-medium shrink-0 transition-colors inline-flex items-center gap-1 ${
+                        step.done
+                          ? "bg-white dark:bg-zinc-800 border border-[#e1e3e5] dark:border-zinc-700 text-[#202223] dark:text-zinc-200 hover:bg-slate-50"
+                          : "bg-[#202223] hover:bg-[#111213] text-white"
+                      }`}
+                    >
+                      <span>{step.ctaLabel}</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* 4. Middle Section: Revenue Dynamics Chart & Sales Channels */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: Revenue Dynamics Chart (8 cols) */}
-        <div className="lg:col-span-8 bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+              <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
                 {chartType === "heatmap"
-                  ? (lang === "ru" ? "Карта активности" : "Faollik taqvimi")
-                  : (lang === "ru" ? "Динамика выручки" : "Tushum dinamikasi")}
+                  ? lang === "ru"
+                    ? "Карта активности заказов"
+                    : "Faollik taqvimi"
+                  : lang === "ru"
+                  ? "Динамика выручки"
+                  : "Tushum dinamikasi"}
               </h2>
-              <div className="text-xs text-slate-500 mt-0.5">
-                {formatMoney(metrics?.revenue || 0)} {lang === "ru" ? "за выбранный период" : "tanlangan davrda"}
+              <div className="text-xs text-[#6d7175] mt-0.5">
+                {formatMoney(metrics?.revenue || 0)}{" "}
+                {lang === "ru" ? `(${store?.name || ""})` : ""}
               </div>
             </div>
 
             {/* View Switcher: Line / Bar / Heatmap */}
-            <div className="inline-flex rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
+            <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <button
                 type="button"
                 onClick={() => setChartType("line")}
-                className={`p-1 rounded-md transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-[6px] transition-colors cursor-pointer ${
                   chartType === "line"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223]"
+                    : "text-[#5c5f62] hover:text-[#202223]"
                 }`}
                 title={lang === "ru" ? "Линейный график" : "Chiziqli"}
               >
@@ -707,10 +817,10 @@ export const DashboardPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setChartType("bar")}
-                className={`p-1 rounded-md transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-[6px] transition-colors cursor-pointer ${
                   chartType === "bar"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223]"
+                    : "text-[#5c5f62] hover:text-[#202223]"
                 }`}
                 title={lang === "ru" ? "Столбчатый график" : "Ustunli"}
               >
@@ -719,10 +829,10 @@ export const DashboardPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setChartType("heatmap")}
-                className={`p-1 rounded-md transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-[6px] transition-colors cursor-pointer ${
                   chartType === "heatmap"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223]"
+                    : "text-[#5c5f62] hover:text-[#202223]"
                 }`}
                 title={lang === "ru" ? "Тепловая карта активности" : "Heatmap"}
               >
@@ -760,7 +870,7 @@ export const DashboardPage: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="w-full py-12 text-center text-xs text-slate-400">
+              <div className="w-full py-12 text-center text-xs text-[#6d7175]">
                 {lang === "ru" ? "Нет данных за выбранный период" : "Tanlangan davr uchun ma'lumotlar mavjud emas"}
               </div>
             )}
@@ -768,57 +878,45 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Right: Channels & Distribution (4 cols) */}
-        <div className="lg:col-span-4 bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
               {lang === "ru" ? "Каналы продаж" : "Savdo kanallari"}
             </h2>
-            <div className="text-xs text-slate-500 mt-0.5 mb-4">
+            <div className="text-xs text-[#6d7175] mt-0.5 mb-4">
               {lang === "ru" ? "Распределение заказов по источникам" : "Buyurtmalar manbai"}
             </div>
 
             <div className="space-y-3">
               {/* Telegram Bot */}
-              <div className="p-3 rounded-lg border border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
+              <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] dark:bg-zinc-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Bot className="w-4 h-4 text-slate-700 dark:text-zinc-300" />
+                  <Bot className="w-4 h-4 text-[#202223] dark:text-zinc-300" />
                   <div>
-                    <div className="text-xs font-medium text-slate-900 dark:text-white">Telegram Bot</div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-xs font-medium text-[#202223] dark:text-white">Telegram Mini App</div>
+                    <div className="text-[11px] text-[#6d7175]">
                       {metrics?.tma_cnt || 0} {lang === "ru" ? "заказов" : "buyurtma"} ({tmaTrafficPct}%)
                     </div>
                   </div>
                 </div>
 
-                {store?.telegram_bot_username ? (
-                  <a
-                    href={`https://t.me/${store.telegram_bot_username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                  >
-                    <span>{lang === "ru" ? "Открыть" : "Ochish"}</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                ) : (
-                  <Link
-                    to="/platforms"
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    {lang === "ru" ? "Подключить" : "Ulash"}
-                  </Link>
-                )}
+                <Link
+                  to="/platforms"
+                  className="text-xs text-[#008060] font-medium hover:underline flex items-center gap-1"
+                >
+                  <span>{lang === "ru" ? "Бот →" : "Bot →"}</span>
+                </Link>
               </div>
 
               {/* Web Storefront */}
-              <div className="p-3 rounded-lg border border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
+              <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] dark:bg-zinc-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Globe className="w-4 h-4 text-blue-600" />
+                  <Globe className="w-4 h-4 text-[#008060]" />
                   <div>
-                    <div className="text-xs font-medium text-slate-900 dark:text-white">
+                    <div className="text-xs font-medium text-[#202223] dark:text-white">
                       {lang === "ru" ? "Веб-витрина" : "Veb-sayt"}
                     </div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-[11px] text-[#6d7175]">
                       {metrics?.web_cnt || 0} {lang === "ru" ? "заказов" : "buyurtma"} ({webTrafficPct}%)
                     </div>
                   </div>
@@ -829,9 +927,9 @@ export const DashboardPage: React.FC = () => {
                     href={store.storefront_url || `/store/${store.subdomain}/`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                    className="text-xs text-[#008060] font-medium hover:underline flex items-center gap-1"
                   >
-                    <span>{lang === "ru" ? "Сайт" : "Sayt"}</span>
+                    <span>{lang === "ru" ? "Витрина" : "Sayt"}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 )}
@@ -840,7 +938,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Minimalist doughnut indicator */}
-          <div className="pt-4 mt-4 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+          <div className="pt-4 mt-4 border-t border-[#e1e3e5] dark:border-zinc-800 flex items-center justify-between">
             <div className="w-20 h-20 relative">
               <Doughnut
                 data={doughnutData}
@@ -853,45 +951,57 @@ export const DashboardPage: React.FC = () => {
               />
             </div>
             <div className="space-y-1 text-right text-xs">
-              <div className="flex items-center justify-end gap-1.5 text-slate-700 dark:text-zinc-300">
-                <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-white"></span>
+              <div className="flex items-center justify-end gap-1.5 text-[#005bd3] font-medium">
+                <span className="w-2 h-2 rounded-full bg-[#005bd3]"></span>
                 <span>Telegram: {tmaTrafficPct}%</span>
               </div>
-              <div className="flex items-center justify-end gap-1.5 text-blue-600 font-medium">
-                <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-                <span>{lang === "ru" ? "Веб-сайт" : "Sayt"}: {webTrafficPct}%</span>
+              <div className="flex items-center justify-end gap-1.5 text-[#00a86b] font-medium">
+                <span className="w-2 h-2 rounded-full bg-[#00a86b]"></span>
+                <span>{lang === "ru" ? "Веб-сайт" : lang === "en" ? "Website" : "Sayt"}: {webTrafficPct}%</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 5. Lower Row: Top Products & Orders Map */}
+      {/* 5. Lower Row: Top Products & Uzbekistan Regional Activity / Map (Block 3.6) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: Top Products (6 cols) */}
-        <div className="lg:col-span-6 bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-6 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
                   {productTab === "top"
-                    ? (lang === "ru" ? "Лидеры продаж" : "Sotuv yetakchilari")
-                    : (lang === "ru" ? "ABC-анализ продаж" : "ABC tahlil")}
+                    ? lang === "ru"
+                      ? "Лидеры продаж"
+                      : lang === "en"
+                      ? "Top Products"
+                      : "Sotuv yetakchilari"
+                    : lang === "ru"
+                    ? "ABC-анализ продаж"
+                    : lang === "en"
+                    ? "ABC Sales Analysis"
+                    : "ABC tahlil"}
                 </h2>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  {lang === "ru" ? "Товары с наибольшим вкладом в выручку" : "Eng ko'p sotilgan tovarlar"}
+                <div className="text-xs text-[#6d7175] mt-0.5">
+                  {lang === "ru"
+                    ? "Товары с наибольшим вкладом в выручку"
+                    : lang === "en"
+                    ? "Products with the highest revenue contribution"
+                    : "Eng ko'p sotilgan tovarlar"}
                 </div>
               </div>
 
               {/* Segmented Switcher */}
-              <div className="inline-flex rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
+              <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5">
                 <button
                   type="button"
                   onClick={() => setProductTab("top")}
-                  className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
                     productTab === "top"
-                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium"
-                      : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 font-normal"
+                      ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
+                      : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
                   }`}
                 >
                   {lang === "ru" ? "Топ" : "Top"}
@@ -899,10 +1009,10 @@ export const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setProductTab("abc")}
-                  className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
                     productTab === "abc"
-                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium"
-                      : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 font-normal"
+                      ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
+                      : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
                   }`}
                 >
                   ABC
@@ -915,52 +1025,52 @@ export const DashboardPage: React.FC = () => {
                 {topProducts.map((p, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-zinc-800/80 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    className="flex items-center justify-between p-2.5 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800/80 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800/50 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 text-xs font-medium flex items-center justify-center shrink-0">
+                      <span className="w-5 h-5 rounded-md bg-[#e6f7f0] text-[#00a86b] text-xs font-bold flex items-center justify-center shrink-0">
                         {idx + 1}
                       </span>
                       <div className="truncate">
-                        <div className="text-xs font-medium text-slate-900 dark:text-white truncate">
+                        <div className="text-xs font-medium text-[#202223] dark:text-white truncate">
                           {p.product_name}
                         </div>
-                        <div className="text-[11px] text-slate-400">
-                          {p.sold_qty} {lang === "ru" ? "шт" : "dona"}
+                        <div className="text-[11px] text-[#6d7175]">
+                          {p.sold_qty} {lang === "ru" ? "шт" : lang === "en" ? "pcs" : "dona"}
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0 text-xs font-semibold text-slate-900 dark:text-white">
+                    <div className="text-right shrink-0 text-xs font-semibold text-[#202223] dark:text-white">
                       {formatMoney(p.sold_sum || 0)}
                     </div>
                   </div>
                 ))}
 
                 {topProducts.length === 0 && (
-                  <div className="py-8 text-center text-xs text-slate-400">
-                    {lang === "ru" ? "Пока нет проданных товаров" : "Sotilgan tovarlar yo'q"}
+                  <div className="py-8 text-center text-xs text-[#6d7175]">
+                    {lang === "ru" ? "Пока нет проданных товаров" : lang === "en" ? "No products sold yet" : "Sotilgan tovarlar yo'q"}
                   </div>
                 )}
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 text-center">
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white">Группа A (~80%)</span>
-                    <div className="text-xs text-slate-500 mt-1">
+                  <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] text-center">
+                    <span className="text-xs font-semibold text-[#202223] dark:text-white">Группа A (~80%)</span>
+                    <div className="text-xs text-[#00a86b] font-semibold mt-1">
                       {abcAnalysis?.group_a.count || 0} {lang === "ru" ? "тов." : "ta"}
                     </div>
                   </div>
-                  <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 text-center">
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white">Группа B (~15%)</span>
-                    <div className="text-xs text-slate-500 mt-1">
+                  <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] text-center">
+                    <span className="text-xs font-semibold text-[#202223] dark:text-white">Группа B (~15%)</span>
+                    <div className="text-xs text-[#005bd3] font-semibold mt-1">
                       {abcAnalysis?.group_b.count || 0} {lang === "ru" ? "тов." : "ta"}
                     </div>
                   </div>
-                  <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 text-center">
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white">Группа C (~5%)</span>
-                    <div className="text-xs text-slate-500 mt-1">
+                  <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] text-center">
+                    <span className="text-xs font-semibold text-[#202223] dark:text-white">Группа C (~5%)</span>
+                    <div className="text-xs text-[#5c5f62] mt-1">
                       {abcAnalysis?.group_c.count || 0} {lang === "ru" ? "тов." : "ta"}
                     </div>
                   </div>
@@ -970,53 +1080,120 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Orders Map (6 cols) */}
-        <div className="lg:col-span-6 bg-white dark:bg-[#18181B] rounded-xl border border-slate-200/80 dark:border-zinc-800 p-5 shadow-xs flex flex-col justify-between">
+        {/* Right: Uzbekistan Regional Activity & Delivery Map (6 cols) */}
+        <div className="lg:col-span-6 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {lang === "ru" ? "География доставки заказов" : "Buyurtma xaritasi"}
+                <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
+                  {geoTab === "regions"
+                    ? lang === "ru"
+                      ? "Активность по регионам Узбекистана"
+                      : lang === "en"
+                      ? "Regional Activity in Uzbekistan"
+                      : "O'zbekiston viloyatlari bo'yicha faollik"
+                    : lang === "ru"
+                    ? "Карта доставок (GPS)"
+                    : lang === "en"
+                    ? "Delivery Map (GPS)"
+                    : "Yetkazib berish xaritasi"}
                 </h2>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  {mapOrders.length} {lang === "ru" ? "активных точек доставки" : "ta manzil"}
+                <div className="text-xs text-[#6d7175] mt-0.5">
+                  {lang === "ru"
+                    ? "Распределение заказов по областям РУз и точкам доставки"
+                    : lang === "en"
+                    ? "Order distribution across regions of Uzbekistan"
+                    : "Viloyatlar kesimida buyurtmalar taqsimoti"}
                 </div>
               </div>
-              <Link to="/orders" className="text-xs text-blue-600 hover:underline">
-                {lang === "ru" ? "Все заказы →" : "Barchasi →"}
-              </Link>
+
+              <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setGeoTab("regions")}
+                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
+                    geoTab === "regions"
+                      ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
+                      : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
+                  }`}
+                >
+                  {lang === "ru" ? "Регионы РУз" : lang === "en" ? "Regions" : "Viloyatlar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGeoTab("map")}
+                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
+                    geoTab === "map"
+                      ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
+                      : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
+                  }`}
+                >
+                  {lang === "ru" ? "GPS Карта" : lang === "en" ? "GPS Map" : "Xarita"}
+                </button>
+              </div>
             </div>
 
-            <div className="h-64 rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 relative z-0">
-              <MapContainer
-                center={[41.3111, 69.2797]}
-                zoom={11}
-                scrollWheelZoom={false}
-                className="w-full h-full"
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                {mapOrders.map((ord, i) => (
-                  <Marker
-                    key={i}
-                    position={[ord.lat, ord.lng]}
-                    icon={defaultPinIcon}
+            {geoTab === "regions" ? (
+              <div className="space-y-2.5">
+                {regionsBreakdown.slice(0, 6).map((reg) => (
+                  <div
+                    key={reg.code}
+                    className="p-2.5 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7]/60 dark:bg-zinc-900/40 space-y-1.5"
                   >
-                    <Popup>
-                      <div className="text-xs font-medium">
-                        <div>#{ord.num} - {ord.client}</div>
-                        <div className="text-blue-600">{formatMoney(ord.total)}</div>
+                    <div className="flex items-center justify-between text-xs gap-2">
+                      <div className="flex items-center gap-2 font-medium text-[#202223] dark:text-white truncate">
+                        <MapPin className="w-3.5 h-3.5 text-[#00a86b] shrink-0" />
+                        <span className="truncate">{lang === "ru" ? reg.name_ru : reg.name_uz}</span>
                       </div>
-                    </Popup>
-                  </Marker>
+                      <div className="flex items-center gap-2 text-xs shrink-0">
+                        <span className="text-[#6d7175]">
+                          {reg.orders} {lang === "ru" ? "зак." : "ta"} ({reg.share_pct}%)
+                        </span>
+                        <span className="font-semibold text-[#202223] dark:text-white">
+                          {formatMoney(reg.revenue)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-[#e1e3e5] dark:bg-zinc-800 overflow-hidden">
+                      <div
+                        className="h-full bg-[#00a86b] rounded-full transition-all duration-300"
+                        style={{ width: `${Math.max(reg.orders > 0 ? 6 : 0, reg.share_pct)}%` }}
+                      />
+                    </div>
+                  </div>
                 ))}
-              </MapContainer>
-            </div>
+              </div>
+            ) : (
+              <div className="h-64 rounded-[8px] overflow-hidden border border-[#e1e3e5] dark:border-zinc-800 relative z-0">
+                <MapContainer
+                  center={[41.3111, 69.2797]}
+                  zoom={11}
+                  scrollWheelZoom={false}
+                  className="w-full h-full"
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  {mapOrders.map((ord, i) => (
+                    <Marker key={i} position={[ord.lat, ord.lng]} icon={defaultPinIcon}>
+                      <Popup>
+                        <div className="text-xs font-medium">
+                          <div>
+                            #{ord.num} - {ord.client}
+                          </div>
+                          <div className="text-[#008060]">{formatMoney(ord.total)}</div>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 };
+

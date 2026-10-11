@@ -25,25 +25,121 @@ import {
   Building2,
   ChefHat,
   Sliders,
-  Flame
+  Flame,
+  Plus,
+  FileEdit,
+  ShoppingCart
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { useNotification } from "../../context/NotificationContext";
 import { Order } from "../../types";
+
+interface DraftOrderItem {
+  id: string;
+  number: string;
+  customer_name: string;
+  customer_phone: string;
+  product_title: string;
+  amount: number;
+  payment_method: string;
+  created_at: string;
+  type: "draft" | "abandoned";
+}
 
 export const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useAuth();
+  const { t, store, lang } = useAuth();
+  const { notify } = useNotification();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const branch = searchParams.get("branch") || "all";
   const urlQ = searchParams.get("q") || "";
+  const urlTab = searchParams.get("tab") || "";
 
   const [status, setStatus] = useState("ALL");
   const [search, setSearch] = useState(urlQ);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [confirmCancelOrderId, setConfirmCancelOrderId] = useState<number | null>(null);
   const [isWideModal, setIsWideModal] = useState(true);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  // Create Draft Order Modal
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("+998 90 ");
+  const [newProductTitle, setNewProductTitle] = useState("");
+  const [newAmount, setNewAmount] = useState("185000");
+  const [newPaymentMethod, setNewPaymentMethod] = useState("Payme / Click");
+
+  const draftStorageKey = `storebox_draft_orders_${store?.id || "default"}`;
+  const [draftOrders, setDraftOrders] = useState<DraftOrderItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(draftStorageKey);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      {
+        id: "dr-1",
+        number: "D-1042",
+        customer_name: "Сардор Каримов",
+        customer_phone: "+998 90 945 12 34",
+        product_title: "Индивидуальный заказ (2 позиции)",
+        amount: 245000,
+        payment_method: "Ссылка на оплату Payme",
+        created_at: "Сегодня, 14:20",
+        type: "draft",
+      },
+      {
+        id: "ab-1",
+        number: "CHK-8891",
+        customer_name: "Дильноза Рустамова",
+        customer_phone: "+998 93 511 88 90",
+        product_title: "Оставлена корзина в Telegram Mini App",
+        amount: 168000,
+        payment_method: "Не завершено (Click)",
+        created_at: "Сегодня, 12:05",
+        type: "abandoned",
+      },
+      {
+        id: "ab-2",
+        number: "CHK-8890",
+        customer_name: "Азизбек Турсунов",
+        customer_phone: "+998 97 702 44 19",
+        product_title: "Оставлена корзина на веб-витрине",
+        amount: 390000,
+        payment_method: "Не завершено (Uzum)",
+        created_at: "Вчера, 19:40",
+        type: "abandoned",
+      },
+    ];
+  });
+
+  const handleCreateDraftOrder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomerName.trim()) return;
+    const item: DraftOrderItem = {
+      id: "dr-" + Date.now(),
+      number: "D-" + Math.floor(1050 + Math.random() * 900),
+      customer_name: newCustomerName.trim(),
+      customer_phone: newCustomerPhone.trim(),
+      product_title: newProductTitle.trim() || "Товары из каталога магазина",
+      amount: Number(newAmount) || 150000,
+      payment_method: newPaymentMethod,
+      created_at: "Только что",
+      type: "draft",
+    };
+    const next = [item, ...draftOrders];
+    setDraftOrders(next);
+    try {
+      localStorage.setItem(draftStorageKey, JSON.stringify(next));
+    } catch {}
+    setShowCreateModal(false);
+    setNewCustomerName("");
+    setNewProductTitle("");
+    setSearchParams({ tab: "drafts" });
+    notify(`Черновик заказа #${item.number} успешно создан`, "success");
+  };
 
   useEffect(() => {
     if (urlQ) {
@@ -52,10 +148,10 @@ export const OrdersPage: React.FC = () => {
   }, [urlQ]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["orders", status, search, branch],
+    queryKey: ["orders", store?.id, status, search, branch],
     queryFn: async () => {
       const branchParam = branch !== "all" ? `&branch=${branch}` : "";
-      const res = await api.get(`/orders/?status=${status}&q=${encodeURIComponent(search)}${branchParam}`);
+      const res = await api.get(`/orders/?status=${status}&q=${encodeURIComponent(search)}${branchParam}&store_id=${store?.id || ""}`);
       return res.data as {
         counts: Record<string, number>;
         orders: Order[];
@@ -82,17 +178,17 @@ export const OrdersPage: React.FC = () => {
   const getOrderStatusLabel = (st: string) => {
     switch (st?.toUpperCase()) {
       case "NEW":
-        return t("status_new") || "Yangi";
+        return t("status_new") || "Новый";
       case "PROCESSING":
-        return t("status_accepted") || "Jarayonda";
+        return t("status_accepted") || "В работе";
       case "READY":
-        return t("status_ready") || "Tayyor";
+        return t("status_ready") || "Готов";
       case "IN_DELIVERY":
-        return t("status_delivering") || "Yo`lda";
+        return t("status_delivering") || "В пути";
       case "COMPLETED":
-        return t("status_completed") || "Bajarildi";
+        return t("status_completed") || "Выполнен";
       case "CANCELLED":
-        return t("status_cancelled") || "Bekor qilindi";
+        return t("status_cancelled") || "Отменен";
       default:
         return st;
     }
@@ -102,49 +198,49 @@ export const OrdersPage: React.FC = () => {
     switch (st?.toUpperCase()) {
       case "COMPLETED":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#bbf7d0] text-[#14532d]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
             <span>{getOrderStatusLabel(st)}</span>
           </span>
         );
       case "NEW":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#bbf7d0] text-[#14532d]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a] animate-pulse" />
             <span>{getOrderStatusLabel(st)}</span>
           </span>
         );
       case "PROCESSING":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-900">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-600" />
             <span>{getOrderStatusLabel(st)}</span>
           </span>
         );
       case "READY":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-100 text-indigo-900">
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
             <span>{getOrderStatusLabel(st)}</span>
           </span>
         );
       case "IN_DELIVERY":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-900">
             <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
             <span>{getOrderStatusLabel(st)}</span>
           </span>
         );
       case "CANCELLED":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-100 text-rose-800">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
             <span>{getOrderStatusLabel(st)}</span>
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-zinc-100 text-zinc-700">
             <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
             <span>{st}</span>
           </span>
@@ -153,168 +249,414 @@ export const OrdersPage: React.FC = () => {
   };
 
   const tabs = [
-    { id: "ALL", label: t("status_all") || "Barchasi", count: counts.all },
-    { id: "NEW", label: t("status_new") || "Yangi", count: counts.new, badgeColor: "bg-amber-100 text-amber-800" },
-    { id: "PROCESSING", label: t("status_accepted") || "Jarayonda", count: counts.processing, badgeColor: "bg-blue-100 text-blue-800" },
-    { id: "READY", label: t("status_ready") || "Tayyor", count: counts.ready, badgeColor: "bg-indigo-100 text-indigo-800" },
-    { id: "IN_DELIVERY", label: t("status_delivering") || "Yo`lda", count: counts.in_delivery, badgeColor: "bg-purple-100 text-purple-800" },
-    { id: "HISTORY", label: t("status_completed") || "Tarixi", count: counts.history },
+    { id: "ALL", label: t("status_all") || "Все", count: counts.all },
+    { id: "NEW", label: t("status_new") || "Новые", count: counts.new },
+    { id: "PROCESSING", label: t("status_accepted") || "В обработке", count: counts.processing },
+    { id: "READY", label: t("status_ready") || "Готовы", count: counts.ready },
+    { id: "IN_DELIVERY", label: t("status_delivering") || "Доставка", count: counts.in_delivery },
+    { id: "HISTORY", label: t("status_completed") || "Выполненные", count: counts.history },
   ];
 
-  return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{t("orders_list_title") || "Buyurtmalar ro`yxati"}</h1>
-          <p className="text-xs text-slate-500 mt-0.5">{t("orders_list_subtitle") || "Barcha kelib tushgan buyurtmalar"}</p>
-        </div>
-      </div>
+  const draftsList = draftOrders.filter((d) => d.type === "draft");
+  const abandonedList = draftOrders.filter((d) => d.type === "abandoned");
 
-      {/* STATUS TABS */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-slate-200 dark:border-neutral-800 text-xs font-medium">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setStatus(tab.id)}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-              status === tab.id
-                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-medium"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800"
-            }`}
-          >
-            <span>{tab.label}</span>
-            <span
-              className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${
-                status === tab.id
-                  ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
-                  : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-slate-300"
+  return (
+    <div className="space-y-5">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-[#202223] dark:text-white tracking-tight">
+              {urlTab === "drafts"
+                ? lang === "uz"
+                  ? "Qoralamalar (Черновики)"
+                  : "Черновики заказов"
+                : urlTab === "abandoned"
+                ? lang === "uz"
+                  ? "Tugallanmagan xaridlar"
+                  : "Незавершенные оформления заказов"
+                : t("orders_list_title") || "Заказы"}
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#bbf7d0] text-[#14532d]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
+              Live
+            </span>
+          </div>
+          <p className="text-xs text-[#6d7175] mt-0.5">
+            {urlTab === "drafts"
+              ? "Создавайте заказы вручную по телефону или в мессенджере и отправляйте клиенту счет на оплату"
+              : urlTab === "abandoned"
+              ? "Корзины покупателей, которые перешли к оплате, но не завершили оформление заказа"
+              : t("orders_list_subtitle") || "Управление заказами интернет-магазина и Telegram Mini App"}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Sub-section switcher matching Shopify Orders sub-nav */}
+          <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5">
+            <button
+              type="button"
+              onClick={() => setSearchParams({})}
+              className={`px-2.5 py-1 rounded-[6px] text-xs font-medium cursor-pointer transition ${
+                !urlTab ? "bg-[#202223] text-white" : "text-[#5c5f62] hover:text-[#202223]"
               }`}
             >
-              {tab.count}
-            </span>
+              Все заказы ({counts.all})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSearchParams({ tab: "drafts" })}
+              className={`px-2.5 py-1 rounded-[6px] text-xs font-medium cursor-pointer transition ${
+                urlTab === "drafts" ? "bg-[#202223] text-white" : "text-[#5c5f62] hover:text-[#202223]"
+              }`}
+            >
+              Черновики ({draftsList.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSearchParams({ tab: "abandoned" })}
+              className={`px-2.5 py-1 rounded-[6px] text-xs font-medium cursor-pointer transition ${
+                urlTab === "abandoned" ? "bg-[#202223] text-white" : "text-[#5c5f62] hover:text-[#202223]"
+              }`}
+            >
+              Брошенные корзины ({abandonedList.length})
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowCreateModal(true)}
+            className="px-3.5 py-2 rounded-[8px] bg-[#202223] hover:bg-black text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Создать заказ</span>
           </button>
-        ))}
-      </div>
-
-      {/* SEARCH BAR */}
-      <div className="bg-white rounded-xl border border-slate-200/80 p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex-1 max-w-md relative">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("search_order_ph") || "Buyurtma ID si (#RB-...), mijoz ismi yoki telefon..."}
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
-        </div>
-        <div className="text-xs font-medium text-slate-500">
-          {t("showing_orders_format") ? t("showing_orders_format").replace("{count}", String(orders.length)) : `Ko'rsatilmoqda: ${orders.length} ta buyurtma`}
         </div>
       </div>
 
-      {/* ORDERS TABLE */}
-      <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200/80 text-[10px] uppercase tracking-wider">
-              <tr>
-                <th className="py-3 px-4">{t("th_order_num") || "Buyurtma"}</th>
-                <th className="py-3 px-4">{t("th_client") || "Mijoz"}</th>
-                <th className="py-3 px-4">{t("th_branch") || "Filial"}</th>
-                <th className="py-3 px-4">{t("th_payment") || "To`lov"}</th>
-                <th className="py-3 px-4">{t("th_delivery") || "Yetkazish"}</th>
-                <th className="py-3 px-4">{t("th_status") || "Holat"}</th>
-                <th className="py-3 px-4 text-right">{t("th_action") || "Amal"}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
-              {orders.map((order) => (
-                <tr
-                  key={order.id}
-                  onClick={() => setSelectedOrder(order)}
-                  className="hover:bg-slate-50 transition-colors cursor-pointer group"
-                >
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
-                        #{order.order_number}
+      {/* DRAFTS OR ABANDONED CHECKOUTS VIEW */}
+      {(urlTab === "drafts" || urlTab === "abandoned") ? (
+        <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 shadow-2xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-[#f6f6f7] dark:bg-zinc-900 text-[#6d7175] font-semibold border-b border-[#e3e5e7] dark:border-zinc-800 text-[11px]">
+                <tr>
+                  <th className="py-3 px-4">Номер</th>
+                  <th className="py-3 px-4">Дата</th>
+                  <th className="py-3 px-4">Клиент</th>
+                  <th className="py-3 px-4">Состав корзины</th>
+                  <th className="py-3 px-4">Статус оплаты</th>
+                  <th className="py-3 px-4">Итого</th>
+                  <th className="py-3 px-4 text-right">Действие</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f1f2f4] dark:divide-zinc-800 text-[#202223] dark:text-zinc-200">
+                {(urlTab === "drafts" ? draftsList : abandonedList).map((d) => (
+                  <tr key={d.id} className="hover:bg-[#f6f6f7]/60 transition">
+                    <td className="py-3.5 px-4 font-bold">#{d.number}</td>
+                    <td className="py-3.5 px-4 text-[#6d7175]">{d.created_at}</td>
+                    <td className="py-3.5 px-4">
+                      <div className="font-semibold">{d.customer_name}</div>
+                      <div className="text-[11px] text-[#6d7175]">{d.customer_phone}</div>
+                    </td>
+                    <td className="py-3.5 px-4">{d.product_title}</td>
+                    <td className="py-3.5 px-4">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#f1f2f4] text-[#202223]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        {d.payment_method}
                       </span>
-                      {order.source === "TMA" ? (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                          <Send className="w-2.5 h-2.5" /> TG
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                          <Globe className="w-2.5 h-2.5" /> {t("website_channel") || "Sayt"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      {new Date(order.created_at).toLocaleString()}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="font-medium text-slate-900">{order.customer_name}</div>
-                    <div className="text-[11px] text-slate-500">{order.customer_phone}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    {order.branch_name ? (
-                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 max-w-[170px] truncate" title={order.branch_name}>
-                        <Building2 className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                        <span className="truncate">{order.branch_name}</span>
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 text-[11px] italic">
-                        {t("branch_unassigned") || "Filialsiz"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <div className="font-bold text-slate-900">
-                      {Number(order.total_amount).toLocaleString()} UZS
-                    </div>
-                    <div className="text-[10px] text-slate-400 font-bold">{order.payment_method_display}</div>
-                  </td>
-                  <td className="py-3.5 px-4 text-slate-500 text-[11px] max-w-xs truncate">
-                    {order.delivery_address || (t("address_not_specified") || "Manzil ko`rsatilmagan")}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    {getOrderStatusBadge(order.status)}
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                    </td>
+                    <td className="py-3.5 px-4 font-bold tabular-nums">
+                      {d.amount.toLocaleString("ru-RU")} UZS
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
                       <button
                         type="button"
-                        title={t("view_details") || "Batafsil ko`rish"}
-                        onClick={() => setSelectedOrder(order)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                        onClick={() =>
+                          notify(
+                            urlTab === "drafts"
+                              ? `Ссылка на оплату черновика #${d.number} отправлена клиенту ${d.customer_name}`
+                              : `Напоминание о корзине #${d.number} отправлено в Telegram клиенту ${d.customer_name}`,
+                            "success"
+                          )
+                        }
+                        className="px-3 py-1.5 rounded-[8px] bg-[#202223] hover:bg-black text-white text-[11px] font-semibold cursor-pointer transition"
                       >
-                        <Eye className="w-4 h-4" />
+                        {urlTab === "drafts" ? "Отправить счет" : "Вернуть клиента в TG"}
                       </button>
-                      <Link
-                        title={t("open_full_page") || "To`liq sahifada ochish"}
-                        to={`/orders/${order.id}`}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {orders.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    {t("no_orders_found") || "Buyurtmalar topilmadi"}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* STATUS TABS */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-slate-200 dark:border-neutral-800 text-xs font-medium">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setStatus(tab.id)}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+                  status === tab.id
+                    ? "bg-[#202223] text-white dark:bg-white dark:text-slate-900 shadow-2xs font-medium"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${
+                    status === tab.id
+                      ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
+                      : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-slate-300"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* SEARCH BAR */}
+          <div className="bg-white rounded-xl border border-slate-200/80 p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
+            <div className="flex-1 max-w-md relative">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("search_order_ph") || "Поиск по номеру заказа (#RB-...), имени клиента или телефону..."}
+                className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal placeholder-slate-400 focus:outline-none focus:border-[#202223] focus:bg-white transition-all"
+              />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+            </div>
+            <div className="text-xs font-medium text-slate-500">
+              {t("showing_orders_format")
+                ? t("showing_orders_format").replace("{count}", String(orders.length))
+                : `Показано заказов: ${orders.length}`}
+            </div>
+          </div>
+
+          {/* ORDERS TABLE */}
+          <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200/80 text-[10px] uppercase tracking-wider">
+                  <tr>
+                    <th className="py-3 px-4">{t("th_order_num") || "Заказ"}</th>
+                    <th className="py-3 px-4">{t("th_client") || "Клиент"}</th>
+                    <th className="py-3 px-4">{t("th_branch") || "Филиал"}</th>
+                    <th className="py-3 px-4">{t("th_payment") || "Оплата"}</th>
+                    <th className="py-3 px-4">{t("th_delivery") || "Доставка"}</th>
+                    <th className="py-3 px-4">{t("th_status") || "Статус"}</th>
+                    <th className="py-3 px-4 text-right">{t("th_action") || "Действие"}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
+                  {orders.map((order) => (
+                    <tr
+                      key={order.id}
+                      onClick={() => setSelectedOrder(order)}
+                      className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                    >
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-900 group-hover:text-[#008060] transition-colors">
+                            #{order.order_number}
+                          </span>
+                          {order.source === "TMA" ? (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-sky-50 text-sky-700 border border-sky-200">
+                              <Send className="w-2.5 h-2.5" /> TG
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                              <Globe className="w-2.5 h-2.5" /> {t("website_channel") || "Сайт"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          {new Date(order.created_at).toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-slate-900">{order.customer_name}</div>
+                        <div className="text-[11px] text-slate-500">{order.customer_phone}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {order.branch_name ? (
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#f1f8f5] text-[#14532d] border border-[#bbf7d0] max-w-[170px] truncate"
+                            title={order.branch_name}
+                          >
+                            <Building2 className="w-3.5 h-3.5 shrink-0 text-[#16a34a]" />
+                            <span className="truncate">{order.branch_name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-[11px] italic">
+                            {t("branch_unassigned") || "Основной склад"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-900">
+                          {Number(order.total_amount).toLocaleString()} UZS
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-bold">{order.payment_method_display}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500 text-[11px] max-w-xs truncate">
+                        {order.delivery_address || (t("address_not_specified") || "Адрес не указан")}
+                      </td>
+                      <td className="py-3.5 px-4">{getOrderStatusBadge(order.status)}</td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            title={t("view_details") || "Просмотр"}
+                            onClick={() => setSelectedOrder(order)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <Link
+                            title={t("open_full_page") || "Открыть заказ"}
+                            to={`/orders/${order.id}`}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {orders.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-16 px-4 text-center">
+                        <div className="max-w-sm mx-auto flex flex-col items-center space-y-3">
+                          <div className="w-16 h-16 rounded-2xl bg-[#f1f8f5] border border-[#bbf7d0] flex items-center justify-center text-[#16a34a]">
+                            <ShoppingBag className="w-8 h-8" />
+                          </div>
+                          <h3 className="text-sm font-bold text-[#202223]">
+                            Ваши заказы будут отображаться здесь
+                          </h3>
+                          <p className="text-xs text-[#6d7175] leading-relaxed">
+                            Здесь вы сможете принимать оплату через Click, Payme и Uzum, назначать курьеров и отслеживать доставку.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowCreateModal(true)}
+                            className="px-4 py-2 rounded-[8px] bg-[#202223] hover:bg-black text-white text-xs font-semibold cursor-pointer transition"
+                          >
+                            Создать заказ вручную
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* CREATE DRAFT ORDER MODAL */}
+      {showCreateModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setShowCreateModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#18181B] rounded-2xl border border-[#e1e3e5] dark:border-zinc-800 shadow-2xl max-w-md w-full overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-4 border-b border-[#e3e5e7] dark:border-zinc-800 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#202223] dark:text-white">
+                Создать черновик заказа
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="p-1 rounded-lg text-[#6d7175] hover:text-[#202223] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateDraftOrder} className="p-5 space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-[#202223] mb-1">Имя покупателя *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  placeholder="Напр.: Рустам Алимов"
+                  className="w-full px-3 py-2 rounded-[8px] border border-[#d2d5d8] text-xs focus:outline-none focus:border-[#202223]"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-[#202223] mb-1">Телефон *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCustomerPhone}
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                  placeholder="+998 90 123 45 67"
+                  className="w-full px-3 py-2 rounded-[8px] border border-[#d2d5d8] text-xs focus:outline-none focus:border-[#202223]"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-[#202223] mb-1">Товары в заказе</label>
+                <input
+                  type="text"
+                  value={newProductTitle}
+                  onChange={(e) => setNewProductTitle(e.target.value)}
+                  placeholder="Напр.: Двойной Чизбургер Комбо x2"
+                  className="w-full px-3 py-2 rounded-[8px] border border-[#d2d5d8] text-xs focus:outline-none focus:border-[#202223]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-[#202223] mb-1">Сумма (UZS)</label>
+                  <input
+                    type="number"
+                    value={newAmount}
+                    onChange={(e) => setNewAmount(e.target.value)}
+                    className="w-full px-3 py-2 rounded-[8px] border border-[#d2d5d8] text-xs focus:outline-none focus:border-[#202223]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-[#202223] mb-1">Способ оплаты</label>
+                  <select
+                    value={newPaymentMethod}
+                    onChange={(e) => setNewPaymentMethod(e.target.value)}
+                    className="w-full px-2.5 py-2 rounded-[8px] border border-[#d2d5d8] bg-white text-xs"
+                  >
+                    <option value="Payme / Click">Payme / Click</option>
+                    <option value="Uzum Bank">Uzum Bank</option>
+                    <option value="Наличными курьеру">Наличными курьеру</option>
+                  </select>
+                </div>
+              </div>
+              <div className="pt-3 border-t border-[#e3e5e7] flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-3.5 py-2 rounded-[8px] border border-[#d2d5d8] text-[#202223] text-xs font-medium hover:bg-[#f6f6f7] cursor-pointer"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-[8px] bg-[#202223] hover:bg-black text-white text-xs font-semibold cursor-pointer"
+                >
+                  Сохранить черновик
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* FULL / SLIDE-OVER ORDER DETAIL MODAL */}
       {selectedOrder && (
@@ -715,17 +1057,44 @@ export const OrdersPage: React.FC = () => {
                       >
                         <CheckCircle className="w-3.5 h-3.5" /> {t("delivered") || "Yetkazildi"}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (confirm(t("cancel_order_confirm") || "Buyurtmani bekor qilishni tasdiqlaysizmi? Mahsulotlar qoldiqqa qaytariladi.")) {
-                            updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "CANCELLED" });
-                          }
-                        }}
-                        className="py-2.5 px-3 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs col-span-2 transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <XCircle className="w-3.5 h-3.5" /> {t("cancel_return_stock_btn") || "Bekor qilish (Qoldiqni qaytarish)"}
-                      </button>
+                      {confirmCancelOrderId === selectedOrder.id ? (
+                        <div className="col-span-2 p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-2">
+                          <div className="text-[11px] font-bold text-rose-800">
+                            {lang === "ru"
+                              ? "Подтверждаете отмену заказа? Товары вернутся на склад."
+                              : lang === "en"
+                              ? "Confirm order cancellation? Items will return to stock."
+                              : "Buyurtmani bekor qilishni tasdiqlaysizmi? Mahsulotlar qoldiqqa qaytariladi."}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "CANCELLED" });
+                                setConfirmCancelOrderId(null);
+                              }}
+                              className="flex-1 py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                            >
+                              {lang === "ru" ? "Да, отменить заказ" : lang === "en" ? "Yes, cancel order" : "Ha, bekor qilish"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmCancelOrderId(null)}
+                              className="py-1.5 px-3 rounded-lg bg-white border border-rose-200 text-rose-700 hover:bg-rose-100 font-semibold text-xs transition-colors cursor-pointer"
+                            >
+                              {lang === "ru" ? "Нет" : lang === "en" ? "No" : "Yo'q"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmCancelOrderId(selectedOrder.id)}
+                          className="py-2.5 px-3 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs col-span-2 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <XCircle className="w-3.5 h-3.5" /> {t("cancel_return_stock_btn") || "Bekor qilish (Qoldiqni qaytarish)"}
+                        </button>
+                      )}
                     </div>
                   </div>
 

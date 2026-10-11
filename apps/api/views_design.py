@@ -86,6 +86,17 @@ def design_theme_get_view(request):
             "description_en": "Aesthetic lookbook with 3:4 portrait cards for fashion and beauty",
             "badge": "Fashion & Visual",
             "icon": "sparkles"
+        },
+        {
+            "id": "streetwear",
+            "name": "Streetwear & Lookbook (222 FMA)",
+            "name_ru": "Стритвир и Лукбук (222 FMA)",
+            "name_en": "Streetwear & Lookbook (222 FMA)",
+            "description": "Qorong'i premium dizayn, 'O'z obrazingni yarat' interaktiv konstruktori va neon aksentlar",
+            "description_ru": "Темный премиальный дизайн, интерактивный конструктор 'Собери свой образ', лукбук и неоновые акценты",
+            "description_en": "Dark luxury streetwear aesthetic, interactive 'Outfit Builder', lookbook & neon accents",
+            "badge": "Dark Luxury & Outfits",
+            "icon": "flame"
         }
     ]
 

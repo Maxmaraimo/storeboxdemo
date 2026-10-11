@@ -35,6 +35,8 @@ import { PaymentsPage } from "./pages/settings/PaymentsPage";
 import { RoboMarketPage } from "./pages/settings/RoboMarketPage";
 import { IntegrationsMarketPage } from "./pages/settings/IntegrationsMarketPage";
 import { StandaloneStorePage } from "./pages/settings/StandaloneStorePage";
+import { SettingsLayout } from "./pages/settings/SettingsLayout";
+import { MarketsPage } from "./pages/markets/MarketsPage";
 import { CourierDashboardPage } from "./pages/courier/CourierDashboardPage";
 
 import { ShieldAlert } from "lucide-react";
@@ -251,15 +253,51 @@ export const App: React.FC = () => {
                   path="settings"
                   element={
                     <PermissionGuard module="settings">
-                      <SettingsPage />
+                      <SettingsPage initialSection="general" />
                     </PermissionGuard>
                   }
                 />
                 <Route
+                  path="settings/domains"
+                  element={
+                    <PermissionGuard module="settings">
+                      <SettingsPage initialSection="domains" />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/notifications"
+                  element={
+                    <PermissionGuard module="settings">
+                      <SettingsPage initialSection="notifications" />
+                    </PermissionGuard>
+                  }
+                />
+                <Route
+                  path="settings/languages"
+                  element={
+                    <PermissionGuard module="settings">
+                      <SettingsPage initialSection="languages" />
+                    </PermissionGuard>
+                  }
+                />
+
+                <Route
+                  path="markets"
+                  element={
+                    <PermissionGuard module="settings">
+                      <MarketsPage />
+                    </PermissionGuard>
+                  }
+                />
+
+                <Route
                   path="settings/branches"
                   element={
                     <PermissionGuard module="branches">
-                      <BranchesPage />
+                      <SettingsLayout>
+                        <BranchesPage />
+                      </SettingsLayout>
                     </PermissionGuard>
                   }
                 />
@@ -268,7 +306,9 @@ export const App: React.FC = () => {
                   path="settings/staff"
                   element={
                     <PermissionGuard module="staff">
-                      <StaffPage initialTab="staff" />
+                      <SettingsLayout>
+                        <StaffPage initialTab="staff" />
+                      </SettingsLayout>
                     </PermissionGuard>
                   }
                 />
@@ -276,7 +316,9 @@ export const App: React.FC = () => {
                   path="settings/staff/roles"
                   element={
                     <PermissionGuard module="roles">
-                      <StaffPage initialTab="roles" />
+                      <SettingsLayout>
+                        <StaffPage initialTab="roles" />
+                      </SettingsLayout>
                     </PermissionGuard>
                   }
                 />
@@ -284,7 +326,9 @@ export const App: React.FC = () => {
                   path="settings/staff/couriers"
                   element={
                     <PermissionGuard module="delivery">
-                      <StaffPage initialTab="couriers" />
+                      <SettingsLayout>
+                        <StaffPage initialTab="couriers" />
+                      </SettingsLayout>
                     </PermissionGuard>
                   }
                 />
@@ -340,7 +384,9 @@ export const App: React.FC = () => {
                   path="settings/robomarket"
                   element={
                     <PermissionGuard module="channels">
-                      <IntegrationsMarketPage />
+                      <SettingsLayout>
+                        <IntegrationsMarketPage />
+                      </SettingsLayout>
                     </PermissionGuard>
                   }
                 />
@@ -348,7 +394,9 @@ export const App: React.FC = () => {
                   path="settings/robo-market"
                   element={
                     <PermissionGuard module="channels">
-                      <IntegrationsMarketPage />
+                      <SettingsLayout>
+                        <IntegrationsMarketPage />
+                      </SettingsLayout>
                     </PermissionGuard>
                   }
                 />
@@ -356,7 +404,9 @@ export const App: React.FC = () => {
                   path="settings/integrations"
                   element={
                     <PermissionGuard module="channels">
-                      <IntegrationsMarketPage />
+                      <SettingsLayout>
+                        <IntegrationsMarketPage />
+                      </SettingsLayout>
                     </PermissionGuard>
                   }
                 />

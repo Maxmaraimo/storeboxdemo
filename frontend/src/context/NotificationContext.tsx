@@ -27,6 +27,7 @@ interface NotificationContextType {
   isLoading: boolean;
   refreshNotifications: () => Promise<void>;
   markAllRead: () => Promise<void>;
+  notify: (message: string, type?: "success" | "error" | "info") => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -63,7 +64,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     notifications: [],
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const prevOrdersCountRef = React.useRef<number | null>(null);
+
+  const notify = useCallback((message: string) => {
+    setToastMsg(message);
+    setTimeout(() => {
+      setToastMsg((prev) => (prev === message ? null : prev));
+    }, 3200);
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
@@ -134,9 +143,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         isLoading,
         refreshNotifications: fetchNotifications,
         markAllRead,
+        notify,
       }}
     >
       {children}
+      {toastMsg && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[120] px-4 py-2.5 rounded-xl bg-[#202223] text-white text-xs font-semibold shadow-2xl border border-zinc-700 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
     </NotificationContext.Provider>
   );
 };
@@ -148,3 +164,5 @@ export const useNotifications = () => {
   }
   return context;
 };
+
+export const useNotification = useNotifications;

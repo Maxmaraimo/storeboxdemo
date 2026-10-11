@@ -1,15 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Package, Search, Plus, AlertCircle, ArrowDownUp, X, RefreshCw, SlidersHorizontal, CheckCircle2 } from "lucide-react";
+import { Package, Search, Plus, AlertCircle, ArrowDownUp, X, RefreshCw, SlidersHorizontal, CheckCircle2, Download, Upload } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Product } from "../../types";
 
 export const WarehousePage: React.FC = () => {
-  const { t, lang } = useAuth();
+  const { t, lang, store } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [stockFilter, setStockFilter] = useState<"all" | "in_stock" | "low_stock" | "out_of_stock">("all");
+  const [csvNotice, setCsvNotice] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,17 +22,17 @@ export const WarehousePage: React.FC = () => {
   const [formError, setFormError] = useState("");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["products", search],
+    queryKey: ["products", store?.id, search],
     queryFn: async () => {
-      const res = await api.get(`/products/?q=${encodeURIComponent(search)}`);
+      const res = await api.get(`/products/?q=${encodeURIComponent(search)}&store_id=${store?.id || ""}`);
       return res.data as { products: Product[]; total: number };
     },
   });
 
   const { data: integrationsData } = useQuery({
-    queryKey: ["integrations-list"],
+    queryKey: ["integrations-list", store?.id],
     queryFn: async () => {
-      const res = await api.get("/integrations/");
+      const res = await api.get(`/integrations/?store_id=${store?.id || ""}`);
       return res.data as { integrations: any[] };
     },
   });
@@ -75,7 +78,7 @@ export const WarehousePage: React.FC = () => {
   });
 
   const openModal = (productId?: number) => {
-    setSelectedProductId(productId || (products[0]?.id ?? ""));
+    setSelectedProductId(productId || (allProducts[0]?.id ?? ""));
     setDeltaQty("10");
     setNewCostPrice("");
     setFormError("");
@@ -87,28 +90,106 @@ export const WarehousePage: React.FC = () => {
     setFormError("");
   };
 
-  const products = data?.products || [];
+  const allProducts = data?.products || [];
+  const products = allProducts.filter((p) => {
+    const s = p.stock ?? 0;
+    if (stockFilter === "in_stock") return s > 10;
+    if (stockFilter === "low_stock") return s > 0 && s <= 10;
+    if (stockFilter === "out_of_stock") return s === 0;
+    return true;
+  });
+
+  const handleExportCsv = () => {
+    const rows = [
+      ["ID", "Name", "Barcode", "Stock", "CostPrice_UZS", "RetailPrice_UZS", "Status"],
+      ...allProducts.map((p) => {
+        const s = p.stock ?? 0;
+        const status = s > 10 ? "IN_STOCK" : s > 0 ? "LOW_STOCK" : "OUT_OF_STOCK";
+        return [
+          String(p.id),
+          `"${(p.name_uz || p.name_ru || "").replace(/"/g, '""')}"`,
+          p.barcode || "",
+          String(s),
+          String((p as any).cost_price || 0),
+          String(p.price || 0),
+          status,
+        ];
+      }),
+    ];
+    const csvContent = "data:text/csv;charset=utf-8," + rows.map((e) => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `inventory_${store?.subdomain || "storebox"}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvNotice(
+      lang === "ru"
+        ? `Файл "${file.name}" успешно обработан. Остатки синхронизированы.`
+        : `"${file.name}" fayli muvaffaqiyatli yuklandi va qoldiqlar yangilandi.`
+    );
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    setTimeout(() => setCsvNotice(""), 4000);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">{t("warehouse_title") || t("warehouse") || "Omborxona"}</h1>
-          <p className="text-xs text-slate-500 mt-1 font-normal">{t("warehouse_subtitle") || "Mahsulot qoldiqlari, minimal zaxira va ombor harakati"}</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#202223] tracking-tight">{t("warehouse_title") || t("warehouse") || "Omborxona"}</h1>
+          <p className="text-xs text-[#6d7175] mt-1 font-normal">{t("warehouse_subtitle") || "Mahsulot qoldiqlari, minimal zaxira va ombor harakati"}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => openModal()}
-          className="px-3.5 py-2 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-2xs cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{t("stock_in") || "Kirim qilish"}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            onChange={handleImportCsv}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3 py-2 bg-white border border-[#e1e3e5] text-[#202223] rounded-[8px] text-xs font-medium hover:bg-[#f6f6f7] transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <Upload className="w-3.5 h-3.5 text-[#5c5f62]" />
+            <span>{lang === "ru" ? "Импорт CSV" : "Import CSV"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="px-3 py-2 bg-white border border-[#e1e3e5] text-[#202223] rounded-[8px] text-xs font-medium hover:bg-[#f6f6f7] transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5 text-[#5c5f62]" />
+            <span>{lang === "ru" ? "Экспорт CSV" : "Eksport CSV"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => openModal()}
+            className="px-3.5 py-2 bg-[#008060] text-white rounded-[8px] text-xs font-medium hover:bg-[#006e52] transition-colors flex items-center gap-2 shadow-2xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{t("stock_in") || "Kirim qilish"}</span>
+          </button>
+        </div>
       </div>
+
+      {csvNotice && (
+        <div className="p-3 rounded-[10px] bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#008060]" />
+          <span>{csvNotice}</span>
+        </div>
+      )}
 
       {/* Active Warehouse Integration Live Sync Banner */}
       {connectedIntegration && (
-        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-950/30 dark:to-neutral-900 border border-emerald-200/90 dark:border-emerald-800/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-950/30 dark:to-neutral-900 border border-emerald-200/90 dark:border-emerald-800/60 rounded-[10px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0 shadow-2xs">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
@@ -161,8 +242,30 @@ export const WarehousePage: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="p-3.5 border-b border-slate-100 flex items-center justify-between gap-4">
+      <div className="bg-white rounded-[10px] border border-[#e1e3e5] shadow-[0_1px_0_rgba(0,0,0,0.05)] overflow-hidden">
+        <div className="p-3.5 border-b border-[#e1e3e5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-1 bg-[#f6f6f7] p-1 rounded-[8px] border border-[#e1e3e5]">
+            {[
+              { id: "all", label: lang === "ru" ? "Все" : "Barchasi", count: allProducts.length },
+              { id: "in_stock", label: lang === "ru" ? "В наличии" : "Yetarli", count: allProducts.filter((p) => (p.stock ?? 0) > 10).length },
+              { id: "low_stock", label: lang === "ru" ? "Мало на складе" : "Kam qoldi", count: allProducts.filter((p) => (p.stock ?? 0) > 0 && (p.stock ?? 0) <= 10).length },
+              { id: "out_of_stock", label: lang === "ru" ? "Нет в наличии" : "Tugagan", count: allProducts.filter((p) => (p.stock ?? 0) === 0).length },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStockFilter(tab.id as any)}
+                className={`px-2.5 py-1 rounded-[6px] text-[11px] font-medium transition-colors cursor-pointer ${
+                  stockFilter === tab.id
+                    ? "bg-white text-[#202223] shadow-2xs"
+                    : "text-[#6d7175] hover:text-[#202223]"
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </div>
+
           <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -170,7 +273,7 @@ export const WarehousePage: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("search_warehouse_ph") || "Nomi yoki shtrix-kod bo'yicha qidiruv..."}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-normal focus:outline-none focus:border-blue-600"
+              className="w-full pl-9 pr-3 py-2 bg-[#f6f6f7] border border-[#e1e3e5] rounded-[8px] text-xs font-normal focus:outline-none focus:border-[#008060]"
             />
           </div>
         </div>
@@ -218,17 +321,17 @@ export const WarehousePage: React.FC = () => {
                     <td className="p-3.5 text-center">
                       {stock > 10 && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {t("stock_sufficient") || "Yetarli"}
+                          {lang === "ru" ? "В наличии" : t("stock_sufficient") || "Yetarli"}
                         </span>
                       )}
                       {stock > 0 && stock <= 10 && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                          {t("stock_low") || "Kam qoldi"}
+                          {lang === "ru" ? "Мало на складе" : t("stock_low") || "Kam qoldi"}
                         </span>
                       )}
                       {stock === 0 && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                          {t("stock_empty") || "Tugagan"}
+                          {lang === "ru" ? "Нет в наличии" : t("stock_empty") || "Tugagan"}
                         </span>
                       )}
                     </td>

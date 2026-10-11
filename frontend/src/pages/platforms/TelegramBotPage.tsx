@@ -218,26 +218,26 @@ export const TelegramBotPage: React.FC = () => {
   const isConnected = status?.is_connected;
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Bot className="w-5 h-5 text-blue-600" />
+          <h1 className="text-xl font-bold text-[#202223] dark:text-white tracking-tight flex items-center gap-2.5">
+            <Bot className="w-5 h-5 text-[#202223] dark:text-white" />
             <span>{t("telegram_bot_title") || "Telegram Bot & Mini App (TMA)"}</span>
             {isConnected ? (
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[11px] font-medium flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>{t("telegram_active_badge") || "Faol • Web App yoqilgan"}</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#bbf7d0] text-[#14532d] text-[11px] font-semibold flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a] animate-pulse"></span>
+                <span>{t("telegram_active_badge") || "Активен • Web App включен"}</span>
               </span>
             ) : (
               <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-medium">
-                {t("telegram_not_connected") || "Ulanmagan"}
+                {t("telegram_not_connected") || "Не подключен"}
               </span>
             )}
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            {t("telegram_bot_subtitle") || "Do'koningiz uchun Telegram bot va Mini App integratsiyasi orqali buyurtmalar qabul qiling."}
+          <p className="text-xs text-[#6d7175] mt-1">
+            {t("telegram_bot_subtitle") || "Принимайте заказы напрямую внутри Telegram через встроенное веб-приложение Mini App и чат-бота."}
           </p>
         </div>
       </div>
@@ -260,12 +260,15 @@ export const TelegramBotPage: React.FC = () => {
         </div>
       )}
 
-      {/* NOT CONNECTED STATE: BOT CREATION GUIDE & FORM */}
-      {!isConnected ? (
-        <div className="bg-white rounded-xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl shrink-0">
-              <Bot className="w-6 h-6 stroke-[1.8]" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* LEFT COLUMN (7 cols): Settings & Bot Configuration */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* NOT CONNECTED STATE: BOT CREATION GUIDE & FORM */}
+          {!isConnected ? (
+            <div className="bg-white rounded-xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl shrink-0">
+                  <Bot className="w-6 h-6 stroke-[1.8]" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-slate-900 tracking-tight">{t("telegram_create_guide_title")}</h3>
@@ -735,6 +738,127 @@ export const TelegramBotPage: React.FC = () => {
           )}
         </div>
       )}
+        </div>
+
+        {/* RIGHT COLUMN (5 cols): Live Interactive iPhone Telegram Mini App & Bot Preview */}
+        <div className="lg:col-span-5 space-y-5 sticky top-20">
+          <div className="bg-white dark:bg-[#18181B] rounded-2xl border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-[#202223] dark:text-white flex items-center gap-1.5">
+                  <Smartphone className="w-4 h-4 text-[#0088cc]" />
+                  <span>Предпросмотр в Telegram (iOS)</span>
+                </h3>
+                <p className="text-[11px] text-[#6d7175] mt-0.5">
+                  Живое отображение вашего бота и кнопки витрины
+                </p>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-[#bbf7d0] text-[#14532d] text-[10px] font-bold">
+                Live Preview
+              </span>
+            </div>
+
+            {/* iPhone Telegram Mockup */}
+            <div className="mx-auto w-full max-w-[310px] rounded-[34px] border-[7px] border-[#141416] bg-[#e6ebee] shadow-xl overflow-hidden flex flex-col">
+              {/* iOS Notch + Telegram Header */}
+              <div className="bg-[#517da2] text-white px-4 pt-3 pb-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#202223] text-[#c8ff6a] flex items-center justify-center font-bold text-xs shadow-xs">
+                    {(store?.name || "SB").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold truncate">
+                      {store?.name || "StoreBox Shop"}
+                    </div>
+                    <div className="text-[10px] text-sky-100">
+                      @{status?.bot_username || `${store?.subdomain || "storebox"}_bot`} • бот
+                    </div>
+                  </div>
+                </div>
+                <Bot className="w-4 h-4 text-white/80" />
+              </div>
+
+              {/* Telegram Chat Wallpaper Area */}
+              <div className="p-3.5 space-y-3 min-h-[290px] flex flex-col justify-end bg-gradient-to-b from-[#dbe7f0] via-[#d2e2ec] to-[#c8d9e6]">
+                {/* Bot Welcome Message Bubble */}
+                <div className="bg-white rounded-2xl rounded-tl-xs p-3 shadow-xs max-w-[90%] space-y-1.5 text-[11.5px] text-[#202223]">
+                  <div className="font-bold text-[#0088cc] text-[11px]">
+                    {store?.name || "StoreBox"}
+                  </div>
+                  <p className="leading-relaxed whitespace-pre-line">
+                    {welcomeMessage.trim() ||
+                      `👋 Добро пожаловать в официальный магазин «${
+                        store?.name || "StoreBox"
+                      }»!\n\nНажмите кнопку «${
+                        buttonName || "Магазин"
+                      }» ниже, чтобы открыть каталог, выбрать товары и оформить доставку за 30 секунд.`}
+                  </p>
+                  <div className="text-[9px] text-slate-400 text-right">14:25 ✓✓</div>
+                </div>
+
+                {/* Inline Mini App Card */}
+                <div className="bg-white/95 backdrop-blur-xs rounded-2xl p-2.5 shadow-xs border border-white max-w-[90%] space-y-2">
+                  <div className="h-24 rounded-xl bg-gradient-to-r from-[#141416] via-[#202223] to-[#0f172a] p-3 flex flex-col justify-between text-white">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-[#c8ff6a] text-[#141416]">
+                        Telegram Mini App
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-semibold">● Online</span>
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">{store?.name || "StoreBox"}</div>
+                      <div className="text-[10px] text-zinc-400">
+                        Оплата Click • Payme • Uzum • Доставка
+                      </div>
+                    </div>
+                  </div>
+                  <a
+                    href={status?.web_app_url || `/?store_id=${store?.id || ""}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs"
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Открыть {buttonName || "Магазин"}</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Telegram Bottom Input Bar with WebApp Menu Button */}
+              <div className="bg-white px-3 py-2.5 border-t border-slate-200 flex items-center gap-2">
+                <a
+                  href={status?.web_app_url || `/?store_id=${store?.id || ""}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-full bg-[#0088cc] text-white text-[11px] font-bold flex items-center gap-1 shrink-0 shadow-2xs"
+                >
+                  <span>🛍️ {buttonName || "Магазин"}</span>
+                </a>
+                <div className="flex-1 text-[11px] text-slate-400 truncate">
+                  Сообщение...
+                </div>
+                <Send className="w-4 h-4 text-[#0088cc] shrink-0" />
+              </div>
+            </div>
+
+            {/* Quick Stats Footer inside Right Column */}
+            <div className="grid grid-cols-2 gap-2.5 pt-2 text-xs">
+              <div className="p-3 rounded-xl bg-[#f6f6f7] dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800">
+                <div className="text-[10px] text-[#6d7175]">Конверсия Mini App</div>
+                <div className="text-sm font-bold text-[#202223] dark:text-white mt-0.5">
+                  6.4% (+1.8%)
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-[#f6f6f7] dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800">
+                <div className="text-[10px] text-[#6d7175]">Оплаты в Telegram</div>
+                <div className="text-sm font-bold text-[#16a34a] mt-0.5">
+                  Click • Payme • Нал
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

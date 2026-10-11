@@ -268,12 +268,24 @@ ESKIZ_FROM = os.environ.get('ESKIZ_FROM', '4546')
 ESKIZ_API_URL = os.environ.get('ESKIZ_API_URL', 'https://notify.eskiz.uz/api')
 ESKIZ_TEST_MODE = os.environ.get('ESKIZ_TEST_MODE', 'False') == 'True' or ('test' in sys.argv)
 
-# StoreBox AI Sidekick Hybrid Architecture (Groq + Gemini + Krea Diffusers on Apple Silicon M2)
+# Load local environment variables from .env (override defaults with .env values)
+if _env_path.exists():
+    with open(_env_path, 'r', encoding='utf-8') as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith('#') and '=' in _line:
+                _k, _v = _line.split('=', 1)
+                os.environ[_k.strip()] = _v.strip().strip('"').strip("'")
+
+# StoreBox AI Sidekick Architecture (Gemini + ElevenLabs)
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
+
+ELEVENLABS_API_KEY = os.environ.get('ELEVENLABS_API_KEY', '')
+ELEVENLABS_VOICE_ID = os.environ.get('ELEVENLABS_VOICE_ID', 'pNInz6obpgDQGcFmaJgB')
+
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_MODEL = os.environ.get('GROQ_MODEL', 'qwen/qwen3.8-27b')
-
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'models/gemini-3.5-flash-lite')
 
 HF_TOKEN = os.environ.get('HF_TOKEN', os.environ.get('HUGGING_FACE_HUB_TOKEN', ''))
 KREA_MODEL_ID = os.environ.get('KREA_MODEL_ID', 'krea/Krea-2-Turbo')

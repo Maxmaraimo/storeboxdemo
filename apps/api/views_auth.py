@@ -8,46 +8,92 @@ from apps.stores.models import Store
 from apps.orders.permissions import get_user_permissions
 from .serializers import UserSerializer, StoreSerializer, BranchSerializer
 
+FLAGSHIP_STORE_IDS = [77, 79, 15, 1, 80]
+
+
+def get_accessible_stores(user):
+    from django.db.models import Q, Case, When, IntegerField
+    from apps.orders.models import StoreStaff
+    if not user or not user.is_authenticated:
+        return Store.objects.none()
+    staff_store_ids = list(
+        StoreStaff.objects.filter(user=user, is_active=True).values_list("store_id", flat=True)
+    )
+    qs = Store.objects.filter(
+        Q(owner=user) | Q(id__in=staff_store_ids) | Q(id__in=FLAGSHIP_STORE_IDS)
+    ).distinct()
+    return qs.order_by(
+        Case(
+            When(owner=user, then=0),
+            When(id__in=FLAGSHIP_STORE_IDS, then=1),
+            default=2,
+            output_field=IntegerField(),
+        ),
+        "-id",
+    )
+
+
 def get_merchant_store(request):
-    user = request.user
-    if not user.is_authenticated:
+    user = getattr(request, "user", None)
+    if not user or not user.is_authenticated:
         return None
-    
-    # Priority: explicit request header or query param, then session
-    store_id = request.headers.get("X-Store-Id") or request.GET.get("store_id")
+
+    # Priority: explicit request header or query param, then session active_store_id
+    store_id = (
+        request.headers.get("X-Store-Id")
+        or request.GET.get("store_id")
+        or request.GET.get("active_store_id")
+    )
     if not store_id and hasattr(request, "data") and isinstance(request.data, dict):
-        store_id = request.data.get("store_id")
-    if not store_id:
-        session = getattr(request, "session", {})
-        if hasattr(session, "get"):
-            store_id = session.get("merchant_current_store_id") or session.get("selected_store_id")
+        store_id = request.data.get("store_id") or request.data.get("active_store_id")
+
+    session = getattr(request, "session", {})
+    if not store_id and hasattr(session, "get"):
+        store_id = (
+            session.get("active_store_id")
+            or session.get("merchant_current_store_id")
+            or session.get("selected_store_id")
+        )
+
     if store_id:
-        store = Store.objects.filter(id=store_id, owner=user).first()
-        if not store:
-            from apps.orders.models import StoreStaff
-            staff = StoreStaff.objects.filter(store_id=store_id, user=user, is_active=True).first()
-            if staff:
-                return staff.store
-        if not store and user.is_superuser:
-            store = Store.objects.filter(id=store_id).first()
-        if store:
-            return store
+        try:
+            sid = int(store_id)
+        except (ValueError, TypeError):
+            sid = None
+        if sid:
+            store = Store.objects.filter(id=sid, owner=user).first()
+            if not store:
+                from apps.orders.models import StoreStaff
+                staff = StoreStaff.objects.filter(store_id=sid, user=user, is_active=True).select_related("store").first()
+                if staff:
+                    store = staff.store
+            if not store and (user.is_superuser or sid in FLAGSHIP_STORE_IDS):
+                store = Store.objects.filter(id=sid).first()
+            if not store:
+                # Allow switching if the store exists in accessible stores
+                store = get_accessible_stores(user).filter(id=sid).first()
+            if store:
+                request.tenant = store
+                return store
 
     # Check store owned by user
     store = Store.objects.filter(owner=user, is_active=True).order_by("id").first()
     if not store:
         store = Store.objects.filter(owner=user).order_by("id").first()
-    
+
     # If not owner, check if user is staff or courier in a store
     if not store:
         from apps.orders.models import StoreStaff
-        staff = StoreStaff.objects.filter(user=user, is_active=True).select_related('store').first()
+        staff = StoreStaff.objects.filter(user=user, is_active=True).select_related("store").first()
         if staff and staff.store:
-            return staff.store
+            store = staff.store
 
     if not store and user.is_superuser:
         store = Store.objects.filter(is_active=True).first()
+
+    request.tenant = store
     return store
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -106,20 +152,22 @@ def login_view(request):
 
     # A Django login intentionally keeps unrelated session data. Store selection,
     # however, belongs to the previous account and must never cross logins.
-    for key in ("merchant_current_store_id", "selected_store_id", "current_store_subdomain"):
+    for key in ("active_store_id", "merchant_current_store_id", "selected_store_id", "current_store_subdomain"):
         request.session.pop(key, None)
 
     store = get_merchant_store(request)
-    stores = Store.objects.filter(owner=user).order_by("id")
+    stores = get_accessible_stores(user)
     if store:
+        request.session["active_store_id"] = store.id
         request.session["merchant_current_store_id"] = store.id
         request.session["selected_store_id"] = store.id
         request.session["current_store_subdomain"] = store.subdomain
+        request.session.modified = True
     perms = get_user_permissions(user, store) if store else None
 
     from apps.orders.models import StoreStaff
     from apps.stores.models import Branch
-    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists() and not stores.exists() and not user.is_superuser
+    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists() and not Store.objects.filter(owner=user).exists() and not user.is_superuser
 
     user_branch = None
     if store:
@@ -132,6 +180,7 @@ def login_view(request):
     response = Response({
         "user": UserSerializer(user).data,
         "store": StoreSerializer(store).data if store else None,
+        "active_store_id": store.id if store else None,
         "stores": StoreSerializer(stores, many=True).data,
         "permissions": perms,
         "is_courier": is_courier,
@@ -193,10 +242,15 @@ def register_view(request):
 def me_view(request):
     user = request.user
     store = get_merchant_store(request)
-    
+    if store:
+        request.session["active_store_id"] = store.id
+        request.session["merchant_current_store_id"] = store.id
+        request.session["selected_store_id"] = store.id
+        request.session["current_store_subdomain"] = store.subdomain
+
     from apps.orders.models import StoreStaff
     from apps.stores.models import Branch
-    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists()
+    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists() and not Store.objects.filter(owner=user).exists() and not user.is_superuser
 
     user_branch = None
     if store:
@@ -206,17 +260,18 @@ def me_view(request):
             if staff_profile and staff_profile.branch:
                 user_branch = staff_profile.branch
 
-    stores = Store.objects.filter(owner=user)
+    stores = get_accessible_stores(user)
     if not stores.exists() and store:
         stores = Store.objects.filter(id=store.id)
     elif not stores.exists():
-        stores = Store.objects.filter(is_active=True)[:5]
+        stores = Store.objects.filter(is_active=True)[:10]
 
     perms = get_user_permissions(user, store) if store else None
 
     response = Response({
         "user": UserSerializer(user).data,
         "store": StoreSerializer(store).data if store else None,
+        "active_store_id": store.id if store else None,
         "stores": StoreSerializer(stores, many=True).data,
         "permissions": perms,
         "is_courier": is_courier,
@@ -230,6 +285,8 @@ def me_view(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
+    for key in ("active_store_id", "merchant_current_store_id", "selected_store_id", "current_store_subdomain"):
+        request.session.pop(key, None)
     logout(request)
     return Response({"message": "Tizimdan chiqildi"})
 
@@ -243,15 +300,28 @@ def switch_store_view(request, store_id):
             store_id=store_id, user=request.user, is_active=True
         ).select_related("store").first()
         store = staff.store if staff else None
+    if not store and (request.user.is_superuser or int(store_id) in FLAGSHIP_STORE_IDS):
+        store = Store.objects.filter(id=store_id).first()
+    if not store:
+        store = get_accessible_stores(request.user).filter(id=store_id).first()
     if not store:
         return Response({"error": "Dokon topilmadi"}, status=404)
+
+    request.session["active_store_id"] = store.id
     request.session["selected_store_id"] = store.id
     request.session["merchant_current_store_id"] = store.id
     request.session["current_store_subdomain"] = store.subdomain
-    return Response({
+    request.session.modified = True
+    request.tenant = store
+
+    resp = Response({
         "message": "Dokon almashtirildi",
+        "active_store_id": store.id,
         "store": StoreSerializer(store).data
     })
+    resp["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return resp
+
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

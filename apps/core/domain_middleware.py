@@ -48,7 +48,8 @@ class PlatformDomainRoutingMiddleware:
 
         legacy_store_path = re.match(r'^/store/([-a-z0-9]+)(/.*)?$', path, re.IGNORECASE)
         is_storebox_host = host in public_hosts or host == app_domain or host.endswith(f'.{platform_domain}')
-        if settings.STOREFRONT_SUBDOMAIN_URLS and is_storebox_host and legacy_store_path:
+        is_local_or_preview = host in {'localhost', '127.0.0.1', '0.0.0.0'} or request.GET.get('preview') == '1'
+        if settings.STOREFRONT_SUBDOMAIN_URLS and is_storebox_host and legacy_store_path and not is_local_or_preview:
             store_subdomain = legacy_store_path.group(1).lower()
             storefront_path = legacy_store_path.group(2) or '/'
             return self._redirect(

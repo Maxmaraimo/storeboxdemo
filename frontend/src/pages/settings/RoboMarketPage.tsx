@@ -1275,80 +1275,150 @@ export const RoboMarketPage: React.FC = () => {
 
       {/* DASHBOARD HERO HEADER */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-neutral-800">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 border border-blue-100 text-blue-700 text-xs font-medium mb-2 dark:bg-blue-950/60 dark:border-blue-900 dark:text-blue-300">
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              <span>StoreBox Market · 13 готовых витрин</span>
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              Маркет современных витрин
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5">
+          <div className="flex items-center gap-2.5">
+            <Store className="w-5 h-5 text-[#202223] dark:text-white" />
+            <h1 className="text-xl font-bold tracking-tight text-[#202223] dark:text-white">
+              Темы интернет-магазина
             </h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400 max-w-2xl leading-relaxed">
-              13 готовых витрин под реальный бизнес: Косметика, Еда и напитки, Электроника и Цветы. Интерактивный предпросмотр (ПК и мобильный) с возможностью скачать или применить тему.
-            </p>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#bbf7d0] text-[#14532d]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
+              Онлайн-витрина активна
+            </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "/")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-2 rounded-[8px] border border-[#d2d5d8] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-[#f6f6f7] text-[#202223] dark:text-zinc-200 text-xs font-medium inline-flex items-center gap-1.5 transition shadow-2xs"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Посмотреть ваш магазин</span>
+            </a>
             <Link
               to="/robo-market"
-              className="px-4 py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 transition-all inline-flex items-center gap-2 shadow-2xs"
+              className="px-3.5 py-2 rounded-[8px] bg-[#202223] text-white hover:bg-black text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition"
             >
-              <Blocks className="w-4 h-4 text-emerald-400" />
+              <Blocks className="w-3.5 h-3.5 text-[#c8ff6a]" />
               <span>Маркетплейс интеграций (32)</span>
             </Link>
-            <div className="px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-3 dark:bg-neutral-900 dark:border-neutral-800">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-semibold text-xs dark:bg-emerald-950/60 dark:text-emerald-400">
-                13
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-900 dark:text-white">Готовых тем</p>
-                <p className="text-[11px] text-slate-500">100% готовность под ключ</p>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* CURRENT ACTIVE THEME (Shopify style) */}
-        <div className="mt-6 p-5 rounded-xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-start sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Store className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Активная витрина
-                </span>
-                <span className="text-xs text-slate-400">Версия 2.5.0</span>
+        {/* SHOPIFY ONLINE STORE CURRENT ACTIVE THEME SHOWCASE */}
+        <div className="rounded-[14px] bg-white dark:bg-[#18181B] border border-[#e1e3e5] dark:border-zinc-800 shadow-2xs overflow-hidden">
+          {/* Visual Desktop + Mobile Mockup Stage */}
+          <div className="bg-gradient-to-b from-[#f6f6f7] to-[#ebebed] dark:from-zinc-900 dark:to-zinc-950 p-6 sm:p-8 border-b border-[#e3e5e7] dark:border-zinc-800 relative overflow-hidden">
+            <div className="max-w-4xl mx-auto flex items-end justify-center gap-6 relative">
+              {/* Desktop Browser Window Preview */}
+              <div className="flex-1 max-w-2xl rounded-t-xl border border-[#d2d5d8] dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden">
+                <div className="px-3 py-2 bg-[#f6f6f7] dark:bg-zinc-800 border-b border-[#e3e5e7] dark:border-zinc-700 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="px-3 py-0.5 rounded bg-white dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-700 text-[10px] font-mono text-[#6d7175]">
+                    {store?.subdomain || "shop"}.storebox.uz
+                  </div>
+                  <div className="w-8" />
+                </div>
+                <div className="relative h-52 sm:h-60 overflow-hidden bg-slate-900">
+                  <img
+                    src={
+                      LUXURY_THEMES_CATALOG.find(
+                        (th) => th.id === (store as any)?.design_system?.active_theme_id
+                      )?.coverImage || "/images/flagships/theact_clean_model_hd.jpg"
+                    }
+                    alt="Active Storefront Desktop"
+                    className="w-full h-full object-cover opacity-90"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent p-6 flex flex-col justify-between text-white">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-[#c8ff6a] text-[#141416] text-[10px] font-extrabold uppercase">
+                        {store?.name || "StoreBox"}
+                      </span>
+                      <span className="text-[11px] text-white/80">Официальная витрина</span>
+                    </div>
+                    <div className="max-w-xs space-y-2">
+                      <div className="text-lg font-bold leading-tight">
+                        Новая коллекция {store?.name || "StoreBox"}
+                      </div>
+                      <div className="text-[11px] text-white/80">
+                        Быстрый заказ на сайте и в Telegram Mini App с оплатой Click, Payme и Uzum
+                      </div>
+                      <span className="inline-block px-3 py-1 rounded-full bg-white text-[#202223] text-[11px] font-bold">
+                        Смотреть каталог →
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white mt-1">
-                {(store as any)?.design_system?.theme_name || "Stuffsus Modern Glass"}
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Основная опубликованная тема интернет-магазина • Адаптирована под смартфоны, планшеты и десктоп
-              </p>
+
+              {/* Mobile Phone Frame Preview */}
+              <div className="hidden sm:flex w-40 h-56 rounded-t-[24px] border-[5px] border-b-0 border-[#141416] bg-white shadow-2xl overflow-hidden flex-col shrink-0">
+                <div className="bg-[#141416] text-white text-[9px] py-1 text-center font-semibold">
+                  {store?.name || "StoreBox"} • TMA
+                </div>
+                <div className="relative flex-1 bg-slate-900 overflow-hidden">
+                  <img
+                    src={
+                      LUXURY_THEMES_CATALOG.find(
+                        (th) => th.id === (store as any)?.design_system?.active_theme_id
+                      )?.coverImage || "/images/flagships/rhode_serum.jpg"
+                    }
+                    alt="Mobile Storefront"
+                    className="w-full h-full object-cover opacity-90"
+                  />
+                  <div className="absolute inset-x-2 bottom-2 p-2 rounded-lg bg-white/95 text-[#202223] shadow-md">
+                    <div className="text-[9px] font-bold truncate">{store?.name || "StoreBox"}</div>
+                    <div className="text-[8px] text-emerald-700 font-semibold">● В наличии</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <a
-              href={store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3.5 py-2 rounded-lg border border-slate-200/80 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-slate-50 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all shadow-2xs inline-flex items-center gap-2"
-            >
-              <ExternalLink className="w-4 h-4 text-slate-400" />
-              <span>Посмотреть магазин</span>
-            </a>
-            <Link
-              to="/design"
-              className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-all shadow-xs inline-flex items-center gap-2"
-            >
-              <Palette className="w-4 h-4" />
-              <span>Настроить тему</span>
-            </Link>
+          {/* Bottom Bar: Active Theme Title + Actions */}
+          <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-[#141416] text-[#c8ff6a] flex items-center justify-center shrink-0 shadow-xs">
+                <Palette className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-[#202223] dark:text-white">
+                    {(store as any)?.design_system?.theme_name || "Dawn / StoreBox Flagship 2.5"}
+                  </h2>
+                  <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#bbf7d0] text-[#14532d]">
+                    Текущая тема
+                  </span>
+                </div>
+                <p className="text-xs text-[#6d7175] mt-0.5">
+                  Версия 2.5.0 • Полная синхронизация с Telegram Mini App, Click, Payme и корзиной
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedTheme(LUXURY_THEMES_CATALOG[0])}
+                className="px-3.5 py-2 rounded-[8px] border border-[#d2d5d8] dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-[#f6f6f7] text-[#202223] dark:text-zinc-200 text-xs font-medium transition cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Предпросмотр</span>
+              </button>
+              <Link
+                to="/design"
+                className="px-4 py-2 rounded-[8px] bg-[#202223] hover:bg-black text-white text-xs font-semibold transition shadow-2xs inline-flex items-center gap-1.5"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Редактировать тему</span>
+              </Link>
+            </div>
           </div>
         </div>
 

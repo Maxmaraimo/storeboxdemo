@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { api, initCsrf } from "../api/client";
+import { api, initCsrf, setActiveStoreId } from "../api/client";
 import { User, Store, UserPermissions, BranchItem } from "../types";
 import { Language, getTranslation } from "../i18n/translations";
 import { queryClient } from "../queryClient";
+
 
 interface AuthContextType {
   user: User | null;
@@ -91,6 +92,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await api.get("/auth/me/");
       setUser(res.data.user);
+      if (res.data.store?.id) {
+        setActiveStoreId(res.data.store.id);
+      }
       setStore(res.data.store);
       setStores(res.data.stores || []);
       setBranch(res.data.branch || null);
@@ -113,8 +117,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (credentials: any) => {
+    setActiveStoreId(null);
     const res = await api.post("/auth/login/", credentials);
     setUser(res.data.user);
+    if (res.data.store?.id) {
+      setActiveStoreId(res.data.store.id);
+    }
     setStore(res.data.store);
     setStores(res.data.stores || []);
     if (res.data.branch) {
@@ -124,11 +132,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (res.data.permissions) {
       setPermissions(res.data.permissions);
     }
+    queryClient.clear();
     await refreshMe();
     return res.data;
   };
 
   const loginWithSms = async (phone: string, code: string, password?: string) => {
+    setActiveStoreId(null);
     const res = await api.post("/auth/sms/verify-code/", {
       phone,
       code,
@@ -136,6 +146,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       purpose: "MERCHANT_LOGIN",
     });
     setUser(res.data.user);
+    if (res.data.store?.id) {
+      setActiveStoreId(res.data.store.id);
+    }
     setStore(res.data.store);
     setStores(res.data.stores || []);
     if (res.data.branch) {
@@ -145,6 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (res.data.permissions) {
       setPermissions(res.data.permissions);
     }
+    queryClient.clear();
     await refreshMe();
     return res.data;
   };
@@ -153,6 +167,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await api.post("/auth/logout/");
     } finally {
+      setActiveStoreId(null);
+      queryClient.clear();
       setUser(null);
       setStore(null);
       setStores([]);
@@ -163,21 +179,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchStore = async (id: number) => {
+    setActiveStoreId(id);
+    const optimistic = stores.find((s) => s.id === id);
+    if (optimistic) {
+      setStore(optimistic);
+    }
+    await queryClient.cancelQueries();
     const res = await api.post(`/auth/switch-store/${id}/`);
-    setStore(res.data.store);
+    if (res.data?.store) {
+      setActiveStoreId(res.data.store.id);
+      setStore(res.data.store);
+    }
     queryClient.clear();
     await refreshMe();
+    await queryClient.invalidateQueries();
   };
 
   const createStore = async (data: { name: string; subdomain?: string; business_type?: string }) => {
     const res = await api.post("/auth/create-store/", data);
+    if (res.data?.store?.id) {
+      setActiveStoreId(res.data.store.id);
+    }
     setStore(res.data.store);
     if (res.data.stores) {
       setStores(res.data.stores);
     }
+    queryClient.clear();
     await refreshMe();
     return res.data;
   };
+
 
   return (
     <AuthContext.Provider

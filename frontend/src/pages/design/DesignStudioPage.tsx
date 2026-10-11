@@ -181,9 +181,9 @@ export const DesignStudioPage: React.FC = () => {
     { name: language === "ru" ? "Премиум Темный" : language === "en" ? "Premium Dark" : "Premium Qorong'i", value: "#0F172A" },
   ];
 
-  // 1. Fetch current theme settings
+  // 1. Fetch current theme settings (reactive to active store)
   const { data: themeData } = useQuery<ThemeSettings>({
-    queryKey: ["design-theme"],
+    queryKey: ["design-theme", store?.id],
     queryFn: async () => {
       const res = await api.get("/design/theme/");
       return res.data;
@@ -374,14 +374,13 @@ export const DesignStudioPage: React.FC = () => {
 
   // Logo Delete Handler
   const handleLogoDelete = async () => {
-    if (!window.confirm("Rostdan ham logotipni o'chirmoqchimisiz?")) return;
     try {
       await api.post("/design/logo/delete/");
       setLogoUrl("");
-      setMsg({ type: "success", text: "Logotip olib tashlandi." });
+      setMsg({ type: "success", text: language === "ru" ? "Логотип удален." : language === "en" ? "Logo removed." : "Logotip olib tashlandi." });
       queryClient.invalidateQueries({ queryKey: ["design-theme"] });
     } catch (err: any) {
-      setMsg({ type: "error", text: "Logotipni o'chirishda xatolik." });
+      setMsg({ type: "error", text: language === "ru" ? "Ошибка при удалении логотипа." : "Logotipni o'chirishda xatolik." });
     }
   };
 
@@ -390,7 +389,7 @@ export const DesignStudioPage: React.FC = () => {
     setEditingBanner(null);
     setBannerForm({
       title: `«${storeName || "StoreBox"}»`,
-      subtitle: "Maxsus takliflar va yangi aksiyalar",
+      subtitle: language === "ru" ? "Специальные предложения и новые акции" : "Maxsus takliflar va yangi aksiyalar",
       image_url: "",
       link: "/",
       is_active: true
@@ -436,7 +435,7 @@ export const DesignStudioPage: React.FC = () => {
         });
         if (res.data?.success) {
           setBanners(prev => prev.map(b => (b.id === editingBanner.id ? res.data.banner : b)));
-          setMsg({ type: "success", text: "Banner muvaffaqiyatli yangilandi!" });
+          setMsg({ type: "success", text: language === "ru" ? "Баннер успешно обновлен!" : "Banner muvaffaqiyatli yangilandi!" });
         }
       } else {
         const res = await api.post("/design/banners/", formData, {
@@ -444,7 +443,7 @@ export const DesignStudioPage: React.FC = () => {
         });
         if (res.data?.success) {
           setBanners(prev => [...prev, res.data.banner]);
-          setMsg({ type: "success", text: "Yangi banner muvaffaqiyatli qo'shildi!" });
+          setMsg({ type: "success", text: language === "ru" ? "Новый баннер добавлен!" : "Yangi banner muvaffaqiyatli qo'shildi!" });
         }
       }
       setShowAddBannerModal(false);
@@ -457,14 +456,13 @@ export const DesignStudioPage: React.FC = () => {
   };
 
   const handleDeleteBanner = async (id: number) => {
-    if (!window.confirm("Rostdan ham ushbu bannerni o'chirmoqchimisiz?")) return;
     try {
       await api.delete(`/design/banners/${id}/`);
       setBanners(prev => prev.filter(b => b.id !== id));
-      setMsg({ type: "success", text: "Banner o'chirildi." });
+      setMsg({ type: "success", text: language === "ru" ? "Баннер удален." : "Banner o'chirildi." });
       queryClient.invalidateQueries({ queryKey: ["design-theme"] });
     } catch (err: any) {
-      setMsg({ type: "error", text: "Bannerni o'chirishda xatolik yuz berdi." });
+      setMsg({ type: "error", text: language === "ru" ? "Ошибка при удалении баннера." : "Bannerni o'chirishda xatolik yuz berdi." });
     }
   };
 
@@ -537,10 +535,9 @@ export const DesignStudioPage: React.FC = () => {
     }
   };
 
-  // Subdomain & Preview URL
+  // Subdomain & Preview URL (Always use same-origin /store/<subdomain> so iframe and preview links work on any host without DNS errors)
   const subdomain = store?.subdomain || themeData?.subdomain || "shop-655";
-  const isLocalHost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "0.0.0.0");
-  const storefrontUrl = isLocalHost ? `/store/${subdomain}` : (themeData?.storefront_url || store?.storefront_url || `/store/${subdomain}`).replace(/\/$/, "");
+  const storefrontUrl = `/store/${subdomain}`;
   const activePrimaryBanner = banners.find(b => b.is_active) || banners[0];
   const previewParams = new URLSearchParams({
     preview: "1",
@@ -556,7 +553,7 @@ export const DesignStudioPage: React.FC = () => {
 
   // Calculate realistic desktop scale
   const desktopCanvasWidth = 1080;
-  const desktopScale = Math.min(1, Math.max(0.58, (containerWidth - 32) / desktopCanvasWidth));
+  const desktopScale = Math.min(1, Math.max(0.55, (containerWidth - 24) / desktopCanvasWidth));
 
   return (
     <div className="space-y-5">
@@ -570,22 +567,22 @@ export const DesignStudioPage: React.FC = () => {
       />
 
       {/* TOP HEADER BAR: Intuitive, Clean & Pro */}
-      <div className="bg-white dark:bg-[#141722] px-5 py-4 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#141722] px-5 py-4 rounded-xl border border-[#e1e3e5] dark:border-white/10 shadow-2xs flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+          <div className="w-9 h-9 rounded-lg bg-[#e3fcef] text-[#00a86b] flex items-center justify-center font-bold">
             <Palette className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-base font-bold text-[#202223] dark:text-white tracking-tight">
                 {t("design_studio_title")}
               </h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#e3fcef] text-[#008060] border border-[#00a86b]/20 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00a86b]"></span>
                 {t("live_badge")}
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-[#6d7175] dark:text-slate-400">
               {t("design_studio_subtitle")}
             </p>
           </div>
@@ -597,17 +594,17 @@ export const DesignStudioPage: React.FC = () => {
             href={`${storefrontUrl}/`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-neutral-200 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer border border-transparent dark:border-white/10"
+            className="px-3.5 py-2 rounded-lg bg-[#f6f6f7] hover:bg-[#ebebec] dark:bg-white/5 dark:hover:bg-white/10 text-[#202223] dark:text-neutral-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-[#e1e3e5] dark:border-white/10"
           >
             <span>{t("view_website")}</span>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+            <ExternalLink className="w-3.5 h-3.5 text-[#6d7175]" />
           </a>
 
           <button
             type="button"
             onClick={handleSaveTheme}
             disabled={saving}
-            className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-[#00a86b] hover:bg-[#008f5b] text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5 text-white" />
             <span>{saving ? t("saving") : t("save_and_apply")}</span>
@@ -694,63 +691,63 @@ export const DesignStudioPage: React.FC = () => {
       </div>
 
       {/* MAIN 2-COLUMN WORKSPACE */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
         
-        {/* LEFT COLUMN: CLEAR TABBED SETTINGS (NO ENDLESS MESSY SCROLL!) */}
-        <div className={`xl:col-span-4 space-y-4 ${mobileTab === "preview" ? "hidden xl:block" : "block"}`}>
+        {/* LEFT COLUMN: CLEAR TABBED SETTINGS */}
+        <div className={`xl:col-span-5 space-y-4 ${mobileTab === "preview" ? "hidden xl:block" : "block"}`}>
           
           {/* STEPPED SEGMENTED TABS */}
-          <div className="bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-4 gap-1">
+          <div className="bg-white p-1.5 rounded-xl border border-[#e1e3e5] shadow-2xs grid grid-cols-4 gap-1">
             <button
               type="button"
               onClick={() => setActiveTab("template")}
-              className={`py-2 px-1 rounded-xl text-[11px] font-extrabold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "template"
-                  ? "bg-brand text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-[#202223] text-white shadow-2xs"
+                  : "text-[#6d7175] hover:bg-[#f6f6f7] hover:text-[#202223]"
               }`}
             >
-              <LayoutGrid className="w-4 h-4" />
-              <span>1. {t("design_tab_templates")}</span>
+              <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{t("design_tab_templates")}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("style")}
-              className={`py-2 px-1 rounded-xl text-[11px] font-extrabold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "style"
-                  ? "bg-brand text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-[#202223] text-white shadow-2xs"
+                  : "text-[#6d7175] hover:bg-[#f6f6f7] hover:text-[#202223]"
               }`}
             >
-              <Palette className="w-4 h-4" />
-              <span>2. {t("design_tab_styles")}</span>
+              <Palette className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{t("design_tab_styles")}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("banners")}
-              className={`py-2 px-1 rounded-xl text-[11px] font-extrabold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "banners"
-                  ? "bg-brand text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-[#202223] text-white shadow-2xs"
+                  : "text-[#6d7175] hover:bg-[#f6f6f7] hover:text-[#202223]"
               }`}
             >
-              <ImageIcon className="w-4 h-4" />
-              <span>3. {t("design_tab_banners")}</span>
+              <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{t("design_tab_banners")}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("store")}
-              className={`py-2 px-1 rounded-xl text-[11px] font-extrabold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "store"
-                  ? "bg-brand text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-[#202223] text-white shadow-2xs"
+                  : "text-[#6d7175] hover:bg-[#f6f6f7] hover:text-[#202223]"
               }`}
             >
-              <Store className="w-4 h-4" />
-              <span>4. {t("design_tab_store_info")}</span>
+              <Store className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{t("design_tab_store_info")}</span>
             </button>
           </div>
 
@@ -1303,24 +1300,24 @@ export const DesignStudioPage: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: REALISTIC RESPONSIVE PREVIEW (DESKTOP & MOBILE) */}
-        <div className={`xl:col-span-8 space-y-3 sticky top-4 ${mobileTab === "settings" ? "hidden xl:block" : "block"}`}>
+        <div className={`xl:col-span-7 space-y-3 sticky top-4 ${mobileTab === "settings" ? "hidden xl:block" : "block"}`}>
           
           {/* DEVICE SWITCHER & CONTROLS */}
-          <div className="bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
+          <div className="bg-white p-2.5 rounded-xl border border-[#e1e3e5] shadow-2xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-              <span className="font-black text-xs text-slate-800">{t("live_showcase")}:</span>
+              <span className="w-2 h-2 rounded-full bg-[#00a86b]"></span>
+              <span className="font-bold text-xs text-[#202223]">{t("live_showcase")}:</span>
             </div>
 
             {/* Switcher Buttons */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+            <div className="flex items-center gap-1 bg-[#f6f6f7] p-1 rounded-lg text-xs font-semibold border border-[#e1e3e5]">
               <button
                 type="button"
                 onClick={() => setPreviewDevice("desktop")}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all cursor-pointer ${
                   previewDevice === "desktop"
-                    ? "bg-white text-slate-900 shadow-2xs font-black"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-white text-[#202223] shadow-2xs font-bold"
+                    : "text-[#6d7175] hover:text-[#202223]"
                 }`}
               >
                 <Monitor className="w-3.5 h-3.5" />
@@ -1330,10 +1327,10 @@ export const DesignStudioPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setPreviewDevice("mobile")}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all cursor-pointer ${
                   previewDevice === "mobile"
-                    ? "bg-white text-slate-900 shadow-2xs font-black"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-white text-[#202223] shadow-2xs font-bold"
+                    : "text-[#6d7175] hover:text-[#202223]"
                 }`}
               >
                 <Smartphone className="w-3.5 h-3.5" />
@@ -1344,7 +1341,7 @@ export const DesignStudioPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setPreviewKey(k => k + 1)}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 cursor-pointer transition-colors"
+              className="p-1.5 rounded-lg border border-[#e1e3e5] hover:bg-[#f6f6f7] text-[#6d7175] cursor-pointer transition-colors"
               title={language === "ru" ? "Обновить" : language === "en" ? "Refresh" : "Yangilash"}
             >
               <RotateCw className="w-3.5 h-3.5" />
@@ -1382,7 +1379,7 @@ export const DesignStudioPage: React.FC = () => {
                   >
                     <iframe
                       ref={iframeRef}
-                      key={`desktop-${previewKey}-${themeTemplate}-${cardStyle}`}
+                      key={`desktop-${subdomain}-${previewKey}-${themeTemplate}-${cardStyle}`}
                       src={previewUrl}
                       onLoad={sendThemeMessage}
                       title="Storefront Desktop Preview"
@@ -1431,7 +1428,7 @@ export const DesignStudioPage: React.FC = () => {
                     {/* Iframe Viewport */}
                     <iframe
                       ref={iframeRef}
-                      key={`mobile-${previewKey}-${themeTemplate}-${cardStyle}`}
+                      key={`mobile-${subdomain}-${previewKey}-${themeTemplate}-${cardStyle}`}
                       src={previewUrl}
                       onLoad={sendThemeMessage}
                       title="Storefront Mobile Preview"

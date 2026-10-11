@@ -139,7 +139,9 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
             response['X-Frame-Options'] = 'DENY'
         elif getattr(request, 'store', None) and request.GET.get('preview') == '1':
             response.headers.pop('X-Frame-Options', None)
-            response['Content-Security-Policy'] = f"frame-ancestors {settings.APP_SITE_URL}"
+            response['Content-Security-Policy'] = (
+                f"frame-ancestors 'self' http://localhost:* http://127.0.0.1:* https://localhost:* {settings.APP_SITE_URL}"
+            )
         elif not response.has_header('X-Frame-Options'):
             response['X-Frame-Options'] = 'SAMEORIGIN'
 

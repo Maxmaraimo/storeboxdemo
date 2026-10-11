@@ -3,6 +3,42 @@ import axios from "axios";
 let memoryCsrfToken: string | null =
   (typeof window !== "undefined" && (window as any).__CSRF_TOKEN__) || null;
 
+let memoryActiveStoreId: number | null = (() => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("active_store_id");
+    return raw ? Number(raw) : null;
+  } catch {
+    return null;
+  }
+})();
+
+export function getActiveStoreId(): number | null {
+  return memoryActiveStoreId;
+}
+
+export function setActiveStoreId(id: number | null) {
+  memoryActiveStoreId = id;
+  if (typeof window !== "undefined") {
+    try {
+      if (id !== null && id !== undefined) {
+        localStorage.setItem("active_store_id", String(id));
+      } else {
+        localStorage.removeItem("active_store_id");
+      }
+    } catch {
+      // ignore
+    }
+  }
+  if (api.defaults.headers.common) {
+    if (id !== null && id !== undefined) {
+      api.defaults.headers.common["X-Store-Id"] = String(id);
+    } else {
+      delete api.defaults.headers.common["X-Store-Id"];
+    }
+  }
+}
+
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const value = `; ${document.cookie}`;
@@ -49,8 +85,13 @@ api.interceptors.request.use((config) => {
   if (token && config.headers) {
     config.headers["X-CSRFToken"] = token;
   }
+  const storeId = getActiveStoreId();
+  if (storeId && config.headers && !config.headers["X-Store-Id"]) {
+    config.headers["X-Store-Id"] = String(storeId);
+  }
   return config;
 });
+
 
 // Auto-retry once on 403 CSRF token error
 api.interceptors.response.use(

@@ -4,72 +4,96 @@ import {
   Sparkles,
   Mic,
   MicOff,
-  Send,
   Volume2,
   VolumeX,
   Trash2,
   X,
   ChevronRight,
-  Copy,
   Check,
   BarChart3,
   Package,
   ShoppingCart,
-  BadgePercent,
-  Zap,
-  AlertTriangle,
-  ExternalLink,
-  Scissors,
-  Wand2,
   RefreshCw,
   ArrowUpRight,
-  Download,
-  Settings,
-  Languages,
-  TrendingUp,
-  FileText,
-  ZoomIn,
-  Paperclip,
-  Phone,
-  PhoneOff,
   Maximize2,
   Minimize2,
-  Eye,
-  Camera,
-  UploadCloud,
   CheckCircle2,
-  SlidersHorizontal,
-  Layers,
+  Plus,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { BannerCanvas } from "./BannerCanvas";
 
-// Programmatically detects the language of text to prevent voice accent mismatch
-export const detectTextLanguage = (text: string): "ru" | "uz" | "en" => {
-  if (!text) return "ru";
-  if (/[а-яё]/i.test(text)) return "ru";
+export const detectTextLanguage = (text: string, fallback: "ru" | "uz" | "en" = "ru"): "ru" | "uz" | "en" => {
+  if (!text) return fallback;
   if (
-    /\b(va|uchun|do'kon|tovar|buyurtma|narx|chegirma|men|siz|boladi|yarat|qora|oq|haqida|yozuv|ko'rsat|rasm|salom|qil|qiling)\b/i.test(
+    /\b(va|uchun|do'kon|tovar|buyurtma|narx|chegirma|men|siz|yarat|haqida|ko'rsat|salom|qil|qiling|hisobot|mijoz|bo'lim|so'm|qancha)\b/i.test(
       text
     ) ||
     /[o‘g‘ʻʼ]/i.test(text)
   ) {
     return "uz";
   }
-  if (/[a-z]/i.test(text)) return "en";
-  return "ru";
+  if (/\b(hello|show|orders|revenue|analytics|products|customers|settings|open|go to|how much|today)\b/i.test(text)) {
+    return "en";
+  }
+  if (/[а-яё]/i.test(text)) {
+    return "ru";
+  }
+  return fallback;
 };
+
+export interface SidekickAction {
+  type: "NAVIGATE" | string;
+  target: string;
+  spa_path?: string;
+  title?: string;
+}
+
+export interface SidekickDataCard {
+  type?: "metrics" | "orders" | "product_draft" | "image_studio";
+  title: string;
+  revenue?: string;
+  revenue_raw?: number;
+  orders_count?: number;
+  avg_check?: string;
+  customers_count?: number;
+  products_count?: number;
+  orders?: Array<{
+    id: number;
+    order_number?: string;
+    customer_name: string;
+    customer_phone?: string;
+    status: string;
+    status_label: string;
+    total_amount: string;
+    created_at: string;
+  }>;
+  product_name?: string;
+  category?: string;
+  description?: string;
+  benefits?: string[];
+  suggested_price?: string;
+  price_raw?: number;
+  image_url?: string;
+}
 
 export interface SidekickMessage {
   id: string;
-  sender: "user" | "assistant";
+  sender: "user" | "assistant" | "system_voice";
   text: string;
   isVoice?: boolean;
-  action_type?: string;
-  action_data?: any;
-  suggestions?: string[];
+  action?: SidekickAction | null;
+  data_card?: SidekickDataCard | null;
+  audio_base64?: string | null;
   timestamp: string;
+}
+
+interface RecentSession {
+  id: string;
+  title: string;
+  isVoiceSession?: boolean;
+  updatedAt: string;
+  messages: SidekickMessage[];
 }
 
 interface SidekickPanelProps {
@@ -77,396 +101,456 @@ interface SidekickPanelProps {
   onClose: () => void;
 }
 
-// Cleans markdown, emojis, asterisks, and urls for smooth natural voice speech
-const cleanTextForSpeech = (text: string, currentLang: string): string => {
-  if (!text) return "";
-  let clean = text;
-
-  // 1. Remove all emojis (prevents synthesizer from reading emoji names out loud)
-  clean = clean.replace(
-    /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu,
-    ""
-  );
-
-  // 2. Strip URLs and markdown links
-  clean = clean.replace(/https?:\/\/\S+/g, "");
-  clean = clean.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-
-  // 3. Strip bold, italic, code markers, headers, and strikethroughs
-  clean = clean.replace(/[*#`_~]/g, "");
-
-  // 4. Convert bullet points and arrows into gentle natural breathing pauses
-  clean = clean.replace(/^[•\-\*]\s+/gm, "");
-  clean = clean.replace(/[•\-\*]/g, ", ");
-  clean = clean.replace(/➡️|→/g, ", ");
-
-  // 5. Enhance currency pronunciation so it reads natural words instead of abbreviation
-  if (currentLang === "uz") {
-    clean = clean.replace(/\bUZS\b/gi, "so'm");
-    clean = clean.replace(/\b(\d+)\s*%/g, "$1 foiz");
-  } else if (currentLang === "en") {
-    clean = clean.replace(/\bUZS\b/gi, "sums");
-    clean = clean.replace(/\b(\d+)\s*%/g, "$1 percent");
-  } else {
-    clean = clean.replace(/\bUZS\b/gi, "сум");
-    clean = clean.replace(/\bсум\./gi, "сум");
-    clean = clean.replace(/\b(\d+)\s*%/g, "$1 процентов");
-    clean = clean.replace(/\bшт\./gi, "штук");
+const toSpaPath = (target?: string, spaPath?: string): string => {
+  if (spaPath) return spaPath;
+  if (!target) return "/";
+  let cleaned = target.trim();
+  if (cleaned.startsWith("/dashboard/")) {
+    cleaned = "/" + cleaned.slice("/dashboard/".length);
+  } else if (cleaned === "/dashboard") {
+    cleaned = "/";
   }
-
-  // 6. Normalize multiple spaces and line breaks
-  clean = clean.replace(/\s+/g, " ").trim();
-  return clean;
-};
-
-// Programmatic Quality Scorer for Neural / Natural / Premium WebSpeech voices
-export const scoreVoice = (
-  voice: SpeechSynthesisVoice,
-  targetLang: "ru" | "uz" | "en",
-  preferredGender: "female" | "male"
-): number => {
-  const name = voice.name.toLowerCase();
-  const uri = voice.voiceURI.toLowerCase();
-  const lang = voice.lang.toLowerCase();
-
-  // 1. HARD BAN: Immediately disqualify legacy, robotic, and low-bitrate synthesizers
-  if (
-    /compact|eloquence|espeak|klatt|whisper|zarvox|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|pipe organ|trinoids|wobble|junior|albert|fred|ralph/i.test(
-      name
-    ) ||
-    /compact|eloquence/i.test(uri)
-  ) {
-    return -10000;
+  if (cleaned.length > 1 && cleaned.endsWith("/")) {
+    cleaned = cleaned.slice(0, -1);
   }
-
-  let score = 0;
-
-  // 2. Language Matching
-  if (targetLang === "ru") {
-    if (lang.startsWith("ru")) score += 200;
-    else return -5000;
-  } else if (targetLang === "en") {
-    if (lang.startsWith("en")) score += 200;
-    else return -5000;
-  } else if (targetLang === "uz") {
-    if (lang.startsWith("uz")) {
-      score += 300; // Native Uzbek voice is gold standard
-    } else if (lang.startsWith("tr")) {
-      // High-quality Turkish neural voice fallback (authentic Turkic vowel harmony for Uzbek Latin text)
-      score += 150;
-    } else {
-      return -5000;
-    }
-  }
-
-  // 3. Neural & High-Fidelity Multipliers
-  // Microsoft Azure 48kHz Natural voices (Edge / Chromium)
-  if (/natural|online \(natural\)/i.test(name)) score += 120;
-  // Neural / WaveNet / Cloud / Studio
-  if (/neural|wavenet|studio|cloud/i.test(name)) score += 100;
-  // Apple Silicon Enhanced & Premium voices (Milena Enhanced, Samantha Enhanced, Ava Premium)
-  if (/enhanced|premium/i.test(name) || /enhanced|premium/i.test(uri)) score += 90;
-  // Google Neural Voices (Chrome)
-  if (/google/i.test(name)) score += 80;
-  // Apple Siri voices
-  if (/siri/i.test(name) || /siri/i.test(uri)) score += 75;
-
-  // 4. Gender Matching
-  const isFemaleName = /svetlana|milena|katya|anna|victoria|jenny|madina|emel|filiz|yelda|samantha|ava|zoe|aria|female|woman|девушк|женск/i.test(
-    name
-  );
-  const isMaleName = /dmitry|yuri|pavel|guy|sardor|ahmet|cem|daniel|evan|nathan|male|man|мужск/i.test(
-    name
-  );
-
-  if (preferredGender === "female") {
-    if (isFemaleName) score += 60;
-    else if (isMaleName) score -= 40;
-  } else {
-    if (isMaleName) score += 60;
-    else if (isFemaleName) score -= 40;
-  }
-
-  return score;
+  return cleaned || "/";
 };
 
 export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose }) => {
-  const { lang: initialLang, store } = useAuth();
-  const [activeLang, setActiveLang] = useState<"ru" | "uz" | "en">(
-    (initialLang as any) === "uz" ? "uz" : (initialLang as any) === "en" ? "en" : "ru"
-  );
-
-  const [messages, setMessages] = useState<SidekickMessage[]>(() => {
-    try {
-      const saved = localStorage.getItem("storebox_sidekick_messages");
-      if (saved) return JSON.parse(saved);
-    } catch (_) {}
-    return [];
-  });
-
+  const { lang: appLang, store } = useAuth();
   const navigate = useNavigate();
+
+  const uiLang: "ru" | "uz" | "en" =
+    appLang === "uz" ? "uz" : appLang === "en" ? "en" : "ru";
+
+  // Clean out legacy cached fake messages on mount
+  useEffect(() => {
+    try {
+      localStorage.removeItem("storebox_sidekick_messages");
+      localStorage.removeItem("storebox_sidekick_v2_messages");
+    } catch (_) {}
+  }, []);
+
+  const [messages, setMessages] = useState<SidekickMessage[]>([]);
+  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([
+    {
+      id: "s_voice_demo",
+      title:
+        uiLang === "uz"
+          ? "Qisqa ovozli muloqot"
+          : uiLang === "en"
+          ? "Brief voice conversation"
+          : "Краткий голосовой диалог",
+      isVoiceSession: true,
+      updatedAt: "Сегодня",
+      messages: [],
+    },
+  ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showRecentsMenu, setShowRecentsMenu] = useState(false);
+  const [creatingProductCardId, setCreatingProductCardId] = useState<string | null>(null);
+  const [createdProductCardIds, setCreatedProductCardIds] = useState<Record<string, boolean>>({});
+
+  // ElevenLabs Voice State
+  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("storebox_sidekick_voice_enabled") !== "false";
+  });
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
 
-  // Shopify Sidekick Live Voice Mode (Живой звонок со сферой)
-  const [isVoiceCallMode, setIsVoiceCallMode] = useState<boolean>(false);
-  const [voiceCallStatus, setVoiceCallStatus] = useState<"connecting" | "listening" | "thinking" | "speaking">("listening");
-  const [callDuration, setCallDuration] = useState<number>(0);
-  const [isCallMuted, setIsCallMuted] = useState<boolean>(false);
-  const [liveTranscript, setLiveTranscript] = useState<string>("");
-  const [liveAssistantText, setLiveAssistantText] = useState<string>("");
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const [generatingSkeleton, setGeneratingSkeleton] = useState<boolean>(false);
+  // Live Voice Call Mode with Barge-in
+  const [isVoiceCallMode, setIsVoiceCallMode] = useState(false);
+  const [voiceCallStatus, setVoiceCallStatus] = useState<
+    "connecting" | "listening" | "thinking" | "speaking" | "ending"
+  >("listening");
+  const [voiceStepText, setVoiceStepText] = useState("");
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const [lastVoiceCard, setLastVoiceCard] = useState<{
+    text: string;
+    action?: SidekickAction | null;
+    data_card?: SidekickDataCard | null;
+  } | null>(null);
+  const [callDuration, setCallDuration] = useState(0);
+  const [isCallMuted, setIsCallMuted] = useState(false);
 
-  // Voice Settings & Neural TTS
-  const [ttsEnabled, setTtsEnabled] = useState<boolean>(() => {
-    return localStorage.getItem("storebox_sidekick_tts") !== "false";
-  });
-  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>(() => {
-    return localStorage.getItem("storebox_sidekick_voice_uri") || "";
-  });
-  const [preferredGender, setPreferredGender] = useState<"female" | "male">(() => {
-    return (localStorage.getItem("storebox_sidekick_gender") as "female" | "male") || "female";
-  });
-  const [speechRate, setSpeechRate] = useState<number>(0.98);
-  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
-  const [previewImageModal, setPreviewImageModal] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  // Optional Image Attachment
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [attachedPreview, setAttachedPreview] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
-  const studioFileInputRef = useRef<HTMLInputElement>(null);
-  // Direct Chat Attachment State (Image-to-Image / Inpaint from Chat)
-  const [chatAttachedFile, setChatAttachedFile] = useState<File | null>(null);
-  const [chatAttachedPreview, setChatAttachedPreview] = useState<string | null>(null);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const recentsMenuRef = useRef<HTMLDivElement>(null);
 
-  // AI Studio (Image-to-Image / Inpaint) State
-  const [activeTab, setActiveTab] = useState<"chat" | "studio">("chat");
-  const [studioPrompt, setStudioPrompt] = useState<string>(
-    "Помести товар на деревянный стол и добавь студийный свет"
-  );
-  const [studioImageFile, setStudioImageFile] = useState<File | null>(null);
-  const [studioImagePreview, setStudioImagePreview] = useState<string | null>(null);
-  const [studioIsListening, setStudioIsListening] = useState<boolean>(false);
-  const [studioIsProcessing, setStudioIsProcessing] = useState<boolean>(false);
-  const [studioResult, setStudioResult] = useState<any>(null);
-  const [studioComparisonMode, setStudioComparisonMode] = useState<"after" | "before" | "split">("after");
-  const [studioSavedSuccess, setStudioSavedSuccess] = useState<boolean>(false);
-  const [catalogProducts, setCatalogProducts] = useState<any[]>([]);
-  const [showCatalogPicker, setShowCatalogPicker] = useState<boolean>(false);
-  const [fooocusStatus, setFooocusStatus] = useState<any>({
-    available: false,
-    engine: "Neural Inpaint Studio (Apple Silicon M2)",
-    url: null,
-  });
+  const messagesRef = useRef<SidekickMessage[]>(messages);
+  messagesRef.current = messages;
+  const isVoiceCallModeRef = useRef<boolean>(isVoiceCallMode);
+  isVoiceCallModeRef.current = isVoiceCallMode;
+  const isCallMutedRef = useRef<boolean>(isCallMuted);
+  isCallMutedRef.current = isCallMuted;
+  const isSpeakingRef = useRef<boolean>(isSpeaking);
+  isSpeakingRef.current = isSpeaking;
+  const voiceThinkingRef = useRef<boolean>(false);
 
-  // Fetch Fooocus Status & Catalog Products on Mount
   useEffect(() => {
-    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (recentsMenuRef.current && !recentsMenuRef.current.contains(e.target as Node)) {
+        setShowRecentsMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    api.get("/ai/fooocus-status/")
-      .then((res) => {
-        if (res.data) setFooocusStatus(res.data);
-      })
-      .catch((_) => {});
-
-    api.get("/products/?page_size=20")
-      .then((res) => {
-        const items = res.data?.results || res.data || [];
-        setCatalogProducts(Array.isArray(items) ? items : []);
-      })
-      .catch((_) => {});
-  }, [isOpen]);
-
-  // Live call duration timer
+  // Auto-scroll chat
   useEffect(() => {
-    let timer: any;
-    if (isVoiceCallMode) {
-      timer = setInterval(() => {
-        setCallDuration((d) => d + 1);
-      }, 1000);
-    } else {
-      setCallDuration(0);
+    if (isOpen && !isVoiceCallMode) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
+  }, [messages, isOpen, isLoading, isVoiceCallMode]);
+
+  // Live call timer
+  useEffect(() => {
+    if (!isVoiceCallMode) {
+      setCallDuration(0);
+      return;
+    }
+    const timer = setInterval(() => setCallDuration((d) => d + 1), 1000);
     return () => clearInterval(timer);
   }, [isVoiceCallMode]);
 
-  // 1. Enumerate and score natural voices
-  useEffect(() => {
-    if (!("speechSynthesis" in window)) return;
-
-    const updateVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices && voices.length > 0) {
-        setAvailableVoices(voices);
-      }
-    };
-
-    updateVoices();
-    window.speechSynthesis.onvoiceschanged = updateVoices;
-  }, []);
-
-  // 2. Select highest-tier neural voice for active language and gender
-  const getBestVoiceForLanguage = (targetLang: "ru" | "uz" | "en") => {
-    if (!availableVoices.length) return null;
-
-    if (selectedVoiceURI) {
-      const chosen = availableVoices.find((v) => v.voiceURI === selectedVoiceURI);
-      if (chosen) return chosen;
+  // Stop any playing ElevenLabs audio immediately (used for Barge-in / Interruption)
+  const stopAudio = () => {
+    if (activeAudioRef.current) {
+      try {
+        activeAudioRef.current.pause();
+        activeAudioRef.current.currentTime = 0;
+      } catch (_) {}
+      activeAudioRef.current = null;
     }
-
-    const scored = availableVoices
-      .map((v) => ({ voice: v, score: scoreVoice(v, targetLang, preferredGender) }))
-      .filter((item) => item.score > -1000)
-      .sort((a, b) => b.score - a.score);
-
-    if (scored.length > 0) {
-      return scored[0].voice;
-    }
-
-    const fallback = availableVoices.find((v) =>
-      targetLang === "ru"
-        ? v.lang.startsWith("ru")
-        : targetLang === "en"
-        ? v.lang.startsWith("en")
-        : v.lang.startsWith("uz") || v.lang.startsWith("tr")
-    );
-    return fallback || null;
+    isSpeakingRef.current = false;
+    setIsSpeaking(false);
   };
 
-  // 3. Natural Voice TTS Speaker with automatic language resolution
-  const speakText = (
-    text: string,
-    forceLang?: "ru" | "uz" | "en",
-    onEndCallback?: () => void
-  ) => {
-    if (!ttsEnabled || !("speechSynthesis" in window)) {
-      if (onEndCallback) onEndCallback();
+  // Play strictly via ElevenLabs Base64 Audio (`new Audio('data:audio/mp3;base64,' + data.audio_base64)`)
+  const playElevenLabsAudio = (audioBase64?: string | null, onEnded?: () => void) => {
+    stopAudio();
+
+    if (!audioBase64) {
+      if (onEnded) onEnded();
       return;
     }
+
     try {
-      window.speechSynthesis.cancel();
+      const audio = new Audio("data:audio/mp3;base64," + audioBase64);
+      activeAudioRef.current = audio;
+      isSpeakingRef.current = true;
+      setIsSpeaking(true);
 
-      // CRITICAL FIX: Automatically detect text language so Russian is NEVER read by an Uzbek voice!
-      const currentTargetLang = forceLang || detectTextLanguage(text);
-      const clean = cleanTextForSpeech(text, currentTargetLang);
-      if (!clean) {
-        if (onEndCallback) onEndCallback();
-        return;
-      }
+      audio.onended = () => {
+        isSpeakingRef.current = false;
+        setIsSpeaking(false);
+        activeAudioRef.current = null;
+        if (onEnded) onEnded();
+      };
+      audio.onerror = () => {
+        isSpeakingRef.current = false;
+        setIsSpeaking(false);
+        activeAudioRef.current = null;
+        if (onEnded) onEnded();
+      };
 
-      const voice = getBestVoiceForLanguage(currentTargetLang);
-      const voiceLang = voice
-        ? voice.lang
-        : currentTargetLang === "ru"
-        ? "ru-RU"
-        : currentTargetLang === "en"
-        ? "en-US"
-        : "tr-TR";
-
-      const sentenceChunks = clean
-        .replace(/([.!?])\s+/g, "$1|#|")
-        .split("|#|")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-
-      const speechQueue = sentenceChunks.slice(0, 3);
-
-      speechQueue.forEach((chunk, idx) => {
-        const utterance = new SpeechSynthesisUtterance(chunk);
-        if (voice) {
-          utterance.voice = voice;
-        }
-        utterance.lang = voiceLang;
-        utterance.rate = speechRate;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-
-        if (idx === speechQueue.length - 1 && onEndCallback) {
-          utterance.onend = () => {
-            onEndCallback();
-          };
-        }
-
-        window.speechSynthesis.speak(utterance);
+      audio.play().catch((err) => {
+        console.warn("ElevenLabs audio play blocked or failed:", err);
+        isSpeakingRef.current = false;
+        setIsSpeaking(false);
+        activeAudioRef.current = null;
+        if (onEnded) onEnded();
       });
     } catch (e) {
-      console.warn("TTS speak failed:", e);
-      if (onEndCallback) onEndCallback();
+      console.warn("ElevenLabs audio error:", e);
+      isSpeakingRef.current = false;
+      setIsSpeaking(false);
+      if (onEnded) onEnded();
     }
   };
 
-  // 4. Initialize Speech Recognition with Hands-Free Live Call Loop
+  // Speech Recognition Setup with Continuous Barge-in Support in Voice Call Mode
   useEffect(() => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
 
-    if (SpeechRecognition) {
-      setSpeechSupported(true);
-      try {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = true;
+    setSpeechSupported(true);
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = isVoiceCallMode;
+      recognition.interimResults = true;
+      recognition.lang = uiLang === "uz" ? "uz-UZ" : uiLang === "en" ? "en-US" : "ru-RU";
 
-        recognition.onstart = () => {
-          setIsListening(true);
-          if (isVoiceCallMode) setVoiceCallStatus("listening");
-        };
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
 
-        recognition.onresult = (event: any) => {
-          let transcript = "";
-          let isFinal = false;
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            transcript += event.results[i][0].transcript;
-            if (event.results[i].isFinal) isFinal = true;
-          }
+      // BARGE-IN: As soon as the user starts speaking, interrupt Sidekick's audio playback!
+      recognition.onspeechstart = () => {
+        if (isVoiceCallModeRef.current && isSpeakingRef.current) {
+          stopAudio();
+          setVoiceCallStatus("listening");
+          setVoiceStepText(
+            uiLang === "uz"
+              ? "Sizni eshityapman..."
+              : uiLang === "en"
+              ? "Listening to you..."
+              : "Слушаю вас..."
+          );
+        }
+      };
 
-          if (isVoiceCallMode) {
-            setLiveTranscript(transcript);
-            if (isFinal && transcript.trim()) {
-              handleVoiceCallTurn(transcript.trim());
-            }
+      recognition.onresult = (event: any) => {
+        let interimTranscript = "";
+        let finalSegment = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const piece = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalSegment += piece;
           } else {
-            setInput(transcript);
+            interimTranscript += piece;
           }
-        };
+        }
 
-        recognition.onerror = (event: any) => {
-          console.warn("Speech recognition error:", event.error);
-          setIsListening(false);
-          if (isVoiceCallMode && !isCallMuted && event.error === "no-speech") {
-            try {
-              recognition.start();
-            } catch (_) {}
+        const currentSpoken = (finalSegment || interimTranscript).trim();
+
+        // BARGE-IN: If Sidekick is currently talking and user speaks >= 2 chars, immediately stop ElevenLabs audio!
+        if (isVoiceCallModeRef.current && isSpeakingRef.current && currentSpoken.length >= 2) {
+          stopAudio();
+          setVoiceCallStatus("listening");
+          setVoiceStepText(
+            uiLang === "uz"
+              ? "Sizni eshityapman..."
+              : uiLang === "en"
+              ? "Listening to you..."
+              : "Слушаю вас..."
+          );
+        }
+
+        if (isVoiceCallModeRef.current) {
+          if (currentSpoken) {
+            setLiveTranscript(currentSpoken);
           }
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-          if (isVoiceCallMode && !isCallMuted && voiceCallStatus === "listening") {
-            try {
-              recognition.start();
-            } catch (_) {}
+          if (finalSegment.trim() && !voiceThinkingRef.current) {
+            handleVoiceCallTurn(finalSegment.trim());
           }
-        };
+        } else {
+          setInput(currentSpoken);
+          if (finalSegment.trim()) {
+            setIsListening(false);
+            handleSend(finalSegment.trim(), true);
+          }
+        }
+      };
 
-        recognitionRef.current = recognition;
-      } catch (e) {
-        console.warn("SpeechRecognition init failed:", e);
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        // Keep recognition alive during hands-free Voice Call Mode so Barge-in works at any moment
+        if (isVoiceCallModeRef.current && !isCallMutedRef.current) {
+          setTimeout(() => {
+            if (isVoiceCallModeRef.current && !isCallMutedRef.current && recognitionRef.current) {
+              try {
+                recognitionRef.current.start();
+              } catch (_) {}
+            }
+          }, 250);
+        }
+      };
+
+      recognitionRef.current = recognition;
+    } catch (_) {}
+  }, [isVoiceCallMode, isCallMuted, uiLang, store?.id, voiceEnabled]);
+
+  // Listen for custom event from anywhere in the app
+  useEffect(() => {
+    const handleExternalTrigger = (e: any) => {
+      const detail = e.detail || {};
+      if (detail.voice) {
+        startVoiceCall();
+      } else if (detail.prompt) {
+        setIsVoiceCallMode(false);
+        setTimeout(() => {
+          handleSend(detail.prompt);
+        }, 100);
       }
-    }
-  }, [isVoiceCallMode, isCallMuted, voiceCallStatus]);
+    };
+    window.addEventListener("storebox:open-sidekick", handleExternalTrigger);
+    return () => window.removeEventListener("storebox:open-sidekick", handleExternalTrigger);
+  }, [store?.id, voiceEnabled]);
 
-  // Hands-free Voice Call Turn Handler
+  const toggleVoiceEnabled = () => {
+    const next = !voiceEnabled;
+    setVoiceEnabled(next);
+    localStorage.setItem("storebox_sidekick_voice_enabled", String(next));
+    if (!next) stopAudio();
+  };
+
+  // Main Chat Submit -> POST `/api/v1/ai/assistant/chat/`
+  const handleSend = async (overrideMessage?: string, isVoiceInput = false) => {
+    const query = (overrideMessage !== undefined ? overrideMessage : input).trim();
+    if ((!query && !attachedFile) || isLoading) return;
+
+    if (isListening && recognitionRef.current && !isVoiceCallModeRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (_) {}
+      setIsListening(false);
+    }
+
+    stopAudio();
+
+    const detectedLang = detectTextLanguage(query, uiLang);
+
+    const userMsg: SidekickMessage = {
+      id: "u_" + Date.now(),
+      sender: "user",
+      text: query || "Обработай фото товара",
+      isVoice: isVoiceInput,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    const currentHistory = messagesRef.current
+      .filter((m) => m.sender === "user" || m.sender === "assistant")
+      .slice(-10)
+      .map((m) => ({
+        sender: m.sender,
+        text: m.text,
+      }));
+
+    const shouldRequestVoice = voiceEnabled || isVoiceInput;
+    const fileToSend = attachedFile;
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setAttachedFile(null);
+    setAttachedPreview(null);
+    setIsLoading(true);
+
+    try {
+      let res;
+      if (fileToSend) {
+        const formData = new FormData();
+        formData.append("message", query || "Помести товар на студийный фон");
+        formData.append("voice_enabled", String(shouldRequestVoice));
+        formData.append("lang", detectedLang);
+        formData.append("image", fileToSend);
+        res = await api.post("/ai/assistant/chat/", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        res = await api.post("/ai/assistant/chat/", {
+          message: query,
+          voice_enabled: shouldRequestVoice,
+          lang: detectedLang,
+          history: currentHistory,
+        });
+      }
+
+      const data = res.data;
+
+      // 1. Execute Action if Gemini triggered `navigate_to`
+      if (data.action && data.action.type === "NAVIGATE" && data.action.target) {
+        const spaTarget = toSpaPath(data.action.target, data.action.spa_path);
+        navigate(spaTarget);
+      }
+
+      // 2. Append Assistant Message with Data Card & ElevenLabs Audio
+      const assistantMsg: SidekickMessage = {
+        id: "a_" + Date.now(),
+        sender: "assistant",
+        text: data.text || "Готово.",
+        action: data.action || null,
+        data_card: data.data_card || null,
+        audio_base64: data.audio_base64 || null,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setMessages((prev) => {
+        const updated = [...prev, assistantMsg];
+        // Save to recent sessions
+        const sessionTitle =
+          query.slice(0, 38) ||
+          (uiLang === "uz" ? "Yangi suhbat" : uiLang === "en" ? "New chat" : "Новый диалог");
+        setRecentSessions((sessions) => {
+          const rest = sessions.filter((s) => s.id !== "current");
+          return [
+            {
+              id: "current",
+              title: sessionTitle,
+              updatedAt: uiLang === "uz" ? "Bugun" : uiLang === "en" ? "Today" : "Сегодня",
+              messages: updated,
+            },
+            ...rest.slice(0, 6),
+          ];
+        });
+        return updated;
+      });
+
+      // 3. Play ElevenLabs Audio (`new Audio('data:audio/mp3;base64,' + data.audio_base64)`)
+      if (shouldRequestVoice && data.audio_base64) {
+        playElevenLabsAudio(data.audio_base64);
+      }
+    } catch (err) {
+      console.error("Sidekick assistant error:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: "err_" + Date.now(),
+          sender: "assistant",
+          text:
+            detectedLang === "uz"
+              ? "So'rovni bajarishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring."
+              : detectedLang === "en"
+              ? "Failed to reach Gemini API. Please try again."
+              : "Не удалось выполнить запрос к Gemini API. Попробуйте еще раз.",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Live Voice Call Turn -> POST `/api/v1/ai/assistant/chat/` with `voice_enabled: true`
   const handleVoiceCallTurn = async (spokenText: string) => {
     if (!spokenText.trim()) return;
 
-    const detected = detectTextLanguage(spokenText);
-    setActiveLang(detected);
+    stopAudio();
+    voiceThinkingRef.current = true;
+    const detected = detectTextLanguage(spokenText, uiLang);
     setVoiceCallStatus("thinking");
+    setVoiceStepText(
+      uiLang === "uz"
+        ? "Sidekick o'ylamoqda..."
+        : uiLang === "en"
+        ? "Sidekick is thinking..."
+        : "Sidekick думает..."
+    );
     setLiveTranscript(spokenText);
+
+    const currentHistory = messagesRef.current
+      .filter((m) => m.sender === "user" || m.sender === "assistant")
+      .slice(-8)
+      .map((m) => ({
+        sender: m.sender,
+        text: m.text,
+      }));
 
     const userMsg: SidekickMessage = {
       id: "u_" + Date.now(),
@@ -478,2474 +562,1226 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const res = await api.post("/ai/chat/", {
+      const res = await api.post("/ai/assistant/chat/", {
         message: spokenText,
+        voice_enabled: true,
         lang: detected,
+        history: currentHistory,
       });
 
+      voiceThinkingRef.current = false;
       const data = res.data;
-      setLiveAssistantText(data.text);
 
-      // Execute navigation if user said "открой заказы" or similar
-      if (data.action_type === "navigate" && data.action_data?.path) {
-        navigate(data.action_data.path);
+      if (data.action && data.action.type === "NAVIGATE" && data.action.target) {
+        const spaTarget = toSpaPath(data.action.target, data.action.spa_path);
+        setVoiceStepText(
+          `${uiLang === "uz" ? "O'tildi" : uiLang === "en" ? "Navigated" : "Переход"}: ${
+            data.action.title || spaTarget
+          }`
+        );
+        navigate(spaTarget);
       }
 
-      const botMsg: SidekickMessage = {
+      setLastVoiceCard({
+        text: data.text,
+        action: data.action,
+        data_card: data.data_card,
+      });
+
+      const assistantMsg: SidekickMessage = {
         id: "a_" + Date.now(),
         sender: "assistant",
-        text: data.text || "Команда выполнена.",
-        action_type: data.action_type,
-        action_data: data.action_data,
-        suggestions: data.suggestions || [],
+        text: data.text || "Выполнено.",
+        action: data.action || null,
+        data_card: data.data_card || null,
+        audio_base64: data.audio_base64 || null,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
-      setMessages((prev) => [...prev, botMsg]);
+      setMessages((prev) => [...prev, assistantMsg]);
 
-      // Speak response back with animated orb pulsing, then resume listening!
       setVoiceCallStatus("speaking");
-      speakText(data.text, detected, () => {
-        if (isVoiceCallMode && !isCallMuted) {
+      setVoiceStepText(
+        uiLang === "uz"
+          ? "Sidekick gapirmoqda (gapirib bo'lishingiz mumkin)..."
+          : uiLang === "en"
+          ? "Sidekick speaking (speak anytime to interrupt)..."
+          : "Sidekick говорит (начните говорить, чтобы перебить)..."
+      );
+
+      // Keep speech recognition active while ElevenLabs speaks so user can barge in!
+      if (recognitionRef.current && !isCallMutedRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch (_) {}
+      }
+
+      playElevenLabsAudio(data.audio_base64, () => {
+        if (isVoiceCallModeRef.current && !isCallMutedRef.current) {
           setVoiceCallStatus("listening");
+          setVoiceStepText(
+            uiLang === "uz"
+              ? "Sizni eshityapman..."
+              : uiLang === "en"
+              ? "Listening..."
+              : "Слушаю вас..."
+          );
           setLiveTranscript("");
           if (recognitionRef.current) {
             try {
-              recognitionRef.current.lang =
-                detected === "ru" ? "ru-RU" : detected === "en" ? "en-US" : "uz-UZ";
               recognitionRef.current.start();
             } catch (_) {}
           }
         }
       });
-    } catch (err) {
-      console.error("Voice turn error:", err);
+    } catch (_) {
+      voiceThinkingRef.current = false;
       setVoiceCallStatus("listening");
+      setVoiceStepText(
+        uiLang === "uz" ? "Sizni eshityapman..." : uiLang === "en" ? "Listening..." : "Слушаю вас..."
+      );
     }
   };
 
-  // Start Shopify Sidekick Live Voice Call
   const startVoiceCall = () => {
+    setShowRecentsMenu(false);
+    stopAudio();
     setIsVoiceCallMode(true);
-    setVoiceCallStatus("listening");
+    isVoiceCallModeRef.current = true;
+    setIsCallMuted(false);
+    isCallMutedRef.current = false;
+    setVoiceCallStatus("connecting");
+    setVoiceStepText(
+      uiLang === "uz" ? "Ulanmoqda..." : uiLang === "en" ? "Connecting..." : "Подключение..."
+    );
     setLiveTranscript("");
-    setLiveAssistantText("");
-    setCallDuration(0);
+    setLastVoiceCard(null);
 
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.lang =
-          activeLang === "ru" ? "ru-RU" : activeLang === "en" ? "en-US" : "uz-UZ";
-        recognitionRef.current.start();
-      } catch (_) {}
-    }
+    setTimeout(() => {
+      if (!isVoiceCallModeRef.current) return;
+      setVoiceCallStatus("listening");
+      setVoiceStepText(
+        uiLang === "uz"
+          ? "Sizni eshityapman — gapiring..."
+          : uiLang === "en"
+          ? "Listening — speak anytime..."
+          : "Слушаю вас — говорите..."
+      );
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.continuous = true;
+          recognitionRef.current.lang =
+            uiLang === "uz" ? "uz-UZ" : uiLang === "en" ? "en-US" : "ru-RU";
+          recognitionRef.current.start();
+        } catch (_) {}
+      }
+    }, 350);
   };
 
-  // End Shopify Sidekick Live Voice Call
   const endVoiceCall = () => {
-    setIsVoiceCallMode(false);
+    stopAudio();
+    setVoiceCallStatus("ending");
+    setVoiceStepText(
+      uiLang === "uz"
+        ? "Suhbat yakunlanmoqda..."
+        : uiLang === "en"
+        ? "Ending conversation..."
+        : "Завершаем диалог..."
+    );
+    isVoiceCallModeRef.current = false;
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
       } catch (_) {}
     }
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
 
-    const mins = Math.floor(callDuration / 60);
-    const secs = callDuration % 60;
-    const durStr = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+    const durationLabel = `${Math.floor(callDuration / 60)}:${(callDuration % 60)
+      .toString()
+      .padStart(2, "0")}`;
 
-    const summaryMsg: SidekickMessage = {
-      id: "call_" + Date.now(),
-      sender: "assistant",
-      text:
-        activeLang === "uz"
-          ? `🎙️ **Ovozli muloqot yakunlandi (${durStr})**\nSidekick AI bilan jonli ovozli suhbat o'tkazildi. Barcha buyruqlar muvaffaqiyatli bajarildi.`
-          : activeLang === "en"
-          ? `🎙️ **Voice Call Finished (${durStr})**\nLive interactive call completed with Sidekick AI. Commands executed.`
-          : `🎙️ **Голосовой диалог завершен (${durStr})**\nЗавершен интерактивный голосовой сеанс с Sidekick AI. Все запросы и навигация обработаны.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setMessages((prev) => [...prev, summaryMsg]);
-    setCallDuration(0);
+    setTimeout(() => {
+      setIsVoiceCallMode(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: "vc_" + Date.now(),
+          sender: "system_voice",
+          text:
+            uiLang === "uz"
+              ? `Qisqa ovozli muloqot • Ovozli seans (${durationLabel})`
+              : uiLang === "en"
+              ? `Brief voice conversation • Voice session (${durationLabel})`
+              : `Краткий голосовой диалог • Голосовой сеанс (${durationLabel})`,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    }, 350);
   };
 
-  // Toggle Live Call Mute State
-  const toggleCallMute = () => {
-    const next = !isCallMuted;
-    setIsCallMuted(next);
-    if (next) {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (_) {}
-      }
-    } else {
-      if (isVoiceCallMode && recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-        } catch (_) {}
-      }
-    }
-  };
-
-  // Save messages to LocalStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem("storebox_sidekick_messages", JSON.stringify(messages.slice(-30)));
-    } catch (_) {}
-  }, [messages]);
-
-  // Scroll to bottom
-  useEffect(() => {
-    if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, isOpen, isLoading, generatingSkeleton]);
-
-  // Toggle Standard Mic Input
-  const toggleListening = () => {
+  const toggleMicDictation = () => {
     if (!recognitionRef.current) return;
-
+    stopAudio();
     if (isListening) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (_) {}
       setIsListening(false);
     } else {
       try {
+        recognitionRef.current.continuous = false;
         recognitionRef.current.lang =
-          activeLang === "ru" ? "ru-RU" : activeLang === "en" ? "en-US" : "uz-UZ";
+          uiLang === "uz" ? "uz-UZ" : uiLang === "en" ? "en-US" : "ru-RU";
         recognitionRef.current.start();
         setIsListening(true);
-      } catch (err) {
-        console.warn("Error starting speech recognition:", err);
-      }
-    }
-  };
-
-  // Test voice preview (gender- and language-aware)
-  const handleTestVoice = () => {
-    const sample =
-      activeLang === "uz"
-        ? (preferredGender === "male"
-            ? "Assalomu alaykum! Men StoreBox biznes yordamchingiz Sardorman."
-            : "Assalomu alaykum! Men sizning StoreBox intellektual biznes yordamchingizman.")
-        : activeLang === "en"
-        ? (preferredGender === "male"
-            ? "Hello! I am your StoreBox intelligent co-founder David."
-            : "Hello! I am your StoreBox intelligent e-commerce co-founder.")
-        : (preferredGender === "male"
-            ? "Здравствуйте! Я Дмитрий, ваш персональный бизнес-ассистент StoreBox."
-            : "Здравствуйте! Я Милена, ваш персональный бизнес-ассистент StoreBox.");
-    speakText(sample);
-  };
-
-  const toggleTts = () => {
-    const next = !ttsEnabled;
-    setTtsEnabled(next);
-    localStorage.setItem("storebox_sidekick_tts", String(next));
-    if (!next && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-  };
-
-  // Send standard message
-  // Send standard message or image attachment
-  const handleSend = async (textToSend?: string, isVoiceInput = false) => {
-    let query = (textToSend !== undefined ? textToSend : input).trim();
-    const hasAttachment = Boolean(chatAttachedFile);
-
-    // If query is empty but an image is attached, provide a sensible default prompt
-    if (!query && hasAttachment) {
-      query =
-        activeLang === "uz"
-          ? "Mahsulotni yog'och stolga joylashtir va studiya nuri qo'sh"
-          : activeLang === "en"
-          ? "Place the product on a wooden table with studio lighting"
-          : "Помести товар на деревянный стол и добавь студийный свет";
-    }
-
-    if (!query || isLoading) return;
-
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    }
-
-    const detected = detectTextLanguage(query);
-    setActiveLang(detected);
-
-    const isImageQuery =
-      hasAttachment ||
-      /^\/(?:photo|image|foto|img|rasm)\b/i.test(query) ||
-      /сделай.*(?:изображен|фото)|создай.*(?:изображен|фото)|белая рубашка|белый рубашка|рубашк|rasm\s+yarat|create\s+image|studio/i.test(
-        query
-      );
-    if (isImageQuery) {
-      setGeneratingSkeleton(true);
-    }
-
-    // Save attachment references before clearing state
-    const currentAttachmentFile = chatAttachedFile;
-    const currentAttachmentPreview = chatAttachedPreview;
-
-    const userMsg: SidekickMessage = {
-      id: "u_" + Date.now(),
-      sender: "user",
-      text: query,
-      isVoice: isVoiceInput || isListening,
-      action_data: currentAttachmentPreview
-        ? { attached_image_url: currentAttachmentPreview }
-        : undefined,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setChatAttachedFile(null);
-    setChatAttachedPreview(null);
-    setIsLoading(true);
-
-    try {
-      let res;
-      if (currentAttachmentFile) {
-        const formData = new FormData();
-        formData.append("message", query);
-        formData.append("lang", detected);
-        formData.append("image", currentAttachmentFile);
-        res = await api.post("/ai/chat/", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-      } else {
-        res = await api.post("/ai/chat/", {
-          message: query,
-          lang: detected,
-        });
-      }
-
-      const data = res.data;
-
-      // Execute navigation if command was to open a section
-      if (data.action_type === "navigate" && data.action_data?.path) {
-        navigate(data.action_data.path);
-      }
-
-      const botMsg: SidekickMessage = {
-        id: "a_" + Date.now(),
-        sender: "assistant",
-        text: data.text || "Команда выполнена.",
-        action_type: data.action_type,
-        action_data: data.action_data,
-        suggestions: data.suggestions || [],
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-
-      setMessages((prev) => [...prev, botMsg]);
-      speakText(botMsg.text, detected);
-    } catch (err: any) {
-      console.error("Sidekick chat error:", err);
-      const errMsg: SidekickMessage = {
-        id: "err_" + Date.now(),
-        sender: "assistant",
-        text:
-          detected === "uz"
-            ? "Kechirasiz, so'rovni bajarishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring."
-            : detected === "en"
-            ? "Sorry, an error occurred while processing the command. Please try again."
-            : "Извините, произошла ошибка обработки команды. Проверьте соединение или повторите запрос.",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, errMsg]);
-    } finally {
-      setIsLoading(false);
-      setGeneratingSkeleton(false);
-    }
-  };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // File upload directly attaches to chat input instead of executing blind background removal
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setChatAttachedFile(file);
-    const previewUrl = URL.createObjectURL(file);
-    setChatAttachedPreview(previewUrl);
-
-    // Also prefill studio tab state in case seller switches to it
-    setStudioImageFile(file);
-    setStudioImagePreview(previewUrl);
-
-    // Reset input so seller can re-attach same file if needed
-    e.target.value = "";
-  };
-
-  const handleRemoveAttachment = () => {
-    if (chatAttachedPreview) {
-      try {
-        URL.revokeObjectURL(chatAttachedPreview);
       } catch (_) {}
     }
-    setChatAttachedFile(null);
-    setChatAttachedPreview(null);
   };
 
-  // -----------------------------------------------------------------------
-  // AI STUDIO (IMAGE-TO-IMAGE / INPAINT) ACTION HANDLERS
-  // -----------------------------------------------------------------------
-  const handleStudioFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSpeakMessage = async (msg: SidekickMessage) => {
+    if (isSpeaking) {
+      stopAudio();
+      return;
+    }
+    if (msg.audio_base64) {
+      playElevenLabsAudio(msg.audio_base64);
+    }
+  };
+
+  const handleCreateProductFromDraft = async (msgId: string, card: SidekickDataCard) => {
+    if (creatingProductCardId || createdProductCardIds[msgId]) return;
+    setCreatingProductCardId(msgId);
+    try {
+      await api.post("/ai/save-to-catalog/", {
+        name: card.product_name || "Новый товар",
+        description: card.description || "",
+        price: card.price_raw || 250000,
+        stock: 25,
+      });
+      setCreatedProductCardIds((prev) => ({ ...prev, [msgId]: true }));
+    } catch (e) {
+      console.error("Failed to save product draft:", e);
+    } finally {
+      setCreatingProductCardId(null);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setStudioImageFile(file);
-    const localUrl = URL.createObjectURL(file);
-    setStudioImagePreview(localUrl);
-    setStudioResult(null);
-    setStudioSavedSuccess(false);
+    setAttachedFile(file);
+    setAttachedPreview(URL.createObjectURL(file));
     e.target.value = "";
   };
 
-  const handleSelectCatalogProduct = (prod: any) => {
-    if (prod.image_url) {
-      setStudioImagePreview(prod.image_url);
-      setStudioImageFile(null);
-      setStudioResult(null);
-      setStudioSavedSuccess(false);
-      setShowCatalogPicker(false);
-      const name = prod.name_ru || prod.name_uz || "Товар";
-      setStudioPrompt(`Помести ${name} на деревянный стол и добавь студийный свет`);
-    }
-  };
-
-  const handleToggleStudioMic = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Голосовой ввод не поддерживается в этом браузере");
-      return;
-    }
-
-    if (studioIsListening) {
-      setStudioIsListening(false);
-      return;
-    }
-
-    try {
-      const rec = new SpeechRecognition();
-      rec.continuous = false;
-      rec.interimResults = false;
-      rec.lang = activeLang === "ru" ? "ru-RU" : activeLang === "en" ? "en-US" : "uz-UZ";
-
-      rec.onstart = () => setStudioIsListening(true);
-      rec.onresult = (evt: any) => {
-        const transcript = evt.results[0][0].transcript;
-        if (transcript) {
-          setStudioPrompt(transcript);
-        }
-      };
-      rec.onerror = () => setStudioIsListening(false);
-      rec.onend = () => setStudioIsListening(false);
-      rec.start();
-    } catch (e) {
-      console.warn("Studio mic error:", e);
-      setStudioIsListening(false);
-    }
-  };
-
-  const handleRunStudioInpaint = async (overridePrompt?: string) => {
-    const promptToUse = (overridePrompt !== undefined ? overridePrompt : studioPrompt).trim();
-    if (!promptToUse) return;
-    if (!studioImageFile && !studioImagePreview) {
-      alert("Пожалуйста, загрузите фото товара или выберите его из каталога");
-      return;
-    }
-
-    setStudioIsProcessing(true);
-    setStudioSavedSuccess(false);
-
-    try {
-      const formData = new FormData();
-      formData.append("prompt", promptToUse);
-      formData.append("product_name", "Товар");
-
-      if (studioImageFile) {
-        formData.append("image", studioImageFile);
-      } else if (studioImagePreview) {
-        formData.append("image_url", studioImagePreview);
-      }
-
-      const res = await api.post("/ai/image-to-image/", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (res.data && res.data.success) {
-        setStudioResult(res.data);
-        setStudioComparisonMode("after");
-      } else {
-        alert(res.data?.error || "Ошибка генерации студийного фото");
-      }
-    } catch (err: any) {
-      console.error("Studio inpaint error:", err);
-      alert(err.response?.data?.error || "Ошибка обработки фото");
-    } finally {
-      setStudioIsProcessing(false);
-    }
-  };
-
-  const handleSaveStudioResultToCatalog = async () => {
-    if (!studioResult || !studioResult.image_url) return;
-    try {
-      await api.post("/ai/save-to-catalog/", {
-        image_url: studioResult.image_url,
-        name: `${studioResult.product_name || "Товар"} (${studioResult.theme_title || "AI Studio"})`,
-        price: 250000,
-        stock: 25,
-      });
-      setStudioSavedSuccess(true);
-      setTimeout(() => setStudioSavedSuccess(false), 4000);
-    } catch (e) {
-      console.error("Save to catalog error:", e);
-      alert("Ошибка при сохранении в каталог");
-    }
-  };
-
-  const handleClearHistory = () => {
+  const handleNewChat = () => {
+    stopAudio();
+    setIsVoiceCallMode(false);
+    isVoiceCallModeRef.current = false;
     setMessages([]);
-    localStorage.removeItem("storebox_sidekick_messages");
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
+    setShowRecentsMenu(false);
   };
 
-  const handleCopy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const studioPresetChips = [
-    {
-      label: "🪵 Деревянный стол",
-      prompt: "Помести товар на деревянный стол и добавь студийный свет",
-      theme: "wood",
-    },
-    {
-      label: "📸 Студийный свет (Циклорама)",
-      prompt: "Сделай профессиональный белый студийный фон циклораму и чистый свет",
-      theme: "clean_white",
-    },
-    {
-      label: "🏛️ Белый мрамор",
-      prompt: "Помести товар на премиальный белый мраморный стол",
-      theme: "marble",
-    },
-    {
-      label: "☕ Уютное кафе (Боке)",
-      prompt: "Помести товар в атмосферу теплого кафе с мягким боке",
-      theme: "cafe_warm",
-    },
-    {
-      label: "⚡ Темный люкс (Неон)",
-      prompt: "Создай темный люксовый подиум со стильной неоновой подсветкой",
-      theme: "dark_luxury",
-    },
-  ];
-
-  // Quick Action Chips in 3 Languages
-  const quickPromptsByLang = {
-    ru: [
-      { label: "📊 Отчет по продажам за неделю", text: "Покажи отчет по продажам за неделю" },
-      { label: "📦 Какие товары заканчиваются?", text: "Какие товары заканчиваются на складе?" },
-      { label: "🎨 Создать студийное фото товара", text: "Создай студийное фото товара Худи черная" },
-      { label: "🖼️ Создать рекламный баннер (Canvas)", text: "Создай рекламный баннер со скидкой 20%" },
-      { label: "✂️ Удалить фон у товара (rembg)", text: "Удали фон у товара" },
-      { label: "🏷️ Создать промокод на 15%", text: "Создай промокод DISCOUNT15 на скидку 15%" },
-      { label: "⚡ Сделай скидку 10% на все товары", text: "Сделай скидку 10% на все товары" },
-      { label: "✍️ Сгенерировать SEO описание", text: "Сгенерируй продающее описание и SEO для товара" },
-      { label: "📈 Как увеличить продажи?", text: "Как увеличить продажи магазина на 30%?" },
-      { label: "🔍 Найти последние заказы", text: "Покажи последние заказы" },
-    ],
-    uz: [
-      { label: "📊 7 kunlik savdo hisoboti", text: "Oxirgi 7 kunlik savdo hisobotini ko'rsat" },
-      { label: "📦 Qaysi tovarlar tugayapti?", text: "Qaysi tovarlar omborda kam qoldi?" },
-      { label: "🎨 Xudi uchun studiya rasmi", text: "Qora xudi uchun studiya rasmini yarat" },
-      { label: "🖼️ Reklama bannerini yaratish (Canvas)", text: "20% chegirmali reklama bannerini yarat" },
-      { label: "✂️ Tovardan fonni tozalash", text: "Tovar fotosidan fonni olib tashla" },
-      { label: "🏷️ 15% li promokod yaratish", text: "Yangi 15% chegirmali promokod yarat" },
-      { label: "⚡ Barcha tovarlarga 10% chegirma", text: "Barcha tovarlarga 10% chegirma ber" },
-      { label: "✍️ Sotuvchi SEO matn yozish", text: "Tovar uchun sotuvchi matn va SEO tavsif yoz" },
-      { label: "📈 Savdoni qanday oshirish mumkin?", text: "Do'kon savdosini qanday oshirsa bo'ladi?" },
-      { label: "🔍 Oxirgi buyurtmalar", text: "Oxirgi buyurtmalarni ko'rsat" },
-    ],
-    en: [
-      { label: "📊 Weekly sales report", text: "Show me weekly sales insights" },
-      { label: "📦 Low stock alert", text: "Which products are running low on stock?" },
-      { label: "🎨 Generate studio product image", text: "Create a studio product artwork for Hoodie" },
-      { label: "🖼️ Generate promo banner (Canvas)", text: "Create promotional banner with 20% discount" },
-      { label: "✂️ Remove background (rembg)", text: "Remove background from product photo" },
-      { label: "🏷️ Create a 15% promo code", text: "Create promo code SAVE15 with 15% discount" },
-      { label: "⚡ Apply 10% storewide discount", text: "Apply 10% discount across all products" },
-      { label: "✍️ Generate SEO description", text: "Write high converting SEO description for product" },
-      { label: "📈 Growth Playbook", text: "How can I increase store sales by 30%?" },
-      { label: "🔍 Recent orders", text: "Show recent orders" },
-    ],
-  };
-
-  const currentPrompts = quickPromptsByLang[activeLang] || quickPromptsByLang.ru;
+  const quickSuggestions =
+    uiLang === "uz"
+      ? [
+          {
+            label: "Oxirgi 30 kunlik savdo tahlili",
+            prompt: "Tahlil bo'limiga o't va oxirgi 30 kunlik tushumni ko'rsat",
+          },
+          {
+            label: "Bugungi tushum va buyurtmalar",
+            prompt: "Bugungi savdo ko'rsatkichlarini ko'rsat",
+          },
+          {
+            label: "Oxirgi buyurtmalarni qidirish",
+            prompt: "Do'kondagi oxirgi buyurtmalarni ko'rsat",
+          },
+          {
+            label: "Yangi tovar uchun sotuvchi tavsif",
+            prompt: "Qora oversayz xudi uchun tovar kartochkasini yarat",
+          },
+        ]
+      : uiLang === "en"
+      ? [
+          {
+            label: "Analytics & 30-day revenue",
+            prompt: "Go to analytics and show me revenue for the last 30 days",
+          },
+          {
+            label: "7-day store performance",
+            prompt: "Show store metrics for the last 7 days",
+          },
+          {
+            label: "Find recent orders",
+            prompt: "Find the latest orders in my store",
+          },
+          {
+            label: "Generate a product listing",
+            prompt: "Generate a product card for a Black Oversized Hoodie",
+          },
+        ]
+      : [
+          {
+            label: "Аналитика и выручка за 30 дней",
+            prompt: "Перейди в аналитику и покажи выручку за 30 дней",
+          },
+          {
+            label: "Сводка продаж за 7 дней",
+            prompt: "Покажи показатели магазина за 7 дней",
+          },
+          {
+            label: "Найти последние заказы",
+            prompt: "Найди последние заказы магазина",
+          },
+          {
+            label: "Сгенерировать карточку товара",
+            prompt: "Сгенерируй карточку товара для Черного оверсайз худи",
+          },
+        ];
 
   if (!isOpen) return null;
 
+  const renderDataCard = (card: SidekickDataCard, msgId: string) => {
+    if (card.type === "metrics" || (card.revenue !== undefined && !card.orders)) {
+      return (
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800 shadow-2xs p-4 space-y-3 text-left">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-[#e6f7f0] dark:bg-emerald-950/50 flex items-center justify-center text-[#00a86b]">
+                <BarChart3 className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <div className="text-[12.5px] font-bold text-[#202223] dark:text-white">
+                  {card.title || "Аналитика магазина"}
+                </div>
+                {store?.name && (
+                  <div className="text-[11px] text-[#6d7175] dark:text-zinc-400">
+                    {store.name}
+                  </div>
+                )}
+              </div>
+            </div>
+            <Link
+              to="/analytics"
+              className="px-2.5 py-1 rounded-lg bg-[#f6f6f7] hover:bg-[#ebebed] dark:bg-zinc-800 text-[11px] font-semibold text-[#00a86b] flex items-center gap-1 transition"
+            >
+              <span>{uiLang === "uz" ? "Hisobot" : uiLang === "en" ? "Report" : "Отчет"}</span>
+              <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="p-2.5 rounded-xl bg-[#f6f6f7] dark:bg-zinc-800/70 border border-[#ebebed] dark:border-zinc-800">
+              <div className="text-[10.5px] text-[#6d7175] dark:text-zinc-400">
+                {uiLang === "uz" ? "Tushum" : uiLang === "en" ? "Revenue" : "Выручка"}
+              </div>
+              <div className="text-[13.5px] font-bold text-[#00a86b] mt-0.5">
+                {card.revenue}
+              </div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-[#f6f6f7] dark:bg-zinc-800/70 border border-[#ebebed] dark:border-zinc-800">
+              <div className="text-[10.5px] text-[#6d7175] dark:text-zinc-400">
+                {uiLang === "uz" ? "Buyurtmalar" : uiLang === "en" ? "Orders" : "Заказов"}
+              </div>
+              <div className="text-[13.5px] font-bold text-[#202223] dark:text-white mt-0.5">
+                {card.orders_count ?? 0} {uiLang === "uz" ? "ta" : uiLang === "en" ? "" : "шт."}
+              </div>
+            </div>
+            {card.avg_check && (
+              <div className="p-2.5 rounded-xl bg-[#f6f6f7] dark:bg-zinc-800/70 border border-[#ebebed] dark:border-zinc-800">
+                <div className="text-[10.5px] text-[#6d7175] dark:text-zinc-400">
+                  {uiLang === "uz" ? "O'rtacha chek" : uiLang === "en" ? "Avg. Order" : "Средний чек"}
+                </div>
+                <div className="text-[12.5px] font-semibold text-[#202223] dark:text-white mt-0.5">
+                  {card.avg_check}
+                </div>
+              </div>
+            )}
+            {card.customers_count !== undefined && (
+              <div className="p-2.5 rounded-xl bg-[#f6f6f7] dark:bg-zinc-800/70 border border-[#ebebed] dark:border-zinc-800">
+                <div className="text-[10.5px] text-[#6d7175] dark:text-zinc-400">
+                  {uiLang === "uz" ? "Mijozlar" : uiLang === "en" ? "Customers" : "Клиентов"}
+                </div>
+                <div className="text-[12.5px] font-semibold text-[#202223] dark:text-white mt-0.5">
+                  {card.customers_count}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (card.type === "orders" || Array.isArray(card.orders)) {
+      const orders = card.orders || [];
+      return (
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800 shadow-2xs p-3.5 space-y-2.5 text-left">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="w-3.5 h-3.5 text-[#00a86b]" />
+              <span className="text-[12.5px] font-bold text-[#202223] dark:text-white">
+                {card.title || `Заказы (${card.orders_count ?? orders.length})`}
+              </span>
+            </div>
+            <Link
+              to="/orders"
+              className="text-[11px] font-semibold text-[#005bd3] hover:underline flex items-center gap-0.5"
+            >
+              <span>{uiLang === "uz" ? "Barchasi" : uiLang === "en" ? "All orders" : "Все заказы"}</span>
+              <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          {orders.length === 0 ? (
+            <div className="py-3 text-center text-[12px] text-[#6d7175]">
+              {uiLang === "uz"
+                ? "Buyurtmalar topilmadi."
+                : uiLang === "en"
+                ? "No orders found."
+                : "Заказы по данному запросу не найдены."}
+            </div>
+          ) : (
+            <div className="divide-y divide-[#f1f2f4] dark:divide-zinc-800">
+              {orders.map((o) => (
+                <div
+                  key={o.id}
+                  onClick={() => navigate(`/orders/${o.id}`)}
+                  className="py-2 flex items-center justify-between hover:bg-[#f6f6f7] dark:hover:bg-zinc-800/60 px-2 -mx-2 rounded-lg cursor-pointer transition"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[12px] font-bold text-[#202223] dark:text-white">
+                        #{o.id}
+                      </span>
+                      <span className="text-[12px] text-[#303030] dark:text-zinc-300 truncate">
+                        {o.customer_name}
+                      </span>
+                    </div>
+                    <div className="text-[10.5px] text-[#6d7175]">{o.created_at}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-[12px] font-bold text-[#202223] dark:text-white">
+                      {o.total_amount}
+                    </div>
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#00a86b] text-white">
+                      {o.status_label}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (card.type === "product_draft") {
+      const isCreated = Boolean(createdProductCardIds[msgId]);
+      const isSaving = creatingProductCardId === msgId;
+      return (
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800 shadow-2xs p-4 space-y-3 text-left">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4 text-[#00a86b]" />
+              <span className="text-[12.5px] font-bold text-[#202223] dark:text-white">
+                {card.product_name}
+              </span>
+            </div>
+            {card.category && (
+              <span className="px-2 py-0.5 rounded-md bg-[#f1f2f4] dark:bg-zinc-800 text-[10.5px] font-medium text-[#303030] dark:text-zinc-300">
+                {card.category}
+              </span>
+            )}
+          </div>
+
+          {card.description && (
+            <p className="text-[12px] text-[#303030] dark:text-zinc-300 leading-relaxed">
+              {card.description}
+            </p>
+          )}
+
+          <div className="pt-2 border-t border-[#f1f2f4] dark:border-zinc-800 flex items-center justify-between">
+            <span className="text-[12.5px] font-bold text-[#202223] dark:text-white">
+              {card.suggested_price || "250 000 UZS"}
+            </span>
+            {isCreated ? (
+              <Link
+                to="/products"
+                className="px-3 py-1.5 rounded-lg bg-[#00a86b] text-white text-[11.5px] font-semibold flex items-center gap-1.5"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>
+                  {uiLang === "uz"
+                    ? "Katalogga qo'shildi"
+                    : uiLang === "en"
+                    ? "Added to catalog"
+                    : "Добавлено в каталог"}
+                </span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => handleCreateProductFromDraft(msgId, card)}
+                className="px-3 py-1.5 rounded-lg bg-[#202223] hover:bg-black text-white dark:bg-white dark:text-[#202223] text-[11.5px] font-semibold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>
+                  {isSaving
+                    ? uiLang === "uz"
+                      ? "Saqlanmoqda..."
+                      : uiLang === "en"
+                      ? "Saving..."
+                      : "Сохранение..."
+                    : uiLang === "uz"
+                    ? "Katalogga qo'shish"
+                    : uiLang === "en"
+                    ? "Add to catalog"
+                    : "Добавить в каталог"}
+                </span>
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (card.type === "image_studio" && card.image_url) {
+      return (
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800 shadow-2xs p-3 space-y-2">
+          <img
+            src={card.image_url}
+            alt={card.product_name || "Product"}
+            className="w-full h-52 object-contain rounded-xl bg-[#111213]"
+          />
+          <div className="flex items-center justify-between text-[11.5px]">
+            <span className="font-semibold text-[#202223] dark:text-white">
+              {card.title || "Студийное фото"}
+            </span>
+            <Link to="/products" className="text-[#005bd3] hover:underline font-medium">
+              {uiLang === "uz" ? "Katalogga →" : uiLang === "en" ? "Catalog →" : "В каталог →"}
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <>
-      {/* Mobile Backdrop */}
+      {/* Mobile Backdrop Only (Desktop uses Push-Layout without overlapping the workspace) */}
       <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/40 z-40 lg:hidden animate-in fade-in duration-200"
         onClick={onClose}
       />
 
-      {/* Slide-over Drawer Panel (Shopify Sidekick Standard) */}
+      {/* Sidekick Docked Push-Column on Desktop (lg+) & Slide-Over Drawer on Mobile */}
       <aside
-        className={`fixed right-0 top-0 bottom-0 z-50 ${
-          isExpanded ? "w-full sm:w-[680px] lg:w-[760px]" : "w-full sm:w-[480px] lg:w-[500px]"
-        } bg-white dark:bg-[#0c0d0e] shadow-2xl border-l border-slate-200/80 dark:border-zinc-800 flex flex-col transition-all duration-300 ease-in-out`}
+        className={`fixed right-0 top-0 bottom-0 z-50 lg:static lg:z-auto lg:h-screen lg:sticky lg:top-0 lg:shrink-0 ${
+          isExpanded ? "w-full sm:w-[540px] lg:w-[520px]" : "w-full sm:w-[400px] lg:w-[380px]"
+        } bg-white dark:bg-[#141417] border-l border-[#e1e3e5] dark:border-zinc-800 flex flex-col transition-all duration-200 shadow-2xl lg:shadow-none`}
       >
-        {/* 1. Header */}
-        <div className="p-3.5 sm:p-4 border-b border-slate-100 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0c0d0e]/95 backdrop-blur-md flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-pink-500 text-white flex items-center justify-center shadow-md shadow-violet-500/20">
-              <Sparkles className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white tracking-tight">
-                  StoreBox Sidekick
-                </h3>
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200/60 dark:border-violet-800/50">
-                  AI 2.0
-                </span>
+        {/* Clean Shopify Sidekick Header: Left = "Недавние ▾", Right = New Chat, Expand, Close */}
+        <div className="h-14 px-4 border-b border-[#ebebeb] dark:border-zinc-800 flex items-center justify-between shrink-0">
+          <div ref={recentsMenuRef} className="relative flex items-center">
+            <button
+              type="button"
+              onClick={() => setShowRecentsMenu((v) => !v)}
+              className="px-2.5 py-1.5 -ml-1.5 rounded-lg text-[13.5px] font-semibold text-[#202223] dark:text-zinc-100 hover:bg-[#f1f2f4] dark:hover:bg-zinc-800 flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <span>
+                {uiLang === "uz" ? "So'nggilar" : uiLang === "en" ? "Recents" : "Недавние"}
+              </span>
+              <svg className="w-4 h-4 text-[#5c5f62]" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+
+            {showRecentsMenu && (
+              <div className="absolute left-0 top-11 w-72 rounded-2xl bg-white dark:bg-zinc-900 border border-[#e1e3e5] dark:border-zinc-800 shadow-2xl py-2 px-1.5 z-50">
+                <div className="px-3 py-1 text-[11px] font-semibold text-[#6d7175] dark:text-zinc-400">
+                  {uiLang === "uz" ? "Bugun" : uiLang === "en" ? "Today" : "Сегодня"}
+                </div>
+
+                <div className="space-y-0.5 max-h-60 overflow-y-auto my-1">
+                  {recentSessions.map((session) => (
+                    <button
+                      key={session.id}
+                      type="button"
+                      onClick={() => {
+                        setShowRecentsMenu(false);
+                        setIsVoiceCallMode(false);
+                        if (session.messages.length > 0) {
+                          setMessages(session.messages);
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 flex items-center gap-2.5 transition cursor-pointer"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-[#00a86b] shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[12.5px] font-medium text-[#202223] dark:text-zinc-100 truncate">
+                          {session.title}
+                        </div>
+                        {session.isVoiceSession && (
+                          <div className="text-[10.5px] text-[#6d7175] flex items-center gap-1 mt-0.5">
+                            <span>
+                              {uiLang === "uz"
+                                ? "Ovozli seans"
+                                : uiLang === "en"
+                                ? "Voice session"
+                                : "Голосовой сеанс"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="border-t border-[#f1f2f4] dark:border-zinc-800 pt-1 mt-1 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={handleNewChat}
+                    className="w-full px-3 py-2 rounded-xl text-left text-[12.5px] font-medium text-[#202223] dark:text-zinc-100 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>
+                      {uiLang === "uz"
+                        ? "Yangi muloqot"
+                        : uiLang === "en"
+                        ? "New conversation"
+                        : "Новый диалог"}
+                    </span>
+                    <Plus className="w-3.5 h-3.5 text-[#616161]" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNewChat}
+                    className="w-full px-3 py-2 rounded-xl text-left text-[12.5px] text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>
+                      {uiLang === "uz"
+                        ? "Tarixni tozalash"
+                        : uiLang === "en"
+                        ? "Clear history"
+                        : "Очистить историю"}
+                    </span>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-              <p className="text-[11px] text-slate-400 font-normal">
-                {store?.name || "Ваш магазин"} • Естественный голос & rembg AI
-              </p>
-            </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* Shopify Live Voice Call Mode Toggle */}
+          {/* Right 3 Clean Shopify Sidekick Header Icons: New Chat (Square-Pen), Expand/Collapse, Close */}
+          <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={isVoiceCallMode ? endVoiceCall : startVoiceCall}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                isVoiceCallMode
-                  ? "bg-rose-500 text-white animate-pulse shadow-sm"
-                  : "bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-90 shadow-xs"
-              }`}
+              onClick={handleNewChat}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4a4a4a] dark:text-zinc-300 hover:bg-[#f1f2f4] dark:hover:bg-zinc-800 transition cursor-pointer"
               title={
-                isVoiceCallMode
-                  ? "Завершить интерактивный голосовой звонок"
-                  : "Начать интерактивный голосовой звонок (Shopify Sidekick Live)"
+                uiLang === "uz"
+                  ? "Yangi suhbat"
+                  : uiLang === "en"
+                  ? "New conversation"
+                  : "Новый диалог"
               }
             >
-              {isVoiceCallMode ? <PhoneOff className="w-3.5 h-3.5" /> : <Phone className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline font-bold">
-                {isVoiceCallMode ? "Завершить" : "Звонок"}
-              </span>
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" />
+              </svg>
             </button>
 
-            {/* Language Switcher Pill */}
-            <div className="flex items-center bg-slate-100 dark:bg-zinc-800/80 rounded-lg p-0.5 text-[11px] font-semibold">
-              {(["ru", "uz", "en"] as const).map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => {
-                    setActiveLang(l);
-                    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-                  }}
-                  className={`px-1.5 py-0.5 rounded-md transition-colors cursor-pointer uppercase ${
-                    activeLang === l
-                      ? "bg-white dark:bg-zinc-700 text-violet-700 dark:text-violet-300 shadow-xs"
-                      : "text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200"
-                  }`}
-                  title={`Сменить язык на ${l.toUpperCase()}`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-
-            {/* Voice Settings toggle */}
-            <button
-              type="button"
-              onClick={() => setShowVoiceSettings(!showVoiceSettings)}
-              className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${
-                showVoiceSettings
-                  ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              }`}
-              title="Настройки естественного голоса"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-
-            {/* TTS Mute/Unmute */}
-            <button
-              type="button"
-              onClick={toggleTts}
-              className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${
-                ttsEnabled
-                  ? "bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              }`}
-              title={ttsEnabled ? "Отключить озвучку" : "Включить естественную озвучку"}
-            >
-              {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </button>
-
-            {/* Expand / Maximize panel width toggle */}
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden sm:flex"
-              title={isExpanded ? "Свернуть панель (500px)" : "Развернуть панель (760px)"}
+              className="w-8 h-8 rounded-lg hidden sm:flex items-center justify-center text-[#4a4a4a] dark:text-zinc-300 hover:bg-[#f1f2f4] dark:hover:bg-zinc-800 transition cursor-pointer"
+              title={
+                isExpanded
+                  ? uiLang === "uz"
+                    ? "Kichraytirish"
+                    : uiLang === "en"
+                    ? "Collapse width"
+                    : "Сузить панель"
+                  : uiLang === "uz"
+                  ? "Kengaytirish"
+                  : uiLang === "en"
+                  ? "Expand width"
+                  : "Расширить панель"
+              }
             >
               {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
 
-            {/* Clear History */}
             <button
               type="button"
-              onClick={handleClearHistory}
-              className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-              title="Очистить диалог"
+              onClick={() => {
+                stopAudio();
+                onClose();
+              }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4a4a4a] dark:text-zinc-300 hover:bg-[#f1f2f4] dark:hover:bg-zinc-800 transition cursor-pointer"
+              title={uiLang === "uz" ? "Yopish" : uiLang === "en" ? "Close" : "Закрыть"}
             >
-              <Trash2 className="w-4 h-4" />
-            </button>
-
-            {/* Close */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-              title="Закрыть Sidekick"
-            >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Voice Settings Dropdown / Panel */}
-        {showVoiceSettings && (
-          <div className="p-3.5 bg-slate-50 dark:bg-zinc-900/90 border-b border-slate-200/80 dark:border-zinc-800 text-xs space-y-3 animate-in slide-in-from-top-2 duration-150">
-            <div className="flex items-center justify-between font-bold text-slate-700 dark:text-zinc-200">
-              <span className="flex items-center gap-1.5">
-                <Volume2 className="w-4 h-4 text-violet-600" />
-                <span>Синтез естественной речи (Shopify Sidekick)</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleTestVoice}
-                className="px-2.5 py-1 rounded-md bg-violet-600 text-white font-semibold hover:bg-violet-700 transition cursor-pointer flex items-center gap-1 shadow-xs"
-              >
-                <Sparkles className="w-3 h-3" />
-                <span>Прослушать</span>
-              </button>
-            </div>
-
-            {/* Active Neural Voice Indicator Badge */}
-            {(() => {
-              const activeVoice = getBestVoiceForLanguage(activeLang);
-              return (
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-between text-[11px]">
-                  <span className="text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 font-medium truncate max-w-[280px]">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    <span className="truncate">
-                      Голос: <b>{activeVoice ? activeVoice.name : "Neural Default"}</b>
-                    </span>
-                  </span>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 shrink-0">
-                    Neural 48kHz
-                  </span>
-                </div>
-              );
-            })()}
-
-            {/* Gender / Timbre Switcher */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-slate-400">
-                Тембр и персонаж ассистента:
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreferredGender("female");
-                    localStorage.setItem("storebox_sidekick_gender", "female");
-                  }}
-                  className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                    preferredGender === "female"
-                      ? "bg-violet-600 text-white shadow-xs"
-                      : "bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50"
-                  }`}
-                >
-                  <span>👩</span>
-                  <span>Женский тембр</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreferredGender("male");
-                    localStorage.setItem("storebox_sidekick_gender", "male");
-                  }}
-                  className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                    preferredGender === "male"
-                      ? "bg-violet-600 text-white shadow-xs"
-                      : "bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50"
-                  }`}
-                >
-                  <span>👨</span>
-                  <span>Мужской тембр</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Voice Selector */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-medium text-slate-400">
-                Голосовой движок системы ({activeLang.toUpperCase()}):
-              </label>
-              <select
-                value={selectedVoiceURI}
-                onChange={(e) => {
-                  setSelectedVoiceURI(e.target.value);
-                  localStorage.setItem("storebox_sidekick_voice_uri", e.target.value);
-                }}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none"
-              >
-                <option value="">✨ Автоматический отбор нейросетевых голосов (Neural)</option>
-                {availableVoices
-                  .filter((v) =>
-                    activeLang === "ru"
-                      ? v.lang.startsWith("ru")
-                      : activeLang === "en"
-                      ? v.lang.startsWith("en")
-                      : v.lang.startsWith("uz") || v.lang.startsWith("tr")
-                  )
-                  .map((v) => ({
-                    voice: v,
-                    score: scoreVoice(v, activeLang, preferredGender),
-                  }))
-                  .sort((a, b) => b.score - a.score)
-                  .map(({ voice, score }) => (
-                    <option key={voice.voiceURI} value={voice.voiceURI}>
-                      {score > 150 ? "✨ [Neural] " : score > 50 ? "⭐ " : ""}
-                      {voice.name} ({voice.lang})
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            {/* Speech Rate Slider */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[11px] text-slate-500 font-medium">
-                Скорость речи: <b>{speechRate.toFixed(2)}x</b> (Мягкий естественный темп)
-              </span>
-              <input
-                type="range"
-                min="0.8"
-                max="1.2"
-                step="0.04"
-                value={speechRate}
-                onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-                className="w-32 accent-violet-600 cursor-pointer"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Mode Switcher Tabs (Chat vs AI Studio) */}
-        {!isVoiceCallMode && (
-          <div className="flex border-b border-slate-200/80 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/60 p-1.5 gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setActiveTab("chat")}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
-                activeTab === "chat"
-                  ? "bg-white dark:bg-zinc-800 text-violet-700 dark:text-violet-300 shadow-xs border border-slate-200/60 dark:border-zinc-700"
-                  : "text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-              <span>Ассистент & Чат</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("studio")}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
-                activeTab === "studio"
-                  ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60"
-              }`}
-            >
-              <Camera className="w-3.5 h-3.5" />
-              <span>AI Фотостудия (Img2Img)</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-emerald-400/20 text-emerald-600 dark:text-emerald-300">
-                M2
-              </span>
-            </button>
-          </div>
-        )}
-
-        {/* 2. Body: Either Shopify Live Voice Call Mode OR Dedicated AI Studio OR Standard Chat */}
+        {/* Body: Dedicated Shopify Live Voice Call Screen OR Chat Feed */}
         {isVoiceCallMode ? (
-          <div className="flex-1 flex flex-col justify-between p-6 bg-gradient-to-b from-[#090a0f] via-[#10121a] to-[#090a0f] text-white relative overflow-hidden select-none">
-            {/* Ambient Glowing Background Blobs */}
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-violet-600/20 blur-3xl pointer-events-none animate-pulse" />
-            <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-72 h-72 rounded-full bg-indigo-600/15 blur-3xl pointer-events-none" />
-
-            {/* Top Bar of Call Mode */}
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-                <span className="text-xs font-bold text-rose-400 tracking-wider uppercase">
-                  Live Call
+          <div className="flex-1 flex flex-col justify-between p-5 bg-white dark:bg-[#141417] text-[#202223] dark:text-white overflow-hidden relative">
+            {/* Top Call Timer Pill */}
+            <div className="flex items-center justify-center">
+              <span className="px-3 py-1 rounded-full bg-[#f6f6f7] dark:bg-zinc-800 border border-[#e3e5e7] dark:border-zinc-700 text-[11px] font-medium text-[#616161] dark:text-zinc-300 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#00a86b] animate-pulse" />
+                <span>
+                  Sidekick Live • {Math.floor(callDuration / 60)}:
+                  {(callDuration % 60).toString().padStart(2, "0")}
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-white/10 text-[11px] font-mono text-zinc-300">
-                  {Math.floor(callDuration / 60)}:{(callDuration % 60).toString().padStart(2, "0")}
-                </span>
-              </div>
-              <div className="text-[11px] font-medium text-zinc-400">
-                Hands-Free Voice Mode
-              </div>
+              </span>
             </div>
 
-            {/* Center Orb Section */}
-            <div className="relative z-10 flex flex-col items-center justify-center my-auto py-8">
-              {/* Soundwave Ripple Rings */}
+            {/* Center Avatar + Dynamic Status + Live Transcript */}
+            <div className="flex flex-col items-center justify-center my-auto py-4 space-y-5 z-10">
               <div className="relative flex items-center justify-center">
-                {/* Outer Wave 3 */}
-                <div
-                  className={`absolute rounded-full transition-all duration-700 pointer-events-none ${
-                    voiceCallStatus === "speaking"
-                      ? "w-64 h-64 border border-violet-500/30 bg-violet-500/5 animate-ping opacity-60"
-                      : voiceCallStatus === "listening"
-                      ? "w-56 h-56 border border-emerald-500/25 bg-emerald-500/5 animate-pulse"
-                      : "w-48 h-48 border border-white/5 opacity-20"
-                  }`}
-                />
-                {/* Outer Wave 2 */}
                 <div
                   className={`absolute rounded-full transition-all duration-500 pointer-events-none ${
                     voiceCallStatus === "speaking"
-                      ? "w-52 h-52 border border-violet-400/40 bg-violet-500/10 scale-110"
-                      : voiceCallStatus === "listening"
-                      ? "w-44 h-44 border border-emerald-400/30 scale-105"
-                      : "w-40 h-40 border border-white/10 opacity-30"
+                      ? "w-32 h-32 bg-[#00a86b]/15 ring-2 ring-[#00a86b]/35 animate-ping"
+                      : voiceCallStatus === "thinking"
+                      ? "w-28 h-28 bg-sky-500/15 ring-2 ring-sky-400/30 animate-pulse"
+                      : "w-26 h-26 bg-emerald-500/10 dark:bg-zinc-800/40"
                   }`}
                 />
-                {/* Outer Wave 1 */}
-                <div
-                  className={`absolute rounded-full transition-all duration-300 pointer-events-none ${
-                    voiceCallStatus === "speaking"
-                      ? "w-40 h-40 border-2 border-fuchsia-400/50 shadow-lg shadow-fuchsia-500/30"
-                      : voiceCallStatus === "listening"
-                      ? "w-36 h-36 border-2 border-emerald-400/50 shadow-lg shadow-emerald-500/20"
-                      : "w-32 h-32 border border-white/15"
-                  }`}
-                />
-
-                {/* The Shopify 3D Luminous Orb */}
-                <div
-                  className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-full cursor-pointer transition-all duration-500 shadow-2xl flex items-center justify-center ${
-                    voiceCallStatus === "speaking"
-                      ? "scale-110 bg-gradient-to-tr from-fuchsia-600 via-violet-600 to-indigo-400 shadow-violet-500/60 ring-4 ring-violet-400/40"
-                      : voiceCallStatus === "thinking"
-                      ? "scale-95 bg-gradient-to-tr from-amber-500 via-orange-600 to-violet-600 shadow-amber-500/50 ring-4 ring-amber-400/40 animate-spin"
-                      : voiceCallStatus === "listening"
-                      ? "scale-100 bg-gradient-to-tr from-emerald-600 via-teal-500 to-indigo-500 shadow-emerald-500/50 ring-4 ring-emerald-400/40"
-                      : "bg-gradient-to-tr from-violet-700 via-indigo-700 to-slate-800 shadow-indigo-500/30"
-                  }`}
-                  onClick={toggleCallMute}
-                  title={isCallMuted ? "Включить микрофон" : "Отключить микрофон"}
-                >
-                  {/* Inner Light Core / Specular */}
-                  <div className="absolute inset-1.5 rounded-full bg-gradient-to-br from-white/40 via-transparent to-black/30 pointer-events-none" />
-                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center">
-                    {voiceCallStatus === "speaking" ? (
-                      <Volume2 className="w-6 h-6 text-white animate-pulse" />
-                    ) : voiceCallStatus === "thinking" ? (
-                      <Sparkles className="w-6 h-6 text-amber-200 animate-spin" />
-                    ) : isCallMuted ? (
-                      <MicOff className="w-6 h-6 text-rose-300" />
-                    ) : (
-                      <Mic className="w-6 h-6 text-white animate-pulse" />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Voice Status Pill */}
-              <div className="mt-8 flex flex-col items-center text-center space-y-2">
-                <div
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border transition-all ${
-                    voiceCallStatus === "speaking"
-                      ? "bg-violet-950/80 border-violet-500/50 text-violet-300 shadow-md shadow-violet-500/20"
-                      : voiceCallStatus === "thinking"
-                      ? "bg-amber-950/80 border-amber-500/50 text-amber-300 shadow-md shadow-amber-500/20"
-                      : voiceCallStatus === "listening"
-                      ? "bg-emerald-950/80 border-emerald-500/50 text-emerald-300 shadow-md shadow-emerald-500/20"
-                      : "bg-zinc-900 border-zinc-700 text-zinc-300"
-                  }`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full animate-ping ${
-                      voiceCallStatus === "speaking"
-                        ? "bg-violet-400"
-                        : voiceCallStatus === "thinking"
-                        ? "bg-amber-400"
-                        : "bg-emerald-400"
-                    }`}
-                  />
-                  <span>
-                    {voiceCallStatus === "speaking"
-                      ? activeLang === "uz"
-                        ? "Sidekick javob bermoqda..."
-                        : activeLang === "en"
-                        ? "Sidekick is speaking..."
-                        : "Отвечаю..."
-                      : voiceCallStatus === "thinking"
-                      ? activeLang === "uz"
-                        ? "Do'kon tahlil qilinmoqda..."
-                        : activeLang === "en"
-                        ? "Analyzing store & data..."
-                        : "Анализирую данные магазина..."
-                      : activeLang === "uz"
-                      ? "Sizni tinglayapman... Erkin gapiring"
-                      : activeLang === "en"
-                      ? "Listening to your voice... Speak freely"
-                      : "Слушаю вас... Говорите свободно"}
+                <div className="relative w-24 h-24 rounded-full bg-[#1c1d1f] text-white flex items-center justify-center shadow-xl border border-zinc-700">
+                  <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none">
+                    <rect
+                      x="7"
+                      y="17"
+                      width="14"
+                      height="11"
+                      rx="3.5"
+                      stroke="white"
+                      strokeWidth="2.6"
+                      fill="#2c2d30"
+                    />
+                    <rect
+                      x="27"
+                      y="17"
+                      width="14"
+                      height="11"
+                      rx="3.5"
+                      stroke="white"
+                      strokeWidth="2.6"
+                      fill="#2c2d30"
+                    />
+                    <path d="M21 21.5H27" stroke="white" strokeWidth="2.6" strokeLinecap="round" />
+                    <circle cx="14" cy="22.5" r="2" fill="white" />
+                    <circle cx="34" cy="22.5" r="2" fill="white" />
+                  </svg>
+                  <span className="absolute -top-0.5 -right-0.5 w-7 h-7 rounded-full bg-[#00a86b] text-white flex items-center justify-center shadow-md">
+                    <Sparkles className="w-4 h-4" />
                   </span>
                 </div>
+              </div>
 
-                {/* Live Subtitle Transcript */}
-                <div className="max-w-sm min-h-[52px] px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-zinc-300 text-center flex items-center justify-center">
-                  {liveTranscript ? (
-                    <p className="italic text-white">«{liveTranscript}»</p>
-                  ) : liveAssistantText ? (
-                    <p className="line-clamp-2 text-zinc-200">{liveAssistantText}</p>
+              <div className="flex flex-col items-center text-center space-y-2 max-w-xs px-2">
+                <div className="flex items-center gap-1.5 text-[13.5px] font-medium text-[#4a4a4a] dark:text-zinc-300">
+                  {voiceCallStatus === "thinking" && (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#00a86b]" />
+                  )}
+                  <span>
+                    {isCallMuted
+                      ? uiLang === "uz"
+                        ? "Mikrofon o'chirilgan"
+                        : uiLang === "en"
+                        ? "Microphone muted"
+                        : "Микрофон отключен"
+                      : voiceStepText}
+                  </span>
+                </div>
+                {liveTranscript && (
+                  <p className="text-[12.5px] font-medium text-[#202223] dark:text-zinc-100 bg-[#f6f6f7] dark:bg-zinc-800/90 px-3.5 py-2 rounded-2xl border border-[#e1e3e5] dark:border-zinc-700 shadow-2xs">
+                    «{liveTranscript}»
+                  </p>
+                )}
+              </div>
+
+              {lastVoiceCard && (
+                <div className="w-full max-w-[340px] max-h-44 overflow-y-auto space-y-2 px-1">
+                  {lastVoiceCard.data_card ? (
+                    renderDataCard(lastVoiceCard.data_card, "voice_live")
                   ) : (
-                    <p className="text-zinc-500">
-                      {activeLang === "uz"
-                        ? "Masalan: «Buyurtmalarni och», «Oq ko'ylak yarat»"
-                        : activeLang === "en"
-                        ? "Try: «Open orders», «Create white shirt»"
-                        : "Скажите: «Открой заказы» или «Создай белую рубашку»"}
-                    </p>
+                    <div className="rounded-2xl bg-[#f6f6f7] dark:bg-zinc-900 border border-[#e1e3e5] dark:border-zinc-800 p-3 text-[12px] text-[#202223] dark:text-zinc-200 leading-relaxed">
+                      {lastVoiceCard.text}
+                    </div>
                   )}
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Bottom Call Controls & Quick Suggestions */}
-            <div className="relative z-10 space-y-4">
-              {/* Quick Voice Prompt Suggestions */}
-              <div className="flex flex-wrap items-center justify-center gap-1.5">
-                {[
-                  activeLang === "uz" ? "Buyurtmalarni och" : activeLang === "en" ? "Open orders" : "Открой заказы",
-                  activeLang === "uz" ? "Oq ko'ylak yarat" : activeLang === "en" ? "Create white shirt" : "Создай белую рубашку",
-                  activeLang === "uz" ? "Savdo hisoboti" : activeLang === "en" ? "Sales report" : "Отчет по продажам",
-                ].map((hint, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleVoiceCallTurn(hint)}
-                    className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-[11px] text-zinc-300 transition cursor-pointer"
-                  >
-                    💬 «{hint}»
-                  </button>
-                ))}
+            {/* Bottom Animated Glowing Waveform + Mute & Red End Call (×) Buttons */}
+            <div className="space-y-4 z-10 pt-2">
+              {/* Animated Multi-Color Glowing Equalizer Wave (Shopify Sidekick style) */}
+              <div className="relative h-14 flex items-center justify-center gap-1.5 px-6 overflow-hidden rounded-2xl bg-gradient-to-t from-sky-500/10 via-violet-500/5 to-transparent py-2">
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((bar) => {
+                  const isActiveWave =
+                    !isCallMuted &&
+                    (voiceCallStatus === "listening" ||
+                      voiceCallStatus === "speaking" ||
+                      voiceCallStatus === "thinking");
+                  return (
+                    <span
+                      key={bar}
+                      style={{
+                        animationDelay: `${bar * 90}ms`,
+                        height: isActiveWave
+                          ? `${16 + ((bar * 13) % 26)}px`
+                          : "6px",
+                      }}
+                      className={`w-1.5 rounded-full transition-all duration-300 ${
+                        voiceCallStatus === "speaking"
+                          ? "bg-gradient-to-t from-[#00a86b] via-[#0096ff] to-[#a855f7] animate-pulse"
+                          : isActiveWave
+                          ? "bg-gradient-to-t from-[#005bd3] via-[#38bdf8] to-[#00a86b] animate-pulse"
+                          : "bg-slate-300 dark:bg-zinc-700"
+                      }`}
+                    />
+                  );
+                })}
               </div>
 
-              {/* Main Call Action Buttons */}
-              <div className="flex items-center justify-center gap-5 pt-2 border-t border-white/10">
-                {/* Mute Mic Button */}
+              {/* Two Circular Controls: Mute Microphone (Gray) & End Call × (Red) */}
+              <div className="flex items-center justify-center gap-4 pb-1">
                 <button
                   type="button"
-                  onClick={toggleCallMute}
-                  className={`p-3.5 rounded-full transition cursor-pointer ${
+                  onClick={() => {
+                    const nextMuted = !isCallMuted;
+                    setIsCallMuted(nextMuted);
+                    isCallMutedRef.current = nextMuted;
+                    if (nextMuted && recognitionRef.current) {
+                      try {
+                        recognitionRef.current.stop();
+                      } catch (_) {}
+                    } else if (!nextMuted && recognitionRef.current) {
+                      try {
+                        recognitionRef.current.start();
+                      } catch (_) {}
+                    }
+                  }}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition shadow-sm cursor-pointer ${
                     isCallMuted
-                      ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                      : "bg-white/10 hover:bg-white/20 text-zinc-300 border border-white/10"
+                      ? "bg-rose-100 text-rose-600 border border-rose-200"
+                      : "bg-[#f1f2f4] hover:bg-[#e3e5e7] dark:bg-zinc-800 text-[#202223] dark:text-white border border-[#d2d5d8] dark:border-zinc-700"
                   }`}
-                  title={isCallMuted ? "Включить микрофон" : "Заглушить микрофон"}
+                  title={
+                    isCallMuted
+                      ? uiLang === "uz"
+                        ? "Mikrofonni yoqish"
+                        : uiLang === "en"
+                        ? "Unmute microphone"
+                        : "Включить микрофон"
+                      : uiLang === "uz"
+                      ? "Mikrofonni o'chirish"
+                      : uiLang === "en"
+                      ? "Mute microphone"
+                      : "Отключить микрофон"
+                  }
                 >
                   {isCallMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                 </button>
 
-                {/* End Call Button */}
                 <button
                   type="button"
                   onClick={endVoiceCall}
-                  className="p-4 rounded-full bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition transform hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
-                  title="Завершить голосовой звонок"
+                  className="w-12 h-12 rounded-full bg-[#e51c00] hover:bg-[#c81900] text-white shadow-lg flex items-center justify-center transition cursor-pointer"
+                  title={
+                    uiLang === "uz"
+                      ? "Suhbatni yakunlash"
+                      : uiLang === "en"
+                      ? "End voice call"
+                      : "Завершить голосовой сеанс"
+                  }
                 >
-                  <PhoneOff className="w-6 h-6" />
+                  <X className="w-5 h-5" strokeWidth={2.4} />
                 </button>
               </div>
             </div>
           </div>
-        ) : activeTab === "studio" ? (
-          /* =============================================================== */
-          /* DEDICATED AI PHOTO STUDIO WORKSPACE (IMAGE-TO-IMAGE / INPAINT)  */
-          /* =============================================================== */
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* 1. Studio Status & Architecture Card */}
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-violet-500/10 via-indigo-500/10 to-pink-500/10 border border-violet-500/20 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                  <span className="font-bold text-xs text-slate-900 dark:text-white">
-                    AI Фотостудия (Image-to-Image / Inpaint)
-                  </span>
-                </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>{fooocusStatus.engine || "Apple Silicon M2"}</span>
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-600 dark:text-zinc-300 font-normal leading-relaxed">
-                {activeLang === "uz"
-                  ? "Haqiqiy tovar rasmini yuklang (kiyim, taom, gadjet). AI fonni tozalaydi, yog'och stol, marmar yoki studiya fonini soyalar va nur bilan hosil qilib beradi."
-                  : activeLang === "en"
-                  ? "Upload a product photo (food, fashion, tech). AI isolates the subject and synthesizes photorealistic studio backdrops, contact shadows, and lighting."
-                  : "Загрузите реальное фото товара (еда, одежда, гаджет). ИИ удалит исходный фон и достроит реалистичное студийное окружение со светом и контактными тенями."}
-              </p>
-            </div>
-
-            {/* 2. Photo Upload or Catalog Selector */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
-                  <span>1. Фотография товара</span>
-                  <span className="text-[10px] font-normal text-slate-400">
-                    (реальный снимок без обработки)
-                  </span>
-                </label>
-                {catalogProducts.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowCatalogPicker(!showCatalogPicker)}
-                    className="text-[11px] font-semibold text-violet-600 hover:text-violet-700 dark:text-violet-400 flex items-center gap-1 cursor-pointer"
-                  >
-                    <Package className="w-3.5 h-3.5" />
-                    <span>{showCatalogPicker ? "Скрыть каталог" : "Выбрать из каталога"}</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Catalog Horizontal Quick Picker */}
-              {showCatalogPicker && catalogProducts.length > 0 && (
-                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900/80 border border-slate-200/80 dark:border-zinc-800 space-y-1.5 animate-in fade-in">
-                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                    Товары вашего магазина:
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {catalogProducts
-                      .filter((p) => p.image_url)
-                      .slice(0, 10)
-                      .map((p) => (
-                        <div
-                          key={p.id}
-                          onClick={() => handleSelectCatalogProduct(p)}
-                          className="shrink-0 w-24 p-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-violet-500 cursor-pointer text-center group transition"
-                        >
-                          <img
-                            src={p.image_url}
-                            alt={p.name_ru || p.name_uz}
-                            className="w-full h-16 object-contain rounded-md mb-1 bg-slate-100 dark:bg-zinc-900"
-                          />
-                          <div className="text-[10px] font-medium text-slate-800 dark:text-zinc-200 truncate group-hover:text-violet-600">
-                            {p.name_ru || p.name_uz}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Hidden file input */}
-              <input
-                type="file"
-                ref={studioFileInputRef}
-                accept="image/*"
-                className="hidden"
-                onChange={handleStudioFileUpload}
-              />
-
-              {studioImagePreview ? (
-                <div className="p-3 rounded-2xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={studioImagePreview}
-                      alt="Product Preview"
-                      className="w-16 h-16 object-contain rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700"
-                    />
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">
-                        {studioImageFile ? studioImageFile.name : "Выбранный товар"}
-                      </div>
-                      <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                        <Check className="w-3 h-3" />
-                        <span>Фото готово к обработке</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => studioFileInputRef.current?.click()}
-                      className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-50 text-slate-700 dark:text-zinc-300 text-xs font-semibold border border-slate-200 dark:border-zinc-700 transition cursor-pointer"
-                    >
-                      Заменить
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStudioImagePreview(null);
-                        setStudioImageFile(null);
-                        setStudioResult(null);
-                      }}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
-                      title="Удалить фото"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  onClick={() => studioFileInputRef.current?.click()}
-                  className="p-6 rounded-2xl border-2 border-dashed border-slate-300 dark:border-zinc-700 hover:border-violet-500 dark:hover:border-violet-500 bg-slate-50/50 dark:bg-zinc-900/40 hover:bg-violet-50/20 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer text-center group"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <UploadCloud className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
-                      Нажмите для загрузки фото товара
-                    </span>
-                    <p className="text-[11px] text-slate-400 font-normal mt-0.5">
-                      PNG, JPG, WEBP (еда, одежда, аксессуары, гаджеты)
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 3. Prompt & Voice Input */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
-                  <span>2. Пожелания к фото (Текст или Голос)</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={handleToggleStudioMic}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer ${
-                    studioIsListening
-                      ? "bg-rose-500 text-white animate-pulse"
-                      : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-violet-100 hover:text-violet-700"
-                  }`}
-                >
-                  {studioIsListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                  <span>{studioIsListening ? "Слушаю..." : "Голосовой ввод"}</span>
-                </button>
-              </div>
-
-              <textarea
-                rows={2}
-                value={studioPrompt}
-                onChange={(e) => setStudioPrompt(e.target.value)}
-                placeholder="Опишите фон и свет (например: «Помести товар на деревянный стол и добавь студийный свет»)..."
-                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 transition resize-none font-normal"
-              />
-
-              {/* Preset Chips */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Быстрые студийные стили:
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {studioPresetChips.map((chip, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setStudioPrompt(chip.prompt);
-                        if (studioImagePreview) {
-                          handleRunStudioInpaint(chip.prompt);
-                        }
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-700 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-700 hover:border-violet-300 transition cursor-pointer"
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Generate Button */}
-            <button
-              type="button"
-              disabled={studioIsProcessing || (!studioImageFile && !studioImagePreview)}
-              onClick={() => handleRunStudioInpaint()}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-pink-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-violet-600/25 hover:opacity-95 disabled:opacity-40 transition transform active:scale-98 cursor-pointer"
-            >
-              {studioIsProcessing ? (
-                <>
-                  <Sparkles className="w-4 h-4 animate-spin" />
-                  <span>Синтез студийного фото (Inpaint M2)...</span>
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-4 h-4" />
-                  <span>Сгенерировать фото (Image-to-Image / Inpaint)</span>
-                </>
-              )}
-            </button>
-
-            {/* Processing State */}
-            {studioIsProcessing && (
-              <div className="p-4 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200/80 dark:border-violet-800/40 shadow-md space-y-3 animate-pulse">
-                <div className="flex items-center justify-between text-xs font-bold text-violet-600 dark:text-violet-400">
-                  <span className="flex items-center gap-1.5">
-                    <Wand2 className="w-4 h-4 animate-spin" />
-                    <span>Синтез окружения и контактных теней...</span>
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200">
-                    Neural Studio M2
-                  </span>
-                </div>
-                <div className="h-44 rounded-xl bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 dark:from-zinc-800 dark:via-zinc-700 dark:to-zinc-800 flex items-center justify-center text-xs text-slate-400">
-                  <div className="flex flex-col items-center gap-2">
-                    <Sparkles className="w-6 h-6 text-violet-500 animate-bounce" />
-                    <span>Удаление фона • Прорисовка студийного стола и света...</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 5. Result Showcase */}
-            {studioResult && !studioIsProcessing && (
-              <div className="p-4 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200 dark:border-violet-800/60 shadow-lg space-y-3 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span>Результат фотостудии (Image-to-Image)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200">
-                      {studioResult.execution_time || "0.6s"}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200">
-                      {studioResult.theme_title || "Студия"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Comparison Mode Switcher */}
-                <div className="flex bg-slate-100 dark:bg-zinc-800/80 rounded-xl p-1 gap-1 text-[11px] font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => setStudioComparisonMode("after")}
-                    className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
-                      studioComparisonMode === "after"
-                        ? "bg-white dark:bg-zinc-700 text-violet-700 dark:text-violet-300 shadow-xs"
-                        : "text-slate-500 hover:text-slate-800 dark:text-zinc-400"
-                    }`}
-                  >
-                    ✨ Студийный снимок (После)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStudioComparisonMode("before")}
-                    className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
-                      studioComparisonMode === "before"
-                        ? "bg-white dark:bg-zinc-700 text-violet-700 dark:text-violet-300 shadow-xs"
-                        : "text-slate-500 hover:text-slate-800 dark:text-zinc-400"
-                    }`}
-                  >
-                    📷 Исходное фото (До)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStudioComparisonMode("split")}
-                    className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
-                      studioComparisonMode === "split"
-                        ? "bg-white dark:bg-zinc-700 text-violet-700 dark:text-violet-300 shadow-xs"
-                        : "text-slate-500 hover:text-slate-800 dark:text-zinc-400"
-                    }`}
-                  >
-                    ↔️ Сравнить рядом
-                  </button>
-                </div>
-
-                {/* Visual View */}
-                {studioComparisonMode === "split" ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1 text-center">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase">До (Исходное)</span>
-                      <div
-                        className="h-44 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 cursor-pointer"
-                        onClick={() =>
-                          setPreviewImageModal(studioResult.original_url || studioImagePreview)
-                        }
-                      >
-                        <img
-                          src={studioResult.original_url || studioImagePreview || ""}
-                          alt="Before"
-                          className="w-full h-full object-contain"
+        ) : (
+          <>
+            {/* Messages Feed */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.length === 0 ? (
+                <div className="h-full min-h-[360px] flex flex-col items-center justify-center text-center px-3 py-6 space-y-6">
+                  <div className="flex flex-col items-center space-y-3">
+                    <div className="relative w-16 h-16 rounded-full bg-[#1c1d1f] text-white flex items-center justify-center shadow-md">
+                      <svg className="w-9 h-9" viewBox="0 0 48 48" fill="none">
+                        <rect
+                          x="7"
+                          y="17"
+                          width="14"
+                          height="11"
+                          rx="3.5"
+                          stroke="white"
+                          strokeWidth="2.6"
+                          fill="#2c2d30"
                         />
-                      </div>
-                    </div>
-                    <div className="space-y-1 text-center">
-                      <span className="text-[10px] font-bold text-emerald-500 uppercase">После (Inpaint)</span>
-                      <div
-                        className="h-44 rounded-xl overflow-hidden bg-slate-950 border border-emerald-500/40 shadow-sm cursor-pointer"
-                        onClick={() => setPreviewImageModal(studioResult.image_url)}
-                      >
-                        <img
-                          src={studioResult.image_url}
-                          alt="After"
-                          className="w-full h-full object-contain"
+                        <rect
+                          x="27"
+                          y="17"
+                          width="14"
+                          height="11"
+                          rx="3.5"
+                          stroke="white"
+                          strokeWidth="2.6"
+                          fill="#2c2d30"
                         />
-                      </div>
+                        <path
+                          d="M21 21.5H27"
+                          stroke="white"
+                          strokeWidth="2.6"
+                          strokeLinecap="round"
+                        />
+                        <circle cx="14" cy="22.5" r="2" fill="white" />
+                        <circle cx="34" cy="22.5" r="2" fill="white" />
+                      </svg>
+                      <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#00a86b] text-white flex items-center justify-center">
+                        <Sparkles className="w-3 h-3" />
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-[13px] font-medium text-[#616161] dark:text-zinc-400">
+                        {uiLang === "uz"
+                          ? `Salom, ${store?.name || "Do'kon"}`
+                          : uiLang === "en"
+                          ? `Hey ${store?.name || "Seller"}`
+                          : `Привет, ${store?.name || "Селлер"}`}
+                      </p>
+                      <h2 className="text-[20px] font-bold text-[#202223] dark:text-white tracking-tight">
+                        {uiLang === "uz"
+                          ? "Nimadan boshlaymiz?"
+                          : uiLang === "en"
+                          ? "Where should we start?"
+                          : "С чего начнем?"}
+                      </h2>
                     </div>
                   </div>
-                ) : (
-                  <div
-                    className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group cursor-pointer"
-                    onClick={() =>
-                      setPreviewImageModal(
-                        studioComparisonMode === "before"
-                          ? studioResult.original_url || studioImagePreview
-                          : studioResult.image_url
-                      )
-                    }
-                  >
-                    <img
-                      src={
-                        studioComparisonMode === "before"
-                          ? studioResult.original_url || studioImagePreview || ""
-                          : studioResult.image_url
-                      }
-                      alt="Studio Inpaint"
-                      className="w-full h-60 sm:h-72 object-contain transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 text-white backdrop-blur-xs">
-                      {studioComparisonMode === "before" ? "📷 Исходное фото" : "✨ Студийный снимок"}
-                    </div>
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-medium text-xs">
-                      <ZoomIn className="w-4 h-4" />
-                      <span>Нажмите для увеличения (HD)</span>
-                    </div>
-                  </div>
-                )}
 
-                {/* Success Notification */}
-                {studioSavedSuccess && (
-                  <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    <span>Фотография успешно сохранена в файлы и каталог магазина!</span>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={handleSaveStudioResultToCatalog}
-                    className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
-                  >
-                    <Check className="w-4 h-4" />
-                    <span>Сохранить в каталог</span>
-                  </button>
-
-                  <a
-                    href={studioResult.image_url}
-                    download="storebox_studio_photo.png"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Скачать PNG</span>
-                  </a>
-                </div>
-
-                {/* Quick Reroll Chips */}
-                <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-1.5">
-                  <span className="text-[10px] font-semibold text-slate-400">
-                    Сгенерировать другой фон для этого же товара:
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {studioPresetChips.map((c, i) => (
+                  <div className="w-full space-y-2 max-w-[340px]">
+                    {quickSuggestions.map((item, idx) => (
                       <button
-                        key={i}
+                        key={idx}
                         type="button"
-                        onClick={() => handleRunStudioInpaint(c.prompt)}
-                        className="px-2 py-1 rounded-md text-[10px] font-medium bg-slate-50 dark:bg-zinc-900 hover:bg-violet-50 dark:hover:bg-violet-950/40 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 transition cursor-pointer"
+                        onClick={() => handleSend(item.prompt)}
+                        className="w-full px-3.5 py-2.5 text-left rounded-xl bg-[#f6f6f7] dark:bg-zinc-900 hover:bg-[#ebebeb] dark:hover:bg-zinc-800 border border-[#e1e3e5] dark:border-zinc-800 text-[12.5px] text-[#202223] dark:text-zinc-200 font-medium transition flex items-center justify-between group cursor-pointer"
                       >
-                        {c.label}
+                        <span className="truncate pr-2">{item.label}</span>
+                        <ArrowUpRight className="w-3.5 h-3.5 text-[#616161] group-hover:text-[#202223] dark:group-hover:text-white shrink-0" />
                       </button>
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* 2. Messages Canvas */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.length === 0 ? (
-            <div className="space-y-5 pt-3">
-              {/* Welcome Card */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-pink-500/5 border border-violet-500/20 text-slate-900 dark:text-white space-y-2.5">
-                <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400 font-bold text-xs">
-                  <Sparkles className="w-4 h-4" />
-                  <span>
-                    {activeLang === "uz"
-                      ? "Salom! Men StoreBox Sidekick biznes yordamchingizman."
-                      : activeLang === "en"
-                      ? "Welcome! I am your StoreBox Sidekick AI Partner."
-                      : "Привет! Я ваш умный помощник StoreBox Sidekick."}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-zinc-300 font-normal leading-relaxed">
-                  {activeLang === "uz"
-                    ? "Men tovarlar qo'shish, 1024x1024 studiya rasmlarini yaratish, fotosuratlardan fonni tozalash (rembg AI), 7 kunlik savdo hisobotlarini tahlil qilish va promokodlar chiqarishda yordam beraman."
-                    : activeLang === "en"
-                    ? "I can manage your inventory, generate 1024x1024 studio product visuals, remove photo backgrounds locally (rembg), analyze sales trends, and craft high-converting campaigns."
-                    : "Я умею создавать товары, генерировать студийные фото 1024x1024, удалять фон с фотографий через rembg, формировать отчеты по продажам и запускать промо-акции."}
-                </p>
-                <div className="pt-1 flex items-center gap-2 text-[11px] text-slate-400">
-                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>
-                    {activeLang === "uz"
-                      ? "100% Maxfiy • Mahalliy AI • Bepul"
-                      : activeLang === "en"
-                      ? "100% Private • Local AI Studio • Zero Cost"
-                      : "Локальный AI Studio • Без платных API • 100% приватно"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick Action Chips */}
-              <div>
-                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
-                  {activeLang === "uz"
-                    ? "Tezkor buyruqlar"
-                    : activeLang === "en"
-                    ? "Quick Actions"
-                    : "Быстрые команды"}
-                </div>
-                <div className="grid grid-cols-1 gap-2">
-                  {currentPrompts.map((p, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleSend(p.text)}
-                      className="p-3 text-left rounded-xl bg-slate-50 dark:bg-zinc-900/70 hover:bg-violet-50 dark:hover:bg-violet-950/30 border border-slate-200/70 dark:border-zinc-800 hover:border-violet-200 dark:hover:border-violet-800/50 text-xs text-slate-700 dark:text-zinc-200 font-medium transition-all flex items-center justify-between group cursor-pointer"
+              ) : (
+                messages.map((m) =>
+                  m.sender === "system_voice" ? (
+                    <div
+                      key={m.id}
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#f6f6f7] dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800 text-xs text-[#616161] dark:text-zinc-400"
                     >
-                      <span>{p.label}</span>
-                      <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-violet-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            messages.map((m) => (
-              <div
-                key={m.id}
-                className={`flex gap-2.5 ${m.sender === "user" ? "justify-end" : "justify-start"}`}
-              >
-                {m.sender === "assistant" && (
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                    <Sparkles className="w-3.5 h-3.5" />
-                  </div>
-                )}
-
-                <div className={`max-w-[88%] sm:max-w-[85%] space-y-2.5 ${m.sender === "user" ? "items-end" : ""}`}>
-                  {/* Bubble */}
-                  <div
-                    className={`p-3.5 rounded-2xl text-xs font-normal leading-relaxed ${
-                      m.sender === "user"
-                        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-tr-xs shadow-xs"
-                        : "bg-slate-100 dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 rounded-tl-xs border border-slate-200/60 dark:border-zinc-800"
-                    }`}
-                  >
-                    {m.isVoice && (
-                      <div className="flex items-center gap-1 text-[10px] text-violet-400 font-semibold mb-1">
-                        <Mic className="w-3 h-3" />
-                        <span>Голосовой запрос</span>
+                      <div className="flex items-center gap-2 font-medium text-[#202223] dark:text-zinc-200">
+                        <span className="w-2 h-2 rounded-full bg-[#00a86b]" />
+                        <span>{m.text}</span>
                       </div>
-                    )}
-                    {m.action_data?.attached_image_url && (
-                      <div
-                        className="mb-2.5 rounded-xl overflow-hidden max-w-[220px] border border-white/20 dark:border-slate-800 bg-slate-950 cursor-pointer shadow-xs group"
-                        onClick={() => setPreviewImageModal(m.action_data.attached_image_url)}
-                        title="Нажмите для увеличения"
-                      >
-                        <img
-                          src={m.action_data.attached_image_url}
-                          alt="Attached product"
-                          className="w-full h-28 object-cover group-hover:scale-105 transition-transform"
-                        />
-                      </div>
-                    )}
-                    <div className="whitespace-pre-line select-text">{m.text}</div>
-                  </div>
-
-                  {/* 0. CLARIFY IMAGE CARD (Shopify Sidekick Interactive Clarification) */}
-                  {m.action_type === "clarify_image" && (
-                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200 dark:border-violet-800/50 shadow-md space-y-3">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
-                        <Sparkles className="w-4 h-4" />
-                        <span>
-                          {activeLang === "uz"
-                            ? "Rasm yaratish bo'yicha aniqlashtirish"
-                            : activeLang === "en"
-                            ? "Image Creation Details"
-                            : "Уточнение для генерации изображения"}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed font-normal">
-                        {m.text}
-                      </p>
-                      <div className="flex flex-col gap-1.5 pt-1">
-                        {(m.suggestions && m.suggestions.length > 0
-                          ? m.suggestions
-                          : [
-                              "Белая рубашка со студийным освещением",
-                              "Сочный бургер BBQ",
-                              "Черное худи оверсайз",
-                              "Рекламный баннер со скидкой 20%",
-                            ]
-                        ).map((chip, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => handleSend(chip)}
-                            className="p-2.5 text-left rounded-xl bg-slate-50 dark:bg-zinc-900/80 hover:bg-violet-50 dark:hover:bg-violet-950/30 border border-slate-200/70 dark:border-zinc-800 text-xs text-slate-800 dark:text-zinc-200 font-medium transition cursor-pointer flex items-center justify-between group"
-                          >
-                            <span>{chip}</span>
-                            <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-violet-600 transition" />
-                          </button>
-                        ))}
-                      </div>
+                      <span className="text-[10.5px]">{m.timestamp}</span>
                     </div>
-                  )}
-
-                  {/* 1. IMAGE GENERATED CARD (1024x1024 Studio Showcase) */}
-                  {m.action_type === "image_generated" && m.action_data && (
-                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200 dark:border-violet-800/50 shadow-md space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
-                          <Wand2 className="w-4 h-4" />
-                          <span>AI Commercial Studio (1024x1024 HD)</span>
+                  ) : (
+                    <div
+                      key={m.id}
+                      className={`flex gap-2.5 ${
+                        m.sender === "user" ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      {m.sender === "assistant" && (
+                        <div className="w-7 h-7 rounded-full bg-[#1c1d1f] text-white flex items-center justify-center shrink-0 mt-0.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#00a86b]" />
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
-                            ⚡ M2 Fast (0.04s)
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200/60">
-                            {m.action_data.theme === "clean_white"
-                              ? "Светлая студия"
-                              : m.action_data.theme === "gourmet_warm"
-                              ? "Gourmet Warm"
-                              : "Dark Luxury"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Image Preview with Hover Zoom */}
-                      <div
-                        className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group cursor-pointer"
-                        onClick={() => setPreviewImageModal(m.action_data.image_url)}
-                      >
-                        <img
-                          src={m.action_data.image_url}
-                          alt={m.action_data.product_name}
-                          className="w-full h-56 sm:h-64 object-contain transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-medium text-xs">
-                          <ZoomIn className="w-4 h-4" />
-                          <span>Нажмите для увеличения</span>
-                        </div>
-                      </div>
-
-                      <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                        {m.action_data.product_name}
-                      </div>
-
-                      {/* Studio Action Buttons */}
-                      <div className="grid grid-cols-3 gap-1.5 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => setPreviewImageModal(m.action_data.image_url)}
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-violet-600" />
-                          <span>Просмотр</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSend(`Удали фон у товара ${m.action_data.product_name}`)
-                          }
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
-                        >
-                          <Scissors className="w-3.5 h-3.5 text-violet-600" />
-                          <span>rembg</span>
-                        </button>
-
-                        <a
-                          href={m.action_data.image_url}
-                          download={`storebox_${m.action_data.product_name}.png`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
-                        >
-                          <Download className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400" />
-                          <span>Скачать</span>
-                        </a>
-                      </div>
-
-                      {/* Quick Iterative Typography Button */}
-                      <div className="pt-1">
-                        <button
-                          type="button"
-                          onClick={() => handleSend("Добавь надпись Белый УЗБ")}
-                          className="w-full p-2 rounded-lg bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 dark:hover:bg-violet-900/50 border border-violet-200 dark:border-violet-800/60 text-violet-700 dark:text-violet-300 font-semibold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
-                        >
-                          <Wand2 className="w-3.5 h-3.5" />
-                          <span>Добавить надпись «Белый УЗБ»</span>
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800 text-[11px]">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSend(
-                              m.action_data.theme === "clean_white"
-                                ? `Создай студийное фото в темном стиле для ${m.action_data.product_name}`
-                                : `Создай студийное фото в светлом стиле для ${m.action_data.product_name}`
-                            )
-                          }
-                          className="text-violet-600 hover:text-violet-700 dark:text-violet-400 font-semibold flex items-center gap-1 cursor-pointer"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          <span>Сменить стиль фона</span>
-                        </button>
-
-                        <Link
-                          to="/products"
-                          className="text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium flex items-center gap-1"
-                        >
-                          <span>В каталог</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2. IMAGE PROCESSED (rembg AI Studio Composite) */}
-                  {m.action_type === "image_processed" && m.action_data && (
-                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200 dark:border-violet-800/40 shadow-xs space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
-                          <Scissors className="w-4 h-4" />
-                          <span>Фон удален (rembg AI Studio)</span>
-                        </div>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Готово
-                        </span>
-                      </div>
+                      )}
 
                       <div
-                        className="p-3 rounded-xl bg-slate-100 dark:bg-zinc-900 flex justify-center cursor-pointer group"
-                        onClick={() => setPreviewImageModal(m.action_data.new_image_url)}
+                        className={`max-w-[90%] space-y-2 ${
+                          m.sender === "user" ? "items-end" : "w-full"
+                        }`}
                       >
-                        <img
-                          src={m.action_data.new_image_url}
-                          alt="Processed"
-                          className="h-36 w-36 object-contain rounded-md transition-transform group-hover:scale-105"
-                        />
-                      </div>
-
-                      <div className="text-center text-[11px] text-slate-500">
-                        Прикреплено к товару: <b>{m.action_data.product_name}</b>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800 text-[11px]">
-                        <a
-                          href={m.action_data.new_image_url}
-                          download="studio_rembg.png"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-violet-600 dark:text-violet-400 font-semibold flex items-center gap-1"
+                        <div
+                          className={`p-3.5 rounded-2xl text-[12.5px] leading-relaxed ${
+                            m.sender === "user"
+                              ? "bg-[#f1f2f4] text-[#202223] dark:bg-zinc-800 dark:text-white rounded-tr-xs"
+                              : "bg-white dark:bg-zinc-900 text-[#202223] dark:text-zinc-200 rounded-tl-xs border border-[#ebebeb] dark:border-zinc-800"
+                          }`}
                         >
-                          <Download className="w-3 h-3" />
-                          <span>Скачать студийный PNG</span>
-                        </a>
+                          <div className="whitespace-pre-line">{m.text}</div>
 
-                        <Link
-                          to="/products"
-                          className="text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium flex items-center gap-1"
-                        >
-                          <span>Открыть товар</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2.5 IMAGE-TO-IMAGE / INPAINT STUDIO CARD */}
-                  {m.action_type === "image_to_image" && m.action_data && (
-                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200 dark:border-violet-800/50 shadow-md space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
-                          <Camera className="w-4 h-4" />
-                          <span>AI Фотостудия • Image-to-Image (Inpaint)</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
-                            {m.action_data.execution_time || "0.6s"}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200/60">
-                            {m.action_data.theme_title || "Студия"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Image Preview with Hover Zoom */}
-                      <div
-                        className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group cursor-pointer"
-                        onClick={() => setPreviewImageModal(m.action_data.image_url)}
-                      >
-                        <img
-                          src={m.action_data.image_url}
-                          alt={m.action_data.product_name}
-                          className="w-full h-56 sm:h-64 object-contain transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 text-white backdrop-blur-xs flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-violet-400" />
-                          <span>Студийный снимок</span>
-                        </div>
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-medium text-xs">
-                          <ZoomIn className="w-4 h-4" />
-                          <span>Нажмите для увеличения (HD)</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs font-semibold text-slate-900 dark:text-white">
-                        <span>{m.action_data.product_name}</span>
-                        <span className="text-[11px] text-slate-400 font-normal">
-                          {m.action_data.engine || "Apple Silicon M2"}
-                        </span>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="grid grid-cols-3 gap-1.5 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => setPreviewImageModal(m.action_data.image_url)}
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-violet-600" />
-                          <span>Просмотр</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              await api.post("/ai/save-to-catalog/", {
-                                image_url: m.action_data.image_url,
-                                name: `${m.action_data.product_name || "Товар"} (AI Studio)`,
-                                price: 250000,
-                                stock: 20,
-                              });
-                              alert("Товар с этим фото успешно сохранен в каталог!");
-                            } catch (e) {
-                              alert("Ошибка сохранения в каталог");
-                            }
-                          }}
-                          className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer border border-emerald-200/60 dark:border-emerald-800/40"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>В каталог</span>
-                        </button>
-
-                        <a
-                          href={m.action_data.image_url}
-                          download={`storebox_studio_${m.action_data.product_name}.png`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
-                        >
-                          <Download className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400" />
-                          <span>Скачать</span>
-                        </a>
-                      </div>
-
-                      {/* Theme variation chips */}
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800 text-[11px]">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSend(
-                              m.action_data.theme === "wood"
-                                ? "Помести товар на белый мрамор"
-                                : "Помести товар на деревянный стол"
-                            )
-                          }
-                          className="text-violet-600 hover:text-violet-700 dark:text-violet-400 font-semibold flex items-center gap-1 cursor-pointer"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          <span>Сменить стиль фона</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("studio");
-                            setStudioImagePreview(m.action_data.image_url);
-                          }}
-                          className="text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium flex items-center gap-1 cursor-pointer"
-                        >
-                          <span>Открыть в студии</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2.6 OPEN STUDIO CTA CARD */}
-                  {m.action_type === "open_studio" && (
-                    <div className="p-4 rounded-2xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-pink-500/5 border border-violet-500/20 space-y-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-violet-600 dark:text-violet-400">
-                        <Camera className="w-4 h-4" />
-                        <span>AI Фотостудия (Image-to-Image / Inpaint)</span>
-                      </div>
-                      <p className="text-xs text-slate-600 dark:text-zinc-300 font-normal leading-relaxed">
-                        Загрузите фото товара или выберите его из каталога, чтобы перенести его на деревянный стол, мрамор или студийную циклораму.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab("studio");
-                          if (m.action_data?.suggested_prompt) {
-                            setStudioPrompt(m.action_data.suggested_prompt);
-                          }
-                        }}
-                        className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md hover:opacity-95 transition cursor-pointer"
-                      >
-                        <Wand2 className="w-4 h-4" />
-                        <span>Перейти в AI Фотостудию</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* 3. BANNER GENERATED CARD (HTML5 Canvas + Theme Switcher + Download) */}
-                  {m.action_type === "banner_generated" && m.action_data && (
-                    <div className="space-y-2">
-                      <BannerCanvas
-                        data={m.action_data}
-                        onRemoveBg={() =>
-                          handleSend(
-                            activeLang === "uz"
-                              ? `Tovardan fonni tozalash: ${m.action_data.product_name}`
-                              : activeLang === "en"
-                              ? `Remove background from: ${m.action_data.product_name}`
-                              : `Удали фон у товара ${m.action_data.product_name}`
-                          )
-                        }
-                      />
-                    </div>
-                  )}
-
-                  {/* 4. PRODUCT CREATED CARD */}
-                  {m.action_type === "product_created" && m.action_data && (
-                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-emerald-200/80 dark:border-emerald-800/40 shadow-xs space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
-                          <Check className="w-4 h-4" />
-                          <span>Товар опубликован в каталоге</span>
-                        </div>
-                        <span className="text-[11px] font-semibold text-slate-500">
-                          {m.action_data.stock} шт на складе
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        {m.action_data.image_url && (
-                          <img
-                            src={m.action_data.image_url}
-                            alt={m.action_data.name}
-                            className="w-14 h-14 object-cover rounded-lg border border-slate-200 dark:border-zinc-700 cursor-pointer"
-                            onClick={() => setPreviewImageModal(m.action_data.image_url)}
-                          />
-                        )}
-                        <div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-white">
-                            {m.action_data.name}
-                          </div>
-                          <div className="text-sm font-extrabold text-slate-900 dark:text-white font-mono mt-0.5">
-                            {Number(m.action_data.price).toLocaleString()} UZS
-                          </div>
-                        </div>
-                      </div>
-
-                      <Link
-                        to="/products"
-                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-violet-600 hover:text-violet-700 dark:text-violet-400"
-                      >
-                        <span>Перейти к редактированию товара</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </div>
-                  )}
-
-                  {/* 4. PROMOCODE CREATED CARD */}
-                  {m.action_type === "promocode_created" && m.action_data && (
-                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200/80 dark:border-violet-800/40 shadow-xs space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-violet-700 dark:text-violet-300">
-                          {m.action_data.discount_value}% Скидка
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Активен
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900 p-2.5 rounded-xl border border-slate-200/70 dark:border-zinc-800">
-                        <code className="text-sm font-extrabold text-slate-900 dark:text-white tracking-widest font-mono">
-                          {m.action_data.code}
-                        </code>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(m.action_data.code, m.id)}
-                          className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white dark:bg-zinc-800 text-slate-700 dark:text-white border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 flex items-center gap-1 cursor-pointer transition"
-                        >
-                          {copiedId === m.id ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
+                          {m.sender === "assistant" && m.audio_base64 && (
+                            <div className="mt-2 pt-1.5 border-t border-[#f1f2f4] dark:border-zinc-800/80 flex items-center justify-between text-[10.5px] text-[#8c9196]">
+                              <span>{m.timestamp}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleSpeakMessage(m)}
+                                className="flex items-center gap-1 text-[#00a86b] hover:underline font-medium cursor-pointer"
+                              >
+                                <Volume2 className="w-3 h-3" />
+                                <span>
+                                  {isSpeaking
+                                    ? uiLang === "uz"
+                                      ? "To'xtatish"
+                                      : uiLang === "en"
+                                      ? "Stop"
+                                      : "Стоп"
+                                    : uiLang === "uz"
+                                    ? "Eshitish"
+                                    : uiLang === "en"
+                                    ? "Listen"
+                                    : "Озвучить"}
+                                </span>
+                              </button>
+                            </div>
                           )}
-                          <span>{copiedId === m.id ? "Скопировано" : "Копировать"}</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 5. BULK DISCOUNT CARD */}
-                  {m.action_type === "bulk_discount_applied" && m.action_data && (
-                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-amber-200 dark:border-amber-800/40 shadow-xs space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold text-xs">
-                          <Zap className="w-4 h-4" />
-                          <span>Массовая скидка {m.action_data.discount_pct}%</span>
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-500">
-                          {m.action_data.affected_count} товаров
-                        </span>
-                      </div>
 
-                      {m.action_data.samples && m.action_data.samples.length > 0 && (
-                        <div className="space-y-1.5 text-[11px] bg-slate-50 dark:bg-zinc-900/60 p-2.5 rounded-xl border border-slate-100 dark:border-zinc-800">
-                          {m.action_data.samples.map((s: any, idx: number) => (
-                            <div key={idx} className="flex justify-between items-center">
-                              <span className="text-slate-700 dark:text-zinc-300 truncate max-w-[180px]">
-                                {s.name}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <span className="line-through text-slate-400 text-[10px]">
-                                  {Number(s.old_price).toLocaleString()} UZS
-                                </span>
-                                <span className="font-bold text-slate-900 dark:text-white">
-                                  {Number(s.new_price).toLocaleString()} UZS
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <Link
-                        to="/products"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400"
-                      >
-                        <span>Посмотреть все товары со скидкой</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </div>
-                  )}
-
-                  {/* 6. ANALYTICS REPORT CARD */}
-                  {m.action_type === "analytics_report" && m.action_data && (
-                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-slate-200 dark:border-zinc-800 shadow-xs space-y-2.5">
-                      <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                        Метрики: {m.action_data.period}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900/80 border border-slate-100 dark:border-zinc-800">
-                          <div className="text-[10px] text-slate-400 font-medium">Выручка</div>
-                          <div className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
-                            {Number(m.action_data.revenue).toLocaleString()} UZS
-                          </div>
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900/80 border border-slate-100 dark:border-zinc-800">
-                          <div className="text-[10px] text-slate-400 font-medium">Заказы</div>
-                          <div className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
-                            {m.action_data.orders_count} шт.
-                          </div>
-                        </div>
-                      </div>
-                      <Link
-                        to="/analytics"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-violet-600 dark:text-violet-400"
-                      >
-                        <span>Открыть подробную аналитику</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </div>
-                  )}
-
-                  {/* 7. RECENT ORDERS CARD */}
-                  {m.action_type === "recent_orders" && m.action_data && (
-                    <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18181B] border border-slate-200 dark:border-zinc-800 shadow-xs space-y-2">
-                      <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between">
-                        <span>Последние заказы</span>
-                        <Link to="/orders" className="text-[11px] text-violet-600 hover:underline">
-                          Все заказы
-                        </Link>
-                      </div>
-                      {m.action_data.orders && m.action_data.orders.length > 0 ? (
-                        <div className="space-y-1.5">
-                          {m.action_data.orders.map((o: any) => (
-                            <div
-                              key={o.id}
-                              className="p-2 rounded-xl bg-slate-50 dark:bg-zinc-900/60 flex items-center justify-between text-[11px]"
-                            >
-                              <div>
-                                <span className="font-bold text-slate-900 dark:text-white">
-                                  #{o.id}
-                                </span>{" "}
-                                <span className="text-slate-500">• {o.customer}</span>
-                              </div>
-                              <span className="font-bold text-slate-900 dark:text-white">
-                                {Number(o.total).toLocaleString()} UZS
+                        {m.action && m.action.type === "NAVIGATE" && (
+                          <div
+                            onClick={() => navigate(toSpaPath(m.action?.target, m.action?.spa_path))}
+                            className="px-3 py-2 rounded-xl bg-[#e6f7f0] dark:bg-emerald-950/30 border border-[#8ce0bf] dark:border-emerald-800 flex items-center justify-between text-[12px] cursor-pointer hover:opacity-90 transition"
+                          >
+                            <div className="flex items-center gap-2 font-medium text-[#007f52] dark:text-emerald-300">
+                              <CheckCircle2 className="w-4 h-4 text-[#00a86b]" />
+                              <span>
+                                {uiLang === "uz"
+                                  ? "Bo'limga o'tildi:"
+                                  : uiLang === "en"
+                                  ? "Navigated to:"
+                                  : "Переход выполнен:"}{" "}
+                                <b>{m.action.title || m.action.target}</b>
                               </span>
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-[11px] text-slate-400">Нет активных заказов</div>
-                      )}
+                            <ChevronRight className="w-4 h-4 text-[#00a86b]" />
+                          </div>
+                        )}
+
+                        {m.data_card && renderDataCard(m.data_card, m.id)}
+                      </div>
                     </div>
-                  )}
+                  )
+                )
+              )}
 
-                  {/* Suggestions Pills */}
-                  {m.suggestions && m.suggestions.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {m.suggestions.map((s, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleSend(s)}
-                          className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 hover:bg-violet-100 dark:bg-zinc-800 dark:hover:bg-violet-950/40 text-slate-700 dark:text-zinc-300 hover:text-violet-800 dark:hover:text-violet-300 border border-slate-200/60 dark:border-zinc-700 transition-colors cursor-pointer"
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+              {isLoading && (
+                <div className="flex gap-2.5 items-center">
+                  <div className="w-7 h-7 rounded-full bg-[#1c1d1f] text-white flex items-center justify-center shrink-0 animate-pulse">
+                    <Sparkles className="w-3.5 h-3.5 text-[#00a86b]" />
+                  </div>
+                  <div className="p-3 rounded-2xl bg-[#f6f6f7] dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800 flex items-center gap-2 text-xs text-[#6d7175]">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#00a86b]" />
+                    <span>
+                      {uiLang === "uz"
+                        ? "Sidekick o'ylamoqda..."
+                        : uiLang === "en"
+                        ? "Sidekick is thinking..."
+                        : "Sidekick думает..."}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
+              )}
 
-          {/* Loading Indicator */}
-          {isLoading && (
-            <div className="flex gap-2.5 items-center">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs animate-pulse">
-                <Sparkles className="w-3.5 h-3.5" />
-              </div>
-              <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-zinc-900 rounded-tl-xs border border-slate-200/60 dark:border-zinc-800 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-violet-600 animate-bounce"></span>
-                <span className="w-2 h-2 rounded-full bg-violet-600 animate-bounce [animation-delay:0.2s]"></span>
-                <span className="w-2 h-2 rounded-full bg-violet-600 animate-bounce [animation-delay:0.4s]"></span>
-                <span className="text-xs text-slate-500 font-medium ml-1">
-                  Sidekick думает и анализирует магазин...
-                </span>
-              </div>
+              <div ref={messagesEndRef} />
             </div>
-          )}
 
-          {/* Skeleton Shimmer for Commercial Studio Image Generation */}
-          {generatingSkeleton && (
-            <div className="p-4 rounded-2xl bg-white dark:bg-[#18181B] border border-violet-200/80 dark:border-violet-800/40 shadow-md space-y-3 animate-pulse">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-violet-600 dark:text-violet-400">
-                  <Wand2 className="w-4 h-4 animate-spin" />
-                  <span>Генерация фото студийного качества (1024x1024)...</span>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200">
-                  Apple Silicon M2
-                </span>
-              </div>
-              <div className="w-full h-56 sm:h-64 rounded-xl bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 dark:from-zinc-800 dark:via-zinc-700 dark:to-zinc-800 animate-pulse flex items-center justify-center text-slate-400 text-xs">
-                <div className="flex flex-col items-center gap-2">
-                  <Sparkles className="w-8 h-8 text-violet-500 animate-bounce" />
-                  <span className="font-medium text-slate-500 dark:text-zinc-400 text-center px-4">
-                    Прорисовка коммерческого света, ткани и студийных теней...
-                  </span>
-                </div>
-              </div>
-              <div className="h-4 bg-slate-200 dark:bg-zinc-800 rounded w-3/4"></div>
-              <div className="h-3 bg-slate-100 dark:bg-zinc-850 rounded w-1/2"></div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* 3. Audio wave recording banner */}
-        {isListening && (
-          <div className="p-3 bg-gradient-to-r from-violet-600 to-pink-600 text-white flex items-center justify-between px-4 animate-in slide-in-from-bottom duration-200">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-              </span>
-              <span className="text-xs font-bold">
-                {activeLang === "uz"
-                  ? "Sizni tinglayapman... Ovozli buyruq bering"
-                  : activeLang === "en"
-                  ? "Listening to your voice... Speak command"
-                  : "Слушаю вас... Говорите голосовую команду"}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleSend(input, true)}
-              className="px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-[11px] font-bold transition cursor-pointer"
-            >
-              Отправить
-            </button>
-          </div>
-        )}
-
-        {/* 4. Input Footer */}
-        <div className="p-3 sm:p-4 border-t border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-[#0c0d0e]">
-          {/* Slash Commands Dropdown Menu */}
-          {input.startsWith("/") && (
-            <div className="mb-2 p-1.5 rounded-2xl bg-white dark:bg-zinc-900 border border-violet-200 dark:border-violet-800/60 shadow-xl space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-150">
-              <div className="px-2.5 py-1 text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider flex items-center justify-between">
-                <span className="flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  Команды Sidekick AI
-                </span>
-                <span className="text-slate-400 font-normal">Нажмите для выбора</span>
-              </div>
-              {[
-                {
-                  cmd: "/photo",
-                  label: "Сгенерировать фото товара",
-                  desc: "1024x1024 коммерческое фото со студийным светом",
-                  example: "/photo Белая футболка на деревянном столе",
-                },
-                {
-                  cmd: "/banner",
-                  label: "Рекламный баннер",
-                  desc: "Маркетинговый промо-баннер со скидкой и акцией",
-                  example: "/banner Скидка 20% на весь ассортимент",
-                },
-                {
-                  cmd: "/stock",
-                  label: "Остатки на складе",
-                  desc: "Проверить товары с низким остатком на складе",
-                  example: "Какие товары заканчиваются на складе?",
-                },
-                {
-                  cmd: "/report",
-                  label: "Отчет по продажам",
-                  desc: "Сводка заказов, выручки и динамики за период",
-                  example: "Покажи отчет по продажам за сегодня",
-                },
-              ]
-                .filter((sc) => sc.cmd.toLowerCase().startsWith(input.split(" ")[0].toLowerCase()))
-                .map((item) => (
+            {/* Footer Input Bar (Shopify Sidekick style: +, Mic, Voice Call Waveform Button, Send) */}
+            <div className="p-3 bg-white dark:bg-[#141417] border-t border-[#ebebeb] dark:border-zinc-800">
+              {attachedPreview && (
+                <div className="mb-2 p-2 rounded-xl bg-[#f6f6f7] dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={attachedPreview}
+                      alt="Attached"
+                      className="w-10 h-10 rounded-lg object-cover border border-[#d2d5d8]"
+                    />
+                    <span className="text-xs font-medium text-[#202223] dark:text-zinc-200 truncate max-w-[180px]">
+                      {attachedFile?.name || "photo.jpg"}
+                    </span>
+                  </div>
                   <button
-                    key={item.cmd}
                     type="button"
                     onClick={() => {
-                      if (item.cmd === "/photo" || item.cmd === "/banner") {
-                        setInput(item.cmd + " ");
-                      } else {
-                        handleSend(item.example);
-                      }
+                      setAttachedFile(null);
+                      setAttachedPreview(null);
                     }}
-                    className="w-full p-2 text-left rounded-xl hover:bg-violet-50 dark:hover:bg-violet-950/40 flex items-center justify-between transition cursor-pointer group"
+                    className="p-1 text-[#616161] hover:text-rose-600 cursor-pointer"
                   >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="px-1.5 py-0.5 rounded-md bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 font-mono text-[11px] font-bold">
-                          {item.cmd}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
-                          {item.label}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate mt-0.5 pl-0.5 font-normal">
-                        {item.desc}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-violet-600 transition shrink-0" />
+                    <X className="w-4 h-4" />
                   </button>
-                ))}
-            </div>
-          )}
+                </div>
+              )}
 
-          {/* Chat Photo Attachment Preview Pill */}
-          {chatAttachedPreview && (
-            <div className="mb-2.5 p-2.5 rounded-2xl bg-violet-50/90 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 shadow-xs space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-950 border border-violet-300 dark:border-violet-700 shrink-0 shadow-xs">
-                    <img
-                      src={chatAttachedPreview}
-                      alt="Attached"
-                      className="w-full h-full object-cover"
-                    />
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSend();
+                }}
+                className="rounded-2xl border border-[#d2d5d8] dark:border-zinc-700 bg-white dark:bg-zinc-900 focus-within:border-[#202223] dark:focus-within:border-zinc-500 shadow-2xs transition-all overflow-hidden"
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+                <div className="px-3.5 pt-3 pb-1.5">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={
+                      isListening
+                        ? uiLang === "uz"
+                          ? "Gapiring..."
+                          : uiLang === "en"
+                          ? "Listening..."
+                          : "Говорите..."
+                        : uiLang === "uz"
+                        ? "Qanday yordam bera olaman?"
+                        : uiLang === "en"
+                        ? "How can I help?"
+                        : "Чем я могу помочь?"
+                    }
+                    className="w-full bg-transparent text-[13px] text-[#202223] dark:text-white placeholder-[#8c9196] focus:outline-none"
+                  />
+                </div>
+
+                <div className="px-2.5 pb-2.5 pt-1 flex items-center justify-between">
+                  {/* Left: + Attach Photo & Auto-Voice Toggle */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-[#616161] hover:text-[#202223] hover:bg-[#f1f2f4] dark:hover:bg-zinc-800 transition cursor-pointer"
+                      title={
+                        uiLang === "uz"
+                          ? "Rasm biriktirish"
+                          : uiLang === "en"
+                          ? "Attach photo"
+                          : "Добавить файлы и др."
+                      }
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={toggleVoiceEnabled}
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer ${
+                        voiceEnabled
+                          ? "text-[#00a86b] bg-[#e6f7f0] dark:bg-emerald-950/40"
+                          : "text-[#8c9196] hover:text-[#202223] hover:bg-[#f1f2f4] dark:hover:bg-zinc-800"
+                      }`}
+                      title={
+                        voiceEnabled
+                          ? "Авто-озвучка ответов включена"
+                          : "Включить авто-озвучку ответов"
+                      }
+                    >
+                      {voiceEnabled ? (
+                        <Volume2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <VolumeX className="w-3.5 h-3.5" />
+                      )}
+                    </button>
                   </div>
-                  <div className="min-w-0 text-left">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-violet-700 dark:text-violet-300">
-                      <Camera className="w-3.5 h-3.5" />
-                      <span>Фото товара прикреплено</span>
-                    </div>
-                    <p className="text-[11px] text-slate-700 dark:text-zinc-300 truncate font-medium">
-                      {chatAttachedFile?.name || "photo.jpg"}
-                    </p>
-                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
-                      Задайте пожелание к фону или нажмите Отправить
-                    </p>
+
+                  {/* Right: Mic Dictation + Send / Shopify Voice Mode Button */}
+                  <div className="flex items-center gap-1.5">
+                    {speechSupported && (
+                      <button
+                        type="button"
+                        onClick={toggleMicDictation}
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer ${
+                          isListening
+                            ? "bg-rose-500 text-white animate-pulse"
+                            : "text-[#616161] hover:text-[#202223] hover:bg-[#f1f2f4] dark:hover:bg-zinc-800"
+                        }`}
+                        title={
+                          uiLang === "uz"
+                            ? "Ovoz bilan yozish"
+                            : uiLang === "en"
+                            ? "Voice input"
+                            : "Голосовой ввод"
+                        }
+                      >
+                        {isListening ? (
+                          <MicOff className="w-3.5 h-3.5" />
+                        ) : (
+                          <Mic className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
+
+                    {input.trim() || attachedFile ? (
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-7 h-7 rounded-full bg-[#202223] dark:bg-white text-white dark:text-[#202223] flex items-center justify-center transition cursor-pointer"
+                        title={uiLang === "uz" ? "Yuborish" : uiLang === "en" ? "Send" : "Отправить"}
+                      >
+                        <ArrowUpRight className="w-3.5 h-3.5 -rotate-45" />
+                      </button>
+                    ) : (
+                      /* Shopify Sidekick Voice Call Mode Button (Gradient Waveform Circle) */
+                      <button
+                        type="button"
+                        onClick={startVoiceCall}
+                        className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#005bd3] via-[#00a86b] to-[#a855f7] text-white shadow-xs hover:scale-105 active:scale-95 flex items-center justify-center transition cursor-pointer"
+                        title={
+                          uiLang === "uz"
+                            ? "Jonli ovozli muloqot (Voice Mode)"
+                            : uiLang === "en"
+                            ? "Live Voice Mode"
+                            : "Голосовой режим Sidekick (живой диалог)"
+                        }
+                      >
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M6 10v4M10 7v10M14 9v6M18 11v2"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleRemoveAttachment}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer shrink-0"
-                  title="Удалить прикрепленное фото"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Quick Preset Wish Chips */}
-              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-violet-200/60 dark:border-violet-800/40">
-                {[
-                  "🪵 Помести на деревянный стол",
-                  "🏛️ Помести на белый мрамор",
-                  "📸 Студийный свет циклорама",
-                  "Удали фон (rembg)",
-                ].map((chipText, cIdx) => (
-                  <button
-                    key={cIdx}
-                    type="button"
-                    onClick={() => setInput(chipText)}
-                    className="px-2 py-1 rounded-lg bg-white dark:bg-zinc-900 border border-violet-200/80 dark:border-violet-800/50 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-[10px] font-medium text-violet-900 dark:text-violet-200 transition cursor-pointer shadow-2xs"
-                  >
-                    {chipText}
-                  </button>
-                ))}
-              </div>
+              </form>
             </div>
-          )}
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSend();
-            }}
-            className="flex items-center gap-2"
-          >
-            {/* Hidden File Input for Direct Chat Image Attachment */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
-
-            {/* Upload Product Photo Button */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={`p-2.5 rounded-xl transition cursor-pointer ${
-                chatAttachedFile
-                  ? "bg-violet-600 text-white shadow-xs"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-violet-100 dark:hover:bg-violet-950/40 hover:text-violet-700"
-              }`}
-              title={
-                activeLang === "uz"
-                  ? "Mahsulot rasmini biriktirish (Inpaint / Fon)"
-                  : activeLang === "en"
-                  ? "Attach product photo (Inpaint / Background)"
-                  : "Прикрепить фото товара (Inpaint / Замена фона)"
-              }
-            >
-              <Paperclip className="w-4 h-4" />
-            </button>
-
-            {/* Voice Mic Button */}
-            {speechSupported && (
-              <button
-                type="button"
-                onClick={toggleListening}
-                className={`p-2.5 rounded-xl transition-all flex items-center justify-center cursor-pointer ${
-                  isListening
-                    ? "bg-rose-500 text-white animate-pulse ring-4 ring-rose-500/20"
-                    : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-violet-100 dark:hover:bg-violet-950/40 hover:text-violet-700"
-                }`}
-                title={isListening ? "Остановить запись" : "Голосовая команда"}
-              >
-                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              </button>
-            )}
-
-            {/* Text Input */}
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={
-                isListening
-                  ? "Слушаю ваш голос..."
-                  : chatAttachedFile
-                  ? activeLang === "uz"
-                    ? "Rasm uchun tilak (masalan, yog‘och stol)..."
-                    : activeLang === "en"
-                    ? "Describe placement (e.g. on wooden table)..."
-                    : "Пожелание к фото (напр. на деревянный стол)..."
-                  : activeLang === "uz"
-                  ? "Sidekick'ga savol bering yoki /photo yozing..."
-                  : activeLang === "en"
-                  ? "Ask Sidekick or type /photo..."
-                  : "Спросите Sidekick или напишите /photo..."
-              }
-              className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs font-normal text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:bg-white dark:focus:bg-zinc-900 transition-all"
-            />
-
-            {/* Send Button */}
-            <button
-              type="submit"
-              disabled={(!input.trim() && !chatAttachedFile) || isLoading}
-              className="p-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white disabled:opacity-40 hover:from-violet-500 hover:to-indigo-500 shadow-sm shadow-violet-500/20 transition-all flex items-center justify-center cursor-pointer active:scale-95"
-              title={
-                !input.trim() && chatAttachedFile
-                  ? "Отправить фото на студийную обработку"
-                  : "Отправить"
-              }
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
-
-          <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 px-1 font-normal">
-            <span>Enter для отправки • / для команд • 📎 для фото</span>
-            <span>StoreBox AI Engine</span>
-          </div>
-        </div>
-        </>
+          </>
         )}
       </aside>
-
-      {/* High Resolution Image Modal (Shopify Sidekick Preview) */}
-      {previewImageModal && (
-        <div
-          className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setPreviewImageModal(null)}
-        >
-          <div
-            className="relative max-w-2xl w-full bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl p-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-3 border-b border-slate-800 text-white">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-violet-400" />
-                <span className="font-bold text-xs">
-                  AI Commercial Studio • Предпросмотр изображения (1024x1024 HD)
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPreviewImageModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 flex justify-center bg-black/60">
-              <img
-                src={previewImageModal}
-                alt="Enlarged Preview"
-                className="max-h-[70vh] object-contain rounded-xl shadow-2xl"
-              />
-            </div>
-            <div className="p-3 border-t border-slate-800 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => {
-                  setPreviewImageModal(null);
-                  navigate("/products");
-                }}
-                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
-              >
-                <Package className="w-4 h-4 text-violet-400" />
-                <span>Открыть в каталоге</span>
-              </button>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPreviewImageModal(null)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition cursor-pointer"
-                >
-                  Закрыть
-                </button>
-                <a
-                  href={previewImageModal}
-                  download="storebox_commercial_artwork.png"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-4 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Скачать оригинал</span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

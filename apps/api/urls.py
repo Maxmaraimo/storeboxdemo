@@ -146,15 +146,13 @@ urlpatterns = [
     path("telegram/setup-menu/", views_telegram.telegram_setup_menu_view, name="telegram_setup_menu"),
     path("telegram/test/", views_telegram.telegram_test_view, name="telegram_test"),
 
-    # AI Assistant (Shopify Sidekick Style)
-    path("ai/chat/", views_ai.ai_chat_view, name="ai_chat"),
+    # AI Assistant (StoreBox Sidekick — Gemini + ElevenLabs)
+    path("ai/assistant/chat/", views_ai.ai_assistant_chat_view, name="ai_assistant_chat"),
+    path("ai/chat/", views_ai.ai_assistant_chat_view, name="ai_chat"),
     path("ai/status/", views_ai.ai_status_view, name="ai_status"),
     path("ai/quick-actions/", views_ai.ai_quick_actions_view, name="ai_quick_actions"),
     path("ai/remove-background/", views_ai.ai_remove_background_view, name="ai_remove_background"),
     path("ai/generate-description/", views_ai.ai_generate_description_view, name="ai_generate_description"),
-    path("ai/generate-image/", views_ai.ai_generate_image_view, name="ai_generate_image"),
-    path("ai/generate-banner/", views_ai.ai_generate_banner_view, name="ai_generate_banner"),
     path("ai/image-to-image/", views_ai.ai_image_to_image_view, name="ai_image_to_image"),
     path("ai/save-to-catalog/", views_ai.ai_save_to_catalog_view, name="ai_save_to_catalog"),
-    path("ai/fooocus-status/", views_ai.ai_fooocus_status_view, name="ai_fooocus_status"),
 ]

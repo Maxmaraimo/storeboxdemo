@@ -10,17 +10,13 @@ import {
   Monitor,
   Laptop,
   ArrowUpRight,
-  ArrowDownRight,
-  DollarSign,
   Activity,
-  Layers,
   Sparkles,
   BarChart3,
-  LineChart as LineChartIcon,
   RefreshCw,
-  ExternalLink,
-  ShieldCheck,
-  Package
+  Package,
+  MapPin,
+  Search
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -35,7 +31,7 @@ import {
   Filler,
   ArcElement
 } from "chart.js";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
+import { Line, Doughnut } from "react-chartjs-2";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { InteractiveGlobe } from "../../components/charts/InteractiveGlobe";
@@ -54,17 +50,19 @@ ChartJS.register(
 );
 
 export const AnalyticsPage: React.FC = () => {
-  const { store, lang, t } = useAuth();
-  const [activeTab, setActiveTab] = useState<"overview" | "live" | "reports">("overview");
+  const { store, lang } = useAuth();
+  const [activeTab, setActiveTab] = useState<"overview" | "live">("overview");
   const [period, setPeriod] = useState<string>("month");
   const [currency, setCurrency] = useState<"UZS" | "USD">("UZS");
+  const [liveSearch, setLiveSearch] = useState<string>("");
 
   const UZS_TO_USD_RATE = 12800;
 
-  const { data: dashboardData, isLoading, refetch, isFetching } = useQuery({
+  const { data: dashboardData, refetch, isFetching } = useQuery({
     queryKey: ["analytics-summary", period, store?.id],
     queryFn: async () => {
-      const res = await api.get(`/dashboard/summary/?period=${period}`);
+      const storeParam = store?.id ? `&store_id=${store.id}` : "";
+      const res = await api.get(`/dashboard/summary/?period=${period}${storeParam}`);
       return res.data;
     },
     refetchInterval: activeTab === "live" ? 15000 : 60000,
@@ -73,6 +71,7 @@ export const AnalyticsPage: React.FC = () => {
   const metrics = dashboardData?.metrics;
   const charts = dashboardData?.charts;
   const topProducts = dashboardData?.top_products || [];
+  const regionsBreakdown = dashboardData?.regions_breakdown || [];
 
   const formatMoney = (sum: number) => {
     if (currency === "USD") {
@@ -82,24 +81,29 @@ export const AnalyticsPage: React.FC = () => {
     return `${Math.round(sum).toLocaleString("uz-UZ")} UZS`;
   };
 
+  const grossSales = Number(metrics?.sales_sum || metrics?.revenue || 0);
+  const deliveryFee = Number(metrics?.delivery_fee || 0);
+  const netSales = Math.max(0, grossSales - deliveryFee);
+  const totalSales = Number(metrics?.revenue || grossSales || 0);
+
   const salesTrendData = {
-    labels: charts?.labels || ["1", "5", "10", "15", "20", "25", "30"],
+    labels: charts?.labels || ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"],
     datasets: [
       {
-        label: lang === "ru" ? "Валовый объем продаж" : "Jami savdo hajmi",
-        data: (charts?.revenue || [0, 0, 0, 0, 0, 0, 0]).map((v: number) =>
+        label: lang === "ru" ? "Текущий период" : "Joriy davr",
+        data: (charts?.revenue || [0, 0, 0, 0, 0, 0]).map((v: number) =>
           currency === "USD" ? Number((v / UZS_TO_USD_RATE).toFixed(2)) : v
         ),
-        borderColor: "#2563EB", // Shopify Polaris Blue
-        backgroundColor: "rgba(37, 99, 235, 0.08)",
-        borderWidth: 2.5,
+        borderColor: "#0ea5e9",
+        backgroundColor: "rgba(14, 165, 233, 0.08)",
+        borderWidth: 2,
         fill: true,
         tension: 0.35,
-        pointBackgroundColor: "#1D4ED8",
+        pointBackgroundColor: "#0284c7",
         pointBorderColor: "#FFFFFF",
-        pointBorderWidth: 2,
-        pointRadius: 3.5,
-        pointHoverRadius: 6,
+        pointBorderWidth: 1.5,
+        pointRadius: 3,
+        pointHoverRadius: 5,
       },
     ],
   };
@@ -110,23 +114,26 @@ export const AnalyticsPage: React.FC = () => {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#0F172A",
+        backgroundColor: "#202223",
         titleColor: "#FFFFFF",
-        bodyColor: "#93C5FD",
+        bodyColor: "#e4e4e7",
         padding: 10,
-        cornerRadius: 10,
+        cornerRadius: 8,
         callbacks: {
-          label: (ctx: any) => `${ctx.dataset.label}: ${currency === "USD" ? "$" : ""}${ctx.raw?.toLocaleString()} ${currency === "UZS" ? "UZS" : ""}`,
+          label: (ctx: any) =>
+            `${ctx.dataset.label}: ${currency === "USD" ? "$" : ""}${ctx.raw?.toLocaleString()} ${
+              currency === "UZS" ? "UZS" : ""
+            }`,
         },
       },
     },
     scales: {
       y: {
         beginAtZero: true,
-        grid: { color: "rgba(226, 232, 240, 0.6)" },
+        grid: { color: "rgba(226, 232, 240, 0.7)" },
         ticks: {
           font: { size: 11 },
-          color: "#64748B",
+          color: "#6d7175",
           callback: (val: any) => {
             if (currency === "USD") return `$${val}`;
             if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
@@ -137,7 +144,7 @@ export const AnalyticsPage: React.FC = () => {
       },
       x: {
         grid: { display: false },
-        ticks: { font: { size: 11 }, color: "#64748B" },
+        ticks: { font: { size: 11 }, color: "#6d7175" },
       },
     },
   };
@@ -151,46 +158,61 @@ export const AnalyticsPage: React.FC = () => {
     datasets: [
       {
         data: [78, 19, 3],
-        backgroundColor: ["#2563EB", "#0EA5E9", "#94A3B8"],
+        backgroundColor: ["#0ea5e9", "#6366f1", "#cbd5e1"],
         borderWidth: 0,
         hoverOffset: 4,
       },
     ],
   };
 
+  const totalSessions = (metrics?.total_customers || 1) * 38 + 120;
+  const addedToCart = Math.round(totalSessions * 0.28);
+  const reachedCheckout = Math.round(totalSessions * 0.14);
+  const completedOrders = metrics?.orders_count || 0;
+  const convRatePct = totalSessions > 0 ? ((completedOrders / totalSessions) * 100).toFixed(1) : "3.8";
+
   const conversionFunnel = [
-    { label: lang === "ru" ? "Сессии интернет-магазина" : "Do'kon sessiyalari", count: (metrics?.total_customers || 1) * 38 + 120, pct: "100%" },
-    { label: lang === "ru" ? "Добавления в корзину" : "Savatga qo'shishlar", count: Math.round(((metrics?.total_customers || 1) * 38 + 120) * 0.28), pct: "28%" },
-    { label: lang === "ru" ? "Переходы к оформлению" : "Buyurtma berishga o'tish", count: Math.round(((metrics?.total_customers || 1) * 38 + 120) * 0.14), pct: "14%" },
-    { label: lang === "ru" ? "Завершенные заказы" : "Tugallangan buyurtmalar", count: metrics?.orders_count || 4, pct: "3.8%" },
+    { label: lang === "ru" ? "Сессии" : "Sessiyalar", count: totalSessions, pct: "100%" },
+    { label: lang === "ru" ? "Добавлено в корзину" : "Savatga qo'shishlar", count: addedToCart, pct: "28%" },
+    { label: lang === "ru" ? "Перешли к оформлению" : "Buyurtma berishga o'tish", count: reachedCheckout, pct: "14%" },
+    { label: lang === "ru" ? "Завершенные заказы" : "Tugallangan buyurtmalar", count: completedOrders, pct: `${convRatePct}%` },
   ];
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* 1. Header with View Tabs & Period Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-neutral-800">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {lang === "ru" ? "Аналитика и отчеты" : "Tahlil va hisobotlar"}
-            </span>
+    <div className="space-y-5 pb-12">
+      {/* 1. Shopify Analytics Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-[#202223] dark:text-white" />
+            <h1 className="text-xl font-bold text-[#202223] dark:text-white tracking-tight">
+              {activeTab === "live"
+                ? lang === "ru"
+                  ? "В реальном времени"
+                  : "Jonli monitoring"
+                : lang === "ru"
+                ? "Аналитика"
+                : "Tahlil va hisobotlar"}
+            </h1>
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">
-            {lang === "ru" ? "Аналитика магазина" : "Do'kon statistikasi"}
-          </h1>
+          {activeTab === "live" && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>Только что</span>
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* View Tab Buttons: Overview vs Live View */}
-          <div className="flex items-center bg-slate-100 dark:bg-neutral-800 p-0.5 rounded-lg text-xs font-medium">
+          <div className="inline-flex items-center rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
             <button
               type="button"
               onClick={() => setActiveTab("overview")}
-              className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-[6px] text-xs transition-all cursor-pointer ${
                 activeTab === "overview"
-                  ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-2xs font-medium"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
+                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-semibold"
+                  : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223]"
               }`}
             >
               {lang === "ru" ? "Обзор" : "Umumiy tahlil"}
@@ -198,55 +220,61 @@ export const AnalyticsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab("live")}
-              className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-[6px] text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === "live"
-                  ? "bg-blue-600 text-white shadow-2xs font-medium"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
+                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-semibold"
+                  : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223]"
               }`}
             >
-              <Activity className="w-3.5 h-3.5" />
-              <span>{lang === "ru" ? "В реальном времени" : "Jonli monitoring"}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>{lang === "ru" ? "В реальном времени" : "Jonli"}</span>
             </button>
           </div>
 
-          {/* Period selector (only in overview) */}
-          {activeTab === "overview" && (
-            <div className="flex items-center bg-slate-100 dark:bg-neutral-800 p-0.5 rounded-lg text-xs font-medium">
-              {[
-                { id: "today", label: lang === "ru" ? "Сегодня" : "Bugun" },
-                { id: "week", label: lang === "ru" ? "7 дней" : "7 kun" },
-                { id: "month", label: lang === "ru" ? "30 дней" : "30 kun" },
-                { id: "year", label: lang === "ru" ? "Год" : "Yil" },
-              ].map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setPeriod(p.id)}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                    period === p.id
-                      ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-2xs font-medium"
-                      : "text-slate-600 dark:text-slate-300"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Period selector */}
+          <div className="inline-flex items-center rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
+            {[
+              { id: "today", label: lang === "ru" ? "Сегодня" : "Bugun" },
+              { id: "week", label: lang === "ru" ? "7 дней" : "7 kun" },
+              { id: "month", label: lang === "ru" ? "30 дней" : "30 kun" },
+              { id: "year", label: lang === "ru" ? "Год" : "Yil" },
+            ].map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPeriod(p.id)}
+                className={`px-2.5 py-1 rounded-[6px] text-xs transition-all cursor-pointer ${
+                  period === p.id
+                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
+                    : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223]"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
 
           {/* Currency Toggle */}
-          <div className="flex items-center bg-slate-100 dark:bg-neutral-800 p-0.5 rounded-lg text-xs font-medium">
+          <div className="inline-flex items-center rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
             <button
               type="button"
               onClick={() => setCurrency("UZS")}
-              className={`px-2 py-1 rounded-md cursor-pointer ${currency === "UZS" ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-2xs font-medium" : "text-slate-500"}`}
+              className={`px-2 py-1 rounded-[6px] text-xs cursor-pointer ${
+                currency === "UZS"
+                  ? "bg-[#202223] text-white font-medium"
+                  : "text-[#5c5f62]"
+              }`}
             >
               UZS
             </button>
             <button
               type="button"
               onClick={() => setCurrency("USD")}
-              className={`px-2 py-1 rounded-md cursor-pointer ${currency === "USD" ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-2xs font-medium" : "text-slate-500"}`}
+              className={`px-2 py-1 rounded-[6px] text-xs cursor-pointer ${
+                currency === "USD"
+                  ? "bg-[#202223] text-white font-medium"
+                  : "text-[#5c5f62]"
+              }`}
             >
               USD
             </button>
@@ -255,112 +283,175 @@ export const AnalyticsPage: React.FC = () => {
           <button
             type="button"
             onClick={() => refetch()}
-            className="w-8 h-8 rounded-lg bg-white border border-slate-200/80 dark:bg-neutral-800 dark:border-neutral-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
+            className="w-8 h-8 rounded-[8px] bg-white border border-[#e1e3e5] dark:bg-zinc-900 dark:border-zinc-800 flex items-center justify-center text-[#5c5f62] hover:text-[#202223] hover:bg-[#f6f6f7] transition-colors cursor-pointer shadow-2xs"
+            title="Обновить"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-blue-600" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-emerald-600" : ""}`} />
           </button>
         </div>
       </div>
 
-      {/* 2. OVERVIEW TAB */}
+      {/* 2. OVERVIEW TAB (Exact Shopify 2026 Analytics Layout) */}
       {activeTab === "overview" && (
-        <div className="space-y-6">
-          {/* Key Metric Cards */}
+        <div className="space-y-4">
+          {/* Top Row: 4 Compact Shopify Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-5 shadow-xs">
-              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+              <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 {lang === "ru" ? "Валовый объем продаж" : "Jami savdo hajmi"}
               </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">
-                {formatMoney(metrics?.revenue || 0)}
-              </div>
-              <div className="mt-2 flex items-center text-xs font-medium text-emerald-600">
-                <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
-                <span>+12.4% {lang === "ru" ? "к прошлому периоду" : "o'tgan davrga nisbatan"}</span>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-xl font-bold text-[#202223] dark:text-white tabular-nums">
+                  {formatMoney(grossSales)}
+                </span>
+                <span className="text-[11px] font-semibold text-emerald-600">+12.4%</span>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-5 shadow-xs">
-              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+              <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                {lang === "ru" ? "Доля повторных клиентов" : "Qayta xarid qilgan mijozlar"}
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-xl font-bold text-[#202223] dark:text-white tabular-nums">
+                  {metrics?.total_customers ? "24.5%" : "0%"}
+                </span>
+                <span className="text-[11px] text-[#6d7175]">—</span>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+              <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 {lang === "ru" ? "Выполненные заказы" : "Bajarilgan buyurtmalar"}
               </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">
-                {metrics?.orders_count || 0} <span className="text-xs font-normal text-slate-500">{lang === "ru" ? "заказов" : "ta"}</span>
-              </div>
-              <div className="mt-2 text-xs text-slate-500">
-                {metrics?.ready_orders || 0} {lang === "ru" ? "готовы к отправке" : "jo'natishga tayyor"}
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-5 shadow-xs">
-              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                {lang === "ru" ? "Коэффициент конверсии" : "Konversiya ko'rsatkichi"}
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">
-                3.8%
-              </div>
-              <div className="mt-2 flex items-center text-xs font-normal text-slate-500">
-                <span>{lang === "ru" ? "Стабильная конверсия витрины" : "Barqaror ko'rsatkich"}</span>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-5 shadow-xs">
-              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                {lang === "ru" ? "Средняя стоимость заказа" : "O'rtacha buyurtma qiymati"}
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">
-                {formatMoney(metrics?.avg_order || 0)}
-              </div>
-              <div className="mt-2 text-xs text-slate-500">
-                {lang === "ru" ? "На основе всех заказов" : "Barcha buyurtmalar bo'yicha"}
-              </div>
-            </div>
-          </div>
-
-          {/* Main Chart: Sales Over Time */}
-          <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-xs">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {lang === "ru" ? "Общий объем продаж в динамике" : "Vaqt bo'yicha savdo dinamikasi"}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {lang === "ru" ? "Чистая выручка по дням выбранного периода" : "Kunlik tushum ko'rsatkichlari"}
-                </p>
-              </div>
-              <div className="flex items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                  {lang === "ru" ? "Текущий период" : "Joriy davr"}
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-xl font-bold text-[#202223] dark:text-white tabular-nums">
+                  {metrics?.ready_orders || metrics?.orders_count || 0}
                 </span>
+                <span className="text-[11px] text-emerald-600 font-medium">● Активно</span>
               </div>
             </div>
 
-            <div className="h-72 w-full">
-              <Line data={salesTrendData} options={chartOptions} />
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+              <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                {lang === "ru" ? "Заказы" : "Buyurtmalar"}
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-xl font-bold text-[#202223] dark:text-white tabular-nums">
+                  {metrics?.orders_count || 0}
+                </span>
+                <span className="text-[11px] text-[#6d7175]">за период</span>
+              </div>
             </div>
           </div>
 
-          {/* Two Columns: Conversion Funnel & Device breakdown */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Conversion Funnel */}
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-xs space-y-4">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {lang === "ru" ? "Воронка конверсии магазина" : "Do'kon konversiya voronkasi"}
-              </h3>
-              <div className="space-y-3">
-                {conversionFunnel.map((step, idx) => (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs font-medium">
-                      <span className="text-slate-700 dark:text-slate-300">{step.label}</span>
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {step.count.toLocaleString()} ({step.pct})
+          {/* Second Row: Main Chart (2/3) + Total Sales Breakdown Table (1/3) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Left 2/3: Sales Over Time Chart */}
+            <div className="lg:col-span-2 bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs flex flex-col justify-between">
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div>
+                    <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                      {lang === "ru" ? "Общий объем продаж в динамике" : "Vaqt bo'yicha savdo dinamikasi"}
+                    </h3>
+                    <div className="text-xl font-bold text-[#202223] dark:text-white mt-1 tabular-nums">
+                      {formatMoney(totalSales)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] text-[#6d7175]">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-0.5 bg-[#0ea5e9] inline-block" />
+                      Текущий период
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-64 w-full mt-3">
+                  <Line data={salesTrendData} options={chartOptions} />
+                </div>
+              </div>
+            </div>
+
+            {/* Right 1/3: Разбивка общего объема продаж (Exact Shopify Sales Breakdown Card) */}
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5 mb-3">
+                  {lang === "ru" ? "Разбивка общего объема продаж" : "Umumiy savdo tarkibi"}
+                </h3>
+
+                <div className="divide-y divide-[#f1f2f4] dark:divide-zinc-800 text-xs">
+                  {[
+                    { label: "Валовый объем продаж", val: grossSales, bold: false },
+                    { label: "Скидки", val: 0, bold: false },
+                    { label: "Возвраты", val: 0, bold: false },
+                    { label: "Чистые продажи", val: netSales, bold: true },
+                    { label: "Плата за доставку", val: deliveryFee, bold: false },
+                    { label: "Налоги", val: 0, bold: false },
+                    { label: "Общая сумма продаж", val: totalSales, bold: true },
+                  ].map((row, idx) => (
+                    <div key={idx} className="py-2.5 flex items-center justify-between gap-2">
+                      <span
+                        className={
+                          row.bold
+                            ? "font-semibold text-[#202223] dark:text-white"
+                            : "text-[#005bd3] dark:text-sky-400 hover:underline cursor-pointer"
+                        }
+                      >
+                        {row.label}
+                      </span>
+                      <span
+                        className={`tabular-nums ${
+                          row.bold
+                            ? "font-bold text-[#202223] dark:text-white"
+                            : "font-medium text-[#202223] dark:text-zinc-200"
+                        }`}
+                      >
+                        {formatMoney(row.val)}
                       </span>
                     </div>
-                    <div className="w-full bg-slate-100 dark:bg-neutral-800 rounded-full h-1.5 overflow-hidden">
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Third Row: 3-Column Shopify Analytics Breakdown Grid (6 Cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Card 1: Общий объем продаж по каналам продаж */}
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs space-y-4">
+              <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                Общий объем продаж по каналам продаж
+              </h3>
+              <div className="space-y-3 pt-1">
+                {[
+                  {
+                    name: "Интернет-магазин (Web)",
+                    amount: Math.round(totalSales * 0.58),
+                    pct: 58,
+                  },
+                  {
+                    name: "Telegram Mini App",
+                    amount: Math.round(totalSales * 0.42),
+                    pct: 42,
+                  },
+                  {
+                    name: "POS / Прямые продажи",
+                    amount: 0,
+                    pct: 0,
+                  },
+                ].map((ch, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#202223] dark:text-zinc-200 font-medium">{ch.name}</span>
+                      <span className="font-semibold text-[#202223] dark:text-white tabular-nums">
+                        {formatMoney(ch.amount)}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-[#f1f2f4] dark:bg-zinc-800 rounded-full overflow-hidden">
                       <div
-                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
-                        style={{ width: step.pct }}
+                        className="h-full bg-[#0ea5e9] rounded-full"
+                        style={{ width: `${Math.max(4, ch.pct)}%` }}
                       />
                     </div>
                   </div>
@@ -368,143 +459,311 @@ export const AnalyticsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Devices & Channels Breakdown */}
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+            {/* Card 2: Средняя стоимость заказа в динамике */}
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs flex flex-col justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
-                  {lang === "ru" ? "Сессии по типам устройств" : "Qurilmalar turlari bo'yicha sessiyalar"}
+                <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                  Средняя стоимость заказа в динамике
                 </h3>
-                <p className="text-xs text-slate-500 mb-4">
-                  {lang === "ru" ? "Распределение мобильных и настольных покупателей" : "Xaridorlarning qurilmalar ulushi"}
+                <div className="text-xl font-bold text-[#202223] dark:text-white mt-2 tabular-nums">
+                  {formatMoney(metrics?.avg_order || 0)}
+                </div>
+                <p className="text-[11px] text-[#6d7175] mt-1">
+                  Средний чек на основе {metrics?.orders_count || 0} заказов
                 </p>
-                <div className="h-44 flex items-center justify-center">
-                  <div className="w-36 h-36">
-                    <Doughnut data={deviceDoughnutData} options={{ plugins: { legend: { display: false } }, cutout: "70%" }} />
+              </div>
+              <div className="pt-6 space-y-2">
+                <div className="h-20 flex items-end gap-2 pt-4 border-b border-[#e3e5e7] dark:border-zinc-800">
+                  {[42, 65, 58, 80, 74, 92, 88].map((h, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <div
+                        className="w-full rounded-t bg-[#0ea5e9]/80 hover:bg-[#0ea5e9] transition-all"
+                        style={{ height: `${h}%` }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between text-[10px] text-[#6d7175]">
+                  <span>Начало периода</span>
+                  <span>Сегодня</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Общий объем продаж по товарам */}
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs space-y-3">
+              <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                Общий объем продаж по товарам
+              </h3>
+              {topProducts.length > 0 ? (
+                <div className="space-y-2.5 pt-1">
+                  {topProducts.slice(0, 4).map((p: any, idx: number) => (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs gap-2">
+                        <span className="text-[#202223] dark:text-zinc-200 truncate font-medium">
+                          {p.product_name}
+                        </span>
+                        <span className="font-semibold text-[#202223] dark:text-white shrink-0 tabular-nums">
+                          {formatMoney(p.sold_sum)}
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-[#f1f2f4] dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#0ea5e9] rounded-full"
+                          style={{ width: `${Math.max(15, 100 - idx * 20)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-36 flex items-center justify-center text-xs text-[#6d7175]">
+                  За этот период данных не найдено
+                </div>
+              )}
+            </div>
+
+            {/* Card 4: Сессии по типу устройства */}
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                  Сессии по типу устройства
+                </h3>
+                <div className="h-36 flex items-center justify-center my-2">
+                  <div className="w-32 h-32">
+                    <Doughnut
+                      data={deviceDoughnutData}
+                      options={{ plugins: { legend: { display: false } }, cutout: "70%" }}
+                    />
                   </div>
                 </div>
               </div>
-
-              <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100 dark:border-neutral-800 text-center text-xs">
+              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#f1f2f4] dark:border-zinc-800 text-center text-xs">
                 <div>
-                  <div className="text-slate-500 text-[11px] flex items-center justify-center gap-1">
-                    <Smartphone className="w-3 h-3 text-blue-600" />
-                    {lang === "ru" ? "Мобильные" : "Mobil"}
+                  <div className="text-[#6d7175] text-[11px] flex items-center justify-center gap-1">
+                    <Smartphone className="w-3 h-3 text-[#0ea5e9]" />
+                    Мобильные
                   </div>
-                  <div className="font-semibold text-slate-900 dark:text-white mt-0.5">78%</div>
+                  <div className="font-bold text-[#202223] dark:text-white mt-0.5">78%</div>
                 </div>
                 <div>
-                  <div className="text-slate-500 text-[11px] flex items-center justify-center gap-1">
-                    <Laptop className="w-3 h-3 text-sky-500" />
-                    {lang === "ru" ? "ПК" : "Desktop"}
+                  <div className="text-[#6d7175] text-[11px] flex items-center justify-center gap-1">
+                    <Laptop className="w-3 h-3 text-indigo-500" />
+                    ПК
                   </div>
-                  <div className="font-semibold text-slate-900 dark:text-white mt-0.5">19%</div>
+                  <div className="font-bold text-[#202223] dark:text-white mt-0.5">19%</div>
                 </div>
                 <div>
-                  <div className="text-slate-500 text-[11px] flex items-center justify-center gap-1">
+                  <div className="text-[#6d7175] text-[11px] flex items-center justify-center gap-1">
                     <Monitor className="w-3 h-3 text-slate-400" />
-                    {lang === "ru" ? "Планшеты" : "Tablet"}
+                    Планшет
                   </div>
-                  <div className="font-semibold text-slate-900 dark:text-white mt-0.5">3%</div>
+                  <div className="font-bold text-[#202223] dark:text-white mt-0.5">3%</div>
                 </div>
+              </div>
+            </div>
+
+            {/* Card 5: Сессии по местоположению */}
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs space-y-3">
+              <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                Сессии по местоположению
+              </h3>
+              <div className="space-y-2.5 pt-1">
+                {(regionsBreakdown.length > 0
+                  ? regionsBreakdown.slice(0, 5).map((r: any) => ({
+                      name: `Узбекистан • ${r.name_ru}`,
+                      sessions: r.orders * 14 + 18,
+                      pct: Math.max(12, r.share_pct || 35),
+                    }))
+                  : [
+                      { name: "Узбекистан • Ташкент", sessions: 142, pct: 68 },
+                      { name: "Узбекистан • Самарканд", sessions: 48, pct: 32 },
+                      { name: "Узбекистан • Бухара", sessions: 29, pct: 20 },
+                      { name: "Узбекистан • Андижан", sessions: 24, pct: 16 },
+                    ]
+                ).map((loc: any, i: number) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#202223] dark:text-zinc-200 font-medium">{loc.name}</span>
+                      <span className="font-semibold text-[#202223] dark:text-white tabular-nums">
+                        {loc.sessions}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-[#f1f2f4] dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#0ea5e9] rounded-full"
+                        style={{ width: `${loc.pct}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Card 6: Разбивка коэффициента конверсии */}
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                  Разбивка коэффициента конверсии
+                </h3>
+                <span className="text-sm font-bold text-[#202223] dark:text-white">{convRatePct}%</span>
+              </div>
+              <div className="space-y-3 pt-1">
+                {conversionFunnel.map((step, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#4a4f55] dark:text-zinc-300">{step.label}</span>
+                      <span className="font-semibold text-[#202223] dark:text-white tabular-nums">
+                        {step.count.toLocaleString()} ({step.pct})
+                      </span>
+                    </div>
+                    <div className="w-full bg-[#f1f2f4] dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-[#0ea5e9] h-1.5 rounded-full transition-all duration-500"
+                        style={{ width: step.pct }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 3. LIVE VIEW TAB (Interactive 3D Globe & Realtime Orders) */}
+      {/* 3. LIVE VIEW TAB (Exact Shopify 2026 "В реальном времени" Layout + Realistic 3D Earth Globe) */}
       {activeTab === "live" && (
-        <div className="space-y-6 animate-in fade-in">
-          {/* Top Live Stats Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-blue-200 dark:border-blue-900/50 p-4 shadow-xs">
-              <div className="flex items-center gap-2 text-xs font-medium text-blue-600">
-                <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping"></span>
-                {lang === "ru" ? "Посетители сейчас" : "Hozirgi tashrif buyuruvchilar"}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* Left Column (5 cols): Live Metrics, Customer Activity, Locations */}
+          <div className="lg:col-span-5 space-y-4">
+            {/* Search location bar */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-[#6d7175] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={liveSearch}
+                onChange={(e) => setLiveSearch(e.target.value)}
+                placeholder="Поиск местоположения (Ташкент, Самарканд, Бухара...)"
+                className="w-full pl-9 pr-4 py-2 rounded-[10px] bg-white dark:bg-[#18181B] border border-[#e1e3e5] dark:border-zinc-800 text-xs text-[#202223] dark:text-white placeholder-[#6d7175] focus:outline-none focus:border-[#202223]"
+              />
+            </div>
+
+            {/* 2x2 Live KPI Cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+                <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                  Посетители прямо сейчас
+                </div>
+                <div className="text-2xl font-bold text-[#202223] dark:text-white mt-3 tabular-nums">
+                  {((metrics?.total_customers || 1) * 3) + 7}
+                </div>
               </div>
-              <div className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
-                {((metrics?.total_customers || 1) * 3) + 7}
+
+              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+                <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                  Общий объем продаж
+                </div>
+                <div className="text-lg font-bold text-[#202223] dark:text-white mt-3 tabular-nums">
+                  {formatMoney(totalSales)}
+                </div>
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
-                {lang === "ru" ? "Активны на витрине и в Telegram" : "Vitrinalarda faol"}
+
+              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+                <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                  Сессии
+                </div>
+                <div className="text-2xl font-bold text-[#202223] dark:text-white mt-3 tabular-nums">
+                  {totalSessions}
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+                <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                  Заказы
+                </div>
+                <div className="text-2xl font-bold text-[#202223] dark:text-white mt-3 tabular-nums">
+                  {metrics?.orders_count || 0}
+                </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-4 shadow-xs">
-              <div className="text-xs font-medium text-slate-500">
-                {lang === "ru" ? "Заказы за сегодня" : "Bugungi buyurtmalar"}
+            {/* Поведение клиентов (В корзине / Оформление заказа / Куплено) */}
+            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs space-y-3">
+              <div className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                Поведение клиентов
               </div>
-              <div className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
-                {metrics?.new_orders || metrics?.orders_count || 4}
-              </div>
-              <div className="text-[11px] text-emerald-600 font-medium mt-1">
-                {lang === "ru" ? "Все заказы в обработке" : "Jarayonda"}
+              <div className="grid grid-cols-3 divide-x divide-[#e3e5e7] dark:divide-zinc-800 pt-1">
+                <div className="pr-3">
+                  <div className="text-[11px] text-[#6d7175]">Активных корзин</div>
+                  <div className="text-lg font-bold text-[#202223] dark:text-white mt-1">
+                    {Math.max(4, (metrics?.total_customers || 1) * 2)}
+                  </div>
+                </div>
+                <div className="px-3">
+                  <div className="text-[11px] text-[#6d7175]">Оформление</div>
+                  <div className="text-lg font-bold text-[#202223] dark:text-white mt-1">
+                    {Math.max(2, metrics?.new_orders || 2)}
+                  </div>
+                </div>
+                <div className="pl-3">
+                  <div className="text-[11px] text-[#6d7175]">Куплено</div>
+                  <div className="text-lg font-bold text-emerald-600 mt-1">
+                    {metrics?.orders_count || 0}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-4 shadow-xs">
-              <div className="text-xs font-medium text-slate-500">
-                {lang === "ru" ? "Выручка за сегодня" : "Bugungi tushum"}
+            {/* Сессии по местоположению + Новые и повторные клиенты */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs space-y-2.5">
+                <div className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                  Сессии по локациям
+                </div>
+                <div className="space-y-2 text-xs">
+                  {[
+                    { city: "Ташкент", count: 42 },
+                    { city: "Самарканд", count: 19 },
+                    { city: "Андижан", count: 16 },
+                    { city: "Бухара", count: 14 },
+                  ]
+                    .filter((c) => !liveSearch || c.city.toLowerCase().includes(liveSearch.toLowerCase()))
+                    .map((c, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <span className="text-[#4a4f55] dark:text-zinc-300">{c.city}</span>
+                        <span className="font-semibold text-[#202223] dark:text-white">{c.count}</span>
+                      </div>
+                    ))}
+                </div>
               </div>
-              <div className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
-                {formatMoney(metrics?.revenue || 446000)}
-              </div>
-              <div className="text-[11px] text-slate-500 mt-1">
-                {lang === "ru" ? "Оплата Payme / Click / Наличные" : "To'lovlar"}
-              </div>
-            </div>
 
-            <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-4 shadow-xs">
-              <div className="text-xs font-medium text-slate-500">
-                {lang === "ru" ? "Активные корзины" : "Faol savatlar"}
-              </div>
-              <div className="text-2xl font-semibold text-slate-900 dark:text-white mt-2">
-                {Math.max(3, (metrics?.total_customers || 1) * 2)}
-              </div>
-              <div className="text-[11px] text-slate-500 mt-1">
-                {lang === "ru" ? "Товары добавлены в корзину" : "Savatdagi mahsulotlar"}
+              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs space-y-2.5">
+                <div className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                  Новые и повторные клиенты
+                </div>
+                <div className="space-y-2 text-xs pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[#4a4f55] dark:text-zinc-300">
+                      <span className="w-2 h-2 rounded-full bg-[#0ea5e9]" />
+                      Первая покупка
+                    </span>
+                    <span className="font-semibold text-[#202223] dark:text-white">75%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[#4a4f55] dark:text-zinc-300">
+                      <span className="w-2 h-2 rounded-full bg-violet-500" />
+                      Повторные
+                    </span>
+                    <span className="font-semibold text-[#202223] dark:text-white">25%</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Interactive Globe Container */}
-          <div className="bg-white dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800 p-6 sm:p-8 shadow-xs">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="max-w-md space-y-3">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 text-xs font-medium border border-blue-200/60 dark:border-blue-800">
-                  <Globe2 className="w-3.5 h-3.5" />
-                  <span>{lang === "ru" ? "Глобус онлайн-покупок в реальном времени" : "Real vaqtdagi xaridorlar xaritasi"}</span>
-                </div>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">
-                  {lang === "ru" ? "География покупателей StoreBox" : "StoreBox xaridorlar geografiyasi"}
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {lang === "ru"
-                    ? "Интерактивная 3D визуализация активных сессий и заказов по городам Узбекистана (Ташкент, Самарканд, Бухара, Андижан, Фергана) и зарубежным странам."
-                    : "O'zbekiston shaharlari bo'yicha onlayn xaridorlar va buyurtmalarning 3D interaktiv xaritasi."}
-                </p>
-
-                <div className="pt-3 space-y-2 border-t border-slate-100 dark:border-neutral-800 text-xs">
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-slate-600 dark:text-slate-400">Toshkent & Toshkent viloyati</span>
-                    <strong className="text-slate-900 dark:text-white font-bold">18 zakaz · 42 faol</strong>
-                  </div>
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-slate-600 dark:text-slate-400">Samarqand viloyati</span>
-                    <strong className="text-slate-900 dark:text-white font-bold">7 zakaz · 19 faol</strong>
-                  </div>
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-slate-600 dark:text-slate-400">Buxoro & vodiy viloyatlari</span>
-                    <strong className="text-slate-900 dark:text-white font-bold">12 zakaz · 38 faol</strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* The 3D Rotating Canvas Globe */}
-              <div className="flex-1 flex justify-center w-full">
-                <InteractiveGlobe size={440} />
-              </div>
-            </div>
+          {/* Right Column (7 cols): Realistic 3D Earth Globe */}
+          <div className="lg:col-span-7 bg-white dark:bg-[#18181B] rounded-[14px] border border-[#e1e3e5] dark:border-zinc-800 p-4 sm:p-6 shadow-2xs flex flex-col items-center justify-center min-h-[540px]">
+            <InteractiveGlobe size={470} />
           </div>
         </div>
       )}

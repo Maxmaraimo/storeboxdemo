@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { SidekickPanel } from "../ai/SidekickPanel";
+import { PageBreadcrumbs } from "./PageBreadcrumbs";
 
 export const AppLayout: React.FC = () => {
   const { user, loading, lang: language } = useAuth();
@@ -21,7 +22,7 @@ export const AppLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidekickOpen, setSidekickOpen] = useState(false);
 
-  // Global keyboard shortcut (Cmd+J / Ctrl+J) to toggle Sidekick
+  // Global keyboard shortcut (Cmd+J / Ctrl+J) and custom event to toggle Sidekick
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
@@ -29,8 +30,15 @@ export const AppLayout: React.FC = () => {
         setSidekickOpen((prev) => !prev);
       }
     };
+    const handleOpenSidekickEvent = () => {
+      setSidekickOpen(true);
+    };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("storebox:open-sidekick", handleOpenSidekickEvent);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("storebox:open-sidekick", handleOpenSidekickEvent);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -50,9 +58,9 @@ export const AppLayout: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#F6F6F7] dark:bg-[#111213]">
+      <div className="h-screen flex items-center justify-center bg-[#f6f6f7] dark:bg-[#111213]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-slate-900 dark:border-white border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-2 border-[#008060] border-t-transparent rounded-full animate-spin"></div>
           <span className="text-xs font-normal text-slate-500">
             {language === "ru" ? "Загрузка..." : "Yuklanmoqda..."}
           </span>
@@ -71,7 +79,7 @@ export const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#F6F6F7] dark:bg-[#111213] text-slate-900 dark:text-zinc-100 transition-colors">
+    <div className="min-h-screen flex bg-[#f6f6f7] dark:bg-[#111213] text-[#202223] dark:text-zinc-100 transition-colors">
       {/* 1. Sidebar (Desktop Docked + Mobile Slide-over Drawer) */}
       <Sidebar
         isMobileOpen={mobileMenuOpen}
@@ -79,38 +87,36 @@ export const AppLayout: React.FC = () => {
       />
 
       {/* 2. Main Workspace Column */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      {/* 2. Main Workspace Column (shrinks smoothly when Sidekick push-column is open) */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300">
         <Header
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
-          onOpenSidekick={() => setSidekickOpen(true)}
+          onOpenSidekick={() => setSidekickOpen((prev) => !prev)}
         />
 
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-12 max-w-[1400px] w-full mx-auto">
+        <main className="flex-1 px-3 sm:px-6 lg:px-8 py-5 pb-24 lg:pb-12 max-w-[1400px] w-full mx-auto min-w-0">
+          <PageBreadcrumbs />
           <Outlet />
         </main>
 
-        {/* Floating Quick AI Button (Shopify Sidekick) */}
-        <button
-          type="button"
-          onClick={() => setSidekickOpen(true)}
-          className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-35 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-violet-600 via-indigo-600 to-pink-500 text-white shadow-xl shadow-violet-500/30 hover:scale-105 active:scale-95 transition-all cursor-pointer group border border-white/20"
-          title="Открыть StoreBox Sidekick AI (Cmd+J)"
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-300 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-200"></span>
-          </span>
-          <Sparkles className="w-4 h-4 text-white group-hover:rotate-12 transition-transform" />
-          <span className="text-xs font-bold tracking-tight pr-0.5 hidden sm:inline">Sidekick AI</span>
-        </button>
+        {/* Floating Quick AI Button (hidden when Sidekick is already open) */}
+        {!sidekickOpen && (
+          <button
+            type="button"
+            onClick={() => setSidekickOpen(true)}
+            className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-35 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-[#202223] hover:bg-[#111213] text-white shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer group border border-zinc-700"
+            title="Открыть StoreBox Sidekick AI (Cmd+J)"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00a86b] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00a86b]"></span>
+            </span>
+            <Sparkles className="w-4 h-4 text-[#00a86b] group-hover:rotate-12 transition-transform" />
+            <span className="text-xs font-semibold tracking-tight pr-0.5 hidden sm:inline">Sidekick AI</span>
+          </button>
+        )}
 
-        {/* 3. Shopify Sidekick AI Drawer */}
-        <SidekickPanel
-          isOpen={sidekickOpen}
-          onClose={() => setSidekickOpen(false)}
-        />
-
-        {/* 3. Mobile Bottom Navigation Bar */}
+        {/* Mobile Bottom Navigation Bar */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-14 bg-white/95 dark:bg-[#18181B]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-zinc-800 flex items-center justify-around z-30 px-2 shadow-xs">
           <Link
             to="/"
@@ -119,7 +125,9 @@ export const AppLayout: React.FC = () => {
             }`}
           >
             <LayoutDashboard className="w-4 h-4" strokeWidth={1.6} />
-            <span className="text-[10px]">{language === "ru" ? "Главная" : "Asosiy"}</span>
+            <span className="text-[10px]">
+              {language === "ru" ? "Главная" : language === "en" ? "Home" : "Asosiy"}
+            </span>
           </Link>
 
           <Link
@@ -130,11 +138,13 @@ export const AppLayout: React.FC = () => {
           >
             <ShoppingCart className="w-4 h-4" strokeWidth={1.6} />
             {newOrdersCount > 0 && (
-              <span className="absolute top-0 right-1 w-3.5 h-3.5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute top-0 right-1 w-3.5 h-3.5 rounded-full bg-[#00a86b] text-white text-[9px] font-bold flex items-center justify-center">
                 {newOrdersCount}
               </span>
             )}
-            <span className="text-[10px]">{language === "ru" ? "Заказы" : "Buyurtma"}</span>
+            <span className="text-[10px]">
+              {language === "ru" ? "Заказы" : language === "en" ? "Orders" : "Buyurtma"}
+            </span>
           </Link>
 
           <Link
@@ -144,7 +154,9 @@ export const AppLayout: React.FC = () => {
             }`}
           >
             <Package className="w-4 h-4" strokeWidth={1.6} />
-            <span className="text-[10px]">{language === "ru" ? "Товары" : "Mahsulot"}</span>
+            <span className="text-[10px]">
+              {language === "ru" ? "Товары" : language === "en" ? "Products" : "Mahsulot"}
+            </span>
           </Link>
 
           <Link
@@ -154,7 +166,9 @@ export const AppLayout: React.FC = () => {
             }`}
           >
             <BarChart3 className="w-4 h-4" strokeWidth={1.6} />
-            <span className="text-[10px]">{language === "ru" ? "Аналитика" : "Tahlil"}</span>
+            <span className="text-[10px]">
+              {language === "ru" ? "Аналитика" : language === "en" ? "Analytics" : "Tahlil"}
+            </span>
           </Link>
 
           <button
@@ -163,10 +177,18 @@ export const AppLayout: React.FC = () => {
             className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
           >
             <Menu className="w-4 h-4" strokeWidth={1.6} />
-            <span className="text-[10px]">{language === "ru" ? "Меню" : "Menyu"}</span>
+            <span className="text-[10px]">
+              {language === "ru" ? "Меню" : language === "en" ? "Menu" : "Menyu"}
+            </span>
           </button>
         </nav>
       </div>
+
+      {/* 3. Shopify Sidekick Docked Push-Column (Desktop) & Drawer (Mobile) */}
+      <SidekickPanel
+        isOpen={sidekickOpen}
+        onClose={() => setSidekickOpen(false)}
+      />
     </div>
   );
 };

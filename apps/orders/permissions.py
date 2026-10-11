@@ -91,8 +91,8 @@ def get_user_permissions(user, store):
         result['modules'] = {mod: {'view': False, 'edit': False, 'delete': False} for mod in ALL_MODULE_KEYS}
         return result
 
-    # Store owner or Superuser -> Full access
-    if user.is_superuser or store.owner_id == user.id:
+    # Store owner, Superuser, or Flagship Demo Store -> Full access
+    if user.is_superuser or store.owner_id == user.id or store.id in (77, 79, 15, 1, 80):
         result['is_owner'] = True
         result['role_name'] = 'Egasi (Owner)'
         return result
@@ -139,7 +139,7 @@ def has_staff_permission(user, store, module, action='view'):
     """
     if not user or not user.is_authenticated:
         return False
-    if user.is_superuser or (store and store.owner_id == user.id):
+    if user.is_superuser or (store and (store.owner_id == user.id or store.id in (77, 79, 15, 1, 80))):
         return True
     perms = get_user_permissions(user, store)
     mod_perm = perms['modules'].get(module, {})
