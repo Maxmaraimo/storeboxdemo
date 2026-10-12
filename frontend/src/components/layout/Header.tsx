@@ -258,7 +258,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, onOpenSidekick
                     onClick={async () => {
                       await markAllRead();
                     }}
-                    className="text-[11px] font-medium text-blue-600 hover:underline cursor-pointer"
+                    className="text-[11px] font-medium text-[#6d5a88] hover:underline cursor-pointer"
                   >
                     {lang === "ru" ? "Прочитать все" : "Barchasini o'qish"}
                   </button>

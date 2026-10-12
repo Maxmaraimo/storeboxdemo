@@ -395,7 +395,7 @@ export const AnalyticsPage: React.FC = () => {
                         className={
                           row.bold
                             ? "font-semibold text-[#211b2e] dark:text-white"
-                            : "text-[#005bd3] dark:text-sky-400 hover:underline cursor-pointer"
+                            : "text-[#6d5a88] dark:text-violet-300 hover:underline cursor-pointer"
                         }
                       >
                         {row.label}
@@ -644,7 +644,7 @@ export const AnalyticsPage: React.FC = () => {
                 value={liveSearch}
                 onChange={(e) => setLiveSearch(e.target.value)}
                 placeholder="Поиск местоположения (Ташкент, Самарканд, Бухара...)"
-                className="w-full pl-9 pr-4 py-2 rounded-[10px] bg-white dark:bg-[#211b2e] border border-[#dfe5ef] dark:border-zinc-800 text-xs text-[#211b2e] dark:text-white placeholder-[#6d7175] focus:outline-none focus:border-[#005bd3]"
+                className="w-full pl-9 pr-4 py-2 rounded-[10px] bg-white dark:bg-[#211b2e] border border-[#dfe5ef] dark:border-zinc-800 text-xs text-[#211b2e] dark:text-white placeholder-[#6d7175] focus:outline-none focus:border-[#6d5a88]"
               />
             </div>
 
@@ -666,7 +666,7 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Общий объем продаж
                 </div>
-                <div className="text-lg font-bold text-[#005bd3] dark:text-sky-400 mt-3 tabular-nums">
+                <div className="text-lg font-bold text-[#6d5a88] dark:text-violet-300 mt-3 tabular-nums">
                   {formatMoney(totalSales)}
                 </div>
               </div>
@@ -698,7 +698,7 @@ export const AnalyticsPage: React.FC = () => {
               <div className="grid grid-cols-3 divide-x divide-[#e3e5e7] dark:divide-zinc-800 pt-1">
                 <div className="pr-3">
                   <div className="text-[11px] text-[#6d7175]">Активных корзин</div>
-                  <div className="text-lg font-bold text-[#005bd3] mt-1">
+                  <div className="text-lg font-bold text-[#6d5a88] mt-1">
                     {Math.max(4, (metrics?.total_customers || 1) * 2)}
                   </div>
                 </div>
@@ -739,7 +739,7 @@ export const AnalyticsPage: React.FC = () => {
                         onClick={() => setLiveSearch(c.city)}
                         className="w-full flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 transition-colors cursor-pointer text-left"
                       >
-                        <span className="text-[#005bd3] dark:text-sky-400 font-medium">{c.city}</span>
+                        <span className="text-[#6d5a88] dark:text-violet-300 font-medium">{c.city}</span>
                         <span className="font-semibold text-[#211b2e] dark:text-white">{c.count}</span>
                       </button>
                     ))}
@@ -753,7 +753,7 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="space-y-2 text-xs pt-1">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1.5 text-[#4a4f55] dark:text-zinc-300">
-                      <span className="w-2 h-2 rounded-full bg-[#005bd3]" />
+                      <span className="w-2 h-2 rounded-full bg-[#6d5a88]" />
                       Первая покупка
                     </span>
                     <span className="font-semibold text-[#211b2e] dark:text-white">75%</span>
