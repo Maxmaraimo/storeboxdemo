@@ -51,7 +51,7 @@
         transition: transform .42s cubic-bezier(.16, 1, .3, 1);
     }
     .auth-page .auth-language.is-uz > .auth-switch-indicator,
-    .auth-page .auth-mode-switch.is-login > .auth-switch-indicator {
+    .auth-page .auth-mode-switch.is-email > .auth-switch-indicator {
         transform: translate3d(100%, 0, 0);
     }
     .auth-page .auth-language-button {
@@ -147,13 +147,13 @@
                 uz: {
                     title: 'Boshqaruv paneliga kirish',
                     tabPhone: 'Telefon raqam',
-                    tabLogin: 'Login / Email',
+                    tabEmail: 'Email',
                     labelPhone: 'Telefon raqam',
                     countryCode: 'Mamlakat kodi',
-                    labelLogin: 'Login yoki Email',
-                    switchLogin: 'Login orqali kirish',
+                    labelEmail: 'Elektron pochta',
+                    switchEmail: 'Email orqali kirish',
                     switchPhone: 'Telefon orqali kirish',
-                    loginPlaceholder: 'admin yoki info@store.uz',
+                    emailPlaceholder: 'info@store.uz',
                     password: 'Parol',
                     forgot: 'Unutdingizmi?',
                     submit: 'Tizimga kirish',
@@ -163,13 +163,13 @@
                 ru: {
                     title: 'Вход в панель управления',
                     tabPhone: 'Номер телефона',
-                    tabLogin: 'Логин / Email',
+                    tabEmail: 'Почта',
                     labelPhone: 'Номер телефона',
                     countryCode: 'Код страны',
-                    labelLogin: 'Логин или Email',
-                    switchLogin: 'Войти по логину',
+                    labelEmail: 'Электронная почта',
+                    switchEmail: 'Войти по почте',
                     switchPhone: 'Войти по номеру',
-                    loginPlaceholder: 'admin или info@store.uz',
+                    emailPlaceholder: 'info@store.uz',
                     password: 'Пароль',
                     forgot: 'Забыли пароль?',
                     submit: 'Войти в систему',
@@ -179,13 +179,13 @@
                 en: {
                     title: 'Sign in to Dashboard',
                     tabPhone: 'Phone number',
-                    tabLogin: 'Login / Email',
+                    tabEmail: 'Email',
                     labelPhone: 'Phone number',
                     countryCode: 'Country calling code',
-                    labelLogin: 'Login or Email',
-                    switchLogin: 'Sign in with login',
+                    labelEmail: 'Email address',
+                    switchEmail: 'Sign in with email',
                     switchPhone: 'Sign in with phone',
-                    loginPlaceholder: 'admin or info@store.uz',
+                    emailPlaceholder: 'info@store.uz',
                     password: 'Password',
                     forgot: 'Forgot password?',
                     submit: 'Sign In',
@@ -207,10 +207,10 @@
                 } catch(_) {}
             },
             showPass: false,
-            mode: 'phone',
+            mode: '{% if '@' in prefill_login %}email{% else %}phone{% endif %}',
             dialCode: '998',
             phoneInput: '',
-            usernameText: '{{ prefill_login|default:'' }}',
+            emailInput: '{% if '@' in prefill_login %}{{ prefill_login|escapejs }}{% endif %}',
             // Main region for each E.164 calling code (Google libphonenumber metadata).
             countryByDialCode: {
                 '1': 'US', '7': 'RU', '20': 'EG', '27': 'ZA', '30': 'GR', '31': 'NL', '32': 'BE', '33': 'FR',
@@ -267,7 +267,7 @@
                 return this.countryByDialCode[code] || '';
             },
             get finalLoginValue() {
-                if (this.mode !== 'phone') return this.usernameText;
+                if (this.mode === 'email') return this.emailInput.trim();
                 const raw = this.phoneInput.trim();
                 const digits = raw.replace(/\D/g, '');
                 const code = this.dialCode.replace(/\D/g, '');
@@ -319,7 +319,7 @@
         {% endif %}
 
         <!-- Mode Switcher Tabs -->
-        <div class="auth-mode-switch p-1 rounded-2xl flex gap-1" :class="{ 'is-login': mode === 'login' }">
+        <div class="auth-mode-switch p-1 rounded-2xl flex gap-1" :class="{ 'is-email': mode === 'email' }">
             <span class="auth-switch-indicator" aria-hidden="true"></span>
             <button type="button" @click="mode = 'phone'"
                     :aria-pressed="mode === 'phone'"
@@ -328,12 +328,12 @@
                 <i data-lucide="phone" class="w-3.5 h-3.5"></i>
                 <span x-text="t('tabPhone')">Telefon raqam</span>
             </button>
-            <button type="button" @click="mode = 'login'"
-                    :aria-pressed="mode === 'login'"
-                    :class="mode === 'login' ? 'is-active' : ''"
+            <button type="button" @click="mode = 'email'"
+                    :aria-pressed="mode === 'email'"
+                    :class="mode === 'email' ? 'is-active' : ''"
                     class="auth-mode-btn flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-                <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                <span x-text="t('tabLogin')">Login / Email</span>
+                <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                <span x-text="t('tabEmail')">Email</span>
             </button>
         </div>
 
@@ -341,14 +341,14 @@
             {% csrf_token %}
             <input type="hidden" name="login" :value="finalLoginValue">
 
-            <!-- Phone / Login Tabs Mode Input -->
+            <!-- Phone / Email Tabs Mode Input -->
             <div class="space-y-1.5">
                 <div class="flex items-center justify-between">
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        <span x-text="mode === 'phone' ? t('labelPhone') : t('labelLogin')"></span>
+                        <span x-text="mode === 'phone' ? t('labelPhone') : t('labelEmail')"></span>
                     </label>
-                    <button type="button" @click="mode = (mode === 'phone' ? 'login' : 'phone')" class="auth-helper font-bold hover:underline cursor-pointer">
-                        <span x-text="mode === 'phone' ? t('switchLogin') : t('switchPhone')"></span>
+                    <button type="button" @click="mode = (mode === 'phone' ? 'email' : 'phone')" class="auth-helper font-bold hover:underline cursor-pointer">
+                        <span x-text="mode === 'phone' ? t('switchEmail') : t('switchPhone')"></span>
                     </button>
                 </div>
 
@@ -370,12 +370,13 @@
                           aria-live="polite" class="auth-country-detected absolute right-3 top-1/2 -translate-y-1/2"></span>
                 </div>
 
-                <!-- Case 2: Login Mode -->
-                <div x-show="mode === 'login'" class="relative">
+                <!-- Case 2: Email Mode -->
+                <div x-show="mode === 'email'" class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <i data-lucide="user" class="w-4 h-4"></i>
+                        <i data-lucide="mail" class="w-4 h-4"></i>
                     </div>
-                    <input type="text" x-model="usernameText" :aria-label="t('labelLogin')" :placeholder="t('loginPlaceholder')"
+                    <input type="email" x-model="emailInput" :aria-label="t('labelEmail')" :placeholder="t('emailPlaceholder')"
+                           :required="mode === 'email'" autocomplete="email" inputmode="email" spellcheck="false"
                            class="auth-text-input block w-full pl-10 pr-4 py-3 placeholder-slate-400 focus:outline-none transition-all">
                 </div>
             </div>
