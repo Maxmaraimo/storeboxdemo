@@ -307,7 +307,7 @@ export const YesPosPage: React.FC = () => {
     }
   };
 
-  // 6. Refresh Catalog with force=1 to bypass any cache
+  // 6. Refresh Catalog with force=1 to bypass any cache and sync live changes
   const handleLoadCatalog = async () => {
     if (isCatalogFetching) return;
     setMsg(null);
@@ -315,7 +315,10 @@ export const YesPosPage: React.FC = () => {
       const res = await api.get(`/yespos/catalog/?store_id=${store?.id || ""}&branch_id=${effectiveBranchId}&force=1`);
       if (res.data?.success && res.data?.categories) {
         queryClient.setQueryData(["yespos-catalog", store?.id, effectiveBranchId], res.data.categories);
-        const tpl = t("yespos_catalog_loaded") || "YES POS katalogidan {count} ta kategoriya yuklandi.";
+        queryClient.invalidateQueries({ queryKey: ["yespos-status"] });
+        queryClient.invalidateQueries({ queryKey: ["products-list"] });
+        queryClient.invalidateQueries({ queryKey: ["categories-list"] });
+        const tpl = t("yespos_catalog_loaded") || (lang === "ru" ? "Загружено категорий из YES POS: {count}. Каталог и фото обновлены!" : "YES POS katalogidan {count} ta kategoriya yuklandi.");
         setMsg({
           type: "success",
           text: tpl.replace("{count}", String(res.data.categories.length))
@@ -812,6 +815,9 @@ export const YesPosPage: React.FC = () => {
                 return;
               }
               cat.products.forEach((p) => {
+                if (!p.name || p.name.startsWith("Товар (Арт:")) {
+                  return;
+                }
                 const q = catalogSearch.trim().toLowerCase();
                 const matchesSearch =
                   !q ||
@@ -824,6 +830,9 @@ export const YesPosPage: React.FC = () => {
                 }
               });
             });
+
+            // Sort newest-first (matching app.yespos.uz ordering: 10438, 10437, 10434, 10433...)
+            flatFilteredProducts.sort((a, b) => Number(b.product.id || 0) - Number(a.product.id || 0));
 
             if (flatFilteredProducts.length === 0) {
               return (
@@ -893,21 +902,21 @@ export const YesPosPage: React.FC = () => {
                           {/* Product Image & Name */}
                           <td className="p-3.5 font-semibold text-slate-900 dark:text-white">
                             <div className="flex items-center gap-3 min-w-[180px]">
-                              {prod.image ? (
-                                <img
-                                  src={prod.image}
-                                  alt={prod.name}
-                                  onError={(e) => {
-                                    e.currentTarget.onerror = null;
-                                    e.currentTarget.style.display = "none";
-                                  }}
-                                  className="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-zinc-700 shrink-0 bg-white"
-                                />
-                              ) : (
-                                <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center text-slate-400 shrink-0">
-                                  <Package className="w-4 h-4" />
-                                </div>
-                              )}
+                              <div className="relative w-9 h-9 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
+                                <Package className="w-4 h-4" />
+                                {prod.image && prod.raw_image ? (
+                                  <img
+                                    key={prod.raw_image}
+                                    src={prod.image}
+                                    alt={prod.name}
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null;
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                    className="absolute inset-0 w-full h-full object-cover bg-white"
+                                  />
+                                ) : null}
+                              </div>
                               <div className="min-w-0">
                                 <div className="font-semibold text-slate-900 dark:text-white line-clamp-1">
                                   {prod.name}

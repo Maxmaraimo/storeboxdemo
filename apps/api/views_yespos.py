@@ -223,8 +223,15 @@ def yespos_catalog_view(request):
         try:
             service = YesPosService(api_key=api_key, branch_id=clean_branch)
             catalog = service.fetch_full_catalog()
+            if force_refresh and connection and connection.is_active and YesPosProductLink.objects.filter(store=store).exists():
+                try:
+                    service.sync_to_store(store, force=True)
+                    connection.last_sync_at = timezone.now()
+                    connection.save(update_fields=["last_sync_at"])
+                except Exception as sync_err:
+                    logger.debug(f"Auto-sync during catalog force refresh: {sync_err}")
             if catalog:
-                cache.set(cache_key, catalog, 600)  # 10 minutes cache
+                cache.set(cache_key, catalog, 60)
         except Exception as e:
             logger.warning(f"YES POS catalog error for store {store.id}: {e}")
             return Response({"success": False, "error": f"YES POS xatosi: {str(e)}"}, status=400)

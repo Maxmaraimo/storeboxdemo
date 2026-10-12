@@ -107,10 +107,11 @@ def ai_assistant_chat_view(request):
     # Core Gemini + Function Calling Brain
     brain = SidekickBrain(store=store, lang=lang if lang != "auto" else "ru")
     result = brain.process_chat(message=message, history=history)
+    effective_lang = result.get("lang") or lang
 
     # Microsoft Azure Neural TTS synthesis when voice_enabled=True
     if voice_enabled and result.get("text"):
-        audio_base64 = synthesize_voice(result["text"], language=lang)
+        audio_base64 = synthesize_voice(result["text"], language=effective_lang)
     else:
         audio_base64 = None
 

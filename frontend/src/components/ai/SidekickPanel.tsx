@@ -25,18 +25,23 @@ import { api } from "../../api/client";
 
 export const detectTextLanguage = (text: string, fallback: "ru" | "uz" | "en" = "ru"): "ru" | "uz" | "en" => {
   if (!text) return fallback;
+  const t = text.trim();
   if (
-    /\b(va|uchun|do'kon|tovar|buyurtma|narx|chegirma|men|siz|yarat|haqida|ko'rsat|salom|qil|qiling|hisobot|mijoz|bo'lim|so'm|qancha)\b/i.test(
-      text
+    /[ўқғҳЎҚҒҲo‘g‘ʻʼ]/i.test(t) ||
+    /\b(ассалом|ассалому|алайкум|алейкум|салом|менга|манга|махсулот|махсулотларни|товарларни|заказларни|буюртма|курсат|кўрсат|оч|очиб|бер|канча|қанча|кандай|нечта|тушум|савдо|мижоз|яхши|рахмат|бугун|созлама)\b/i.test(
+      t
     ) ||
-    /[o‘g‘ʻʼ]/i.test(text)
+    /\b(assalom|assalomu|alaykum|aleykum|salom|menga|manga|va|uchun|bilan|do'kon|dokon|tovar|tovarlarni|mahsulot|mahsulotlarni|maxsulot|maxsulotlarni|buyurtma|buyurtmalarni|zakaz|zakazlarni|narx|chegirma|men|siz|yarat|haqida|xaqida|ko'rsat|korsat|och|ochib|ber|qil|qiling|hisobot|mijoz|bo'lim|bolim|so'm|som|qancha|qanday|nechta|tushum|savdo|rahmat)\b/i.test(
+      t
+    ) ||
+    /(larni|lardan|larga|ning|dagi|yapman|moqda|ларни|лардан|ларга|нинг)\b/i.test(t)
   ) {
     return "uz";
   }
-  if (/\b(hello|show|orders|revenue|analytics|products|customers|settings|open|go to|how much|today)\b/i.test(text)) {
+  if (/\b(hello|show|orders|revenue|analytics|products|customers|settings|open|go to|how much|today)\b/i.test(t)) {
     return "en";
   }
-  if (/[а-яё]/i.test(text)) {
+  if (/[а-яё]/i.test(t)) {
     return "ru";
   }
   return fallback;
@@ -411,15 +416,18 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
         if (!userAccumulatedTranscript) return;
 
+        const latestResult = event.results[event.results.length - 1];
+        const isFinalChunk = Boolean(latestResult && latestResult.isFinal);
+
         if (mode === "call") {
           setLiveTranscript(userAccumulatedTranscript);
           if (silenceTimerRef.current) {
             clearTimeout(silenceTimerRef.current);
           }
-          // Wait 850ms of silence after the user finishes their thought before sending to Gemini
+          // Commit almost immediately (160ms) once browser speech recognition marks chunk as final
           silenceTimerRef.current = setTimeout(() => {
             commitUtterance(userAccumulatedTranscript);
-          }, 850);
+          }, isFinalChunk ? 160 : 480);
         } else {
           setInput(userAccumulatedTranscript);
           if (silenceTimerRef.current) {
@@ -427,7 +435,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
           }
           silenceTimerRef.current = setTimeout(() => {
             commitUtterance(userAccumulatedTranscript);
-          }, 950);
+          }, isFinalChunk ? 180 : 520);
         }
       };
 

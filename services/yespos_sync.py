@@ -22,45 +22,55 @@ def download_and_attach_product_image(product, raw_image_path, force=False):
     from apps.catalog.models import ProductImage
     from django.core.files.base import ContentFile
 
-    if not raw_image_path:
-        # Product in YES POS has no image (or image was removed): clean up existing images
-        product.images.all().delete()
-        if product.image_url and ("/dashboard/api/yespos/image/" in product.image_url or "temp-images/" in product.image_url):
-            product.image_url = ""
-            product.save(update_fields=["image_url"])
-        return False
-
-    clean = str(raw_image_path).strip().lstrip('/')
+    clean = str(raw_image_path or "").strip().lstrip('/')
     if 'path=' in clean:
         clean = clean.split('path=')[-1].split('&')[0].lstrip('/')
-    if not clean or clean.startswith('media/products/yp_') or clean.lower().startswith('parent_'):
+
+    # Reject empty paths or old local/fake paths
+    if (
+        not clean
+        or clean.startswith('media/')
+        or clean.startswith('static/')
+        or clean.startswith('products/')
+        or clean.lower().startswith('parent_')
+        or 'yp_prod_' in clean
+    ):
+        product.images.all().delete()
+        if product.image_url:
+            product.image_url = ""
+            product._skip_auto_translation = True
+            product.save(update_fields=["image_url"])
         return False
 
     path_hash = hashlib.md5(clean.encode()).hexdigest()
     cache_dir = os.path.join(settings.MEDIA_ROOT, 'yespos_cache')
     os.makedirs(cache_dir, exist_ok=True)
 
-    # Check if the product already has this exact photo attached
+    # Check if the product already has this exact photo attached (by path_hash)
     existing_pimg = product.images.filter(is_primary=True).first()
     expected_prefix = f"yp_{product.id}_{path_hash[:8]}."
-    if not force and existing_pimg and existing_pimg.image and expected_prefix in existing_pimg.image.name:
-        return True
+    if existing_pimg and existing_pimg.image and expected_prefix in existing_pimg.image.name:
+        try:
+            if os.path.exists(existing_pimg.image.path) and os.path.getsize(existing_pimg.image.path) > 100:
+                product.images.exclude(id=existing_pimg.id).delete()
+                return True
+        except Exception:
+            pass
 
     content = None
     ext = 'png'
 
-    # 1. Check local disk cache (only if not forcing refresh)
-    if not force:
-        for ext_cand in ['png', 'jpg', 'jpeg', 'webp']:
-            cache_path = os.path.join(cache_dir, f"{path_hash}.{ext_cand}")
-            if os.path.exists(cache_path) and os.path.getsize(cache_path) > 100:
-                try:
-                    with open(cache_path, 'rb') as f:
-                        content = f.read()
-                    ext = ext_cand
-                    break
-                except Exception:
-                    pass
+    # 1. Check local disk cache by path_hash
+    for ext_cand in ['png', 'jpg', 'jpeg', 'webp']:
+        cache_path = os.path.join(cache_dir, f"{path_hash}.{ext_cand}")
+        if os.path.exists(cache_path) and os.path.getsize(cache_path) > 100:
+            try:
+                with open(cache_path, 'rb') as f:
+                    content = f.read()
+                ext = ext_cand
+                break
+            except Exception:
+                pass
 
     # 2. Fetch directly from official YES POS media server
     if not content:
@@ -99,16 +109,21 @@ def download_and_attach_category_image(category, raw_image_path, force=False):
     Downloads real image from YES POS and attaches it to Category.image.
     If raw_image_path is empty, clears category image.
     """
-    if not raw_image_path:
-        category.image = None
-        category.image_url = ""
-        category.save(update_fields=["image", "image_url"])
-        return False
-
-    clean = str(raw_image_path).strip().lstrip('/')
+    clean = str(raw_image_path or "").strip().lstrip('/')
     if 'path=' in clean:
         clean = clean.split('path=')[-1].split('&')[0].lstrip('/')
-    if not clean or clean.startswith('media/products/yp_') or clean.lower().startswith('parent_'):
+
+    if (
+        not clean
+        or clean.startswith('media/')
+        or clean.startswith('static/')
+        or clean.startswith('products/')
+        or clean.lower().startswith('parent_')
+    ):
+        category.image = None
+        category.image_url = ""
+        category._skip_auto_translation = True
+        category.save(update_fields=["image", "image_url"])
         return False
 
     path_hash = hashlib.md5(clean.encode()).hexdigest()
@@ -116,22 +131,25 @@ def download_and_attach_category_image(category, raw_image_path, force=False):
     os.makedirs(cache_dir, exist_ok=True)
 
     expected_prefix = f"cat_{category.id}_{path_hash[:8]}."
-    if not force and category.image and expected_prefix in category.image.name:
-        return True
+    if category.image and expected_prefix in category.image.name:
+        try:
+            if os.path.exists(category.image.path) and os.path.getsize(category.image.path) > 100:
+                return True
+        except Exception:
+            pass
 
     content = None
     ext = 'png'
-    if not force:
-        for ext_cand in ['png', 'jpg', 'jpeg', 'webp']:
-            cache_path = os.path.join(cache_dir, f"{path_hash}.{ext_cand}")
-            if os.path.exists(cache_path) and os.path.getsize(cache_path) > 100:
-                try:
-                    with open(cache_path, 'rb') as f:
-                        content = f.read()
-                    ext = ext_cand
-                    break
-                except Exception:
-                    pass
+    for ext_cand in ['png', 'jpg', 'jpeg', 'webp']:
+        cache_path = os.path.join(cache_dir, f"{path_hash}.{ext_cand}")
+        if os.path.exists(cache_path) and os.path.getsize(cache_path) > 100:
+            try:
+                with open(cache_path, 'rb') as f:
+                    content = f.read()
+                ext = ext_cand
+                break
+            except Exception:
+                pass
 
     if not content:
         url = f"http://app.yespos.uz:8263/getImage?path={clean}"
@@ -273,7 +291,7 @@ class YesPosService:
         Combines the live catalog tree with paginated branch prices and stocks.
         Returns authentic warehouse products with real names, prices, stocks, and photos.
         Fetches tree and branch items concurrently for maximum performance.
-        Includes all warehouse items without false filters.
+        Skips unnamed/empty draft rows and never invents fake titles or fake images.
         """
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             fut_tree = executor.submit(self.fetch_catalog_tree)
@@ -295,11 +313,18 @@ class YesPosService:
                 continue
             cat_id = str(cat.get("id") or cat.get("category_id") or "")
             cat_name = str(cat.get("name") or "").strip() or f"Категория {cat_id}"
-            
+
             raw_cat_img = str(cat.get("image") or "").strip()
             if "path=" in raw_cat_img:
                 raw_cat_img = raw_cat_img.split("path=")[-1].split("&")[0]
             clean_cat_img = raw_cat_img.lstrip("/")
+            if (
+                not clean_cat_img
+                or clean_cat_img.startswith("media/")
+                or clean_cat_img.startswith("static/")
+                or clean_cat_img.lower().startswith("parent_")
+            ):
+                clean_cat_img = ""
             cat_image_url = f"/dashboard/api/yespos/image/?path={clean_cat_img}" if clean_cat_img else ""
 
             prods = []
@@ -310,16 +335,16 @@ class YesPosService:
                 if not pid:
                     continue
 
-                sku = str(p.get("sku") or "").strip()
-                barcode = str(p.get("barcode") or sku).strip()
+                info = price_stock_map.get(pid, {})
+                sku = str(p.get("sku") or info.get("sku") or "").strip()
+                barcode = str(p.get("barcode") or info.get("barcode") or sku).strip()
                 ikpu = str(p.get("classcode") or p.get("ikpu") or "").strip()
 
-                name = str(p.get("name") or "").strip()
-                if not name:
-                    # Provide clean warehouse title for items without explicit title in YES POS
-                    name = f"Товар (Арт: {sku})" if sku else f"Товар #{pid}"
+                # Only include real named products from YES POS — never invent "Товар (Арт: ...)"
+                name = str(p.get("name") or info.get("name") or "").strip()
+                if not name or name.startswith("Товар (Арт:") or name.startswith("Товар #"):
+                    continue
 
-                info = price_stock_map.get(pid, {})
                 try:
                     price_val = float(info.get("price", p.get("price", 0)) or 0)
                 except (ValueError, TypeError):
@@ -336,7 +361,14 @@ class YesPosService:
                     raw_prod_img = raw_prod_img.split("path=")[-1].split("&")[0]
                 clean_prod_img = raw_prod_img.lstrip("/")
 
-                if clean_prod_img:
+                if (
+                    clean_prod_img
+                    and not clean_prod_img.startswith("media/")
+                    and not clean_prod_img.startswith("static/")
+                    and not clean_prod_img.startswith("products/")
+                    and not clean_prod_img.lower().startswith("parent_")
+                    and "yp_prod_" not in clean_prod_img
+                ):
                     prod_img_url = f"/dashboard/api/yespos/image/?path={clean_prod_img}"
                 else:
                     prod_img_url = ""
@@ -364,6 +396,8 @@ class YesPosService:
                 })
 
             if prods:
+                # Sort products newest first (descending by numeric id, matching app.yespos.uz)
+                prods.sort(key=lambda item: int(item["id"]) if str(item["id"]).isdigit() else 0, reverse=True)
                 enriched_catalog.append({
                     "id": cat_id,
                     "name": cat_name,
@@ -381,9 +415,14 @@ class YesPosService:
         """
         from apps.catalog.models import Product, Category, YesPosCategoryLink, YesPosProductLink
 
+        # Clean up any legacy unnamed placeholder items in this store
+        Product.objects.filter(store=store, name_ru__startswith="Товар (Арт:").delete()
+        Product.objects.filter(store=store, name_uz__startswith="Товар (Арт:").delete()
+
         catalog = self.fetch_full_catalog()
         created_count = 0
         updated_count = 0
+        seen_remote_ids = set()
 
         # Purge catalog cache so next catalog view always gets fresh data
         clean_branch = str(self.branch_id or "1").strip()
@@ -433,8 +472,12 @@ class YesPosService:
 
             # 2. Map and update/create products
             for item in cat_data["products"]:
-                remote_id = str(item["id"])
-                name = item["name"]
+                remote_id = str(item["id"]).strip()
+                name = str(item.get("name") or "").strip()
+                if not remote_id or not name or name.startswith("Товар (Арт:"):
+                    continue
+                seen_remote_ids.add(remote_id)
+
                 price = Decimal(str(item.get("price") or 0))
                 stock = int(item.get("stock") or 0)
                 barcode = str(item.get("barcode") or item.get("sku") or "").strip()
@@ -459,7 +502,7 @@ class YesPosService:
                     if desc:
                         product.description_ru = desc
                         product.description_uz = desc
-                    product.image_url = image_url or ""
+                    product.image_url = image_url if raw_img else ""
 
                     product._skip_auto_translation = True
                     product.save()
@@ -477,6 +520,11 @@ class YesPosService:
                     product = None
                     if barcode:
                         product = Product.objects.filter(store=store, barcode=barcode).first()
+                    if not product:
+                        product = (
+                            Product.objects.filter(store=store, name_ru__iexact=name, yespos_links__isnull=True).first()
+                            or Product.objects.filter(store=store, name_uz__iexact=name, yespos_links__isnull=True).first()
+                        )
 
                     if product:
                         product.name_ru = name
@@ -489,7 +537,10 @@ class YesPosService:
                             product.barcode = barcode
                         if ikpu:
                             product.ikpu_code = ikpu
-                        product.image_url = image_url or ""
+                        if desc:
+                            product.description_ru = desc
+                            product.description_uz = desc
+                        product.image_url = image_url if raw_img else ""
                         product._skip_auto_translation = True
                         product.save()
                     else:
@@ -510,7 +561,7 @@ class YesPosService:
                             stock=stock,
                             barcode=barcode,
                             ikpu_code=ikpu,
-                            image_url=image_url or "",
+                            image_url=image_url if raw_img else "",
                             description_ru=desc,
                             description_uz=desc,
                             is_active=True,
@@ -534,6 +585,30 @@ class YesPosService:
                     )
                     created_count += 1
 
+                # Ensure newest YES POS products (largest remote_id) appear first in /dashboard/products/
+                try:
+                    rid_num = int(remote_id)
+                    from datetime import timedelta
+                    ordered_ts = timezone.now() - timedelta(seconds=max(0, 100000 - rid_num))
+                    Product.objects.filter(id=product.id).update(created_at=ordered_ts)
+                except (ValueError, TypeError):
+                    pass
+
+                # Remove any unlinked duplicate products with the exact same name in this store
+                Product.objects.filter(
+                    store=store,
+                    name_ru__iexact=name,
+                    yespos_links__isnull=True
+                ).exclude(id=product.id).delete()
+
+        # Remove stale links and their products whose remote_product_id is no longer in the connected YES POS catalog
+        if seen_remote_ids:
+            stale_links = YesPosProductLink.objects.filter(store=store).exclude(remote_product_id__in=seen_remote_ids)
+            for sl in stale_links.select_related("product"):
+                if sl.product:
+                    sl.product.delete()
+            stale_links.delete()
+
         return {
             "created": created_count,
             "updated": updated_count,
@@ -547,6 +622,7 @@ class YesPosService:
         """
         from apps.catalog.models import Product, Category, YesPosCategoryLink, YesPosProductLink
 
+        Product.objects.filter(store=store, name_ru__startswith="Товар (Арт:").delete()
         created_count = 0
         updated_count = 0
 
@@ -555,9 +631,8 @@ class YesPosService:
             if not remote_id:
                 continue
             name = str(item.get("name") or "").strip()
-            if not name:
-                sku_val = str(item.get("sku") or "").strip()
-                name = f"Товар (Арт: {sku_val})" if sku_val else f"Товар #{remote_id}"
+            if not name or name.startswith("Товар (Арт:") or name.startswith("Товар #"):
+                continue
 
             cat_name = str(item.get("category_name") or "Импорт YES POS").strip()
             cat_remote_id = str(item.get("category_id") or "").strip()
@@ -613,8 +688,8 @@ class YesPosService:
             barcode = str(item.get("barcode") or item.get("sku") or "").strip()
             ikpu = str(item.get("ikpu") or "").strip()
             desc = str(item.get("description") or "").strip()
-            image_url = str(item.get("image") or "").strip()
             raw_img = str(item.get("raw_image") or "").strip()
+            image_url = str(item.get("image") or "").strip() if raw_img else ""
 
             link = YesPosProductLink.objects.filter(store=store, remote_product_id=remote_id).first()
             if link and link.product:
@@ -632,7 +707,7 @@ class YesPosService:
                 if desc:
                     product.description_ru = desc
                     product.description_uz = desc
-                product.image_url = image_url or ""
+                product.image_url = image_url
 
                 product._skip_auto_translation = True
                 product.save()
@@ -650,6 +725,11 @@ class YesPosService:
                 product = None
                 if barcode:
                     product = Product.objects.filter(store=store, barcode=barcode).first()
+                if not product:
+                    product = (
+                        Product.objects.filter(store=store, name_ru__iexact=name, yespos_links__isnull=True).first()
+                        or Product.objects.filter(store=store, name_uz__iexact=name, yespos_links__isnull=True).first()
+                    )
 
                 if product:
                     product.name_ru = name
@@ -662,7 +742,10 @@ class YesPosService:
                         product.barcode = barcode
                     if ikpu:
                         product.ikpu_code = ikpu
-                    product.image_url = image_url or ""
+                    if desc:
+                        product.description_ru = desc
+                        product.description_uz = desc
+                    product.image_url = image_url
                     product._skip_auto_translation = True
                     product.save()
                 else:
@@ -683,7 +766,7 @@ class YesPosService:
                         stock=stock,
                         barcode=barcode,
                         ikpu_code=ikpu,
-                        image_url=image_url or "",
+                        image_url=image_url,
                         description_ru=desc,
                         description_uz=desc,
                         is_active=True,
@@ -706,6 +789,20 @@ class YesPosService:
                     }
                 )
                 created_count += 1
+
+            try:
+                rid_num = int(remote_id)
+                from datetime import timedelta
+                ordered_ts = timezone.now() - timedelta(seconds=max(0, 100000 - rid_num))
+                Product.objects.filter(id=product.id).update(created_at=ordered_ts)
+            except (ValueError, TypeError):
+                pass
+
+            Product.objects.filter(
+                store=store,
+                name_ru__iexact=name,
+                yespos_links__isnull=True
+            ).exclude(id=product.id).delete()
 
         clean_branch = str(self.branch_id or "1").strip()
         key_hash = hashlib.md5(f"{self.api_key.strip()}_{clean_branch}".encode()).hexdigest()

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Globe2, RotateCcw, ZoomIn, ZoomOut, Compass, Sparkles } from "lucide-react";
+import { RotateCcw, ZoomIn, ZoomOut, Compass } from "lucide-react";
 
 export interface MarkerLocation {
   name: string;
@@ -27,204 +27,16 @@ export const DEFAULT_MARKERS: MarkerLocation[] = [
   { name: "Дубай", country: "ОАЭ", lat: 25.2048, lng: 55.2708, orders: 2, visitors: 5, revenue: "690 000 UZS", active: false },
 ];
 
-interface LandPolygon {
-  name: string;
-  biome: "continent" | "steppe" | "uzbekistan" | "island" | "water";
-  coords: Array<[number, number]>;
-}
-
-// High-detail geographic polygons [lat, lng][] for realistic 3D Earth rendering
-const LAND_POLYGONS: LandPolygon[] = [
-  // 1. Eurasia (High-resolution coastline from Iberia -> Europe -> Russia -> East Asia -> India -> Arabia -> Mediterranean)
-  {
-    name: "Eurasia",
-    biome: "continent",
-    coords: [
-      [36.1, -5.6], [37.0, -8.9], [41.2, -8.7], [43.4, -8.4], [43.3, -1.8],
-      [47.2, -2.2], [48.4, -4.5], [49.6, -1.6], [51.0, 1.8], [53.5, 6.8],
-      [57.7, 10.6], [54.4, 10.2], [54.0, 14.2], [54.7, 18.6], [57.8, 21.8],
-      [60.0, 23.0], [60.2, 27.5], [60.0, 30.0], [64.0, 24.0], [65.8, 24.2],
-      [60.5, 18.0], [56.0, 15.5], [55.4, 13.0], [58.9, 11.1], [59.9, 10.7],
-      [58.0, 7.5], [62.0, 5.1], [65.0, 12.0], [68.5, 16.5], [70.9, 25.8],
-      [70.0, 31.0], [68.9, 37.0], [66.5, 40.5], [68.5, 44.0], [69.2, 55.0],
-      [72.5, 68.5], [73.5, 80.5], [76.5, 96.0], [77.5, 104.0], [74.0, 112.0],
-      [73.2, 125.0], [71.5, 138.0], [70.0, 158.0], [68.8, 175.0], [66.0, 179.5],
-      [62.5, 178.0], [60.0, 164.0], [56.0, 162.5], [51.2, 156.8], [54.5, 155.8],
-      [59.5, 150.8], [59.0, 142.0], [54.0, 138.5], [48.0, 140.0], [43.0, 132.0],
-      [40.0, 128.0], [35.1, 129.0], [34.8, 126.5], [37.5, 126.6], [39.8, 124.2],
-      [40.8, 121.8], [38.9, 121.6], [38.0, 119.0], [36.0, 120.4], [34.5, 119.5],
-      [31.2, 121.8], [28.0, 121.2], [24.5, 118.2], [22.2, 114.2], [21.5, 109.5],
-      [20.8, 106.8], [16.5, 107.6], [12.2, 109.2], [10.3, 107.0], [8.6, 104.8],
-      [10.5, 103.5], [13.5, 100.6], [8.0, 98.4], [3.1, 101.4], [1.3, 103.8],
-      [6.5, 100.1], [12.5, 98.5], [16.8, 96.2], [16.0, 94.3], [21.5, 92.0],
-      [22.2, 89.0], [19.8, 85.8], [16.2, 81.2], [13.1, 80.3], [8.1, 77.5],
-      [10.0, 76.2], [15.4, 73.8], [19.0, 72.8], [21.6, 69.6], [23.8, 68.2],
-      [24.9, 66.9], [25.2, 61.5], [25.8, 57.3], [27.1, 56.3], [29.8, 49.5],
-      [29.3, 48.0], [26.2, 50.2], [24.4, 54.4], [26.1, 56.3], [22.5, 59.8],
-      [17.0, 54.1], [14.5, 49.2], [12.7, 43.4], [16.9, 42.5], [21.5, 39.1],
-      [27.8, 35.2], [29.5, 34.9], [31.2, 32.3], [32.8, 35.0], [35.5, 35.8],
-      [36.8, 36.2], [36.2, 32.5], [36.8, 28.2], [38.4, 26.8], [40.1, 26.2],
-      [41.0, 29.0], [41.2, 36.3], [41.0, 40.5], [43.3, 40.0], [44.6, 37.8],
-      [46.5, 36.8], [46.2, 30.8], [44.2, 28.6], [42.0, 28.0], [40.6, 23.0],
-      [38.0, 24.0], [36.8, 22.0], [39.5, 20.0], [42.2, 18.8], [45.4, 13.6],
-      [44.4, 12.3], [41.2, 16.8], [38.2, 15.6], [41.8, 12.2], [44.4, 8.9],
-      [43.3, 5.4], [42.5, 3.1], [39.5, -0.3], [36.7, -4.4], [36.1, -5.6],
-    ],
-  },
-  // 2. Central Asia & Kazakhstan Steppe Layer
-  {
-    name: "CentralAsia",
-    biome: "steppe",
-    coords: [
-      [54.2, 52.0], [54.8, 61.5], [53.8, 72.5], [50.8, 82.5], [47.2, 83.0],
-      [44.5, 80.2], [42.2, 79.5], [40.2, 76.0], [37.0, 74.5], [36.2, 68.5],
-      [35.2, 61.2], [37.5, 54.0], [40.2, 52.6], [44.5, 50.3], [47.1, 51.9],
-      [50.5, 51.0], [54.2, 52.0],
-    ],
-  },
-  // 3. Uzbekistan (Highlighted in vibrant Shopify Emerald / Cyan)
-  {
-    name: "Uzbekistan",
-    biome: "uzbekistan",
-    coords: [
-      [45.5, 56.0], [45.1, 58.6], [43.7, 61.6], [43.2, 63.8], [42.6, 66.2],
-      [41.9, 69.2], [41.5, 70.6], [41.3, 72.0], [40.8, 73.1], [40.2, 71.8],
-      [40.1, 70.2], [40.3, 69.1], [39.5, 68.4], [38.2, 68.1], [37.2, 67.3],
-      [38.4, 65.2], [39.1, 63.4], [40.2, 62.1], [41.2, 60.2], [41.4, 58.2],
-      [41.9, 56.0], [45.5, 56.0],
-    ],
-  },
-  // 4. Caspian Sea & Aral Sea (Water cutouts inside Eurasia)
-  {
-    name: "CaspianSea",
-    biome: "water",
-    coords: [
-      [47.1, 51.9], [45.5, 53.2], [44.0, 50.3], [41.5, 52.5], [37.5, 53.9],
-      [36.7, 52.2], [37.4, 49.2], [40.3, 50.0], [43.0, 47.6], [45.8, 47.5],
-      [47.1, 49.5], [47.1, 51.9],
-    ],
-  },
-  // 5. Africa
-  {
-    name: "Africa",
-    biome: "continent",
-    coords: [
-      [35.8, -5.8], [36.9, 3.1], [37.2, 10.2], [33.8, 11.2], [32.2, 15.2],
-      [32.8, 22.0], [31.5, 25.5], [31.5, 32.3], [28.0, 33.5], [22.0, 36.9],
-      [15.6, 39.5], [11.8, 43.3], [10.5, 45.0], [11.9, 51.3], [6.0, 49.0],
-      [2.0, 45.3], [-1.6, 41.6], [-4.0, 39.7], [-10.5, 40.4], [-15.0, 40.7],
-      [-19.8, 34.9], [-25.9, 32.6], [-29.8, 31.0], [-33.9, 25.6], [-34.8, 20.0],
-      [-34.3, 18.4], [-28.6, 16.5], [-22.9, 14.5], [-17.2, 11.8], [-12.3, 13.6],
-      [-8.8, 13.2], [-4.8, 11.8], [-0.7, 8.8], [4.0, 9.7], [4.4, 7.0],
-      [6.4, 3.4], [4.7, -2.0], [4.4, -7.7], [6.3, -10.8], [9.5, -13.7],
-      [14.7, -17.5], [18.1, -16.0], [21.0, -17.0], [24.0, -15.6], [28.0, -12.9],
-      [30.4, -9.6], [33.6, -7.6], [35.8, -5.8],
-    ],
-  },
-  // 6. North America
-  {
-    name: "NorthAmerica",
-    biome: "continent",
-    coords: [
-      [70.2, -161.0], [71.3, -156.5], [69.5, -138.0], [70.2, -124.0], [68.5, -106.0],
-      [66.0, -86.0], [63.5, -78.0], [58.5, -63.0], [52.2, -55.6], [47.0, -60.5],
-      [44.6, -63.6], [43.6, -70.2], [41.7, -70.0], [40.6, -74.0], [36.8, -76.0],
-      [32.8, -79.9], [28.5, -80.6], [25.2, -80.2], [28.0, -82.8], [30.0, -85.5],
-      [29.2, -89.2], [29.3, -94.8], [26.0, -97.2], [21.5, -97.4], [19.2, -96.1],
-      [21.2, -89.6], [21.5, -87.1], [18.2, -87.8], [15.8, -88.6], [15.9, -85.0],
-      [14.5, -83.2], [11.0, -83.8], [9.4, -79.9], [7.5, -78.0], [8.5, -83.0],
-      [10.5, -85.8], [13.5, -89.8], [16.2, -95.2], [16.8, -99.9], [20.6, -105.2],
-      [23.2, -106.4], [27.9, -110.9], [31.3, -113.5], [22.9, -109.9], [28.0, -114.2],
-      [32.5, -117.1], [34.4, -120.4], [37.8, -122.5], [40.4, -124.4], [46.2, -124.0],
-      [48.4, -124.7], [54.2, -130.3], [58.3, -136.6], [60.0, -142.0], [61.2, -150.0],
-      [54.8, -163.5], [58.8, -161.8], [63.5, -162.0], [65.6, -168.1], [70.2, -161.0],
-    ],
-  },
-  // 7. South America
-  {
-    name: "SouthAmerica",
-    biome: "continent",
-    coords: [
-      [11.2, -74.2], [12.2, -71.2], [10.6, -66.9], [10.5, -62.0], [8.5, -59.8],
-      [6.0, -55.2], [4.5, -51.6], [0.0, -50.0], [-2.5, -44.3], [-3.7, -38.5],
-      [-5.8, -35.2], [-8.0, -34.9], [-13.0, -38.5], [-18.0, -39.5], [-23.0, -43.2],
-      [-25.5, -48.5], [-30.0, -50.2], [-34.9, -54.9], [-38.0, -57.5], [-41.0, -63.0],
-      [-45.8, -67.5], [-50.0, -68.5], [-52.4, -68.4], [-54.8, -65.2], [-55.2, -68.0],
-      [-52.0, -75.0], [-46.5, -75.5], [-41.5, -73.8], [-33.0, -71.6], [-23.6, -70.4],
-      [-18.5, -70.3], [-12.0, -77.1], [-8.1, -79.0], [-4.7, -81.3], [-2.2, -80.9],
-      [1.0, -79.6], [4.0, -77.4], [7.8, -77.8], [9.5, -75.6], [11.2, -74.2],
-    ],
-  },
-  // 8. Australia
-  {
-    name: "Australia",
-    biome: "continent",
-    coords: [
-      [-12.4, 130.8], [-11.2, 136.7], [-14.5, 136.0], [-16.8, 139.2], [-10.7, 142.5],
-      [-16.9, 145.8], [-20.0, 148.2], [-24.8, 152.4], [-28.2, 153.6], [-33.9, 151.2],
-      [-37.5, 150.0], [-38.4, 145.0], [-38.1, 140.6], [-35.2, 138.5], [-34.7, 135.5],
-      [-32.1, 132.5], [-31.8, 127.0], [-33.9, 121.9], [-35.0, 117.9], [-34.0, 115.0],
-      [-32.0, 115.8], [-27.5, 114.1], [-21.9, 114.1], [-20.3, 118.6], [-17.9, 122.2],
-      [-14.5, 125.5], [-14.8, 129.0], [-12.4, 130.8],
-    ],
-  },
-  // 9. UK & Ireland
-  {
-    name: "UK",
-    biome: "island",
-    coords: [
-      [50.1, -5.2], [51.5, -5.0], [53.4, -3.0], [55.0, -4.5], [57.5, -5.8],
-      [58.6, -3.1], [57.1, -2.1], [55.9, -3.1], [54.6, -1.1], [52.9, 1.3],
-      [51.4, 1.4], [50.7, -1.1], [50.1, -5.2],
-    ],
-  },
-  // 10. Japan
-  {
-    name: "Japan",
-    biome: "island",
-    coords: [
-      [31.2, 130.6], [33.6, 130.4], [34.4, 132.5], [35.6, 135.2], [37.5, 137.2],
-      [39.7, 140.1], [41.5, 140.9], [43.3, 145.5], [42.0, 143.2], [39.6, 142.0],
-      [35.7, 140.8], [34.7, 138.9], [33.5, 135.8], [32.8, 133.0], [31.2, 130.6],
-    ],
-  },
-  // 11. Indonesia & Philippines & Sri Lanka & Madagascar & Greenland
-  {
-    name: "SumatraJava",
-    biome: "island",
-    coords: [
-      [5.5, 95.3], [1.5, 101.5], [-3.0, 104.8], [-5.9, 105.8], [-6.8, 108.5],
-      [-7.8, 114.4], [-8.4, 114.2], [-7.7, 109.0], [-6.2, 105.4], [-2.0, 100.5],
-      [2.5, 96.8], [5.5, 95.3],
-    ],
-  },
-  {
-    name: "Borneo",
-    biome: "island",
-    coords: [
-      [6.9, 116.8], [4.2, 117.9], [1.2, 118.8], [-3.3, 116.2], [-3.2, 112.5],
-      [-0.8, 109.3], [2.0, 109.6], [4.9, 114.9], [6.9, 116.8],
-    ],
-  },
-  {
-    name: "Madagascar",
-    biome: "island",
-    coords: [
-      [-12.0, 49.3], [-15.8, 50.2], [-20.0, 48.8], [-25.0, 47.0], [-25.2, 44.5],
-      [-20.2, 44.3], [-16.0, 45.2], [-12.0, 49.3],
-    ],
-  },
-  {
-    name: "Greenland",
-    biome: "island",
-    coords: [
-      [60.0, -44.0], [65.0, -52.5], [70.0, -54.0], [76.5, -69.0], [81.5, -52.0],
-      [82.5, -30.0], [78.0, -18.5], [70.5, -22.0], [65.5, -37.5], [60.0, -44.0],
-    ],
-  },
+// Detailed Uzbekistan border coordinates [lat, lng] for subtle highlight on the 3D globe
+const UZBEKISTAN_BORDER: Array<[number, number]> = [
+  [45.58, 55.99], [45.00, 58.50], [43.65, 61.50], [43.15, 63.80], [42.55, 66.15],
+  [41.95, 69.05], [41.55, 70.55], [41.35, 71.95], [40.82, 73.12], [40.25, 71.80],
+  [40.12, 70.25], [40.32, 69.10], [39.50, 68.35], [38.20, 68.10], [37.18, 67.30],
+  [38.40, 65.20], [39.10, 63.40], [40.18, 62.10], [41.20, 60.15], [41.38, 58.15],
+  [41.90, 55.99], [45.58, 55.99],
 ];
 
-// Helper: convert lat, lng (degrees) to 3D unit vector
+// Convert [lat, lng] (degrees) to 3D unit sphere vector
 function latLngToVec3(lat: number, lng: number) {
   const phi = ((180 - lng) * Math.PI) / 180;
   const theta = (lat * Math.PI) / 180;
@@ -235,7 +47,7 @@ function latLngToVec3(lat: number, lng: number) {
   };
 }
 
-// Helper: rotate 3D vector by camera angles (phi around Y, theta around X)
+// Rotate 3D unit vector by camera angles (phi around Y, theta around X)
 function rotateVec3(
   v: { x: number; y: number; z: number },
   cosPhi: number,
@@ -250,13 +62,130 @@ function rotateVec3(
   return { x: x1, y: y1, z: z2 };
 }
 
+const VERTEX_SHADER_SRC = `
+  attribute vec2 a_pos;
+  varying vec2 v_uv;
+  void main() {
+    v_uv = a_pos;
+    gl_Position = vec4(a_pos, 0.0, 1.0);
+  }
+`;
+
+// Real-time 3D Raycasted Sphere Fragment Shader (NASA Blue Marble + Black Marble + Rayleigh Atmosphere)
+const FRAGMENT_SHADER_SRC = `
+  precision highp float;
+  varying vec2 v_uv;
+  uniform sampler2D u_dayTex;
+  uniform sampler2D u_nightTex;
+  uniform sampler2D u_bumpTex;
+  uniform float u_phi;
+  uniform float u_theta;
+  uniform float u_radius;
+  uniform float u_nightMode;
+
+  const float PI = 3.141592653589793;
+
+  void main() {
+    // v_uv is in [-1, 1], with Y pointing up. Match screen Y-down convention:
+    vec2 p = vec2(v_uv.x, -v_uv.y);
+    float dist = length(p);
+    float R = u_radius;
+
+    // Outside sphere: render realistic Rayleigh atmospheric glow halo
+    if (dist > R) {
+      float haloDist = (dist - R) / (R * 0.24);
+      if (haloDist > 1.0) {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+        return;
+      }
+      float falloff = pow(1.0 - haloDist, 2.6);
+      vec3 dayHalo = vec3(0.18, 0.62, 0.96);
+      vec3 nightHalo = vec3(0.12, 0.52, 0.88);
+      vec3 haloCol = mix(dayHalo, nightHalo, u_nightMode);
+      gl_FragColor = vec4(haloCol * falloff, falloff * 0.52);
+      return;
+    }
+
+    // Inside sphere: compute exact 3D surface normal n = (nx, ny, nz) in view space
+    vec2 nxy = p / R;
+    float nz = sqrt(max(0.0, 1.0 - dot(nxy, nxy)));
+    vec3 n = vec3(nxy.x, nxy.y, nz);
+
+    // Inverse rotate from view space back to world sphere coordinates (v.x, v.y, v.z)
+    float cosTheta = cos(u_theta);
+    float sinTheta = sin(u_theta);
+    float cosPhi = cos(u_phi);
+    float sinPhi = sin(u_phi);
+
+    // Inverse of:
+    // y1 = v.y * cosTheta - z1 * sinTheta
+    // z2 = v.y * sinTheta + z1 * cosTheta
+    float vy = n.y * cosTheta + n.z * sinTheta;
+    float z1 = -n.y * sinTheta + n.z * cosTheta;
+
+    // Inverse of:
+    // x1 = v.x * cosPhi - v.z * sinPhi
+    // z1 = v.x * sinPhi + v.z * cosPhi
+    float vx = n.x * cosPhi + z1 * sinPhi;
+    float vz = -n.x * sinPhi + z1 * cosPhi;
+
+    // Convert 3D unit vector (vx, vy, vz) back to spherical [lat, lng] and equirectangular UV
+    float lat = asin(clamp(-vy, -1.0, 1.0));
+    float phiLon = atan(-vx, -vz); // in [-PI, PI], where phiLon = (180 - lng) * PI / 180
+    // lng = 180 - phiLon * 180 / PI => u = (lng + 180) / 360 = 1.0 - phiLon / (2*PI)
+    float u = fract(1.0 - phiLon / (2.0 * PI));
+    float v = clamp(0.5 - lat / PI, 0.001, 0.999);
+
+    vec2 uv = vec2(u, v);
+    vec3 dayCol = texture2D(u_dayTex, uv).rgb;
+    vec3 nightCol = texture2D(u_nightTex, uv).rgb;
+    float topo = texture2D(u_bumpTex, uv).r;
+
+    // Pseudo-normal perturbation from topography for crisp mountain relief
+    vec3 lightDir = normalize(vec3(-0.38, -0.35, 0.86));
+    float ndotl = max(0.18, dot(n, lightDir));
+
+    // Detect ocean vs land from blue dominance in Blue Marble texture
+    float isOcean = smoothstep(0.02, 0.14, dayCol.b - max(dayCol.r, dayCol.g));
+
+    // Enhance Day colors (rich vibrant ocean + crisp relief continents like Shopify Live View)
+    vec3 vibrantDay = pow(dayCol, vec3(0.88)) * 1.18;
+    vibrantDay += vec3(0.02, 0.06, 0.12) * isOcean;
+    vibrantDay *= (0.88 + 0.22 * topo * (1.0 - isOcean));
+
+    // Specular ocean reflection
+    vec3 halfVec = normalize(lightDir + vec3(0.0, 0.0, 1.0));
+    float spec = pow(max(0.0, dot(n, halfVec)), 28.0) * isOcean * 0.38;
+
+    vec3 shadedDay = vibrantDay * (0.35 + 0.72 * ndotl) + vec3(0.75, 0.90, 1.0) * spec;
+
+    // Enhance Night mode (NASA Black Marble with glowing golden city lights + deep sapphire oceans)
+    vec3 cityGlow = pow(nightCol, vec3(0.85)) * vec3(1.55, 1.35, 0.95);
+    vec3 nightBase = dayCol * vec3(0.12, 0.20, 0.34) * (0.45 + 0.55 * ndotl);
+    vec3 shadedNight = nightBase + cityGlow * 1.35 + vec3(0.04, 0.12, 0.24) * spec * 0.5;
+
+    vec3 surfaceCol = mix(shadedDay, shadedNight, u_nightMode);
+
+    // 3D Fresnel atmospheric scattering rim on the sphere limb
+    float fresnel = pow(1.0 - nz, 2.8);
+    vec3 rimCol = mix(vec3(0.28, 0.74, 0.98), vec3(0.16, 0.62, 0.95), u_nightMode);
+    surfaceCol = mix(surfaceCol, rimCol, fresnel * 0.58);
+
+    // Anti-aliased sphere edge
+    float edgeAlpha = smoothstep(R, R - 0.008, dist);
+    gl_FragColor = vec4(surfaceCol, edgeAlpha);
+  }
+`;
+
 export const InteractiveGlobe: React.FC<{
   size?: number;
   className?: string;
   selectedCityName?: string;
   onMarkerSelect?: (marker: MarkerLocation) => void;
 }> = ({ size = 470, className = "", selectedCityName, onMarkerSelect }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const glCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
   const [activeMarker, setActiveMarker] = useState<MarkerLocation>(DEFAULT_MARKERS[0]);
   const [isDragging, setIsDragging] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
@@ -264,10 +193,22 @@ export const InteractiveGlobe: React.FC<{
   const [globeTheme, setGlobeTheme] = useState<"day" | "satellite">("day");
 
   // Camera centered on Uzbekistan / Central Asia (lat ~41°, lng ~69°) initially
-  const rotationRef = useRef({ phi: 1.2, theta: 0.65 });
+  const rotationRef = useRef({ phi: 1.21, theta: 0.68 });
+  const velocityRef = useRef({ dPhi: 0, dTheta: 0 });
   const targetRotationRef = useRef<{ phi: number; theta: number } | null>(null);
   const mouseRef = useRef({ lastX: 0, lastY: 0, downX: 0, downY: 0 });
   const screenMarkersRef = useRef<Array<{ marker: MarkerLocation; x: number; y: number }>>([]);
+  const themeBlendRef = useRef<number>(0);
+
+  // WebGL resources ref
+  const glStateRef = useRef<{
+    gl: WebGLRenderingContext;
+    program: WebGLProgram;
+    uPhi: WebGLUniformLocation | null;
+    uTheta: WebGLUniformLocation | null;
+    uRadius: WebGLUniformLocation | null;
+    uNightMode: WebGLUniformLocation | null;
+  } | null>(null);
 
   // Focus camera on a specific lat/lng
   const focusLocation = (lat: number, lng: number, targetZoom?: number) => {
@@ -275,6 +216,7 @@ export const InteractiveGlobe: React.FC<{
     const desiredPhi = Math.PI - phiM;
     const desiredTheta = (lat * Math.PI) / 180;
     targetRotationRef.current = { phi: desiredPhi, theta: desiredTheta };
+    velocityRef.current = { dPhi: 0, dTheta: 0 };
     setAutoRotate(false);
     if (targetZoom) setZoom(targetZoom);
   };
@@ -291,22 +233,127 @@ export const InteractiveGlobe: React.FC<{
     }
   }, [selectedCityName]);
 
+  // Initialize WebGL 3D Sphere Renderer & Load NASA Earth Textures
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const glCanvas = glCanvasRef.current;
+    if (!glCanvas) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    glCanvas.width = size * dpr;
+    glCanvas.height = size * dpr;
+
+    const gl = (glCanvas.getContext("webgl", { alpha: true, antialias: true, premultipliedAlpha: false }) ||
+      glCanvas.getContext("experimental-webgl", { alpha: true, antialias: true })) as WebGLRenderingContext | null;
+    if (!gl) return;
+
+    const compileShader = (type: number, src: string) => {
+      const sh = gl.createShader(type);
+      if (!sh) return null;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+        console.warn("Globe shader error:", gl.getShaderInfoLog(sh));
+        gl.deleteShader(sh);
+        return null;
+      }
+      return sh;
+    };
+
+    const vs = compileShader(gl.VERTEX_SHADER, VERTEX_SHADER_SRC);
+    const fs = compileShader(gl.FRAGMENT_SHADER, FRAGMENT_SHADER_SRC);
+    if (!vs || !fs) return;
+
+    const program = gl.createProgram();
+    if (!program) return;
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+
+    gl.useProgram(program);
+
+    // Fullscreen quad [-1, 1]
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+      gl.STATIC_DRAW
+    );
+
+    const aPos = gl.getAttribLocation(program, "a_pos");
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    // Helper to create a texture with an immediate fallback pixel, then load high-res image
+    const loadGlobeTexture = (unit: number, uniformName: string, url: string, fallbackRgb: [number, number, number]) => {
+      const tex = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        1,
+        1,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        new Uint8Array([fallbackRgb[0], fallbackRgb[1], fallbackRgb[2], 255])
+      );
+
+      const uLoc = gl.getUniformLocation(program, uniformName);
+      gl.uniform1i(uLoc, unit);
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        gl.activeTexture(gl.TEXTURE0 + unit);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      };
+      img.src = url;
+    };
+
+    loadGlobeTexture(0, "u_dayTex", "/static/images/globe/earth-day.jpg", [14, 116, 184]);
+    loadGlobeTexture(1, "u_nightTex", "/static/images/globe/earth-night.jpg", [10, 18, 36]);
+    loadGlobeTexture(2, "u_bumpTex", "/static/images/globe/earth-topology.png", [128, 128, 128]);
+
+    glStateRef.current = {
+      gl,
+      program,
+      uPhi: gl.getUniformLocation(program, "u_phi"),
+      uTheta: gl.getUniformLocation(program, "u_theta"),
+      uRadius: gl.getUniformLocation(program, "u_radius"),
+      uNightMode: gl.getUniformLocation(program, "u_nightMode"),
+    };
+  }, [size]);
+
+  // Main 60 FPS Render Loop (WebGL 3D Sphere + 2D Vector Overlay for Arcs, Uzbekistan Border & City Pins)
+  useEffect(() => {
+    const overlayCanvas = overlayCanvasRef.current;
+    if (!overlayCanvas) return;
+    const ctx = overlayCanvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    ctx.scale(dpr, dpr);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    overlayCanvas.width = size * dpr;
+    overlayCanvas.height = size * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     let animId: number;
     let pulse = 0;
 
     const render = () => {
-      pulse += 0.042;
+      pulse += 0.038;
+
+      // Smooth Day <-> Night transition
+      const targetNight = globeTheme === "satellite" ? 1.0 : 0.0;
+      themeBlendRef.current += (targetNight - themeBlendRef.current) * 0.14;
 
       if (targetRotationRef.current && !isDragging) {
         const dPhi = targetRotationRef.current.phi - rotationRef.current.phi;
@@ -316,13 +363,22 @@ export const InteractiveGlobe: React.FC<{
         if (Math.abs(dPhi) < 0.002 && Math.abs(dTheta) < 0.002) {
           targetRotationRef.current = null;
         }
-      } else if (!isDragging && autoRotate) {
-        rotationRef.current.phi += 0.002;
+      } else if (!isDragging) {
+        if (Math.abs(velocityRef.current.dPhi) > 0.0002 || Math.abs(velocityRef.current.dTheta) > 0.0002) {
+          rotationRef.current.phi += velocityRef.current.dPhi;
+          rotationRef.current.theta = Math.max(
+            -1.25,
+            Math.min(1.25, rotationRef.current.theta + velocityRef.current.dTheta)
+          );
+          velocityRef.current.dPhi *= 0.92;
+          velocityRef.current.dTheta *= 0.92;
+        } else if (autoRotate) {
+          rotationRef.current.phi += 0.0022;
+        }
       }
 
-      ctx.clearRect(0, 0, size, size);
-
       const radius = size * 0.39 * zoom;
+      const normalizedRadius = (radius / (size * 0.5));
       const centerX = size / 2;
       const centerY = size / 2;
 
@@ -332,209 +388,70 @@ export const InteractiveGlobe: React.FC<{
       const cosTheta = Math.cos(theta);
       const sinTheta = Math.sin(theta);
 
-      // 1. Multi-layer atmospheric Rayleigh scattering halo (Shopify 3D Earth style)
-      const outerHalo = ctx.createRadialGradient(
-        centerX,
-        centerY,
-        radius * 0.85,
-        centerX,
-        centerY,
-        radius * 1.22
-      );
-      if (globeTheme === "day") {
-        outerHalo.addColorStop(0, "rgba(14, 165, 233, 0.28)");
-        outerHalo.addColorStop(0.45, "rgba(56, 189, 248, 0.14)");
-        outerHalo.addColorStop(0.75, "rgba(99, 102, 241, 0.05)");
-        outerHalo.addColorStop(1, "rgba(14, 165, 233, 0)");
-      } else {
-        outerHalo.addColorStop(0, "rgba(56, 189, 248, 0.35)");
-        outerHalo.addColorStop(0.5, "rgba(16, 185, 129, 0.15)");
-        outerHalo.addColorStop(1, "rgba(15, 23, 42, 0)");
+      // 1. Render 3D Photorealistic Earth Sphere via WebGL
+      const glState = glStateRef.current;
+      if (glState) {
+        const { gl, program, uPhi, uTheta, uRadius, uNightMode } = glState;
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(program);
+        gl.uniform1f(uPhi, phi);
+        gl.uniform1f(uTheta, theta);
+        gl.uniform1f(uRadius, normalizedRadius);
+        gl.uniform1f(uNightMode, themeBlendRef.current);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
       }
-      ctx.fillStyle = outerHalo;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius * 1.22, 0, Math.PI * 2);
-      ctx.fill();
 
-      // 2. Clip to 3D Sphere & Render Realistic Ocean with Specular Sunlight
+      // 2. Clear 2D Overlay & Draw Uzbekistan Highlight, 3D Flight Arcs, and City Beacons
+      ctx.clearRect(0, 0, size, size);
+
+      // Subtle Uzbekistan Territory Highlight (strictly front-hemisphere v.z > 0.05)
       ctx.save();
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
       ctx.clip();
 
-      const oceanGrad = ctx.createRadialGradient(
-        centerX - radius * 0.32,
-        centerY - radius * 0.32,
-        radius * 0.05,
-        centerX + radius * 0.1,
-        centerY + radius * 0.1,
-        radius * 1.08
-      );
-      if (globeTheme === "day") {
-        oceanGrad.addColorStop(0, "#7dd3fc");
-        oceanGrad.addColorStop(0.28, "#38bdf8");
-        oceanGrad.addColorStop(0.65, "#0284c7");
-        oceanGrad.addColorStop(0.9, "#0369a1");
-        oceanGrad.addColorStop(1, "#1e3a8a");
-      } else {
-        oceanGrad.addColorStop(0, "#1e293b");
-        oceanGrad.addColorStop(0.45, "#0f172a");
-        oceanGrad.addColorStop(0.85, "#090d16");
-        oceanGrad.addColorStop(1, "#020617");
-      }
-      ctx.fillStyle = oceanGrad;
-      ctx.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
-
-      // 3. Subtle Spherical Graticule (Latitude & Longitude Lines)
-      ctx.strokeStyle =
-        globeTheme === "day"
-          ? "rgba(255, 255, 255, 0.16)"
-          : "rgba(56, 189, 248, 0.12)";
-      ctx.lineWidth = 0.7;
-
-      for (let lat = -60; lat <= 60; lat += 20) {
-        ctx.beginPath();
-        let started = false;
-        for (let lng = -180; lng <= 180; lng += 5) {
-          const v = rotateVec3(latLngToVec3(lat, lng), cosPhi, sinPhi, cosTheta, sinTheta);
-          if (v.z > 0) {
-            const sx = centerX + v.x * radius;
-            const sy = centerY + v.y * radius;
-            if (!started) {
-              ctx.moveTo(sx, sy);
-              started = true;
-            } else {
-              ctx.lineTo(sx, sy);
-            }
-          } else {
-            started = false;
-          }
+      const uzbProjected: Array<{ sx: number; sy: number }> = [];
+      let uzbVisible = true;
+      for (let i = 0; i < UZBEKISTAN_BORDER.length; i++) {
+        const [lat, lng] = UZBEKISTAN_BORDER[i];
+        const v = rotateVec3(latLngToVec3(lat, lng), cosPhi, sinPhi, cosTheta, sinTheta);
+        if (v.z <= 0.04) {
+          uzbVisible = false;
+          break;
         }
+        uzbProjected.push({
+          sx: centerX + v.x * radius,
+          sy: centerY + v.y * radius,
+        });
+      }
+
+      if (uzbVisible && uzbProjected.length > 3) {
+        ctx.beginPath();
+        uzbProjected.forEach((pt, idx) => {
+          if (idx === 0) ctx.moveTo(pt.sx, pt.sy);
+          else ctx.lineTo(pt.sx, pt.sy);
+        });
+        ctx.closePath();
+        ctx.fillStyle =
+          globeTheme === "day"
+            ? "rgba(16, 185, 129, 0.28)"
+            : "rgba(16, 185, 129, 0.34)";
+        ctx.strokeStyle =
+          globeTheme === "day"
+            ? "rgba(255, 255, 255, 0.92)"
+            : "rgba(52, 211, 153, 0.95)";
+        ctx.lineWidth = 1.6;
+        ctx.fill();
         ctx.stroke();
       }
+      ctx.restore();
 
-      for (let lng = -180; lng < 180; lng += 20) {
-        ctx.beginPath();
-        let started = false;
-        for (let lat = -80; lat <= 80; lat += 4) {
-          const v = rotateVec3(latLngToVec3(lat, lng), cosPhi, sinPhi, cosTheta, sinTheta);
-          if (v.z > 0) {
-            const sx = centerX + v.x * radius;
-            const sy = centerY + v.y * radius;
-            if (!started) {
-              ctx.moveTo(sx, sy);
-              started = true;
-            } else {
-              ctx.lineTo(sx, sy);
-            }
-          } else {
-            started = false;
-          }
-        }
-        ctx.stroke();
-      }
-
-      // 4. Render Continents, Biomes, Inland Seas, and Uzbekistan Highlight
-      LAND_POLYGONS.forEach((poly) => {
-        const projected: Array<{ sx: number; sy: number; z: number }> = [];
-        let visibleCount = 0;
-
-        for (let i = 0; i < poly.coords.length; i++) {
-          const [lat, lng] = poly.coords[i];
-          const v = rotateVec3(latLngToVec3(lat, lng), cosPhi, sinPhi, cosTheta, sinTheta);
-          if (v.z > -0.18) visibleCount++;
-          const clampedZ = Math.max(-0.12, v.z);
-          const scale = clampedZ < 0 ? 1 / (1 - clampedZ * 0.22) : 1;
-          projected.push({
-            sx: centerX + v.x * radius * scale,
-            sy: centerY + v.y * radius * scale,
-            z: v.z,
-          });
-        }
-
-        if (visibleCount >= 3) {
-          ctx.beginPath();
-          projected.forEach((pt, idx) => {
-            if (idx === 0) ctx.moveTo(pt.sx, pt.sy);
-            else ctx.lineTo(pt.sx, pt.sy);
-          });
-          ctx.closePath();
-
-          if (poly.biome === "water") {
-            ctx.fillStyle = globeTheme === "day" ? "#0284c7" : "#0f172a";
-            ctx.strokeStyle =
-              globeTheme === "day"
-                ? "rgba(186, 230, 253, 0.5)"
-                : "rgba(56, 189, 248, 0.3)";
-            ctx.lineWidth = 0.8;
-          } else if (poly.biome === "uzbekistan") {
-            // Uzbekistan highlighted with glowing Shopify Emerald / Teal relief
-            const uzbGrad = ctx.createLinearGradient(
-              centerX - radius * 0.3,
-              centerY - radius * 0.3,
-              centerX + radius * 0.3,
-              centerY + radius * 0.3
-            );
-            if (globeTheme === "day") {
-              uzbGrad.addColorStop(0, "rgba(16, 185, 129, 0.88)");
-              uzbGrad.addColorStop(1, "rgba(5, 150, 105, 0.92)");
-              ctx.fillStyle = uzbGrad;
-              ctx.strokeStyle = "#ffffff";
-              ctx.lineWidth = 1.8;
-            } else {
-              uzbGrad.addColorStop(0, "rgba(16, 185, 129, 0.55)");
-              uzbGrad.addColorStop(1, "rgba(6, 182, 212, 0.65)");
-              ctx.fillStyle = uzbGrad;
-              ctx.strokeStyle = "#34d399";
-              ctx.lineWidth = 1.8;
-            }
-          } else if (poly.biome === "steppe") {
-            // Central Asia & Steppe warm relief
-            if (globeTheme === "day") {
-              ctx.fillStyle = "rgba(217, 237, 196, 0.92)";
-              ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
-              ctx.lineWidth = 1.1;
-            } else {
-              ctx.fillStyle = "rgba(30, 41, 59, 0.92)";
-              ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
-              ctx.lineWidth = 1.0;
-            }
-          } else {
-            // Natural Earth physical relief gradient (Lush green/ivory terrain in Day mode)
-            const landGrad = ctx.createRadialGradient(
-              centerX - radius * 0.25,
-              centerY - radius * 0.25,
-              radius * 0.1,
-              centerX,
-              centerY,
-              radius
-            );
-            if (globeTheme === "day") {
-              landGrad.addColorStop(0, "#ecfccb");
-              landGrad.addColorStop(0.45, "#bbf7d0");
-              landGrad.addColorStop(0.85, "#86efac");
-              landGrad.addColorStop(1, "#4ade80");
-              ctx.fillStyle = landGrad;
-              ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
-              ctx.lineWidth = 1.0;
-            } else {
-              landGrad.addColorStop(0, "#334155");
-              landGrad.addColorStop(0.6, "#1e293b");
-              landGrad.addColorStop(1, "#0f172a");
-              ctx.fillStyle = landGrad;
-              ctx.strokeStyle = "rgba(56, 189, 248, 0.35)";
-              ctx.lineWidth = 1.0;
-            }
-          }
-          ctx.fill();
-          ctx.stroke();
-        }
-      });
-
-      // 5. Render Animated 3D Order Arcs & Travelling Packets into Tashkent
+      // 3. Render Animated 3D Order Arcs & Travelling Packets into Tashkent
       const tashkent = DEFAULT_MARKERS[0];
       DEFAULT_MARKERS.slice(1).forEach((dest, arcIdx) => {
-        const steps = 32;
+        const steps = 36;
         ctx.beginPath();
         let started = false;
         for (let s = 0; s <= steps; s++) {
@@ -542,8 +459,8 @@ export const InteractiveGlobe: React.FC<{
           const lat = tashkent.lat + (dest.lat - tashkent.lat) * t;
           const lng = tashkent.lng + (dest.lng - tashkent.lng) * t;
           const v = rotateVec3(latLngToVec3(lat, lng), cosPhi, sinPhi, cosTheta, sinTheta);
-          if (v.z > 0.04) {
-            const arcLift = 1 + Math.sin(t * Math.PI) * 0.075;
+          if (v.z > 0.05) {
+            const arcLift = 1 + Math.sin(t * Math.PI) * 0.072;
             const sx = centerX + v.x * radius * arcLift;
             const sy = centerY + v.y * radius * arcLift;
             if (!started) {
@@ -558,9 +475,9 @@ export const InteractiveGlobe: React.FC<{
         }
         ctx.strokeStyle = dest.active
           ? globeTheme === "day"
-            ? "rgba(255, 255, 255, 0.75)"
-            : "rgba(16, 185, 129, 0.65)"
-          : "rgba(139, 92, 246, 0.55)";
+            ? "rgba(255, 255, 255, 0.82)"
+            : "rgba(52, 211, 153, 0.78)"
+          : "rgba(168, 85, 247, 0.68)";
         ctx.lineWidth = 1.4;
         ctx.setLineDash([4, 3]);
         ctx.stroke();
@@ -572,44 +489,17 @@ export const InteractiveGlobe: React.FC<{
         const pLng = dest.lng + (tashkent.lng - dest.lng) * packetT;
         const pv = rotateVec3(latLngToVec3(pLat, pLng), cosPhi, sinPhi, cosTheta, sinTheta);
         if (pv.z > 0.06) {
-          const lift = 1 + Math.sin(packetT * Math.PI) * 0.075;
+          const lift = 1 + Math.sin(packetT * Math.PI) * 0.072;
           const px = centerX + pv.x * radius * lift;
           const py = centerY + pv.y * radius * lift;
           ctx.beginPath();
           ctx.arc(px, py, 2.8, 0, Math.PI * 2);
-          ctx.fillStyle = dest.active ? "#ffffff" : "#c084fc";
+          ctx.fillStyle = dest.active ? "#ffffff" : "#e879f9";
           ctx.fill();
         }
       });
 
-      // 6. Inner 3D Spherical Shadow & Atmospheric Limb Lighting
-      const innerShadow = ctx.createRadialGradient(
-        centerX - radius * 0.25,
-        centerY - radius * 0.25,
-        radius * 0.55,
-        centerX,
-        centerY,
-        radius
-      );
-      innerShadow.addColorStop(0, "rgba(15, 23, 42, 0)");
-      innerShadow.addColorStop(0.78, "rgba(15, 23, 42, 0.06)");
-      innerShadow.addColorStop(1, "rgba(15, 23, 42, 0.36)");
-      ctx.fillStyle = innerShadow;
-      ctx.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
-
-      ctx.restore();
-
-      // Crisp Atmospheric Rim Ring
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.strokeStyle =
-        globeTheme === "day"
-          ? "rgba(56, 189, 248, 0.65)"
-          : "rgba(56, 189, 248, 0.45)";
-      ctx.lineWidth = 1.6;
-      ctx.stroke();
-
-      // 7. Render 3D Glowing City Beacons & Labels (Shopify Live View style)
+      // 4. Render 3D Glowing City Beacons & Labels (Shopify Live View style)
       const currentScreenMarkers: Array<{ marker: MarkerLocation; x: number; y: number }> = [];
 
       DEFAULT_MARKERS.forEach((m) => {
@@ -643,10 +533,10 @@ export const InteractiveGlobe: React.FC<{
           ctx.beginPath();
           ctx.arc(screenX, screenY, ringRadius, 0, Math.PI * 2);
           ctx.fillStyle = isSelected
-            ? "rgba(16, 185, 129, 0.32)"
+            ? "rgba(16, 185, 129, 0.36)"
             : m.active
-            ? "rgba(99, 102, 241, 0.28)"
-            : "rgba(168, 85, 247, 0.24)";
+            ? "rgba(99, 102, 241, 0.30)"
+            : "rgba(168, 85, 247, 0.28)";
           ctx.fill();
 
           // Outer marker dot at beacon tip
@@ -694,6 +584,7 @@ export const InteractiveGlobe: React.FC<{
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     targetRotationRef.current = null;
+    velocityRef.current = { dPhi: 0, dTheta: 0 };
     mouseRef.current = {
       lastX: e.clientX,
       lastY: e.clientY,
@@ -706,11 +597,14 @@ export const InteractiveGlobe: React.FC<{
     if (!isDragging) return;
     const deltaX = e.clientX - mouseRef.current.lastX;
     const deltaY = e.clientY - mouseRef.current.lastY;
-    rotationRef.current.phi += deltaX * 0.0075;
+    const dPhi = deltaX * 0.0072;
+    const dTheta = -deltaY * 0.0072;
+    rotationRef.current.phi += dPhi;
     rotationRef.current.theta = Math.max(
       -1.25,
-      Math.min(1.25, rotationRef.current.theta - deltaY * 0.0075)
+      Math.min(1.25, rotationRef.current.theta + dTheta)
     );
+    velocityRef.current = { dPhi: dPhi * 0.45, dTheta: dTheta * 0.45 };
     mouseRef.current.lastX = e.clientX;
     mouseRef.current.lastY = e.clientY;
   };
@@ -721,8 +615,8 @@ export const InteractiveGlobe: React.FC<{
     setIsDragging(false);
 
     // Direct click on a 3D city marker
-    if (!moved && canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
+    if (!moved && overlayCanvasRef.current) {
+      const rect = overlayCanvasRef.current.getBoundingClientRect();
       const scaleX = size / rect.width;
       const scaleY = size / rect.height;
       const clickX = (e.clientX - rect.left) * scaleX;
@@ -755,11 +649,23 @@ export const InteractiveGlobe: React.FC<{
         onMouseUp={handleMouseUp}
         onMouseLeave={() => setIsDragging(false)}
       >
-        <canvas
-          ref={canvasRef}
+        <div
           style={{ width: `${size}px`, height: `${size}px` }}
-          className="max-w-full h-auto"
-        />
+          className="relative max-w-full aspect-square flex items-center justify-center"
+        >
+          {/* Layer 1: WebGL 3D Raycasted NASA Earth Sphere */}
+          <canvas
+            ref={glCanvasRef}
+            style={{ width: `${size}px`, height: `${size}px` }}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+          />
+          {/* Layer 2: 2D Vector Overlay for 3D Arcs, Uzbekistan Highlight & City Beacons */}
+          <canvas
+            ref={overlayCanvasRef}
+            style={{ width: `${size}px`, height: `${size}px` }}
+            className="relative w-full h-full"
+          />
+        </div>
 
         {/* Top-left Active City Telemetry Overlay (Shopify Live View style) */}
         <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-[#e3e5e7] dark:border-zinc-800 rounded-xl p-3 shadow-sm max-w-[220px]">

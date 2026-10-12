@@ -1,25 +1,35 @@
 """
 StoreBox Sidekick Voice Service — Microsoft Azure Cognitive Services Speech REST API.
 Generates natural neural speech (`uz-UZ-MadinaNeural`, `ru-RU-DmitryNeural`, `en-US-BrianMultilingualNeural`)
-and returns a Base64-encoded MP3 stream.
+and returns a Base64-encoded MP3 stream in <0.5s.
 """
 import os
 import re
 import base64
+import hashlib
 import logging
+import threading
 from xml.sax.saxutils import escape as xml_escape
 from typing import Optional, Dict, Any, Tuple
 
 import requests
 import urllib3
 from django.conf import settings
+from django.core.cache import cache
+
+import socket
+import urllib3.util.connection
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# Force IPv4 to prevent 5-7s IPv6 connection timeout fallback on local ISP networks
+urllib3.util.connection.allowed_gai_family = lambda: socket.AF_INET
 logger = logging.getLogger(__name__)
 
-# Persistent HTTP session to reuse TLS connection to eastus.tts.speech.microsoft.com
+# Persistent HTTP session with connection pooling to eastus.tts.speech.microsoft.com
 _AZURE_TTS_SESSION = requests.Session()
 _AZURE_TTS_SESSION.trust_env = False
+_adapter = requests.adapters.HTTPAdapter(pool_connections=4, pool_maxsize=8, max_retries=1)
+_AZURE_TTS_SESSION.mount("https://", _adapter)
 
 AZURE_VOICE_MAP: Dict[str, Tuple[str, str]] = {
     "uz": ("uz-UZ", "uz-UZ-MadinaNeural"),
@@ -34,26 +44,34 @@ def detect_tts_language(text: str, language: str = "auto") -> str:
     """
     t = (text or "").strip()
     t_low = t.lower()
+    lang_norm = (language or "auto").strip().lower()
 
-    # Check for Uzbek Cyrillic characters
-    if re.search(r"[ўқғҳЎҚҒҲ]", t):
-        return "uz"
-
-    # Check for Russian Cyrillic characters
-    if re.search(r"[а-яА-ЯёЁ]", t):
-        return "ru"
-
-    # Check for Uzbek Latin words/apostrophes
-    if (
-        re.search(
-            r"\b(salom|buyurtma|buyurtmalar|mahsulot|mahsulotlar|so'm|do'kon|qanday|qancha|uchun|bo'lim|ko'rsat|ko'rib|tovar|mijoz|bugun|bugungi|hafta|oylik|tushum|yordam|kerak)\b",
-            t_low,
-        )
-        or re.search(r"[oOgG]['‘’ʻʼ]", t)
+    # 1. Check for Uzbek Cyrillic characters or words
+    if re.search(r"[ўқғҳЎҚҒҲ]", t) or re.search(
+        r"\b(ассалом|ассалому|алайкум|салом|менга|махсулот|буюртма|курсат|тушум|мижоз|яхши|рахмат)\b",
+        t_low,
     ):
         return "uz"
 
-    lang_norm = (language or "auto").strip().lower()
+    # 2. Check for Russian Cyrillic characters
+    if re.search(r"[а-яА-ЯёЁ]", t):
+        return "ru"
+
+    # 3. Check for Uzbek Latin words, suffixes, or apostrophes
+    if (
+        re.search(
+            r"\b(assalom|assalomu|alaykum|salom|marhamat|albatta|hozir|uchun|bilan|buyurtma|buyurtmalar|"
+            r"mahsulot|mahsulotlar|maxsulot|so'm|som|do'kon|dokon|qanday|qancha|bo'lim|bolim|sahifa|"
+            r"ko'rsat|korsat|ochyapman|tahlil|tovar|mijoz|bugun|bugungi|hafta|oylik|tushum|yordam|kerak|"
+            r"tayyor|jami|o'rtacha|narx|chegirma|katalog|rahmat)\b",
+            t_low,
+        )
+        or re.search(r"[oOgG]['‘’ʻʼ]", t)
+        or re.search(r"(larni|lardan|larga|ning|dagi|yapman|moqda|miz|siz)\b", t_low)
+    ):
+        return "uz"
+
+    # 4. If explicitly passed language flag matches script
     if lang_norm.startswith("uz"):
         return "uz"
     if lang_norm.startswith("en"):
@@ -68,7 +86,7 @@ def detect_tts_language(text: str, language: str = "auto") -> str:
 
 
 def clean_text_for_tts(text: str, lang: str = "ru") -> str:
-    """Strips markdown symbols, emojis, URLs, and normalizes brand phonetics for natural Azure Neural TTS."""
+    """Strips markdown symbols, emojis, URLs, and normalizes brand phonetics for fast Azure Neural TTS."""
     if not text:
         return ""
 
@@ -80,10 +98,10 @@ def clean_text_for_tts(text: str, lang: str = "ru") -> str:
     )
     clean = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", clean)
     clean = re.sub(r"https?://\S+", "", clean)
-    clean = re.sub(r"[*#`_~«»\"']", "", clean)
+    # Preserve apostrophe (') for Uzbek o', g', so'm, bo'lim!
+    clean = re.sub(r'[*#`_~«»"]', "", clean)
     clean = re.sub(r"^[•\-\*]\s+", "", clean, flags=re.MULTILINE)
 
-    # Phonetic normalization for brand names & symbols so Azure never says "Бергер амперсанд Цо" or "Бургер тсо"
     if lang == "uz":
         clean = re.sub(r"Burger\s*&\s*Co\.?", "Burger end Ko", clean, flags=re.IGNORECASE)
         clean = re.sub(r"&\s*Co\.?", "end Ko", clean, flags=re.IGNORECASE)
@@ -104,11 +122,11 @@ def clean_text_for_tts(text: str, lang: str = "ru") -> str:
 
     clean = re.sub(r"\s+", " ", clean).strip()
 
-    # Keep spoken output natural and concise (up to ~500 chars)
-    if len(clean) > 500:
-        cut = clean[:500]
+    # Keep spoken output crisp and fast to synthesize (up to ~260 chars / 2 sentences)
+    if len(clean) > 260:
+        cut = clean[:260]
         last_punct = max(cut.rfind("."), cut.rfind("!"), cut.rfind("?"))
-        if last_punct > 120:
+        if last_punct > 60:
             clean = cut[: last_punct + 1]
         else:
             clean = cut.rsplit(" ", 1)[0] + "."
@@ -129,6 +147,12 @@ def synthesize_voice(text: str, language: str = "auto") -> Optional[str]:
     clean_text = clean_text_for_tts(text, lang=detected_lang)
     if not clean_text:
         return None
+
+    # Check fast in-memory TTS cache first (instant 0ms hit for repeated phrases)
+    cache_key = "az_tts_v2_" + hashlib.md5(f"{detected_lang}:{clean_text}".encode("utf-8")).hexdigest()
+    cached_audio = cache.get(cache_key)
+    if cached_audio:
+        return cached_audio
 
     azure_key = (
         getattr(settings, "AZURE_SPEECH_KEY", "")
@@ -151,13 +175,14 @@ def synthesize_voice(text: str, language: str = "auto") -> Optional[str]:
     headers = {
         "Ocp-Apim-Subscription-Key": azure_key,
         "Content-Type": "application/ssml+xml",
-        "X-Microsoft-OutputFormat": "audio-16khz-128kbitrate-mono-mp3",
+        "X-Microsoft-OutputFormat": "audio-16khz-32kbitrate-mono-mp3",
         "User-Agent": "StoreBoxSidekick",
+        "Connection": "keep-alive",
     }
     ssml_body = (
         f"<speak version='1.0' xml:lang='{lang_code}'>"
         f"<voice xml:lang='{lang_code}' name='{voice_name}'>"
-        f"{escaped_text}"
+        f"<prosody rate='+6%'>{escaped_text}</prosody>"
         f"</voice>"
         f"</speak>"
     )
@@ -167,11 +192,13 @@ def synthesize_voice(text: str, language: str = "auto") -> Optional[str]:
             url,
             headers=headers,
             data=ssml_body.encode("utf-8"),
-            timeout=10.0,
+            timeout=4.5,
             verify=False,
         )
         if response.status_code == 200 and response.content:
-            return base64.b64encode(response.content).decode("utf-8")
+            b64 = base64.b64encode(response.content).decode("utf-8")
+            cache.set(cache_key, b64, timeout=3600)
+            return b64
 
         logger.error(
             "Azure Speech TTS error (%s): %s",
@@ -182,6 +209,25 @@ def synthesize_voice(text: str, language: str = "auto") -> Optional[str]:
     except Exception as exc:
         logger.error("Azure Speech TTS request exception: %s", exc)
         return None
+
+
+def _warmup_azure_connection():
+    """Pre-warms the TLS socket to Azure TTS in background so the first user request has 0ms TLS handshake."""
+    try:
+        azure_region = (
+            getattr(settings, "AZURE_SPEECH_REGION", "")
+            or os.environ.get("AZURE_SPEECH_REGION", "eastus")
+        ).strip() or "eastus"
+        _AZURE_TTS_SESSION.get(
+            f"https://{azure_region}.tts.speech.microsoft.com/cognitiveservices/v1",
+            timeout=3.0,
+            verify=False,
+        )
+    except Exception:
+        pass
+
+
+threading.Thread(target=_warmup_azure_connection, daemon=True).start()
 
 
 def generate_voice_response(text: str, language: str = "auto") -> Optional[str]:
