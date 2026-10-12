@@ -116,6 +116,8 @@
     .auth-page .auth-submit:hover { background: #352b49; }
     .auth-page .auth-footer { color: #687389; font-size: 13px; }
     .auth-page .auth-footer a { color: #211b2e; }
+    .auth-page .auth-geo-credit { margin-top: 10px; font-size: 10px; line-height: 1.3; }
+    .auth-page .auth-geo-credit a { color: #8791a3; }
     .auth-page input:-webkit-autofill,
     .auth-page input:-webkit-autofill:hover,
     .auth-page input:-webkit-autofill:focus,
@@ -208,7 +210,8 @@
             },
             showPass: false,
             mode: '{% if '@' in prefill_login %}email{% else %}phone{% endif %}',
-            dialCode: '998',
+            dialCode: '{{ phone_dial_code|default:'998'|escapejs }}',
+            autoCountry: '{{ phone_country|default:'UZ'|escapejs }}',
             phoneInput: '',
             emailInput: '{% if '@' in prefill_login %}{{ prefill_login|escapejs }}{% endif %}',
             // Main region for each E.164 calling code (Google libphonenumber metadata).
@@ -243,6 +246,7 @@
             },
             setDialCode(event) {
                 this.dialCode = event.target.value.replace(/\D/g, '').slice(0, 3);
+                this.autoCountry = '';
                 event.target.value = this.dialCode;
             },
             setPhoneInput(event) {
@@ -253,6 +257,7 @@
                         .find(candidate => this.countryByDialCode[candidate]);
                     if (code) {
                         this.dialCode = code;
+                        this.autoCountry = '';
                         this.phoneInput = digits.slice(code.length);
                         event.target.value = this.phoneInput;
                         return;
@@ -264,7 +269,7 @@
                 const code = this.dialCode.replace(/\D/g, '');
                 const national = this.phoneInput.replace(/\D/g, '');
                 if (code === '7' && national && '67'.includes(national[0])) return 'KZ';
-                return this.countryByDialCode[code] || '';
+                return this.autoCountry || this.countryByDialCode[code] || '';
             },
             get finalLoginValue() {
                 if (this.mode === 'email') return this.emailInput.trim();
@@ -409,6 +414,9 @@
         <div class="auth-footer pt-5 border-t border-slate-100 text-center font-medium">
             <span x-text="t('noStore')">Hali do'koningiz yo'qmi?</span>
             <a href="{{ app_site_url }}/dashboard/register/" class="font-bold hover:underline ml-1" x-text="t('createStore')">Akkaunt yaratish</a>
+            {% if phone_geoip_detected %}
+            <div class="auth-geo-credit"><a href="https://db-ip.com" target="_blank" rel="noopener noreferrer">IP Geolocation by DB-IP</a></div>
+            {% endif %}
         </div>
     </div>
 </div>
