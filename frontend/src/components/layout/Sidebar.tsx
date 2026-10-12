@@ -10,17 +10,14 @@ import {
   Tag,
   Barcode,
   Boxes,
-  Database,
   Megaphone,
   Bot,
   Sparkles,
   QrCode,
-  Monitor,
   Wand2,
   Store as StoreIcon,
   Settings,
   ChevronLeft,
-  ExternalLink,
   BarChart3,
   X,
   PanelLeftClose,
@@ -50,7 +47,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
   const navigate = useNavigate();
   const { store, lang } = useAuth();
   const { newOrdersCount, unreadChatsCount } = useNotifications();
-  const storefrontUrl = store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#");
 
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
     const saved = localStorage.getItem("storebox_sidebar_expanded");
@@ -277,27 +273,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
             label: lang === "ru" ? "Сообщения клиентов" : lang === "en" ? "Inbox" : "Xabarlar",
             badge: unreadChatsCount > 0 ? String(unreadChatsCount) : null,
           },
-        ],
-      },
-      {
-        title: lang === "ru" ? "Приложения и POS" : lang === "en" ? "Apps & POS" : "Ilovalar va POS",
-        items: [
           {
             path: "/robo-market",
             icon: Blocks,
             label: lang === "ru" ? "Маркет интеграций" : lang === "en" ? "App Store" : "Integratsiyalar",
-            badge: null,
-          },
-          {
-            path: "/yespos",
-            icon: Monitor,
-            label: lang === "ru" ? "YES POS касса" : lang === "en" ? "YES POS" : "YES POS",
-            badge: null,
-          },
-          {
-            path: "/billz",
-            icon: Database,
-            label: lang === "ru" ? "Billz касса" : lang === "en" ? "Billz POS" : "Billz POS",
             badge: null,
           },
         ],
@@ -314,6 +293,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
     }
     return current === cleanPath || current.startsWith(cleanPath + "/");
   };
+
+  const isNavItemActive = (path: string) =>
+    isActive(path) ||
+    (path === "/robo-market" &&
+      ["/yespos", "/billz", "/integrations"].some((integrationPath) =>
+        isActive(integrationPath)
+      ));
 
   const isSectionExpanded = (item: any) => {
     if (isActive(item.path)) return true;
@@ -524,24 +510,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
             )}
           </div>
 
-          {/* Active Store Subdomain Pill with bright emerald indicator */}
-          {store?.subdomain && (
-            <a
-              href={storefrontUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-2.5 py-1.5 rounded-[8px] bg-[#18181b] border border-zinc-800 hover:border-zinc-700 flex items-center justify-between text-xs text-white transition-all group"
-              title={lang === "ru" ? "Открыть витрину" : "Open storefront"}
-            >
-              <div className="flex items-center gap-2 truncate">
-                <span className="w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e] shrink-0"></span>
-                <span className="truncate text-[11px] font-medium text-white">
-                  {store.subdomain}.storebox.uz
-                </span>
-              </div>
-              <ExternalLink className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0" />
-            </a>
-          )}
         </div>
 
         {/* Scrollable Navigation List */}
@@ -556,7 +524,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
               )}
 
               {section.items.map((item: any) => {
-                const isItemActive = isActive(item.path);
+                const isItemActive = isNavItemActive(item.path);
                 const showSub = isSectionExpanded(item) && item.subItems;
                 const Icon = item.icon;
 
@@ -670,7 +638,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
           {/* Stacked Navigation Icons with Hover Flyout Menus */}
           <div className="flex flex-col items-center gap-1 w-full px-1.5">
             {flatItems.map((item: any) => {
-              const isItemActive = isActive(item.path);
+              const isItemActive = isNavItemActive(item.path);
               const Icon = item.icon;
               return (
                 <div key={item.path} className="relative group w-full flex justify-center">
