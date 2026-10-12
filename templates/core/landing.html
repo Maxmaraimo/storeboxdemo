@@ -10,8 +10,11 @@
     <meta property="og:title" content="StoreBox — интернет-магазин для вашего бизнеса">
     <meta property="og:description" content="Создайте онлайн-магазин, добавьте товары и принимайте заказы в одной панели.">
     <meta property="og:url" content="https://storebox.uz/">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z' fill='%23211b2e'/%3E%3Cpath d='m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26' fill='none' stroke='%23c8ff6a' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z' fill='%23211b2e'/%3E%3Cpath d='m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
     <title>StoreBox — конструктор интернет-магазинов</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS (with scoped preflight disabled to keep existing design intact) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +25,7 @@
           extend: {
             colors: {
               brand: '#211b2e',
-              accent: '#c8ff6a',
+              accent: '#211b2e',
             }
           }
         },
@@ -43,20 +46,22 @@
     --primary-dark: #14101c;
     --primary-gradient: linear-gradient(135deg, #2c243d 0%, #151020 100%);
     
-    /* Authentic StoreBox Lime/Salat Palette */
-    --accent: #c8ff6a;
-    --accent-glow: rgba(200, 255, 106, 0.65);
-    --accent-soft: rgba(200, 255, 106, 0.16);
-    --accent-border: rgba(200, 255, 106, 0.45);
+    /* StoreBox dark-purple and white brand palette */
+    --accent: #211b2e;
+    --accent-glow: rgba(33, 27, 46, 0.65);
+    --accent-soft: rgba(33, 27, 46, 0.16);
+    --accent-border: rgba(33, 27, 46, 0.45);
     --accent-dark: #211b2e;
-    --salat: #c8ff6a;
-    --salat-glow: rgba(200, 255, 106, 0.65);
-    --salat-soft: rgba(200, 255, 106, 0.16);
-    --salat-border: rgba(200, 255, 106, 0.45);
+    --salat: #211b2e;
+    --salat-glow: rgba(33, 27, 46, 0.65);
+    --salat-soft: rgba(33, 27, 46, 0.16);
+    --salat-border: rgba(33, 27, 46, 0.45);
     --salat-dark: #211b2e;
-    --lime: #c8ff6a;
-    --lime-dark: #a8f044;
+    --lime: #211b2e;
+    --lime-dark: #211b2e;
     --cyan: #74e7ef;
+    --hero-shadow-rgb: 142, 163, 188;
+    --section-title-size: clamp(30px, 3.3vw, 44px);
     
     /* Neumorphic Shadows */
     --neu-outer: 8px 10px 24px rgba(175, 185, 210, 0.26), -8px -8px 24px rgba(255, 255, 255, 0.95);
@@ -70,8 +75,8 @@
     --glass-blur: blur(28px) saturate(200%);
     --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.05), inset 0 1.5px 2px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(255, 255, 255, 0.25);
 
-    --font-sans: Inter, "Segoe UI", Arial, sans-serif;
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    --font-sans: "Inter", "Segoe UI", Arial, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: var(--ink);
@@ -88,10 +93,11 @@ section, [id] {
 body {
     margin: 0;
     min-width: 320px;
+    padding-bottom: 28px;
     background: radial-gradient(130% 90% at 50% 0%, #ffffff 0%, #edf2f8 35%, #e1e9f3 70%, #d4dfea 100%);
     background-attachment: fixed;
     color: var(--ink);
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -99,7 +105,7 @@ body {
     overflow-x: hidden;
 }
 a { color: inherit; text-decoration: none; }
-button, input, select, textarea, optgroup { font-family: Inter, "Segoe UI", Arial, sans-serif; }
+button, input, select, textarea, optgroup { font-family: var(--font-sans); }
 
 .skip-link {
     position: absolute;
@@ -148,21 +154,21 @@ button, input, select, textarea, optgroup { font-family: Inter, "Segoe UI", Aria
     height: 480px;
     top: 60px;
     right: 5%;
-    background: radial-gradient(circle, rgba(200, 255, 106, 0.45) 0%, rgba(200, 255, 106, 0.05) 70%, transparent 100%);
+    background: radial-gradient(circle, rgba(var(--hero-shadow-rgb), 0.45) 0%, rgba(var(--hero-shadow-rgb), 0.05) 70%, transparent 100%);
 }
 .glow-orb-2 {
     width: 420px;
     height: 420px;
     top: 320px;
     left: -5%;
-    background: radial-gradient(circle, rgba(200, 255, 106, 0.35) 0%, rgba(116, 231, 239, 0.1) 60%, transparent 100%);
+    background: radial-gradient(circle, rgba(var(--hero-shadow-rgb), 0.35) 0%, rgba(var(--hero-shadow-rgb), 0.08) 60%, transparent 100%);
 }
 .glow-orb-3 {
     width: 360px;
     height: 360px;
     top: 850px;
     right: 15%;
-    background: radial-gradient(circle, rgba(200, 255, 106, 0.25) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--hero-shadow-rgb), 0.22) 0%, transparent 70%);
 }
 .glow-orb-4 {
     display: none;
@@ -252,7 +258,7 @@ button, input, select, textarea, optgroup { font-family: Inter, "Segoe UI", Aria
 .brand-mark svg {
     width: 26px;
     fill: none;
-    stroke: #c8ff6a;
+    stroke: #ffffff;
     stroke-width: 1.8;
     stroke-linejoin: round;
 }
@@ -697,32 +703,6 @@ h1 span {
     gap: 14px;
     margin-top: 32px;
 }
-.hero-points {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px 22px;
-    margin: 30px 0 0;
-    padding: 0;
-    list-style: none;
-    color: #5f5a6c;
-    font-size: 13px;
-}
-.hero-points li {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-.hero-points li > span:first-child {
-    display: grid;
-    width: 20px;
-    height: 20px;
-    place-items: center;
-    border-radius: 50%;
-    color: #345916;
-    background: var(--lime);
-    font-size: 11px;
-    font-weight: 900;
-}
 
 /* Hero Visual: 1-in-1 Authentic Match with storebox.uz */
 .hero-visual {
@@ -742,7 +722,7 @@ h1 span {
     height: 200px;
     top: -15px;
     right: -20px;
-    background: rgba(200, 255, 106, 0.75);
+    background: rgba(var(--hero-shadow-rgb), 0.60);
     animation: floatGlowOne 7s ease-in-out infinite alternate;
 }
 .visual-glow-two {
@@ -750,7 +730,7 @@ h1 span {
     height: 160px;
     bottom: 0;
     left: -35px;
-    background: rgba(200, 255, 106, 0.55);
+    background: rgba(var(--hero-shadow-rgb), 0.50);
     animation: floatGlowTwo 6s ease-in-out infinite alternate-reverse;
 }
 @keyframes floatGlowOne {
@@ -769,13 +749,13 @@ h1 span {
     border: 8px solid #252032;
     border-radius: 22px;
     background: #fff;
-    box-shadow: 0 26px 80px rgba(35, 20, 78, .13);
+    box-shadow: 0 26px 80px rgba(var(--hero-shadow-rgb), .26);
     transform: rotate(1.2deg);
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
 }
 .dashboard-window:hover {
     transform: rotate(0deg) translateY(-4px);
-    box-shadow: 0 34px 90px rgba(35, 20, 78, .18);
+    box-shadow: 0 34px 90px rgba(var(--hero-shadow-rgb), .32);
 }
 .window-top {
     display: grid;
@@ -818,9 +798,9 @@ h1 span {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #55db93;
+    background: #c8ff6a;
     display: block;
-    box-shadow: 0 0 8px #55db93;
+    box-shadow: 0 0 8px rgba(200, 255, 106, 0.85);
     animation: livePillBlink 1.8s infinite;
 }
 @keyframes livePillBlink {
@@ -849,10 +829,15 @@ h1 span {
     height: 28px;
     place-items: center;
     border-radius: 8px;
-    color: #fff;
     background: #211b2e;
-    font-size: 11px;
-    font-weight: 800;
+}
+.mock-logo svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
 }
 .mock-sidebar > i {
     width: 17px;
@@ -1010,7 +995,7 @@ h1 span {
 .order-toast {
     position: absolute;
     z-index: 4;
-    right: -20px;
+    right: 0;
     bottom: 4px;
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -1058,13 +1043,13 @@ h1 span {
     font-weight: 800;
 }
 .order-toast > i {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: #55db93;
+    background: #c8ff6a;
+    border: 1px solid #77a600;
     display: block;
-    box-shadow: 0 0 8px #55db93;
-    animation: livePillBlink 1.8s infinite;
+    box-shadow: 0 0 0 3px rgba(200, 255, 106, 0.35), 0 0 10px rgba(119, 166, 0, 0.55);
 }
 
 /* Floating interactive badges on hero */
@@ -1138,8 +1123,8 @@ h1 span {
 
 /* Trust Strip - Glassmorphic Neumorphic Bar */
 .trust-strip-wrapper {
-    margin-top: 10px;
-    margin-bottom: 20px;
+    margin-top: -14px;
+    margin-bottom: clamp(56px, 6vw, 96px);
 }
 .trust-strip {
     display: grid;
@@ -1201,11 +1186,12 @@ h1 span {
 }
 .showcase-header {
     max-width: 860px;
-    margin: 0 auto 16px;
+    margin: 0 auto 22px;
+    padding-top: 12px;
 }
 .showcase-header h2 {
-    margin: 6px 0 10px;
-    font-size: clamp(26px, 3.5vw, 42px);
+    margin: 0 0 14px;
+    font-size: var(--section-title-size);
     line-height: 1.15;
     letter-spacing: -.04em;
     font-weight: 700;
@@ -1215,163 +1201,42 @@ h1 span {
     color: var(--muted);
     font-size: 15px;
     line-height: 1.5;
-    margin: 0 auto 14px;
+    margin: 0 auto 32px;
     max-width: 680px;
 }
 
-/* Store Selector Bar & Pills Carousel */
-.store-carousel-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin: 14px auto 10px;
-    max-width: 880px;
-}
-.store-arrow-btn {
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 1px solid rgba(33, 27, 46, 0.12);
-    box-shadow: 0 4px 12px rgba(33, 27, 46, 0.06);
-    color: #211b2e;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
-    flex-shrink: 0;
-}
-.store-arrow-btn:hover {
-    background: #211b2e;
-    color: #c8ff6a;
-    transform: scale(1.08);
-    box-shadow: 0 6px 16px rgba(33, 27, 46, 0.18);
-}
-.store-arrow-btn:active {
-    transform: scale(0.95);
-}
-.store-pills-track {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    overflow-x: auto;
-    padding: 4px;
-    scrollbar-width: none;
-}
-.store-pills-track::-webkit-scrollbar { display: none; }
-.store-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 16px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(33, 27, 46, 0.1);
-    color: #4a4455;
-    font-size: 12.5px;
-    font-weight: 750;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(33, 27, 46, 0.04);
-    transition: all 0.25s cubic-bezier(0.2, 0, 0.2, 1);
-    white-space: nowrap;
-}
-.store-pill:hover {
-    color: #211b2e;
-    background: #ffffff;
-    border-color: rgba(33, 27, 46, 0.22);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(33, 27, 46, 0.08);
-}
-.store-pill.is-active {
-    color: #ffffff;
-    background: #211b2e;
-    border-color: #211b2e;
-    box-shadow: 0 6px 20px rgba(33, 27, 46, 0.25);
-}
-.store-pill.is-active .pill-icon {
-    transform: scale(1.15);
-}
-.pill-icon {
-    font-size: 14px;
-    transition: transform 0.25s ease;
-}
-
-/* Store Dots Indicator */
-.store-dots-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    margin: 6px auto 14px;
-}
-.store-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #cbd5e1;
-    border: 0;
-    padding: 0;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.2, 0, 0.2, 1);
-}
-.store-dot.is-active {
-    width: 22px;
-    border-radius: 4px;
-    background: #211b2e;
-}
-
-/* Secondary Controls (Devices & Platforms) */
+/* Device preview controls */
 .showcase-controls-wrapper {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 0;
 }
 .segmented-control {
     display: inline-flex;
+    min-height: 42px;
     padding: 4px;
     border-radius: 14px;
-    background: rgba(235, 240, 252, 0.85);
+    background: rgba(235, 240, 250, 0.85);
     box-shadow: var(--neu-inset);
     border: 1px solid rgba(255, 255, 255, 0.9);
-    gap: 3px;
-}
-.seg-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    border: 0;
-    border-radius: 10px;
-    background: transparent;
-    color: #6a6476;
-    font-size: 12px;
-    font-weight: 750;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.2, 0, 0.2, 1);
-}
-.seg-btn:hover {
-    color: var(--ink);
-}
-.seg-btn.is-active {
-    color: #ffffff;
-    background: #211b2e;
-    box-shadow: 0 4px 14px rgba(33, 27, 46, 0.3);
+    gap: 4px;
 }
 .device-tab {
     display: inline-flex;
     align-items: center;
+    min-height: 32px;
     gap: 6px;
-    padding: 7px 13px;
+    padding: 7px 12px;
     border: 0;
     border-radius: 10px;
     background: transparent;
     color: #6a6476;
     font-size: 12px;
-    font-weight: 750;
+    font-weight: 800;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.2, 0, 0.2, 1);
 }
@@ -1391,7 +1256,7 @@ h1 span {
     overflow-y: auto;
     background: #f8fafc;
     color: #0f172a;
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    font-family: var(--font-sans);
     font-size: 11px;
     text-align: left;
     scrollbar-width: none;
@@ -1436,8 +1301,8 @@ h1 span {
 .sf-brand-badge {
     font-size: 8px;
     font-weight: 800;
-    color: #15803d;
-    background: rgba(200, 255, 106, 0.35);
+    color: #211b2e;
+    background: rgba(33, 27, 46, 0.35);
     padding: 1px 5px;
     border-radius: 4px;
 }
@@ -1465,7 +1330,7 @@ h1 span {
     font-weight: 800;
 }
 .sf-cart-pill span.badge-num {
-    background: #c8ff6a;
+    background: #ffffff;
     color: #211b2e;
     border-radius: 4px;
     padding: 0 4px;
@@ -1490,7 +1355,7 @@ h1 span {
 .sf-promo-tag {
     font-size: 8.5px;
     font-weight: 900;
-    color: #c8ff6a;
+    color: #ffffff;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-bottom: 2px;
@@ -1623,7 +1488,7 @@ h1 span {
     padding: 2.5px 6px;
     border-radius: 5px;
     background: #211b2e;
-    color: #c8ff6a;
+    color: #ffffff;
     font-size: 8.5px;
     font-weight: 900;
     border: 0;
@@ -1731,7 +1596,7 @@ h1 span {
     position: relative;
     width: 100%;
     min-height: 620px;
-    margin-top: 30px;
+    margin-top: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1744,7 +1609,7 @@ h1 span {
     width: 65%;
     height: 70%;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(200, 255, 106, 0.35) 0%, rgba(116, 231, 239, 0.25) 45%, transparent 70%);
+    background: radial-gradient(circle, rgba(33, 27, 46, 0.35) 0%, rgba(116, 231, 239, 0.25) 45%, transparent 70%);
     filter: blur(80px);
     pointer-events: none;
     z-index: 0;
@@ -1818,8 +1683,8 @@ h1 span {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #27c93f;
-    box-shadow: 0 0 10px #27c93f;
+    background: #c8ff6a;
+    box-shadow: 0 0 10px rgba(200, 255, 106, 0.8);
     animation: pulseGlow 1.5s infinite;
 }
 .badge-mobile {
@@ -1903,11 +1768,11 @@ h1 span {
     background: rgba(255, 255, 255, 0.08);
     color: #cfcad8;
     font-size: 10px;
-    font-family: monospace;
+    font-family: var(--font-sans);
 }
-.browser-address svg { width: 10px; height: 10px; fill: #c8ff6a; }
+.browser-address svg { width: 10px; height: 10px; fill: #ffffff; }
 .browser-status {
-    color: #c8ff6a;
+    color: #ffffff;
     font-size: 9px;
     font-weight: 750;
 }
@@ -2154,7 +2019,7 @@ h1 span {
 }
 .section-heading h2, .growth-copy h2, .final-cta h2 {
     margin: 0;
-    font-size: clamp(32px, 4vw, 52px);
+    font-size: var(--section-title-size);
     line-height: 1.08;
     letter-spacing: -.04em;
     font-weight: 700;
@@ -2195,7 +2060,7 @@ h1 span {
     position: relative;
     border-radius: 36px;
     padding: 32px 24px 28px 24px;
-    min-height: 860px;
+    min-height: 800px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -3136,7 +3001,7 @@ h1 span {
     border-radius: 16px;
     background: rgba(20, 16, 28, 0.85);
     font-size: 14px;
-    font-family: monospace;
+    font-family: var(--font-sans);
     box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
 }
 .domain-preview span { color: #fff; font-weight: 750; }
@@ -3148,8 +3013,8 @@ h1 span {
     margin-left: auto;
     place-items: center;
     border-radius: 50%;
-    color: #211b2e;
-    background: #c8ff6a;
+    color: #ffffff;
+    background: #211b2e;
     font-size: 11px;
     font-style: normal;
     font-weight: 900;
@@ -3215,7 +3080,7 @@ h1 span {
     box-shadow: 0 4px 12px rgba(160, 175, 200, 0.16), inset 0 1px 1px #fff;
     font-size: 13px;
     font-weight: 850;
-    font-family: monospace;
+    font-family: var(--font-sans);
 }
 .steps h3 {
     margin: 32px 0 10px;
@@ -3232,13 +3097,18 @@ h1 span {
 
 /* FAQ Accordion Section */
 .faq-section {
-    display: grid;
-    grid-template-columns: .65fr 1.35fr;
-    gap: 70px;
+    display: block;
+}
+.faq-section .section-heading {
+    max-width: 850px;
+    margin: 0 auto 28px;
+    text-align: center;
 }
 .faq-list {
     display: grid;
     gap: 14px;
+    width: min(100%, 850px);
+    margin-inline: auto;
 }
 .faq-list details {
     border-radius: 20px;
@@ -3298,10 +3168,13 @@ h1 span {
 .pricing-header {
     text-align: center;
     max-width: 680px;
-    margin: 0 auto 36px;
+    margin: 0 auto 26px;
 }
 .pricing-header h2 {
-    margin: 14px 0 12px;
+    margin: 0 0 12px;
+    font-size: var(--section-title-size);
+    line-height: 1.15;
+    letter-spacing: -.04em;
 }
 .pricing-header p {
     color: var(--muted);
@@ -3312,20 +3185,23 @@ h1 span {
 .billing-cycle-switch {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    margin-top: 24px;
-    border-radius: 18px;
+    min-height: 42px;
+    gap: 4px;
+    padding: 4px;
+    margin-top: 32px;
+    border-radius: 14px;
     background: rgba(235, 240, 250, 0.85);
     box-shadow: var(--neu-inset);
     border: 1px solid rgba(255, 255, 255, 0.9);
 }
 .cycle-btn {
     border: 0;
-    padding: 8px 18px;
-    border-radius: 12px;
-    font-size: 13px;
+    min-height: 32px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 12px;
     font-weight: 800;
+    line-height: 1;
     color: #6a6476;
     background: transparent;
     cursor: pointer;
@@ -3355,7 +3231,7 @@ h1 span {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     max-width: 1080px;
-    margin: 28px auto 0;
+    margin: 18px auto 0;
     gap: 26px;
     align-items: stretch;
     position: relative;
@@ -3428,17 +3304,30 @@ h1 span {
     opacity: 0.82;
 }
 .plan-price-box {
-    padding-bottom: 20px;
+    padding-bottom: 18px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-    margin-bottom: 20px;
+    margin-bottom: 18px;
+}
+.plan-price-box.is-updating {
+    animation: priceSettle 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes priceSettle {
+    from { opacity: 0.55; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 .pricing-card.is-popular .plan-price-box {
     border-bottom-color: rgba(33, 27, 46, 0.12);
 }
+.plan-price-main {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-height: 42px;
+}
 .price-val {
     font-size: 34px;
     font-weight: 900;
-    font-family: monospace;
+    font-family: var(--font-sans);
     letter-spacing: -0.03em;
     color: var(--ink);
 }
@@ -3449,25 +3338,17 @@ h1 span {
     font-size: 13px;
     font-weight: 750;
     color: var(--muted);
-    margin-left: 4px;
 }
 .pricing-card.is-popular .price-curr {
     color: var(--ink);
     opacity: 0.8;
 }
-.price-period {
-    display: block;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--muted);
-    margin-top: 3px;
-}
 .plan-total-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 10px;
-    padding-top: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
     border-top: 1px dashed rgba(0, 0, 0, 0.09);
     font-size: 12px;
     color: var(--muted);
@@ -3486,7 +3367,7 @@ h1 span {
 }
 .plan-total-val {
     font-weight: 850;
-    font-family: monospace;
+    font-family: var(--font-sans);
     font-size: 13px;
     color: var(--ink);
 }
@@ -3580,11 +3461,6 @@ h1 span {
     color: var(--muted);
     font-size: 16px;
 }
-.section-kicker-light {
-    color: var(--primary);
-    background: rgba(33, 27, 46, 0.06);
-    border: 1px solid rgba(33, 27, 46, 0.14);
-}
 .final-actions {
     display: flex;
     flex-direction: column;
@@ -3621,32 +3497,165 @@ h1 span {
     transform: translateY(-2px);
 }
 
+/* Contact Section */
+.contact-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.9fr);
+    align-items: center;
+    gap: clamp(32px, 5vw, 72px);
+    margin-bottom: 72px;
+    padding: clamp(28px, 4.5vw, 58px);
+    border-radius: 32px;
+    background: linear-gradient(135deg, #211b2e 0%, #15111e 100%);
+    box-shadow: 0 28px 60px rgba(33, 27, 46, 0.2);
+    color: #fff;
+    overflow: hidden;
+}
+.contact-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 8% 5%, rgba(255, 255, 255, 0.1), transparent 48%);
+    pointer-events: none;
+}
+.contact-info, .contact-form-panel { position: relative; z-index: 1; }
+.contact-info h2 {
+    margin: 0;
+    font-size: var(--section-title-size);
+    line-height: 1.08;
+    letter-spacing: -.04em;
+    font-weight: 700;
+    color: #fff;
+}
+.contact-info > p {
+    max-width: 470px;
+    margin: 18px 0 0;
+    color: #c9c4d3;
+    font-size: 16px;
+    line-height: 1.6;
+}
+.contact-methods { display: grid; gap: 12px; margin-top: 30px; }
+.contact-method {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    min-height: 76px;
+    padding: 14px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.07);
+    transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+.contact-method:hover, .contact-method:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-2px);
+}
+.contact-method small {
+    display: block;
+    color: #aca5bb;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+.contact-method strong { display: block; margin-top: 5px; font-size: 15px; font-weight: 750; overflow-wrap: anywhere; }
+.contact-method svg { width: 18px; height: 18px; flex: none; color: #d9d4e2; }
+.contact-form-panel {
+    padding: clamp(24px, 3vw, 38px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 24px;
+    background: #f7f9fd;
+    box-shadow: 0 18px 38px rgba(5, 3, 10, 0.22);
+    color: var(--ink);
+}
+.contact-form-panel h3 { margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -.025em; }
+.contact-form-panel > p { margin: 8px 0 22px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.contact-fields { display: grid; gap: 15px; }
+.contact-field label { display: block; margin-bottom: 7px; font-size: 13px; font-weight: 750; }
+.contact-field input {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 1px solid #dce4ef;
+    border-radius: 11px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 14px;
+}
+.contact-field input::placeholder { color: #939aaa; }
+.contact-field input:focus-visible { outline: 2px solid #211b2e; outline-offset: 2px; }
+.contact-submit {
+    display: block;
+    width: 100%;
+    min-height: 50px;
+    margin-top: 20px;
+    border: 0;
+    border-radius: 11px;
+    background: var(--primary-gradient);
+    box-shadow: 0 9px 20px rgba(33, 27, 46, 0.22);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.contact-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(33, 27, 46, 0.3); }
+.contact-submit:focus-visible { outline: 2px solid #211b2e; outline-offset: 3px; }
+.contact-submit:disabled { cursor: wait; opacity: .65; }
+.contact-form-status { margin: 14px 0 0; font-size: 13px; font-weight: 650; line-height: 1.45; }
+.contact-form-status[hidden] { display: none; }
+.contact-form-status.is-error { color: #b42318; }
+
+@media (max-width: 900px) {
+    .contact-section { grid-template-columns: 1fr; gap: 30px; }
+}
+@media (max-width: 680px) {
+    .contact-section { margin-bottom: 44px; padding: 24px 18px; border-radius: 24px; }
+    .contact-info > p { font-size: 15px; }
+    .contact-methods { margin-top: 22px; }
+    .contact-form-panel { padding: 24px 18px; }
+}
+
 /* Footer */
 .site-footer {
-    display: grid;
-    grid-template-columns: auto 1fr auto auto;
-    gap: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px 28px;
     align-items: center;
-    padding-block: 36px 48px;
-    border-top: 1px solid var(--line);
-    background: transparent;
+    padding: 22px 28px;
+    border-radius: 20px;
+    border: var(--glass-border);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--neu-outer);
     position: relative;
     z-index: 1;
 }
 .site-footer .brand { font-size: 20px; }
 .site-footer .brand-mark { width: 34px; height: 34px; }
-.site-footer p { margin: 0; color: var(--muted); font-size: 13px; }
+.site-footer p { flex: 1 1 220px; margin: 0; color: #514b5d; font-size: 13px; }
 .footer-links {
     display: flex;
-    gap: 18px;
-    color: #554f62;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    color: #393347;
     font-size: 13px;
     font-weight: 650;
 }
 .footer-links a:hover { color: var(--primary); }
-.site-footer small { color: #928b9d; font-size: 12px; }
+.site-footer small { margin-left: auto; color: #6d667a; font-size: 12px; white-space: nowrap; }
 
 /* Responsive Media Queries */
+@media (min-width: 981px) and (max-width: 1100px) {
+    .site-header { gap: 10px; }
+    .nav { gap: 10px; font-size: 13px; }
+    .header-actions { gap: 6px; }
+    .header-actions .button-small { padding-inline: 12px; font-size: 13px; }
+}
 @media (max-width: 980px) {
     .site-header-wrapper { width: 100%; padding: 12px 20px; }
     .nav { display: none; }
@@ -3658,7 +3667,7 @@ h1 span {
     }
     .hero-copy { text-align: center; }
     .hero-copy > * { margin-inline: auto; }
-    .hero-actions, .hero-points { justify-content: center; }
+    .hero-actions { justify-content: center; }
     .hero-visual {
         width: min(700px, 100%);
         margin-inline: auto;
@@ -3679,18 +3688,16 @@ h1 span {
     .feature-grid { grid-template-columns: repeat(2, 1fr); }
     .steps li { min-height: 220px; }
     .steps h3 { margin-top: 50px; }
-    .faq-section {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
     .final-cta { grid-template-columns: 1fr; }
     .final-actions { flex-direction: row; }
-    .site-footer { grid-template-columns: auto 1fr auto; }
-    .footer-links { grid-column: 1 / -1; order: 5; }
 }
 
 @media (max-width: 680px) {
     .section-shell { width: min(100% - 20px, 1180px); }
+    .site-footer { gap: 14px; padding: 20px; }
+    .site-footer p { flex-basis: 100%; order: 2; }
+    .site-footer small { order: 1; }
+    .footer-links { flex-basis: 100%; order: 3; }
     .site-header-wrapper { width: 100%; top: 0; margin-top: 0; padding: 10px 16px; }
     .site-header {
         min-height: 50px;
@@ -3728,12 +3735,6 @@ h1 span {
         width: 100%;
     }
     .hero-actions .button { width: 100%; }
-    .hero-points {
-        display: grid;
-        justify-content: start;
-        width: fit-content;
-        text-align: left;
-    }
     .dashboard-window {
         border-radius: 18px;
         transform: none;
@@ -3750,7 +3751,7 @@ h1 span {
     }
     .stats-grid article:nth-child(3) { display: none; }
     .order-toast {
-        right: -5px;
+        right: 0;
         bottom: -25px;
         min-width: 220px;
         padding: 10px 14px;
@@ -3777,7 +3778,7 @@ h1 span {
     .device-tab { padding: 8px 12px; font-size: 11.5px; white-space: nowrap; flex-shrink: 0; }
     .showcase-stage { 
         min-height: 400px; 
-        margin-top: 20px;
+        margin-top: 0;
         overflow: hidden;
     }
     .device-desktop { width: 85%; }
@@ -3844,17 +3845,23 @@ h1 span {
     position: relative;
     z-index: 5;
     margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
     width: 100%;
 }
 
 .platform-tabs-scroll {
     display: flex;
+    width: max-content;
+    max-width: 100%;
+    min-height: 42px;
     gap: 8px;
     align-items: center;
-    max-width: 1240px;
     margin-inline: auto;
-    padding-inline: 12px;
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 14px;
+    background: rgba(235, 240, 250, 0.85);
+    box-shadow: var(--neu-inset);
     flex-wrap: nowrap;
     overflow-x: auto;
     justify-content: flex-start;
@@ -3866,66 +3873,38 @@ h1 span {
     display: none;
 }
 
-@media (min-width: 1240px) {
-    .platform-tabs-scroll {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-}
-
 .platform-tab-btn {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
+    min-height: 32px;
     gap: 7px;
-    padding: 8px 15px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1.5px solid rgba(15, 23, 42, 0.08);
-    font-size: 12.5px;
-    font-weight: 700;
-    color: #334155;
+    padding: 7px 18px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    color: #6a6476;
     cursor: pointer;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    transition: all 0.2s ease;
     white-space: nowrap;
 }
 
-.theme-dark .platform-tab-btn {
-    background: rgba(33, 27, 46, 0.65);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #cbd5e1;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-}
-
-.platform-tab-btn:hover {
-    transform: translateY(-2px);
-    border-color: rgba(33, 27, 46, 0.3);
-    color: #0f172a;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-}
-
-.theme-dark .platform-tab-btn:hover {
-    border-color: rgba(200, 255, 106, 0.5);
-    color: #ffffff;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+.platform-tab-btn:not(.is-active):hover {
+    color: #211b2e;
 }
 
 .platform-tab-btn.is-active {
-    background: #211b2e;
-    color: #c8ff6a;
-    border-color: #211b2e;
-    box-shadow: 0 10px 25px rgba(33, 27, 46, 0.25), 0 0 20px rgba(200, 255, 106, 0.2);
-    transform: translateY(-2px);
+    background: var(--primary-gradient);
+    color: #ffffff;
+    box-shadow: 2px 4px 12px rgba(33, 27, 46, 0.28);
 }
 
-.theme-dark .platform-tab-btn.is-active {
-    background: #c8ff6a;
-    color: #211b2e;
-    border-color: #c8ff6a;
-    box-shadow: 0 10px 30px rgba(200, 255, 106, 0.35);
+.platform-tab-btn:focus-visible {
+    outline: 2px solid #211b2e;
+    outline-offset: 2px;
 }
 
 .platform-tab-btn .tab-icon {
@@ -3933,27 +3912,40 @@ h1 span {
     align-items: center;
     justify-content: center;
 }
+.platform-tab-btn .tab-icon svg { width: 14px; height: 14px; }
 
-.platform-tab-btn .tab-badge {
-    font-size: 10px;
-    font-weight: 850;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 2px 7px;
-    border-radius: 6px;
-    background: #c8ff6a;
-    color: #211b2e;
+/* One sliding highlight shared by all segmented switches. */
+.language,
+.segmented-control,
+.billing-cycle-switch,
+.platform-tabs-scroll {
+    position: relative;
+    isolation: isolate;
 }
-
-.platform-tab-btn.is-active .tab-badge {
-    background: #c8ff6a;
-    color: #211b2e;
+.switch-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--switch-width, 0px);
+    height: var(--switch-height, 0px);
+    transform: translate3d(var(--switch-left, 0px), var(--switch-top, 0px), 0);
+    border-radius: 10px;
+    background: var(--primary-gradient);
+    box-shadow: 2px 4px 12px rgba(33, 27, 46, 0.28);
+    pointer-events: none;
+    z-index: 0;
+    transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), width 0.42s cubic-bezier(0.16, 1, 0.3, 1), height 0.3s ease;
 }
-
-.theme-dark .platform-tab-btn.is-active .tab-badge {
-    background: #211b2e;
-    color: #c8ff6a;
+.has-motion-indicator > button {
+    position: relative;
+    z-index: 1;
+    transition: color 0.24s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.has-motion-indicator > button.is-active {
+    background: transparent;
+    box-shadow: none;
+}
+.has-motion-indicator > button:hover { transform: translateY(-1px); }
 
 .platform-stage-card {
     position: relative;
@@ -3978,7 +3970,7 @@ h1 span {
     transform: translateX(-50%);
     width: 800px;
     height: 400px;
-    background: radial-gradient(ellipse at center, rgba(200, 255, 106, 0.2) 0%, rgba(99, 102, 241, 0.12) 45%, transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(33, 27, 46, 0.2) 0%, rgba(99, 102, 241, 0.12) 45%, transparent 70%);
     filter: blur(50px);
     pointer-events: none;
     z-index: 1;
@@ -4029,7 +4021,7 @@ h1 span {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     padding: 6px 14px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--font-sans);
     font-size: 12px;
     color: #94a3b8;
 }
@@ -4045,9 +4037,9 @@ h1 span {
     gap: 7px;
     font-size: 12px;
     font-weight: 700;
-    color: #c8ff6a;
-    background: rgba(200, 255, 106, 0.1);
-    border: 1px solid rgba(200, 255, 106, 0.25);
+    color: #ffffff;
+    background: rgba(33, 27, 46, 0.1);
+    border: 1px solid rgba(33, 27, 46, 0.25);
     padding: 4px 12px;
     border-radius: 999px;
 }
@@ -4076,7 +4068,25 @@ h1 span {
     display: block;
     object-fit: contain;
     object-position: center top;
-    transition: opacity 0.22s ease, transform 0.25s ease;
+    transition: opacity 0.28s ease, transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+#platformMainImg.is-switching {
+    opacity: 0;
+    transform: translateY(8px) scale(1.015);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .switch-indicator,
+    .has-motion-indicator > button,
+    .device-wrapper,
+    #platformMainImg,
+    .platform-floating-infocard {
+        transition: none !important;
+    }
+    .device-wrapper,
+    .stage-backdrop-glow { animation: none !important; }
+    .has-motion-indicator > button:hover { transform: none !important; }
+    .plan-price-box.is-updating { animation: none !important; }
 }
 
 .platform-floating-infocard {
@@ -4109,10 +4119,6 @@ h1 span {
         padding: 13px 15px;
         border-radius: 15px;
     }
-    .platform-floating-infocard .pfc-title {
-        font-size: 15px;
-        margin-bottom: 4px;
-    }
     .platform-floating-infocard .pfc-description {
         font-size: 11.5px;
         line-height: 1.35;
@@ -4139,51 +4145,12 @@ h1 span {
     pointer-events: none;
 }
 
-.platform-floating-infocard .pfc-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    gap: 10px;
-}
-
-.platform-floating-infocard .pfc-badge {
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #059669;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.platform-floating-infocard .pfc-badge::before {
-    content: "";
-    width: 6.5px;
-    height: 6.5px;
-    border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
-}
-
-.platform-floating-infocard .pfc-metric-pill {
-    font-size: 11px;
-    font-weight: 800;
-    padding: 3px 9px;
-    border-radius: 8px;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.28);
-    color: #047857;
-    letter-spacing: 0.02em;
-}
-
 .platform-floating-infocard .pfc-title {
-    font-size: 17.5px;
+    font-size: 18px;
     font-weight: 850;
     color: #0f172a;
-    margin-bottom: 5px;
-    line-height: 1.25;
+    margin: 0 0 9px;
+    line-height: 1.2;
     letter-spacing: -0.015em;
 }
 
@@ -4191,8 +4158,15 @@ h1 span {
     font-size: 12.5px;
     color: #334155;
     line-height: 1.45;
-    margin-bottom: 10px;
+    margin: 0 0 10px;
     font-weight: 500;
+}
+
+@media (max-width: 1080px) {
+    .platform-floating-infocard .pfc-title {
+        font-size: 15px;
+        margin-bottom: 7px;
+    }
 }
 
 .platform-floating-infocard .pfc-features-list {
@@ -4216,7 +4190,7 @@ h1 span {
 
 .platform-floating-infocard .pfc-features-list li svg {
     flex-shrink: 0;
-    stroke: #10b981;
+    stroke: #7eaa16;
 }
 
 /* Dark mode glassmorphism override */
@@ -4234,19 +4208,9 @@ h1 span {
 .theme-dark .platform-floating-infocard .pfc-features-list li {
     color: #f1f5f9;
 }
-.theme-dark .platform-floating-infocard .pfc-badge {
-    color: #c8ff6a;
+.theme-dark .platform-floating-infocard .pfc-features-list li svg {
+    stroke: #c8ff6a;
 }
-.theme-dark .platform-floating-infocard .pfc-badge::before {
-    background: #c8ff6a;
-    box-shadow: 0 0 8px rgba(200, 255, 106, 0.6);
-}
-.theme-dark .platform-floating-infocard .pfc-metric-pill {
-    background: rgba(200, 255, 106, 0.15);
-    border: 1px solid rgba(200, 255, 106, 0.32);
-    color: #c8ff6a;
-}
-
 /* Navigation arrows on the showcase stage */
 .platform-nav-arrow {
     position: absolute;
@@ -4297,7 +4261,7 @@ h1 span {
 
 .theme-dark .platform-nav-arrow:hover {
     background: rgba(42, 34, 62, 0.9);
-    color: #c8ff6a;
+    color: #ffffff;
 }
 
 @media (min-width: 992px) {
@@ -4323,10 +4287,10 @@ h1 span {
         justify-content: flex-start;
     }
     .platform-showcase-section .section-heading {
-        margin-bottom: 14px !important;
+        margin-bottom: 32px !important;
     }
     .platform-showcase-section .section-heading h2 {
-        font-size: clamp(24px, 2.6vw, 36px);
+        font-size: var(--section-title-size);
         margin-bottom: 5px;
         line-height: 1.2;
     }
@@ -4338,10 +4302,10 @@ h1 span {
     }
     .platform-tabs-wrapper {
         margin-top: 0 !important;
-        margin-bottom: 18px !important;
+        margin-bottom: 22px !important;
     }
     .platform-stage-card {
-        max-width: 1240px;
+        max-width: 1180px;
         width: 100%;
         border-radius: 20px;
         margin-inline: auto;
@@ -4369,6 +4333,9 @@ h1 span {
     .platform-showcase-section {
         padding-block: 24px 35px;
         scroll-margin-top: 86px;
+    }
+    .platform-showcase-section .section-heading {
+        margin-bottom: 24px;
     }
     .platform-sticky-container {
         position: relative;
@@ -4435,16 +4402,8 @@ h1 span {
     padding-block: 90px 80px;
     position: relative;
     overflow: hidden;
-    background: radial-gradient(circle at 45% 35%, #ffffff 0%, #faf8f5 55%, #f1ece4 100%);
+    background: transparent;
     scroll-margin-top: 100px;
-}
-.storebox-mobile-showcase::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: repeating-linear-gradient(90deg, rgba(140, 120, 100, 0.035) 0px, rgba(140, 120, 100, 0.035) 1px, transparent 1px, transparent 56px);
-    pointer-events: none;
-    z-index: 0;
 }
 .mob-showcase-container {
     max-width: 1200px;
@@ -4469,7 +4428,7 @@ h1 span {
     width: 480px;
     height: 480px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(230, 215, 195, 0.45) 0%, rgba(200, 255, 106, 0.12) 40%, transparent 70%);
+    background: radial-gradient(circle, rgba(230, 215, 195, 0.45) 0%, rgba(33, 27, 46, 0.12) 40%, transparent 70%);
     filter: blur(50px);
     pointer-events: none;
     z-index: 0;
@@ -4506,8 +4465,8 @@ h1 span {
     transform: rotateY(0deg) rotateX(0deg) translateY(-8px);
     box-shadow: 
         0 40px 105px -12px rgba(15, 23, 42, 0.42),
-        0 0 0 2px #c8ff6a,
-        0 20px 50px rgba(200, 255, 106, 0.25);
+        0 0 0 2px #ffffff,
+        0 20px 50px rgba(33, 27, 46, 0.25);
 }
 @keyframes floatIphoneLevitate {
     0%, 100% {
@@ -4551,7 +4510,7 @@ h1 span {
     z-index: 25;
     background: #ffffff;
     color: #0f172a;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font-sans);
     pointer-events: none;
     box-sizing: border-box;
     flex-shrink: 0;
@@ -4691,7 +4650,7 @@ h1 span {
     height: 30px;
     border-radius: 9px;
     background: #211b2e;
-    color: #c8ff6a;
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4827,8 +4786,8 @@ h1 span {
     display: inline-block;
     font-size: 7px;
     font-weight: 850;
-    color: #c8ff6a;
-    background: rgba(200, 255, 106, 0.2);
+    color: #ffffff;
+    background: rgba(33, 27, 46, 0.2);
     padding: 1px 4.5px;
     border-radius: 4px;
     margin-bottom: 2px;
@@ -4915,7 +4874,7 @@ h1 span {
 }
 .sb-cat-item.active .sb-cat-circle {
     background: #211b2e;
-    color: #c8ff6a;
+    color: #ffffff;
     border-color: #211b2e;
     box-shadow: 0 2px 6px rgba(33, 27, 46, 0.25);
 }
@@ -5097,7 +5056,7 @@ h1 span {
 .sb-cart-float-sum {
     font-size: 9.5px;
     font-weight: 850;
-    color: #c8ff6a;
+    color: #ffffff;
 }
 .sb-cart-float-action {
     display: flex;
@@ -5186,7 +5145,7 @@ h1 span {
 
 .mob-showcase-content { padding-left: 20px; }
 .mob-showcase-title {
-    font-size: 40px;
+    font-size: var(--section-title-size);
     font-weight: 900;
     color: #0f172a;
     letter-spacing: -0.02em;
@@ -5214,17 +5173,17 @@ h1 span {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: #c8ff6a;
-    color: #211b2e;
+    background: #211b2e;
+    color: #ffffff;
     display: grid;
     place-items: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 14px rgba(200, 255, 106, 0.4);
+    box-shadow: 0 4px 14px rgba(33, 27, 46, 0.4);
 }
 .mob-check-icon svg {
     width: 16px;
     height: 16px;
-    stroke: #211b2e;
+    stroke: #ffffff;
     fill: none;
     stroke-width: 3;
     stroke-linecap: round;
@@ -5250,12 +5209,12 @@ h1 span {
     gap: 12px;
     padding: 16px 42px;
     background: #211b2e;
-    color: #c8ff6a !important;
+    color: #ffffff !important;
     font-size: 16px;
     font-weight: 850;
     border-radius: 18px;
-    border: 1.5px solid rgba(200, 255, 106, 0.45);
-    box-shadow: 0 12px 32px rgba(33, 27, 46, 0.35), 0 0 20px rgba(200, 255, 106, 0.12);
+    border: 1.5px solid rgba(33, 27, 46, 0.45);
+    box-shadow: 0 12px 32px rgba(33, 27, 46, 0.35), 0 0 20px rgba(33, 27, 46, 0.12);
     transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     text-decoration: none;
     letter-spacing: -0.01em;
@@ -5263,11 +5222,11 @@ h1 span {
 .mob-start-btn:hover {
     transform: translateY(-3px);
     background: #2c243e;
-    border-color: #c8ff6a;
-    box-shadow: 0 16px 36px rgba(33, 27, 46, 0.45), 0 0 28px rgba(200, 255, 106, 0.28);
-    color: #d8ff8a !important;
+    border-color: #211b2e;
+    box-shadow: 0 16px 36px rgba(33, 27, 46, 0.45), 0 0 28px rgba(33, 27, 46, 0.28);
+    color: #ffffff !important;
 }
-.mob-start-btn svg { stroke: #c8ff6a; transition: transform 0.25s ease; }
+.mob-start-btn svg { stroke: #ffffff; transition: transform 0.25s ease; }
 .mob-start-btn:hover svg { transform: translateX(4px); }
 
 
@@ -5294,7 +5253,7 @@ h1 span {
     top: -80px;
     left: 50%;
     transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(200, 255, 106, 0.22) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 70%);
+    background: radial-gradient(circle, rgba(33, 27, 46, 0.22) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 70%);
     filter: blur(90px);
     pointer-events: none;
     z-index: 0;
@@ -5306,32 +5265,8 @@ h1 span {
     position: relative;
     z-index: 1;
 }
-.eco-kicker {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 18px;
-    border-radius: 999px;
-    background: #211b2e;
-    border: 1px solid rgba(200, 255, 106, 0.35);
-    color: #c8ff6a;
-    font-size: 12px;
-    font-weight: 850;
-    margin-bottom: 18px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    box-shadow: 0 6px 18px rgba(33, 27, 46, 0.2);
-}
-.brand-cube-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 2px;
-    background: #c8ff6a;
-    box-shadow: 0 0 10px #c8ff6a;
-    display: inline-block;
-}
 .eco-title {
-    font-size: 44px;
+    font-size: var(--section-title-size);
     font-weight: 900;
     color: #0f172a;
     letter-spacing: -0.025em;
@@ -5431,7 +5366,7 @@ h1 span {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #c8ff6a 0%, #8ee419 100%);
+    background: linear-gradient(135deg, #211b2e 0%, #463854 100%);
     border: 2.5px solid #ffffff;
     box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.8);
     display: grid;
@@ -5450,7 +5385,7 @@ h1 span {
 .eco-coin-txt {
     font-size: 9px;
     font-weight: 900;
-    color: #171321;
+    color: #ffffff;
     margin-top: -3px;
 }
 
@@ -5587,7 +5522,7 @@ h1 span {
     align-items: center;
     gap: 6px;
 }
-.c2-food-badge svg { width: 12px; height: 12px; fill: #c8ff6a; }
+.c2-food-badge svg { width: 12px; height: 12px; fill: #ffffff; }
 
 /* 3D Glowing Circular Microphone Button (Photo 1 Reference) */
 .eco-figma-mic-btn {
@@ -5657,9 +5592,9 @@ h1 span {
 .c2-chat-bubble-user svg { width: 12px; height: 12px; stroke: #ffffff; fill: none; stroke-width: 2; }
 .c2-chat-bubble-ai {
     align-self: flex-start;
-    background: rgba(200, 255, 106, 0.2);
-    border: 1px solid rgba(200, 255, 106, 0.45);
-    color: #e5ffaa;
+    background: rgba(33, 27, 46, 0.2);
+    border: 1px solid rgba(33, 27, 46, 0.45);
+    color: #ffffff;
     padding: 7px 14px;
     border-radius: 14px 14px 14px 2px;
     font-size: 11px;
@@ -5669,7 +5604,7 @@ h1 span {
     align-items: center;
     gap: 6px;
 }
-.c2-chat-bubble-ai svg { width: 12px; height: 12px; fill: #c8ff6a; }
+.c2-chat-bubble-ai svg { width: 12px; height: 12px; fill: #ffffff; }
 
 /* Card 3: YES POS & Payments with Floating "Swipe To Accept" (Photo 1 Reference 3) */
 .eco-c3-stage {
@@ -5698,7 +5633,7 @@ h1 span {
     align-items: center;
     gap: 5px;
 }
-.eco-c3-pill .pill-ok { color: #c8ff6a; font-weight: 850; }
+.eco-c3-pill .pill-ok { color: #ffffff; font-weight: 850; }
 .eco-c3-photo-box {
     position: relative;
     width: 100%;
@@ -5808,8 +5743,8 @@ h1 span {
     box-shadow: inset 0 1px 2px rgba(255,255,255,0.7), 0 3px 8px rgba(0,0,0,0.3);
 }
 .p-orb svg { width: 12px; height: 12px; fill: #ffffff; }
-.orb-lime { background: linear-gradient(135deg, #c8ff6a 0%, #65a30d 100%); }
-.orb-lime svg { fill: #171321; }
+.orb-lime { background: linear-gradient(135deg, #211b2e 0%, #463854 100%); }
+.orb-lime svg { fill: #ffffff; }
 .orb-cyan { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); }
 .orb-blue { background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%); }
 
@@ -5843,10 +5778,10 @@ h1 span {
     margin-bottom: 6px;
 }
 .c4-courier-name { display: flex; align-items: center; gap: 5px; }
-.c4-courier-name svg { width: 13px; height: 13px; stroke: #c8ff6a; fill: none; stroke-width: 2; }
+.c4-courier-name svg { width: 13px; height: 13px; stroke: #ffffff; fill: none; stroke-width: 2; }
 .c4-time-tag {
-    background: rgba(200, 255, 106, 0.2);
-    color: #c8ff6a;
+    background: rgba(33, 27, 46, 0.2);
+    color: #ffffff;
     padding: 3px 8px;
     border-radius: 6px;
     font-size: 10px;
@@ -5863,7 +5798,7 @@ h1 span {
     width: 78%;
     height: 100%;
     background: #c8ff6a;
-    box-shadow: 0 0 10px #c8ff6a;
+    box-shadow: 0 0 10px rgba(200, 255, 106, 0.5);
     border-radius: 999px;
 }
 .c4-track-bot {
@@ -5908,9 +5843,6 @@ h1 span {
         bottom: -20px !important;
         transform: translateX(-50%) scale(0.9) !important;
     }
-    .eco-title {
-        font-size: 28px !important;
-    }
     .eco-sub-lead {
         font-size: 15px !important;
     }
@@ -5938,7 +5870,7 @@ h1 span {
     }
 }
 @media (max-width: 640px) {
-    .mob-showcase-title, .chats-title {
+    .chats-title {
         font-size: 28px;
     }
     .storebox-chats-showcase {
@@ -5982,6 +5914,7 @@ h1 span {
                 <a href="#dashboard" data-i18n="navDashboard">Панель</a>
                 <a href="#pricing" data-i18n="navPricing">Тарифы</a>
                 <a href="#faq" data-i18n="navFaq">FAQ</a>
+                <a href="#contact" data-i18n="navContact">Контакты</a>
             </nav>
             
             <div class="header-actions">
@@ -6002,21 +5935,12 @@ h1 span {
         <!-- Hero Section -->
         <section class="hero section-shell">
             <div class="hero-copy">
-                <div class="eyebrow">
-                    <span class="eyebrow-dot"></span>
-                    <span data-i18n="heroEyebrow">SaaS для онлайн-продаж</span>
-                </div>
                 <h1 data-i18n="heroTitle">Ваш интернет-магазин.<br><span>Готов к продажам.</span></h1>
                 <p class="hero-lead" data-i18n="heroLead">Создайте витрину под своим брендом, добавьте товары и принимайте заказы в одной панели — без разработки с нуля.</p>
                 <div class="hero-actions">
                     <a class="button button-primary" href="/register/" data-i18n="heroPrimary">Создать магазин</a>
                     <a class="button button-ghost" href="/login/" data-i18n="heroSecondary">Войти в кабинет</a>
                 </div>
-                <ul class="hero-points" aria-label="Ключевые преимущества">
-                    <li><span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#345916" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="pointOne">Собственный адрес магазина</span></li>
-                    <li><span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#345916" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="pointTwo">Русский и узбекский языки</span></li>
-                    <li><span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#345916" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="pointThree">Готовность к SEO и рекламе</span></li>
-                </ul>
             </div>
             
             <div class="hero-visual" aria-label="Пример панели StoreBox">
@@ -6030,7 +5954,9 @@ h1 span {
                     </div>
                     <div class="dashboard-body">
                         <aside class="mock-sidebar">
-                            <div class="mock-logo"><b>S</b></div>
+                            <div class="mock-logo" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" focusable="false"><path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/><path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/></svg>
+                            </div>
                             <i class="is-selected"></i><i></i><i></i><i></i><i></i>
                         </aside>
                         <div class="mock-content">
@@ -6091,61 +6017,11 @@ h1 span {
                 <div class="showcase-sticky-box">
                     <div class="section-shell">
                         <div class="showcase-header">
-                            <span class="section-kicker" data-i18n="showcaseKicker">Реальные витрины</span>
                             <h2 data-i18n="showcaseTitle">Ваш магазин на десктопе, ноутбуке и телефоне</h2>
                             <p data-i18n="showcaseLead">StoreBox автоматически оптимизирует витрину под каждый экран. Быстрый отклик, адаптивная сетка и удобная корзина гарантируют высокие продажи.</p>
                             
-                            <!-- Store Selector Bar & Carousel (3 Real Stores, No Emojis, Pure SVG) -->
-                            <div class="store-carousel-wrapper">
-                                <button class="store-arrow-btn" id="prevStoreBtn" type="button" aria-label="Предыдущий магазин">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                                </button>
-                                <div class="store-pills-track" id="storePillsTrack">
-                                    <button class="store-pill is-active" data-store-id="burger" type="button">
-                                        <span class="pill-icon">
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6v1H3v-1z"/><rect x="3" y="18" width="18" height="3" rx="1.5"/><path d="M4 14h16"/></svg>
-                                        </span>
-                                        <span class="pill-title">Shop 655 · Fast-Fud &amp; Pitsa</span>
-                                    </button>
-                                    <button class="store-pill" data-store-id="dishes" type="button">
-                                        <span class="pill-icon">
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2v20M21 15V2a5 5 0 0 0-5 5v3h5ZM6 2v20M3 2v6a3 3 0 0 0 6 0V2"/></svg>
-                                        </span>
-                                        <span class="pill-title">Shop 655 · Issiq taomlar</span>
-                                    </button>
-                                    <button class="store-pill" data-store-id="all" type="button">
-                                        <span class="pill-icon">
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                                        </span>
-                                        <span class="pill-title">Shop 655 · Barcha tovarlar</span>
-                                    </button>
-                                </div>
-                                <button class="store-arrow-btn" id="nextStoreBtn" type="button" aria-label="Keyingi toifa">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                                </button>
-                            </div>
-
-                            <!-- Store Dots Row -->
-                            <div class="store-dots-row" id="storeDotsTrack">
-                                <button class="store-dot is-active" data-store-index="0" aria-label="Store 1"></button>
-                                <button class="store-dot" data-store-index="1" aria-label="Store 2"></button>
-                                <button class="store-dot" data-store-index="2" aria-label="Store 3"></button>
-                            </div>
-
-                            <!-- Controls: Platform & Device Switches -->
+                            <!-- Device preview controls -->
                             <div class="showcase-controls-wrapper">
-                                <!-- Platform: Web vs Telegram WebApp -->
-                                <div class="segmented-control" role="tablist" aria-label="Платформа">
-                                    <button class="seg-btn platform-tab is-active" data-platform="web" type="button">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                                        <span data-i18n="platformWeb">Veb-sayt</span>
-                                    </button>
-                                    <button class="seg-btn platform-tab" data-platform="telegram" type="button">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-                                        <span data-i18n="platformTg">Telegram WebApp</span>
-                                    </button>
-                                </div>
-
                                 <!-- Devices: All, Desktop, Laptop, Phone -->
                                 <div class="segmented-control device-switcher" role="tablist" aria-label="Устройства">
                                     <button class="device-tab is-active" data-device="all" role="tab" aria-selected="true" type="button">
@@ -6281,12 +6157,11 @@ h1 span {
             <div class="platform-sticky-container" id="platformStickyContainer">
                 <div class="platform-sticky-shell" id="platformStickyShell">
                     <div class="section-heading text-center" style="max-width: 860px; margin-inline: auto; text-align: center;">
-                        <span class="section-kicker" data-i18n="platformKicker">StoreBox 2.0 Boshqaruv Markazi</span>
                         <h2 data-i18n="platformTitle">Bitta ekranda butun biznes nazorati</h2>
-                        <p data-i18n="platformLead">Kassa, buyurtmalar, kuryerlar, xodimlar va tovarlar katalogi — barchasi real vaqtda sinxronlashgan yagona boshqaruv tizimi.</p>
+                        <p data-i18n="platformLead">Boshqaruv paneli, yetkazish, vitrina, tovarlar katalogi va Telegram WebApp — barchasi yagona tizimda.</p>
                     </div>
 
-                    <!-- Interactive Module Tabs (8 Authentic Modules) -->
+                    <!-- Interactive Module Tabs (5 Modules) -->
                     <div class="platform-tabs-wrapper">
                         <div class="platform-tabs-scroll" id="platformTabsList" role="tablist" aria-label="StoreBox 2.0 Modullari">
                             <button class="platform-tab-btn is-active" data-module="dashboard" role="tab" aria-selected="true" type="button">
@@ -6294,13 +6169,6 @@ h1 span {
                                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                                 </span>
                                 <span class="tab-label" data-i18n="tabModDashboard">Boshqaruv paneli</span>
-                                <span class="tab-badge">Live</span>
-                            </button>
-                            <button class="platform-tab-btn" data-module="yespos" role="tab" aria-selected="false" type="button">
-                                <span class="tab-icon">
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><line x1="3" x2="21" y1="10" y2="10"/><circle cx="7" cy="15" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="17" cy="15" r="1"/></svg>
-                                </span>
-                                <span class="tab-label" data-i18n="tabModYespos">YES POS kassa</span>
                             </button>
                             <button class="platform-tab-btn" data-module="courier" role="tab" aria-selected="false" type="button">
                                 <span class="tab-icon">
@@ -6308,23 +6176,11 @@ h1 span {
                                 </span>
                                 <span class="tab-label" data-i18n="tabModCourier">Kuryerlar &amp; Logistika</span>
                             </button>
-                            <button class="platform-tab-btn" data-module="staff" role="tab" aria-selected="false" type="button">
-                                <span class="tab-icon">
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                </span>
-                                <span class="tab-label" data-i18n="tabModStaff">Xodimlar &amp; Rollar</span>
-                            </button>
                             <button class="platform-tab-btn" data-module="design" role="tab" aria-selected="false" type="button">
                                 <span class="tab-icon">
                                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2Z"/></svg>
                                 </span>
                                 <span class="tab-label" data-i18n="tabModDesign">Vitrina konstruktori</span>
-                            </button>
-                            <button class="platform-tab-btn" data-module="qr" role="tab" aria-selected="false" type="button">
-                                <span class="tab-icon">
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
-                                </span>
-                                <span class="tab-label" data-i18n="tabModQr">QR Menyu &amp; Zallar</span>
                             </button>
                             <button class="platform-tab-btn" data-module="products" role="tab" aria-selected="false" type="button">
                                 <span class="tab-icon">
@@ -6367,7 +6223,7 @@ h1 span {
                             <!-- Screen Viewport with Image Crossfade -->
                             <div class="platform-screen-viewport">
                                 <div class="platform-image-wrapper">
-                                    <img id="platformMainImg" src="/static/images/landing/platform/dashboard.png?v=sb2026_09_22" alt="StoreBox 2.0 Boshqaruv Paneli" loading="lazy">
+                                    <img id="platformMainImg" src="/static/images/landing/platform/dashboard.png?v=brand20261010" alt="StoreBox 2.0 Boshqaruv Paneli" loading="lazy">
                                 </div>
 
                                 <!-- Navigation Arrows -->
@@ -6380,23 +6236,19 @@ h1 span {
 
                                 <!-- Floating Glassmorphic Info Card (Animated on Tab Switch) -->
                                 <div class="platform-floating-infocard" id="platformFloatingCard">
-                                    <div class="pfc-header">
-                                        <span class="pfc-badge" id="pfcBadge">Savdo statistikasi</span>
-                                        <span class="pfc-metric-pill" id="pfcMetric">3 319 400 UZS</span>
-                                    </div>
                                     <h4 class="pfc-title" id="pfcTitle">Boshqaruv paneli</h4>
                                     <p class="pfc-description" id="pfcDesc">Kunlik savdo, buyurtmalar soni va o‘rtacha chek dinamikasini jonli kuzating.</p>
                                     <ul class="pfc-features-list" id="pfcList">
                                         <li>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7eaa16" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                             <span>Haqiqiy vaqt hisoboti va savdo grafigi</span>
                                         </li>
                                         <li>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7eaa16" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                             <span>O‘rtacha chek va tushum ko‘rsatkichlari</span>
                                         </li>
                                         <li>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7eaa16" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                             <span>Yangi va doimiy xaridorlar oqimi</span>
                                         </li>
                                     </ul>
@@ -6505,7 +6357,7 @@ h1 span {
                                     <div class="sb-store-categories">
                                         <div class="sb-cat-item active">
                                             <div class="sb-cat-circle">
-                                                <svg style="width: 14px; height: 14px; stroke: #c8ff6a; fill: none; stroke-width: 2.2;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+                                                <svg style="width: 14px; height: 14px; stroke: #ffffff; fill: none; stroke-width: 2.2;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
                                             </div>
                                             <span data-i18n="sbCatAll">Barchasi</span>
                                         </div>
@@ -6763,10 +6615,6 @@ h1 span {
 
             <!-- Section Header -->
             <div class="eco-header" style="margin-bottom: 36px; text-align: center;">
-                <div class="eco-kicker" style="justify-content: center;">
-                    <span class="brand-cube-dot"></span>
-                    <span data-i18n="ecoKicker">STOREBOX 2.0 ЭКОСИСТЕМА</span>
-                </div>
                 <h2 class="eco-title" data-i18n="ecoTitle">Одна платформа — Безграничные возможности</h2>
                 <p class="eco-sub-lead" data-i18n="ecoLead" style="margin: 0 auto; max-width: 680px;">
                     Telegram WebApp, касса YES POS, CRM-система, аналитика продаж и быстрая доставка в одной панели
@@ -6781,17 +6629,6 @@ h1 span {
                 <!-- ========================================================================= -->
                 <article class="bento-showcase-card card-theme-food group">
                     <div class="relative z-10 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-white text-[11px] font-black tracking-wider uppercase backdrop-blur-md shadow-xs">
-                                <span class="w-2 h-2 rounded-full bg-cyan-300 animate-pulse"></span>
-                                <span data-i18n="bentoFoodBadge">RESTORAN &amp; TAOMLAR</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1 text-xs font-black text-cyan-200">
-                                <svg class="w-3.5 h-3.5 text-amber-300 fill-amber-300 shrink-0" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                4.9 · 450+
-                            </span>
-                        </div>
-
                         <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoFoodH">
                             Restoran va<br>taom yetkazish
                         </h3>
@@ -6799,21 +6636,6 @@ h1 span {
                         <p class="text-xs sm:text-sm text-sky-100 leading-relaxed" data-i18n="bentoFoodSub">
                             Elektron menyu, kombolar, modifikatorlar, stollar uchun QR va kuryerlarni avtomatik chaqirish.
                         </p>
-
-                        <div class="flex flex-wrap gap-1.5 pt-1">
-                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                                <svg class="w-3 h-3 text-cyan-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span data-i18n="bentoFoodTag1">Stollar uchun QR</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                                <svg class="w-3 h-3 text-cyan-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span data-i18n="bentoFoodTag2">1 bosishda buyurtma</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                                <svg class="w-3 h-3 text-cyan-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span data-i18n="bentoFoodTag3">Yandex Go GPS</span>
-                            </span>
-                        </div>
                     </div>
 
                     <!-- 3D iPhone Food Mockup (Full Height Apple iPhone 16 Pro) -->
@@ -6863,7 +6685,7 @@ h1 span {
                                 <div class="bento-store-banner">
                                     <img src="/static/images/showcase/bento/food_steak_burger.jpg" alt="Steak Burger">
                                     <div class="bento-store-banner-overlay bg-gradient-to-r from-black/85 via-black/45 to-transparent">
-                                        <span class="bento-banner-tag text-[#c8ff6a]" data-i18n="b1BannerTag">🔥 AKSIYA 1+1</span>
+                                        <span class="bento-banner-tag text-[#ffffff]" data-i18n="b1BannerTag">🔥 AKSIYA 1+1</span>
                                         <div class="bento-banner-title" data-i18n="b1BannerTitle">Maxsus Nonushta &amp; Kombolar</div>
                                         <span class="bento-banner-sub" data-i18n="b1BannerSub">Barcha burger kombolariga 20% gacha</span>
                                     </div>
@@ -6873,7 +6695,7 @@ h1 span {
                                 <div class="bento-categories-row">
                                     <div class="bento-cat-item active">
                                         <div class="bento-cat-circle">
-                                            <svg style="width: 12px; height: 12px; stroke: #c8ff6a; fill: none; stroke-width: 2.2;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+                                            <svg style="width: 12px; height: 12px; stroke: #ffffff; fill: none; stroke-width: 2.2;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
                                         </div>
                                         <span class="bento-cat-label" data-i18n="sbCatAll">Barchasi</span>
                                     </div>
@@ -6917,7 +6739,7 @@ h1 span {
                                             <div class="bento-card-item-title" data-i18n="sbProd1">Double Chizburger</div>
                                             <div class="bento-card-item-footer">
                                                 <span class="bento-card-item-price">52 000 <small>UZS</small></span>
-                                                <button class="bento-card-item-btn bg-[#211b2e] text-[#c8ff6a]" type="button">+</button>
+                                                <button class="bento-card-item-btn bg-[#211b2e] text-[#ffffff]" type="button">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -6933,7 +6755,7 @@ h1 span {
                                             <div class="bento-card-item-title" data-i18n="sbProd2">Ribay Steyk Burger</div>
                                             <div class="bento-card-item-footer">
                                                 <span class="bento-card-item-price">74 000 <small>UZS</small></span>
-                                                <button class="bento-card-item-btn bg-[#211b2e] text-[#c8ff6a]" type="button">+</button>
+                                                <button class="bento-card-item-btn bg-[#211b2e] text-[#ffffff]" type="button">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -6949,7 +6771,7 @@ h1 span {
                                             <div class="bento-card-item-title" data-i18n="sbProd3">Katta Go'shtli Lavash</div>
                                             <div class="bento-card-item-footer">
                                                 <span class="bento-card-item-price">66 000 <small>UZS</small></span>
-                                                <button class="bento-card-item-btn bg-[#211b2e] text-[#c8ff6a]" type="button">+</button>
+                                                <button class="bento-card-item-btn bg-[#211b2e] text-[#ffffff]" type="button">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -6965,7 +6787,7 @@ h1 span {
                                             <div class="bento-card-item-title" data-i18n="sbProd4">Klassik Chizburger</div>
                                             <div class="bento-card-item-footer">
                                                 <span class="bento-card-item-price">48 000 <small>UZS</small></span>
-                                                <button class="bento-card-item-btn bg-[#211b2e] text-[#c8ff6a]" type="button">+</button>
+                                                <button class="bento-card-item-btn bg-[#211b2e] text-[#ffffff]" type="button">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -6973,7 +6795,7 @@ h1 span {
 
                                 <!-- Floating Cart -->
                                 <div class="bento-store-cart-float bg-[#211b2e] text-white">
-                                    <span class="bento-cart-sum text-[#c8ff6a]" data-i18n="b1CartFloat">Savatda: 2 ta • 118 000 UZS</span>
+                                    <span class="bento-cart-sum text-[#ffffff]" data-i18n="b1CartFloat">Savatda: 2 ta • 118 000 UZS</span>
                                     <span class="bento-cart-act" data-i18n="b1OrderFloat">Buyurtma →</span>
                                 </div>
 
@@ -7017,17 +6839,6 @@ h1 span {
                 <!-- ========================================================================= -->
                 <article class="bento-showcase-card card-theme-fashion group">
                     <div class="relative z-10 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-white text-[11px] font-black tracking-wider uppercase backdrop-blur-md shadow-xs">
-                                <span class="w-2 h-2 rounded-full bg-pink-300 animate-pulse"></span>
-                                <span data-i18n="bentoFashionBadge">GULLAR &amp; MODA</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1 text-xs font-black text-pink-200">
-                                <svg class="w-3.5 h-3.5 text-amber-300 fill-amber-300 shrink-0" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                4.9 · 320+
-                            </span>
-                        </div>
-
                         <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoFashionH">
                             Gullar, butiklar<br>va kiyim-kechak
                         </h3>
@@ -7035,21 +6846,6 @@ h1 span {
                         <p class="text-xs sm:text-sm text-pink-100 leading-relaxed" data-i18n="bentoFashionSub">
                             Gullar va zamonaviy liboslar foto-vitrinasi, o'lcham tanlash, tabriknomalar va nozik yetkazish.
                         </p>
-
-                        <div class="flex flex-wrap gap-1.5 pt-1">
-                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                                <svg class="w-3 h-3 text-pink-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span data-i18n="bentoFashionTag1">O'lcham tanlash</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                                <svg class="w-3 h-3 text-pink-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span data-i18n="bentoFashionTag2">Yuborishdan oldin foto</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                                <svg class="w-3 h-3 text-pink-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span data-i18n="bentoFashionTag3">Sovg'a tabriknoma</span>
-                            </span>
-                        </div>
                     </div>
 
                     <!-- 3D iPhone Flowers & Fashion Mockup (Full Height Apple iPhone 16 Pro) -->
@@ -7253,17 +7049,6 @@ h1 span {
                 <!-- ========================================================================= -->
                 <article class="bento-showcase-card card-theme-tech group">
                     <div class="relative z-10 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-white text-[11px] font-black tracking-wider uppercase backdrop-blur-md shadow-xs">
-                                <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
-                                <span data-i18n="bentoTechBadge">TEXNIKA &amp; GADJETLAR</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1 text-xs font-black text-emerald-200">
-                                <svg class="w-3.5 h-3.5 text-amber-300 fill-amber-300 shrink-0" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                4.9 · 280+
-                            </span>
-                        </div>
-
                         <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow-sm" data-i18n="bentoTechH">
                             Elektronika va<br>maishiy texnika
                         </h3>
@@ -7271,21 +7056,6 @@ h1 span {
                         <p class="text-xs sm:text-sm text-emerald-100 leading-relaxed" data-i18n="bentoTechSub">
                             Smartfonlar, noutbuklar va televizorlar katalogi, xarakteristikalar taqqoslash va 0% muddatli to'lov.
                         </p>
-
-                        <div class="flex flex-wrap gap-1.5 pt-1">
-                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                                <svg class="w-3 h-3 text-emerald-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span data-i18n="bentoTechTag1">0% Muddatli to'lov</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                                <svg class="w-3 h-3 text-emerald-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span data-i18n="bentoTechTag2">To'liq xarakteristika</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-                                <svg class="w-3 h-3 text-emerald-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span data-i18n="bentoTechTag3">1 yil rasmiy kafolat</span>
-                            </span>
-                        </div>
                     </div>
 
                     <!-- 3D iPhone Tech Mockup (Full Height Apple iPhone 16 Pro) -->
@@ -7335,7 +7105,7 @@ h1 span {
                                 <div class="bento-store-banner">
                                     <img src="/static/images/showcase/bento/tech_banner.jpg" alt="Tech">
                                     <div class="bento-store-banner-overlay bg-gradient-to-r from-emerald-950/90 via-emerald-950/50 to-transparent">
-                                        <span class="bento-banner-tag text-[#c8ff6a]" data-i18n="b3BannerTag">⚡ FLAGMAN APPLE 2026</span>
+                                        <span class="bento-banner-tag text-[#ffffff]" data-i18n="b3BannerTag">⚡ FLAGMAN APPLE 2026</span>
                                         <div class="bento-banner-title" data-i18n="b3BannerTitle">iPhone 16 Pro Max 256GB</div>
                                         <span class="bento-banner-sub" data-i18n="b3BannerSub">0% muddatli to'lov bilan</span>
                                     </div>
@@ -7345,7 +7115,7 @@ h1 span {
                                 <div class="bento-categories-row">
                                     <div class="bento-cat-item active">
                                         <div class="bento-cat-circle" style="background: #064e3b; border-color: #064e3b;">
-                                            <svg style="width: 12px; height: 12px; stroke: #c8ff6a; fill: none; stroke-width: 2.2;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+                                            <svg style="width: 12px; height: 12px; stroke: #ffffff; fill: none; stroke-width: 2.2;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
                                         </div>
                                         <span class="bento-cat-label" data-i18n="sbCatAll">Barchasi</span>
                                     </div>
@@ -7389,7 +7159,7 @@ h1 span {
                                             <div class="bento-card-item-title text-slate-900" data-i18n="b3Prod1">iPhone 16 Pro Max</div>
                                             <div class="bento-card-item-footer">
                                                 <span class="bento-card-item-price text-slate-900">16 490 000 <small>UZS</small></span>
-                                                <button class="bento-card-item-btn bg-emerald-900 text-[#c8ff6a]" type="button">+</button>
+                                                <button class="bento-card-item-btn bg-emerald-900 text-[#ffffff]" type="button">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -7405,7 +7175,7 @@ h1 span {
                                             <div class="bento-card-item-title text-slate-900" data-i18n="b3Prod2">MacBook Pro M3 Max</div>
                                             <div class="bento-card-item-footer">
                                                 <span class="bento-card-item-price text-slate-900">24 990 000 <small>UZS</small></span>
-                                                <button class="bento-card-item-btn bg-emerald-900 text-[#c8ff6a]" type="button">+</button>
+                                                <button class="bento-card-item-btn bg-emerald-900 text-[#ffffff]" type="button">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -7421,7 +7191,7 @@ h1 span {
                                             <div class="bento-card-item-title text-slate-900" data-i18n="b3Prod3">AirPods Pro 2</div>
                                             <div class="bento-card-item-footer">
                                                 <span class="bento-card-item-price text-slate-900">2 890 000 <small>UZS</small></span>
-                                                <button class="bento-card-item-btn bg-emerald-900 text-[#c8ff6a]" type="button">+</button>
+                                                <button class="bento-card-item-btn bg-emerald-900 text-[#ffffff]" type="button">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -7437,7 +7207,7 @@ h1 span {
                                             <div class="bento-card-item-title text-slate-900" data-i18n="b3Prod4">Apple Watch Ultra</div>
                                             <div class="bento-card-item-footer">
                                                 <span class="bento-card-item-price text-slate-900">9 200 000 <small>UZS</small></span>
-                                                <button class="bento-card-item-btn bg-emerald-900 text-[#c8ff6a]" type="button">+</button>
+                                                <button class="bento-card-item-btn bg-emerald-900 text-[#ffffff]" type="button">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -7445,7 +7215,7 @@ h1 span {
 
                                 <!-- Floating Cart -->
                                 <div class="bento-store-cart-float bg-emerald-950 text-white">
-                                    <span class="bento-cart-sum text-[#c8ff6a]" data-i18n="b3CartFloat">Bo'lib to'lash: 1 350k/oy</span>
+                                    <span class="bento-cart-sum text-[#ffffff]" data-i18n="b3CartFloat">Bo'lib to'lash: 1 350k/oy</span>
                                     <span class="bento-cart-act" data-i18n="b3OrderFloat">Rasmiylashtirish →</span>
                                 </div>
 
@@ -7490,7 +7260,6 @@ h1 span {
         <!-- Pricing Section -->
         <section class="pricing-section section-shell wow-reveal" id="pricing">
             <div class="pricing-header">
-                <span class="section-kicker" data-i18n="pricingKicker">Тарифы платформы</span>
                 <h2 data-i18n="pricingTitle">Прозрачные цены для любого масштаба</h2>
                 <p data-i18n="pricingLead">Выберите подходящий тариф для вашего бизнеса. Никаких скрытых комиссий — платите только фиксированную стоимость.</p>
                 
@@ -7514,14 +7283,13 @@ h1 span {
                         <h3 class="plan-tier-title" data-i18n="planStartTitle">Start</h3>
                         <p class="plan-tier-desc" data-i18n="planStartDesc">Для растущих магазинов и активных брендов</p>
                         <div class="plan-price-box">
-                            <div>
-                                <span class="price-val" data-plan-price="start">199 000</span>
+                            <div class="plan-price-main">
+                                <span class="price-val" data-plan-price="start">200 000</span>
                                 <span class="price-curr">UZS</span>
                             </div>
-                            <span class="price-period" data-plan-period="start">в месяц (6 633 / день)</span>
                             <div class="plan-total-row" data-plan-total-row="start">
                                 <span class="plan-total-label" data-plan-total-label="start">Итого (1 мес.):</span>
-                                <span class="plan-total-val" data-plan-total="start">199 000 UZS</span>
+                                <span class="plan-total-val" data-plan-total="start">200 000 UZS</span>
                             </div>
                         </div>
                         <ul class="pricing-features">
@@ -7543,14 +7311,13 @@ h1 span {
                         <h3 class="plan-tier-title" data-i18n="planStandardTitle">Standard</h3>
                         <p class="plan-tier-desc" data-i18n="planStandardDesc">Для зрелого бизнеса, ресторанов и торговых сетей</p>
                         <div class="plan-price-box">
-                            <div>
-                                <span class="price-val" data-plan-price="standard">399 000</span>
+                            <div class="plan-price-main">
+                                <span class="price-val" data-plan-price="standard">400 000</span>
                                 <span class="price-curr">UZS</span>
                             </div>
-                            <span class="price-period" data-plan-period="standard">в месяц (13 300 / день)</span>
                             <div class="plan-total-row" data-plan-total-row="standard">
                                 <span class="plan-total-label" data-plan-total-label="standard">Итого (1 мес.):</span>
-                                <span class="plan-total-val" data-plan-total="standard">399 000 UZS</span>
+                                <span class="plan-total-val" data-plan-total="standard">400 000 UZS</span>
                             </div>
                         </div>
                         <ul class="pricing-features">
@@ -7571,14 +7338,13 @@ h1 span {
                         <h3 class="plan-tier-title" data-i18n="planProTitle">Pro</h3>
                         <p class="plan-tier-desc" data-i18n="planProDesc">Для крупных сетей и персональных интеграций</p>
                         <div class="plan-price-box">
-                            <div>
-                                <span class="price-val" data-plan-price="pro">799 000</span>
+                            <div class="plan-price-main">
+                                <span class="price-val" data-plan-price="pro">1 000 000</span>
                                 <span class="price-curr">UZS</span>
                             </div>
-                            <span class="price-period" data-plan-period="pro">в месяц (26 633 / день)</span>
                             <div class="plan-total-row" data-plan-total-row="pro">
                                 <span class="plan-total-label" data-plan-total-label="pro">Итого (1 мес.):</span>
-                                <span class="plan-total-val" data-plan-total="pro">799 000 UZS</span>
+                                <span class="plan-total-val" data-plan-total="pro">1 000 000 UZS</span>
                             </div>
                         </div>
                         <ul class="pricing-features">
@@ -7587,6 +7353,7 @@ h1 span {
                             <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF3">Индивидуальные интеграции по API</span></li>
                             <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF4">Выделенный персональный менеджер</span></li>
                             <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF5">SLA 99.9% и обучение персонала</span></li>
+                            <li><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-i18n="planProF6">Мобильные приложения для iOS и Android</span></li>
                         </ul>
                     </div>
                     <a class="button button-ghost pricing-btn" href="/register/?plan=pro" data-i18n="planSelectPro">Выбрать Pro</a>
@@ -7596,7 +7363,6 @@ h1 span {
         <!-- FAQ Section -->
         <section class="content-section faq-section section-shell wow-reveal" id="faq">
             <div class="section-heading">
-                <span class="section-kicker">FAQ</span>
                 <h2 data-i18n="faqTitle">Частые вопросы</h2>
             </div>
             <div class="faq-list">
@@ -7634,13 +7400,53 @@ h1 span {
         <!-- Final CTA Section -->
         <section class="final-cta section-shell wow-reveal">
             <div>
-                <span class="section-kicker section-kicker-light" data-i18n="ctaKicker">StoreBox для вашего бизнеса</span>
                 <h2 data-i18n="ctaTitle">Запустите магазин под своим брендом</h2>
                 <p data-i18n="ctaText">Каталог, витрина и заказы — в одном рабочем пространстве.</p>
             </div>
             <div class="final-actions">
                 <a class="button button-white" href="/register/" data-i18n="ctaPrimary">Создать магазин</a>
                 <a class="button button-outline-light" href="/login/" data-i18n="ctaSignIn">Войти в кабинет</a>
+            </div>
+        </section>
+
+        <!-- Contact and consultation requests -->
+        <section class="contact-section section-shell wow-reveal" id="contact" aria-labelledby="contactTitle">
+            <div class="contact-info">
+                <h2 id="contactTitle" data-i18n="contactTitle">Остались вопросы?</h2>
+                <p data-i18n="contactLead">Поможем выбрать тариф, покажем платформу и ответим на вопросы о запуске вашего магазина.</p>
+                <div class="contact-methods">
+                    <a class="contact-method" href="https://t.me/storebox_support" target="_blank" rel="noopener noreferrer">
+                        <span><small>Telegram</small><strong>@storebox_support</strong></span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+                    </a>
+                    <a class="contact-method" href="mailto:info@storebox.uz">
+                        <span><small>Email</small><strong>info@storebox.uz</strong></span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+                    </a>
+                </div>
+            </div>
+            <div class="contact-form-panel">
+                <h3 data-i18n="contactFormTitle">Оставить заявку</h3>
+                <p data-i18n="contactFormLead">Оставьте контакты — мы ответим по вашему запросу.</p>
+                <form id="contactForm" action="/api/lead/" method="post">
+                    {% csrf_token %}
+                    <div class="contact-fields">
+                        <div class="contact-field">
+                            <label for="contactName" data-i18n="contactNameLabel">Имя</label>
+                            <input id="contactName" name="name" type="text" autocomplete="name" minlength="2" maxlength="255" required data-i18n-placeholder="contactNamePlaceholder" placeholder="Ваше имя">
+                        </div>
+                        <div class="contact-field">
+                            <label for="contactCompany" data-i18n="contactCompanyLabel">Компания</label>
+                            <input id="contactCompany" name="company" type="text" autocomplete="organization" maxlength="255" data-i18n-placeholder="contactCompanyPlaceholder" placeholder="Название магазина или компании">
+                        </div>
+                        <div class="contact-field">
+                            <label for="contactPhone" data-i18n="contactPhoneLabel">Телефон</label>
+                            <input id="contactPhone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="50" required data-i18n-placeholder="contactPhonePlaceholder" placeholder="+998 90 123 45 67">
+                        </div>
+                    </div>
+                    <button class="contact-submit" type="submit" data-i18n="contactSubmit">Отправить заявку</button>
+                    <p class="contact-form-status" id="contactFormStatus" role="status" aria-live="polite" hidden></p>
+                </form>
             </div>
         </section>
     </main>
@@ -7655,6 +7461,7 @@ h1 span {
         <div class="footer-links">
             <a href="/login/" data-i18n="signIn">Войти</a>
             <a href="/register/" data-i18n="signUp">Регистрация</a>
+            <a href="#contact" data-i18n="navContact">Контакты</a>
             <a href="mailto:info@storebox.uz">info@storebox.uz</a>
         </div>
         <small>© <span id="year">2026</span> StoreBox</small>
@@ -7664,15 +7471,11 @@ h1 span {
     <script>
     const translations = {
         ru: {
-            platformKicker: "Центр управления StoreBox 2.0",
             platformTitle: "Полный контроль бизнеса на одном экране",
-            platformLead: "Касса, заказы, курьеры, сотрудники и каталог товаров — всё синхронизировано в единой системе в реальном времени.",
+            platformLead: "Панель управления, доставка, конструктор витрины, каталог товаров и Telegram WebApp — в одной системе.",
             tabModDashboard: "Панель управления",
-            tabModYespos: "YES POS касса",
             tabModCourier: "Курьеры & Доставка",
-            tabModStaff: "Сотрудники & Роли",
             tabModDesign: "Конструктор витрины",
-            tabModQr: "QR Меню & Залы",
             tabModProducts: "Каталог товаров",
             tabModTelegram: "Telegram WebApp",
             platformLiveBadge: "Синхронизировано · Реальное время",
@@ -7774,27 +7577,14 @@ h1 span {
             b3CartFloat: "В рассрочку: 1 350к/мес",
             b3OrderFloat: "Оформить →",
 
-            ecoKicker: "STOREBOX 2.0 ЭКОСИСТЕМА",
             ecoTitle: "Одна платформа — Любой бизнес",
             ecoLead: "Готовые мобильные витрины для ресторанов, магазинов одежды, цветов и электроники с доставкой и онлайн-оплатой",
-            bentoFoodBadge: "ЕДА & РЕСТОРАНЫ",
             bentoFoodH: "Рестораны и<br>доставка еды",
             bentoFoodSub: "Электронное меню, комбо-сеты, модификаторы, QR для столиков и мгновенный заказ курьера через Yandex Go.",
-            bentoFoodTag1: "Столики & QR",
-            bentoFoodTag2: "Заказ в 1 клик",
-            bentoFoodTag3: "Yandex Go GPS",
-            bentoFashionBadge: "ЦВЕТЫ & FASHION",
             bentoFashionH: "Цветы, бутики<br>и одежда",
             bentoFashionSub: "Эстетичная фотовитрина свежих букетов и модной одежды, выбор размера, открытки и бережная доставка.",
-            bentoFashionTag1: "Выбор размера",
-            bentoFashionTag2: "Фото до отправки",
-            bentoFashionTag3: "Открытка в подарок",
-            bentoTechBadge: "ТЕХНИКА & ГАДЖЕТЫ",
             bentoTechH: "Бытовая техника<br>и электроника",
             bentoTechSub: "Каталог смартфонов, ноутбуков и ТВ с подробными характеристиками, выбором памяти и рассрочкой 0%.",
-            bentoTechTag1: "0% Рассрочка",
-            bentoTechTag2: "Характеристики",
-            bentoTechTag3: "Гарантия 1 год",
             ecoCard1Cat: "TELEGRAM WEBAPP",
             ecoCard1H: "Telegram<br>WebApp",
             ecoCard1Sub: "Магазин в 1 клик",
@@ -7885,16 +7675,13 @@ h1 span {
             navDashboard: "Панель",
             navPricing: "Тарифы",
             navFaq: "FAQ",
+            navContact: "Контакты",
             signIn: "Войти",
             signUp: "Регистрация",
-            heroEyebrow: "SaaS для онлайн-продаж",
             heroTitle: "Ваш интернет-магазин.<br><span>Готов к продажам.</span>",
             heroLead: "Создайте витрину под своим брендом, добавьте товары и принимайте заказы в одной панели — без разработки с нуля.",
             heroPrimary: "Создать магазин",
             heroSecondary: "Войти в кабинет",
-            pointOne: "Собственный адрес магазина",
-            pointTwo: "Русский и узбекский языки",
-            pointThree: "Готовность к SEO и рекламе",
             mockToday: "Сегодня",
             mockOverview: "Обзор магазина",
             mockAdd: "+ Товар",
@@ -7908,7 +7695,6 @@ h1 span {
             trustTwo: "онлайн-витрина",
             trustThree: "локализация",
             trustFour: "основа для роста",
-            showcaseKicker: "Реальные витрины",
             showcaseTitle: "Ваш магазин на десктопе, ноутбуке и телефоне",
             showcaseLead: "StoreBox автоматически оптимизирует витрину под каждый экран. Быстрый отклик, адаптивная сетка и удобная корзина гарантируют высокие продажи.",
             platformWeb: "Веб-сайт",
@@ -8078,7 +7864,6 @@ h1 span {
             featPosChip: "Синхронизация",
             featAnalyticsMeta: "Аналитика & Склад",
             featAnalyticsChip: "18.45 млн UZS",
-            pricingKicker: "Тарифы платформы",
             pricingTitle: "Прозрачные цены для любого масштаба",
             pricingLead: "Выберите подходящий тариф для вашего бизнеса. Никаких скрытых комиссий — платите только фиксированную стоимость.",
             cycleMonthly: "Месяц",
@@ -8110,6 +7895,7 @@ h1 span {
             planProF3: "Индивидуальные интеграции по API",
             planProF4: "Выделенный персональный менеджер",
             planProF5: "SLA 99.9% и обучение персонала",
+            planProF6: "Мобильные приложения для iOS и Android",
             planSelectPro: "Выбрать Pro",
             planEnterpriseTitle: "Enterprise",
             planEnterpriseDesc: "Для крупных сетей и персональных интеграций",
@@ -8128,7 +7914,20 @@ h1 span {
             faqThreeA: "Да. Бот и рабочая группа связываются с магазином, после чего команда может получать заказы и работать со статусами.",
             faqFourQ: "Подойдёт ли магазин для рекламы и SEO?",
             faqFourA: "StoreBox проектируется с индексируемым каталогом, управляемыми метаданными и основой для аналитики и рекламных интеграций.",
-            ctaKicker: "StoreBox для вашего бизнеса",
+            contactTitle: "Остались вопросы?",
+            contactLead: "Поможем выбрать тариф, покажем платформу и ответим на вопросы о запуске вашего магазина.",
+            contactFormTitle: "Оставить заявку",
+            contactFormLead: "Оставьте контакты — мы ответим по вашему запросу.",
+            contactNameLabel: "Имя",
+            contactNamePlaceholder: "Ваше имя",
+            contactCompanyLabel: "Компания",
+            contactCompanyPlaceholder: "Название магазина или компании",
+            contactPhoneLabel: "Телефон",
+            contactPhonePlaceholder: "+998 90 123 45 67",
+            contactSubmit: "Отправить заявку",
+            contactSubmitting: "Отправляем...",
+            contactSuccess: "Спасибо! Заявка получена, мы свяжемся с вами.",
+            contactError: "Не удалось отправить заявку. Попробуйте ещё раз или напишите нам напрямую.",
             ctaTitle: "Запустите магазин под своим брендом",
             ctaText: "Каталог, витрина и заказы — в одном рабочем пространстве.",
             ctaPrimary: "Создать магазин",
@@ -8137,15 +7936,11 @@ h1 span {
             footerText: "Платформа для создания и управления онлайн-магазинами."
         },
         uz: {
-            platformKicker: "StoreBox 2.0 Boshqaruv Markazi",
             platformTitle: "Bitta ekranda butun biznes nazorati",
-            platformLead: "Kassa, buyurtmalar, kuryerlar, xodimlar va tovarlar katalogi — barchasi real vaqtda sinxronlashgan yagona boshqaruv tizimi.",
+            platformLead: "Boshqaruv paneli, yetkazish, vitrina, tovarlar katalogi va Telegram WebApp — barchasi yagona tizimda.",
             tabModDashboard: "Boshqaruv paneli",
-            tabModYespos: "YES POS kassa",
             tabModCourier: "Kuryerlar & Yetkazish",
-            tabModStaff: "Xodimlar & Rollar",
             tabModDesign: "Vitrina konstruktori",
-            tabModQr: "QR Menyu & Zallar",
             tabModProducts: "Mahsulotlar katalogi",
             tabModTelegram: "Telegram WebApp",
             platformLiveBadge: "Sinxronlangan · Real vaqt",
@@ -8247,27 +8042,14 @@ h1 span {
             b3CartFloat: "Bo'lib to'lash: 1 350k/oy",
             b3OrderFloat: "Rasmiylashtirish →",
 
-            ecoKicker: "STOREBOX 2.0 EKOTIZIMI",
             ecoTitle: "Bitta platforma — Istalgan biznes",
             ecoLead: "Restoranlar, kiyim do'konlari, gullar va elektronika uchun yetkazib berish va to'lov bilan tayyor mobil vitrinalar",
-            bentoFoodBadge: "RESTORAN & TAOMLAR",
             bentoFoodH: "Restoran va<br>taom yetkazish",
             bentoFoodSub: "Elektron menyu, kombolar, modifikatorlar, stollar uchun QR va kuryerlarni avtomatik chaqirish.",
-            bentoFoodTag1: "Stollar uchun QR",
-            bentoFoodTag2: "1 bosishda buyurtma",
-            bentoFoodTag3: "Yandex Go GPS",
-            bentoFashionBadge: "GULLAR & MODA",
             bentoFashionH: "Gullar, butiklar<br>va kiyim-kechak",
             bentoFashionSub: "Gullar va zamonaviy liboslar foto-vitrinasi, o'lcham tanlash, tabriknomalar va nozik yetkazish.",
-            bentoFashionTag1: "O'lcham tanlash",
-            bentoFashionTag2: "Yuborishdan oldin foto",
-            bentoFashionTag3: "Sovg'a tabriknoma",
-            bentoTechBadge: "TEXNIKA & GADJETLAR",
             bentoTechH: "Elektronika va<br>maishiy texnika",
             bentoTechSub: "Smartfonlar, noutbuklar va televizorlar katalogi, xarakteristikalar taqqoslash va 0% muddatli to'lov.",
-            bentoTechTag1: "0% Muddatli to'lov",
-            bentoTechTag2: "To'liq xarakteristika",
-            bentoTechTag3: "1 yil rasmiy kafolat",
             ecoCard1Cat: "TELEGRAM WEBAPP",
             ecoCard1H: "Telegram<br>WebApp",
             ecoCard1Sub: "Do'kon 1 bosishda",
@@ -8358,16 +8140,13 @@ h1 span {
             navDashboard: "Boshqaruv",
             navPricing: "Tariflar",
             navFaq: "Savollar",
+            navContact: "Aloqa",
             signIn: "Kirish",
             signUp: "Ro'yxatdan o'tish",
-            heroEyebrow: "Onlayn savdo uchun SaaS",
             heroTitle: "Sizning internet-do‘koningiz.<br><span>Sotuvga tayyor.</span>",
             heroLead: "O‘z brendingiz bilan vitrina yarating, mahsulotlarni qo‘shing va buyurtmalarni bitta panelda qabul qiling — noldan dasturlashsiz.",
             heroPrimary: "Do'kon yaratish",
             heroSecondary: "Kabinetga kirish",
-            pointOne: "Do‘kon uchun alohida manzil",
-            pointTwo: "O‘zbek va rus tillari",
-            pointThree: "SEO va reklama uchun tayyor",
             mockToday: "Bugun",
             mockOverview: "Do‘kon sharhi",
             mockAdd: "+ Mahsulot",
@@ -8381,7 +8160,6 @@ h1 span {
             trustTwo: "onlayn vitrina",
             trustThree: "lokalizatsiya",
             trustFour: "o‘sish uchun asos",
-            showcaseKicker: "Haqiqiy vitrinalar",
             showcaseTitle: "Sizning do'koningiz kompyuter, noutbuk va telefonda",
             showcaseLead: "Mijozlar istalgan qurilmadan xarid qilishadi. StoreBox vitrinani avtomatik moslashtiradi: tezkor yuklanish, qulay savat va bir zumda buyurtma.",
             platformWeb: "Veb-sayt",
@@ -8549,7 +8327,6 @@ h1 span {
             featPosChip: "Sinxron",
             featAnalyticsMeta: "Analitika & Ombor",
             featAnalyticsChip: "18.45 mln UZS",
-            pricingKicker: "Platforma tariflari",
             pricingTitle: "Har qanday biznes miqyosi uchun shaffof narxlar",
             pricingLead: "Biznesingiz uchun eng qulay tarifni tanlang. Hech qanday yashirin komissiyalarsiz — faqat belgilangan narxda to'lang.",
             cycleMonthly: "Oy",
@@ -8581,6 +8358,7 @@ h1 span {
             planProF3: "API orqali maxsus integratsiyalar",
             planProF4: "Biriktirilgan shaxsiy menejer",
             planProF5: "SLA 99.9% va xodimlarni o'qitish",
+            planProF6: "iOS va Android uchun mobil ilovalar",
             planSelectPro: "Pro tarifini tanlash",
             planEnterpriseTitle: "Enterprise",
             planEnterpriseDesc: "Katta tarmoqlar va maxsus integratsiyalar uchun",
@@ -8599,7 +8377,20 @@ h1 span {
             faqThreeA: "Ha. Bot va ishchi guruh do‘kon bilan bog‘lanadi, so‘ng jamoa buyurtmalarni qabul qiladi va holatlarini boshqaradi.",
             faqFourQ: "Reklama va SEO uchun mosmi?",
             faqFourA: "StoreBox indekslanadigan katalog, boshqariladigan meta-ma’lumotlar, analitika va reklama integratsiyalari uchun asos bilan loyihalanadi.",
-            ctaKicker: "Biznesingiz uchun StoreBox",
+            contactTitle: "Savollaringiz bormi?",
+            contactLead: "Tarifni tanlash, platformani ko‘rsatish va do‘koningizni ishga tushirish bo‘yicha savollarga javob beramiz.",
+            contactFormTitle: "Ariza qoldirish",
+            contactFormLead: "Bog‘lanish uchun ma’lumotlaringizni qoldiring — so‘rovingizga javob beramiz.",
+            contactNameLabel: "Ism",
+            contactNamePlaceholder: "Ismingiz",
+            contactCompanyLabel: "Kompaniya",
+            contactCompanyPlaceholder: "Do‘kon yoki kompaniya nomi",
+            contactPhoneLabel: "Telefon",
+            contactPhonePlaceholder: "+998 90 123 45 67",
+            contactSubmit: "Ariza yuborish",
+            contactSubmitting: "Yuborilmoqda...",
+            contactSuccess: "Rahmat! Arizangiz qabul qilindi, tez orada bog‘lanamiz.",
+            contactError: "Arizani yuborib bo‘lmadi. Qayta urinib ko‘ring yoki bizga bevosita yozing.",
             ctaTitle: "O‘z brendingiz ostida do‘kon oching",
             ctaText: "Katalog, vitrina va buyurtmalar — bitta ish maydonida.",
             ctaPrimary: "Do'kon yaratish",
@@ -8614,42 +8405,42 @@ h1 span {
     // =========================================================
     const planPrices = {
         monthly: {
-            start: "199 000",
-            standard: "399 000",
-            pro: "799 000",
+            start: "200 000",
+            standard: "400 000",
+            pro: "1 000 000",
             enterprise: "799 000"
         },
         semiannual: {
-            start: "179 100",
-            standard: "359 100",
-            pro: "719 100",
+            start: "180 000",
+            standard: "360 000",
+            pro: "900 000",
             enterprise: "719 100"
         },
         annual: {
-            start: "159 200",
-            standard: "319 200",
-            pro: "639 200",
+            start: "160 000",
+            standard: "320 000",
+            pro: "800 000",
             enterprise: "639 200"
         }
     };
 
     const planTotalPrices = {
         monthly: {
-            start: "199 000 UZS",
-            standard: "399 000 UZS",
-            pro: "799 000 UZS",
+            start: "200 000 UZS",
+            standard: "400 000 UZS",
+            pro: "1 000 000 UZS",
             enterprise: "799 000 UZS"
         },
         semiannual: {
-            start: "1 074 600 UZS",
-            standard: "2 154 600 UZS",
-            pro: "4 314 600 UZS",
+            start: "1 080 000 UZS",
+            standard: "2 160 000 UZS",
+            pro: "5 400 000 UZS",
             enterprise: "4 314 600 UZS"
         },
         annual: {
-            start: "1 910 400 UZS",
-            standard: "3 830 400 UZS",
-            pro: "7 670 400 UZS",
+            start: "1 920 000 UZS",
+            standard: "3 840 000 UZS",
+            pro: "9 600 000 UZS",
             enterprise: "7 670 400 UZS"
         }
     };
@@ -8658,23 +8449,6 @@ h1 span {
 
     function updatePricingPeriods() {
         const isUz = document.documentElement.lang === "uz";
-        document.querySelectorAll("[data-plan-period]").forEach((el) => {
-            const plan = el.dataset.planPeriod;
-            if (currentCycle === "monthly") {
-                if (plan === "start") el.textContent = isUz ? "oyiga (6 633 / kun)" : "в месяц (6 633 / день)";
-                if (plan === "standard") el.textContent = isUz ? "oyiga (13 300 / kun)" : "в месяц (13 300 / день)";
-                if (plan === "pro" || plan === "enterprise") el.textContent = isUz ? "oyiga (26 633 / kun)" : "в месяц (26 633 / день)";
-            } else if (currentCycle === "semiannual") {
-                if (plan === "start") el.textContent = isUz ? "oyiga (6 oylik to'lovda -10%)" : "в месяц (при оплате за 6 мес -10%)";
-                if (plan === "standard") el.textContent = isUz ? "oyiga (6 oylik to'lovda -10%)" : "в месяц (при оплате за 6 мес -10%)";
-                if (plan === "pro" || plan === "enterprise") el.textContent = isUz ? "oyiga (6 oylik to'lovda -10%)" : "в месяц (при оплате за 6 мес -10%)";
-            } else {
-                if (plan === "start") el.textContent = isUz ? "oyiga (12 oylik to'lovda -20%)" : "в месяц (при оплате за 12 мес -20%)";
-                if (plan === "standard") el.textContent = isUz ? "oyiga (12 oylik to'lovda -20%)" : "в месяц (при оплате за 12 мес -20%)";
-                if (plan === "pro" || plan === "enterprise") el.textContent = isUz ? "oyiga (12 oylik to'lovda -20%)" : "в месяц (при оплате за 12 мес -20%)";
-            }
-        });
-
         const cycleLabelRu = currentCycle === "monthly" ? "Итого (1 мес.):" : currentCycle === "semiannual" ? "Итого (6 мес.):" : "Итого (12 мес.):";
         const cycleLabelUz = currentCycle === "monthly" ? "Jami (1 oy):" : currentCycle === "semiannual" ? "Jami (6 oy):" : "Jami (12 oy):";
 
@@ -8693,6 +8467,7 @@ h1 span {
     // Language Switcher Logic
     const buttons = document.querySelectorAll("[data-lang]");
     const nodes = document.querySelectorAll("[data-i18n]");
+    const placeholderNodes = document.querySelectorAll("[data-i18n-placeholder]");
 
     const studioCards = document.querySelectorAll(".studio-step-card");
     const studioDots = document.querySelectorAll(".step-dot");
@@ -8701,6 +8476,42 @@ h1 span {
     let currentStepIdx = 0;
     let isStepManualClick = false;
     let stepManualTimeout = null;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let switchIndicatorFrame = 0;
+
+    function positionSwitchIndicator(group) {
+        const active = group.querySelector("button.is-active");
+        const indicator = group.querySelector(".switch-indicator");
+        if (!active || !indicator) return;
+        group.style.setProperty("--switch-left", `${active.offsetLeft}px`);
+        group.style.setProperty("--switch-top", `${active.offsetTop}px`);
+        group.style.setProperty("--switch-width", `${active.offsetWidth}px`);
+        group.style.setProperty("--switch-height", `${active.offsetHeight}px`);
+    }
+
+    function scheduleSwitchIndicators() {
+        if (switchIndicatorFrame) return;
+        switchIndicatorFrame = requestAnimationFrame(() => {
+            switchIndicatorFrame = 0;
+            document.querySelectorAll(".has-motion-indicator").forEach(positionSwitchIndicator);
+        });
+    }
+
+    function initAnimatedSwitches() {
+        document.querySelectorAll(".language, .segmented-control, .billing-cycle-switch, .platform-tabs-scroll").forEach((group) => {
+            if (!group.querySelector("button.is-active")) return;
+            const indicator = document.createElement("span");
+            indicator.className = "switch-indicator";
+            indicator.setAttribute("aria-hidden", "true");
+            indicator.style.transition = "none";
+            group.prepend(indicator);
+            positionSwitchIndicator(group);
+            group.classList.add("has-motion-indicator");
+            requestAnimationFrame(() => { indicator.style.transition = ""; });
+        });
+        window.addEventListener("resize", scheduleSwitchIndicators, { passive: true });
+        if (document.fonts) document.fonts.ready.then(scheduleSwitchIndicators);
+    }
 
     function setLanguage(language) {
         const dictionary = translations[language] || translations.ru;
@@ -8708,6 +8519,10 @@ h1 span {
         nodes.forEach((node) => {
             const value = dictionary[node.dataset.i18n];
             if (value) node.innerHTML = value;
+        });
+        placeholderNodes.forEach((node) => {
+            const value = dictionary[node.dataset.i18nPlaceholder];
+            if (value) node.placeholder = value;
         });
         buttons.forEach((button) => {
             const active = button.dataset.lang === language;
@@ -8733,6 +8548,7 @@ h1 span {
         if (typeof window.renderPlatformModule === "function" && window.platformModuleKeys) {
             window.renderPlatformModule(window.platformModuleKeys[window.currentPlatformModIdx || 0]);
         }
+        scheduleSwitchIndicators();
     }
 
     buttons.forEach((button) => button.addEventListener("click", () => setLanguage(button.dataset.lang)));
@@ -8744,6 +8560,48 @@ h1 span {
         initialLanguage = localStorage.getItem("storebox-language") || (navigator.language.toLowerCase().startsWith("uz") ? "uz" : "ru");
     } catch (_) {}
     setLanguage(initialLanguage);
+    initAnimatedSwitches();
+
+    const contactForm = document.getElementById("contactForm");
+    if (contactForm) {
+        const submitButton = contactForm.querySelector('button[type="submit"]');
+        const statusEl = document.getElementById("contactFormStatus");
+        contactForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            if (!contactForm.reportValidity() || submitButton.disabled) return;
+
+            const dictionary = translations[document.documentElement.lang] || translations.ru;
+            submitButton.disabled = true;
+            submitButton.textContent = dictionary.contactSubmitting;
+            statusEl.hidden = true;
+            statusEl.classList.remove("is-error");
+
+            try {
+                const response = await fetch(contactForm.action, {
+                    method: "POST",
+                    body: new FormData(contactForm),
+                    credentials: "same-origin",
+                    headers: { "Accept": "application/json" }
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    statusEl.textContent = data.error || dictionary.contactError;
+                    statusEl.classList.add("is-error");
+                } else {
+                    statusEl.textContent = dictionary.contactSuccess;
+                    contactForm.reset();
+                }
+            } catch (_) {
+                statusEl.textContent = dictionary.contactError;
+                statusEl.classList.add("is-error");
+            } finally {
+                statusEl.hidden = false;
+                submitButton.disabled = false;
+                const activeDictionary = translations[document.documentElement.lang] || translations.ru;
+                submitButton.textContent = activeDictionary.contactSubmit;
+            }
+        });
+    }
 
     const cycleBtns = document.querySelectorAll(".cycle-btn");
     cycleBtns.forEach((btn) => {
@@ -8752,6 +8610,7 @@ h1 span {
             if (!cycle || cycle === currentCycle) return;
             currentCycle = cycle;
             cycleBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
+            scheduleSwitchIndicators();
             
             document.querySelectorAll("[data-plan-price]").forEach((el) => {
                 const plan = el.dataset.planPrice;
@@ -8760,6 +8619,13 @@ h1 span {
                 }
             });
             updatePricingPeriods();
+            if (!reduceMotion.matches) {
+                document.querySelectorAll(".plan-price-box").forEach((box) => {
+                    box.classList.remove("is-updating");
+                    void box.offsetWidth;
+                    box.classList.add("is-updating");
+                });
+            }
         });
     });
 
@@ -8906,101 +8772,11 @@ h1 span {
     }
 
     // =========================================================
-    // 5-STORE MULTI-DEVICE SHOWCASE CONTROLLER (UNPINNED & SMOOTH)
+    // INTERACTIVE MULTI-DEVICE SHOWCASE
     // =========================================================
-        // =========================================================
-    // INTERACTIVE 3D MULTI-DEVICE SHOWCASE & SHOP 655 DISPLAY
-    // =========================================================
-    const SHOWCASE_STORES = [
-        {
-            id: "burger",
-            name: "Shop 655 · Fast-Fud & Pitsa",
-            domain: "shop-655.storebox.uz",
-            desktopImg: "/static/images/showcase/showcase_desktop.png?v=20260924b",
-            laptopImg: "/static/images/showcase/showcase_desktop.png?v=20260924b",
-            mobileImg: "/static/images/showcase/showcase_mobile.png?v=20260924b",
-            orderBadge: { title: "Yangi buyurtma #SB-1049", sub: "117 000 UZS · To'landi" }
-        },
-        {
-            id: "dishes",
-            name: "Shop 655 · Issiq taomlar",
-            domain: "shop-655.storebox.uz",
-            desktopImg: "/static/images/showcase/showcase_desktop.png?v=20260924b",
-            laptopImg: "/static/images/showcase/showcase_desktop.png?v=20260924b",
-            mobileImg: "/static/images/showcase/showcase_mobile.png?v=20260924b",
-            orderBadge: { title: "Yangi buyurtma #SB-1050", sub: "84 000 UZS · To'landi" }
-        },
-        {
-            id: "all",
-            name: "Shop 655 · Barcha tovarlar",
-            domain: "shop-655.storebox.uz",
-            desktopImg: "/static/images/showcase/showcase_desktop.png?v=20260924b",
-            laptopImg: "/static/images/showcase/showcase_desktop.png?v=20260924b",
-            mobileImg: "/static/images/showcase/showcase_mobile.png?v=20260924b",
-            orderBadge: { title: "Yangi buyurtma #SB-1051", sub: "250 000 UZS · To'landi" }
-        }
-    ];
-
-    let currentStoreIdx = 0;
     const stage = document.getElementById("showcaseStage");
     const deviceTabs = document.querySelectorAll(".device-tab");
-    const platformTabs = document.querySelectorAll(".platform-tab");
-    const storePills = document.querySelectorAll(".store-pill");
-    const storeDots = document.querySelectorAll(".store-dot");
-    const prevStoreBtn = document.getElementById("prevStoreBtn");
-    const nextStoreBtn = document.getElementById("nextStoreBtn");
     const showcaseSec = document.getElementById("showcase");
-
-    function renderStore(storeIdx) {
-        if (storeIdx < 0 || storeIdx >= SHOWCASE_STORES.length) return;
-        const s = SHOWCASE_STORES[storeIdx];
-        currentStoreIdx = storeIdx;
-
-        storePills.forEach((pill, idx) => {
-            pill.classList.toggle("is-active", idx === storeIdx);
-        });
-        storeDots.forEach((dot, idx) => {
-            dot.classList.toggle("is-active", idx === storeIdx);
-        });
-
-        const deskImg = document.getElementById("showcaseDesktopImg");
-        const lapImg = document.getElementById("showcaseLaptopImg");
-        const mobImg = document.getElementById("showcaseMobileImg");
-
-        const domainEl = document.getElementById("mockDomainDesktop");
-        if (domainEl) domainEl.textContent = s.domain;
-
-        const badgeOrderTitle = document.getElementById("mockBadgeOrderTitle");
-        if (badgeOrderTitle) badgeOrderTitle.textContent = s.orderBadge.title;
-        const badgeOrderSub = document.getElementById("mockBadgeOrderSub");
-        if (badgeOrderSub) badgeOrderSub.textContent = s.orderBadge.sub;
-    }
-
-    if (prevStoreBtn) {
-        prevStoreBtn.addEventListener("click", () => {
-            const nextIdx = (currentStoreIdx - 1 + SHOWCASE_STORES.length) % SHOWCASE_STORES.length;
-            renderStore(nextIdx);
-        });
-    }
-    if (nextStoreBtn) {
-        nextStoreBtn.addEventListener("click", () => {
-            const nextIdx = (currentStoreIdx + 1) % SHOWCASE_STORES.length;
-            renderStore(nextIdx);
-        });
-    }
-
-    storePills.forEach((pill, idx) => {
-        pill.addEventListener("click", () => {
-            renderStore(idx);
-        });
-    });
-
-    storeDots.forEach((dot, idx) => {
-        dot.addEventListener("click", () => {
-            renderStore(idx);
-        });
-    });
-    // Auto-cycle removed: stays permanently and cleanly on Shop 655!
 
     // =========================================================
     // 3D DEVICE STEPPING ANIMATION ("по одному выходило")
@@ -9020,6 +8796,7 @@ h1 span {
             tab.classList.toggle("is-active", active);
             tab.setAttribute("aria-selected", String(active));
         });
+        scheduleSwitchIndicators();
 
         if (isManual) {
             isUserInteractingWithDevices = true;
@@ -9033,17 +8810,6 @@ h1 span {
     deviceTabs.forEach((tab) => {
         tab.addEventListener("click", () => {
             activateDevice(tab.dataset.device, true);
-        });
-    });
-
-    // Platform switcher tabs (Web vs Telegram WebApp)
-    platformTabs.forEach((tab) => {
-        tab.addEventListener("click", () => {
-            platformTabs.forEach(t => t.classList.remove("is-active"));
-            tab.classList.add("is-active");
-            if (stage) {
-                stage.setAttribute("data-platform", tab.dataset.platform);
-            }
         });
     });
 
@@ -9087,6 +8853,7 @@ h1 span {
 
     // 2. Continuous Auto-Tour: smoothly brings devices forward one by one every 4.2 seconds
     setInterval(() => {
+        if (reduceMotion.matches) return;
         if (isUserInteractingWithDevices || isShowcaseHovered) return;
         const rect = showcaseSec ? showcaseSec.getBoundingClientRect() : null;
         if (rect && (rect.bottom < 0 || rect.top > (window.innerHeight || 800))) return;
@@ -9096,7 +8863,7 @@ h1 span {
     }, 4200);
 
     // 3. Interactive 3D Tilt on Mouse Move
-    if (stage && window.matchMedia("(min-width: 980px)").matches) {
+    if (stage && window.matchMedia("(min-width: 980px)").matches && !reduceMotion.matches) {
         stage.addEventListener("mousemove", (e) => {
             const rect = stage.getBoundingClientRect();
             const x = (e.clientX - rect.left) / rect.width - 0.5;
@@ -9296,11 +9063,7 @@ h1 span {
     const platformModulesData = {
         dashboard: {
             url: "app.storebox.uz/dashboard/",
-            img: "/static/images/landing/platform/dashboard.png?v=sb2026_09_22",
-            badgeUz: "Savdo statistikasi",
-            badgeRu: "Статистика продаж",
-            metricUz: "21 990 400 UZS",
-            metricRu: "21 990 400 UZS",
+            img: "/static/images/landing/platform/dashboard.png?v=brand20261010",
             titleUz: "Boshqaruv paneli",
             titleRu: "Панель управления",
             descUz: "Kunlik savdo, buyurtmalar soni va o‘rtacha chek dinamikasini jonli kuzating.",
@@ -9316,35 +9079,9 @@ h1 span {
                 "Поток новых и постоянных клиентов"
             ]
         },
-        yespos: {
-            url: "app.storebox.uz/integrations/yespos/",
-            img: "/static/images/landing/platform/yespos.png?v=sb2026_09_22",
-            badgeUz: "YES POS integratsiyasi",
-            badgeRu: "Интеграция YES POS",
-            metricUz: "100% Avtosinxron",
-            metricRu: "100% Автосинхрон",
-            titleUz: "Bulutli Kassa & POS",
-            titleRu: "Облачная Касса & POS",
-            descUz: "Offlayn savdo nuqtalari va internet do‘koni bitta umumiy omborga ulanadi.",
-            descRu: "Оффлайн точки и интернет-магазин работают с единым складом и базой остатков.",
-            itemsUz: [
-                "Fiskal cheklar va kassa apparatlari",
-                "Ombordagi qoldiqlar avtomatik yangilanishi",
-                "1 klikda YES POS bilan to‘liq integratsiya"
-            ],
-            itemsRu: [
-                "Фискальные чеки и интеграция с кассой",
-                "Автоматический пересчет остатков на складе",
-                "Быстрое подключение YES POS в 1 клик"
-            ]
-        },
         courier: {
             url: "app.storebox.uz/logistics/couriers/",
-            img: "/static/images/landing/platform/courier.png?v=sb2026_09_22",
-            badgeUz: "Logistika nazorati",
-            badgeRu: "Контроль логистики",
-            metricUz: "GPS & Balans",
-            metricRu: "GPS & Баланс",
+            img: "/static/images/landing/platform/courier.png?v=brand20261010",
             titleUz: "Kuryerlar & Yetkazish",
             titleRu: "Курьеры и Доставка",
             descUz: "Kuryerlar holati, yetkazilgan buyurtmalar va kunlik to‘lovlarni to‘liq boshqaring.",
@@ -9360,35 +9097,9 @@ h1 span {
                 "Мгновенное назначение ближайшему курьеру"
             ]
         },
-        staff: {
-            url: "app.storebox.uz/settings/staff/",
-            img: "/static/images/landing/platform/staff.png?v=sb2026_09_22",
-            badgeUz: "Xavfsiz boshqaruv",
-            badgeRu: "Безопасный доступ",
-            metricUz: "Nozik ruxsatlar",
-            metricRu: "Гибкие роли",
-            titleUz: "Xodimlar & Rollar",
-            titleRu: "Сотрудники и Роли",
-            descUz: "Kassir, menejer va administrator uchun alohida kirish huquqlarini sozlang.",
-            descRu: "Настраивайте персональные уровни доступа для кассиров, менеджеров и админов.",
-            itemsUz: [
-                "Har bir rol uchun aniq chegaralangan huquqlar",
-                "Do‘kon balansi va tahrirlash xavfsizligi",
-                "Xodimlar amaliyotlari to‘liq nazorati"
-            ],
-            itemsRu: [
-                "Строгое разграничение прав для каждой роли",
-                "Защита баланса магазина и важных настроек",
-                "Журнал действий и история сотрудников"
-            ]
-        },
         design: {
             url: "app.storebox.uz/storefront/customizer/",
-            img: "/static/images/landing/platform/design.png?v=sb2026_09_22",
-            badgeUz: "Vitrina konstruktori",
-            badgeRu: "Конструктор витрины",
-            metricUz: "100% Moslashuv",
-            metricRu: "100% Адаптив",
+            img: "/static/images/landing/platform/design.png?v=brand20261010",
             titleUz: "Shaxsiy brending",
             titleRu: "Персональный брендинг",
             descUz: "Do‘koningiz ranglari, bannerlari va bo‘limlarini o‘zingiz xohlagandek bezating.",
@@ -9404,35 +9115,9 @@ h1 span {
                 "Управление промо-баннерами и акциями"
             ]
         },
-        qr: {
-            url: "app.storebox.uz/restaurants/tables-qr/",
-            img: "/static/images/landing/platform/qr.png?v=sb2026_09_22",
-            badgeUz: "Smart QR menyu",
-            badgeRu: "Smart QR меню",
-            metricUz: "0 soniya kutish",
-            metricRu: "0 сек ожидания",
-            titleUz: "QR Menyu & Zallar",
-            titleRu: "QR Меню и Залы",
-            descUz: "Stollar uchun QR-kodlar: mehmonlar ilovasiz menyuni ko‘radi va buyurtma beradi.",
-            descRu: "QR-коды на столах: гости смотрят меню без скачивания приложений и делают заказ.",
-            itemsUz: [
-                "Stoldan turib mustaqil buyurtma berish",
-                "Oshxonaga buyurtmalarni zudlik bilan yuborish",
-                "Click va Payme orqali stolda to‘lov qilish"
-            ],
-            itemsRu: [
-                "Самостоятельный заказ прямо со стола",
-                "Мгновенная передача чека на кухню",
-                "Оплата через Click и Payme не вставая со стула"
-            ]
-        },
         products: {
             url: "app.storebox.uz/catalog/products/",
-            img: "/static/images/landing/platform/products.png?v=sb2026_09_22",
-            badgeUz: "Tovar katalogi",
-            badgeRu: "Каталог товаров",
-            metricUz: "Cheksiz toifalar",
-            metricRu: "Безлимитно",
+            img: "/static/images/landing/platform/products.png?v=brand20261010",
             titleUz: "Mahsulotlar & Modifikatorlar",
             titleRu: "Товары и Модификаторы",
             descUz: "Variantlar, o‘lchamlar, qo‘shimchalar va ombor qoldiqlarini boshqarish.",
@@ -9450,11 +9135,7 @@ h1 span {
         },
         telegram: {
             url: "t.me/StoreBoxDemoBot/app",
-            img: "/static/images/landing/platform/telegram.png?v=sb2026_09_22",
-            badgeUz: "Telegram WebApp",
-            badgeRu: "Telegram WebApp",
-            metricUz: "200M+ auditoriya",
-            metricRu: "200M+ аудитория",
+            img: "/static/images/landing/platform/telegram.png?v=brand20261010",
             titleUz: "Telegramda to‘liq do‘kon",
             titleRu: "Полноценный магазин в Telegram",
             descUz: "Mijozlar Telegram messenjeridan chiqmasdan tovar tanlaydi va to‘lov qiladi.",
@@ -9472,17 +9153,21 @@ h1 span {
         }
     };
 
-    window.platformModuleKeys = ["dashboard", "yespos", "courier", "staff", "design", "qr", "products", "telegram"];
+    window.platformModuleKeys = ["dashboard", "courier", "design", "products", "telegram"];
     window.currentPlatformModIdx = 0;
 
 
-    // Preload all 8 platform screenshots immediately
+    // Preload all 5 platform screenshots immediately
     window.platformModuleKeys.forEach((key) => {
         if (platformModulesData[key] && platformModulesData[key].img) {
             const preload = new Image();
             preload.src = platformModulesData[key].img;
         }
     });
+
+    let platformImageSwitchToken = 0;
+    let platformImageTimer = 0;
+    let platformCardTimer = 0;
 
     window.renderPlatformModule = function(modKey, animateCard = true) {
         const data = platformModulesData[modKey];
@@ -9494,21 +9179,46 @@ h1 span {
             btn.classList.toggle("is-active", isActive);
             btn.setAttribute("aria-selected", isActive ? "true" : "false");
         });
+        scheduleSwitchIndicators();
 
         // Update URL display
         const urlEl = document.getElementById("platformUrlDisplay");
         if (urlEl) urlEl.textContent = data.url;
 
-        // Crossfade Main Image
+        // Wait for the next screenshot before fading out the current one.
         const imgEl = document.getElementById("platformMainImg");
+        const imageToken = ++platformImageSwitchToken;
+        clearTimeout(platformImageTimer);
+        if (imgEl) imgEl.classList.remove("is-switching");
         if (imgEl && imgEl.getAttribute("src") !== data.img) {
-            imgEl.style.opacity = "0.4";
-            imgEl.style.transform = "scale(0.99)";
-            setTimeout(() => {
+            if (reduceMotion.matches) {
                 imgEl.src = data.img;
-                imgEl.style.opacity = "1";
-                imgEl.style.transform = "scale(1)";
-            }, 100);
+                imgEl.classList.remove("is-switching");
+            } else {
+                const nextImage = new Image();
+                nextImage.src = data.img;
+                const showNextImage = () => {
+                    if (imageToken !== platformImageSwitchToken) return;
+                    imgEl.classList.add("is-switching");
+                    platformImageTimer = setTimeout(() => {
+                        if (imageToken !== platformImageSwitchToken) return;
+                        imgEl.src = data.img;
+                        requestAnimationFrame(() => {
+                            if (imageToken === platformImageSwitchToken) imgEl.classList.remove("is-switching");
+                        });
+                    }, 170);
+                };
+                if (typeof nextImage.decode === "function") {
+                    nextImage.decode().catch(() => {}).then(showNextImage);
+                } else if (nextImage.complete) {
+                    showNextImage();
+                } else {
+                    nextImage.onload = showNextImage;
+                    nextImage.onerror = showNextImage;
+                }
+            }
+        } else if (imgEl) {
+            imgEl.classList.remove("is-switching");
         }
 
         // Update Floating Info Card
@@ -9517,15 +9227,12 @@ h1 span {
         const isRu = currentLanguage.startsWith("ru");
 
         if (card) {
+            clearTimeout(platformCardTimer);
             const updateCardText = () => {
-                const badgeEl = document.getElementById("pfcBadge");
-                const metricEl = document.getElementById("pfcMetric");
                 const titleEl = document.getElementById("pfcTitle");
                 const descEl = document.getElementById("pfcDesc");
                 const listEl = document.getElementById("pfcList");
 
-                if (badgeEl) badgeEl.textContent = isRu ? data.badgeRu : data.badgeUz;
-                if (metricEl) metricEl.textContent = isRu ? data.metricRu : data.metricUz;
                 if (titleEl) titleEl.textContent = isRu ? data.titleRu : data.titleUz;
                 if (descEl) descEl.textContent = isRu ? data.descRu : data.descUz;
 
@@ -9533,19 +9240,19 @@ h1 span {
                 if (listEl && items) {
                     listEl.innerHTML = items.map((txt) => `
                         <li>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7eaa16" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                             <span>${txt}</span>
                         </li>
                     `).join("");
                 }
             };
 
-            if (animateCard) {
+            if (animateCard && !reduceMotion.matches) {
                 card.classList.add("is-hidden");
-                setTimeout(() => {
+                platformCardTimer = setTimeout(() => {
                     updateCardText();
                     card.classList.remove("is-hidden");
-                }, 130);
+                }, 160);
             } else {
                 updateCardText();
                 card.classList.remove("is-hidden");
@@ -9565,7 +9272,7 @@ h1 span {
             const btnWidth = activeBtn.offsetWidth;
             const listWidth = tabsList.offsetWidth;
             const targetScroll = btnLeft - (listWidth / 2) + (btnWidth / 2);
-            tabsList.scrollTo({ left: targetScroll, behavior: 'smooth' });
+            tabsList.scrollTo({ left: targetScroll, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
         }
     }
 

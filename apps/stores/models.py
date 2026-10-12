@@ -266,7 +266,7 @@ class Store(models.Model):
     TARIFF_RATES = {
         'START': Decimal('199000.00'),       # ~6 633 UZS/день
         'STANDARD': Decimal('399000.00'),    # ~13 300 UZS/день
-        'PRO': Decimal('799000.00'),         # ~26 633 UZS/день
+        'PRO': Decimal('1000000.00'),        # ~33 333 UZS/день
         'ENTERPRISE': Decimal('799000.00'),  # ~26 633 UZS/день
     }
 

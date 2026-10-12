@@ -179,8 +179,8 @@ def tariff_info_view(request):
         {
             "code": "PRO",
             "name": "Pro",
-            "monthly_price": 799000,
-            "daily_rate": 26633,
+            "monthly_price": 1000000,
+            "daily_rate": 33333,
             "period_label": "oyiga",
             "desc": "Katta tarmoqlar va maxsus integratsiyalar uchun",
             "features": [
