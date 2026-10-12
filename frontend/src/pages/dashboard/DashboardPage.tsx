@@ -309,7 +309,7 @@ export const DashboardPage: React.FC = () => {
   const webTrafficPct = totalTraffic > 0 ? Math.round(((charts?.traffic?.web || 0) / totalTraffic) * 100) : 50;
   const tmaTrafficPct = totalTraffic > 0 ? 100 - webTrafficPct : 50;
 
-  // Chart configuration: Clean minimal Shopify Polaris style with vibrant #005bd3 Shopify Blue accent
+  // Chart configuration: Clean minimal Shopify Polaris style with vibrant #6d5a88 Shopify Blue accent
   const chartData = {
     labels: charts?.labels || [],
     datasets: [
@@ -318,13 +318,13 @@ export const DashboardPage: React.FC = () => {
         data: (charts?.revenue || []).map((val) =>
           currency === "USD" ? Number((val / UZS_TO_USD_RATE).toFixed(2)) : val
         ),
-        backgroundColor: chartType === "bar" ? "#005bd3" : "rgba(0, 91, 211, 0.14)",
-        borderColor: "#005bd3",
+        backgroundColor: chartType === "bar" ? "#6d5a88" : "rgba(0, 91, 211, 0.14)",
+        borderColor: "#6d5a88",
         borderWidth: chartType === "line" ? 2.5 : 0,
         borderRadius: chartType === "bar" ? 5 : 0,
         fill: chartType === "line",
         tension: 0.35,
-        pointBackgroundColor: "#005bd3",
+        pointBackgroundColor: "#6d5a88",
         pointBorderColor: "#FFFFFF",
         pointBorderWidth: 1.5,
         pointRadius: chartType === "line" ? 3 : 0,
@@ -339,7 +339,7 @@ export const DashboardPage: React.FC = () => {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#202223",
+        backgroundColor: "#211b2e",
         titleColor: "#FFFFFF",
         bodyColor: "#E4E4E7",
         padding: 8,
@@ -389,7 +389,7 @@ export const DashboardPage: React.FC = () => {
     datasets: [
       {
         data: [charts?.traffic?.telegram || 0, charts?.traffic?.web || 0],
-        backgroundColor: ["#005bd3", "#00a86b"],
+        backgroundColor: ["#6d5a88", "#00a86b"],
         borderWidth: 0,
         hoverOffset: 3,
       },
@@ -397,12 +397,12 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 pb-8">
+    <div className="space-y-6 pb-8">
       {/* 1. Header Bar: Store Title & Period Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
             <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-[#202223] dark:text-white tracking-tight">
+            <h1 className="text-xl font-semibold text-[#211b2e] dark:text-white tracking-tight">
               {store?.name || (lang === "ru" ? "Панель управления" : "Boshqaruv paneli")}
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#e6f7f0] text-[#00a86b] border border-[#8ce0bf]">
@@ -420,7 +420,7 @@ export const DashboardPage: React.FC = () => {
         {/* Action Controls: Periods, Currency, Refresh */}
         <div className="flex flex-wrap items-center gap-2 max-w-full">
           {/* Period selector */}
-          <div className="inline-flex max-w-full overflow-x-auto no-scrollbar rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+          <div className="inline-flex max-w-full overflow-x-auto no-scrollbar rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
             {periods.map((p) => (
               <button
                 key={p.id}
@@ -434,10 +434,10 @@ export const DashboardPage: React.FC = () => {
                     return next;
                   });
                 }}
-                className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                   period === p.id && !startDateParam
-                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
-                    : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] dark:hover:text-white font-normal"
+                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
+                    : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] dark:hover:text-white font-normal"
                 }`}
               >
                 {p.label}
@@ -453,10 +453,10 @@ export const DashboardPage: React.FC = () => {
                   setCustomEnd(endDateParam || metrics?.today_date || "2026-10-11");
                   setShowDatePicker(!showDatePicker);
                 }}
-                className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap ${
+                className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap ${
                   period === "custom" || (startDateParam && endDateParam)
-                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
-                    : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] dark:hover:text-white font-normal"
+                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
+                    : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] dark:hover:text-white font-normal"
                 }`}
               >
                 <Calendar className="w-3 h-3" />
@@ -470,8 +470,8 @@ export const DashboardPage: React.FC = () => {
               </button>
 
               {showDatePicker && (
-                <div className="absolute right-0 top-full mt-2 z-30 w-72 p-4 rounded-[10px] bg-white dark:bg-zinc-900 border border-[#e1e3e5] dark:border-zinc-800 shadow-xl space-y-3">
-                  <div className="text-xs font-semibold text-[#202223] dark:text-white">
+                <div className="absolute right-0 top-full mt-2 z-30 w-72 p-4 rounded-[18px] bg-white dark:bg-zinc-900 border border-[#dfe5ef] dark:border-zinc-800 shadow-xl space-y-3">
+                  <div className="text-xs font-semibold text-[#211b2e] dark:text-white">
                     {lang === "ru" ? "Выбор периода" : "Sana oralig'i"}
                   </div>
                   <div className="space-y-2 text-xs">
@@ -483,7 +483,7 @@ export const DashboardPage: React.FC = () => {
                         type="date"
                         value={customStart}
                         onChange={(e) => setCustomStart(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs"
+                        className="w-full px-2.5 py-1.5 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs"
                       />
                     </div>
                     <div>
@@ -494,11 +494,11 @@ export const DashboardPage: React.FC = () => {
                         type="date"
                         value={customEnd}
                         onChange={(e) => setCustomEnd(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs"
+                        className="w-full px-2.5 py-1.5 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs"
                       />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 pt-2 border-t border-[#e1e3e5] dark:border-zinc-800">
+                  <div className="flex items-center gap-2 pt-2 border-t border-[#dfe5ef] dark:border-zinc-800">
                     <button
                       type="button"
                       onClick={() => {
@@ -512,7 +512,7 @@ export const DashboardPage: React.FC = () => {
                         });
                         setShowDatePicker(false);
                       }}
-                      className="flex-1 py-1.5 rounded-[8px] bg-[#202223] text-white font-medium text-xs hover:bg-black transition-colors cursor-pointer"
+                      className="flex-1 py-1.5 rounded-[12px] bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] font-medium text-xs hover:bg-[#151020] transition-colors cursor-pointer"
                     >
                       {lang === "ru" ? "Применить" : "Qo'llash"}
                     </button>
@@ -528,7 +528,7 @@ export const DashboardPage: React.FC = () => {
                         });
                         setShowDatePicker(false);
                       }}
-                      className="px-2.5 py-1.5 rounded-[8px] border border-[#e1e3e5] text-[#5c5f62] text-xs hover:bg-[#f6f6f7] cursor-pointer"
+                      className="px-2.5 py-1.5 rounded-[12px] border border-[#dfe5ef] text-[#686475] text-xs hover:bg-[#f6f6f7] cursor-pointer"
                     >
                       {lang === "ru" ? "Сброс" : "Tozalash"}
                     </button>
@@ -539,14 +539,14 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Currency Switcher */}
-          <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+          <div className="inline-flex rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
             <button
               type="button"
               onClick={() => setCurrency("UZS")}
-              className={`px-2 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
+              className={`px-2 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
                 currency === "UZS"
-                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
-                  : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
+                  ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
+                  : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
               }`}
             >
               UZS
@@ -554,10 +554,10 @@ export const DashboardPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setCurrency("USD")}
-              className={`px-2 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
+              className={`px-2 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
                 currency === "USD"
-                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
-                  : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
+                  ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
+                  : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
               }`}
             >
               USD
@@ -568,7 +568,7 @@ export const DashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => refetch()}
-            className="w-8 h-8 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-[#5c5f62] dark:text-zinc-300 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 transition-colors shadow-[0_1px_0_rgba(0,0,0,0.05)] cursor-pointer"
+            className="w-8 h-8 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-[#686475] dark:text-zinc-300 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 transition-colors shadow-[0_1px_0_rgba(0,0,0,0.05)] cursor-pointer"
             title={lang === "ru" ? "Обновить данные" : "Ma'lumotlarni yangilash"}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-[#00a86b]" : ""}`} />
@@ -579,16 +579,16 @@ export const DashboardPage: React.FC = () => {
       {/* 2. Pure Shopify Polaris Metric Cards (4 cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 @3xl:grid-cols-4 gap-4">
         {/* Card 1: Total Revenue */}
-        <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
           <div>
             <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
               {lang === "ru" ? "Общая выручка" : "Jami tushum"}
             </div>
-            <div className="text-2xl font-semibold text-[#202223] dark:text-white tracking-tight mt-1">
+            <div className="text-2xl font-semibold text-[#211b2e] dark:text-white tracking-tight mt-1">
               {isLoading ? "..." : formatMoney(metrics?.revenue || 0)}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#6d7175]">
+          <div className="mt-3 pt-3 border-t border-[#dfe5ef] dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#6d7175]">
             <span className="truncate">
               {lang === "ru" ? "Оборот:" : "Aylanma:"} {formatMoney(metrics?.sales_sum || 0)}
             </span>
@@ -597,19 +597,19 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Card 2: Orders Count */}
-        <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
           <div>
             <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
               {lang === "ru" ? "Всего заказов" : "Buyurtmalar"}
             </div>
-            <div className="text-2xl font-semibold text-[#202223] dark:text-white tracking-tight mt-1">
+            <div className="text-2xl font-semibold text-[#211b2e] dark:text-white tracking-tight mt-1">
               {isLoading ? "..." : metrics?.orders_count || 0}{" "}
               <span className="text-sm font-normal text-[#6d7175]">
                 {lang === "ru" ? "заказов" : "ta"}
               </span>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs">
+          <div className="mt-3 pt-3 border-t border-[#dfe5ef] dark:border-zinc-800/80 flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5 text-[#6d7175]">
               <span className="text-[#00a86b] font-semibold">
                 {metrics?.new_orders || 0} {lang === "ru" ? "новых" : "yangi"}
@@ -619,43 +619,43 @@ export const DashboardPage: React.FC = () => {
                 {metrics?.ready_orders || 0} {lang === "ru" ? "готовых" : "tayyor"}
               </span>
             </div>
-            <Link to="/orders" className="text-[#005bd3] hover:underline font-medium">
+            <Link to="/orders" className="text-[#6d5a88] hover:underline font-medium">
               {lang === "ru" ? "Все →" : "Barchasi →"}
             </Link>
           </div>
         </div>
 
         {/* Card 3: Customers */}
-        <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
           <div>
             <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
               {lang === "ru" ? "База клиентов" : "Mijozlar bazasi"}
             </div>
-            <div className="text-2xl font-semibold text-[#202223] dark:text-white tracking-tight mt-1">
+            <div className="text-2xl font-semibold text-[#211b2e] dark:text-white tracking-tight mt-1">
               {isLoading ? "..." : metrics?.total_customers || 0}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs">
+          <div className="mt-3 pt-3 border-t border-[#dfe5ef] dark:border-zinc-800/80 flex items-center justify-between text-xs">
             <span className="text-[#6d7175]">
               {lang === "ru" ? "Покупатели магазина" : "Do'kon xaridorlari"}
             </span>
-            <Link to="/customers" className="text-[#005bd3] hover:underline font-medium">
+            <Link to="/customers" className="text-[#6d5a88] hover:underline font-medium">
               CRM →
             </Link>
           </div>
         </div>
 
         {/* Card 4: Average Order Value */}
-        <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
           <div>
             <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
               {lang === "ru" ? "Средний чек" : "O'rtacha chek"}
             </div>
-            <div className="text-2xl font-semibold text-[#202223] dark:text-white tracking-tight mt-1">
+            <div className="text-2xl font-semibold text-[#211b2e] dark:text-white tracking-tight mt-1">
               {isLoading ? "..." : formatMoney(metrics?.avg_order || 0)}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#e1e3e5] dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#6d7175]">
+          <div className="mt-3 pt-3 border-t border-[#dfe5ef] dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#6d7175]">
             <span>{lang === "ru" ? "За одну покупку" : "Bitta xarid uchun"}</span>
             <span className="text-[#00a86b] font-semibold">✓ {lang === "ru" ? "В норме" : "Barqaror"}</span>
           </div>
@@ -663,14 +663,14 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* 3. Interactive Shopify Polaris Setup Guide (Гайд по запуску на Главной — Block 3.1) */}
-      <div className="bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 shadow-[0_1px_0_rgba(0,0,0,0.05)] overflow-hidden">
+      <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 shadow-[0_1px_0_rgba(0,0,0,0.05)] overflow-hidden">
         <div
           onClick={() => setSetupExpanded((prev) => !prev)}
           className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 cursor-pointer hover:bg-[#f6f6f7]/60 dark:hover:bg-zinc-800/40 transition-colors"
         >
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
+              <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
                 {lang === "ru"
                   ? `Гайд по запуску магазина «${store?.name || "StoreBox"}»`
                   : lang === "en"
@@ -702,7 +702,7 @@ export const DashboardPage: React.FC = () => {
                 style={{ width: `${setupProgressPct}%` }}
               />
             </div>
-            <span className="text-xs font-medium text-[#202223] dark:text-zinc-300">
+            <span className="text-xs font-medium text-[#211b2e] dark:text-zinc-300">
               {setupExpanded
                 ? lang === "ru"
                   ? "Свернуть ▲"
@@ -719,7 +719,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {setupExpanded && (
-          <div className="border-t border-[#e1e3e5] dark:border-zinc-800 divide-y divide-[#e1e3e5] dark:divide-zinc-800">
+          <div className="border-t border-[#dfe5ef] dark:border-zinc-800 divide-y divide-[#e1e3e5] dark:divide-zinc-800">
             {setupSteps.map((step, idx) => {
               const isSelected = activeSetupStep === idx;
               return (
@@ -745,8 +745,8 @@ export const DashboardPage: React.FC = () => {
                         <div
                           className={`text-xs font-semibold ${
                             step.done
-                              ? "text-[#202223] dark:text-white"
-                              : "text-[#202223] dark:text-zinc-200"
+                              ? "text-[#211b2e] dark:text-white"
+                              : "text-[#211b2e] dark:text-zinc-200"
                           }`}
                         >
                           {idx + 1}. {step.title}
@@ -762,10 +762,10 @@ export const DashboardPage: React.FC = () => {
                     <Link
                       to={step.ctaPath}
                       onClick={(e) => e.stopPropagation()}
-                      className={`px-3 py-1.5 rounded-[8px] text-xs font-medium shrink-0 transition-colors inline-flex items-center gap-1 ${
+                      className={`px-3 py-1.5 rounded-[12px] text-xs font-medium shrink-0 transition-colors inline-flex items-center gap-1 ${
                         step.done
-                          ? "bg-white dark:bg-zinc-800 border border-[#e1e3e5] dark:border-zinc-700 text-[#202223] dark:text-zinc-200 hover:bg-slate-50"
-                          : "bg-[#202223] hover:bg-[#111213] text-white"
+                          ? "bg-white dark:bg-zinc-800 border border-[#dfe5ef] dark:border-zinc-700 text-[#211b2e] dark:text-zinc-200 hover:bg-slate-50"
+                          : "bg-[#211b2e] hover:bg-[#151020] text-white"
                       }`}
                     >
                       <span>{step.ctaLabel}</span>
@@ -782,10 +782,10 @@ export const DashboardPage: React.FC = () => {
       {/* 4. Middle Section: Revenue Dynamics Chart & Sales Channels */}
       <div className="sidekick-adaptive-grid grid grid-cols-1 xl:grid-cols-12 gap-5">
         {/* Left: Revenue Dynamics Chart (8 cols) */}
-        <div className="xl:col-span-8 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-w-0">
+        <div className="xl:col-span-8 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
+              <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
                 {chartType === "heatmap"
                   ? lang === "ru"
                     ? "Карта активности заказов"
@@ -801,14 +801,14 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* View Switcher: Line / Bar / Heatmap */}
-            <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+            <div className="inline-flex rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <button
                 type="button"
                 onClick={() => setChartType("line")}
-                className={`p-1.5 rounded-[6px] transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-[9px] transition-colors cursor-pointer ${
                   chartType === "line"
-                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223]"
-                    : "text-[#5c5f62] hover:text-[#202223]"
+                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e]"
+                    : "text-[#686475] hover:text-[#211b2e]"
                 }`}
                 title={lang === "ru" ? "Линейный график" : "Chiziqli"}
               >
@@ -817,10 +817,10 @@ export const DashboardPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setChartType("bar")}
-                className={`p-1.5 rounded-[6px] transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-[9px] transition-colors cursor-pointer ${
                   chartType === "bar"
-                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223]"
-                    : "text-[#5c5f62] hover:text-[#202223]"
+                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e]"
+                    : "text-[#686475] hover:text-[#211b2e]"
                 }`}
                 title={lang === "ru" ? "Столбчатый график" : "Ustunli"}
               >
@@ -829,10 +829,10 @@ export const DashboardPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setChartType("heatmap")}
-                className={`p-1.5 rounded-[6px] transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-[9px] transition-colors cursor-pointer ${
                   chartType === "heatmap"
-                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223]"
-                    : "text-[#5c5f62] hover:text-[#202223]"
+                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e]"
+                    : "text-[#686475] hover:text-[#211b2e]"
                 }`}
                 title={lang === "ru" ? "Тепловая карта активности" : "Heatmap"}
               >
@@ -878,9 +878,9 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Right: Channels & Distribution (4 cols) */}
-        <div className="xl:col-span-4 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-w-0">
+        <div className="xl:col-span-4 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
           <div>
-            <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
+            <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
               {lang === "ru" ? "Каналы продаж" : "Savdo kanallari"}
             </h2>
             <div className="text-xs text-[#6d7175] mt-0.5 mb-4">
@@ -889,11 +889,11 @@ export const DashboardPage: React.FC = () => {
 
             <div className="space-y-3">
               {/* Telegram Bot */}
-              <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] dark:bg-zinc-900/50 flex items-center justify-between">
+              <div className="p-3 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7] dark:bg-zinc-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Bot className="w-4 h-4 text-[#005bd3]" />
+                  <Bot className="w-4 h-4 text-[#6d5a88]" />
                   <div>
-                    <div className="text-xs font-medium text-[#202223] dark:text-white">Telegram Mini App</div>
+                    <div className="text-xs font-medium text-[#211b2e] dark:text-white">Telegram Mini App</div>
                     <div className="text-[11px] text-[#6d7175]">
                       {metrics?.tma_cnt || 0} {lang === "ru" ? "заказов" : "buyurtma"} ({tmaTrafficPct}%)
                     </div>
@@ -902,18 +902,18 @@ export const DashboardPage: React.FC = () => {
 
                 <Link
                   to="/platforms"
-                  className="text-xs text-[#005bd3] font-medium hover:underline flex items-center gap-1"
+                  className="text-xs text-[#6d5a88] font-medium hover:underline flex items-center gap-1"
                 >
                   <span>{lang === "ru" ? "Бот →" : "Bot →"}</span>
                 </Link>
               </div>
 
               {/* Web Storefront */}
-              <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] dark:bg-zinc-900/50 flex items-center justify-between">
+              <div className="p-3 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7] dark:bg-zinc-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <Globe className="w-4 h-4 text-[#00a86b]" />
                   <div>
-                    <div className="text-xs font-medium text-[#202223] dark:text-white">
+                    <div className="text-xs font-medium text-[#211b2e] dark:text-white">
                       {lang === "ru" ? "Веб-витрина" : "Veb-sayt"}
                     </div>
                     <div className="text-[11px] text-[#6d7175]">
@@ -938,7 +938,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Minimalist doughnut indicator */}
-          <div className="pt-4 mt-4 border-t border-[#e1e3e5] dark:border-zinc-800 flex items-center justify-between">
+          <div className="pt-4 mt-4 border-t border-[#dfe5ef] dark:border-zinc-800 flex items-center justify-between">
             <div className="w-20 h-20 relative">
               <Doughnut
                 data={doughnutData}
@@ -951,8 +951,8 @@ export const DashboardPage: React.FC = () => {
               />
             </div>
             <div className="space-y-1 text-right text-xs">
-              <div className="flex items-center justify-end gap-1.5 text-[#005bd3] font-medium">
-                <span className="w-2 h-2 rounded-full bg-[#005bd3]"></span>
+              <div className="flex items-center justify-end gap-1.5 text-[#6d5a88] font-medium">
+                <span className="w-2 h-2 rounded-full bg-[#6d5a88]"></span>
                 <span>Telegram: {tmaTrafficPct}%</span>
               </div>
               <div className="flex items-center justify-end gap-1.5 text-[#00a86b] font-medium">
@@ -967,11 +967,11 @@ export const DashboardPage: React.FC = () => {
       {/* 5. Lower Row: Top Products & Uzbekistan Regional Activity / Map (Block 3.6) */}
       <div className="sidekick-adaptive-grid grid grid-cols-1 xl:grid-cols-12 gap-5">
         {/* Left: Top Products (6 cols) */}
-        <div className="xl:col-span-6 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-w-0">
+        <div className="xl:col-span-6 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
+                <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
                   {productTab === "top"
                     ? lang === "ru"
                       ? "Лидеры продаж"
@@ -994,14 +994,14 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {/* Segmented Switcher */}
-              <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5">
+              <div className="inline-flex rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5">
                 <button
                   type="button"
                   onClick={() => setProductTab("top")}
-                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
                     productTab === "top"
-                      ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
-                      : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
+                      ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
+                      : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
                   }`}
                 >
                   {lang === "ru" ? "Топ" : "Top"}
@@ -1009,10 +1009,10 @@ export const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setProductTab("abc")}
-                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
                     productTab === "abc"
-                      ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
-                      : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
+                      ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
+                      : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
                   }`}
                 >
                   ABC
@@ -1025,14 +1025,14 @@ export const DashboardPage: React.FC = () => {
                 {topProducts.map((p, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-2.5 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800/80 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800/50 transition-colors"
+                    className="flex items-center justify-between p-2.5 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800/80 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800/50 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <span className="w-5 h-5 rounded-md bg-[#e6f7f0] text-[#00a86b] text-xs font-bold flex items-center justify-center shrink-0">
                         {idx + 1}
                       </span>
                       <div className="truncate">
-                        <div className="text-xs font-medium text-[#202223] dark:text-white truncate">
+                        <div className="text-xs font-medium text-[#211b2e] dark:text-white truncate">
                           {p.product_name}
                         </div>
                         <div className="text-[11px] text-[#6d7175]">
@@ -1041,7 +1041,7 @@ export const DashboardPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0 text-xs font-semibold text-[#202223] dark:text-white">
+                    <div className="text-right shrink-0 text-xs font-semibold text-[#211b2e] dark:text-white">
                       {formatMoney(p.sold_sum || 0)}
                     </div>
                   </div>
@@ -1056,21 +1056,21 @@ export const DashboardPage: React.FC = () => {
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] text-center">
-                    <span className="text-xs font-semibold text-[#202223] dark:text-white">Группа A (~80%)</span>
+                  <div className="p-3 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7] text-center">
+                    <span className="text-xs font-semibold text-[#211b2e] dark:text-white">Группа A (~80%)</span>
                     <div className="text-xs text-[#00a86b] font-semibold mt-1">
                       {abcAnalysis?.group_a.count || 0} {lang === "ru" ? "тов." : "ta"}
                     </div>
                   </div>
-                  <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] text-center">
-                    <span className="text-xs font-semibold text-[#202223] dark:text-white">Группа B (~15%)</span>
-                    <div className="text-xs text-[#005bd3] font-semibold mt-1">
+                  <div className="p-3 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7] text-center">
+                    <span className="text-xs font-semibold text-[#211b2e] dark:text-white">Группа B (~15%)</span>
+                    <div className="text-xs text-[#6d5a88] font-semibold mt-1">
                       {abcAnalysis?.group_b.count || 0} {lang === "ru" ? "тов." : "ta"}
                     </div>
                   </div>
-                  <div className="p-3 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7] text-center">
-                    <span className="text-xs font-semibold text-[#202223] dark:text-white">Группа C (~5%)</span>
-                    <div className="text-xs text-[#5c5f62] mt-1">
+                  <div className="p-3 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7] text-center">
+                    <span className="text-xs font-semibold text-[#211b2e] dark:text-white">Группа C (~5%)</span>
+                    <div className="text-xs text-[#686475] mt-1">
                       {abcAnalysis?.group_c.count || 0} {lang === "ru" ? "тов." : "ta"}
                     </div>
                   </div>
@@ -1081,11 +1081,11 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Right: Uzbekistan Regional Activity & Delivery Map (6 cols) */}
-        <div className="xl:col-span-6 bg-white dark:bg-[#18181B] rounded-[10px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex flex-col justify-between min-w-0">
+        <div className="xl:col-span-6 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <div>
-                <h2 className="text-sm font-semibold text-[#202223] dark:text-white">
+                <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
                   {geoTab === "regions"
                     ? lang === "ru"
                       ? "Активность по регионам Узбекистана"
@@ -1107,14 +1107,14 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5">
+              <div className="inline-flex rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5">
                 <button
                   type="button"
                   onClick={() => setGeoTab("regions")}
-                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
                     geoTab === "regions"
-                      ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
-                      : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
+                      ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
+                      : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
                   }`}
                 >
                   {lang === "ru" ? "Регионы РУз" : lang === "en" ? "Regions" : "Viloyatlar"}
@@ -1122,10 +1122,10 @@ export const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setGeoTab("map")}
-                  className={`px-2.5 py-1 text-xs rounded-[6px] transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
                     geoTab === "map"
-                      ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
-                      : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223] font-normal"
+                      ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
+                      : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
                   }`}
                 >
                   {lang === "ru" ? "GPS Карта" : lang === "en" ? "GPS Map" : "Xarita"}
@@ -1138,25 +1138,25 @@ export const DashboardPage: React.FC = () => {
                 {regionsBreakdown.slice(0, 6).map((reg) => (
                   <div
                     key={reg.code}
-                    className="p-2.5 rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-[#f6f6f7]/60 dark:bg-zinc-900/40 space-y-1.5"
+                    className="p-2.5 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7]/60 dark:bg-zinc-900/40 space-y-1.5"
                   >
                     <div className="flex items-center justify-between text-xs gap-2">
-                      <div className="flex items-center gap-2 font-medium text-[#202223] dark:text-white truncate">
-                        <MapPin className="w-3.5 h-3.5 text-[#005bd3] shrink-0" />
+                      <div className="flex items-center gap-2 font-medium text-[#211b2e] dark:text-white truncate">
+                        <MapPin className="w-3.5 h-3.5 text-[#6d5a88] shrink-0" />
                         <span className="truncate">{lang === "ru" ? reg.name_ru : reg.name_uz}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs shrink-0">
                         <span className="text-[#6d7175]">
                           {reg.orders} {lang === "ru" ? "зак." : "ta"} ({reg.share_pct}%)
                         </span>
-                        <span className="font-semibold text-[#202223] dark:text-white">
+                        <span className="font-semibold text-[#211b2e] dark:text-white">
                           {formatMoney(reg.revenue)}
                         </span>
                       </div>
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-[#e1e3e5] dark:bg-zinc-800 overflow-hidden">
                       <div
-                        className="h-full bg-[#005bd3] rounded-full transition-all duration-300"
+                        className="h-full bg-[#6d5a88] rounded-full transition-all duration-300"
                         style={{ width: `${Math.max(reg.orders > 0 ? 6 : 0, reg.share_pct)}%` }}
                       />
                     </div>
@@ -1164,7 +1164,7 @@ export const DashboardPage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="h-64 rounded-[8px] overflow-hidden border border-[#e1e3e5] dark:border-zinc-800 relative z-0">
+              <div className="h-64 rounded-[12px] overflow-hidden border border-[#dfe5ef] dark:border-zinc-800 relative z-0">
                 <MapContainer
                   center={[41.3111, 69.2797]}
                   zoom={11}
