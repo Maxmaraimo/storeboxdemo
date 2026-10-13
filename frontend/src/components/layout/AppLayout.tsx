@@ -58,9 +58,9 @@ export const AppLayout: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#f6f6f7] dark:bg-[#111213]">
+      <div className="h-screen flex items-center justify-center bg-[#edf2f8] dark:bg-[#151020]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#008060] border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-2 border-[#6d5a88] border-t-transparent rounded-full animate-spin"></div>
           <span className="text-xs font-normal text-slate-500">
             {language === "ru" ? "Загрузка..." : "Yuklanmoqda..."}
           </span>
@@ -79,7 +79,7 @@ export const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#f6f6f7] dark:bg-[#111213] text-[#202223] dark:text-zinc-100 transition-colors">
+    <div className="storebox-app-shell min-h-screen flex text-[#171321] dark:text-zinc-100 transition-colors">
       {/* 1. Sidebar (Desktop Docked + Mobile Slide-over Drawer) */}
       <Sidebar
         isMobileOpen={mobileMenuOpen}
@@ -108,20 +108,20 @@ export const AppLayout: React.FC = () => {
           <button
             type="button"
             onClick={() => setSidekickOpen(true)}
-            className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-35 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-[#202223] hover:bg-[#111213] text-white shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer group border border-zinc-700"
+            className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-35 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-[#211b2e] hover:bg-[#151020] text-white shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer group border border-zinc-700"
             title="Открыть StoreBox Sidekick AI (Cmd+J)"
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00a86b] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00a86b]"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8d7ca5] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8d7ca5]"></span>
             </span>
-            <Sparkles className="w-4 h-4 text-[#00a86b] group-hover:rotate-12 transition-transform" />
+            <Sparkles className="w-4 h-4 text-[#8d7ca5] group-hover:rotate-12 transition-transform" />
             <span className="text-xs font-semibold tracking-tight pr-0.5 hidden sm:inline">Sidekick AI</span>
           </button>
         )}
 
         {/* Mobile Bottom Navigation Bar */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-14 bg-white/95 dark:bg-[#18181B]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-zinc-800 flex items-center justify-around z-30 px-2 shadow-xs">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-14 bg-white/95 dark:bg-[#211b2e]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-zinc-800 flex items-center justify-around z-30 px-2 shadow-xs">
           <Link
             to="/"
             className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors ${
@@ -142,7 +142,7 @@ export const AppLayout: React.FC = () => {
           >
             <ShoppingCart className="w-4 h-4" strokeWidth={1.6} />
             {newOrdersCount > 0 && (
-              <span className="absolute top-0 right-1 w-3.5 h-3.5 rounded-full bg-[#00a86b] text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute top-0 right-1 w-3.5 h-3.5 rounded-full bg-[#8d7ca5] text-white text-[9px] font-bold flex items-center justify-center">
                 {newOrdersCount}
               </span>
             )}

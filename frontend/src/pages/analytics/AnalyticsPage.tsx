@@ -94,12 +94,12 @@ export const AnalyticsPage: React.FC = () => {
         data: (charts?.revenue || [0, 0, 0, 0, 0, 0]).map((v: number) =>
           currency === "USD" ? Number((v / UZS_TO_USD_RATE).toFixed(2)) : v
         ),
-        borderColor: "#0ea5e9",
-        backgroundColor: "rgba(14, 165, 233, 0.08)",
+        borderColor: "#6d5a88",
+        backgroundColor: "rgba(109, 90, 136, 0.10)",
         borderWidth: 2,
         fill: true,
         tension: 0.35,
-        pointBackgroundColor: "#0284c7",
+        pointBackgroundColor: "#5d4c78",
         pointBorderColor: "#FFFFFF",
         pointBorderWidth: 1.5,
         pointRadius: 3,
@@ -114,7 +114,7 @@ export const AnalyticsPage: React.FC = () => {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#202223",
+        backgroundColor: "#211b2e",
         titleColor: "#FFFFFF",
         bodyColor: "#e4e4e7",
         padding: 10,
@@ -158,7 +158,7 @@ export const AnalyticsPage: React.FC = () => {
     datasets: [
       {
         data: [78, 19, 3],
-        backgroundColor: ["#0ea5e9", "#6366f1", "#cbd5e1"],
+        backgroundColor: ["#6d5a88", "#6366f1", "#cbd5e1"],
         borderWidth: 0,
         hoverOffset: 4,
       },
@@ -179,13 +179,13 @@ export const AnalyticsPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-5 pb-12">
+    <div className="space-y-6 pb-12">
       {/* 1. Shopify Analytics Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-[#202223] dark:text-white" />
-            <h1 className="text-xl font-bold text-[#202223] dark:text-white tracking-tight">
+            <BarChart3 className="w-5 h-5 text-[#211b2e] dark:text-white" />
+            <h1 className="text-xl font-bold text-[#211b2e] dark:text-white tracking-tight">
               {activeTab === "live"
                 ? lang === "ru"
                   ? "В реальном времени"
@@ -205,14 +205,14 @@ export const AnalyticsPage: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-2">
           {/* View Tab Buttons: Overview vs Live View */}
-          <div className="inline-flex items-center rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
+          <div className="inline-flex items-center rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
             <button
               type="button"
               onClick={() => setActiveTab("overview")}
-              className={`px-3 py-1 rounded-[6px] text-xs transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-[9px] text-xs transition-all cursor-pointer ${
                 activeTab === "overview"
-                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-semibold"
-                  : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223]"
+                  ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-semibold"
+                  : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e]"
               }`}
             >
               {lang === "ru" ? "Обзор" : "Umumiy tahlil"}
@@ -220,10 +220,10 @@ export const AnalyticsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab("live")}
-              className={`px-3 py-1 rounded-[6px] text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-[9px] text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === "live"
-                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-semibold"
-                  : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223]"
+                  ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-semibold"
+                  : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e]"
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -232,7 +232,7 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Period selector */}
-          <div className="inline-flex items-center rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
+          <div className="inline-flex items-center rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
             {[
               { id: "today", label: lang === "ru" ? "Сегодня" : "Bugun" },
               { id: "week", label: lang === "ru" ? "7 дней" : "7 kun" },
@@ -243,10 +243,10 @@ export const AnalyticsPage: React.FC = () => {
                 key={p.id}
                 type="button"
                 onClick={() => setPeriod(p.id)}
-                className={`px-2.5 py-1 rounded-[6px] text-xs transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-[9px] text-xs transition-all cursor-pointer ${
                   period === p.id
-                    ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223] font-medium"
-                    : "text-[#5c5f62] dark:text-zinc-400 hover:text-[#202223]"
+                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
+                    : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e]"
                 }`}
               >
                 {p.label}
@@ -255,14 +255,14 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Currency Toggle */}
-          <div className="inline-flex items-center rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
+          <div className="inline-flex items-center rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-2xs">
             <button
               type="button"
               onClick={() => setCurrency("UZS")}
-              className={`px-2 py-1 rounded-[6px] text-xs cursor-pointer ${
+              className={`px-2 py-1 rounded-[9px] text-xs cursor-pointer ${
                 currency === "UZS"
-                  ? "bg-[#202223] text-white font-medium"
-                  : "text-[#5c5f62]"
+                  ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] font-medium"
+                  : "text-[#686475]"
               }`}
             >
               UZS
@@ -270,10 +270,10 @@ export const AnalyticsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setCurrency("USD")}
-              className={`px-2 py-1 rounded-[6px] text-xs cursor-pointer ${
+              className={`px-2 py-1 rounded-[9px] text-xs cursor-pointer ${
                 currency === "USD"
-                  ? "bg-[#202223] text-white font-medium"
-                  : "text-[#5c5f62]"
+                  ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] font-medium"
+                  : "text-[#686475]"
               }`}
             >
               USD
@@ -283,7 +283,7 @@ export const AnalyticsPage: React.FC = () => {
           <button
             type="button"
             onClick={() => refetch()}
-            className="w-8 h-8 rounded-[8px] bg-white border border-[#e1e3e5] dark:bg-zinc-900 dark:border-zinc-800 flex items-center justify-center text-[#5c5f62] hover:text-[#202223] hover:bg-[#f6f6f7] transition-colors cursor-pointer shadow-2xs"
+            className="w-8 h-8 rounded-[12px] bg-white border border-[#dfe5ef] dark:bg-zinc-900 dark:border-zinc-800 flex items-center justify-center text-[#686475] hover:text-[#211b2e] hover:bg-[#f6f6f7] transition-colors cursor-pointer shadow-2xs"
             title="Обновить"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-emerald-600" : ""}`} />
@@ -296,48 +296,48 @@ export const AnalyticsPage: React.FC = () => {
         <div className="space-y-4">
           {/* Top Row: 4 Compact Shopify Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)]">
               <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 {lang === "ru" ? "Валовый объем продаж" : "Jami savdo hajmi"}
               </div>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-xl font-bold text-[#202223] dark:text-white tabular-nums">
+                <span className="text-xl font-bold text-[#211b2e] dark:text-white tabular-nums">
                   {formatMoney(grossSales)}
                 </span>
                 <span className="text-[11px] font-semibold text-emerald-600">+12.4%</span>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)]">
               <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 {lang === "ru" ? "Доля повторных клиентов" : "Qayta xarid qilgan mijozlar"}
               </div>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-xl font-bold text-[#202223] dark:text-white tabular-nums">
+                <span className="text-xl font-bold text-[#211b2e] dark:text-white tabular-nums">
                   {metrics?.total_customers ? "24.5%" : "0%"}
                 </span>
                 <span className="text-[11px] text-[#6d7175]">—</span>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)]">
               <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 {lang === "ru" ? "Выполненные заказы" : "Bajarilgan buyurtmalar"}
               </div>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-xl font-bold text-[#202223] dark:text-white tabular-nums">
+                <span className="text-xl font-bold text-[#211b2e] dark:text-white tabular-nums">
                   {metrics?.ready_orders || metrics?.orders_count || 0}
                 </span>
                 <span className="text-[11px] text-emerald-600 font-medium">● Активно</span>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)]">
               <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 {lang === "ru" ? "Заказы" : "Buyurtmalar"}
               </div>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-xl font-bold text-[#202223] dark:text-white tabular-nums">
+                <span className="text-xl font-bold text-[#211b2e] dark:text-white tabular-nums">
                   {metrics?.orders_count || 0}
                 </span>
                 <span className="text-[11px] text-[#6d7175]">за период</span>
@@ -348,20 +348,20 @@ export const AnalyticsPage: React.FC = () => {
           {/* Second Row: Main Chart (2/3) + Total Sales Breakdown Table (1/3) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left 2/3: Sales Over Time Chart */}
-            <div className="lg:col-span-2 bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs flex flex-col justify-between">
+            <div className="lg:col-span-2 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <div>
-                    <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                    <h3 className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                       {lang === "ru" ? "Общий объем продаж в динамике" : "Vaqt bo'yicha savdo dinamikasi"}
                     </h3>
-                    <div className="text-xl font-bold text-[#202223] dark:text-white mt-1 tabular-nums">
+                    <div className="text-xl font-bold text-[#211b2e] dark:text-white mt-1 tabular-nums">
                       {formatMoney(totalSales)}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-[11px] text-[#6d7175]">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-0.5 bg-[#0ea5e9] inline-block" />
+                      <span className="w-2.5 h-0.5 bg-[#6d5a88] inline-block" />
                       Текущий период
                     </span>
                   </div>
@@ -374,9 +374,9 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Right 1/3: Разбивка общего объема продаж (Exact Shopify Sales Breakdown Card) */}
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
               <div>
-                <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5 mb-3">
+                <h3 className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5 mb-3">
                   {lang === "ru" ? "Разбивка общего объема продаж" : "Umumiy savdo tarkibi"}
                 </h3>
 
@@ -394,8 +394,8 @@ export const AnalyticsPage: React.FC = () => {
                       <span
                         className={
                           row.bold
-                            ? "font-semibold text-[#202223] dark:text-white"
-                            : "text-[#005bd3] dark:text-sky-400 hover:underline cursor-pointer"
+                            ? "font-semibold text-[#211b2e] dark:text-white"
+                            : "text-[#6d5a88] dark:text-violet-300 hover:underline cursor-pointer"
                         }
                       >
                         {row.label}
@@ -403,8 +403,8 @@ export const AnalyticsPage: React.FC = () => {
                       <span
                         className={`tabular-nums ${
                           row.bold
-                            ? "font-bold text-[#202223] dark:text-white"
-                            : "font-medium text-[#202223] dark:text-zinc-200"
+                            ? "font-bold text-[#211b2e] dark:text-white"
+                            : "font-medium text-[#211b2e] dark:text-zinc-200"
                         }`}
                       >
                         {formatMoney(row.val)}
@@ -419,8 +419,8 @@ export const AnalyticsPage: React.FC = () => {
           {/* Third Row: 3-Column Shopify Analytics Breakdown Grid (6 Cards) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Card 1: Общий объем продаж по каналам продаж */}
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs space-y-4">
-              <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] space-y-4">
+              <h3 className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 Общий объем продаж по каналам продаж
               </h3>
               <div className="space-y-3 pt-1">
@@ -443,14 +443,14 @@ export const AnalyticsPage: React.FC = () => {
                 ].map((ch, idx) => (
                   <div key={idx} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#202223] dark:text-zinc-200 font-medium">{ch.name}</span>
-                      <span className="font-semibold text-[#202223] dark:text-white tabular-nums">
+                      <span className="text-[#211b2e] dark:text-zinc-200 font-medium">{ch.name}</span>
+                      <span className="font-semibold text-[#211b2e] dark:text-white tabular-nums">
                         {formatMoney(ch.amount)}
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-[#f1f2f4] dark:bg-zinc-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#0ea5e9] rounded-full"
+                        className="h-full bg-[#6d5a88] rounded-full"
                         style={{ width: `${Math.max(4, ch.pct)}%` }}
                       />
                     </div>
@@ -460,12 +460,12 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Card 2: Средняя стоимость заказа в динамике */}
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
               <div>
-                <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                <h3 className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Средняя стоимость заказа в динамике
                 </h3>
-                <div className="text-xl font-bold text-[#202223] dark:text-white mt-2 tabular-nums">
+                <div className="text-xl font-bold text-[#211b2e] dark:text-white mt-2 tabular-nums">
                   {formatMoney(metrics?.avg_order || 0)}
                 </div>
                 <p className="text-[11px] text-[#6d7175] mt-1">
@@ -477,7 +477,7 @@ export const AnalyticsPage: React.FC = () => {
                   {[42, 65, 58, 80, 74, 92, 88].map((h, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
                       <div
-                        className="w-full rounded-t bg-[#0ea5e9]/80 hover:bg-[#0ea5e9] transition-all"
+                        className="w-full rounded-t bg-[#6d5a88]/80 hover:bg-[#6d5a88] transition-all"
                         style={{ height: `${h}%` }}
                       />
                     </div>
@@ -491,8 +491,8 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Card 3: Общий объем продаж по товарам */}
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs space-y-3">
-              <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] space-y-3">
+              <h3 className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 Общий объем продаж по товарам
               </h3>
               {topProducts.length > 0 ? (
@@ -500,16 +500,16 @@ export const AnalyticsPage: React.FC = () => {
                   {topProducts.slice(0, 4).map((p: any, idx: number) => (
                     <div key={idx} className="space-y-1">
                       <div className="flex items-center justify-between text-xs gap-2">
-                        <span className="text-[#202223] dark:text-zinc-200 truncate font-medium">
+                        <span className="text-[#211b2e] dark:text-zinc-200 truncate font-medium">
                           {p.product_name}
                         </span>
-                        <span className="font-semibold text-[#202223] dark:text-white shrink-0 tabular-nums">
+                        <span className="font-semibold text-[#211b2e] dark:text-white shrink-0 tabular-nums">
                           {formatMoney(p.sold_sum)}
                         </span>
                       </div>
                       <div className="w-full h-1.5 bg-[#f1f2f4] dark:bg-zinc-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#0ea5e9] rounded-full"
+                          className="h-full bg-[#6d5a88] rounded-full"
                           style={{ width: `${Math.max(15, 100 - idx * 20)}%` }}
                         />
                       </div>
@@ -524,9 +524,9 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Card 4: Сессии по типу устройства */}
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
               <div>
-                <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                <h3 className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Сессии по типу устройства
                 </h3>
                 <div className="h-36 flex items-center justify-center my-2">
@@ -541,31 +541,31 @@ export const AnalyticsPage: React.FC = () => {
               <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#f1f2f4] dark:border-zinc-800 text-center text-xs">
                 <div>
                   <div className="text-[#6d7175] text-[11px] flex items-center justify-center gap-1">
-                    <Smartphone className="w-3 h-3 text-[#0ea5e9]" />
+                    <Smartphone className="w-3 h-3 text-[#6d5a88]" />
                     Мобильные
                   </div>
-                  <div className="font-bold text-[#202223] dark:text-white mt-0.5">78%</div>
+                  <div className="font-bold text-[#211b2e] dark:text-white mt-0.5">78%</div>
                 </div>
                 <div>
                   <div className="text-[#6d7175] text-[11px] flex items-center justify-center gap-1">
                     <Laptop className="w-3 h-3 text-indigo-500" />
                     ПК
                   </div>
-                  <div className="font-bold text-[#202223] dark:text-white mt-0.5">19%</div>
+                  <div className="font-bold text-[#211b2e] dark:text-white mt-0.5">19%</div>
                 </div>
                 <div>
                   <div className="text-[#6d7175] text-[11px] flex items-center justify-center gap-1">
                     <Monitor className="w-3 h-3 text-slate-400" />
                     Планшет
                   </div>
-                  <div className="font-bold text-[#202223] dark:text-white mt-0.5">3%</div>
+                  <div className="font-bold text-[#211b2e] dark:text-white mt-0.5">3%</div>
                 </div>
               </div>
             </div>
 
             {/* Card 5: Сессии по местоположению */}
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs space-y-3">
-              <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] space-y-3">
+              <h3 className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 Сессии по местоположению
               </h3>
               <div className="space-y-2.5 pt-1">
@@ -584,14 +584,14 @@ export const AnalyticsPage: React.FC = () => {
                 ).map((loc: any, i: number) => (
                   <div key={i} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#202223] dark:text-zinc-200 font-medium">{loc.name}</span>
-                      <span className="font-semibold text-[#202223] dark:text-white tabular-nums">
+                      <span className="text-[#211b2e] dark:text-zinc-200 font-medium">{loc.name}</span>
+                      <span className="font-semibold text-[#211b2e] dark:text-white tabular-nums">
                         {loc.sessions}
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-[#f1f2f4] dark:bg-zinc-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#0ea5e9] rounded-full"
+                        className="h-full bg-[#6d5a88] rounded-full"
                         style={{ width: `${loc.pct}%` }}
                       />
                     </div>
@@ -601,25 +601,25 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Card 6: Разбивка коэффициента конверсии */}
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-5 shadow-2xs space-y-3">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+                <h3 className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Разбивка коэффициента конверсии
                 </h3>
-                <span className="text-sm font-bold text-[#202223] dark:text-white">{convRatePct}%</span>
+                <span className="text-sm font-bold text-[#211b2e] dark:text-white">{convRatePct}%</span>
               </div>
               <div className="space-y-3 pt-1">
                 {conversionFunnel.map((step, idx) => (
                   <div key={idx} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-[#4a4f55] dark:text-zinc-300">{step.label}</span>
-                      <span className="font-semibold text-[#202223] dark:text-white tabular-nums">
+                      <span className="font-semibold text-[#211b2e] dark:text-white tabular-nums">
                         {step.count.toLocaleString()} ({step.pct})
                       </span>
                     </div>
                     <div className="w-full bg-[#f1f2f4] dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
                       <div
-                        className="bg-[#0ea5e9] h-1.5 rounded-full transition-all duration-500"
+                        className="bg-[#6d5a88] h-1.5 rounded-full transition-all duration-500"
                         style={{ width: step.pct }}
                       />
                     </div>
@@ -644,43 +644,43 @@ export const AnalyticsPage: React.FC = () => {
                 value={liveSearch}
                 onChange={(e) => setLiveSearch(e.target.value)}
                 placeholder="Поиск местоположения (Ташкент, Самарканд, Бухара...)"
-                className="w-full pl-9 pr-4 py-2 rounded-[10px] bg-white dark:bg-[#18181B] border border-[#e1e3e5] dark:border-zinc-800 text-xs text-[#202223] dark:text-white placeholder-[#6d7175] focus:outline-none focus:border-[#005bd3]"
+                className="w-full pl-9 pr-4 py-2 rounded-[10px] bg-white dark:bg-[#211b2e] border border-[#dfe5ef] dark:border-zinc-800 text-xs text-[#211b2e] dark:text-white placeholder-[#6d7175] focus:outline-none focus:border-[#6d5a88]"
               />
             </div>
 
             {/* 2x2 Live KPI Cards */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+              <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)]">
                 <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Посетители прямо сейчас
                 </div>
                 <div className="flex items-center gap-2 mt-3">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#00a86b] animate-pulse shrink-0" />
-                  <span className="text-2xl font-bold text-[#202223] dark:text-white tabular-nums">
+                  <span className="text-2xl font-bold text-[#211b2e] dark:text-white tabular-nums">
                     {((metrics?.total_customers || 1) * 3) + 7}
                   </span>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+              <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)]">
                 <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Общий объем продаж
                 </div>
-                <div className="text-lg font-bold text-[#005bd3] dark:text-sky-400 mt-3 tabular-nums">
+                <div className="text-lg font-bold text-[#6d5a88] dark:text-violet-300 mt-3 tabular-nums">
                   {formatMoney(totalSales)}
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+              <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)]">
                 <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Сессии
                 </div>
-                <div className="text-2xl font-bold text-[#202223] dark:text-white mt-3 tabular-nums">
+                <div className="text-2xl font-bold text-[#211b2e] dark:text-white mt-3 tabular-nums">
                   {totalSessions}
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs">
+              <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)]">
                 <div className="text-xs font-medium text-[#6d7175] border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Заказы
                 </div>
@@ -691,14 +691,14 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Поведение клиентов (В корзине / Оформление заказа / Куплено) */}
-            <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs space-y-3">
-              <div className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+            <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] space-y-3">
+              <div className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                 Поведение клиентов
               </div>
               <div className="grid grid-cols-3 divide-x divide-[#e3e5e7] dark:divide-zinc-800 pt-1">
                 <div className="pr-3">
                   <div className="text-[11px] text-[#6d7175]">Активных корзин</div>
-                  <div className="text-lg font-bold text-[#005bd3] mt-1">
+                  <div className="text-lg font-bold text-[#6d5a88] mt-1">
                     {Math.max(4, (metrics?.total_customers || 1) * 2)}
                   </div>
                 </div>
@@ -719,8 +719,8 @@ export const AnalyticsPage: React.FC = () => {
 
             {/* Сессии по местоположению + Новые и повторные клиенты */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs space-y-2.5">
-                <div className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+              <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] space-y-2.5">
+                <div className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Сессии по локациям
                 </div>
                 <div className="space-y-1.5 text-xs">
@@ -739,31 +739,31 @@ export const AnalyticsPage: React.FC = () => {
                         onClick={() => setLiveSearch(c.city)}
                         className="w-full flex items-center justify-between py-1 px-1.5 rounded-md hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 transition-colors cursor-pointer text-left"
                       >
-                        <span className="text-[#005bd3] dark:text-sky-400 font-medium">{c.city}</span>
-                        <span className="font-semibold text-[#202223] dark:text-white">{c.count}</span>
+                        <span className="text-[#6d5a88] dark:text-violet-300 font-medium">{c.city}</span>
+                        <span className="font-semibold text-[#211b2e] dark:text-white">{c.count}</span>
                       </button>
                     ))}
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 p-4 shadow-2xs space-y-2.5">
-                <div className="text-xs font-semibold text-[#202223] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
+              <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] space-y-2.5">
+                <div className="text-xs font-semibold text-[#211b2e] dark:text-white border-b border-dashed border-[#c9cccf] inline-block pb-0.5">
                   Новые и повторные клиенты
                 </div>
                 <div className="space-y-2 text-xs pt-1">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1.5 text-[#4a4f55] dark:text-zinc-300">
-                      <span className="w-2 h-2 rounded-full bg-[#005bd3]" />
+                      <span className="w-2 h-2 rounded-full bg-[#6d5a88]" />
                       Первая покупка
                     </span>
-                    <span className="font-semibold text-[#202223] dark:text-white">75%</span>
+                    <span className="font-semibold text-[#211b2e] dark:text-white">75%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1.5 text-[#4a4f55] dark:text-zinc-300">
                       <span className="w-2 h-2 rounded-full bg-[#00a86b]" />
                       Повторные
                     </span>
-                    <span className="font-semibold text-[#202223] dark:text-white">25%</span>
+                    <span className="font-semibold text-[#211b2e] dark:text-white">25%</span>
                   </div>
                 </div>
               </div>
@@ -771,7 +771,7 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Right Column (7 cols): Realistic 3D Earth Globe */}
-          <div className="xl:col-span-7 bg-white dark:bg-[#18181B] rounded-[14px] border border-[#e1e3e5] dark:border-zinc-800 p-4 sm:p-6 shadow-2xs flex flex-col items-center justify-center min-h-[540px] min-w-0">
+          <div className="xl:col-span-7 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-4 sm:p-6 shadow-2xs flex flex-col items-center justify-center min-h-[540px] min-w-0">
             <InteractiveGlobe size={470} selectedCityName={liveSearch.trim()} />
           </div>
         </div>

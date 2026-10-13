@@ -3,81 +3,196 @@
 {% block title %}Kirish — StoreBox 2.0{% endblock %}
 
 {% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
 <style>
-    /* Prevent Chrome / Safari yellow/blue autofill background */
-    input:-webkit-autofill,
-    input:-webkit-autofill:hover, 
-    input:-webkit-autofill:focus, 
-    input:-webkit-autofill:active {
+    .auth-page {
+        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        background: radial-gradient(130% 90% at 50% 0%, #fff 0%, #edf2f8 35%, #e1e9f3 70%, #d4dfea 100%);
+    }
+    .auth-page .auth-card {
+        max-width: 480px;
+        padding: 36px;
+        color: #211b2e;
+        background: rgba(255, 255, 255, .94);
+        border: 1px solid rgba(255, 255, 255, .95);
+        border-radius: 28px;
+        box-shadow: 0 26px 70px -28px rgba(28, 31, 51, .3), 0 1px 3px rgba(28, 31, 51, .04);
+        backdrop-filter: blur(20px);
+    }
+    .auth-page .auth-logo-mark { background: #211b2e; border-color: #211b2e; }
+    .auth-page .auth-brand { color: #211b2e; font-size: 21px; font-weight: 800; letter-spacing: -.05em; }
+    .auth-page .auth-title { color: #211b2e; font-size: 25px; line-height: 1.2; font-weight: 800; letter-spacing: -.035em; }
+    .auth-page .auth-language {
+        display: flex;
+        padding: 3px;
+        border: 1px solid rgba(255, 255, 255, .8);
+        border-radius: 12px;
+        background: rgba(235, 240, 250, .8);
+        box-shadow: inset 2px 2px 5px rgba(165, 175, 200, .3), inset -2px -2px 5px rgba(255, 255, 255, .95);
+    }
+    .auth-page .auth-language,
+    .auth-page .auth-mode-switch {
+        position: relative;
+        isolation: isolate;
+    }
+    .auth-page .auth-switch-indicator {
+        position: absolute;
+        top: 3px;
+        bottom: 3px;
+        left: 3px;
+        width: calc(50% - 3px);
+        border-radius: 9px;
+        background: linear-gradient(135deg, #2c243d 0%, #151020 100%);
+        box-shadow: 2px 4px 12px rgba(33, 27, 46, .28);
+        pointer-events: none;
+        z-index: 0;
+        transition: transform .42s cubic-bezier(.16, 1, .3, 1);
+    }
+    .auth-page .auth-language.is-uz > .auth-switch-indicator,
+    .auth-page .auth-mode-switch.is-email > .auth-switch-indicator {
+        transform: translate3d(100%, 0, 0);
+    }
+    .auth-page .auth-language-button {
+        position: relative;
+        z-index: 1;
+        min-width: 36px;
+        padding: 6px 8px;
+        border: 0;
+        border-radius: 9px;
+        color: #7b7588;
+        background: transparent;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: color .24s ease;
+    }
+    .auth-page .auth-language-button.is-active {
+        color: #fff;
+    }
+    .auth-page .auth-mode-switch {
+        gap: 0;
+        padding: 3px;
+        border: 1px solid rgba(255, 255, 255, .8);
+        border-radius: 12px;
+        background: rgba(235, 240, 250, .8);
+        box-shadow: inset 2px 2px 5px rgba(165, 175, 200, .3), inset -2px -2px 5px rgba(255, 255, 255, .95);
+    }
+    .auth-page .auth-mode-btn {
+        position: relative;
+        z-index: 1;
+        min-height: 42px;
+        border: 0;
+        border-radius: 9px;
+        color: #7b7588;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 800;
+        transition: color .24s ease;
+    }
+    .auth-page .auth-mode-btn.is-active {
+        color: #fff;
+    }
+    .auth-page .auth-mode-btn:not(.is-active):hover,
+    .auth-page .auth-language-button:not(.is-active):hover { color: #171321; }
+    .auth-page .auth-form { color: #273247; }
+    .auth-page .auth-form label,
+    .auth-page .auth-form .auth-helper { font-size: 13px; line-height: 1.35; }
+    .auth-page .auth-form label { color: #273247; }
+    .auth-page .auth-form .auth-helper { color: #555f74; }
+    .auth-page .auth-phone-field,
+    .auth-page .auth-text-input { min-height: 50px; background: #f8faff; border: 1px solid #dfe6f0; color: #211b2e; border-radius: 15px; }
+    .auth-page .auth-phone-field:focus-within,
+    .auth-page .auth-text-input:focus { border-color: #211b2e; box-shadow: 0 0 0 3px rgba(33, 27, 46, .09); outline: none; }
+    .auth-page .auth-dial-prefix { align-self: stretch; display: flex; align-items: center; gap: 2px; padding: 0 12px 0 15px; border-right: 1px solid #dfe6f0; border-radius: 14px 0 0 14px; background: #eef2f8; color: #211b2e; font-size: 14px; font-weight: 700; }
+    .auth-page .auth-dial-code-input { width: 3ch; min-width: 3ch; padding: 0; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; }
+    .auth-page .auth-dial-code-input:focus { outline: none; }
+    .auth-page .auth-country-detected { padding: 5px 8px; border-radius: 8px; background: #eef2f8; color: #5f697c; font-size: 11px; font-weight: 800; white-space: nowrap; pointer-events: none; }
+    .auth-page .auth-phone-input,
+    .auth-page .auth-text-input { font-size: 14px; font-weight: 600; }
+    .auth-page .auth-phone-input { flex: 1; min-width: 0; color: #211b2e; }
+    .auth-page .auth-submit { min-height: 50px; background: #211b2e; border-color: #211b2e; border-radius: 15px; font-size: 14px; box-shadow: 0 9px 18px -9px rgba(33, 27, 46, .55); }
+    .auth-page .auth-submit:hover { background: #352b49; }
+    .auth-page .auth-footer { color: #687389; font-size: 13px; }
+    .auth-page .auth-footer a { color: #211b2e; }
+    .auth-page .auth-geo-credit { margin-top: 10px; font-size: 10px; line-height: 1.3; }
+    .auth-page .auth-geo-credit a { color: #8791a3; }
+    .auth-page input:-webkit-autofill,
+    .auth-page input:-webkit-autofill:hover,
+    .auth-page input:-webkit-autofill:focus,
+    .auth-page input:-webkit-autofill:active {
         -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
-        -webkit-text-fill-color: #0f172a !important;
+        -webkit-text-fill-color: #211b2e !important;
         transition: background-color 5000s ease-in-out 0s;
     }
-    .dark input:-webkit-autofill,
-    .dark input:-webkit-autofill:hover, 
-    .dark input:-webkit-autofill:focus, 
-    .dark input:-webkit-autofill:active {
-        -webkit-box-shadow: 0 0 0 30px #161b26 inset !important;
-        -webkit-text-fill-color: #ffffff !important;
+    @media (max-width: 480px) {
+        .auth-page .auth-card { padding: 26px 22px; border-radius: 24px; }
+        .auth-page .auth-title { font-size: 22px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .auth-page .auth-switch-indicator,
+        .auth-page .auth-language-button,
+        .auth-page .auth-mode-btn { transition: none !important; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden" style="background: radial-gradient(130% 90% at 50% 0%, #ffffff 0%, #edf2f8 35%, #e1e9f3 70%, #d4dfea 100%);">
+<div class="auth-page min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
 
     <!-- Frosted Glass Login Card -->
-    <div class="max-w-md w-full space-y-6 relative z-10 bg-white/85 dark:bg-[#161b26]/85 backdrop-blur-2xl p-7 sm:p-9 rounded-[32px] border border-white/90 dark:border-white/15 shadow-[0_20px_50px_-15px_rgba(15,23,42,0.1),inset_0_1.5px_2px_rgba(255,255,255,0.95)] transition-all"
+    <div class="auth-card w-full space-y-7 relative z-10"
          x-data="{
             lang: '{{ current_lang|default:'ru' }}',
             i18n: {
                 uz: {
                     title: 'Boshqaruv paneliga kirish',
-                    subtitle: 'Katalog, buyurtmalar va do\'kon sozlamalarini boshqaring',
                     tabPhone: 'Telefon raqam',
-                    tabLogin: 'Login / Email',
+                    tabEmail: 'Email',
                     labelPhone: 'Telefon raqam',
-                    labelLogin: 'Login yoki Email',
-                    switchLogin: 'Login orqali kirish',
+                    countryCode: 'Mamlakat kodi',
+                    labelEmail: 'Elektron pochta',
+                    switchEmail: 'Email orqali kirish',
                     switchPhone: 'Telefon orqali kirish',
-                    loginPlaceholder: 'admin yoki info@store.uz',
+                    emailPlaceholder: 'info@store.uz',
                     password: 'Parol',
                     forgot: 'Unutdingizmi?',
                     submit: 'Tizimga kirish',
                     noStore: 'Hali do\'koningiz yo\'qmi?',
-                    createStore: '15 daqiqada yaratish'
+                    createStore: 'Akkaunt yaratish'
                 },
                 ru: {
                     title: 'Вход в панель управления',
-                    subtitle: 'Управляйте каталогом, заказами и настройками магазина',
                     tabPhone: 'Номер телефона',
-                    tabLogin: 'Логин / Email',
+                    tabEmail: 'Почта',
                     labelPhone: 'Номер телефона',
-                    labelLogin: 'Логин или Email',
-                    switchLogin: 'Войти по логину',
+                    countryCode: 'Код страны',
+                    labelEmail: 'Электронная почта',
+                    switchEmail: 'Войти по почте',
                     switchPhone: 'Войти по номеру',
-                    loginPlaceholder: 'admin или info@store.uz',
+                    emailPlaceholder: 'info@store.uz',
                     password: 'Пароль',
                     forgot: 'Забыли пароль?',
                     submit: 'Войти в систему',
                     noStore: 'Ещё нет магазина?',
-                    createStore: 'Создать за 15 минут'
+                    createStore: 'Создать аккаунт'
                 },
                 en: {
                     title: 'Sign in to Dashboard',
-                    subtitle: 'Manage your catalog, orders and store settings',
                     tabPhone: 'Phone number',
-                    tabLogin: 'Login / Email',
+                    tabEmail: 'Email',
                     labelPhone: 'Phone number',
-                    labelLogin: 'Login or Email',
-                    switchLogin: 'Sign in with login',
+                    countryCode: 'Country calling code',
+                    labelEmail: 'Email address',
+                    switchEmail: 'Sign in with email',
                     switchPhone: 'Sign in with phone',
-                    loginPlaceholder: 'admin or info@store.uz',
+                    emailPlaceholder: 'info@store.uz',
                     password: 'Password',
                     forgot: 'Forgot password?',
                     submit: 'Sign In',
                     noStore: 'Don\'t have a store yet?',
-                    createStore: 'Create in 15 minutes'
+                    createStore: 'Create account'
                 }
             },
             t(k) {
@@ -94,82 +209,111 @@
                 } catch(_) {}
             },
             showPass: false,
-            mode: 'phone',
-            country: { flag: 'UZ', dialCode: '+998', code: '998', digits: 9, placeholder: '(90) 123-45-67' },
-            countries: [
-                { flag: 'UZ', dialCode: '+998', code: '998', digits: 9, name: 'O\'zbekiston', placeholder: '(90) 123-45-67' },
-                { flag: 'KZ', dialCode: '+7', code: '7', digits: 10, name: 'Qozog\'iston', placeholder: '(701) 123-45-67' },
-                { flag: 'RU', dialCode: '+7', code: '7', digits: 10, name: 'Россия', placeholder: '(999) 123-45-67' },
-                { flag: 'KG', dialCode: '+996', code: '996', digits: 9, name: 'Qirg\'iziston', placeholder: '(555) 123-456' },
-                { flag: 'TJ', dialCode: '+992', code: '992', digits: 9, name: 'Tojikiston', placeholder: '(92) 123-45-67' }
-            ],
-            countryOpen: false,
-            phoneDigits: '',
-            usernameText: '{{ prefill_login|default:'' }}',
-            formatPhone(d, c) {
-                if (c.dialCode === '+998') {
-                    if (!d) return '';
-                    if (d.length <= 2) return '(' + d;
-                    if (d.length <= 5) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
-                    if (d.length <= 7) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 5) + '-' + d.slice(5);
-                    return '(' + d.slice(0, 2) + ') ' + d.slice(2, 5) + '-' + d.slice(5, 7) + '-' + d.slice(7, 9);
-                } else if (c.digits === 10) {
-                    if (!d) return '';
-                    if (d.length <= 3) return '(' + d;
-                    if (d.length <= 6) return '(' + d.slice(0, 3) + ') ' + d.slice(3);
-                    if (d.length <= 8) return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6);
-                    return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6, 8) + '-' + d.slice(8, 10);
-                }
-                return d;
+            mode: '{% if '@' in prefill_login %}email{% else %}phone{% endif %}',
+            dialCode: '{{ phone_dial_code|default:'998'|escapejs }}',
+            autoCountry: '{{ phone_country|default:'UZ'|escapejs }}',
+            phoneInput: '',
+            emailInput: '{% if '@' in prefill_login %}{{ prefill_login|escapejs }}{% endif %}',
+            // Main region for each E.164 calling code (Google libphonenumber metadata).
+            countryByDialCode: {
+                '1': 'US', '7': 'RU', '20': 'EG', '27': 'ZA', '30': 'GR', '31': 'NL', '32': 'BE', '33': 'FR',
+                '34': 'ES', '36': 'HU', '39': 'IT', '40': 'RO', '41': 'CH', '43': 'AT', '44': 'GB', '45': 'DK',
+                '46': 'SE', '47': 'NO', '48': 'PL', '49': 'DE', '51': 'PE', '52': 'MX', '53': 'CU', '54': 'AR',
+                '55': 'BR', '56': 'CL', '57': 'CO', '58': 'VE', '60': 'MY', '61': 'AU', '62': 'ID', '63': 'PH',
+                '64': 'NZ', '65': 'SG', '66': 'TH', '81': 'JP', '82': 'KR', '84': 'VN', '86': 'CN', '90': 'TR',
+                '91': 'IN', '92': 'PK', '93': 'AF', '94': 'LK', '95': 'MM', '98': 'IR', '211': 'SS', '212': 'MA',
+                '213': 'DZ', '216': 'TN', '218': 'LY', '220': 'GM', '221': 'SN', '222': 'MR', '223': 'ML', '224': 'GN',
+                '225': 'CI', '226': 'BF', '227': 'NE', '228': 'TG', '229': 'BJ', '230': 'MU', '231': 'LR', '232': 'SL',
+                '233': 'GH', '234': 'NG', '235': 'TD', '236': 'CF', '237': 'CM', '238': 'CV', '239': 'ST', '240': 'GQ',
+                '241': 'GA', '242': 'CG', '243': 'CD', '244': 'AO', '245': 'GW', '246': 'IO', '247': 'AC', '248': 'SC',
+                '249': 'SD', '250': 'RW', '251': 'ET', '252': 'SO', '253': 'DJ', '254': 'KE', '255': 'TZ', '256': 'UG',
+                '257': 'BI', '258': 'MZ', '260': 'ZM', '261': 'MG', '262': 'RE', '263': 'ZW', '264': 'NA', '265': 'MW',
+                '266': 'LS', '267': 'BW', '268': 'SZ', '269': 'KM', '290': 'SH', '291': 'ER', '297': 'AW', '298': 'FO',
+                '299': 'GL', '350': 'GI', '351': 'PT', '352': 'LU', '353': 'IE', '354': 'IS', '355': 'AL', '356': 'MT',
+                '357': 'CY', '358': 'FI', '359': 'BG', '370': 'LT', '371': 'LV', '372': 'EE', '373': 'MD', '374': 'AM',
+                '375': 'BY', '376': 'AD', '377': 'MC', '378': 'SM', '380': 'UA', '381': 'RS', '382': 'ME', '383': 'XK',
+                '385': 'HR', '386': 'SI', '387': 'BA', '389': 'MK', '420': 'CZ', '421': 'SK', '423': 'LI', '500': 'FK',
+                '501': 'BZ', '502': 'GT', '503': 'SV', '504': 'HN', '505': 'NI', '506': 'CR', '507': 'PA', '508': 'PM',
+                '509': 'HT', '590': 'GP', '591': 'BO', '592': 'GY', '593': 'EC', '594': 'GF', '595': 'PY', '596': 'MQ',
+                '597': 'SR', '598': 'UY', '599': 'CW', '670': 'TL', '672': 'NF', '673': 'BN', '674': 'NR', '675': 'PG',
+                '676': 'TO', '677': 'SB', '678': 'VU', '679': 'FJ', '680': 'PW', '681': 'WF', '682': 'CK', '683': 'NU',
+                '685': 'WS', '686': 'KI', '687': 'NC', '688': 'TV', '689': 'PF', '690': 'TK', '691': 'FM', '692': 'MH',
+                '800': 'INT', '808': 'INT', '850': 'KP', '852': 'HK', '853': 'MO', '855': 'KH', '856': 'LA', '870': 'INT',
+                '878': 'INT', '880': 'BD', '881': 'INT', '882': 'INT', '883': 'INT', '886': 'TW', '888': 'INT', '960': 'MV',
+                '961': 'LB', '962': 'JO', '963': 'SY', '964': 'IQ', '965': 'KW', '966': 'SA', '967': 'YE', '968': 'OM',
+                '970': 'PS', '971': 'AE', '972': 'IL', '973': 'BH', '974': 'QA', '975': 'BT', '976': 'MN', '977': 'NP',
+                '979': 'INT', '992': 'TJ', '993': 'TM', '994': 'AZ', '995': 'GE', '996': 'KG', '998': 'UZ'
             },
-            onPhoneInput(e) {
-                let d = e.target.value.replace(/\D/g, '');
-                if (d.startsWith(this.country.code)) {
-                    d = d.slice(this.country.code.length);
+            setDialCode(event) {
+                this.dialCode = event.target.value.replace(/\D/g, '').slice(0, 3);
+                this.autoCountry = '';
+                event.target.value = this.dialCode;
+            },
+            setPhoneInput(event) {
+                const value = event.target.value.trim();
+                if (value.startsWith('+') || value.startsWith('00')) {
+                    const digits = value.replace(/\D/g, '').replace(/^00/, '');
+                    const code = [3, 2, 1].map(length => digits.slice(0, length))
+                        .find(candidate => this.countryByDialCode[candidate]);
+                    if (code) {
+                        this.dialCode = code;
+                        this.autoCountry = '';
+                        this.phoneInput = digits.slice(code.length);
+                        event.target.value = this.phoneInput;
+                        return;
+                    }
                 }
-                d = d.slice(0, this.country.digits);
-                this.phoneDigits = d;
+                this.phoneInput = event.target.value;
+            },
+            get detectedCountry() {
+                const code = this.dialCode.replace(/\D/g, '');
+                const national = this.phoneInput.replace(/\D/g, '');
+                if (code === '7' && national && '67'.includes(national[0])) return 'KZ';
+                return this.autoCountry || this.countryByDialCode[code] || '';
             },
             get finalLoginValue() {
-                if (this.mode === 'phone') {
-                    return this.phoneDigits ? (this.country.dialCode + this.phoneDigits) : '';
-                }
-                return this.usernameText;
+                if (this.mode === 'email') return this.emailInput.trim();
+                const raw = this.phoneInput.trim();
+                const digits = raw.replace(/\D/g, '');
+                const code = this.dialCode.replace(/\D/g, '');
+                if (!digits) return '';
+                if (raw.startsWith('+')) return '+' + digits;
+                if (raw.startsWith('00')) return '+' + digits.slice(2);
+                return code ? '+' + code + digits : '';
             }
          }">
 
         <!-- Top Row: Logo & Language Toggle -->
         <div class="flex items-center justify-between">
             <a href="{{ platform_site_url }}/" class="inline-flex items-center gap-2.5 group">
-                <div class="w-10 h-10 rounded-xl bg-[#18181B] flex items-center justify-center border border-zinc-700/80 shadow-md group-hover:scale-105 transition transform">
-                    <svg viewBox="0 0 32 32" class="w-6 h-6 stroke-[#c8ff6a] fill-none stroke-[2] stroke-linejoin-round">
+                <div class="auth-logo-mark w-10 h-10 rounded-xl flex items-center justify-center border shadow-md group-hover:scale-105 transition transform">
+                    <svg viewBox="0 0 32 32" class="w-6 h-6 stroke-white fill-none stroke-[2] stroke-linejoin-round">
                         <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z"/>
                         <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26"/>
                     </svg>
                 </div>
-                <span class="text-xl font-[850] text-slate-900 dark:text-white tracking-tight">
+                <span class="auth-brand tracking-tight">
                     StoreBox
                 </span>
             </a>
 
             <!-- Quick Language Switcher -->
-            <div class="inline-flex items-center bg-slate-100 dark:bg-white/10 p-1 rounded-xl text-[11px] font-extrabold border border-slate-200/60 dark:border-white/10">
-                <button type="button" @click="changeLang('uz')"
-                        :class="lang === 'uz' ? 'bg-[#18181B] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                        class="px-2.5 py-1 rounded-lg transition-all cursor-pointer">UZ</button>
+            <div class="auth-language" :class="{ 'is-uz': lang === 'uz' }" role="group" aria-label="Выбор языка">
+                <span class="auth-switch-indicator" aria-hidden="true"></span>
                 <button type="button" @click="changeLang('ru')"
-                        :class="lang === 'ru' ? 'bg-[#18181B] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                        class="px-2.5 py-1 rounded-lg transition-all cursor-pointer">RU</button>
-                <button type="button" @click="changeLang('en')"
-                        :class="lang === 'en' ? 'bg-[#18181B] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                        class="px-2.5 py-1 rounded-lg transition-all cursor-pointer">EN</button>
+                        :aria-pressed="lang === 'ru'"
+                        :class="lang === 'ru' ? 'is-active' : ''"
+                        class="auth-language-button">RU</button>
+                <button type="button" @click="changeLang('uz')"
+                        :aria-pressed="lang === 'uz'"
+                        :class="lang === 'uz' ? 'is-active' : ''"
+                        class="auth-language-button">UZ</button>
             </div>
         </div>
 
         <!-- Header Titles -->
         <div class="text-center pt-1">
-            <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight" x-text="t('title')">Boshqaruv paneliga kirish</h2>
-            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium" x-text="t('subtitle')">Katalog, buyurtmalar va do'kon sozlamalarini boshqaring</p>
+            <h2 class="auth-title" x-text="t('title')">Boshqaruv paneliga kirish</h2>
         </div>
 
         {% if error %}
@@ -180,69 +324,65 @@
         {% endif %}
 
         <!-- Mode Switcher Tabs -->
-        <div class="p-1 rounded-2xl bg-slate-100 dark:bg-white/5 flex gap-1 text-xs font-bold">
+        <div class="auth-mode-switch p-1 rounded-2xl flex gap-1" :class="{ 'is-email': mode === 'email' }">
+            <span class="auth-switch-indicator" aria-hidden="true"></span>
             <button type="button" @click="mode = 'phone'"
-                    :class="mode === 'phone' ? 'bg-[#18181B] text-white shadow-md font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                    class="flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                    :aria-pressed="mode === 'phone'"
+                    :class="mode === 'phone' ? 'is-active' : ''"
+                    class="auth-mode-btn flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer">
                 <i data-lucide="phone" class="w-3.5 h-3.5"></i>
                 <span x-text="t('tabPhone')">Telefon raqam</span>
             </button>
-            <button type="button" @click="mode = 'login'"
-                    :class="mode === 'login' ? 'bg-[#18181B] text-white shadow-md font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                    class="flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-                <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                <span x-text="t('tabLogin')">Login / Email</span>
+            <button type="button" @click="mode = 'email'"
+                    :aria-pressed="mode === 'email'"
+                    :class="mode === 'email' ? 'is-active' : ''"
+                    class="auth-mode-btn flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                <span x-text="t('tabEmail')">Email</span>
             </button>
         </div>
 
-        <form method="POST" class="space-y-4">
+        <form method="POST" class="auth-form space-y-5">
             {% csrf_token %}
             <input type="hidden" name="login" :value="finalLoginValue">
 
-            <!-- Phone / Login Tabs Mode Input -->
+            <!-- Phone / Email Tabs Mode Input -->
             <div class="space-y-1.5">
                 <div class="flex items-center justify-between">
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        <span x-text="mode === 'phone' ? t('labelPhone') : t('labelLogin')"></span>
+                        <span x-text="mode === 'phone' ? t('labelPhone') : t('labelEmail')"></span>
                     </label>
-                    <button type="button" @click="mode = (mode === 'phone' ? 'login' : 'phone')" class="text-[11px] font-bold text-slate-800 dark:text-slate-200 hover:underline cursor-pointer">
-                        <span x-text="mode === 'phone' ? t('switchLogin') : t('switchPhone')"></span>
+                    <button type="button" @click="mode = (mode === 'phone' ? 'email' : 'phone')" class="auth-helper font-bold hover:underline cursor-pointer">
+                        <span x-text="mode === 'phone' ? t('switchEmail') : t('switchPhone')"></span>
                     </button>
                 </div>
 
                 <!-- Case 1: Phone Mode -->
-                <div x-show="mode === 'phone'" class="relative flex rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus-within:border-[#18181B] dark:focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-900/10 transition-all overflow-visible">
-                    <div class="relative shrink-0">
-                        <button type="button" @click="countryOpen = !countryOpen" class="h-full px-3 py-3 flex items-center gap-1.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200/70 rounded-l-2xl border-r border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-white transition-colors cursor-pointer">
-                            <span class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/20 text-slate-800 dark:text-white text-[10px] font-black tracking-wider" x-text="country.flag"></span>
-                            <span class="text-xs" x-text="country.dialCode"></span>
-                            <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
-                        </button>
-                        <div x-show="countryOpen" @click.away="countryOpen = false" x-cloak class="absolute left-0 top-full mt-1.5 w-56 bg-white dark:bg-[#1f2633] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl z-50 p-1.5 max-h-56 overflow-y-auto space-y-0.5">
-                            <template x-for="c in countries" :key="c.code">
-                                <button type="button" @click="country = c; phoneDigits = ''; countryOpen = false"
-                                        class="w-full px-3 py-2 rounded-xl text-left text-xs font-bold flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 cursor-pointer">
-                                    <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[10px] font-black tracking-wider" x-text="c.flag"></span>
-                                    <span class="flex-1 truncate" x-text="c.name"></span>
-                                    <span class="text-[11px] text-slate-400" x-text="c.dialCode"></span>
-                                </button>
-                            </template>
-                        </div>
+                <div x-show="mode === 'phone'" class="auth-phone-field relative flex items-center transition-all">
+                    <div class="auth-dial-prefix">
+                        <span aria-hidden="true">+</span>
+                        <input type="text" :aria-label="t('countryCode')" :value="dialCode" @input="setDialCode($event)"
+                               inputmode="numeric" autocomplete="tel-country-code" maxlength="4"
+                               class="auth-dial-code-input">
                     </div>
                     <input type="tel"
-                           :value="formatPhone(phoneDigits, country)"
-                           @input="onPhoneInput($event)"
-                           :placeholder="country.placeholder"
-                           class="block w-full pl-3 pr-4 py-3 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 text-xs font-bold focus:outline-none">
+                           :aria-label="t('labelPhone')"
+                           :value="phoneInput" @input="setPhoneInput($event)"
+                           inputmode="tel" autocomplete="tel-national" maxlength="24"
+                           placeholder="90 123 45 67"
+                           class="auth-phone-input block pl-4 pr-16 py-3 bg-transparent placeholder-slate-400 focus:outline-none">
+                    <span x-show="detectedCountry" x-cloak x-text="detectedCountry"
+                          aria-live="polite" class="auth-country-detected absolute right-3 top-1/2 -translate-y-1/2"></span>
                 </div>
 
-                <!-- Case 2: Login Mode -->
-                <div x-show="mode === 'login'" class="relative">
+                <!-- Case 2: Email Mode -->
+                <div x-show="mode === 'email'" class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <i data-lucide="user" class="w-4 h-4"></i>
+                        <i data-lucide="mail" class="w-4 h-4"></i>
                     </div>
-                    <input type="text" x-model="usernameText" :placeholder="t('loginPlaceholder')"
-                           class="block w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#18181B] dark:focus-within:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 transition-all">
+                    <input type="email" x-model="emailInput" :aria-label="t('labelEmail')" :placeholder="t('emailPlaceholder')"
+                           :required="mode === 'email'" autocomplete="email" inputmode="email" spellcheck="false"
+                           class="auth-text-input block w-full pl-10 pr-4 py-3 placeholder-slate-400 focus:outline-none transition-all">
                 </div>
             </div>
 
@@ -250,32 +390,34 @@
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300" x-text="t('password')">Parol</label>
-                    <a href="https://t.me/storebox_support" target="_blank" class="text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:underline" x-text="t('forgot')">Unutdingizmi?</a>
+                    <a href="https://t.me/storebox_support" target="_blank" rel="noopener noreferrer" class="auth-helper font-bold hover:underline" x-text="t('forgot')">Unutdingizmi?</a>
                 </div>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="lock" class="w-4 h-4"></i>
                     </div>
-                    <input :type="showPass ? 'text' : 'password'" name="password" required
+                    <input :type="showPass ? 'text' : 'password'" name="password" :aria-label="t('password')" required
                            placeholder="••••••••"
-                           class="block w-full pl-10 pr-10 py-3 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-[#18181B] dark:focus-within:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 transition-all">
+                           class="auth-text-input block w-full pl-10 pr-10 py-3 placeholder-slate-400 focus:outline-none transition-all">
                     <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
                         <i :data-lucide="showPass ? 'eye-off' : 'eye'" class="w-4 h-4"></i>
                     </button>
                 </div>
             </div>
 
-            <button type="submit" class="w-full py-3.5 px-4 rounded-2xl bg-[#18181B] hover:bg-[#27272A] text-white font-bold text-xs transition-all shadow-md shadow-black/10 transform active:scale-98 cursor-pointer flex items-center justify-center gap-2 border border-zinc-800">
+            <button type="submit" class="auth-submit w-full py-3.5 px-4 text-white font-bold transition-all transform active:scale-98 cursor-pointer flex items-center justify-center gap-2 border">
                 <span x-text="t('submit')">Tizimga kirish</span>
-                <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#c8ff6a]"></i>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-white"></i>
             </button>
         </form>
 
-        <div class="pt-4 border-t border-slate-100 dark:border-white/10 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <div class="auth-footer pt-5 border-t border-slate-100 text-center font-medium">
             <span x-text="t('noStore')">Hali do'koningiz yo'qmi?</span>
-            <a href="{{ app_site_url }}/dashboard/register/" class="font-bold text-slate-900 dark:text-white hover:underline ml-1" x-text="t('createStore')">15 daqiqada yaratish</a>
+            <a href="{{ app_site_url }}/dashboard/register/" class="font-bold hover:underline ml-1" x-text="t('createStore')">Akkaunt yaratish</a>
+            {% if phone_geoip_detected %}
+            <div class="auth-geo-credit"><a href="https://db-ip.com" target="_blank" rel="noopener noreferrer">IP Geolocation by DB-IP</a></div>
+            {% endif %}
         </div>
     </div>
-</div>
 </div>
 {% endblock %}
