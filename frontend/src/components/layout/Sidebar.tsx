@@ -10,17 +10,14 @@ import {
   Tag,
   Barcode,
   Boxes,
-  Database,
   Megaphone,
   Bot,
   Sparkles,
   QrCode,
-  Monitor,
   Wand2,
   Store as StoreIcon,
   Settings,
   ChevronLeft,
-  ExternalLink,
   BarChart3,
   X,
   PanelLeftClose,
@@ -50,7 +47,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
   const navigate = useNavigate();
   const { store, lang } = useAuth();
   const { newOrdersCount, unreadChatsCount } = useNotifications();
-  const storefrontUrl = store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#");
 
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
     const saved = localStorage.getItem("storebox_sidebar_expanded");
@@ -277,27 +273,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
             label: lang === "ru" ? "Сообщения клиентов" : lang === "en" ? "Inbox" : "Xabarlar",
             badge: unreadChatsCount > 0 ? String(unreadChatsCount) : null,
           },
-        ],
-      },
-      {
-        title: lang === "ru" ? "Приложения и POS" : lang === "en" ? "Apps & POS" : "Ilovalar va POS",
-        items: [
           {
             path: "/robo-market",
             icon: Blocks,
             label: lang === "ru" ? "Маркет интеграций" : lang === "en" ? "App Store" : "Integratsiyalar",
-            badge: null,
-          },
-          {
-            path: "/yespos",
-            icon: Monitor,
-            label: lang === "ru" ? "YES POS касса" : lang === "en" ? "YES POS" : "YES POS",
-            badge: null,
-          },
-          {
-            path: "/billz",
-            icon: Database,
-            label: lang === "ru" ? "Billz касса" : lang === "en" ? "Billz POS" : "Billz POS",
             badge: null,
           },
         ],
@@ -314,6 +293,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
     }
     return current === cleanPath || current.startsWith(cleanPath + "/");
   };
+
+  const isNavItemActive = (path: string) =>
+    isActive(path) ||
+    (path === "/robo-market" &&
+      ["/yespos", "/billz", "/integrations"].some((integrationPath) =>
+        isActive(integrationPath)
+      ));
 
   const isSectionExpanded = (item: any) => {
     if (isActive(item.path)) return true;
@@ -333,7 +319,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
     );
 
     return (
-      <div className="flex flex-col h-full justify-between bg-[#0a0a0a] text-[#ffffff] animate-in fade-in slide-in-from-left-2 duration-150">
+      <div className="flex flex-col h-full justify-between bg-[#211b2e] text-[#ffffff] animate-in fade-in slide-in-from-left-2 duration-150">
         <div className="p-3 space-y-3 border-b border-zinc-800/90">
           {/* Top Back Button: < Настройки */}
           <div className="flex items-center justify-between">
@@ -343,7 +329,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                 if (isMobile && onCloseMobile) onCloseMobile();
                 navigate("/");
               }}
-              className="inline-flex items-center gap-2 px-2 py-1.5 rounded-[8px] text-[#ffffff] hover:bg-[#262626] transition-colors text-[14px] font-semibold cursor-pointer"
+              className="inline-flex items-center gap-2 px-2 py-1.5 rounded-[8px] text-[#ffffff] hover:bg-[#3b304e] transition-colors text-[14px] font-semibold cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4 text-white" strokeWidth={2.2} />
               <span>{lang === "ru" ? "Настройки" : lang === "en" ? "Settings" : "Sozlamalar"}</span>
@@ -353,7 +339,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
               <button
                 type="button"
                 onClick={onCloseMobile}
-                className="w-7 h-7 rounded-[8px] flex items-center justify-center text-zinc-300 hover:text-white hover:bg-[#262626]"
+                className="w-7 h-7 rounded-[8px] flex items-center justify-center text-zinc-300 hover:text-white hover:bg-[#3b304e]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -361,9 +347,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
           </div>
 
           {/* Store Card with PRO Badge (like Shopify 05:26) */}
-          <div className="px-2.5 py-2 rounded-[10px] bg-[#171717] border border-zinc-800 flex items-center justify-between gap-2">
+          <div className="px-2.5 py-2 rounded-[10px] bg-[#2c243d] border border-zinc-800 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-[6px] bg-[#22c55e] text-black font-bold text-xs flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-[6px] bg-[#6d5a88] text-white font-bold text-xs flex items-center justify-center shrink-0">
                 {(store?.name || "S").charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
@@ -375,7 +361,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                 </div>
               </div>
             </div>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#8b5cf6] text-white shrink-0">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#6d5a88] text-white shrink-0">
               PRO
             </span>
           </div>
@@ -388,7 +374,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
               value={settingsSearch}
               onChange={(e) => setSettingsSearch(e.target.value)}
               placeholder={lang === "ru" ? "Поиск" : "Qidiruv"}
-              className="w-full pl-8 pr-7 py-1.5 rounded-[8px] bg-[#1c1c1e] border border-zinc-700/80 text-xs text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-400"
+              className="w-full pl-8 pr-7 py-1.5 rounded-[8px] bg-[#30263f] border border-zinc-700/80 text-xs text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-400"
             />
             {settingsSearch && (
               <button
@@ -414,8 +400,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                   onClick={() => isMobile && onCloseMobile && onCloseMobile()}
                   className={`flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] transition-colors ${
                     active
-                      ? "bg-[#262626] text-[#ffffff] font-semibold"
-                      : "text-[#f1f1f1] hover:bg-[#1c1c1e] hover:text-white font-normal"
+                      ? "bg-[#3b304e] text-[#ffffff] font-semibold"
+                      : "text-[#f1f1f1] hover:bg-[#30263f] hover:text-white font-normal"
                   }`}
                 >
                   <Icon
@@ -436,8 +422,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                           onClick={() => isMobile && onCloseMobile && onCloseMobile()}
                           className={`block px-2.5 py-1.5 rounded-[6px] text-xs transition-colors ${
                             subActive
-                              ? "bg-[#262626] text-white font-semibold"
-                              : "text-zinc-300 hover:text-white hover:bg-[#1c1c1e]"
+                              ? "bg-[#3b304e] text-white font-semibold"
+                              : "text-zinc-300 hover:text-white hover:bg-[#30263f]"
                           }`}
                         >
                           {sub.label}
@@ -456,7 +442,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] bg-[#1c1c1e] hover:bg-[#262626] text-xs font-medium text-white transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] bg-[#30263f] hover:bg-[#3b304e] text-xs font-medium text-white transition-colors cursor-pointer"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             <span>{lang === "ru" ? "Вернуться в магазин" : "Do'konga qaytish"}</span>
@@ -468,39 +454,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
 
   /* ----------------------------------------------------------------------
    * RENDER 2: MAIN STOREBOX GLOBAL SIDEBAR
-   * Pure black #0a0a0a, bright white text #ffffff, full collapse to bottom-left pill
+   * Pure black #211b2e, bright white text #ffffff, full collapse to bottom-left pill
    * ---------------------------------------------------------------------- */
   const renderMainSidebar = (isMobile: boolean = false) => {
     return (
-      <div className="flex flex-col h-full justify-between bg-[#0a0a0a] text-[#ffffff]">
+      <div className="flex flex-col h-full justify-between bg-[#211b2e] text-[#ffffff]">
         {/* Top Header: Brand Logo + Search + Collapse Button */}
-        <div className="p-3 border-b border-zinc-800/80 space-y-2.5">
+        <div className="storebox-sidebar-brand px-3 py-3 border-b border-[#e2e6f0] bg-white shadow-[0_5px_20px_rgba(33,27,46,0.08)]">
           <div className="flex items-center justify-between gap-2">
             <Link
               to="/"
               onClick={() => isMobile && onCloseMobile && onCloseMobile()}
-              className="flex items-center gap-2.5 overflow-hidden group min-w-0"
+              className="flex items-center gap-2.5 overflow-hidden group min-w-0 text-[#171321]"
               title="StoreBox"
             >
-              {/* Authentic StoreBox Cube Logo (Lime wireframe cube on dark badge) */}
-              <div className="w-8 h-8 rounded-lg bg-[#141416] border border-zinc-800 flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-[#211b2e] flex items-center justify-center shrink-0 shadow-[0_8px_18px_rgba(33,27,46,0.24)]">
                 <svg
                   viewBox="0 0 32 32"
-                  className="w-5 h-5 fill-none stroke-[#c8ff6a] stroke-[1.8] stroke-linejoin-round"
+                  className="w-[26px] h-[26px] fill-none stroke-white stroke-[1.8] stroke-linejoin-round"
                 >
                   <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
                   <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
                 </svg>
               </div>
-
-              <div className="text-left truncate">
-                <div className="text-sm font-bold tracking-tight text-white leading-tight">
-                  StoreBox
-                </div>
-                <div className="text-[11px] text-zinc-300 truncate font-medium">
-                  {store?.name || "Commerce SaaS"}
-                </div>
-              </div>
+              <span className="storebox-wordmark text-[20px] font-extrabold tracking-[-0.045em] leading-none">StoreBox</span>
             </Link>
 
             {/* Collapse Navigation Button (Shopify top-right of sidebar) */}
@@ -508,7 +485,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
               <button
                 type="button"
                 onClick={toggleExpand}
-                className="w-8 h-8 rounded-[8px] flex items-center justify-center text-zinc-300 hover:text-white hover:bg-[#262626] transition-colors cursor-pointer shrink-0"
+                className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[#686475] hover:text-[#211b2e] hover:bg-[#eef1f8] transition-colors cursor-pointer shrink-0"
                 title={lang === "ru" ? "Свернуть навигацию" : "Collapse navigation"}
               >
                 <PanelLeftClose className="w-4 h-4" strokeWidth={1.9} />
@@ -517,31 +494,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
               <button
                 type="button"
                 onClick={onCloseMobile}
-                className="w-8 h-8 rounded-[8px] flex items-center justify-center text-zinc-300 hover:text-white hover:bg-[#262626] transition-colors shrink-0"
+                className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[#686475] hover:text-[#211b2e] hover:bg-[#eef1f8] transition-colors shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Active Store Subdomain Pill with bright emerald indicator */}
-          {store?.subdomain && (
-            <a
-              href={storefrontUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-2.5 py-1.5 rounded-[8px] bg-[#18181b] border border-zinc-800 hover:border-zinc-700 flex items-center justify-between text-xs text-white transition-all group"
-              title={lang === "ru" ? "Открыть витрину" : "Open storefront"}
-            >
-              <div className="flex items-center gap-2 truncate">
-                <span className="w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e] shrink-0"></span>
-                <span className="truncate text-[11px] font-medium text-white">
-                  {store.subdomain}.storebox.uz
-                </span>
-              </div>
-              <ExternalLink className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0" />
-            </a>
-          )}
         </div>
 
         {/* Scrollable Navigation List */}
@@ -556,7 +515,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
               )}
 
               {section.items.map((item: any) => {
-                const isItemActive = isActive(item.path);
+                const isItemActive = isNavItemActive(item.path);
                 const showSub = isSectionExpanded(item) && item.subItems;
                 const Icon = item.icon;
 
@@ -567,8 +526,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                       onClick={() => isMobile && onCloseMobile && onCloseMobile()}
                       className={`relative flex items-center rounded-[8px] px-2.5 py-1.5 gap-2.5 w-full text-[13px] transition-colors group ${
                         isItemActive
-                          ? "bg-[#262626] text-[#ffffff] font-semibold"
-                          : "text-[#f4f4f5] hover:text-[#ffffff] hover:bg-[#1c1c1e] font-medium"
+                          ? "bg-[#3b304e] text-[#ffffff] font-semibold"
+                          : "text-[#f4f4f5] hover:text-[#ffffff] hover:bg-[#30263f] font-medium"
                       }`}
                     >
                       <Icon
@@ -583,7 +542,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                       <span className="truncate flex-1">{item.label}</span>
 
                       {item.badge && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 bg-[#00a86b] text-white leading-none shadow-2xs">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 bg-[#6d5a88] text-white leading-none shadow-2xs">
                           {item.badge}
                         </span>
                       )}
@@ -604,8 +563,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                               onClick={() => isMobile && onCloseMobile && onCloseMobile()}
                               className={`block px-2.5 py-1.5 rounded-[7px] text-[12.5px] transition-colors ${
                                 subActive
-                                  ? "bg-[#262626] text-white font-semibold"
-                                  : "text-zinc-300 hover:text-white hover:bg-[#1c1c1e] font-normal"
+                                  ? "bg-[#3b304e] text-white font-semibold"
+                                  : "text-zinc-300 hover:text-white hover:bg-[#30263f] font-normal"
                               }`}
                             >
                               {sub.label}
@@ -628,8 +587,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
             onClick={() => isMobile && onCloseMobile && onCloseMobile()}
             className={`flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] transition-colors ${
               isSettingsMode
-                ? "bg-[#262626] text-white font-semibold"
-                : "text-[#f4f4f5] hover:text-white hover:bg-[#1c1c1e] font-medium"
+                ? "bg-[#3b304e] text-white font-semibold"
+                : "text-[#f4f4f5] hover:text-white hover:bg-[#30263f] font-medium"
             }`}
           >
             <Settings className="w-[18px] h-[18px] text-[#e4e4e7] shrink-0" strokeWidth={1.9} />
@@ -653,12 +612,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
         <div className="flex flex-col items-center gap-2 w-full">
           <Link
             to="/"
-            className="w-9 h-9 rounded-lg bg-[#141416] border border-zinc-800 hover:border-[#c8ff6a]/60 flex items-center justify-center shrink-0 shadow-xs transition-colors"
+            className="w-10 h-10 rounded-xl bg-[#342a47] border border-white/15 hover:bg-[#453957] flex items-center justify-center shrink-0 shadow-[0_8px_18px_rgba(15,10,25,0.22)] transition-colors"
             title={`StoreBox — ${store?.name || "Dashboard"}`}
           >
             <svg
               viewBox="0 0 32 32"
-              className="w-5 h-5 fill-none stroke-[#c8ff6a] stroke-[1.8] stroke-linejoin-round"
+              className="w-[26px] h-[26px] fill-none stroke-white stroke-[1.8] stroke-linejoin-round"
             >
               <path d="M7.5 10.8 16 6l8.5 4.8v10.4L16 26l-8.5-4.8V10.8Z" />
               <path d="m7.8 10.9 8.2 4.7 8.2-4.7M16 15.6V26" />
@@ -670,7 +629,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
           {/* Stacked Navigation Icons with Hover Flyout Menus */}
           <div className="flex flex-col items-center gap-1 w-full px-1.5">
             {flatItems.map((item: any) => {
-              const isItemActive = isActive(item.path);
+              const isItemActive = isNavItemActive(item.path);
               const Icon = item.icon;
               return (
                 <div key={item.path} className="relative group w-full flex justify-center">
@@ -678,13 +637,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                     to={item.path}
                     className={`relative w-10 h-9 rounded-[8px] flex items-center justify-center transition-colors ${
                       isItemActive
-                        ? "bg-[#262626] text-white"
-                        : "text-zinc-300 hover:text-white hover:bg-[#1c1c1e]"
+                        ? "bg-[#3b304e] text-white"
+                        : "text-zinc-300 hover:text-white hover:bg-[#30263f]"
                     }`}
                   >
                     <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.9} />
                     {item.badge && (
-                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#00a86b] text-white text-[9px] font-bold flex items-center justify-center leading-none shadow-xs">
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#6d5a88] text-white text-[9px] font-bold flex items-center justify-center leading-none shadow-xs">
                         {item.badge}
                       </span>
                     )}
@@ -692,14 +651,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
 
                   {/* Hover Flyout Menu (with pl-2 hover bridge so cursor can click sub-items) */}
                   <div className="hidden group-hover:block absolute left-full top-0 pl-2 z-[80]">
-                    <div className="min-w-[210px] rounded-[10px] bg-[#141416] border border-zinc-800 shadow-2xl py-2 px-1.5 text-white">
+                    <div className="min-w-[210px] rounded-[10px] bg-[#30263f] border border-zinc-800 shadow-2xl py-2 px-1.5 text-white">
                       <Link
                         to={item.path}
-                        className="flex items-center justify-between px-2.5 py-1.5 rounded-[7px] text-[13px] font-semibold text-white hover:bg-[#262626] transition-colors"
+                        className="flex items-center justify-between px-2.5 py-1.5 rounded-[7px] text-[13px] font-semibold text-white hover:bg-[#3b304e] transition-colors"
                       >
                         <span>{item.label}</span>
                         {item.badge && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#00a86b] text-white leading-none">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#6d5a88] text-white leading-none">
                             {item.badge}
                           </span>
                         )}
@@ -717,8 +676,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                                 to={sub.path}
                                 className={`block px-2.5 py-1.5 rounded-[7px] text-[12px] transition-colors ${
                                   subActive
-                                    ? "bg-[#262626] text-white font-semibold"
-                                    : "text-zinc-300 hover:text-white hover:bg-[#1c1c1e]"
+                                    ? "bg-[#3b304e] text-white font-semibold"
+                                    : "text-zinc-300 hover:text-white hover:bg-[#30263f]"
                                 }`}
                               >
                                 {sub.label}
@@ -741,13 +700,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
             <button
               type="button"
               onClick={toggleExpand}
-              className="w-10 h-9 rounded-[8px] flex items-center justify-center text-zinc-300 hover:text-white hover:bg-[#262626] transition-colors cursor-pointer"
+              className="w-10 h-9 rounded-[8px] flex items-center justify-center text-zinc-300 hover:text-white hover:bg-[#3b304e] transition-colors cursor-pointer"
               aria-label={lang === "ru" ? "Развернуть навигацию" : "Expand navigation"}
             >
               <PanelLeftOpen className="w-[18px] h-[18px]" strokeWidth={1.9} />
             </button>
             <div className="hidden group-hover:block absolute left-full top-1/2 -translate-y-1/2 pl-2 z-[80] pointer-events-none">
-              <div className="px-2.5 py-1.5 rounded-[8px] bg-[#141416] border border-zinc-800 text-white text-xs font-medium whitespace-nowrap shadow-xl">
+              <div className="px-2.5 py-1.5 rounded-[8px] bg-[#30263f] border border-zinc-800 text-white text-xs font-medium whitespace-nowrap shadow-xl">
                 {lang === "ru" ? "Развернуть навигацию" : lang === "en" ? "Expand navigation" : "Navigatsiyani ochish"}
               </div>
             </div>
@@ -756,12 +715,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
           <div className="relative group w-full flex justify-center">
             <Link
               to="/settings"
-              className="w-10 h-9 rounded-[8px] flex items-center justify-center text-zinc-300 hover:text-white hover:bg-[#262626] transition-colors"
+              className="w-10 h-9 rounded-[8px] flex items-center justify-center text-zinc-300 hover:text-white hover:bg-[#3b304e] transition-colors"
             >
               <Settings className="w-[18px] h-[18px]" strokeWidth={1.9} />
             </Link>
             <div className="hidden group-hover:block absolute left-full top-1/2 -translate-y-1/2 pl-2 z-[80] pointer-events-none">
-              <div className="px-2.5 py-1.5 rounded-[8px] bg-[#141416] border border-zinc-800 text-white text-xs font-medium whitespace-nowrap shadow-xl">
+              <div className="px-2.5 py-1.5 rounded-[8px] bg-[#30263f] border border-zinc-800 text-white text-xs font-medium whitespace-nowrap shadow-xl">
                 {lang === "ru" ? "Настройки" : lang === "en" ? "Settings" : "Sozlamalar"}
               </div>
             </div>
@@ -775,7 +734,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
     <>
       {/* 1. Desktop Sidebar: Expanded = w-60, Collapsed = w-14 Icon Rail with Logo & Flyout Menus */}
       <aside
-        className={`bg-[#0a0a0a] shrink-0 hidden lg:flex flex-col h-screen sticky top-0 transition-all duration-200 z-40 select-none border-r border-zinc-800/90 ${
+        className={`bg-[#211b2e] shrink-0 hidden lg:flex flex-col h-screen sticky top-0 transition-all duration-200 z-40 select-none border-r border-zinc-800/90 ${
           isSettingsMode || isExpanded ? "w-60" : "w-14 overflow-visible"
         }`}
       >
@@ -793,7 +752,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
             className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in"
             onClick={onCloseMobile}
           />
-          <div className="relative w-72 max-w-[85vw] h-full bg-[#0a0a0a] border-r border-zinc-800 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+          <div className="relative w-72 max-w-[85vw] h-full bg-[#211b2e] border-r border-zinc-800 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             {isSettingsMode ? renderSettingsSidebar(true) : renderMainSidebar(true)}
           </div>
         </div>

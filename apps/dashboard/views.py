@@ -23,6 +23,7 @@ from django.db.models import Sum, Count, Q
 from django.utils.text import slugify
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from apps.dashboard.phone_region import phone_region_for_request
 from apps.accounts.models import User
 from apps.stores.models import Store, Branch, MerchantBalance, MerchantCard
 from apps.catalog.models import (
@@ -838,10 +839,14 @@ def login_view(request):
             error_msg = "Noto'g'ri telefon raqami yoki parol"
 
     prefill_login = request.GET.get('login', '') or request.POST.get('login', '')
+    phone_country, phone_dial_code, phone_geoip_detected = phone_region_for_request(request)
     response = render(request, 'dashboard/auth/login.html', {
         'error': error_msg,
         'prefill_login': prefill_login,
         'current_lang': current_lang,
+        'phone_country': phone_country,
+        'phone_dial_code': phone_dial_code,
+        'phone_geoip_detected': phone_geoip_detected,
     })
     if request.GET.get('lang'):
         response.set_cookie('storebox_lang', current_lang, max_age=31536000)
