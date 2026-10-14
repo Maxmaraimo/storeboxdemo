@@ -159,7 +159,7 @@ export const AnalyticsPage: React.FC = () => {
     datasets: [
       {
         data: [78, 19, 3],
-        backgroundColor: ["#6d5a88", "#6366f1", "#cbd5e1"],
+        backgroundColor: ["#a3e635", "#65a30d", "#d9f99d"],
         borderWidth: 0,
         hoverOffset: 4,
       },
@@ -542,21 +542,21 @@ export const AnalyticsPage: React.FC = () => {
               <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#f1f2f4] dark:border-zinc-800 text-center text-xs">
                 <div>
                   <div className="text-[#6d7175] text-[11px] flex items-center justify-center gap-1">
-                    <Smartphone className="w-3 h-3 text-[#6d5a88]" />
+                    <Smartphone className="w-3 h-3 text-[#a3e635]" />
                     Мобильные
                   </div>
                   <div className="font-bold text-[#211b2e] dark:text-white mt-0.5">78%</div>
                 </div>
                 <div>
                   <div className="text-[#6d7175] text-[11px] flex items-center justify-center gap-1">
-                    <Laptop className="w-3 h-3 text-indigo-500" />
+                    <Laptop className="w-3 h-3 text-[#65a30d]" />
                     ПК
                   </div>
                   <div className="font-bold text-[#211b2e] dark:text-white mt-0.5">19%</div>
                 </div>
                 <div>
                   <div className="text-[#6d7175] text-[11px] flex items-center justify-center gap-1">
-                    <Monitor className="w-3 h-3 text-slate-400" />
+                    <Monitor className="w-3 h-3 text-[#d9f99d]" />
                     Планшет
                   </div>
                   <div className="font-bold text-[#211b2e] dark:text-white mt-0.5">3%</div>

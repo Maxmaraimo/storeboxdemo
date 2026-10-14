@@ -363,22 +363,18 @@ export const IkpuPage: React.FC = () => {
       <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 shadow-2xs overflow-hidden">
         {/* Filter & Search Bar */}
         <div className="p-4 border-b border-[#e3e5e7] dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <select
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+            aria-label="Категория ИКПУ"
+            className="min-h-[42px] w-full sm:w-64 max-w-full rounded-[14px] border border-white/90 bg-[#ebf0fa] px-3 text-xs font-semibold text-[#211b2e] shadow-[inset_2px_2px_5px_rgba(165,175,200,0.3),inset_-2px_-2px_5px_rgba(255,255,255,0.95)] outline-none focus-visible:ring-2 focus-visible:ring-[#6d5a88] dark:border-[#494052] dark:bg-[#30263f] dark:text-white cursor-pointer"
+          >
             {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategoryFilter(cat)}
-                className={`px-3 py-1.5 rounded-[8px] text-xs font-medium whitespace-nowrap transition cursor-pointer ${
-                  categoryFilter === cat
-                    ? "bg-[#202223] text-white"
-                    : "bg-[#f6f6f7] dark:bg-zinc-800 text-[#5c5f62] dark:text-zinc-300 hover:bg-[#ebebed]"
-                }`}
-              >
+              <option key={cat} value={cat}>
                 {cat === "all" ? "Все категории" : cat}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
 
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 text-[#6d7175] absolute left-3 top-1/2 -translate-y-1/2" />

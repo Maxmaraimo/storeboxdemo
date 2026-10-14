@@ -244,7 +244,7 @@ export const WarehousePage: React.FC = () => {
 
       <div className="bg-white rounded-[10px] border border-[#e1e3e5] shadow-[0_1px_0_rgba(0,0,0,0.05)] overflow-hidden">
         <div className="p-3.5 border-b border-[#e1e3e5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1 bg-[#f6f6f7] p-1 rounded-[8px] border border-[#e1e3e5]">
+          <div className="storebox-segmented-control min-w-0 max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Остатки товаров" : "Mahsulot qoldiqlari"}>
             {[
               { id: "all", label: lang === "ru" ? "Все" : "Barchasi", count: allProducts.length },
               { id: "in_stock", label: lang === "ru" ? "В наличии" : "Yetarli", count: allProducts.filter((p) => (p.stock ?? 0) > 10).length },
@@ -254,12 +254,9 @@ export const WarehousePage: React.FC = () => {
               <button
                 key={tab.id}
                 type="button"
+                aria-pressed={stockFilter === tab.id}
                 onClick={() => setStockFilter(tab.id as any)}
-                className={`px-2.5 py-1 rounded-[6px] text-[11px] font-medium transition-colors cursor-pointer ${
-                  stockFilter === tab.id
-                    ? "bg-white text-[#202223] shadow-2xs"
-                    : "text-[#6d7175] hover:text-[#202223]"
-                }`}
+                className={`storebox-segmented-tab ${stockFilter === tab.id ? "is-active" : ""}`}
               >
                 {tab.label} ({tab.count})
               </button>
