@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -11,6 +11,10 @@ import {
   BarChart3,
   LineChart as LineChartIcon,
   Store as StoreIcon,
+  WalletCards,
+  ShoppingBag,
+  UsersRound,
+  ReceiptText,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -25,11 +29,9 @@ import {
   Filler
 } from "chart.js";
 import { Bar, Line } from "react-chartjs-2";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { DashboardOrderMap } from "./DashboardOrderMap";
 import {
   ContributionHeatmap,
   DashboardHeatmap,
@@ -46,36 +48,6 @@ ChartJS.register(
   Legend,
   Filler
 );
-
-const orderPinIcon = L.divIcon({
-  className: "storebox-order-marker",
-  html: '<span style="display:block;width:20px;height:20px;border:3px solid white;border-radius:50%;background:#8e7bae;box-shadow:0 3px 11px rgba(33,27,46,.3)"></span>',
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
-});
-
-const branchPinIcon = L.divIcon({
-  className: "storebox-branch-marker",
-  html: '<span style="display:flex;width:30px;height:30px;align-items:center;justify-content:center;border:3px solid white;border-radius:50%;background:#211b2e;box-shadow:0 4px 12px rgba(33,27,46,.3);color:white;font-size:15px;font-weight:700">S</span>',
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
-});
-
-const MapViewport: React.FC<{ points: [number, number][] }> = ({ points }) => {
-  const map = useMap();
-  const pointsKey = points.map(([lat, lng]) => `${lat},${lng}`).join(";");
-
-  useEffect(() => {
-    if (points.length > 1) {
-      map.fitBounds(L.latLngBounds(points), { padding: [30, 30], maxZoom: 12, animate: true });
-    } else if (points.length === 1) {
-      map.setView(points[0], 11, { animate: true });
-    }
-    // The coordinate key changes only when visible map locations change.
-  }, [map, pointsKey]);
-
-  return null;
-};
 
 interface DashboardMetrics {
   period: string;
@@ -179,7 +151,7 @@ export const DashboardPage: React.FC = () => {
   const endDateParam = searchParams.get("end_date") || "";
 
   const [currency, setCurrency] = useState<"UZS" | "USD">("UZS");
-  const [chartType, setChartType] = useState<"line" | "bar" | "heatmap">("line");
+  const [chartType, setChartType] = useState<"line" | "bar" | "heatmap">("bar");
   const [productTab, setProductTab] = useState<"top" | "abc">("top");
   const [showBranches, setShowBranches] = useState(true);
   const [heroPrompt, setHeroPrompt] = useState<string>("");
@@ -248,13 +220,14 @@ export const DashboardPage: React.FC = () => {
   const abcAnalysis = data?.abc_analysis;
   const validCoordinates = (lat: number, lng: number) =>
     Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
-  const mapOrders = (data?.map_orders || []).filter((order) => validCoordinates(order.lat, order.lng));
-  const mapBranches = (data?.map_branches || []).filter((branch) => validCoordinates(branch.latitude, branch.longitude));
-  const mapPoints: [number, number][] = [
-    ...mapOrders.map((order): [number, number] => [order.lat, order.lng]),
-    ...(showBranches ? mapBranches.map((location): [number, number] => [location.latitude, location.longitude]) : []),
-  ];
-  const mapCenter: [number, number] = mapPoints[0] || [41.3111, 69.2797];
+  const mapOrders = useMemo(
+    () => (data?.map_orders || []).filter((order) => validCoordinates(order.lat, order.lng)),
+    [data?.map_orders]
+  );
+  const mapBranches = useMemo(
+    () => (data?.map_branches || []).filter((location) => validCoordinates(location.latitude, location.longitude)),
+    [data?.map_branches]
+  );
   const regionsBreakdown = data?.regions_breakdown || [];
   const periods = [
     { id: "today", label: t("today") || (lang === "ru" ? "Сегодня" : lang === "en" ? "Today" : "Bugun") },
@@ -271,7 +244,7 @@ export const DashboardPage: React.FC = () => {
     ...(metrics?.instagram_cnt ? [{ key: "instagram", label: "Instagram", count: metrics.instagram_cnt, color: "#c071a8", icon: Instagram }] : []),
   ];
 
-  // Chart configuration: Clean minimal Shopify Polaris style with vibrant #6d5a88 Shopify Blue accent
+  // Use the marketing site's ink and violet palette for dashboard charts.
   const chartData = {
     labels: charts?.labels || [],
     datasets: [
@@ -280,13 +253,13 @@ export const DashboardPage: React.FC = () => {
         data: (charts?.revenue || []).map((val) =>
           currency === "USD" ? Number((val / UZS_TO_USD_RATE).toFixed(2)) : val
         ),
-        backgroundColor: chartType === "bar" ? "#6d5a88" : "rgba(0, 91, 211, 0.14)",
-        borderColor: "#6d5a88",
+        backgroundColor: chartType === "bar" ? "#211b2e" : "rgba(33, 27, 46, 0.13)",
+        borderColor: "#211b2e",
         borderWidth: chartType === "line" ? 2.5 : 0,
         borderRadius: chartType === "bar" ? 5 : 0,
         fill: chartType === "line",
         tension: 0.35,
-        pointBackgroundColor: "#6d5a88",
+        pointBackgroundColor: "#211b2e",
         pointBorderColor: "#FFFFFF",
         pointBorderWidth: 1.5,
         pointRadius: chartType === "line" ? 3 : 0,
@@ -395,7 +368,7 @@ export const DashboardPage: React.FC = () => {
       {/* 1. Header Bar: Store Title & Period Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-[#211b2e] dark:text-white tracking-tight">
+          <h1 className="text-[26px] font-bold text-[#171321] dark:text-white tracking-[-0.04em] leading-tight">
             {store?.name || (lang === "ru" ? "Панель управления" : "Boshqaruv paneli")}
           </h1>
           <p className="text-xs text-[#6d7175] font-normal mt-0.5">
@@ -564,94 +537,98 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Pure Shopify Polaris Metric Cards (4 cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 @3xl:grid-cols-4 gap-4">
+      {/* Four site-styled metrics in one row on desktop. */}
+      <div className="dashboard-kpi-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
         {/* Card 1: Total Revenue */}
-        <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
+        <div className="dashboard-kpi-card flex min-w-0 flex-col justify-between p-4">
           <div>
-            <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
-              {lang === "ru" ? "Общая выручка" : "Jami tushum"}
+            <div className="flex items-center justify-between gap-2 text-xs font-semibold text-[#686475] dark:text-zinc-400">
+              <span>{lang === "ru" ? "Общая выручка" : "Jami tushum"}</span>
+              <span className="dashboard-kpi-icon"><WalletCards className="h-4 w-4" /></span>
             </div>
-            <div className="text-2xl font-semibold text-[#211b2e] dark:text-white tracking-tight mt-1">
+            <div className="mt-2 break-words text-xl font-bold tabular-nums tracking-[-0.04em] text-[#171321] dark:text-white">
               {isLoading ? "..." : formatMoney(metrics?.revenue || 0)}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#dfe5ef] dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#6d7175]">
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#dfe5ef] pt-3 text-[11px] text-[#686475] dark:border-zinc-700">
             <span className="truncate">
               {lang === "ru" ? "Оборот:" : "Aylanma:"} {formatMoney(metrics?.sales_sum || 0)}
             </span>
-            <span className="text-[#00a86b] font-semibold">● Live</span>
+            <span className="shrink-0 font-semibold text-[#50465f] dark:text-[#c7badb]">● Live</span>
           </div>
         </div>
 
         {/* Card 2: Orders Count */}
-        <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
+        <div className="dashboard-kpi-card flex min-w-0 flex-col justify-between p-4">
           <div>
-            <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
-              {lang === "ru" ? "Всего заказов" : "Buyurtmalar"}
+            <div className="flex items-center justify-between gap-2 text-xs font-semibold text-[#686475] dark:text-zinc-400">
+              <span>{lang === "ru" ? "Всего заказов" : "Buyurtmalar"}</span>
+              <span className="dashboard-kpi-icon"><ShoppingBag className="h-4 w-4" /></span>
             </div>
-            <div className="text-2xl font-semibold text-[#211b2e] dark:text-white tracking-tight mt-1">
+            <div className="mt-2 text-xl font-bold tabular-nums tracking-[-0.04em] text-[#171321] dark:text-white">
               {isLoading ? "..." : metrics?.orders_count || 0}{" "}
-              <span className="text-sm font-normal text-[#6d7175]">
+              <span className="text-xs font-medium tracking-normal text-[#686475]">
                 {lang === "ru" ? "заказов" : "ta"}
               </span>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#dfe5ef] dark:border-zinc-800/80 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-[#6d7175]">
-              <span className="text-[#00a86b] font-semibold">
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#dfe5ef] pt-3 text-[11px] dark:border-zinc-700">
+            <div className="flex min-w-0 items-center gap-1 text-[#686475]">
+              <span className="font-semibold text-[#50465f] dark:text-[#c7badb]">
                 {metrics?.new_orders || 0} {lang === "ru" ? "новых" : "yangi"}
               </span>
               <span>•</span>
-              <span>
+              <span className="truncate">
                 {metrics?.ready_orders || 0} {lang === "ru" ? "готовых" : "tayyor"}
               </span>
             </div>
-            <Link to="/orders" className="text-[#6d5a88] hover:underline font-medium">
+            <Link to="/orders" className="shrink-0 font-semibold text-[#211b2e] hover:underline dark:text-white">
               {lang === "ru" ? "Все →" : "Barchasi →"}
             </Link>
           </div>
         </div>
 
         {/* Card 3: Customers */}
-        <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
+        <div className="dashboard-kpi-card flex min-w-0 flex-col justify-between p-4">
           <div>
-            <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
-              {lang === "ru" ? "База клиентов" : "Mijozlar bazasi"}
+            <div className="flex items-center justify-between gap-2 text-xs font-semibold text-[#686475] dark:text-zinc-400">
+              <span>{lang === "ru" ? "База клиентов" : "Mijozlar bazasi"}</span>
+              <span className="dashboard-kpi-icon"><UsersRound className="h-4 w-4" /></span>
             </div>
-            <div className="text-2xl font-semibold text-[#211b2e] dark:text-white tracking-tight mt-1">
+            <div className="mt-2 text-xl font-bold tabular-nums tracking-[-0.04em] text-[#171321] dark:text-white">
               {isLoading ? "..." : metrics?.total_customers || 0}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#dfe5ef] dark:border-zinc-800/80 flex items-center justify-between text-xs">
-            <span className="text-[#6d7175]">
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#dfe5ef] pt-3 text-[11px] dark:border-zinc-700">
+            <span className="truncate text-[#686475]">
               {lang === "ru" ? "Покупатели магазина" : "Do'kon xaridorlari"}
             </span>
-            <Link to="/customers" className="text-[#6d5a88] hover:underline font-medium">
+            <Link to="/customers" className="shrink-0 font-semibold text-[#211b2e] hover:underline dark:text-white">
               CRM →
             </Link>
           </div>
         </div>
 
         {/* Card 4: Average Order Value */}
-        <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between">
+        <div className="dashboard-kpi-card flex min-w-0 flex-col justify-between p-4">
           <div>
-            <div className="text-xs font-medium text-[#6d7175] dark:text-zinc-400">
-              {lang === "ru" ? "Средний чек" : "O'rtacha chek"}
+            <div className="flex items-center justify-between gap-2 text-xs font-semibold text-[#686475] dark:text-zinc-400">
+              <span>{lang === "ru" ? "Средний чек" : "O'rtacha chek"}</span>
+              <span className="dashboard-kpi-icon"><ReceiptText className="h-4 w-4" /></span>
             </div>
-            <div className="text-2xl font-semibold text-[#211b2e] dark:text-white tracking-tight mt-1">
+            <div className="mt-2 break-words text-xl font-bold tabular-nums tracking-[-0.04em] text-[#171321] dark:text-white">
               {isLoading ? "..." : formatMoney(metrics?.avg_order || 0)}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#dfe5ef] dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#6d7175]">
-            <span>{lang === "ru" ? "За одну покупку" : "Bitta xarid uchun"}</span>
-            <span className="text-[#00a86b] font-semibold">✓ {lang === "ru" ? "В норме" : "Barqaror"}</span>
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#dfe5ef] pt-3 text-[11px] text-[#686475] dark:border-zinc-700">
+            <span className="truncate">{lang === "ru" ? "За одну покупку" : "Bitta xarid uchun"}</span>
+            <span className="shrink-0 font-semibold text-[#50465f] dark:text-[#c7badb]">✓ {lang === "ru" ? "В норме" : "Barqaror"}</span>
           </div>
         </div>
       </div>
 
       {/* Order geography: delivery addresses and optional branch locations. */}
-      <section className="overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
+      <section className="dashboard-panel overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
         <div className="flex flex-wrap items-center justify-between gap-3 p-5">
           <div>
             <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
@@ -680,40 +657,7 @@ export const DashboardPage: React.FC = () => {
           {isLoading ? (
             <div className="h-full animate-pulse bg-[#eef0f5] dark:bg-zinc-900" />
           ) : (
-            <MapContainer
-              key={`${store?.id || "store"}-${period}-${branch}-${startDateParam}-${endDateParam}`}
-              center={mapCenter}
-              zoom={mapPoints.length ? 11 : 6}
-              scrollWheelZoom={false}
-              className="h-full w-full"
-            >
-              <MapViewport points={mapPoints} />
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {mapOrders.map((order, index) => (
-                <Marker key={`${order.num}-${index}`} position={[order.lat, order.lng]} icon={orderPinIcon}>
-                  <Popup>
-                    <div className="space-y-1 text-xs">
-                      <strong>#{order.num} · {order.client}</strong>
-                      <div>{order.status}</div>
-                      <div>{formatMoney(order.total)}</div>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-              {showBranches && mapBranches.map((location) => (
-                <Marker key={`branch-${location.id}`} position={[location.latitude, location.longitude]} icon={branchPinIcon}>
-                  <Popup>
-                    <div className="space-y-1 text-xs">
-                      <strong>{location.name}</strong>
-                      {location.address && <div>{location.address}</div>}
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+            <DashboardOrderMap orders={mapOrders} branches={mapBranches} showBranches={showBranches} currency={currency} />
           )}
           {!isLoading && mapOrders.length === 0 && (
             <div className="pointer-events-none absolute bottom-4 left-4 z-[400] rounded-xl border border-[#e4e0ea] bg-white/95 px-3 py-2 text-xs text-[#686475] shadow-sm backdrop-blur-sm">
@@ -726,7 +670,7 @@ export const DashboardPage: React.FC = () => {
       {/* Revenue dynamics and order source statistics. */}
       <div className="sidekick-adaptive-grid grid grid-cols-1 xl:grid-cols-12 gap-5">
         {/* Left: Revenue Dynamics Chart (8 cols) */}
-        <div className="xl:col-span-8 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
+        <div className="dashboard-panel xl:col-span-8 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
@@ -744,23 +688,12 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-            {/* View Switcher: Line / Bar / Heatmap */}
+            {/* Bar is the primary view; line and heatmap remain available. */}
             <div className="inline-flex rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <button
                 type="button"
-                onClick={() => setChartType("line")}
-                className={`p-1.5 rounded-[9px] transition-colors cursor-pointer ${
-                  chartType === "line"
-                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e]"
-                    : "text-[#686475] hover:text-[#211b2e]"
-                }`}
-                title={lang === "ru" ? "Линейный график" : "Chiziqli"}
-              >
-                <LineChartIcon className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
                 onClick={() => setChartType("bar")}
+                aria-pressed={chartType === "bar"}
                 className={`p-1.5 rounded-[9px] transition-colors cursor-pointer ${
                   chartType === "bar"
                     ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e]"
@@ -772,7 +705,21 @@ export const DashboardPage: React.FC = () => {
               </button>
               <button
                 type="button"
+                onClick={() => setChartType("line")}
+                aria-pressed={chartType === "line"}
+                className={`p-1.5 rounded-[9px] transition-colors cursor-pointer ${
+                  chartType === "line"
+                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e]"
+                    : "text-[#686475] hover:text-[#211b2e]"
+                }`}
+                title={lang === "ru" ? "Линейный график" : "Chiziqli"}
+              >
+                <LineChartIcon className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
                 onClick={() => setChartType("heatmap")}
+                aria-pressed={chartType === "heatmap"}
                 className={`p-1.5 rounded-[9px] transition-colors cursor-pointer ${
                   chartType === "heatmap"
                     ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e]"
@@ -822,7 +769,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Channel totals and progress bars, based on orders in the selected period. */}
-        <div className="xl:col-span-4 min-w-0 rounded-[18px] border border-[#dfe5ef] bg-white p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
+        <div className="dashboard-panel xl:col-span-4 min-w-0 rounded-[18px] border border-[#dfe5ef] bg-white p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
           <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
             {lang === "ru" ? "Статистика заказов" : lang === "en" ? "Order statistics" : "Buyurtmalar statistikasi"}
           </h2>

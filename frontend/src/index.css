@@ -174,6 +174,83 @@ h1, h2, h3, h4 {
   letter-spacing: -0.045em !important;
 }
 
+/* Dashboard surfaces echo the marketing site's Inter, ink and soft-glass palette. */
+.dashboard-kpi-card,
+.dashboard-panel {
+  background: linear-gradient(145deg, #ffffff 52%, #f8faff 100%);
+  border: 1px solid rgba(220, 226, 240, 0.9);
+  border-radius: 18px;
+  box-shadow: 0 15px 34px -23px rgba(33, 27, 46, 0.35), inset 0 1px rgba(255, 255, 255, 0.96);
+}
+.dashboard-kpi-card {
+  min-height: 142px;
+  transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms ease;
+}
+.dashboard-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 19px 37px -23px rgba(33, 27, 46, 0.4), inset 0 1px rgba(255, 255, 255, 0.96);
+}
+.dashboard-kpi-icon {
+  display: grid;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  color: #211b2e;
+  background: #f0eef5;
+  border: 1px solid #e5e1ec;
+  border-radius: 10px;
+}
+.dark .dashboard-kpi-card,
+.dark .dashboard-panel {
+  background: linear-gradient(145deg, #292134 0%, #211b2e 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 15px 34px -23px rgba(0, 0, 0, 0.65), inset 0 1px rgba(255, 255, 255, 0.04);
+}
+.dark .dashboard-kpi-icon {
+  color: #e3dceb;
+  background: #383044;
+  border-color: #494052;
+}
+@media (min-width: 1280px) {
+  .sidekick-open .dashboard-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Identical order/branch symbols on Yandex Maps and on the offline fallback. */
+.storebox-leaflet-marker { background: none; border: 0; }
+.storebox-yandex-marker { position: absolute; top: -48px; left: -21px; }
+.storebox-map-pin {
+  position: relative;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 3px solid #ffffff;
+  border-radius: 13px;
+  color: #ffffff;
+  box-shadow: 0 7px 18px rgba(33, 27, 46, 0.28);
+}
+.storebox-map-pin::after {
+  position: absolute;
+  bottom: -8px;
+  left: 12px;
+  width: 0;
+  height: 0;
+  border-right: 6px solid transparent;
+  border-left: 6px solid transparent;
+  border-top: 9px solid #211b2e;
+  content: "";
+}
+.storebox-map-pin svg { width: 21px; height: 21px; }
+.storebox-map-pin--branch { background: #211b2e; }
+.storebox-map-pin--order { background: #695780; }
+.storebox-map-pin--order::after { border-top-color: #695780; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-kpi-card { transition: none; }
+  .dashboard-kpi-card:hover { transform: none; }
+}
+
 /* StoreBox dashboard navigation — the same glass, ink and shadow language as the site. */
 .storebox-sidebar {
   --sb-ink: #211b2e;
