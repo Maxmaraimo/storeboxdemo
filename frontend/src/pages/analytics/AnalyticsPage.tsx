@@ -48,6 +48,7 @@ ChartJS.register(
   Filler,
   ArcElement
 );
+ChartJS.defaults.font.family = 'Inter, "Segoe UI", Arial, sans-serif';
 
 export const AnalyticsPage: React.FC = () => {
   const { store, lang } = useAuth();
