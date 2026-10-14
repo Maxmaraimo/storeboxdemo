@@ -280,39 +280,30 @@ export const MarketingPage: React.FC = () => {
         {/* LEFT COLUMN (7 cols): Broadcast Builder, Automations, Campaigns Table */}
         <div className="xl:col-span-7 space-y-5 min-w-0">
           {/* Sub-tabs */}
-          <div className="inline-flex flex-wrap rounded-xl border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-1 shadow-2xs text-xs font-semibold">
+          <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label="Разделы маркетинга">
             <button
               type="button"
+              aria-pressed={activeTab === "broadcast"}
               onClick={() => setActiveTab("broadcast")}
-              className={`px-3.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
-                activeTab === "broadcast"
-                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223]"
-                  : "text-[#5c5f62] hover:text-[#202223] dark:text-zinc-400"
-              }`}
+              className={`storebox-segmented-tab ${activeTab === "broadcast" ? "is-active" : ""}`}
             >
               <Send className="w-3.5 h-3.5" />
               <span>Конструктор Push-рассылки</span>
             </button>
             <button
               type="button"
+              aria-pressed={activeTab === "automations"}
               onClick={() => setActiveTab("automations")}
-              className={`px-3.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
-                activeTab === "automations"
-                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223]"
-                  : "text-[#5c5f62] hover:text-[#202223] dark:text-zinc-400"
-              }`}
+              className={`storebox-segmented-tab ${activeTab === "automations" ? "is-active" : ""}`}
             >
               <Zap className="w-3.5 h-3.5" />
               <span>Автоматизации (3)</span>
             </button>
             <button
               type="button"
+              aria-pressed={activeTab === "campaigns"}
               onClick={() => setActiveTab("campaigns")}
-              className={`px-3.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
-                activeTab === "campaigns"
-                  ? "bg-[#202223] text-white dark:bg-white dark:text-[#202223]"
-                  : "text-[#5c5f62] hover:text-[#202223] dark:text-zinc-400"
-              }`}
+              className={`storebox-segmented-tab ${activeTab === "campaigns" ? "is-active" : ""}`}
             >
               <Clock className="w-3.5 h-3.5" />
               <span>Журнал кампаний ({campaigns.length})</span>

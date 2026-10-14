@@ -1242,7 +1242,7 @@ export const IntegrationsMarketPage: React.FC = () => {
 
         {/* CATEGORY TABS (Robosell structure + Shopify styling) */}
         <div className="mt-8 pt-6 border-t border-slate-100 dark:border-neutral-800/80">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === 'ru' ? 'Категории интеграций' : 'Integratsiya toifalari'}>
             {[
               { id: 'all', label: t.tabAll, count: counts.all },
               { id: 'pos', label: t.tabPos, count: counts.pos },
@@ -1256,19 +1256,16 @@ export const IntegrationsMarketPage: React.FC = () => {
                 <button
                   key={tab.id}
                   type="button"
+                  aria-pressed={isActive}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    isActive
-                      ? 'bg-slate-900 text-white shadow-2xs dark:bg-white dark:text-slate-900'
-                      : 'bg-slate-100/80 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:bg-slate-200/70 hover:text-slate-900'
-                  }`}
+                  className={`storebox-segmented-tab ${isActive ? 'is-active' : ''}`}
                 >
                   <span>{tab.label}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-md font-bold ${
                       isActive
-                        ? 'bg-white/20 text-white dark:bg-slate-900/10 dark:text-slate-900'
-                        : 'bg-slate-200/80 dark:bg-neutral-700 text-slate-500 dark:text-neutral-400'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#e2ddec] text-[#6a6476] dark:bg-[#4a4058] dark:text-[#ded7e9]'
                     }`}
                   >
                     {tab.count}

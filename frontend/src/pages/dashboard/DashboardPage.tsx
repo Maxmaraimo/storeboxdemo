@@ -388,7 +388,7 @@ export const DashboardPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2 max-w-full">
           {/* Period selector */}
           <div ref={datePickerRef} className="relative max-w-full">
-            <div className="dashboard-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Период статистики" : lang === "en" ? "Statistics period" : "Statistika davri"}>
+            <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Период статистики" : lang === "en" ? "Statistics period" : "Statistika davri"}>
               {periods.map((p) => (
                 <button
                   key={p.id}
@@ -404,7 +404,7 @@ export const DashboardPage: React.FC = () => {
                       return next;
                     });
                   }}
-                  className={`dashboard-segmented-tab ${period === p.id && !startDateParam ? "is-active" : ""}`}
+                  className={`storebox-segmented-tab ${period === p.id && !startDateParam ? "is-active" : ""}`}
                 >
                   {p.label}
                 </button>
@@ -421,7 +421,7 @@ export const DashboardPage: React.FC = () => {
                   setCustomEnd(endDateParam || metrics?.today_date || "2026-10-11");
                   setShowDatePicker(!showDatePicker);
                 }}
-                className={`dashboard-segmented-tab ${period === "custom" || (startDateParam && endDateParam) ? "is-active" : ""}`}
+                className={`storebox-segmented-tab ${period === "custom" || (startDateParam && endDateParam) ? "is-active" : ""}`}
               >
                 <Calendar className="h-3.5 w-3.5" />
                 <span>
@@ -503,12 +503,12 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Currency Switcher */}
-          <div className="dashboard-segmented-control" role="group" aria-label={lang === "ru" ? "Валюта статистики" : lang === "en" ? "Statistics currency" : "Statistika valyutasi"}>
+          <div className="storebox-segmented-control" role="group" aria-label={lang === "ru" ? "Валюта статистики" : lang === "en" ? "Statistics currency" : "Statistika valyutasi"}>
             <button
               type="button"
               aria-pressed={currency === "UZS"}
               onClick={() => setCurrency("UZS")}
-              className={`dashboard-segmented-tab ${currency === "UZS" ? "is-active" : ""}`}
+              className={`storebox-segmented-tab ${currency === "UZS" ? "is-active" : ""}`}
             >
               UZS
             </button>
@@ -516,7 +516,7 @@ export const DashboardPage: React.FC = () => {
               type="button"
               aria-pressed={currency === "USD"}
               onClick={() => setCurrency("USD")}
-              className={`dashboard-segmented-tab ${currency === "USD" ? "is-active" : ""}`}
+              className={`storebox-segmented-tab ${currency === "USD" ? "is-active" : ""}`}
             >
               USD
             </button>

@@ -697,15 +697,12 @@ export const DesignStudioPage: React.FC = () => {
         <div className={`xl:col-span-5 space-y-4 ${mobileTab === "preview" ? "hidden xl:block" : "block"}`}>
           
           {/* STEPPED SEGMENTED TABS */}
-          <div className="bg-white p-1.5 rounded-xl border border-[#e1e3e5] shadow-2xs grid grid-cols-4 gap-1">
+          <div className="storebox-segmented-control storebox-segmented-control--full" role="group" aria-label={language === "ru" ? "Разделы дизайна" : language === "en" ? "Design sections" : "Dizayn bo'limlari"}>
             <button
               type="button"
+              aria-pressed={activeTab === "template"}
               onClick={() => setActiveTab("template")}
-              className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === "template"
-                  ? "bg-[#202223] text-white shadow-2xs"
-                  : "text-[#6d7175] hover:bg-[#f6f6f7] hover:text-[#202223]"
-              }`}
+              className={`storebox-segmented-tab ${activeTab === "template" ? "is-active" : ""}`}
             >
               <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{t("design_tab_templates")}</span>
@@ -713,12 +710,9 @@ export const DesignStudioPage: React.FC = () => {
 
             <button
               type="button"
+              aria-pressed={activeTab === "style"}
               onClick={() => setActiveTab("style")}
-              className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === "style"
-                  ? "bg-[#202223] text-white shadow-2xs"
-                  : "text-[#6d7175] hover:bg-[#f6f6f7] hover:text-[#202223]"
-              }`}
+              className={`storebox-segmented-tab ${activeTab === "style" ? "is-active" : ""}`}
             >
               <Palette className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{t("design_tab_styles")}</span>
@@ -726,12 +720,9 @@ export const DesignStudioPage: React.FC = () => {
 
             <button
               type="button"
+              aria-pressed={activeTab === "banners"}
               onClick={() => setActiveTab("banners")}
-              className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === "banners"
-                  ? "bg-[#202223] text-white shadow-2xs"
-                  : "text-[#6d7175] hover:bg-[#f6f6f7] hover:text-[#202223]"
-              }`}
+              className={`storebox-segmented-tab ${activeTab === "banners" ? "is-active" : ""}`}
             >
               <ImageIcon className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{t("design_tab_banners")}</span>
@@ -739,12 +730,9 @@ export const DesignStudioPage: React.FC = () => {
 
             <button
               type="button"
+              aria-pressed={activeTab === "store"}
               onClick={() => setActiveTab("store")}
-              className={`py-2 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === "store"
-                  ? "bg-[#202223] text-white shadow-2xs"
-                  : "text-[#6d7175] hover:bg-[#f6f6f7] hover:text-[#202223]"
-              }`}
+              className={`storebox-segmented-tab ${activeTab === "store" ? "is-active" : ""}`}
             >
               <Store className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{t("design_tab_store_info")}</span>

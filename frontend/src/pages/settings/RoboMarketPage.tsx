@@ -1424,7 +1424,7 @@ export const RoboMarketPage: React.FC = () => {
 
         {/* SEARCH & CATEGORY FILTER TABS */}
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
+          <div className="storebox-segmented-control min-w-0 max-w-full overflow-x-auto no-scrollbar" role="group" aria-label="Категории витрин">
             {[
               { id: 'all', label: 'Все 13 витрин' },
               { id: 'beauty', label: 'Косметика (4)' },
@@ -1435,12 +1435,9 @@ export const RoboMarketPage: React.FC = () => {
               <button
                 key={cat.id}
                 type="button"
+                aria-pressed={selectedCategory === cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-                  selectedCategory === cat.id
-                    ? 'bg-slate-900 text-white shadow-xs dark:bg-white dark:text-slate-900'
-                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80 dark:bg-neutral-900 dark:text-neutral-400 dark:border-neutral-800'
-                }`}
+                className={`storebox-segmented-tab ${selectedCategory === cat.id ? 'is-active' : ''}`}
               >
                 {cat.label}
               </button>

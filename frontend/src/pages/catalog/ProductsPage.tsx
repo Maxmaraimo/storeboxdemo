@@ -830,40 +830,33 @@ export const ProductsPage: React.FC = () => {
       {/* Filter Card: Status Tabs, Search & Category */}
       <div className="bg-white rounded-xl border border-zinc-200/80 shadow-xs divide-y divide-zinc-100">
         {/* Status Tabs */}
-        <div className="px-3 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar text-xs">
-          <button
-            type="button"
-            onClick={() => setStatusFilter("all")}
-            className={`px-3 py-1 rounded-md transition-colors font-normal cursor-pointer ${
-              statusFilter === "all"
-                ? "bg-zinc-100 text-zinc-900 font-semibold"
-                : "text-zinc-600 hover:text-zinc-900"
-            }`}
-          >
-            {lang === "ru" ? "Все товары" : "Barchasi"} ({rawProducts.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter("active")}
-            className={`px-3 py-1 rounded-md transition-colors font-normal cursor-pointer ${
-              statusFilter === "active"
-                ? "bg-zinc-100 text-zinc-900 font-semibold"
-                : "text-zinc-600 hover:text-zinc-900"
-            }`}
-          >
-            {lang === "ru" ? "В наличии" : "Sotuvda"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter("draft")}
-            className={`px-3 py-1 rounded-md transition-colors font-normal cursor-pointer ${
-              statusFilter === "draft"
-                ? "bg-zinc-100 text-zinc-900 font-semibold"
-                : "text-zinc-600 hover:text-zinc-900"
-            }`}
-          >
-            {lang === "ru" ? "Стоп-лист" : "Stop-list"}
-          </button>
+        <div className="px-3 py-2">
+          <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Статус товаров" : "Mahsulot holati"}>
+            <button
+              type="button"
+              aria-pressed={statusFilter === "all"}
+              onClick={() => setStatusFilter("all")}
+              className={`storebox-segmented-tab ${statusFilter === "all" ? "is-active" : ""}`}
+            >
+              {lang === "ru" ? "Все товары" : "Barchasi"} ({rawProducts.length})
+            </button>
+            <button
+              type="button"
+              aria-pressed={statusFilter === "active"}
+              onClick={() => setStatusFilter("active")}
+              className={`storebox-segmented-tab ${statusFilter === "active" ? "is-active" : ""}`}
+            >
+              {lang === "ru" ? "В наличии" : "Sotuvda"}
+            </button>
+            <button
+              type="button"
+              aria-pressed={statusFilter === "draft"}
+              onClick={() => setStatusFilter("draft")}
+              className={`storebox-segmented-tab ${statusFilter === "draft" ? "is-active" : ""}`}
+            >
+              {lang === "ru" ? "Стоп-лист" : "Stop-list"}
+            </button>
+          </div>
         </div>
 
         {/* Search & Category Filter Row */}

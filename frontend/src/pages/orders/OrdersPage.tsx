@@ -316,32 +316,29 @@ export const OrdersPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Sub-section switcher matching Shopify Orders sub-nav */}
-          <div className="inline-flex rounded-[8px] border border-[#e1e3e5] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5">
+          {/* Order sections share the dashboard's segmented control. */}
+          <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Разделы заказов" : "Buyurtma bo'limlari"}>
             <button
               type="button"
+              aria-pressed={!urlTab}
               onClick={() => setSearchParams({})}
-              className={`px-2.5 py-1 rounded-[6px] text-xs font-medium cursor-pointer transition ${
-                !urlTab ? "bg-[#202223] text-white" : "text-[#5c5f62] hover:text-[#202223]"
-              }`}
+              className={`storebox-segmented-tab ${!urlTab ? "is-active" : ""}`}
             >
               Все заказы ({counts.all})
             </button>
             <button
               type="button"
+              aria-pressed={urlTab === "drafts"}
               onClick={() => setSearchParams({ tab: "drafts" })}
-              className={`px-2.5 py-1 rounded-[6px] text-xs font-medium cursor-pointer transition ${
-                urlTab === "drafts" ? "bg-[#202223] text-white" : "text-[#5c5f62] hover:text-[#202223]"
-              }`}
+              className={`storebox-segmented-tab ${urlTab === "drafts" ? "is-active" : ""}`}
             >
               Черновики ({draftsList.length})
             </button>
             <button
               type="button"
+              aria-pressed={urlTab === "abandoned"}
               onClick={() => setSearchParams({ tab: "abandoned" })}
-              className={`px-2.5 py-1 rounded-[6px] text-xs font-medium cursor-pointer transition ${
-                urlTab === "abandoned" ? "bg-[#202223] text-white" : "text-[#5c5f62] hover:text-[#202223]"
-              }`}
+              className={`storebox-segmented-tab ${urlTab === "abandoned" ? "is-active" : ""}`}
             >
               Брошенные корзины ({abandonedList.length})
             </button>
@@ -418,23 +415,21 @@ export const OrdersPage: React.FC = () => {
       ) : (
         <>
           {/* STATUS TABS */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-slate-200 dark:border-neutral-800 text-xs font-medium">
+          <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Статус заказа" : "Buyurtma holati"}>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
+                aria-pressed={status === tab.id}
                 onClick={() => setStatus(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-                  status === tab.id
-                    ? "bg-[#202223] text-white dark:bg-white dark:text-slate-900 shadow-2xs font-medium"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800"
-                }`}
+                className={`storebox-segmented-tab ${status === tab.id ? "is-active" : ""}`}
               >
                 <span>{tab.label}</span>
                 <span
                   className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${
                     status === tab.id
-                      ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
-                      : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-slate-300"
+                      ? "bg-white/20 text-white"
+                      : "bg-[#e2ddec] text-[#6a6476] dark:bg-[#4a4058] dark:text-[#ded7e9]"
                   }`}
                 >
                   {tab.count}

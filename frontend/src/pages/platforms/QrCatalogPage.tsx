@@ -309,30 +309,24 @@ export const QrCatalogPage: React.FC = () => {
             {/* 1. Paper Size */}
             <div>
               <label className="block text-xs font-black text-slate-800 mb-2">{t("qr_banner_size")}</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="storebox-segmented-control storebox-segmented-control--full" role="group" aria-label={t("qr_banner_size")}>
                 <button
                   type="button"
+                  aria-pressed={paperSize === "A5"}
                   onClick={() => setPaperSize("A5")}
-                  className={`p-3 rounded-2xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    paperSize === "A5"
-                      ? "border-brand bg-slate-100 text-brand font-black ring-2 ring-brand/20 shadow-xs"
-                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
+                  className={`storebox-segmented-tab ${paperSize === "A5" ? "is-active" : ""}`}
                 >
-                  <FileText className="w-4 h-4" />
-                  <span>{t("qr_paper_a5")}</span>
+                  <FileText className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{t("qr_paper_a5")}</span>
                 </button>
                 <button
                   type="button"
+                  aria-pressed={paperSize === "A6"}
                   onClick={() => setPaperSize("A6")}
-                  className={`p-3 rounded-2xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    paperSize === "A6"
-                      ? "border-brand bg-slate-100 text-brand font-black ring-2 ring-brand/20 shadow-xs"
-                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
+                  className={`storebox-segmented-tab ${paperSize === "A6" ? "is-active" : ""}`}
                 >
-                  <File className="w-4 h-4" />
-                  <span>{t("qr_paper_a6")}</span>
+                  <File className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{t("qr_paper_a6")}</span>
                 </button>
               </div>
             </div>
