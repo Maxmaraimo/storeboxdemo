@@ -18,7 +18,6 @@ import {
   UserPlus,
   X,
   Loader2,
-  Sparkles,
   Building2,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -27,10 +26,9 @@ import { Language } from "../../i18n/translations";
 
 interface HeaderProps {
   onOpenMobileMenu?: () => void;
-  onOpenSidekick?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, onOpenSidekick }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   const { user, store, stores, switchStore, logout, lang, setLang, t } = useAuth();
   const { totalUnread, notifications, markAllRead, markOneRead } = useNotifications();
   const navigate = useNavigate();
@@ -150,13 +148,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, onOpenSidekick
                 ? "Search store (products, orders, customers)..."
                 : "Qidiruv (mahsulot, buyurtma, mijoz)..."
             }
-            className="w-full pl-9 pr-12 py-1.5 rounded-lg bg-[#f6f6f7] dark:bg-zinc-800/80 border border-[#e1e3e5] dark:border-zinc-700/60 focus:bg-white dark:focus:bg-zinc-900 focus:border-[#6d5a88] dark:focus:border-zinc-500 text-xs text-[#211b2e] dark:text-zinc-100 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#f6f6f7] dark:bg-zinc-800/80 border border-[#e1e3e5] dark:border-zinc-700/60 focus:bg-white dark:focus:bg-zinc-900 focus:border-[#6d5a88] dark:focus:border-zinc-500 text-xs text-[#211b2e] dark:text-zinc-100 placeholder:text-slate-400 outline-none transition-all"
           />
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:flex items-center">
-            <kbd className="text-[10px] font-sans text-slate-400 bg-white dark:bg-zinc-700 border border-[#e1e3e5] dark:border-zinc-600 px-1 py-0.5 rounded shadow-2xs">
-              ⌘K
-            </kbd>
-          </div>
         </div>
 
         {/* Mobile Search Icon Button */}
@@ -199,20 +192,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, onOpenSidekick
 
       </div>
 
-      {/* 2. Right: Sidekick, Theme, Notifications, Language, Profile */}
+      {/* 2. Right: Theme, Notifications, Language, Profile */}
       <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-        {/* Shopify Sidekick AI Assistant Trigger */}
-        <button
-          type="button"
-          onClick={onOpenSidekick}
-          className="h-8 px-2.5 sm:px-3 rounded-lg bg-[#211b2e] hover:bg-[#14101c] dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white flex items-center gap-1.5 text-xs font-medium shadow-2xs transition-all cursor-pointer active:scale-95 group border border-zinc-700/60"
-          title="Открыть StoreBox Sidekick (ИИ-Ассистент)"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-[#bda8d4] group-hover:rotate-12 transition-transform" />
-          <span className="hidden sm:inline">Sidekick</span>
-          <span className="text-[10px] px-1 py-0.2 rounded bg-[#6d5a88] text-white font-mono font-bold">AI</span>
-        </button>
-
         {/* Dark/Light mode toggle */}
         <button
           type="button"
