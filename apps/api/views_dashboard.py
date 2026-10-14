@@ -1,8 +1,8 @@
 from decimal import Decimal
 import json
 from django.utils import timezone
-from django.db.models import Sum, Count
-from django.db.models.functions import TruncDate
+from django.db.models import Sum, Count, Max
+from django.db.models.functions import ExtractHour, TruncDate
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -187,7 +187,7 @@ def dashboard_summary_view(request):
     branch_id = request.GET.get("branch") or request.GET.get("branch_id")
     custom_start = request.GET.get("start_date", "").strip()
     custom_end = request.GET.get("end_date", "").strip()
-    now = timezone.now()
+    now = timezone.localtime()
 
     store_orders = Order.objects.filter(store=store)
     if branch_id and branch_id != "all":
@@ -197,7 +197,7 @@ def dashboard_summary_view(request):
             pass
 
     today_date = timezone.localdate(now)
-    store_created_date = store.created_at.date() if store.created_at else timezone.datetime(2026, 1, 1).date()
+    store_created_date = timezone.localtime(store.created_at).date() if store.created_at else timezone.datetime(2026, 1, 1).date()
 
     if custom_start and custom_end:
         try:
@@ -233,14 +233,8 @@ def dashboard_summary_view(request):
         start_date = (now - timezone.timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
         end_date = now
 
-    orders_scope = store_orders.filter(created_at__range=(start_date, end_date))
-    # If the store has historical orders but none strictly within today's window when viewing default 'today',
-    # use the store's active order scope so switching between stores immediately reflects each store's real metrics.
-    if not orders_scope.exists() and store_orders.exists() and period in ("today", "week"):
-        month_start = (now - timezone.timedelta(days=30)).replace(hour=0, minute=0, second=0, microsecond=0)
-        orders_scope = store_orders.filter(created_at__gte=month_start)
-        if not orders_scope.exists():
-            orders_scope = store_orders
+    period_orders = store_orders.filter(created_at__range=(start_date, end_date))
+    orders_scope = period_orders
 
     sotuvlar_summasi = orders_scope.exclude(status=Order.OrderStatuses.CANCELLED).aggregate(
         total=Sum("total_amount")
@@ -262,8 +256,44 @@ def dashboard_summary_view(request):
     total_customers = Customer.objects.filter(store=store).count()
     avg_order = (foyda / orders_count) if orders_count > 0 else Decimal("0")
 
-    web_cnt = store_orders.filter(source=Order.Sources.WEB).count()
-    tma_cnt = store_orders.filter(source=Order.Sources.TELEGRAM_MINI_APP).count()
+    source_counts = {
+        row["source"]: row["count"]
+        for row in period_orders.values("source").annotate(count=Count("id"))
+    }
+    web_cnt = source_counts.get(Order.Sources.WEB, 0)
+    tma_cnt = source_counts.get(Order.Sources.TELEGRAM_MINI_APP, 0)
+    instagram_cnt = source_counts.get(Order.Sources.INSTAGRAM, 0)
+
+    hourly_orders = {
+        "labels": [f"{hour:02d}:00" for hour in range(24)],
+        "new": [0] * 24,
+        "cancelled": [0] * 24,
+        "completed": [0] * 24,
+    }
+    hourly_status_keys = {
+        Order.OrderStatuses.NEW: "new",
+        Order.OrderStatuses.CANCELLED: "cancelled",
+        Order.OrderStatuses.COMPLETED: "completed",
+    }
+    for row in period_orders.annotate(hour=ExtractHour("created_at")).values("hour", "status").annotate(count=Count("id")):
+        hour = row["hour"]
+        status_key = hourly_status_keys.get(row["status"])
+        if status_key and hour is not None and 0 <= hour < 24:
+            hourly_orders[status_key][hour] += row["count"]
+
+    top_customers = list(
+        period_orders.exclude(status=Order.OrderStatuses.CANCELLED)
+        .exclude(customer_phone="")
+        .values("customer_phone")
+        .annotate(
+            name=Max("customer_name"),
+            orders_count=Count("id"),
+            total_spent=Sum("total_amount"),
+        )
+        .order_by("-orders_count", "-total_spent", "customer_phone")[:10]
+    )
+    for customer in top_customers:
+        customer["total_spent"] = float(customer["total_spent"] or 0)
 
     # Timeline chart
     chart_labels = []
@@ -418,9 +448,9 @@ def dashboard_summary_view(request):
         "items": abc_items[:15]
     }
 
-    # Deliveries map
+    # Delivery and branch map for the selected period and store.
     map_orders = []
-    for ord in store_orders.filter(delivery_lat__isnull=False, delivery_lng__isnull=False)[:30]:
+    for ord in period_orders.filter(delivery_lat__isnull=False, delivery_lng__isnull=False).order_by("-created_at")[:100]:
         map_orders.append({
             "num": ord.order_number,
             "client": ord.customer_name,
@@ -429,6 +459,13 @@ def dashboard_summary_view(request):
             "total": float(ord.total_amount),
             "status": ord.get_status_display()
         })
+    map_branches_qs = Branch.objects.filter(store=store, is_active=True)
+    if branch_id and branch_id != "all":
+        try:
+            map_branches_qs = map_branches_qs.filter(id=int(branch_id))
+        except (ValueError, TypeError):
+            pass
+    map_branches = list(map_branches_qs.values("id", "name", "address", "latitude", "longitude")[:100])
 
     # Regional breakdown across Uzbekistan for this store
     UZ_REGIONS = [
@@ -507,11 +544,13 @@ def dashboard_summary_view(request):
             "total_customers": total_customers,
             "avg_order": float(avg_order),
             "web_cnt": web_cnt,
-            "tma_cnt": tma_cnt
+            "tma_cnt": tma_cnt,
+            "instagram_cnt": instagram_cnt,
         },
         "charts": {
             "labels": chart_labels,
             "revenue": chart_revenue,
+            "hourly_orders": hourly_orders,
             "traffic": {
                 "web": web_cnt,
                 "telegram": tma_cnt
@@ -519,8 +558,10 @@ def dashboard_summary_view(request):
             "heatmap": get_dashboard_heatmap_data(store),
         },
         "top_products": top_products,
+        "top_customers": top_customers,
         "abc_analysis": abc_analysis,
         "map_orders": map_orders,
+        "map_branches": map_branches,
         "regions_breakdown": regions_breakdown,
         "setup_guide": setup_guide,
     })
