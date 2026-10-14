@@ -6,7 +6,6 @@ import {
   Calendar,
   RefreshCw,
   Globe,
-  Bot,
   Instagram,
   BarChart3,
   LineChart as LineChartIcon,
@@ -49,6 +48,12 @@ ChartJS.register(
   Filler
 );
 ChartJS.defaults.font.family = 'Inter, "Segoe UI", Arial, sans-serif';
+
+const TelegramLogo = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+    <path d="m20.665 3.717-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701h-.002l-.313 4.671c.458 0 .66-.21.916-.458l2.199-2.138 4.573 3.378c.843.464 1.448.225 1.658-.783l2.998-14.127c.308-1.233-.473-1.794-1.507-1.31z" />
+  </svg>
+);
 
 interface DashboardMetrics {
   period: string;
@@ -240,7 +245,7 @@ export const DashboardPage: React.FC = () => {
 
   const channelTotal = (metrics?.web_cnt || 0) + (metrics?.tma_cnt || 0) + (metrics?.instagram_cnt || 0);
   const channels = [
-    { key: "telegram", label: "Telegram Mini App", count: metrics?.tma_cnt || 0, color: "#6d5a88", icon: Bot },
+    { key: "telegram", label: "Telegram Mini App", count: metrics?.tma_cnt || 0, color: "#229ED9", icon: TelegramLogo },
     { key: "website", label: lang === "ru" ? "Веб-сайт" : lang === "en" ? "Website" : "Veb-sayt", count: metrics?.web_cnt || 0, color: "#7d9bd0", icon: Globe },
     ...(metrics?.instagram_cnt ? [{ key: "instagram", label: "Instagram", count: metrics.instagram_cnt, color: "#c071a8", icon: Instagram }] : []),
   ];
@@ -776,8 +781,8 @@ export const DashboardPage: React.FC = () => {
               return (
                 <div key={channel.key}>
                   <div className="mb-2 flex items-center gap-3 text-xs">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f2eff6] dark:bg-zinc-800">
-                      <ChannelIcon className="h-4 w-4" style={{ color: channel.color }} />
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${channel.key === "telegram" ? "bg-[#229ED9]" : "bg-[#f2eff6] dark:bg-zinc-800"}`}>
+                      <ChannelIcon className={channel.key === "telegram" ? "h-5 w-5" : "h-4 w-4"} style={{ color: channel.key === "telegram" ? "#ffffff" : channel.color }} />
                     </span>
                     <span className="min-w-0 flex-1 truncate font-medium text-[#211b2e] dark:text-white">{channel.label}</span>
                     <span className="font-semibold tabular-nums text-[#211b2e] dark:text-white">{channel.count}</span>
