@@ -382,46 +382,43 @@ export const DashboardPage: React.FC = () => {
         {/* Action Controls: Periods, Currency, Refresh */}
         <div className="flex flex-wrap items-center gap-2 max-w-full">
           {/* Period selector */}
-          <div className="inline-flex max-w-full overflow-x-auto no-scrollbar rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
-            {periods.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => {
-                  setShowDatePicker(false);
-                  setSearchParams((prev) => {
-                    const next = new URLSearchParams(prev);
-                    next.set("period", p.id);
-                    next.delete("start_date");
-                    next.delete("end_date");
-                    return next;
-                  });
-                }}
-                className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
-                  period === p.id && !startDateParam
-                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
-                    : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] dark:hover:text-white font-normal"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
+          <div ref={datePickerRef} className="relative max-w-full">
+            <div className="dashboard-period-switcher max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Период статистики" : lang === "en" ? "Statistics period" : "Statistika davri"}>
+              {periods.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  aria-pressed={period === p.id && !startDateParam}
+                  onClick={() => {
+                    setShowDatePicker(false);
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.set("period", p.id);
+                      next.delete("start_date");
+                      next.delete("end_date");
+                      return next;
+                    });
+                  }}
+                  className={`dashboard-period-tab ${period === p.id && !startDateParam ? "is-active" : ""}`}
+                >
+                  {p.label}
+                </button>
+              ))}
 
-            {/* Custom Date Range Popover */}
-            <div ref={datePickerRef} className="relative">
+              {/* Custom date range */}
               <button
                 type="button"
+                aria-pressed={period === "custom" || Boolean(startDateParam && endDateParam)}
+                aria-expanded={showDatePicker}
+                aria-haspopup="dialog"
                 onClick={() => {
                   setCustomStart(startDateParam || metrics?.store_inception_date || "2026-05-10");
                   setCustomEnd(endDateParam || metrics?.today_date || "2026-10-11");
                   setShowDatePicker(!showDatePicker);
                 }}
-                className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap ${
-                  period === "custom" || (startDateParam && endDateParam)
-                    ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
-                    : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] dark:hover:text-white font-normal"
-                }`}
+                className={`dashboard-period-tab ${period === "custom" || (startDateParam && endDateParam) ? "is-active" : ""}`}
               >
-                <Calendar className="w-3 h-3" />
+                <Calendar className="h-3.5 w-3.5" />
                 <span>
                   {period === "custom" && startDateParam && endDateParam
                     ? `${startDateParam.slice(5)} - ${endDateParam.slice(5)}`
@@ -430,9 +427,10 @@ export const DashboardPage: React.FC = () => {
                     : "Sana"}
                 </span>
               </button>
+            </div>
 
-              {showDatePicker && (
-                <div className="absolute right-0 top-full mt-2 z-30 w-72 p-4 rounded-[18px] bg-white dark:bg-zinc-900 border border-[#dfe5ef] dark:border-zinc-800 shadow-xl space-y-3">
+            {showDatePicker && (
+                <div role="dialog" aria-label={lang === "ru" ? "Выбор периода" : lang === "en" ? "Choose date range" : "Sana oralig'i"} className="absolute right-0 top-full mt-2 z-30 w-72 max-w-[calc(100vw-2rem)] p-4 rounded-[18px] bg-white dark:bg-zinc-900 border border-[#dfe5ef] dark:border-zinc-800 shadow-xl space-y-3">
                   <div className="text-xs font-semibold text-[#211b2e] dark:text-white">
                     {lang === "ru" ? "Выбор периода" : "Sana oralig'i"}
                   </div>
@@ -496,8 +494,7 @@ export const DashboardPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Currency Switcher */}
@@ -928,8 +925,8 @@ export const DashboardPage: React.FC = () => {
                     className="flex items-center justify-between p-2.5 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800/80 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800/50 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <span className="w-5 h-5 rounded-md bg-[#e6f7f0] text-[#00a86b] text-xs font-bold flex items-center justify-center shrink-0">
-                        {idx + 1}
+                      <span className="w-5 shrink-0 text-center text-[11px] font-semibold tabular-nums text-[#6d5a88] dark:text-[#c7badb]">
+                        {String(idx + 1).padStart(2, "0")}
                       </span>
                       <div className="truncate">
                         <div className="text-xs font-medium text-[#211b2e] dark:text-white truncate">
