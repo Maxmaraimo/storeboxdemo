@@ -9,7 +9,6 @@ import {
   MapPin,
   Calendar,
   Layers,
-  ArrowUpRight,
   RefreshCw,
   DollarSign,
   Package,
@@ -147,15 +146,6 @@ interface RegionBreakdown {
   share_pct: number;
 }
 
-interface SetupGuideStatus {
-  has_products: boolean;
-  products_count: number;
-  has_theme: boolean;
-  has_payments: boolean;
-  has_delivery: boolean;
-  has_domain: boolean;
-}
-
 export const DashboardPage: React.FC = () => {
   const { store, lang, t } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -168,8 +158,6 @@ export const DashboardPage: React.FC = () => {
   const [chartType, setChartType] = useState<"line" | "bar" | "heatmap">("line");
   const [productTab, setProductTab] = useState<"top" | "abc">("top");
   const [geoTab, setGeoTab] = useState<"regions" | "map">("regions");
-  const [setupExpanded, setSetupExpanded] = useState<boolean>(true);
-  const [activeSetupStep, setActiveSetupStep] = useState<number>(0);
   const [heroPrompt, setHeroPrompt] = useState<string>("");
 
   // Custom Date Range state
@@ -222,7 +210,6 @@ export const DashboardPage: React.FC = () => {
         abc_analysis?: AbcAnalysis;
         map_orders: MapOrder[];
         regions_breakdown?: RegionBreakdown[];
-        setup_guide?: SetupGuideStatus;
       };
     },
     refetchInterval: 30000,
@@ -234,69 +221,6 @@ export const DashboardPage: React.FC = () => {
   const abcAnalysis = data?.abc_analysis;
   const mapOrders = data?.map_orders || [];
   const regionsBreakdown = data?.regions_breakdown || [];
-  const setupGuide = data?.setup_guide;
-
-  const setupSteps = [
-    {
-      id: "product",
-      done: Boolean(setupGuide?.has_products),
-      title: lang === "ru" ? "Добавить первый товар" : lang === "en" ? "Add first product" : "Birinchi mahsulotni qo'shish",
-      desc:
-        lang === "ru"
-          ? "Загрузите фотографии, укажите цены в UZS, категории и остатки по филиалам."
-          : "Mahsulot rasmlari, narxi va qoldiqlarini kiriting.",
-      ctaLabel: lang === "ru" ? "Перейти к товарам" : "Mahsulotlarga o'tish",
-      ctaPath: "/products",
-    },
-    {
-      id: "theme",
-      done: Boolean(setupGuide?.has_theme),
-      title: lang === "ru" ? "Выбрать тему оформления витрины" : lang === "en" ? "Choose storefront theme" : "Vitrina mavzusini tanlash",
-      desc:
-        lang === "ru"
-          ? "Выберите одну из 13 готовых тем витрин и настройте цвета и баннеры под ваш бренд."
-          : "13 ta tayyor vitrina shablonlaridan birini tanlang.",
-      ctaLabel: lang === "ru" ? "Выбрать тему" : "Mavzu tanlash",
-      ctaPath: "/themes",
-    },
-    {
-      id: "payments",
-      done: Boolean(setupGuide?.has_payments),
-      title: lang === "ru" ? "Подключить платежные системы (Click / Payme / Uzum)" : lang === "en" ? "Connect payment providers" : "To'lov tizimlarini ulash (Click / Payme / Uzum)",
-      desc:
-        lang === "ru"
-          ? "Активируйте прием онлайн-оплат через Click, Payme, Uzum Bank и наличными при доставке."
-          : "Click, Payme, Uzum va naqd to'lovlarni faollashtiring.",
-      ctaLabel: lang === "ru" ? "Настроить оплату" : "To'lovlarni sozlash",
-      ctaPath: "/settings/payments",
-    },
-    {
-      id: "delivery",
-      done: Boolean(setupGuide?.has_delivery),
-      title: lang === "ru" ? "Настроить зоны доставки и филиалы" : lang === "en" ? "Configure delivery zones" : "Yetkazib berish hududlarini sozlash",
-      desc:
-        lang === "ru"
-          ? "Укажите стоимость курьерской доставки, условия бесплатной доставки и точки самовывоза."
-          : "Kuryerlik narxi va filiallarni belgilang.",
-      ctaLabel: lang === "ru" ? "Настроить доставку" : "Yetkazib berishni sozlash",
-      ctaPath: "/settings/delivery",
-    },
-    {
-      id: "domain",
-      done: Boolean(setupGuide?.has_domain),
-      title: lang === "ru" ? "Подключить домен (.storebox.uz или .uz)" : lang === "en" ? "Connect store domain" : "Domen ulash (.storebox.uz yoki .uz)",
-      desc:
-        lang === "ru"
-          ? "Проверьте системный поддомен или привяжите собственный домен с автоматическим SSL."
-          : "Tizim subdomeni yoki shaxsiy domeningizni ulang.",
-      ctaLabel: lang === "ru" ? "Управление доменами" : "Domenlarni boshqarish",
-      ctaPath: "/settings/domains",
-    },
-  ];
-
-  const completedStepsCount = setupSteps.filter((s) => s.done).length;
-  const setupProgressPct = Math.round((completedStepsCount / setupSteps.length) * 100);
-
   const periods = [
     { id: "today", label: t("today") || (lang === "ru" ? "Сегодня" : lang === "en" ? "Today" : "Bugun") },
     { id: "week", label: t("last_7_days") || (lang === "ru" ? "7 дней" : lang === "en" ? "7 days" : "Oxirgi 7 kun") },
@@ -401,15 +325,9 @@ export const DashboardPage: React.FC = () => {
       {/* 1. Header Bar: Store Title & Period Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
-            <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-[#211b2e] dark:text-white tracking-tight">
-              {store?.name || (lang === "ru" ? "Панель управления" : "Boshqaruv paneli")}
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#e6f7f0] text-[#00a86b] border border-[#8ce0bf]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00a86b] animate-pulse"></span>
-              {lang === "ru" ? "Активен" : "Faol"}
-            </span>
-          </div>
+          <h1 className="text-xl font-semibold text-[#211b2e] dark:text-white tracking-tight">
+            {store?.name || (lang === "ru" ? "Панель управления" : "Boshqaruv paneli")}
+          </h1>
           <p className="text-xs text-[#6d7175] font-normal mt-0.5">
             {lang === "ru"
               ? "Сводка показателей продаж, заказов и региональной активности по магазину"
@@ -662,124 +580,7 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Interactive Shopify Polaris Setup Guide (Гайд по запуску на Главной — Block 3.1) */}
-      <div className="bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 shadow-[0_1px_0_rgba(0,0,0,0.05)] overflow-hidden">
-        <div
-          onClick={() => setSetupExpanded((prev) => !prev)}
-          className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 cursor-pointer hover:bg-[#f6f6f7]/60 dark:hover:bg-zinc-800/40 transition-colors"
-        >
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
-                {lang === "ru"
-                  ? `Гайд по запуску магазина «${store?.name || "StoreBox"}»`
-                  : lang === "en"
-                  ? `Setup Guide for «${store?.name || "StoreBox"}»`
-                  : `«${store?.name || "StoreBox"}» do'konini ishga tushirish qo'llanmasi`}
-              </h2>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#e6f7f0] text-[#00a86b] border border-[#8ce0bf]">
-                {lang === "ru"
-                  ? `${completedStepsCount} из ${setupSteps.length} выполнено`
-                  : lang === "en"
-                  ? `${completedStepsCount} of ${setupSteps.length} completed`
-                  : `${completedStepsCount} / ${setupSteps.length} bajarildi`}
-              </span>
-            </div>
-            <p className="text-xs text-[#6d7175]">
-              {lang === "ru"
-                ? "Пошаговый чек-лист настройки витрины, платежей, доставки и домена по стандартам Shopify"
-                : lang === "en"
-                ? "Step-by-step checklist to configure your storefront, payments, delivery, and domain"
-                : "Vitrina, to'lovlar, yetkazib berish va domenni bosqichma-bosqich sozlang"}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Progress Bar */}
-            <div className="w-28 sm:w-36 h-2 rounded-full bg-[#e1e3e5] dark:bg-zinc-800 overflow-hidden">
-              <div
-                className="h-full bg-[#00a86b] transition-all duration-300"
-                style={{ width: `${setupProgressPct}%` }}
-              />
-            </div>
-            <span className="text-xs font-medium text-[#211b2e] dark:text-zinc-300">
-              {setupExpanded
-                ? lang === "ru"
-                  ? "Свернуть ▲"
-                  : lang === "en"
-                  ? "Collapse ▲"
-                  : "Yopish ▲"
-                : lang === "ru"
-                ? "Развернуть ▼"
-                : lang === "en"
-                ? "Expand ▼"
-                : "Ochish ▼"}
-            </span>
-          </div>
-        </div>
-
-        {setupExpanded && (
-          <div className="border-t border-[#dfe5ef] dark:border-zinc-800 divide-y divide-[#e1e3e5] dark:divide-zinc-800">
-            {setupSteps.map((step, idx) => {
-              const isSelected = activeSetupStep === idx;
-              return (
-                <div
-                  key={step.id}
-                  onClick={() => setActiveSetupStep(idx)}
-                  className={`p-4 transition-colors cursor-pointer ${
-                    isSelected ? "bg-[#f6f6f7] dark:bg-zinc-900/70" : "hover:bg-[#f6f6f7]/40"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                          step.done
-                            ? "bg-[#00a86b] text-white"
-                            : "border-2 border-[#8c9196] text-transparent"
-                        }`}
-                      >
-                        ✓
-                      </div>
-                      <div>
-                        <div
-                          className={`text-xs font-semibold ${
-                            step.done
-                              ? "text-[#211b2e] dark:text-white"
-                              : "text-[#211b2e] dark:text-zinc-200"
-                          }`}
-                        >
-                          {idx + 1}. {step.title}
-                        </div>
-                        {isSelected && (
-                          <p className="text-xs text-[#6d7175] mt-1 max-w-xl leading-relaxed">
-                            {step.desc}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <Link
-                      to={step.ctaPath}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`px-3 py-1.5 rounded-[12px] text-xs font-medium shrink-0 transition-colors inline-flex items-center gap-1 ${
-                        step.done
-                          ? "bg-white dark:bg-zinc-800 border border-[#dfe5ef] dark:border-zinc-700 text-[#211b2e] dark:text-zinc-200 hover:bg-slate-50"
-                          : "bg-[#211b2e] hover:bg-[#151020] text-white"
-                      }`}
-                    >
-                      <span>{step.ctaLabel}</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* 4. Middle Section: Revenue Dynamics Chart & Sales Channels */}
+      {/* 3. Middle Section: Revenue Dynamics Chart & Sales Channels */}
       <div className="sidekick-adaptive-grid grid grid-cols-1 xl:grid-cols-12 gap-5">
         {/* Left: Revenue Dynamics Chart (8 cols) */}
         <div className="xl:col-span-8 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
