@@ -175,7 +175,7 @@ h1, h2, h3, h4 {
 }
 
 /* Dashboard surfaces echo the marketing site's Inter, ink and soft-glass palette. */
-.dashboard-period-switcher {
+.dashboard-segmented-control {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -186,7 +186,7 @@ h1, h2, h3, h4 {
   background: rgba(235, 240, 250, 0.85);
   box-shadow: inset 2px 2px 5px rgba(165, 175, 200, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.95);
 }
-.dashboard-period-tab {
+.dashboard-segmented-tab {
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -205,25 +205,25 @@ h1, h2, h3, h4 {
   cursor: pointer;
   transition: color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
 }
-.dashboard-period-tab:hover { color: #171321; }
-.dashboard-period-tab.is-active,
-.dashboard-period-tab.is-active:hover {
+.dashboard-segmented-tab:hover { color: #171321; }
+.dashboard-segmented-tab.is-active,
+.dashboard-segmented-tab.is-active:hover {
   color: #ffffff;
   background: #211b2e;
   box-shadow: 0 4px 14px rgba(33, 27, 46, 0.3);
 }
-.dashboard-period-tab:focus-visible {
+.dashboard-segmented-tab:focus-visible {
   outline: 2px solid #6d5a88;
   outline-offset: 2px;
 }
-.dark .dashboard-period-switcher {
+.dark .dashboard-segmented-control {
   border-color: #494052;
   background: #30263f;
   box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.28), inset -2px -2px 5px rgba(255, 255, 255, 0.04);
 }
-.dark .dashboard-period-tab { color: #c7c1d0; }
-.dark .dashboard-period-tab:hover { color: #ffffff; }
-.dark .dashboard-period-tab.is-active { background: #151020; color: #ffffff; }
+.dark .dashboard-segmented-tab { color: #c7c1d0; }
+.dark .dashboard-segmented-tab:hover { color: #ffffff; }
+.dark .dashboard-segmented-tab.is-active { background: #151020; color: #ffffff; }
 
 .dashboard-kpi-card,
 .dashboard-panel {
