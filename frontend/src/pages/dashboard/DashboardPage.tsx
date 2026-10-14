@@ -383,7 +383,7 @@ export const DashboardPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2 max-w-full">
           {/* Period selector */}
           <div ref={datePickerRef} className="relative max-w-full">
-            <div className="dashboard-period-switcher max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Период статистики" : lang === "en" ? "Statistics period" : "Statistika davri"}>
+            <div className="dashboard-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Период статистики" : lang === "en" ? "Statistics period" : "Statistika davri"}>
               {periods.map((p) => (
                 <button
                   key={p.id}
@@ -399,7 +399,7 @@ export const DashboardPage: React.FC = () => {
                       return next;
                     });
                   }}
-                  className={`dashboard-period-tab ${period === p.id && !startDateParam ? "is-active" : ""}`}
+                  className={`dashboard-segmented-tab ${period === p.id && !startDateParam ? "is-active" : ""}`}
                 >
                   {p.label}
                 </button>
@@ -416,7 +416,7 @@ export const DashboardPage: React.FC = () => {
                   setCustomEnd(endDateParam || metrics?.today_date || "2026-10-11");
                   setShowDatePicker(!showDatePicker);
                 }}
-                className={`dashboard-period-tab ${period === "custom" || (startDateParam && endDateParam) ? "is-active" : ""}`}
+                className={`dashboard-segmented-tab ${period === "custom" || (startDateParam && endDateParam) ? "is-active" : ""}`}
               >
                 <Calendar className="h-3.5 w-3.5" />
                 <span>
@@ -498,26 +498,20 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Currency Switcher */}
-          <div className="inline-flex rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+          <div className="dashboard-segmented-control" role="group" aria-label={lang === "ru" ? "Валюта статистики" : lang === "en" ? "Statistics currency" : "Statistika valyutasi"}>
             <button
               type="button"
+              aria-pressed={currency === "UZS"}
               onClick={() => setCurrency("UZS")}
-              className={`px-2 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
-                currency === "UZS"
-                  ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
-                  : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
-              }`}
+              className={`dashboard-segmented-tab ${currency === "UZS" ? "is-active" : ""}`}
             >
               UZS
             </button>
             <button
               type="button"
+              aria-pressed={currency === "USD"}
               onClick={() => setCurrency("USD")}
-              className={`px-2 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
-                currency === "USD"
-                  ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
-                  : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
-              }`}
+              className={`dashboard-segmented-tab ${currency === "USD" ? "is-active" : ""}`}
             >
               USD
             </button>
