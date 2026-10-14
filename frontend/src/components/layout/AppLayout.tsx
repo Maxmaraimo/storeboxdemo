@@ -10,7 +10,8 @@ import {
   Package,
   BarChart3,
   Menu,
-  Sparkles,
+  Bot,
+  MessageCircle,
 } from "lucide-react";
 import { SidekickPanel } from "../ai/SidekickPanel";
 import { PageBreadcrumbs } from "./PageBreadcrumbs";
@@ -107,15 +108,15 @@ export const AppLayout: React.FC = () => {
           <button
             type="button"
             onClick={() => setSidekickOpen(true)}
-            className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-35 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-[#211b2e] hover:bg-[#151020] text-white shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer group border border-zinc-700"
-            title="Открыть StoreBox Sidekick AI (Cmd+J)"
+            className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-35 inline-flex h-11 items-center gap-1.5 rounded-[16px] rounded-br-[6px] border border-[#3b304e] bg-[#211b2e] px-3 text-white shadow-[0_8px_24px_rgba(33,27,46,0.25)] transition-all hover:-translate-y-0.5 hover:bg-[#352a49] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8e7bae] active:translate-y-0 cursor-pointer"
+            aria-label={language === "ru" ? "Открыть ИИ-чат" : language === "en" ? "Open AI chat" : "AI chatni ochish"}
+            title={language === "ru" ? "Открыть ИИ-чат" : language === "en" ? "Open AI chat" : "AI chatni ochish"}
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8d7ca5] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8d7ca5]"></span>
+            <span className="relative flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden="true">
+              <MessageCircle className="h-6 w-6 text-[#c7badb]" strokeWidth={1.8} />
+              <Bot className="absolute left-[5px] top-[4px] h-3.5 w-3.5 text-white" strokeWidth={2} />
             </span>
-            <Sparkles className="w-4 h-4 text-[#8d7ca5] group-hover:rotate-12 transition-transform" />
-            <span className="text-xs font-semibold tracking-tight pr-0.5 hidden sm:inline">Sidekick AI</span>
+            <span className="text-xs font-semibold tracking-tight">{language === "ru" ? "ИИ-чат" : "AI chat"}</span>
           </button>
         )}
 

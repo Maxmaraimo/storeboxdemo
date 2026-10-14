@@ -48,6 +48,7 @@ ChartJS.register(
   Legend,
   Filler
 );
+ChartJS.defaults.font.family = 'Inter, "Segoe UI", Arial, sans-serif';
 
 interface DashboardMetrics {
   period: string;
@@ -326,7 +327,7 @@ export const DashboardPage: React.FC = () => {
       {
         label: lang === "ru" ? "Новые" : lang === "en" ? "New" : "Yangi",
         data: hourlyOrders?.new || [],
-        backgroundColor: "#8e7bae",
+        backgroundColor: "#a3e635",
         borderRadius: 4,
         maxBarThickness: 12,
       },
@@ -340,7 +341,7 @@ export const DashboardPage: React.FC = () => {
       {
         label: lang === "ru" ? "Завершены" : lang === "en" ? "Completed" : "Bajarilgan",
         data: hourlyOrders?.completed || [],
-        backgroundColor: "#211b2e",
+        backgroundColor: "#8e7bae",
         borderRadius: 4,
         maxBarThickness: 12,
       },
@@ -550,11 +551,10 @@ export const DashboardPage: React.FC = () => {
               {isLoading ? "..." : formatMoney(metrics?.revenue || 0)}
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#dfe5ef] pt-3 text-[11px] text-[#686475] dark:border-zinc-700">
+          <div className="mt-4 border-t border-[#dfe5ef] pt-3 text-[11px] text-[#686475] dark:border-zinc-700">
             <span className="truncate">
               {lang === "ru" ? "Оборот:" : "Aylanma:"} {formatMoney(metrics?.sales_sum || 0)}
             </span>
-            <span className="shrink-0 font-semibold text-[#50465f] dark:text-[#c7badb]">● Live</span>
           </div>
         </div>
 
@@ -620,9 +620,8 @@ export const DashboardPage: React.FC = () => {
               {isLoading ? "..." : formatMoney(metrics?.avg_order || 0)}
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#dfe5ef] pt-3 text-[11px] text-[#686475] dark:border-zinc-700">
+          <div className="mt-4 border-t border-[#dfe5ef] pt-3 text-[11px] text-[#686475] dark:border-zinc-700">
             <span className="truncate">{lang === "ru" ? "За одну покупку" : "Bitta xarid uchun"}</span>
-            <span className="shrink-0 font-semibold text-[#50465f] dark:text-[#c7badb]">✓ {lang === "ru" ? "В норме" : "Barqaror"}</span>
           </div>
         </div>
       </div>

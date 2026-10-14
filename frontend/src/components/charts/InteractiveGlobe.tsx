@@ -551,8 +551,8 @@ export const InteractiveGlobe: React.FC<{
           // City label pill for selected city or major hubs
           if (isSelected || m.name === "Ташкент" || (v.z > 0.62 && zoom >= 1.04)) {
             ctx.font = isSelected
-              ? "600 11px -apple-system, BlinkMacSystemFont, Inter, sans-serif"
-              : "500 10px -apple-system, BlinkMacSystemFont, Inter, sans-serif";
+              ? '600 11px Inter, "Segoe UI", Arial, sans-serif'
+              : '500 10px Inter, "Segoe UI", Arial, sans-serif';
             const label = isSelected ? `${m.name} • ${m.orders} зак.` : m.name;
             const textWidth = ctx.measureText(label).width;
             const bx = tipX + 9;

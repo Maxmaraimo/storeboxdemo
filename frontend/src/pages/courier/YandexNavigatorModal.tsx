@@ -309,7 +309,7 @@ export const YandexNavigatorModal: React.FC<YandexNavigatorModalProps> = ({
               color: white;
               padding: 5px 9px;
               border-radius: 12px;
-              font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+              font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
               font-size: 11px;
               font-weight: 700;
               display: flex;
