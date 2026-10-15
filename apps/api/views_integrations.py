@@ -99,8 +99,8 @@ INTEGRATIONS_CATALOG = [
         "desc": "Clopos tizimi bilan to'liq integratsiya. Mahsulotlar katalogi, narxlar va kassa holatini real vaqtda yangilash.",
         "icon_color": "#6366F1",
         "fields": [
-            {"key": "api_token", "label": "Clopos API Token", "type": "password", "placeholder": "clopos_tok_...", "required": True, "secret": True},
-            {"key": "branch_id", "label": "Filial ID", "type": "text", "placeholder": "branch_main", "required": True},
+            {"key": "api_token", "label": "Clopos API Token", "type": "password", "placeholder": "JSJUM8a6A8QxYutiJxJghufVgTws2DAL", "required": True, "secret": True, "default": "JSJUM8a6A8QxYutiJxJghufVgTws2DAL"},
+            {"key": "branch_id", "label": "Filial ID", "type": "text", "placeholder": "1", "required": True, "default": "1"},
         ]
     },
     {
@@ -793,7 +793,7 @@ def integrations_list_view(request):
 @permission_classes([IsAuthenticated])
 def integration_detail_view(request, slug):
     """
-    Returns single integration details with its stored config.
+    Returns single integration details with its stored config and linked product counts.
     """
     store = get_merchant_store(request)
     if not store:
@@ -809,6 +809,10 @@ def integration_detail_view(request, slug):
     config = record.config if record else {}
     masked_creds = record.credentials_preview if record else {}
 
+    from apps.catalog.models import Product
+    total_store_products = Product.objects.filter(store=store).count()
+    linked_count = Product.objects.filter(store=store, slug__startswith=f"{slug}-").count()
+
     return Response({
         **meta,
         "is_connected": is_connected,
@@ -816,6 +820,8 @@ def integration_detail_view(request, slug):
         "saved_config": config,
         "masked_credentials": masked_creds,
         "last_synced": record.last_sync_at.isoformat() if record and record.last_sync_at else None,
+        "linked_products_count": linked_count,
+        "total_store_products_count": total_store_products,
     })
 
 
@@ -900,14 +906,14 @@ def integration_save_view(request, slug):
         message=f"{meta['name']} sozlamalari yangilandi va 256-bitli shifrlash bilan saqlandi."
     )
 
-    # Automatically trigger initial synchronization if enabled
+    # For non-POS/warehouse integrations (payments, delivery, social) or if explicitly requested, run sync_data
     sync_result = None
-    if is_active:
+    if is_active and (meta.get("category") not in ("pos", "warehouse") or data.get("auto_sync_all")):
         sync_result = IntegrationSyncService.sync_data(store, slug)
 
     return Response({
         "success": True,
-        "message": f"{meta['name']} muvaffaqiyatli ulandi va sozlamalari saqlandi!",
+        "message": f"{meta['name']} muvaffaqiyatli ulandi! Endi quyidagi katalogdan kerakli tovarlarni tanlab do'konga qo'shishingiz mumkin.",
         "sync_result": sync_result,
         "integration": {
             "slug": slug,
@@ -1049,6 +1055,38 @@ def integration_sync_view(request, slug):
 
     from apps.stores.integration_service import IntegrationSyncService
     result = IntegrationSyncService.sync_data(store, slug)
+    status_code = 200 if result.get("success") else 400
+    return Response(result, status=status_code)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def integration_catalog_view(request, slug):
+    """
+    Returns the live POS / Warehouse product catalog for Clopos and other POS/Warehouse integrations.
+    """
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Do'kon topilmadi"}, status=404)
+
+    from apps.stores.integration_service import IntegrationSyncService
+    result = IntegrationSyncService.fetch_catalog(store, slug)
+    return Response(result)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def integration_import_view(request, slug):
+    """
+    Imports user-selected POS / Warehouse catalog products into StoreBox.
+    """
+    store = get_merchant_store(request)
+    if not store:
+        return Response({"error": "Do'kon topilmadi"}, status=404)
+
+    items = request.data.get("items") or []
+    from apps.stores.integration_service import IntegrationSyncService
+    result = IntegrationSyncService.import_selected(store, slug, items)
     status_code = 200 if result.get("success") else 400
     return Response(result, status=status_code)
 

@@ -96,6 +96,11 @@ def get_storefront_lang(request, store=None):
         request.language = q_lang
         return q_lang
 
+    if store and store.theme_template == 'streetwear':
+        s_lang = (request.session.get('lang') if hasattr(request, 'session') else None) or (store.default_language if store else None) or 'ru'
+        if s_lang in ['uz', 'ru', 'en', 'tr']:
+            return s_lang
+
     req_lang = getattr(request, 'language', None)
     if req_lang in ['uz', 'ru', 'en', 'tr']:
         if hasattr(request, 'session'):
@@ -657,6 +662,296 @@ UI_TRANSLATIONS = {
 }
 
 
+STREETWEAR_I18N = {
+    'ru': {
+        'brand_name': 'CRYSTALL AMI',
+        'ticker_delivery': '«CRYSTALL AMI» — БЕСПЛАТНАЯ ДОСТАВКА ПО ВСЕМУ МИРУ',
+        'ticker_collection': 'НОВАЯ КОЛЛЕКЦИЯ АВТОРСКОГО СТРИТВИРА SS26',
+        'ticker_boutique': 'EXCLUSIVE WOMEN\'S BOUTIQUE SELECTION',
+        'in_stock': 'В НАЛИЧИИ',
+        'out_of_stock': 'НЕТ В НАЛИЧИИ',
+        'archive_badge': 'ARCHIVE DROP 2026',
+        'hero_title': 'CRYSTALL AMI — ARCHIVE 2026',
+        'hero_subtitle': 'АВТОРСКАЯ КОЛЛЕКЦИЯ ЖЕНСКОЙ ОДЕЖДЫ, ОБУВИ И СЕЛЕКТИВНОГО ПАРФЮМА',
+        'catalog': 'КАТАЛОГ',
+        'clothing': 'ОДЕЖДА',
+        'shoes': 'ОБУВЬ',
+        'bags': 'СУМКИ',
+        'accessories': 'АКСЕССУАРЫ',
+        'perfume': 'ПАРФЮМ',
+        'all_items': 'ВСЕ ТОВАРЫ',
+        'models': 'Models',
+        'mockups': 'Mockups',
+        'items_in_stock': 'ТОВАРОВ В НАЛИЧИИ',
+        'items_count': 'ТОВАРОВ В НАЛИЧИИ',
+        'filter': 'Фильтр',
+        'sort': 'Сортировка',
+        'sort_default': 'По умолчанию',
+        'sort_price_asc': 'Цена ↑ (Дешевле)',
+        'sort_price_desc': 'Цена ↓ (Дороже)',
+        'sort_name': 'По названию (A-Z)',
+        'search_placeholder': 'ПОИСК ПО КАТАЛОГУ...',
+        'cart': 'КОРЗИНА',
+        'wishlist': 'ИЗБРАННОЕ',
+        'empty_cart': 'Ваша корзина пуста',
+        'checkout': 'ОФОРМИТЬ ЗАКАЗ',
+        'total': 'ИТОГО',
+        'add_to_cart': 'ДОБАВИТЬ В КОРЗИНУ',
+        'select_size': 'ВЫБЕРИТЕ РАЗМЕР',
+        'please_select_size': 'ПОЖАЛУЙСТА, ВЫБЕРИТЕ РАЗМЕР',
+        'share': 'ПОДЕЛИТЬСЯ',
+        'share_copied': 'ССЫЛКА СКОПИРОВАНА',
+        'size_chart': 'Таблица размеров',
+        'size_guide': 'ТАБЛИЦА РАЗМЕРОВ',
+        'dolyami_badge': 'ДОЛЯМИ',
+        'dolyami_text': '4 платежа по {price} без переплат',
+        'back_btn': '← НАЗАД',
+        'back_short': 'НАЗАД',
+        'you_may_like': 'ВАМ МОЖЕТ ПОНРАВИТЬСЯ',
+        'recently_viewed': 'НЕДАВНО ПРОСМОТРЕННЫЕ',
+        'description': 'ОПИСАНИЕ',
+        'composition': 'СОСТАВ И МАТЕРИАЛЫ',
+        'delivery': 'ДОСТАВКА И ОПЛАТА',
+        'details': 'ДЕТАЛИ',
+        'composition_text': 'Премиальные аутентичные материалы итальянского и португальского производства. Ручная сборка, оригинальная фурнитура и безупречные швы.',
+        'delivery_line1': 'Бесплатная экспресс-доставка СДЭК и Яндекс по Узбекистану и СНГ.',
+        'delivery_line2': 'Примерка перед покупкой и безопасная оплата при получении или картой.',
+        'delivery_line3': 'Обмен и возврат в течение 14 дней.',
+        'one_size': 'ЕДИНЫЙ РАЗМЕР',
+        'account': 'Личный кабинет',
+        'login_register': 'Вход / Регистрация',
+        'reset_filters': 'СБРОСИТЬ',
+        'show_results': 'ПОКАЗАТЬ',
+        'price_range': 'ЦЕНОВОЙ ДИАПАЗОН (UZS)',
+        'from': 'ОТ',
+        'to': 'ДО',
+        'only_in_stock': 'ТОЛЬКО В НАЛИЧИИ',
+        'categories_title': 'КАТЕГОРИИ',
+        'collections_title': 'КОЛЛЕКЦИИ (WOMEN)',
+        'navigation': 'НАВИГАЦИЯ',
+        'support': 'ПОДДЕРЖКА',
+        'rights_reserved': 'ВСЕ ПРАВА ЗАЩИЩЕНЫ.',
+        'no_products': 'Товары не найдены',
+        'no_products_desc': 'Попробуйте изменить категорию или сбросить фильтры.',
+        'ticker_top': 'В НАЛИЧИИ • IMPERIAL ZIP-HOODIES / CARGO PANTS / LONGSLEEVES • «CRYSTALL AMI» — БЕСПЛАТНАЯ ДОСТАВКА ПО ВСЕМУ МИРУ • НОВАЯ КОЛЛЕКЦИЯ АВТОРСКОГО СТРИТВИРА SS26',
+        'ticker_bottom': 'SS26 • В НАЛИЧИИ • EXCLUSIVE WOMEN\'S BOUTIQUE SELECTION — «CRYSTALL AMI» — БЕСПЛАТНАЯ ДОСТАВКА ПО ВСЕМУ МИРУ',
+        'newsletter_title': 'РАССЫЛКА',
+        'newsletter_desc': 'Подпишитесь на рассылку, чтобы первыми узнавать о новых коллекциях и эксклюзивных предложениях.',
+        'newsletter_placeholder': 'Email',
+        'newsletter_btn': 'OK',
+        'newsletter_success': 'Спасибо за подписку на рассылку!',
+        'support_title': 'ПОДДЕРЖКА',
+        'delivery_customs': 'ДОСТАВКА И ТАМОЖНЯ',
+        'return_refund': 'ВОЗВРАТ И ВОЗМЕЩЕНИЕ',
+        'preorder': 'ПРЕДЗАКАЗ',
+        'garment_care': 'УХОД ЗА ИЗДЕЛИЯМИ',
+        'company_title': 'КОМПАНИЯ',
+        'about_brand': 'О БРЕНДЕ',
+        'contacts': 'КОНТАКТЫ',
+        'offer': 'ОФЕРТА',
+        'privacy': 'КОНФИДЕНЦИАЛЬНОСТЬ',
+        'socials_title': 'СОЦСЕТИ',
+        'vkontakte': 'ВКОНТАКТЕ',
+        'telegram': 'ТЕЛЕГРАМ',
+        'instagram': 'INSTAGRAM',
+        'powered_by_storebox': 'Работает на платформе StoreBox',
+        'copyright_storebox': '© 2026 CRYSTALL AMI. Все права защищены. Разработано на платформе StoreBox',
+        'success_order': 'Ваш заказ успешно оформлен! Наш менеджер свяжется с вами в течение 10 минут.'
+    },
+    'uz': {
+        'brand_name': 'CRYSTALL AMI',
+        'ticker_delivery': '«CRYSTALL AMI» — BUTUN DUNYO BO\'YLAB BEPUL YETKAZISH',
+        'ticker_collection': 'MUALLIFLIK STREETWEAR SS26 YANGI TO\'PLAMI',
+        'ticker_boutique': 'EXCLUSIVE WOMEN\'S BOUTIQUE SELECTION',
+        'in_stock': 'SOTUVDA BOR',
+        'out_of_stock': 'SOTUVDA YO\'Q',
+        'archive_badge': 'ARCHIVE DROP 2026',
+        'hero_title': 'CRYSTALL AMI — ARCHIVE 2026',
+        'hero_subtitle': 'AYOLLAR KIYIMLARI, POYABZALLARI VA PARFYUMERIYA TO\'PLAMI',
+        'catalog': 'KATALOG',
+        'clothing': 'KIYIMLAR',
+        'shoes': 'POYABZALLAR',
+        'bags': 'SUMKALAR',
+        'accessories': 'AKSESSUARLAR',
+        'perfume': 'ATIRLAR',
+        'all_items': 'BARCHA MAHSULOTLAR',
+        'models': 'Models',
+        'mockups': 'Mockups',
+        'items_in_stock': 'MAHSULOT MAVJUD',
+        'items_count': 'TA TOVAR MAVJUD',
+        'filter': 'Filtr',
+        'sort': 'Saralash',
+        'sort_default': 'Odatiy',
+        'sort_price_asc': 'Narx: Arzonroq ↑',
+        'sort_price_desc': 'Narx: Qimmatroq ↓',
+        'sort_name': 'Nomi bo\'yicha (A-Z)',
+        'search_placeholder': 'KATALOGDAN QIDIRISH...',
+        'cart': 'SAVAT',
+        'wishlist': 'SEVIMLILAR',
+        'empty_cart': 'Savatingiz bo\'sh',
+        'checkout': 'BUYURTMA BERISH',
+        'total': 'JAMI',
+        'add_to_cart': 'SAVATCHAGA QO\'SHISH',
+        'select_size': 'O\'LCHAMNI TANLANG',
+        'please_select_size': 'ILTIMOS, OʻLCHAMNI TANLANG',
+        'share': 'ULASHISH',
+        'share_copied': 'HAVOLA NUSXALANDI',
+        'size_chart': 'O\'lchamlar jadvali',
+        'size_guide': 'O\'LCHAMLAR JADVALI',
+        'dolyami_badge': 'BO\'LIB TO\'LASH',
+        'dolyami_text': '{price} dan 4 ta to\'lov, foizsiz',
+        'back_btn': '← ORQAGA',
+        'back_short': 'ORQAGA',
+        'you_may_like': 'SIZGA YOQISHI MUMKIN',
+        'recently_viewed': 'YAQINDA KO\'RILGANLAR',
+        'description': 'TAVSIF',
+        'composition': 'TARKIBI VA MATERIALLAR',
+        'delivery': 'YETKAZIB BERISH VA TO\'LOV',
+        'details': 'DETALLAR',
+        'composition_text': 'Italiya va Portugaliya ishlab chiqarishidagi premium original materiallar. Qo‘l mehnati, original furnitura va mukammal tikuvlar.',
+        'delivery_line1': 'O‘zbekiston va MDH bo‘ylab bepul CDEK va Yandex tezkor yetkazib berish.',
+        'delivery_line2': 'Sotib olishdan oldin kiyib ko‘rish va qabul qilganda xavfsiz to‘lov.',
+        'delivery_line3': '14 kun ichida almashtirish va qaytarish.',
+        'one_size': 'YAGONA O\'LCHAM',
+        'account': 'Shaxsiy kabinet',
+        'login_register': 'Kirish / Ro\'yxatdan o\'tish',
+        'reset_filters': 'TOZALASH',
+        'show_results': 'KO\'RSATISH',
+        'price_range': 'NARX ORALIG\'I (UZS)',
+        'from': 'DAN',
+        'to': 'GACHA',
+        'only_in_stock': 'FAQAT SOTUVDA BORLAR',
+        'categories_title': 'KATEGORIYALAR',
+        'collections_title': 'TO\'PLAMLAR (WOMEN)',
+        'navigation': 'NAVIGATSIYA',
+        'support': 'QO\'LLAB-QUVVATLASH',
+        'rights_reserved': 'BARCHA HUQUQLAR HIMOYALANGAN.',
+        'no_products': 'Mahsulotlar topilmadi',
+        'no_products_desc': 'Filtrlarni o\'zgartiring yoki tozalang.',
+        'ticker_top': 'SOTUVDA BOR • IMPERIAL ZIP-HOODIES / CARGO PANTS / LONGSLEEVES • «CRYSTALL AMI» — BUTUN DUNYO BO\'YLAB BEPUL YETKAZIB BERISH • SS26 MUALLIFLIK STREETWEAR TO\'PLAMI',
+        'ticker_bottom': 'SS26 • SOTUVDA BOR • EXCLUSIVE WOMEN\'S BOUTIQUE SELECTION — «CRYSTALL AMI» — BUTUN DUNYO BO\'YLAB BEPUL YETKAZIB BERISH',
+        'newsletter_title': 'XABARNOMA',
+        'newsletter_desc': 'Yangi to‘plamlar va eksklyuziv takliflardan birinchi bo‘lib xabardor bo‘lish uchun obuna bo‘ling.',
+        'newsletter_placeholder': 'Email',
+        'newsletter_btn': 'OK',
+        'newsletter_success': 'Xabarnomaga obuna bo‘lganingiz uchun rahmat!',
+        'support_title': 'QO‘LLAB-QUVVATLASH',
+        'delivery_customs': 'YETKAZISH VA BOJXONA',
+        'return_refund': 'QAYTARISH VA TO‘LOVNI QAYTARISH',
+        'preorder': 'OLDINDAN BUYURTMA',
+        'garment_care': 'MAHSULOTLARGA G‘AMXO‘RLIK',
+        'company_title': 'KOMPANIYA',
+        'about_brand': 'BREND HAQIDA',
+        'contacts': 'BOG‘LANISH',
+        'offer': 'OMMAVIY OFERTA',
+        'privacy': 'MAXFIYLIK SIYOSATI',
+        'socials_title': 'IJTIMOIY TARMOQLAR',
+        'vkontakte': 'VKONTAKTE',
+        'telegram': 'TELEGRAM',
+        'instagram': 'INSTAGRAM',
+        'powered_by_storebox': 'StoreBox platformasida ishlaydi',
+        'copyright_storebox': '© 2026 CRYSTALL AMI. Barcha huquqlar himoyalangan. StoreBox platformasida yaratilgan',
+        'success_order': 'Buyurtmangiz muvaffaqiyatli qabul qilindi! Menejerimiz 10 daqiqa ichida siz bilan bog\'lanadi.'
+    },
+    'en': {
+        'brand_name': 'CRYSTALL AMI',
+        'ticker_delivery': '«CRYSTALL AMI» — WORLDWIDE FREE SHIPPING',
+        'ticker_collection': 'NEW SS26 ARCHIVE STREETWEAR COLLECTION',
+        'ticker_boutique': 'EXCLUSIVE WOMEN\'S BOUTIQUE SELECTION',
+        'in_stock': 'IN STOCK',
+        'out_of_stock': 'OUT OF STOCK',
+        'archive_badge': 'ARCHIVE DROP 2026',
+        'hero_title': 'CRYSTALL AMI — ARCHIVE 2026',
+        'hero_subtitle': 'EXCLUSIVE WOMEN\'S STREETWEAR, FOOTWEAR & SELECTIVE PARFUM',
+        'catalog': 'CATALOG',
+        'clothing': 'CLOTHING',
+        'shoes': 'SHOES',
+        'bags': 'BAGS',
+        'accessories': 'ACCESSORIES',
+        'perfume': 'PERFUME',
+        'all_items': 'ALL ITEMS',
+        'models': 'Models',
+        'mockups': 'Mockups',
+        'items_in_stock': 'ITEMS IN STOCK',
+        'items_count': 'ITEMS IN STOCK',
+        'filter': 'Filter',
+        'sort': 'Sort',
+        'sort_default': 'Default',
+        'sort_price_asc': 'Price ↑ (Low to High)',
+        'sort_price_desc': 'Price ↓ (High to Low)',
+        'sort_name': 'By Name (A-Z)',
+        'search_placeholder': 'SEARCH CATALOG...',
+        'cart': 'CART',
+        'wishlist': 'SAVED',
+        'empty_cart': 'Your cart is empty',
+        'checkout': 'CHECKOUT',
+        'total': 'TOTAL',
+        'add_to_cart': 'ADD TO CART',
+        'select_size': 'SELECT SIZE',
+        'please_select_size': 'PLEASE SELECT A SIZE',
+        'share': 'SHARE',
+        'share_copied': 'LINK COPIED',
+        'size_chart': 'Size Chart',
+        'size_guide': 'SIZE GUIDE',
+        'dolyami_badge': 'INSTALLMENTS',
+        'dolyami_text': '4 payments of {price} no fees',
+        'back_btn': '← BACK',
+        'back_short': 'BACK',
+        'you_may_like': 'YOU MAY ALSO LIKE',
+        'recently_viewed': 'RECENTLY VIEWED',
+        'description': 'DESCRIPTION',
+        'composition': 'MATERIALS & CARE',
+        'delivery': 'SHIPPING & RETURNS',
+        'details': 'DETAILS',
+        'composition_text': 'Premium authentic materials from Italian and Portuguese production. Hand craftsmanship, original hardware, and flawless stitching.',
+        'delivery_line1': 'Free express delivery by CDEK & Yandex across Uzbekistan and CIS.',
+        'delivery_line2': 'Fitting before purchase and secure payment on delivery or by card.',
+        'delivery_line3': 'Exchange and return within 14 days.',
+        'one_size': 'ONE SIZE',
+        'account': 'My Account',
+        'login_register': 'Login / Register',
+        'reset_filters': 'RESET',
+        'show_results': 'SHOW',
+        'price_range': 'PRICE RANGE (UZS)',
+        'from': 'FROM',
+        'to': 'TO',
+        'only_in_stock': 'IN STOCK ONLY',
+        'categories_title': 'CATEGORIES',
+        'collections_title': 'COLLECTIONS (WOMEN)',
+        'navigation': 'NAVIGATION',
+        'support': 'CUSTOMER SERVICE',
+        'rights_reserved': 'ALL RIGHTS RESERVED.',
+        'no_products': 'No products found',
+        'no_products_desc': 'Try changing filters or select another category.',
+        'ticker_top': 'IN STOCK • IMPERIAL ZIP-HOODIES / CARGO PANTS / LONGSLEEVES • «CRYSTALL AMI» — WORLDWIDE FREE SHIPPING • NEW SS26 ARCHIVE STREETWEAR COLLECTION',
+        'ticker_bottom': 'SS26 • IN STOCK • EXCLUSIVE WOMEN\'S BOUTIQUE SELECTION — «CRYSTALL AMI» — WORLDWIDE FREE SHIPPING',
+        'newsletter_title': 'NEWSLETTER',
+        'newsletter_desc': 'Subscribe to our newsletter to be the first to know about new collections and exclusive drops.',
+        'newsletter_placeholder': 'Email',
+        'newsletter_btn': 'OK',
+        'newsletter_success': 'Thank you for subscribing to our newsletter!',
+        'support_title': 'SUPPORT',
+        'delivery_customs': 'SHIPPING & CUSTOMS',
+        'return_refund': 'RETURNS & REFUNDS',
+        'preorder': 'PRE-ORDER',
+        'garment_care': 'GARMENT CARE',
+        'company_title': 'COMPANY',
+        'about_brand': 'ABOUT BRAND',
+        'contacts': 'CONTACTS',
+        'offer': 'TERMS OF SERVICE',
+        'privacy': 'PRIVACY POLICY',
+        'socials_title': 'SOCIAL MEDIA',
+        'vkontakte': 'VKONTAKTE',
+        'telegram': 'TELEGRAM',
+        'instagram': 'INSTAGRAM',
+        'powered_by_storebox': 'Powered by StoreBox',
+        'copyright_storebox': '© 2026 CRYSTALL AMI. All rights reserved. Powered by StoreBox',
+        'success_order': 'Your order has been placed! Our manager will contact you within 10 minutes.'
+    }
+}
+
+
+
 # -----------------------------------------------------------------
 # STOREFRONT HOME & CATALOG
 # -----------------------------------------------------------------
@@ -936,57 +1231,86 @@ def storefront_home_view(request, subdomain=None):
         'first_constructor_product_id': first_constructor_product_id,
     }
     if store.theme_template == 'streetwear':
-        OUTFIT_GARMENT_MAP = {
-            slug: {
-                **meta,
-                'cutout': meta['image'],
-                'photo': meta['image'],
-            }
-            for slug, meta in STREETWEAR_PRODUCT_MEDIA.items()
-        }
+        catalog_items = []
+        for p in products.prefetch_related('images', 'variations').order_by('-is_featured', 'id'):
+            p_cat = p.category.slug if p.category else ''
+            p_cat_name = p.category.get_name(lang) if p.category else ''
 
-        outfit_prods = []
-        for p in products.order_by('id'):
-            p_cat = p.category.slug if getattr(p, 'category', None) else ''
-            p_img = p.image_url or (p.primary_image_url if hasattr(p, 'primary_image_url') else '') or ''
-            p_slug = getattr(p, 'slug', '')
-            g_meta = OUTFIT_GARMENT_MAP.get(p_slug, {})
+            p_imgs = []
+            for img_obj in p.images.all().order_by('-is_primary', 'sort_order', 'id'):
+                if img_obj.image:
+                    p_imgs.append(img_obj.image.url)
+            if not p_imgs and p.primary_image_url:
+                p_imgs.append(p.primary_image_url)
+            if not p_imgs:
+                p_imgs.append('/static/images/placeholder_product.png')
+
+            model_img = next((img for img in p_imgs if '_model.' in img or 'model' in img), p_imgs[0])
+            mockup_img = next((img for img in p_imgs if '_mockup.' in img or 'mockup' in img or 'packshot' in img or 'studio_' in img), (p_imgs[1] if len(p_imgs) > 1 else p_imgs[0]))
 
             p_vars = []
-            if hasattr(p, 'variations'):
-                for v in p.variations.filter(is_active=True).order_by('sort_order', 'id'):
-                    p_vars.append({
-                        'id': v.id,
-                        'name': v.get_name(lang),
-                        'price': float(v.price)
-                    })
+            for v in p.variations.filter(is_active=True).order_by('sort_order', 'id'):
+                p_vars.append({
+                    'id': v.id,
+                    'name': v.get_name(lang),
+                    'price': float(v.price),
+                    'stock': v.stock,
+                    'is_in_stock': v.stock > 0,
+                })
 
-            default_slot = 'top' if p_cat in ['tops', 'outerwear'] else ('bottom' if p_cat == 'bottoms' else 'shoes')
-            outfit_prods.append({
+            p_desc = p.get_description(lang) or p.description_ru or ''
+            catalog_items.append({
                 'id': p.id,
-                'slug': p_slug,
-                'name': getattr(p, 'display_name', '') or p.get_name(lang),
+                'slug': p.slug,
+                'name': p.get_name(lang) or p.name_ru or '',
+                'name_ru': p.name_ru or p.name or '',
+                'name_uz': p.name_uz or p.get_name('uz') or p.name or '',
+                'name_en': p.name_en or p.get_name('en') or p.name or '',
                 'category_slug': p_cat,
-                'slot': g_meta.get('slot', default_slot),
-                'label': g_meta.get('label', ''),
-                'color': g_meta.get('color', '#333333'),
-                'cutout': g_meta.get('cutout', ''),
-                'fitted': g_meta.get('fitted', ''),
-                'photo': g_meta.get('photo', p_img),
+                'category_name': p_cat_name,
+                'category_name_ru': p.category.name_ru if p.category else '',
+                'category_name_uz': (p.category.name_uz or p.category.get_name('uz')) if p.category else '',
+                'category_name_en': (p.category.name_en or p.category.get_name('en')) if p.category else '',
                 'price': float(p.price),
-                'old_price': float(p.old_price) if getattr(p, 'old_price', None) else None,
-                'image': g_meta.get('photo', p_img),
-                'description': getattr(p, 'display_description', '') or p.get_description(lang),
+                'old_price': float(p.old_price) if p.old_price else None,
+                'discount_percent': p.discount_percent,
+                'is_in_stock': p.is_in_stock,
+                'primary_image': model_img,
+                'model_image': model_img,
+                'mockup_image': mockup_img,
+                'images': p_imgs,
+                'description': p_desc,
+                'description_ru': p.description_ru or p.description or '',
+                'description_uz': p.description_uz or p.get_description('uz') or p.description or '',
+                'description_en': p.description_en or p.get_description('en') or p.description or '',
                 'variations': p_vars,
             })
-        context['outfit_products_json'] = json.dumps(outfit_prods, ensure_ascii=False)
-        context['mannequin_base_url'] = '/static/images/222fma/uploads/models/mannequin-3b30f3cb4662.webp'
 
-        # Repair carts created before the streetwear packshots were wired into
-        # the cart API. This makes already-added mobile items visible at once.
-        if normalize_streetwear_cart_images(cart, store):
-            request.session['cart'] = cart
-            request.session.modified = True
+        store_categories_data = [
+            {
+                'slug': '',
+                'name': 'ВСЕ ТОВАРЫ' if lang == 'ru' else ('BARCHA MAHSULOTLAR' if lang == 'uz' else 'ALL ITEMS'),
+                'name_ru': 'ВСЕ ТОВАРЫ',
+                'name_uz': 'BARCHA MAHSULOTLAR',
+                'name_en': 'ALL ITEMS',
+                'count': len(catalog_items)
+            }
+        ]
+        for c in store.categories.filter(is_active=True).order_by('sort_order', 'id'):
+            cnt = sum(1 for it in catalog_items if it['category_slug'] == c.slug)
+            store_categories_data.append({
+                'slug': c.slug,
+                'name': c.get_name(lang) or c.name_ru,
+                'name_ru': c.name_ru,
+                'name_uz': c.name_uz or c.get_name('uz') or c.name_ru,
+                'name_en': c.name_en or c.get_name('en') or c.name_ru,
+                'count': cnt
+            })
+
+        context['streetwear_catalog_json'] = json.dumps(catalog_items, ensure_ascii=False)
+        context['streetwear_categories_json'] = json.dumps(store_categories_data, ensure_ascii=False)
+        context['streetwear_i18n_json'] = json.dumps(STREETWEAR_I18N, ensure_ascii=False)
+        context['total_catalog_items'] = len(catalog_items)
         context['cart'] = cart
         context['cart_json'] = json.dumps(cart)
         return render(request, 'storefront/streetwear_home.html', context)
@@ -2260,6 +2584,79 @@ def product_detail_page_view(request, product_id, subdomain=None):
         'is_tma': request.GET.get('tma') == '1' or getattr(request, 'is_tma', False),
     }
     if store.theme_template == 'streetwear':
+        p_first = product.images.order_by('-is_primary', 'sort_order').first()
+        p_img = p_first.image.url if p_first and p_first.image else (product.primary_image_url or '/static/images/placeholder_product.png')
+        all_imgs = [img.image.url for img in product.images.all().order_by('-is_primary', 'sort_order') if img.image]
+        if not all_imgs:
+            all_imgs = [p_img]
+
+        p_data = {
+            'id': product.id,
+            'slug': product.slug,
+            'name_ru': product.name_ru or product.name or '',
+            'name_uz': product.name_uz or product.get_name('uz') or product.name or '',
+            'name_en': product.name_en or product.get_name('en') or product.name or '',
+            'category_name_ru': product.category.name_ru if product.category else '',
+            'category_name_uz': (product.category.name_uz or product.category.get_name('uz')) if product.category else '',
+            'category_name_en': (product.category.name_en or product.category.get_name('en')) if product.category else '',
+            'category_slug': product.category.slug if product.category else '',
+            'description_ru': product.description_ru or product.description or '',
+            'description_uz': product.description_uz or product.get_description('uz') or product.description or '',
+            'description_en': product.description_en or product.get_description('en') or product.description or '',
+            'price': float(product.price),
+            'old_price': float(product.old_price) if product.old_price else None,
+            'images': all_imgs,
+            'variations': [
+                {
+                    'name_ru': v.name_ru or v.name_uz or '',
+                    'name_uz': v.name_uz or v.name_ru or '',
+                    'name_en': v.name_en or v.name_ru or '',
+                    'price': float(v.price) if v.price else float(product.price)
+                } for v in variations
+            ]
+        }
+
+        related_data = []
+        for rp in related_products:
+            rp_first = rp.images.order_by('-is_primary', 'sort_order').first()
+            rp_img = rp_first.image.url if rp_first and rp_first.image else (rp.primary_image_url or '/static/images/placeholder_product.png')
+            related_data.append({
+                'id': rp.id,
+                'slug': rp.slug,
+                'name_ru': rp.name_ru or rp.name or '',
+                'name_uz': rp.name_uz or rp.get_name('uz') or rp.name or '',
+                'name_en': rp.name_en or rp.get_name('en') or rp.name or '',
+                'category_name_ru': rp.category.name_ru if rp.category else '',
+                'category_name_uz': (rp.category.name_uz or rp.category.get_name('uz')) if rp.category else '',
+                'category_name_en': (rp.category.name_en or rp.category.get_name('en')) if rp.category else '',
+                'price': float(rp.price),
+                'old_price': float(rp.old_price) if rp.old_price else None,
+                'primary_image': rp_img,
+            })
+
+        store_categories_data = [
+            {
+                'slug': '',
+                'name_ru': 'ВСЕ ТОВАРЫ',
+                'name_uz': 'BARCHA MAHSULOTLAR',
+                'name_en': 'ALL ITEMS',
+                'count': Product.objects.filter(store=store, is_active=True).count()
+            }
+        ]
+        for c in store.categories.filter(is_active=True).order_by('sort_order', 'id'):
+            cnt = Product.objects.filter(store=store, category=c, is_active=True).count()
+            store_categories_data.append({
+                'slug': c.slug,
+                'name_ru': c.name_ru,
+                'name_uz': c.name_uz or c.get_name('uz') or c.name_ru,
+                'name_en': c.name_en or c.get_name('en') or c.name_ru,
+                'count': cnt
+            })
+
+        context['product_data_json'] = json.dumps(p_data, ensure_ascii=False)
+        context['related_items_json'] = json.dumps(related_data, ensure_ascii=False)
+        context['streetwear_categories_json'] = json.dumps(store_categories_data, ensure_ascii=False)
+        context['streetwear_i18n_json'] = json.dumps(STREETWEAR_I18N, ensure_ascii=False)
         return render(request, 'storefront/streetwear_product_detail.html', context)
     return render(request, 'storefront/product_detail.html', context)
 

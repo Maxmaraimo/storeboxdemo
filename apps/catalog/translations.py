@@ -1538,6 +1538,10 @@ def translate_online(text: str, target_lang: str = 'en', src_lang: str = 'auto')
     """
     Fast online multi-engine translator supporting any input language to UZ, RU, EN, TR.
     """
+    # Prevent freezing/hanging synchronous web request threads with slow external scrapers
+    if os.environ.get('ENABLE_ONLINE_SCRAPE_TRANSLATION') != '1':
+        return None
+
     if not text or not text.strip():
         return ''
     text_clean = text.strip()

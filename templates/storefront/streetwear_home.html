@@ -1,1905 +1,1449 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="{{ lang|default:'uz' }}" class="h-full">
+<html lang="{{ lang|default:'ru' }}" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{{ store.name }} — Tashkent Streetwear Flagship</title>
-    <meta name="description" content="AURA ATELIER — zamonaviy erkaklar ko'cha modasi. Sara tabiiy matolar, mualliflik bichimi. Toshkent, Mirobod.">
+    <title>{{ store.name|default:'CRYSTALL AMI' }} — Авторская одежда | Интернет-магазин</title>
+    <meta name="description" content="{{ store.name|default:'CRYSTALL AMI' }} — интернет-магазин авторской одежды. Женская коллекция, обувь, сумки, аксессуары и селективный парфюм.">
     <link rel="icon" type="image/svg+xml" href="{% static 'images/streetwear/logo_emblem.svg' %}">
 
-    <!-- Fonts: Barlow Condensed, Inter, Manrope -->
+    <!-- Fonts: IBM Plex Mono & Lora (1:1 with psihclothes.ru) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
-    <!-- Base Tailwind & 222 FMA CSS -->
+    <!-- Tailwind & Alpine.js -->
     <link rel="stylesheet" href="{% static 'css/storefront-tailwind.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/222fma.css' %}">
     <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
-    <script src="{% static 'vendor/lucide.min.js' %}"></script>
 
     <style>
         [x-cloak] { display: none !important; }
 
         :root {
-            --ink: #0c0d0b;
-            --paper: #ffffff;
-            --paper-warm: #ffffff;
-            --olive: #737861;
-            --olive-soft: #777c64;
-            --line: rgba(12, 13, 11, 0.08);
-            --muted: #74756f;
-            --ease: cubic-bezier(.2, .75, .2, 1);
-            --font-display: 'Barlow Condensed', 'Manrope', Inter, sans-serif;
-            --font-serif: Georgia, serif;
-            --font-sans: Inter, sans-serif;
+            --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+            --font-heading: 'Lora', Georgia, serif;
+            --color-black: #000000;
+            --color-white: #ffffff;
+            --color-border: #e5e5e5;
+            --color-border-strong: #000000;
         }
 
         body {
             background-color: #ffffff;
-            color: #0c0d0b;
-            font-family: var(--font-sans);
+            color: #000000;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.5;
             -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
+            -moz-osx-font-smoothing: grayscale;
             margin: 0;
             padding: 0;
+            overflow-x: hidden;
         }
 
-        /* Essential Scroll Margin to prevent sticky navbar from cutting titles */
-        section[id], div[id] {
-            scroll-margin-top: 85px !important;
-        }
+        .font-lora { font-family: var(--font-heading); }
+        .font-mono { font-family: var(--font-mono); }
 
-        .font-condensed {
-            font-family: 'Barlow Condensed', sans-serif;
-            text-transform: uppercase;
-        }
-
-        .font-serif-italic {
-            font-family: var(--font-serif);
-            font-style: italic;
-        }
-
-        /* Running Ticker Marquee */
-        @keyframes marquee {
+        /* Running Ticker Marquee (1:1 PSIH) */
+        @keyframes infiniteMarquee {
             0% { transform: translateX(0%); }
             100% { transform: translateX(-50%); }
         }
-        .animate-marquee {
-            display: flex;
+        .animate-infinite-marquee {
+            display: inline-flex;
             width: max-content;
-            animation: marquee 24s linear infinite;
+            animation: infiniteMarquee 24s linear infinite;
         }
-        .animate-marquee:hover {
+        .animate-infinite-marquee:hover {
             animation-play-state: paused;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(12, 13, 11, 0.15);
-            border-radius: 999px;
+        /* 1px Architectural Grid (PSIH 1:1) */
+        .catalog-grid {
+            display: grid;
+            gap: 1px;
+            background-color: #e5e5e5;
+            border-left: 1px solid #000000;
+            border-right: 1px solid #000000;
+            border-top: 1px solid #000000;
+            border-bottom: 1px solid #000000;
         }
 
-        /* Smooth Dragging Lookbook */
-        .lookbook-slider {
-            display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 12px;
-        }
-        .lookbook-slider::-webkit-scrollbar { display: none; }
-        .lb-card-item {
-            flex: 0 0 clamp(280px, 28vw, 420px);
-            scroll-snap-align: start;
-        }
-        @media (max-width: 640px) {
-            .lb-card-item {
-                flex: 0 0 78vw;
-            }
+        /* Aspect ratio 3:4 for product cards */
+        .aspect-product {
+            aspect-ratio: 3 / 4;
         }
 
-        /* Fixed Navigation Bar - Crisp Light Architectural Header */
-        .fma-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 60;
-            height: 72px;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            padding: 0 4vw !important;
-            transition: all 0.35s var(--ease);
-            background: rgba(255, 255, 255, 0.94);
+        /* Frosted Glass Floating Islands (1:1 with PSIH) */
+        .frosted-island {
+            background: rgba(255, 255, 255, 0.78);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(12, 13, 11, 0.08);
-            color: #0c0d0b;
-        }
-        .fma-nav.scrolled {
-            background: rgba(255, 255, 255, 0.98);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
-        .fma-nav-left {
-            display: flex !important;
-            align-items: center !important;
-            gap: 36px !important;
-        }
-        .fma-nav-links {
-            display: none !important;
-        }
-        @media (min-width: 768px) {
-            .fma-nav-links {
-                display: flex !important;
-                align-items: center !important;
-                gap: 24px !important;
-            }
-        }
-        .fma-nav-links a {
-            color: rgba(12, 13, 11, 0.75) !important;
-            font-size: 13px !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.04em !important;
-            text-transform: uppercase !important;
-            font-family: 'Barlow Condensed', sans-serif !important;
-            text-decoration: none !important;
-            transition: color 0.2s ease !important;
-            padding: 6px 2px !important;
-            white-space: nowrap !important;
-        }
-        .fma-nav-links a:hover {
-            color: #0c0d0b !important;
+        /* Shadow float (1:1 with PSIH) */
+        .shadow-float {
+            box-shadow: rgba(0, 0, 0, 0.18) 0px 8px 32px, rgba(255, 255, 255, 0.12) 0px 0px 0px 1px;
         }
 
-        /* Language Switcher Pill - Crystal Clear High Contrast */
-        .lang-switcher-pill {
-            display: inline-flex !important;
-            align-items: center !important;
-            background: rgba(12, 13, 11, 0.06) !important;
-            border: 1px solid rgba(12, 13, 11, 0.12) !important;
-            border-radius: 999px !important;
-            padding: 3px !important;
-            gap: 2px !important;
-        }
-        .lang-btn-item {
-            padding: 6px 14px !important;
-            font-size: 11px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.04em !important;
-            border-radius: 999px !important;
-            transition: all 0.2s ease !important;
-            border: none !important;
-            cursor: pointer !important;
-            line-height: 1 !important;
-            text-transform: uppercase !important;
-            font-family: 'Barlow Condensed', sans-serif !important;
-        }
-        .lang-btn-item.active,
-        button.lang-btn-item.active {
-            background-color: #0c0d0b !important;
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-        }
-        .lang-btn-item.inactive,
-        button.lang-btn-item.inactive {
-            background-color: transparent !important;
-            color: rgba(12, 13, 11, 0.6) !important;
-            -webkit-text-fill-color: rgba(12, 13, 11, 0.6) !important;
-        }
-        .lang-btn-item.inactive:hover {
-            color: #0c0d0b !important;
-            -webkit-text-fill-color: #0c0d0b !important;
-        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #ffffff; }
+        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
 
-        /* High-Contrast Cart Pill Button (Header) */
-        .fma-cart-pill {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            background: #0c0d0b !important;
-            color: #ffffff !important;
-            border: none !important;
-            border-radius: 999px !important;
-            padding: 8px 18px !important;
-            font-size: 12px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.02em !important;
-            cursor: pointer !important;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
-            transition: all 0.25s ease !important;
-            text-decoration: none !important;
-        }
-        .fma-cart-pill * {
-            color: #ffffff !important;
-        }
-        .fma-cart-pill:hover {
-            background: #222222 !important;
-            transform: translateY(-1px) !important;
-        }
-
-        /* Mobile-Ready Slide-Over Drawer & Always-Visible Sticky Footer */
-        .drawer {
-            display: flex !important;
-            flex-direction: column !important;
-            z-index: 201 !important;
-        }
-        .cart-items {
-            flex: 1 1 auto !important;
-            min-height: 0 !important;
-            overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-        }
-        .cart-footer {
-            flex-shrink: 0 !important;
-            margin-top: auto !important;
-            background: #f0efea !important;
-            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-        }
-
-        /* Profile Pill Button */
-        .fma-profile-pill {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            background: rgba(12, 13, 11, 0.06) !important;
-            border: 1px solid rgba(12, 13, 11, 0.12) !important;
-            color: #0c0d0b !important;
-            border-radius: 999px !important;
-            padding: 8px 16px !important;
-            font-size: 12px !important;
-            font-weight: 700 !important;
-            text-decoration: none !important;
-            transition: all 0.25s ease !important;
-        }
-        .fma-profile-pill * {
-            color: #0c0d0b !important;
-        }
-        .fma-profile-pill:hover {
-            background: #0c0d0b !important;
-            color: #ffffff !important;
-            border-color: #0c0d0b !important;
-        }
-        .fma-profile-pill:hover * {
-            color: #ffffff !important;
-        }
-
-        /* High-Contrast Hero CTA Buttons */
-        .fma-hero-btn-primary {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 10px !important;
-            background: #0c0d0b !important;
-            color: #ffffff !important;
-            border: none !important;
-            border-radius: 999px !important;
-            padding: 14px 28px !important;
-            font-family: 'Barlow Condensed', sans-serif !important;
-            font-size: 15px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.06em !important;
-            text-transform: uppercase !important;
-            text-decoration: none !important;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-            transition: all 0.3s ease !important;
-        }
-        .fma-hero-btn-primary * {
-            color: #ffffff !important;
-        }
-        .fma-hero-btn-primary:hover {
-            background: #222222 !important;
-            transform: translateY(-2px) !important;
-        }
-
-        .fma-hero-btn-secondary {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 10px !important;
-            background: rgba(12, 13, 11, 0.06) !important;
-            color: #0c0d0b !important;
-            border: 1px solid rgba(12, 13, 11, 0.15) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
-            border-radius: 999px !important;
-            padding: 14px 28px !important;
-            font-family: 'Barlow Condensed', sans-serif !important;
-            font-size: 15px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.06em !important;
-            text-transform: uppercase !important;
-            text-decoration: none !important;
-            transition: all 0.3s ease !important;
-        }
-        .fma-hero-btn-secondary * {
-            color: #0c0d0b !important;
-        }
-        .fma-hero-btn-secondary:hover {
-            background: rgba(12, 13, 11, 0.12) !important;
-            transform: translateY(-2px) !important;
-        }
-
-        /* High-Fashion Split Hero Section (Pure CSS - Zero dependency) */
-        .fma-hero-section {
-            background-color: #ffffff !important;
-            color: #0c0d0b !important;
-            position: relative;
-            width: 100%;
-            min-height: calc(100vh - 40px);
-            display: flex;
-            align-items: center;
-            padding: 110px 5vw 50px;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-        .fma-hero-container {
-            width: 100%;
-            max-width: 1380px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            align-items: center;
-        }
-        .fma-hero-text {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 22px;
-            max-width: 620px;
-            z-index: 2;
-        }
-        .fma-hero-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(12, 13, 11, 0.05);
-            border: 1px solid rgba(12, 13, 11, 0.1);
-            border-radius: 999px;
-            padding: 6px 16px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            font-family: 'Barlow Condensed', sans-serif;
-            color: #0c0d0b;
-            align-self: flex-start;
-        }
-        .fma-hero-title {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: clamp(48px, 5.5vw, 84px);
-            font-weight: 900;
-            line-height: 0.92;
-            letter-spacing: -0.03em;
-            text-transform: uppercase;
-            color: #0c0d0b;
-            margin: 0;
-        }
-        .fma-hero-sub {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #55574f;
-            font-weight: 500;
-            margin: 0;
-            max-width: 520px;
-        }
-        .fma-hero-actions {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 14px;
-            margin-top: 6px;
-        }
-        .fma-hero-features {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 20px;
-            padding-top: 18px;
-            border-top: 1px solid rgba(12, 13, 11, 0.08);
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #737861;
-        }
-        .fma-hero-card {
-            position: relative;
-            width: 100%;
-            height: 600px;
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(12, 13, 11, 0.08);
-            background: #f0eee9;
-        }
-        .fma-hero-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center top;
-            display: block;
-            transition: transform 0.8s ease;
-        }
-        .fma-hero-card:hover img {
-            transform: scale(1.03);
-        }
-        .fma-hero-card-badge {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            padding: 14px 18px;
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(16px);
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        /* High-Fashion Manifesto Section (Pure CSS - Zero dependency) */
-        .fma-manifesto-section {
-            background-color: #f7f6f2 !important;
-            border-top: 1px solid rgba(12, 13, 11, 0.08);
-            border-bottom: 1px solid rgba(12, 13, 11, 0.08);
-            padding: 90px 5vw;
-            width: 100%;
-            box-sizing: border-box;
-            position: relative;
-        }
-        .fma-manifesto-container {
-            width: 100%;
-            max-width: 1380px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1.15fr 1fr;
-            gap: 60px;
-            align-items: center;
-        }
-        .fma-manifesto-text {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .fma-manifesto-kicker {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: #737861;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .fma-manifesto-title {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: clamp(34px, 4.2vw, 56px);
-            font-weight: 900;
-            line-height: 1.02;
-            letter-spacing: -0.02em;
-            text-transform: uppercase;
-            color: #0c0d0b;
-            margin: 0;
-        }
-        .fma-manifesto-desc {
-            font-size: 15px;
-            line-height: 1.65;
-            color: #55574f;
-            margin: 0;
-        }
-        .fma-manifesto-bento {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-top: 10px;
-        }
-        .fma-bento-card {
-            background: #ffffff;
-            border: 1px solid rgba(12, 13, 11, 0.08);
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .fma-bento-val {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 24px;
-            font-weight: 900;
-            color: #0c0d0b;
-            line-height: 1;
-        }
-        .fma-bento-label {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: #737861;
-            margin-top: 6px;
-        }
-        .fma-bento-sub {
-            font-size: 10.5px;
-            color: #8c8f85;
-            margin-top: 2px;
-        }
-        .fma-manifesto-photo-wrap {
-            position: relative;
-            width: 100%;
-            height: 520px;
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.12);
-            border: 1px solid rgba(12, 13, 11, 0.08);
-            background: #ffffff;
-        }
-        .fma-manifesto-photo-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-            display: block;
-            transition: transform 0.8s ease;
-        }
-        .fma-manifesto-photo-wrap:hover img {
-            transform: scale(1.03);
-        }
-        .fma-manifesto-photo-badge {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            padding: 14px 18px;
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(16px);
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        /* Kinetic Typography for Brand Manifesto */
-        .ink-text {
-            max-width: 1080px;
-            letter-spacing: -0.04em;
-            color: #0c0d0b;
-        }
-        .ink-text span {
-            opacity: clamp(0.18, calc(var(--p, 0) * (var(--n, 12) + 4) - var(--w, 0)), 1);
-            transition: opacity 0.2s linear;
-            display: inline-block;
-            margin-right: 0.22em;
-        }
-
-        /* Lookbook Cards */
-        .lb-card {
-            pointer-events: auto !important;
-            opacity: 1 !important;
-            transform: none !important;
-        }
-        .lb-media {
-            background: #ffffff !important;
-            border: 1px solid rgba(12, 13, 11, 0.08) !important;
-            transition: all 0.3s ease;
-        }
-        .lb-card:hover .lb-media {
-            border-color: rgba(12, 13, 11, 0.22) !important;
-            box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.08) !important;
-        }
-        .lb-index {
-            background: #0c0d0b !important;
-            color: #ffffff !important;
-            font-weight: 900 !important;
-        }
-        .lb-badge {
-            background: rgba(12, 13, 11, 0.06) !important;
-            color: #0c0d0b !important;
-            font-weight: 700 !important;
-            border: 1px solid rgba(12, 13, 11, 0.1) !important;
-        }
-        .lb-bar {
-            background: rgba(12, 13, 11, 0.88) !important;
-            backdrop-filter: blur(14px) !important;
-            color: #ffffff !important;
-        }
-
-        /* Outfit Builder Stage & Full Mannequin Scaling */
-        .stage-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            max-height: 520px;
-            aspect-ratio: 2/3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-        }
-        .mannequin-img-layer {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            pointer-events: none;
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-
-        /* Hand layers clip-paths */
-        .hand-layer-left {
-            clip-path: polygon(26.3% 48.2%, 34.5% 48.2%, 34.5% 56.8%, 31.5% 59%, 27.2% 56.6%);
-            z-index: 25;
-        }
-        .hand-layer-right {
-            clip-path: polygon(65.5% 48.2%, 73.7% 48.2%, 72.8% 56.6%, 68.5% 59%, 65.5% 56.8%);
-            z-index: 25;
-        }
-
-        /* High-Contrast Outfit Add Button */
-        .fma-outfit-add-btn {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 10px !important;
-            background: #ffffff !important;
-            color: #0c0d0b !important;
-            border: none !important;
-            border-radius: 999px !important;
-            padding: 14px 28px !important;
-            font-family: 'Barlow Condensed', sans-serif !important;
-            font-size: 14px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.06em !important;
-            text-transform: uppercase !important;
-            cursor: pointer !important;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
-            transition: all 0.25s ease !important;
-        }
-        .fma-outfit-add-btn * {
-            color: #0c0d0b !important;
-        }
-        .fma-outfit-add-btn:hover {
-            background: #ece7db !important;
-            transform: translateY(-1px) !important;
-        }
-
-        /* Craft Section - Solid Architectural Black Contrast */
-        #craft {
-            background-color: #0c0d0b !important;
-            color: #ffffff !important;
-        }
-        .craft-card {
-            background: rgba(255, 255, 255, 0.04) !important;
-            border: 1px solid rgba(255, 255, 255, 0.12) !important;
-            backdrop-filter: blur(12px) !important;
-            border-radius: 24px !important;
-            padding: 32px 28px !important;
-            transition: all 0.35s ease !important;
-        }
-        .craft-card:hover {
-            background: rgba(255, 255, 255, 0.08) !important;
-            border-color: rgba(255, 255, 255, 0.25) !important;
-            transform: translateY(-4px) !important;
-        }
-
-        /* Clean Streetwear Badge */
-        .fma-brand-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(12, 13, 11, 0.06);
-            border: 1px solid rgba(12, 13, 11, 0.12);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            padding: 6px 14px;
-            border-radius: 999px;
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: #0c0d0b;
-        }
-
-        /* Mobile bottom dock overrides */
-        @media (min-width: 901px) {
-            .mnav { display: none !important; }
-        }
-        @media (max-width: 900px) {
-            .mnav {
-                display: block !important;
-                z-index: 70;
-            }
-            body {
-                padding-bottom: calc(76px + env(safe-area-inset-bottom));
-            }
-        }
-
-        /* Mobile Adjustments for Hero, Manifesto, and Fitting Room */
-        @media (max-width: 900px) {
-            .fma-hero-section {
-                padding: 90px 20px 40px !important;
-                min-height: auto !important;
-            }
-            .fma-hero-container {
-                grid-template-columns: 1fr !important;
-                gap: 28px !important;
-            }
-            .fma-hero-card {
-                height: 380px !important;
-                border-radius: 20px !important;
-                order: 1 !important;
-            }
-            .fma-hero-text {
-                order: 2 !important;
-                gap: 16px !important;
-            }
-            .fma-hero-title {
-                font-size: clamp(38px, 10vw, 54px) !important;
-            }
-            .fma-hero-actions a {
-                width: 100% !important;
-                justify-content: center !important;
-            }
-            .fma-hero-btn-primary, .fma-hero-btn-secondary {
-                width: 100% !important;
-                justify-content: center !important;
-                padding: 13px 20px !important;
-                font-size: 13px !important;
-            }
-            .fma-manifesto-section {
-                padding: 60px 20px !important;
-            }
-            .fma-manifesto-container {
-                grid-template-columns: 1fr !important;
-                gap: 32px !important;
-            }
-            .fma-manifesto-photo-wrap {
-                height: 340px !important;
-                border-radius: 20px !important;
-            }
-            .fma-manifesto-bento {
-                grid-template-columns: 1fr !important;
-                gap: 8px !important;
-            }
-            .fitting-room {
-                min-height: 580px !important;
-            }
-            .model-stage {
-                inset: 54px 10px 145px !important;
-            }
-            .stage-wrapper {
-                max-height: 380px !important;
-                height: 100% !important;
-                width: auto !important;
-            }
-            .look-summary {
-                padding: 12px 16px !important;
-                gap: 8px !important;
-            }
-            .look-summary .look-chips {
-                display: none !important;
-            }
-            .fma-outfit-add-btn {
-                padding: 12px 20px !important;
-                font-size: 13px !important;
-                width: 100% !important;
-            }
+        /* Hide number spin buttons */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
         }
     </style>
 </head>
-<body x-data="streetwear222App()" x-init="init()" class="selection:bg-[#737861] selection:text-white bg-white">
 
-    <!-- RUNNING TICKER MARQUEE (Top Header Bar) -->
-    <div class="bg-[#0c0d0b] text-white/80 py-2.5 overflow-hidden select-none border-b border-white/10">
-        <div class="animate-marquee whitespace-nowrap text-[11px] font-bold tracking-widest uppercase font-condensed">
-            <span class="mx-6 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> AURA ATELIER · STOREBOX APPAREL ARCHITECTURE
-            </span>
-            <span class="mx-6 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> SARA TABIIY MATOLAR VA MUALLIFLIK BICHIMI
-            </span>
-            <span class="mx-6 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> INTERAKTIV OBRAZLAR KONSTRUKTORI
-            </span>
-            <span class="mx-6 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> TOSHKENT, MIROBOD FLAGSHIP SHOWROOM
-            </span>
-            <span class="mx-6 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> BUTUN O'ZBEKISTON BO'YLAB TEZKOR YETKAZISH
-            </span>
-            <span class="mx-6 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span> AURA ATELIER · DROP 01 NEW ARRIVALS
-            </span>
+<body class="min-h-full flex flex-col bg-white text-black selection:bg-black selection:text-white pb-48"
+      x-data="psihStoreApp()"
+      x-init="initApp()"
+      @keydown.escape="closeAll()">
+
+    <!-- 0. TOP ANNOUNCEMENT TICKER (CRYSTALL AMI SS26 1:1) -->
+    <div class="overflow-hidden flex items-center bg-black text-white py-1.5 px-6 border-b border-black select-none font-mono text-[10px] md:text-[11px] tracking-wider uppercase">
+        <div class="inline-flex animate-infinite-marquee">
+            <div class="flex-shrink-0 whitespace-nowrap pr-24" x-text="t('ticker_top')"></div>
+            <div class="flex-shrink-0 whitespace-nowrap pr-24" x-text="t('ticker_top')"></div>
+            <div class="flex-shrink-0 whitespace-nowrap pr-24" x-text="t('ticker_top')"></div>
+            <div class="flex-shrink-0 whitespace-nowrap pr-24" x-text="t('ticker_top')"></div>
         </div>
     </div>
 
-    <!-- MAIN FIXED NAVIGATION BAR -->
-    <header :class="isScrolled ? 'fma-nav scrolled' : 'fma-nav'">
-        <!-- Left: Brand Logo & Links with guaranteed separation -->
-        <div class="fma-nav-left">
-            <a href="#home" class="flex items-center group">
-                <img src="{% static 'images/streetwear/logo_wordmark_dark.svg' %}" alt="AURA ATELIER" class="h-8 w-auto">
-            </a>
-
-            <!-- Desktop Links -->
-            <nav class="hidden md:flex fma-nav-links">
-                <a href="#collection" x-text="t('navCollection')"></a>
-                <a href="#outfit-builder" class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-[#737861]"></span>
-                    <span x-text="t('navOutfit')"></span>
+    <!-- 1. TOP STICKY HEADER NAVIGATION BAR (1:1 CRYSTALL AMI VIDEO) -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-black/10 select-none transition-shadow duration-200">
+        <div class="max-w-[1920px] mx-auto px-2.5 sm:px-4 md:px-8 h-14 md:h-16 flex items-center justify-between gap-1 sm:gap-4">
+            
+            <!-- Left: Brand Monogram & Logo Wordmark -->
+            <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+                <a href="#" @click.prevent="selectCategory(''); window.scrollTo({top: 0, behavior: 'smooth'})" 
+                   class="flex items-center gap-1.5 sm:gap-2.5 text-black hover:opacity-75 transition-opacity"
+                   title="{{ store.name|default:'CRYSTALL AMI' }}">
+                    <!-- Geometric 3-layer Monogram Icon (1:1 with video) -->
+                    <svg class="w-5 h-5 text-black flex-shrink-0" style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+                        <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+                        <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+                    </svg>
+                    <span class="font-bold tracking-[0.1em] sm:tracking-[0.2em] text-[11px] sm:text-[13px] md:text-[14px] uppercase font-mono whitespace-nowrap">
+                        {{ store.name|default:'CRYSTALL AMI' }}
+                    </span>
                 </a>
-                <a href="#manifesto" x-text="t('navAbout')"></a>
-                <a href="#craft" x-text="t('navCraft')"></a>
-                <a href="#location" x-text="t('navStore')"></a>
-            </nav>
-        </div>
-
-        <!-- Right: Actions (Language, Profile, Cart) -->
-        <div class="flex items-center gap-3">
-            <!-- Language Switcher Pill (Guaranteed high-contrast segmented control) -->
-            <div class="lang-switcher-pill">
-                <button type="button" @click="switchLang('uz')" :class="lang === 'uz' ? 'lang-btn-item active' : 'lang-btn-item inactive'">UZ</button>
-                <button type="button" @click="switchLang('ru')" :class="lang === 'ru' ? 'lang-btn-item active' : 'lang-btn-item inactive'">RU</button>
             </div>
 
-            <!-- Profile / Customer Page Link -->
-            <a href="/store/{{ store.subdomain }}/profile/" class="hidden sm:inline-flex fma-profile-pill">
-                <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                <span x-text="t('profile')"></span>
-            </a>
+            <!-- Center: Top-Level Catalog Navigation Links (Desktop) -->
+            <nav class="hidden lg:flex items-center gap-6 xl:gap-8 font-mono text-xs uppercase tracking-wider">
+                <button type="button" 
+                        @click="selectCategory('')" 
+                        :class="!selectedCategory ? 'text-black font-bold border-b-2 border-black pb-0.5' : 'text-neutral-500 hover:text-black font-medium transition-colors'">
+                    <span x-text="t('navCatalog')">КАТАЛОГ</span>
+                </button>
+                <button type="button" 
+                        @click="selectCategory('clothing')" 
+                        :class="selectedCategory === 'clothing' ? 'text-black font-bold border-b-2 border-black pb-0.5' : 'text-neutral-500 hover:text-black font-medium transition-colors'">
+                    <span x-text="t('navClothing')">ОДЕЖДА</span>
+                </button>
+                <button type="button" 
+                        @click="selectCategory('shoes')" 
+                        :class="(selectedCategory === 'shoes' || selectedCategory === 'sneakers') ? 'text-black font-bold border-b-2 border-black pb-0.5' : 'text-neutral-500 hover:text-black font-medium transition-colors'">
+                    <span x-text="t('navShoes')">ОБУВЬ</span>
+                </button>
+                <button type="button" 
+                        @click="selectCategory('bags')" 
+                        :class="selectedCategory === 'bags' ? 'text-black font-bold border-b-2 border-black pb-0.5' : 'text-neutral-500 hover:text-black font-medium transition-colors'">
+                    <span x-text="t('navBags')">СУМКИ</span>
+                </button>
+                <button type="button" 
+                        @click="selectCategory('accessories')" 
+                        :class="selectedCategory === 'accessories' ? 'text-black font-bold border-b-2 border-black pb-0.5' : 'text-neutral-500 hover:text-black font-medium transition-colors'">
+                    <span x-text="t('navAccessories')">АКСЕССУАРЫ</span>
+                </button>
+                <button type="button" 
+                        @click="selectCategory('fragrance')" 
+                        :class="(selectedCategory === 'fragrance' || selectedCategory === 'perfume') ? 'text-black font-bold border-b-2 border-black pb-0.5' : 'text-neutral-500 hover:text-black font-medium transition-colors'">
+                    <span x-text="t('navPerfume')">ПАРФЮМ</span>
+                </button>
+            </nav>
 
-            <!-- Slide-over Cart Trigger (Ultra high contrast black pill with white text) -->
-            <button @click="cartDrawerOpen = true" class="fma-cart-pill group" :title="t('cart')">
-                <i data-lucide="shopping-bag" class="w-4 h-4 group-hover:scale-105 transition-transform"></i>
-                <span class="hidden sm:inline" x-text="t('cart') + ' (' + cartCount + ')'"></span>
-                <span class="sm:hidden font-mono font-bold text-xs" x-text="'(' + cartCount + ')'"></span>
-            </button>
+            <!-- Right: Search, Wishlist, Cart Pill, Profile, Language Switcher -->
+            <div class="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
+                <!-- Search Button -->
+                <button type="button" 
+                        @click="searchOpen = !searchOpen" 
+                        class="p-1 sm:p-2 text-black hover:opacity-60 transition-opacity" 
+                        aria-label="Поиск">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" style="width: 17px; height: 17px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.3-4.3"/>
+                    </svg>
+                </button>
+
+                <!-- Wishlist Bookmark Button with dynamic counter -->
+                <button type="button" 
+                        @click="openDrawer('wishlist')" 
+                        class="p-1 sm:p-2 text-black hover:opacity-60 transition-opacity relative" 
+                        aria-label="Избранное">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" style="width: 17px; height: 17px;" :fill="wishlist.length > 0 ? '#000000' : 'none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+                    </svg>
+                    <span x-show="wishlist.length > 0" 
+                          x-text="wishlist.length"
+                          class="absolute top-0 right-0 sm:top-1 sm:right-1 bg-black text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center leading-none"></span>
+                </button>
+
+                <!-- High-Contrast Cart Pill Button (1:1 with video) -->
+                <button type="button" 
+                        @click="openDrawer('cart')" 
+                        class="bg-black text-white px-2 sm:px-3 md:px-4 py-1.5 md:py-2 rounded-full flex items-center gap-1.5 sm:gap-2 hover:bg-neutral-800 transition-colors shadow-xs">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                        <path d="M3 6h18"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                    <span class="hidden sm:inline text-[10px] md:text-[11px] font-bold tracking-widest uppercase font-mono" x-text="t('cart')">КОРЗИНА</span>
+                    <span class="bg-white text-black text-[9px] md:text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none" 
+                          x-text="cartTotalCount">0</span>
+                </button>
+
+                <!-- Profile Link -->
+                <a href="/store/{{ store.subdomain }}/profile/?lang={{ lang|default:'ru' }}" 
+                   class="p-1 sm:p-2 text-black hover:opacity-60 transition-opacity" 
+                   aria-label="Личный кабинет">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" style="width: 17px; height: 17px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </a>
+
+                <!-- Language Switcher Pill (RU | UZ | EN) -->
+                <div class="inline-flex items-center bg-neutral-100 rounded-full p-0.5 border border-black/10 flex-shrink-0">
+                    <button type="button" 
+                            @click="setLanguage('ru')" 
+                            :class="currentLang === 'ru' ? 'bg-black text-white font-bold shadow-xs' : 'text-neutral-500 hover:text-black font-medium'" 
+                            class="px-1.5 sm:px-2 py-0.5 text-[9px] md:text-[10px] font-mono tracking-wider uppercase rounded-full transition-all">RU</button>
+                    <button type="button" 
+                            @click="setLanguage('uz')" 
+                            :class="currentLang === 'uz' ? 'bg-black text-white font-bold shadow-xs' : 'text-neutral-500 hover:text-black font-medium'" 
+                            class="px-1.5 sm:px-2 py-0.5 text-[9px] md:text-[10px] font-mono tracking-wider uppercase rounded-full transition-all">UZ</button>
+                    <button type="button" 
+                            @click="setLanguage('en')" 
+                            :class="currentLang === 'en' ? 'bg-black text-white font-bold shadow-xs' : 'text-neutral-500 hover:text-black font-medium'" 
+                            class="px-1.5 sm:px-2 py-0.5 text-[9px] md:text-[10px] font-mono tracking-wider uppercase rounded-full transition-all">EN</button>
+                </div>
+
+            </div>
         </div>
     </header>
 
-    <!-- SECTION 1: HERO (Luxury Architectural Daylight Campaign) -->
-    <section id="home" class="fma-hero-section">
-        <div class="fma-hero-container">
+    <!-- 2. HERO CAMPAIGN BANNER (1:1 WITH CRYSTALL AMI SS26 VIDEO) -->
+    <div class="relative w-full">
+        <div class="relative w-full aspect-[21/9] md:aspect-[2.5/1] min-h-[240px] md:min-h-[340px] max-h-[460px] overflow-hidden bg-white">
+            <img src="{% static 'images/streetwear/hero_women_banner.png' %}" 
+                 onerror="this.src='/static/images/streetwear/crystallami_models_banner.jpg'"
+                 alt="{{ store.name|default:'CRYSTALL AMI' }} Women Collection" 
+                 class="w-full h-full object-cover object-center block">
             
-            <!-- Left: High-Fashion Typography & Actions -->
-            <div class="fma-hero-text">
-                <!-- Eyebrow Pill -->
-                <div class="fma-hero-eyebrow">
-                    <span style="width: 8px; height: 8px; border-radius: 999px; background: #737861; display: inline-block;"></span>
-                    <span x-text="t('heroEyebrow')"></span>
-                    <span style="color: #737861;">· DROP 01 / NEW ARRIVALS</span>
+            <!-- Hero Overlay Typography & Badges (1:1 with video frame_020.jpg) -->
+            <!--
+            <div class="absolute inset-0 flex flex-col items-start justify-end p-6 md:p-10 select-none pointer-events-none">
+                <div class="inline-flex items-center bg-white text-black px-3 py-1 rounded text-[10px] font-mono font-bold tracking-widest uppercase mb-2 shadow-sm pointer-events-auto">
+                    ARCHIVE DROP 2026
                 </div>
-
-                <!-- Big Headline (High-Contrast, Perfectly Sized) -->
-                <h1 class="fma-hero-title">
-                    <span x-html="t('heroTitle')"></span>
-                </h1>
-
-                <!-- Subtitle -->
-                <p class="fma-hero-sub" x-text="t('heroSubtitle')"></p>
-
-                <!-- Action Buttons: Primary & Secondary -->
-                <div class="fma-hero-actions">
-                    <a href="#collection" class="fma-hero-btn-primary group">
-                        <span x-text="t('viewCollection')"></span>
-                        <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
-                    </a>
-                    <a href="#outfit-builder" class="fma-hero-btn-secondary group">
-                        <span style="width: 8px; height: 8px; border-radius: 999px; background: #737861; display: inline-block;"></span>
-                        <span x-text="t('navOutfit')"></span>
-                    </a>
-                </div>
-
-                <!-- Trust Badges (Fills space with luxury brand credibility) -->
-                <div class="fma-hero-features">
-                    <span style="display: flex; align-items: center; gap: 6px;"><span style="color: #0c0d0b;">✦</span> 100% Sara Paxta</span>
-                    <span style="display: flex; align-items: center; gap: 6px;"><span style="color: #0c0d0b;">✦</span> Mualliflik Bichimi</span>
-                    <span style="display: flex; align-items: center; gap: 6px;"><span style="color: #0c0d0b;">✦</span> Toshkent Flagship</span>
-                </div>
+                <h2 class="text-white font-mono text-xl md:text-3xl font-bold tracking-[0.15em] uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                    {{ store.name|default:'CRYSTALL AMI' }} — ARCHIVE 2026
+                </h2>
+                <p class="text-white font-mono text-xs md:text-sm tracking-wider uppercase mt-1 max-w-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] hidden sm:block">
+                    АВТОРСКАЯ КОЛЛЕКЦИЯ ЖЕНСКОЙ ОДЕЖДЫ, ОБУВИ И СЕЛЕКТИВНОГО ПАРФЮМА
+                </p>
             </div>
-
-            <!-- Right: The Editorial Campaign Photography (Full Head, Full Clarity, No Fog) -->
-            <div class="fma-hero-card">
-                <img src="{% static 'images/streetwear/hero_editorial_light.jpg' %}" alt="AURA ATELIER Daylight Campaign">
-                
-                <!-- Floating Corner Card -->
-                <div class="fma-hero-card-badge">
-                    <div>
-                        <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #737861;">CAMPAIGN 2026 · TOSHKENT</div>
-                        <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; text-transform: uppercase; color: #0c0d0b;">URBAN ARCHITECTURE & TAILORING</div>
-                    </div>
-                    <span style="font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #0c0d0b; background: rgba(12, 13, 11, 0.06); padding: 6px 14px; border-radius: 999px;">DROP 01</span>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- SECTION 2: BRAND MANIFESTO (Pure Studio Editorial Atelier) -->
-    <section id="manifesto" class="fma-manifesto-section">
-        <div class="fma-manifesto-container">
-            
-            <!-- Left: Editorial Philosophy & Bento Metric Cards (NO EMPTY SPACE!) -->
-            <div class="fma-manifesto-text">
-                <!-- Kicker -->
-                <div class="fma-manifesto-kicker">
-                    <span style="width: 6px; height: 6px; border-radius: 999px; background: #737861; display: inline-block;"></span>
-                    <span x-text="t('manifestoKicker')"></span>
-                </div>
-
-                <!-- Big Headline (Natural, balanced multi-word flow) -->
-                <h2 class="fma-manifesto-title" x-text="t('manifestoTitle')"></h2>
-
-                <!-- Rich Paragraph -->
-                <p class="fma-manifesto-desc" x-text="t('manifestoText')"></p>
-
-                <!-- Bento Metrics Grid (Eliminates ALL empty space!) -->
-                <div class="fma-manifesto-bento">
-                    <div class="fma-bento-card">
-                        <div class="fma-bento-val">100%</div>
-                        <div>
-                            <div class="fma-bento-label">Sara Paxta</div>
-                            <div class="fma-bento-sub">Heavyweight 320g</div>
-                        </div>
-                    </div>
-                    <div class="fma-bento-card">
-                        <div class="fma-bento-val">ATELIER</div>
-                        <div>
-                            <div class="fma-bento-label">Mualliflik</div>
-                            <div class="fma-bento-sub">Maxsus lekala</div>
-                        </div>
-                    </div>
-                    <div class="fma-bento-card">
-                        <div class="fma-bento-val">TOSHKENT</div>
-                        <div>
-                            <div class="fma-bento-label">Showroom</div>
-                            <div class="fma-bento-sub">Mirobod tumani</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Location note -->
-                <div style="display: flex; align-items: center; gap: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #737861; padding-top: 4px;">
-                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#0c0d0b]"></i>
-                    <span>Toshkent, Mirobod Flagship Showroom & Studio</span>
-                </div>
-            </div>
-
-            <!-- Right: Beautiful High-Resolution Atelier Photo Card -->
-            <div class="fma-manifesto-photo-wrap">
-                <img src="{% static 'images/streetwear/manifesto_editorial_light.jpg' %}" alt="AURA Editorial Studio">
-                
-                <!-- Bottom Editorial Glass Pill -->
-                <div class="fma-manifesto-photo-badge">
-                    <div>
-                        <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #737861;">ATELIER & CRAFT</div>
-                        <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; text-transform: uppercase; color: #0c0d0b;">NATURAL FABRICS & TAILORING</div>
-                    </div>
-                    <span style="font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #0c0d0b; background: rgba(12, 13, 11, 0.06); padding: 6px 14px; border-radius: 999px;">HANDCRAFTED</span>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- KINETIC RUNNING TICKER -->
-    <div class="kinetic select-none bg-[#0c0d0b]">
-        <div class="kinetic-track animate-marquee">
-            <span class="mx-6 font-condensed font-bold tracking-tight text-white uppercase text-4xl sm:text-6xl">
-                AURA ATELIER · STOREBOX APPAREL · TASHKENT FLAGSHIP · DROP 01 · CLEAN STREETWEAR ·
-            </span>
-            <span class="mx-6 font-condensed font-bold tracking-tight text-white uppercase text-4xl sm:text-6xl">
-                AURA ATELIER · STOREBOX APPAREL · TASHKENT FLAGSHIP · DROP 01 · CLEAN STREETWEAR ·
-            </span>
+            -->
         </div>
     </div>
 
-    <!-- SECTION 3: COLLECTION LOOKBOOK (Pure White Studio Backdrop & Direct Product Navigation) -->
-    <section id="collection" class="collection bg-white relative py-20">
-        <div class="collection-head">
-            <div class="collection-title">
-                <span class="text-xs font-bold uppercase tracking-widest text-[#737861] font-condensed block mb-2" x-text="t('collectionKicker')"></span>
-                <h2 class="font-condensed font-black text-4xl sm:text-6xl lg:text-7xl uppercase tracking-tight text-[#0c0d0b]" x-text="t('collectionTitle')"></h2>
-            </div>
+    <!-- 3. RUNNING BLACK TICKER (PSIH / CRYSTALL AMI 1:1 MARQUEE) -->
+    <div class="overflow-hidden flex items-center bg-black text-white py-2.5 px-6 border-b border-black select-none font-mono text-xs uppercase tracking-wider">
+        <div class="inline-flex animate-infinite-marquee">
+            <div class="flex-shrink-0 whitespace-nowrap pr-24" x-text="t('ticker_bottom')"></div>
+            <div class="flex-shrink-0 whitespace-nowrap pr-24" x-text="t('ticker_bottom')"></div>
+            <div class="flex-shrink-0 whitespace-nowrap pr-24" x-text="t('ticker_bottom')"></div>
+            <div class="flex-shrink-0 whitespace-nowrap pr-24" x-text="t('ticker_bottom')"></div>
+        </div>
+    </div>
 
-            <!-- Category Filter Tabs -->
-            <div class="collection-meta">
-                <div class="filters">
-                    <button @click="activeCategory = 'all'" :class="activeCategory === 'all' ? 'active' : ''" x-text="t('catAll')"></button>
-                    <button @click="activeCategory = 'tops'" :class="activeCategory === 'tops' ? 'active' : ''" x-text="t('catTops')"></button>
-                    <button @click="activeCategory = 'bottoms'" :class="activeCategory === 'bottoms' ? 'active' : ''" x-text="t('catBottoms')"></button>
-                    <button @click="activeCategory = 'shoes'" :class="activeCategory === 'shoes' ? 'active' : ''" x-text="t('catShoes')"></button>
-                </div>
-            </div>
+    <!-- 4. COLLECTION TITLE BLOCK & DUAL TOGGLE (1:1 CRYSTALL AMI VIDEO) -->
+    <section id="catalog-title-section" class="border-b border-black/10 py-6 flex flex-col items-center justify-center bg-white select-none">
+        <h1 class="text-center font-lora text-2xl md:text-3xl tracking-[0.25em] uppercase text-black leading-none"
+            x-text="currentCategoryTitle">
+            ЖЕНСКАЯ КОЛЛЕКЦИЯ
+        </h1>
+        <div class="mt-2 text-[11px] font-mono tracking-widest text-neutral-500 uppercase">
+            <span x-text="filteredProducts.length"></span> ITEMS IN STOCK
         </div>
 
-        <!-- HORIZONTAL SWIPER CONTAINER -->
-        <div class="lookbook-slider mt-8" id="lookbook-carousel">
-            <template x-for="(p, index) in filteredProducts" :key="p.id">
-                <div class="lb-card-item">
-                    <!-- Direct Navigation to Dedicated Product Page -->
-                    <a :href="'/store/{{ store.subdomain }}/product/' + p.id + '/'" class="lb-card h-full flex flex-col justify-between block group text-inherit no-underline">
-                        <!-- Product Media Box: 100% Isolated Transparent Packshot -->
-                        <div class="lb-media aspect-square rounded-[22px] overflow-hidden relative group cursor-pointer border border-[#0c0d0b]/8 shadow-sm hover:border-[#0c0d0b]/20 hover:shadow-md transition-all">
-                            <img :src="p.image || p.photo" :alt="p.name" class="product-photo w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500">
+        <!-- MODELS | MOCKUPS TOGGLE (1:1 WITH PSIH) -->
+        <div class="flex items-center justify-center mt-3.5">
+            <div class="inline-flex items-center bg-white rounded-full p-0.5 border border-black/25 shadow-xs">
+                <button type="button" 
+                        @click="displayMode = 'models'"
+                        :class="displayMode === 'models' ? 'bg-black text-white font-bold' : 'text-neutral-500 hover:text-black font-medium'"
+                        class="px-4 py-1 text-[10px] tracking-widest uppercase rounded-full transition-all duration-150">
+                    MODELS
+                </button>
+                <button type="button" 
+                        @click="displayMode = 'mockups'"
+                        :class="displayMode === 'mockups' ? 'bg-black text-white font-bold' : 'text-neutral-500 hover:text-black font-medium'"
+                        class="px-4 py-1 text-[10px] tracking-widest uppercase rounded-full transition-all duration-150">
+                    MOCKUPS
+                </button>
+            </div>
+        </div>
+    </section>
 
-                            <!-- Top-Left Index Pill (01, 02, 03...) -->
-                            <div class="lb-index font-condensed font-black" x-text="String(index + 1).padStart(2, '0')"></div>
+    <!-- 4. PRODUCT CATALOG GRID (1:1 PSIH ARCHITECTURAL 1PX GRID) -->
+    <main class="w-full bg-white flex-1">
+        <div class="w-full">
+            <!-- Dynamic Grid: 4 cols or 2 cols on desktop; 2 cols or 1 col on mobile -->
+            <div class="catalog-grid"
+                 :class="{
+                     'grid-cols-1': gridCols === 1,
+                     'grid-cols-2': gridCols === 2,
+                     'grid-cols-2 md:grid-cols-3 lg:grid-cols-4': gridCols === 4
+                 }">
+                
+                <template x-for="product in filteredProducts" :key="product.id">
+                    <article class="group relative bg-white w-full flex flex-col transition-all duration-200 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:z-10"
+                             x-data="{ activeImgIdx: 0, showSizePicker: false, touchStartX: 0 }">
 
-                            <!-- Top-Right Badge -->
-                            <div class="lb-badge font-condensed font-bold">NEW</div>
+                        <!-- Aspect 3:4 Media Container with PURE WHITE Background (1:1 with PSIH) -->
+                        <div class="relative aspect-[3/4] bg-white overflow-hidden w-full select-none flex items-center justify-center"
+                             @touchstart.passive="touchStartX = $event.touches[0].clientX"
+                             @touchend="if (product.images && product.images.length > 1) { const diff = $event.changedTouches[0].clientX - touchStartX; if (diff > 35) { activeImgIdx = (activeImgIdx - 1 + product.images.length) % product.images.length; } else if (diff < -35) { activeImgIdx = (activeImgIdx + 1) % product.images.length; } }">
+                            
+                            <!-- Top Right: Wishlist Bookmark Icon (PSIH 1:1) -->
+                            <button type="button" 
+                                    @click.stop.prevent="toggleWishlist(product)"
+                                    class="absolute top-2.5 right-2.5 z-30 p-1 transition-transform hover:scale-110"
+                                    :aria-label="isWishlisted(product.id) ? 'Удалить из избранного' : 'Добавить в избранное'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" 
+                                     :fill="isWishlisted(product.id) ? '#000000' : 'none'" 
+                                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" 
+                                     class="lucide lucide-bookmark drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] text-black">
+                                    <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
+                                </svg>
+                            </button>
 
-                            <!-- Floating Bottom Glass Bar with Price and Expandable Sizes -->
-                            <div class="lb-bar" :class="activeCardId === p.id ? 'picking' : ''" @click.prevent.stop>
-                                <!-- Price display when not picking sizes -->
-                                <div x-show="activeCardId !== p.id" class="lb-price font-condensed font-bold" x-text="formatMoney(p.price) + ' UZS'"></div>
+                            <!-- Top Left: Stock Status Badge if out of stock -->
+                            <div x-show="!product.is_in_stock" 
+                                 class="absolute top-2.5 left-2.5 z-30 bg-black/80 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                                 x-text="t('out_of_stock')">
+                                НЕТ В НАЛИЧИИ
+                            </div>
 
-                                <!-- Sizes list when picking sizes -->
-                                <div x-show="activeCardId === p.id" class="lb-sizes">
-                                    <template x-for="v in p.variations" :key="v.id">
-                                        <button @click.prevent.stop="quickAddSize(p, v)" class="hover:bg-white hover:text-black">
-                                            <span x-text="v.name"></span>
-                                        </button>
+                            <!-- Clickable Product Image Link -->
+                            <a :href="'/store/{{ store.subdomain }}/product/' + product.id + '/?lang=' + currentLang" 
+                               class="w-full h-full p-3 flex items-center justify-center">
+                                <img :src="(product.images && product.images.length > 0) ? (product.images[activeImgIdx] || product.primary_image) : (product.primary_image || '/static/images/placeholder_product.png')" 
+                                     :alt="getProductName(product)" 
+                                     loading="lazy"
+                                     class="h-full w-full object-contain select-none flex-shrink-0 transition-transform duration-700 ease-out group-hover:scale-[1.03]">
+                            </a>
+
+                            <!-- Desktop Carousel Hover Arrows (PSIH 1:1) -->
+                            <button type="button" 
+                                    aria-label="Предыдущее изображение"
+                                    x-show="product.images && product.images.length > 1"
+                                    @click.stop.prevent="activeImgIdx = (activeImgIdx - 1 + product.images.length) % product.images.length"
+                                    class="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-black opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 rounded-full bg-white/80 hover:bg-white shadow-xs">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"></path></svg>
+                            </button>
+                            <button type="button" 
+                                    aria-label="Следующее изображение"
+                                    x-show="product.images && product.images.length > 1"
+                                    @click.stop.prevent="activeImgIdx = (activeImgIdx + 1) % product.images.length"
+                                    class="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-black opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 rounded-full bg-white/80 hover:bg-white shadow-xs">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"></path></svg>
+                            </button>
+
+                            <!-- Carousel Dots Indicator (PSIH 1:1) -->
+                            <div class="absolute bottom-2 left-0 right-0 flex justify-center z-20 pointer-events-none"
+                                 x-show="product.images && product.images.length > 1">
+                                <div class="flex items-center gap-1.5">
+                                    <template x-for="(img, idx) in product.images.slice(0, 5)" :key="idx">
+                                        <div class="rounded-full flex-shrink-0 transition-all duration-300"
+                                             :class="activeImgIdx === idx ? 'bg-black w-2 h-2 scale-100' : 'bg-neutral-300 w-1.5 h-1.5 scale-90'"></div>
                                     </template>
                                 </div>
+                            </div>
 
-                                <!-- The Toggle Plus Button -->
-                                <button @click.prevent.stop="toggleCardPicker(p.id)" class="lb-add" :class="[activeCardId === p.id ? 'close' : '', justAddedId === p.id ? 'done' : '']" :title="t('add')">
-                                    <template x-if="justAddedId === p.id">
-                                        <i data-lucide="check" class="w-4 h-4 text-black stroke-[3]"></i>
-                                    </template>
-                                    <template x-if="justAddedId !== p.id">
-                                        <i data-lucide="plus" class="w-4 h-4"></i>
-                                    </template>
+                        </div>
+
+                        <!-- Card Info BELOW the Image (1:1 with PSIH CLOTHES style) -->
+                        <div class="relative bg-white text-black flex-1 border-t border-gray-100 flex flex-col justify-between p-3 select-none">
+                            <a :href="'/store/{{ store.subdomain }}/product/' + product.id + '/?lang=' + currentLang" 
+                               class="block text-black no-underline">
+                                <h3 class="text-[12px] md:text-[13px] font-medium tracking-wider uppercase truncate w-full text-black font-mono text-left"
+                                    x-text="getProductName(product)"></h3>
+                                <div class="flex items-center gap-2 mt-1 font-mono text-[11px] md:text-[12px]">
+                                    <span x-show="product.old_price" 
+                                          class="line-through text-gray-400 font-normal"
+                                          x-text="formatPrice(product.old_price)"></span>
+                                    <span class="text-black font-semibold"
+                                          x-text="formatPrice(product.price)"></span>
+                                </div>
+                                <!-- Color swatch dots (PSIH 1:1) -->
+                                <div class="flex items-center gap-1.5 mt-2">
+                                    <span class="w-3.5 h-3.5 rounded-full border border-black bg-black"></span>
+                                    <span class="w-3.5 h-3.5 rounded-full border border-gray-300 bg-[#707070]"></span>
+                                    <span class="w-3.5 h-3.5 rounded-full border border-gray-300 bg-white"></span>
+                                </div>
+                            </a>
+
+                            <!-- Quick Add "+" Button (PSIH 1:1 Bottom Right) -->
+                            <div class="absolute bottom-3 right-3 z-30">
+                                <button type="button" 
+                                        @click.stop.prevent="showSizePicker = !showSizePicker"
+                                        class="w-7 h-7 flex items-center justify-center rounded-full bg-white hover:bg-gray-100 active:bg-gray-200 transition-colors border border-black/15 text-black shadow-xs" 
+                                        aria-label="Добавить в корзину">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus">
+                                        <path d="M5 12h14"></path>
+                                        <path d="M12 5v14"></path>
+                                    </svg>
                                 </button>
                             </div>
-                        </div>
 
-                        <!-- Card Info -->
-                        <div class="lb-info pt-4">
-                            <h3 class="font-condensed font-bold text-base sm:text-lg text-[#0c0d0b] uppercase group-hover:text-[#737861] transition-colors" x-text="p.name"></h3>
-                            <small class="text-xs text-[#74756f] block" x-text="p.label || 'AURA Atelier'"></small>
-                        </div>
-                    </a>
-                </div>
-            </template>
-        </div>
-
-        <!-- Controls: Progress Bar and Scroll Arrows -->
-        <div class="lookbook-controls">
-            <div class="lookbook-progress">
-                <i :style="'width: ' + scrollProgress + '%'"></i>
-            </div>
-            <div class="lookbook-arrows">
-                <button @click="scrollLookbook(-1)" aria-label="Previous">
-                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                </button>
-                <button @click="scrollLookbook(1)" aria-label="Next">
-                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- SECTION 4: FLAGSHIP FEATURE «СОБЕРИ СВОЙ ОБРАЗ» / OUTFIT BUILDER (Architectural Dark Atelier Stage) -->
-    <section id="outfit-builder" class="look-section bg-[#0c0d0b] text-white relative">
-        <!-- Left: Category Tabs & Selectable Garment Cards -->
-        <div class="look-intro">
-            <div class="space-y-3">
-                <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed block" x-text="t('builderKicker')"></span>
-                <h2 class="font-condensed font-black text-4xl sm:text-6xl lg:text-7xl uppercase leading-[0.9] text-white">
-                    <span x-html="t('builderTitle')"></span>
-                </h2>
-                <p class="text-xs sm:text-sm text-[#8f918a] leading-relaxed max-w-md" x-text="t('builderText')"></p>
-            </div>
-
-            <!-- Slot Category Tabs (Ustki • Shim • Oyoq kiyim) -->
-            <div class="look-tabs mt-8">
-                <button @click="activeSlot = 'top'" :class="activeSlot === 'top' ? 'active' : ''">
-                    <span class="tab-dot"></span>
-                    <span x-text="t('slotTop')"></span>
-                </button>
-                <button @click="activeSlot = 'bottom'" :class="activeSlot === 'bottom' ? 'active' : ''">
-                    <span class="tab-dot"></span>
-                    <span x-text="t('slotBottom')"></span>
-                </button>
-                <button @click="activeSlot = 'shoes'" :class="activeSlot === 'shoes' ? 'active' : ''">
-                    <span class="tab-dot"></span>
-                    <span x-text="t('slotShoes')"></span>
-                </button>
-            </div>
-
-            <!-- 3-Column Garment Cards for the Active Slot -->
-            <div class="look-options">
-                <template x-for="item in currentSlotProducts" :key="item.id">
-                    <button @click="selectSlotProduct(item)" class="look-option group rounded-xl" :class="isProductSelected(item) ? 'active' : ''">
-                        <!-- Cutout Thumbnail on Clean Studio Backdrop -->
-                        <div class="look-option-media cutout rounded-lg relative overflow-hidden bg-[#1a1c17]">
-                            <img :src="item.cutout || item.photo || item.image" :alt="item.name" class="w-full h-full object-contain p-1">
-                            <div x-show="isProductSelected(item)" class="look-option-check">
-                                <i data-lucide="check" class="w-3 h-3 stroke-[3]"></i>
+                            <!-- Quick Size Picker Floating Popover -->
+                            <div x-show="showSizePicker" 
+                                 @click.away="showSizePicker = false" 
+                                 x-transition 
+                                 class="absolute bottom-12 right-2 bg-white border border-black rounded-lg shadow-float z-40 p-2.5 min-w-[130px]"
+                                 x-cloak>
+                                <p class="text-[9px] font-mono text-gray-500 uppercase tracking-wider text-center mb-1.5 font-bold" x-text="t('select_size')">РАЗМЕР:</p>
+                                <div class="flex flex-col gap-1">
+                                    <template x-for="v in product.variations" :key="v.id">
+                                        <button type="button" 
+                                                @click.stop.prevent="addToCartDirect(product, v); showSizePicker = false"
+                                                class="px-3 py-1 text-xs font-mono font-medium text-center hover:bg-black hover:text-white transition-colors rounded border border-gray-200"
+                                                x-text="v.name"></button>
+                                    </template>
+                                    <button type="button" 
+                                            x-show="!product.variations || product.variations.length === 0"
+                                            @click.stop.prevent="quickAddToCart(product); showSizePicker = false"
+                                            class="px-3 py-1 bg-black text-white rounded text-xs font-mono font-medium text-center uppercase">
+                                        ONE SIZE
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="look-option-name font-condensed font-bold text-xs uppercase line-clamp-1" x-text="item.name"></div>
-                        <div class="look-option-price font-condensed text-[11px]" x-text="formatMoney(item.price) + ' UZS'"></div>
-                    </button>
+
+                    </article>
                 </template>
             </div>
 
-            <!-- Quick Preset Looks Pills -->
-            <div class="pt-6 flex flex-wrap items-center gap-2">
-                <span class="text-[11px] font-condensed font-bold uppercase text-[#8f918a] mr-1" x-text="t('presets') + ':'"></span>
-                <template x-for="(pr, pIdx) in outfitPresets" :key="pIdx">
-                    <button @click="applyOutfitPreset(pIdx)" class="px-3.5 py-1.5 rounded-full border border-white/10 hover:border-white/30 text-xs font-condensed uppercase tracking-wider text-white/80 hover:text-white transition-all bg-white/5 hover:bg-white/10">
-                        <span x-text="pr.title"></span>
-                    </button>
-                </template>
+            <!-- Empty State -->
+            <div x-show="filteredProducts.length === 0" class="text-center py-20 text-gray-400">
+                <p class="font-lora text-lg text-black mb-1" x-text="t('no_products')">Товары не найдены</p>
+                <p class="font-mono text-xs text-gray-500" x-text="t('no_products_desc')">Попробуйте изменить категорию или сбросить фильтры.</p>
+                <button @click="resetFilters()" class="mt-4 text-xs font-mono font-bold text-black underline uppercase" x-text="t('reset_filters')">Сбросить фильтры</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 8. MINIMALIST ARCHITECTURAL FOOTER (1:1 WITH PSIH & STOREBOX) -->
+    <footer class="w-full bg-white border-t border-black select-none text-black font-mono">
+        <!-- Newsletter Subscription Block -->
+        <div class="border-b border-black/10 py-12 px-6 md:px-12">
+            <div class="max-w-xl mx-auto text-center" x-data="{ email: '', subscribed: false }">
+                <h3 class="font-lora text-xl md:text-2xl uppercase tracking-[0.2em] mb-2" x-text="t('newsletter_title')">РАССЫЛКА</h3>
+                <p class="text-[11px] md:text-xs text-neutral-500 uppercase tracking-wider mb-6" x-text="t('newsletter_desc')">
+                    Подпишитесь на рассылку, чтобы первыми узнавать о новых коллекциях и эксклюзивных предложениях.
+                </p>
+                <div x-show="!subscribed">
+                    <form @submit.prevent="if(email.trim()) subscribed = true" class="flex items-center justify-center max-w-md mx-auto border-b border-black pb-1">
+                        <input type="email" 
+                               x-model="email" 
+                               required 
+                               :placeholder="t('newsletter_placeholder')" 
+                               class="w-full bg-transparent text-xs font-mono tracking-wider uppercase text-black placeholder-neutral-400 outline-none py-2 px-1">
+                        <button type="submit" 
+                                class="px-4 py-2 font-mono text-xs font-bold uppercase tracking-widest hover:opacity-60 transition-opacity" 
+                                x-text="t('newsletter_btn')">
+                            OK
+                        </button>
+                    </form>
+                </div>
+                <div x-show="subscribed" x-cloak class="text-xs font-bold tracking-wider text-black py-2" x-text="t('newsletter_success')">
+                    Спасибо за подписку на рассылку!
+                </div>
             </div>
         </div>
 
-        <!-- Right: THE 3D MANNEQUIN FITTING ROOM -->
-        <div class="fitting-room rounded-3xl overflow-hidden relative shadow-2xl flex flex-col justify-between">
-            <!-- Top Toolbar: Title & Reset Button -->
-            <div class="fitting-toolbar">
-                <div class="flex items-center gap-2 font-condensed font-bold text-xs tracking-widest text-[#0c0d0b]">
-                    <span class="w-2 h-2 rounded-full bg-[#737861]"></span>
-                    <span x-text="t('previewTitle')"></span>
-                </div>
-                <button @click="resetOutfit()" class="font-condensed font-bold tracking-wider text-[#0c0d0b]" x-text="t('reset')"></button>
+        <!-- Links Grid: 3 Columns (Поддержка, Компания, Соцсети) -->
+        <div class="max-w-6xl mx-auto px-6 md:px-12 py-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+            <!-- 1. ПОДДЕРЖКА -->
+            <div class="flex flex-col items-center md:items-start space-y-2.5">
+                <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2" x-text="t('support_title')">ПОДДЕРЖКА</h4>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('delivery_customs')">ДОСТАВКА И ТАМОЖНЯ</a>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('return_refund')">ВОЗВРАТ И ВОЗМЕЩЕНИЕ</a>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('preorder')">ПРЕДЗАКАЗ</a>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('garment_care')">УХОД ЗА ИЗДЕЛИЯМИ</a>
             </div>
 
-            <!-- The Visual Stage (Base Standing White Mannequin + Layered Clothing) -->
-            <div class="model-stage flex items-center justify-center">
-                <div class="stage-wrapper">
-                    <!-- Base Standing White Mannequin Model -->
-                    <img src="/static/images/222fma/uploads/models/mannequin-3b30f3cb4662.webp" alt="Mannequin Base" class="mannequin-img-layer z-0">
-
-                    <!-- Layer 1: Bottom / Pants Fitted WebP -->
-                    <template x-if="selectedBottom && selectedBottom.fitted">
-                        <img :src="selectedBottom.fitted" alt="Bottom Fitted" class="mannequin-img-layer z-10 animate-fade">
-                    </template>
-
-                    <!-- Layer 2: Shoes Fitted WebP (Only covers feet, Y >= 1060) -->
-                    <template x-if="selectedShoes && selectedShoes.fitted">
-                        <img :src="selectedShoes.fitted" alt="Shoes Fitted" class="mannequin-img-layer z-15 animate-fade">
-                    </template>
-
-                    <!-- Layer 3: Top / Cardigan / Sweater Fitted WebP -->
-                    <template x-if="selectedTop && selectedTop.fitted">
-                        <img :src="selectedTop.fitted" alt="Top Fitted" class="mannequin-img-layer z-20 animate-fade">
-                    </template>
-
-                    <!-- Layer 4: Natural Left & Right Hand Overlays so fingers remain over the shirt -->
-                    <img src="/static/images/222fma/uploads/models/mannequin-3b30f3cb4662.webp" alt="Hands" class="mannequin-img-layer hand-layer-left">
-                    <img src="/static/images/222fma/uploads/models/mannequin-3b30f3cb4662.webp" alt="Hands" class="mannequin-img-layer hand-layer-right">
-                </div>
+            <!-- 2. КОМПАНИЯ -->
+            <div class="flex flex-col items-center md:items-start space-y-2.5">
+                <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2" x-text="t('company_title')">КОМПАНИЯ</h4>
+                <a href="#" @click.prevent="openModal('about')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('about_brand')">О БРЕНДЕ</a>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('contacts')">КОНТАКТЫ</a>
+                <a href="#" @click.prevent="openModal('about')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('offer')">ОФЕРТА</a>
+                <a href="#" @click.prevent="openModal('about')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('privacy')">КОНФИДЕНЦИАЛЬНОСТЬ</a>
             </div>
 
-            <!-- Bottom Live Price & Batch Add to Cart Bar -->
-            <div class="look-summary">
-                <div>
-                    <small x-text="t('yourLook')"></small>
-                    <strong class="font-condensed font-black text-xl text-[#0c0d0b]" x-text="formatMoney(outfitTotalPrice) + ' UZS'"></strong>
-                    <!-- Chips of chosen items (hidden on narrow mobile screens) -->
-                    <div class="look-chips">
-                        <template x-if="selectedTop">
-                            <span><i :style="'background: ' + selectedTop.color"></i> <span x-text="selectedTop.name"></span></span>
-                        </template>
-                        <template x-if="selectedBottom">
-                            <span><i :style="'background: ' + selectedBottom.color"></i> <span x-text="selectedBottom.name"></span></span>
-                        </template>
-                        <template x-if="selectedShoes">
-                            <span><i :style="'background: ' + selectedShoes.color"></i> <span x-text="selectedShoes.name"></span></span>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Add Complete Outfit to Cart Button (Solid White Pill with Black Bold Text) -->
-                <button @click="addCompleteOutfitToCart()" class="fma-outfit-add-btn group">
-                    <i data-lucide="shopping-bag" class="w-4 h-4 text-[#737861] group-hover:scale-110 transition-transform"></i>
-                    <span x-text="t('addOutfitToCart')"></span>
-                </button>
+            <!-- 3. СОЦСЕТИ -->
+            <div class="flex flex-col items-center md:items-start space-y-2.5">
+                <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2" x-text="t('socials_title')">СОЦСЕТИ</h4>
+                <a href="https://vk.com" target="_blank" rel="noopener noreferrer" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('vkontakte')">ВКОНТАКТЕ</a>
+                <a href="https://t.me" target="_blank" rel="noopener noreferrer" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('telegram')">ТЕЛЕГРАМ</a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('instagram')">INSTAGRAM</a>
             </div>
         </div>
-    </section>
 
-    <!-- SECTION 5: CRAFT & HERITAGE («SIFAT VA BICHIM» - Architectural Black Contrast) -->
-    <section id="craft" class="py-24 sm:py-32 px-6 sm:px-12 md:px-16 relative overflow-hidden">
-        <!-- Ambient Radial Glow -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-radial from-[#737861]/15 to-transparent pointer-events-none rounded-full blur-3xl"></div>
-
-        <div class="max-w-6xl mx-auto relative z-10 space-y-16">
-            <!-- Header Block -->
-            <div class="text-center max-w-2xl mx-auto space-y-4">
-                <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed" x-text="t('craftKicker')"></span>
-                <h2 class="font-condensed font-black text-4xl sm:text-6xl uppercase tracking-tight text-white leading-none" x-text="t('craftTitle')"></h2>
-                <p class="text-xs sm:text-sm text-[#b5b8ad] leading-relaxed" x-text="t('craftSubtitle')"></p>
-            </div>
-
-            <!-- 3 Pillars Feature Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Pillar 1: Fabric -->
-                <div class="craft-card space-y-4">
-                    <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[#cfd2bd]">
-                        <i data-lucide="layers" class="w-6 h-6"></i>
-                    </div>
-                    <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed block">01 / DENSITY</span>
-                    <h3 class="font-condensed font-bold text-2xl uppercase text-white" x-text="t('craftPillar1Title')"></h3>
-                    <p class="text-xs sm:text-sm text-[#b5b8ad] leading-relaxed" x-text="t('craftPillar1Text')"></p>
-                </div>
-
-                <!-- Pillar 2: Hardware -->
-                <div class="craft-card space-y-4">
-                    <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[#cfd2bd]">
-                        <i data-lucide="shield" class="w-6 h-6"></i>
-                    </div>
-                    <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed block">02 / HARDWARE</span>
-                    <h3 class="font-condensed font-bold text-2xl uppercase text-white" x-text="t('craftPillar2Title')"></h3>
-                    <p class="text-xs sm:text-sm text-[#b5b8ad] leading-relaxed" x-text="t('craftPillar2Text')"></p>
-                </div>
-
-                <!-- Pillar 3: Atelier -->
-                <div class="craft-card space-y-4">
-                    <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[#cfd2bd]">
-                        <i data-lucide="sparkles" class="w-6 h-6"></i>
-                    </div>
-                    <span class="text-xs font-bold uppercase tracking-widest text-[#a7ae8f] font-condensed block">03 / ATELIER</span>
-                    <h3 class="font-condensed font-bold text-2xl uppercase text-white" x-text="t('craftPillar3Title')"></h3>
-                    <p class="text-xs sm:text-sm text-[#b5b8ad] leading-relaxed" x-text="t('craftPillar3Text')"></p>
-                </div>
-            </div>
-
-            <!-- Atelier Quote Banner -->
-            <div class="border-t border-white/10 pt-12 text-center max-w-xl mx-auto space-y-3">
-                <blockquote class="font-serif-italic text-lg sm:text-2xl text-[#e8e5dc]" x-text="t('craftQuote')"></blockquote>
-                <span class="text-[11px] font-condensed uppercase tracking-widest text-[#a7ae8f] block">— STOREBOX APPAREL ARCHITECTURE</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- SECTION 6: FLAGSHIP STORE & LOCATION (Clean StoreBox Coordinates on Light Ground) -->
-    <section id="location" class="location bg-white border-t border-[#141512]/10 py-20">
-        <div class="location-copy">
-            <div class="loc-address space-y-4">
-                <span class="loc-chip font-condensed font-bold" x-text="t('locationBadge')"></span>
-                <h2 class="font-condensed font-black text-4xl sm:text-6xl uppercase tracking-tight text-[#0c0d0b]" x-text="t('locationTitle')"></h2>
-                <p class="font-condensed text-2xl text-[#0c0d0b]">Toshkent, Mirobod, Oybek ko'chasi 14</p>
-            </div>
-
-            <div class="loc-rows">
-                <div class="loc-row">
-                    <div class="loc-status open">
-                        <i></i>
-                    </div>
-                    <div>
-                        <small x-text="t('hours')"></small>
-                        <b>10:00 — 22:00</b>
-                    </div>
-                    <div class="loc-badge open" x-text="t('openNow')"></div>
-                </div>
-
-                <a href="tel:+998712005555" class="loc-row">
-                    <div class="loc-icon">
-                        <i data-lucide="phone" class="w-4 h-4"></i>
-                    </div>
-                    <div>
-                        <small x-text="t('phone')"></small>
-                        <b>+998 71 200 55 55</b>
-                    </div>
-                    <div class="loc-row-arrow">
-                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-                    </div>
+        <!-- Bottom Line: Copyright & StoreBox Attribution -->
+        <div class="border-t border-black/10 py-6 px-6 text-center text-[10px] md:text-[11px] text-neutral-500 uppercase tracking-widest">
+            <p>
+                © 2026 {{ store.name|default:'CRYSTALL AMI' }}. <span x-text="t('rights_reserved')">ВСЕ ПРАВА ЗАЩИЩЕНЫ.</span> • 
+                <a href="https://storebox.uz" target="_blank" class="hover:text-black font-semibold underline decoration-neutral-300 hover:decoration-black transition-colors" x-text="t('powered_by_storebox')">
+                    Работает на платформе StoreBox
                 </a>
-
-                <a href="https://t.me/aura_atelier_uz" target="_blank" class="loc-row">
-                    <div class="loc-icon">
-                        <i data-lucide="send" class="w-4 h-4"></i>
-                    </div>
-                    <div>
-                        <small>Telegram</small>
-                        <b>@aura_atelier_uz</b>
-                    </div>
-                    <div class="loc-row-arrow">
-                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-                    </div>
-                </a>
-
-                <a href="https://instagram.com/aura.atelier" target="_blank" class="loc-row">
-                    <div class="loc-icon">
-                        <i data-lucide="instagram" class="w-4 h-4"></i>
-                    </div>
-                    <div>
-                        <small>Instagram</small>
-                        <b>@aura.atelier</b>
-                    </div>
-                    <div class="loc-row-arrow">
-                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Interactive Map Container -->
-        <div class="map">
-            <iframe class="ymap is-ready" src="https://yandex.com/map-widget/v1/?ll=69.277884%2C41.298944&z=15&pt=69.277884%2C41.298944%2Cpm2dgl" frameborder="0" allowfullscreen="true"></iframe>
-            <div class="map-card">
-                <div class="map-card-logo">
-                    <img src="{% static 'images/streetwear/logo_emblem.svg' %}" alt="AURA">
-                </div>
-                <div class="map-card-info">
-                    <b>AURA Atelier Flagship</b>
-                    <span>Tashkent, Mirobod, Oybek 14</span>
-                </div>
-                <a href="https://yandex.uz/maps/?rtext=~41.298944%2C69.277884&rtt=auto" target="_blank" class="map-route">
-                    <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
-                    <span x-text="t('route')"></span>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- SECTION 7: FOOTER -->
-    <footer class="footer bg-[#0c0d0b] text-white">
-        <div class="footer-main">
-            <div class="footer-brand">
-                <a href="#home" class="footer-logo">
-                    <img src="{% static 'images/streetwear/logo_wordmark.svg' %}" alt="AURA ATELIER" class="h-8 w-auto">
-                </a>
-                <p>StoreBox zamonaviy ko'cha kiyimlari flagmani. Mirobod, Oybek ko'chasi 14.</p>
-            </div>
-            <div class="footer-col">
-                <small x-text="t('navCollection')"></small>
-                <a href="#collection" x-text="t('catAll')"></a>
-                <a href="#outfit-builder" x-text="t('navOutfit')"></a>
-            </div>
-            <div class="footer-col">
-                <small x-text="t('navAbout')"></small>
-                <a href="#manifesto" x-text="t('navAbout')"></a>
-                <a href="#craft" x-text="t('navCraft')"></a>
-            </div>
-            <div class="footer-col">
-                <small x-text="t('navStore')"></small>
-                <a href="#location">Mirobod, Oybek ko'chasi 14</a>
-                <a href="tel:+998712005555">+998 71 200 55 55</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <span>© 2026 AURA ATELIER. Barcha huquqlar himoyalangan.</span>
-            <div class="footer-credit">
-                <span>Platforma: <b>StoreBox</b></span>
-            </div>
+            </p>
         </div>
     </footer>
 
-    <!-- MOBILE FIXED BOTTOM DOCK -->
-    <nav class="mnav" style="--count: 5;">
-        <div class="mnav-track">
-            <!-- Sliding spring highlight pill -->
-            <div class="mnav-slider" :style="'--count: 5; --index: ' + mobileNavIndex"></div>
+    <!-- 5. FLOATING FILTER BAR (TR COMPONENT 1:1 WITH PSIH) -->
+    <!-- Positioned cleanly at bottom: 80px, exactly above bottom dock with zero overlap! -->
+    <div class="fixed left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 ease-out select-none" 
+         style="bottom: calc(80px + env(safe-area-inset-bottom, 0px));"
+         :class="(!menuDrawerOpen && filterIslandVisible) ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-28 opacity-0 pointer-events-none'">
+        <div class="frosted-island w-[360px] max-w-[calc(100vw-24px)] h-[56px] flex items-center justify-center rounded-2xl transition-all">
+            <div class="h-full flex items-center w-full relative font-mono text-[13px]">
+                
+                <!-- Left: Filter Button -->
+                <button @click="filterDrawerOpen = !filterDrawerOpen; sortMenuOpen = false; menuDrawerOpen = false" 
+                        class="flex-1 h-full flex items-center justify-center hover:bg-black/5 rounded-l-2xl transition-all gap-2 text-black/80 hover:text-black whitespace-nowrap px-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-funnel flex-shrink-0">
+                        <path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"></path>
+                    </svg>
+                    <span x-text="t('filter')">Фильтр</span>
+                </button>
 
-            <a href="#home" @click="mobileNavIndex = 0" class="mnav-item" :class="mobileNavIndex === 0 ? 'active' : ''">
-                <i data-lucide="home" class="w-4 h-4"></i>
-                <span x-text="t('mHome')"></span>
-            </a>
-            <a href="#collection" @click="mobileNavIndex = 1" class="mnav-item" :class="mobileNavIndex === 1 ? 'active' : ''">
-                <i data-lucide="grid" class="w-4 h-4"></i>
-                <span x-text="t('mCollection')"></span>
-            </a>
-            <a href="#outfit-builder" @click="mobileNavIndex = 2" class="mnav-item" :class="mobileNavIndex === 2 ? 'active' : ''">
-                <i data-lucide="shirt" class="w-4 h-4"></i>
-                <span x-text="t('mOutfit')"></span>
-            </a>
-            <a href="#craft" @click="mobileNavIndex = 3" class="mnav-item" :class="mobileNavIndex === 3 ? 'active' : ''">
-                <i data-lucide="layers" class="w-4 h-4"></i>
-                <span x-text="t('mCraft')"></span>
-            </a>
-            <a href="#location" @click="mobileNavIndex = 4" class="mnav-item" :class="mobileNavIndex === 4 ? 'active' : ''">
-                <i data-lucide="map-pin" class="w-4 h-4"></i>
-                <span x-text="t('mStore')"></span>
-            </a>
-        </div>
-    </nav>
+                <!-- Center Divider -->
+                <div class="w-px h-6 bg-black/10 flex-shrink-0"></div>
 
-    <!-- SLIDE-OVER CART DRAWER -->
-    <div :class="cartDrawerOpen ? 'backdrop show' : 'backdrop'" @click="cartDrawerOpen = false"></div>
-    <div :class="cartDrawerOpen ? 'drawer open' : 'drawer'">
-        <!-- Drawer Header -->
-        <div class="drawer-head">
-            <div>
-                <small x-text="t('cart')"></small>
-                <h3 x-text="t('yourCart') + ' (' + cartCount + ')'"></h3>
-            </div>
-            <button @click="cartDrawerOpen = false" class="remove" aria-label="Close">✕</button>
-        </div>
-
-        <!-- Items List -->
-        <div class="cart-items">
-            <template x-if="Object.keys(cartItems).length === 0">
-                <div class="empty text-center py-16 space-y-3">
-                    <p x-text="t('cartEmpty')"></p>
-                    <button @click="cartDrawerOpen = false" class="px-5 py-2 rounded-full bg-[#0c0d0b] text-white font-condensed font-bold text-xs uppercase" x-text="t('continueShopping')"></button>
+                <!-- Center: Count & Grid Toggle (4 | 2) -->
+                <div class="flex-1 h-full flex items-center justify-center gap-3 select-none">
+                    <span class="text-[11px] font-mono text-neutral-400 font-medium" x-text="filteredProducts.length"></span>
+                    <button @click="toggleGridDensity()" 
+                            class="text-[13px] font-mono tracking-tight transition-opacity hover:opacity-60 whitespace-nowrap"
+                            title="Сменить сетку">
+                        <span :class="gridCols === 4 ? 'font-bold text-black' : 'text-neutral-400'">4</span>
+                        <span class="text-neutral-300 mx-1">|</span>
+                        <span :class="gridCols === 2 ? 'font-bold text-black' : 'text-neutral-400'">2</span>
+                    </button>
                 </div>
-            </template>
 
-            <template x-for="(item, key) in cartItems" :key="key">
-                <div class="cart-item">
-                    <img :src="item.image || item.image_url" :alt="item.name" class="w-16 h-16 rounded-xl object-contain bg-white p-1 border border-[#0c0d0b]/10">
-                    <div>
-                        <h4 class="font-condensed font-bold text-xs uppercase text-[#0c0d0b]" x-text="item.name"></h4>
-                        <small x-show="item.variation_name" x-text="'O\'lcham: ' + item.variation_name"></small>
-                        <div class="font-condensed font-bold text-xs text-[#0c0d0b] mt-1" x-text="formatMoney(item.unit_price || item.price) + ' UZS'"></div>
+                <!-- Center Divider -->
+                <div class="w-px h-6 bg-black/10 flex-shrink-0"></div>
+
+                <!-- Right: Sort Button -->
+                <button @click="sortMenuOpen = !sortMenuOpen; filterDrawerOpen = false; menuDrawerOpen = false" 
+                        class="flex-1 h-full flex items-center justify-center hover:bg-black/5 rounded-r-2xl transition-all gap-2 text-black/80 hover:text-black whitespace-nowrap px-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
+                        <line x1="4" x2="20" y1="21" y2="21"></line>
+                        <line x1="4" x2="20" y1="14" y2="14"></line>
+                        <line x1="4" x2="20" y1="7" y2="7"></line>
+                        <circle cx="14" cy="21" r="2" fill="currentColor"></circle>
+                        <circle cx="8" cy="14" r="2" fill="currentColor"></circle>
+                        <circle cx="16" cy="7" r="2" fill="currentColor"></circle>
+                    </svg>
+                    <span x-text="sortLabel || t('sort')">Сорт.</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. FLOATING BOTTOM NAVIGATION ISLAND (fC COMPONENT 1:1 WITH PSIH) -->
+    <!-- Positioned at bottom: 14px, exactly 10px below the filter bar, with zero overlap! -->
+    <div class="navigation-island fixed left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 ease-out select-none" 
+         style="bottom: calc(14px + env(safe-area-inset-bottom, 0px));">
+        <div class="frosted-island h-[56px] flex items-center justify-center rounded-2xl w-[360px] max-w-[calc(100vw-24px)] transition-all">
+            <nav class="flex items-center justify-between w-full h-full px-4 relative overflow-hidden" aria-label="Bottom Navigation Island">
+                
+                <!-- 1: Menu Button -->
+                <button @click="toggleMenu()" 
+                        aria-label="Меню" 
+                        title="Меню" 
+                        class="w-[44px] h-[44px] flex items-center justify-center hover:opacity-70 transition-opacity">
+                    <svg x-show="!menuDrawerOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu">
+                        <line x1="4" x2="20" y1="12" y2="12"></line>
+                        <line x1="4" x2="20" y1="6" y2="6"></line>
+                        <line x1="4" x2="20" y1="18" y2="18"></line>
+                    </svg>
+                    <svg x-show="menuDrawerOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </svg>
+                </button>
+
+                <!-- 2: Search Button -->
+                <button @click="searchOpen = !searchOpen; menuDrawerOpen = false; filterDrawerOpen = false; sortMenuOpen = false" 
+                        aria-label="Поиск" 
+                        title="Поиск" 
+                        class="w-[44px] h-[44px] flex items-center justify-center hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+                        <path d="m21 21-4.34-4.34"></path>
+                        <circle cx="11" cy="11" r="8"></circle>
+                    </svg>
+                </button>
+
+                <!-- 3: CENTER BRAND LOGO EMBLEM (CRYSTALL AMI) — 1:1 WITH PSIH EMBLEM -->
+                <button @click="window.scrollTo({top: 0, behavior: 'smooth'})" 
+                        aria-label="CRYSTALL AMI" 
+                        title="CRYSTALL AMI" 
+                        class="w-[44px] h-[44px] flex items-center justify-center group hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers text-black">
+                        <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+                        <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+                        <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+                    </svg>
+                </button>
+
+                <!-- 4: Account / Profile Button -->
+                <a href="/store/{{ store.subdomain }}/profile/?lang={{ lang|default:'ru' }}" 
+                    aria-label="Профиль" 
+                    title="Личный кабинет" 
+                    class="w-[44px] h-[44px] flex items-center justify-center hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </a>
+
+                <!-- 5: Shopping Bag Button with Red Round Badge (PSIH 1:1) -->
+                <button @click="openDrawer('cart')" 
+                        aria-label="Корзина" 
+                        title="Корзина" 
+                        class="relative w-[44px] h-[44px] flex items-center justify-center hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-bag">
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        <path d="M3.103 6.034h17.794"></path>
+                        <path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"></path>
+                    </svg>
+                    <span x-show="cartTotalCount > 0" 
+                          x-text="cartTotalCount" 
+                          class="absolute top-1.5 right-1.5 bg-[#e53935] text-white font-mono text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs"></span>
+                </button>
+
+            </nav>
+        </div>
+    </div>
+
+    <!-- 7. FLOATING FILTER CARD (POPOVER 1:1 WITH PSIH) -->
+    <!-- Positioned at bottom: 144px, centered horizontally directly above filter bar -->
+    <div x-show="filterDrawerOpen" 
+         x-transition.opacity 
+         class="fixed inset-0 z-[9998] bg-black/20 backdrop-blur-[2px]" 
+         @click="filterDrawerOpen = false" 
+         x-cloak></div>
+
+    <div x-show="filterDrawerOpen" 
+         x-transition 
+         class="fixed left-1/2 -translate-x-1/2 z-[9999] w-[360px]" 
+         style="bottom: 144px; max-width: calc(100vw - 32px);" 
+         x-cloak>
+        <div class="relative text-gray-900 flex flex-col bg-white rounded-xl overflow-hidden shadow-float border border-black/15">
+            <!-- Header: COLLECTION with Close Button (PSIH 1:1) -->
+            <div class="border-b border-black px-5 py-4 bg-white z-10 flex items-center justify-center relative">
+                <h2 class="text-center font-lora text-[16px] uppercase tracking-wide">COLLECTION</h2>
+                <button @click="filterDrawerOpen = false" 
+                        class="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:opacity-60 transition-opacity text-2xl leading-none">
+                    ×
+                </button>
+            </div>
+
+            <!-- Body: Collection Select & Filters -->
+            <div class="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                <div class="relative">
+                    <select x-model="selectedCategory" 
+                            class="w-full appearance-none border border-neutral-300 rounded-lg py-3 px-3.5 pr-10 text-[11px] uppercase tracking-wide bg-white text-gray-900 outline-none cursor-pointer font-mono font-medium focus:border-black transition">
+                        <option value="">ALL COLLECTIONS (ВСЕ ТОВАРЫ)</option>
+                        <template x-for="cat in categories" :key="cat.slug">
+                            <option :value="cat.slug" x-text="getCategoryName(cat).toUpperCase() + ' (' + cat.count + ')'"></option>
+                        </template>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </div>
-                    <div class="flex flex-col items-end gap-2">
-                        <button @click="updateCart(key, 0, 'remove')" class="text-red-500 hover:text-red-700 text-xs p-1" title="Удалить">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <div class="qty rounded-full bg-white border border-[#141512]/15">
-                            <button @click="updateCart(key, -1)">−</button>
-                            <span x-text="item.quantity"></span>
-                            <button @click="updateCart(key, 1)">+</button>
+                </div>
+
+                <!-- Price Range Filter -->
+                <div class="pt-2">
+                    <p class="font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2" x-text="t('price_range')">ЦЕНОВОЙ ДИАПАЗОН (UZS)</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-[9px] font-mono text-gray-400 uppercase" x-text="t('from')">ОТ</span>
+                            <input type="number" x-model.number="minPrice" placeholder="0" class="w-full border border-neutral-300 rounded-lg px-3 py-2 font-mono text-xs focus:outline-none focus:border-black">
+                        </div>
+                        <div>
+                            <span class="text-[9px] font-mono text-gray-400 uppercase" x-text="t('to')">ДО</span>
+                            <input type="number" x-model.number="maxPrice" placeholder="3 500 000" class="w-full border border-neutral-300 rounded-lg px-3 py-2 font-mono text-xs focus:outline-none focus:border-black">
                         </div>
                     </div>
                 </div>
-            </template>
-        </div>
 
-        <!-- Footer & Checkout -->
-        <div x-show="Object.keys(cartItems).length > 0" class="cart-footer">
-            <div class="total">
-                <span class="font-condensed font-bold uppercase text-sm" x-text="t('total')"></span>
-                <b class="font-condensed font-black text-xl text-[#0c0d0b]" x-text="formatMoney(cartTotal) + ' UZS'"></b>
+                <!-- In-Stock Toggle -->
+                <div class="pt-2 flex items-center justify-between border-t border-gray-100">
+                    <span class="font-mono text-xs uppercase tracking-wider text-black" x-text="t('only_in_stock')">ТОЛЬКО В НАЛИЧИИ</span>
+                    <input type="checkbox" x-model="inStockOnly" class="accent-black w-4 h-4 cursor-pointer">
+                </div>
             </div>
-            <a href="/store/{{ store.subdomain }}/checkout/" class="w-full bg-[#0c0d0b] text-white hover:bg-black font-condensed font-bold text-sm uppercase py-4 rounded-full flex items-center justify-center gap-2 shadow-lg transition-all">
-                <i data-lucide="check" class="w-4 h-4"></i>
-                <span x-text="t('checkout')"></span>
-            </a>
+
+            <!-- Footer: CLEAR & APPLY Buttons (PSIH 1:1) -->
+            <div class="border-t border-neutral-200 px-5 py-3.5 flex gap-3 bg-white font-mono text-xs">
+                <button @click="resetFilters()" 
+                        class="flex-1 py-3 text-center uppercase tracking-wider font-semibold text-black hover:opacity-60 transition-opacity">
+                    CLEAR
+                </button>
+                <button @click="filterDrawerOpen = false; updateCategoryTitle()" 
+                        class="flex-1 py-3 bg-black text-white text-center rounded-lg uppercase tracking-wider font-bold hover:bg-neutral-800 transition-colors shadow-sm">
+                    APPLY
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
-    <div x-show="toastMessage" x-cloak class="fixed bottom-20 sm:bottom-8 right-6 z-50 bg-[#0c0d0b] text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transition-all border border-white/20" x-transition>
-        <span class="w-2 h-2 rounded-full bg-[#737861]"></span>
-        <span class="font-condensed font-bold text-xs uppercase tracking-wider" x-text="toastMessage"></span>
+    <!-- 8. FLOATING SORT CARD (POPOVER 1:1 WITH PSIH) -->
+    <!-- Positioned at bottom: 144px, centered horizontally -->
+    <div x-show="sortMenuOpen" 
+         x-transition.opacity 
+         class="fixed inset-0 z-[9998] bg-transparent" 
+         @click="sortMenuOpen = false" 
+         x-cloak></div>
+
+    <div x-show="sortMenuOpen" 
+         x-transition 
+         class="fixed left-1/2 -translate-x-1/2 z-[9999] w-[260px] p-2 rounded-2xl shadow-2xl font-mono text-[12px] uppercase tracking-wider space-y-1" 
+         style="bottom: 144px; max-width: calc(100vw - 32px); background-color: rgba(20, 20, 20, 0.94); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffffff;" 
+         x-cloak>
+        <button @click="setSort('default', 'По умолчанию')" 
+                class="w-full text-left px-3.5 py-2.5 rounded-lg transition-colors flex items-center justify-between"
+                :style="sortBy === 'default' ? 'background: rgba(255, 255, 255, 0.15); color: #ffffff; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.25);' : 'color: rgba(255, 255, 255, 0.65);'">
+            <span>ПО УМОЛЧАНИЮ</span>
+        </button>
+        <button @click="setSort('price_asc', 'Цена ↑')" 
+                class="w-full text-left px-3.5 py-2.5 rounded-lg transition-colors flex items-center justify-between"
+                :style="sortBy === 'price_asc' ? 'background: rgba(255, 255, 255, 0.15); color: #ffffff; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.25);' : 'color: rgba(255, 255, 255, 0.65);'">
+            <span>ЦЕНА ↑ (ДЕШЕВЛЕ)</span>
+        </button>
+        <button @click="setSort('price_desc', 'Цена ↓')" 
+                class="w-full text-left px-3.5 py-2.5 rounded-lg transition-colors flex items-center justify-between"
+                :style="sortBy === 'price_desc' ? 'background: rgba(255, 255, 255, 0.15); color: #ffffff; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.25);' : 'color: rgba(255, 255, 255, 0.65);'">
+            <span>ЦЕНА ↓ (ДОРОЖЕ)</span>
+        </button>
+        <button @click="setSort('name', 'A-Z')" 
+                class="w-full text-left px-3.5 py-2.5 rounded-lg transition-colors flex items-center justify-between"
+                :style="sortBy === 'name' ? 'background: rgba(255, 255, 255, 0.15); color: #ffffff; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.25);' : 'color: rgba(255, 255, 255, 0.65);'">
+            <span>ПО НАЗВАНИЮ (A-Z)</span>
+        </button>
     </div>
 
-    <!-- JAVASCRIPT APP STATE & LOGIC -->
+    <!-- 9. FLOATING MENU CARD (POPOVER 1:1 WITH PSIH) -->
+    <!-- Positioned at bottom: 74px, centered horizontally directly above navigation island -->
+    <div x-show="menuDrawerOpen" 
+         x-transition.opacity 
+         class="fixed inset-0 z-[9998] bg-black/25 backdrop-blur-[3px]" 
+         @click="menuDrawerOpen = false; menuSubmenu = ''" 
+         x-cloak></div>
+
+    <div x-show="menuDrawerOpen" 
+         x-transition 
+         class="fixed left-1/2 -translate-x-1/2 z-[9999] w-[360px]" 
+         style="bottom: 74px; max-width: calc(100vw - 32px);" 
+         x-cloak>
+        <div class="relative w-[360px] max-h-[72vh] text-gray-900 flex flex-col bg-white rounded-2xl overflow-hidden shadow-2xl border border-neutral-200" 
+             style="max-width: min(360px, -24px + 100vw);">
+            
+            <!-- STATE 1: MAIN MENU (PSIH 1:1) -->
+            <div x-show="menuSubmenu === ''">
+                <div class="border-b border-neutral-200 px-5 py-3.5 flex items-center">
+                    <h2 class="flex-1 text-center font-lora text-[15px] uppercase tracking-wide">МЕНЮ</h2>
+                </div>
+                
+                <!-- Category Links with Chevrons -->
+                <div class="px-5 py-2 border-b border-neutral-200">
+                    <button @click="menuSubmenu = 'collections'" 
+                            class="w-full flex items-center justify-between py-3 text-black hover:text-gray-600 transition-colors">
+                        <span class="w-4 h-4 flex-shrink-0"></span>
+                        <span class="flex-1 text-center font-mono text-[14px]">Коллекции</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4 text-gray-400 flex-shrink-0"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                    <button @click="menuSubmenu = 'women'" 
+                            class="w-full flex items-center justify-between py-3 text-black hover:text-gray-600 transition-colors">
+                        <span class="w-4 h-4 flex-shrink-0"></span>
+                        <span class="flex-1 text-center font-mono text-[14px]">Женское</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4 text-gray-400 flex-shrink-0"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                    <button @click="selectCategory(''); menuDrawerOpen = false; menuSubmenu = ''" 
+                            class="w-full flex items-center justify-between py-3 text-black hover:text-gray-600 transition-colors">
+                        <span class="w-4 h-4 flex-shrink-0"></span>
+                        <span class="flex-1 text-center font-mono text-[14px]">Все товары</span>
+                        <span class="w-4 h-4 flex-shrink-0"></span>
+                    </button>
+                </div>
+
+                <!-- Footer Links & Language Switcher -->
+                <div class="px-5 py-3 space-y-0.5">
+                    <button @click="openModal('support')" class="w-full text-center py-2 font-mono text-[13px] text-gray-700 hover:text-black transition-colors uppercase tracking-wider">
+                        ПОДДЕРЖКА
+                    </button>
+                    <button @click="openModal('about')" class="w-full text-center py-2 font-mono text-[13px] text-gray-700 hover:text-black transition-colors uppercase tracking-wider">
+                        ПРО КОМПАНИЮ
+                    </button>
+                    <button @click="openModal('social')" class="w-full text-center py-2 font-mono text-[13px] text-gray-700 hover:text-black transition-colors uppercase tracking-wider">
+                        СЛЕДИТЕ ЗА НАМИ
+                    </button>
+                    
+                    <!-- Language Switcher Pill -->
+                    <div class="pt-2.5 flex items-center justify-center gap-2 font-mono text-[13px]">
+                        <span class="text-gray-500">Язык:</span>
+                        <button type="button" @click="setLanguage('ru')" 
+                                class="px-2 py-0.5 rounded transition-colors"
+                                :class="currentLang === 'ru' ? 'bg-black text-white font-bold' : 'text-gray-700 hover:text-black'">RU</button>
+                        <span class="text-gray-300">/</span>
+                        <button type="button" @click="setLanguage('uz')" 
+                                class="px-2 py-0.5 rounded transition-colors"
+                                :class="currentLang === 'uz' ? 'bg-black text-white font-bold' : 'text-gray-700 hover:text-black'">UZ</button>
+                        <span class="text-gray-300">/</span>
+                        <button type="button" @click="setLanguage('en')" 
+                                class="px-2 py-0.5 rounded transition-colors"
+                                :class="currentLang === 'en' ? 'bg-black text-white font-bold' : 'text-gray-700 hover:text-black'">EN</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATE 2: WOMEN SUBCATEGORIES MENU (PSIH 1:1) -->
+            <div x-show="menuSubmenu === 'women'">
+                <div class="border-b border-neutral-200 px-5 py-3.5 flex items-center justify-between">
+                    <button @click="menuSubmenu = ''" class="p-1 -ml-1 text-black hover:opacity-60 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                    <h2 class="flex-1 text-center font-lora text-[15px] uppercase tracking-wide">ЖЕНСКОЕ</h2>
+                    <div class="w-5"></div>
+                </div>
+                
+                <div class="px-5 py-2 overflow-y-auto max-h-[55vh] space-y-1">
+                    <button @click="selectCategory(''); menuDrawerOpen = false; menuSubmenu = ''" 
+                            class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">Все</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+
+                    <template x-for="cat in categories" :key="cat.slug">
+                        <button @click="selectCategory(cat.slug); menuDrawerOpen = false; menuSubmenu = ''" 
+                                class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                            <span class="w-4 h-4"></span>
+                            <span class="flex-1 text-center" x-text="getCategoryName(cat)"></span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- STATE 3: COLLECTIONS SUBMENU -->
+            <div x-show="menuSubmenu === 'collections'">
+                <div class="border-b border-neutral-200 px-5 py-3.5 flex items-center justify-between">
+                    <button @click="menuSubmenu = ''" class="p-1 -ml-1 text-black hover:opacity-60 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                    <h2 class="flex-1 text-center font-lora text-[15px] uppercase tracking-wide">КОЛЛЕКЦИИ</h2>
+                    <div class="w-5"></div>
+                </div>
+                
+                <div class="px-5 py-2 overflow-y-auto max-h-[55vh] space-y-1">
+                    <button @click="selectCategory(''); menuDrawerOpen = false; menuSubmenu = ''" 
+                            class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">SS26 RESORT COLLECTION</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                    <button @click="selectCategory('bags'); menuDrawerOpen = false; menuSubmenu = ''" 
+                            class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">HAUTE MAROQUINERIE (BAGS)</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                    <button @click="selectCategory('shoes'); menuDrawerOpen = false; menuSubmenu = ''" 
+                            class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">ATELIER FOOTWEAR</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                    <button @click="selectCategory('perfume'); menuDrawerOpen = false; menuSubmenu = ''" 
+                            class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">SELECTIVE HAUTE PARFUM</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 10. SEARCH FLOATING DRAWER / MODAL -->
+    <div x-show="searchOpen" 
+         x-transition.opacity 
+         class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-start justify-center pt-20 px-4" 
+         @click="searchOpen = false" 
+         x-cloak>
+        <div @click.stop 
+             class="w-full max-w-lg bg-white rounded-xl shadow-2xl p-5 border border-black space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                <div class="flex items-center gap-2 flex-1">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" 
+                           x-model="searchQuery" 
+                           placeholder="Поиск по коллекции..." 
+                           class="w-full font-mono text-sm focus:outline-none">
+                </div>
+                <button @click="searchOpen = false" class="text-xl leading-none text-gray-500 hover:text-black">×</button>
+            </div>
+            <p class="font-mono text-xs text-gray-400">Найдено товаров: <span class="text-black font-bold" x-text="filteredProducts.length"></span></p>
+        </div>
+    </div>
+
+    <!-- 11. SLIDE-OVER CART & WISHLIST DRAWER -->
+    <div x-show="cartDrawerOpen" 
+         x-transition.opacity 
+         class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex justify-end"
+         x-cloak>
+        <div @click.away="cartDrawerOpen = false"
+             class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between border-l border-gray-200">
+            
+            <!-- Drawer Tabs Header -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-6 font-mono text-xs uppercase tracking-widest font-bold">
+                    <button @click="cartTab = 'cart'" 
+                            :class="cartTab === 'cart' ? 'text-black border-b-2 border-black pb-1' : 'text-gray-400 hover:text-black'">
+                        <span x-text="t('cart')">КОРЗИНА</span> (<span x-text="cartTotalCount"></span>)
+                    </button>
+                    <button @click="cartTab = 'wishlist'" 
+                            :class="cartTab === 'wishlist' ? 'text-black border-b-2 border-black pb-1' : 'text-gray-400 hover:text-black'">
+                        <span x-text="t('wishlist')">ИЗБРАННОЕ</span> (<span x-text="wishlist.length"></span>)
+                    </button>
+                </div>
+                <button @click="cartDrawerOpen = false" class="p-1 hover:opacity-60 text-black">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Tab 1: Cart Items -->
+            <div x-show="cartTab === 'cart'" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <template x-for="(item, idx) in cart" :key="item.cartId">
+                    <div class="flex gap-4 p-3 border border-gray-100 rounded-xl items-center justify-between bg-white">
+                        <img :src="item.image" :alt="item.name" class="w-16 h-20 object-contain bg-white rounded-lg flex-shrink-0">
+                        <div class="flex-1 min-w-0 font-mono">
+                            <h4 class="text-xs font-bold uppercase truncate text-black" x-text="item.name"></h4>
+                            <p class="text-[10px] text-gray-500 uppercase mt-0.5">Размер: <span x-text="item.size" class="text-black font-semibold"></span></p>
+                            <p class="text-xs font-bold text-black mt-1" x-text="formatPrice(item.price)"></p>
+                            
+                            <!-- Qty Controls -->
+                            <div class="flex items-center gap-2 mt-2">
+                                <button @click="updateCartQty(idx, -1)" class="w-6 h-6 rounded-md border border-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-100">-</button>
+                                <span class="text-xs font-bold w-4 text-center" x-text="item.qty"></span>
+                                <button @click="updateCartQty(idx, 1)" class="w-6 h-6 rounded-md border border-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-100">+</button>
+                            </div>
+                        </div>
+                        <button @click="removeFromCart(idx)" class="text-gray-400 hover:text-red-500 p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
+                </template>
+
+                <div x-show="cart.length === 0" class="text-center py-20 text-gray-400 font-mono text-xs">
+                    <p x-text="t('empty_cart')">Ваша корзина пуста</p>
+                </div>
+            </div>
+
+            <!-- Tab 2: Wishlist Items -->
+            <div x-show="cartTab === 'wishlist'" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <template x-for="item in wishlist" :key="item.id">
+                    <div class="flex gap-4 p-3 border border-gray-100 rounded-xl items-center justify-between bg-white">
+                        <img :src="item.image" :alt="item.name" class="w-16 h-20 object-contain bg-white rounded-lg flex-shrink-0">
+                        <div class="flex-1 min-w-0 font-mono">
+                            <h4 class="text-xs font-bold uppercase truncate text-black" x-text="item.name"></h4>
+                            <p class="text-xs font-bold text-black mt-1" x-text="formatPrice(item.price)"></p>
+                            <a :href="'/store/{{ store.subdomain }}/product/' + item.id + '/?lang=' + currentLang" 
+                               class="inline-block mt-2 text-[10px] uppercase font-bold text-black underline">
+                                Переход к товару →
+                            </a>
+                        </div>
+                        <button @click="toggleWishlist(item)" class="text-gray-400 hover:text-black p-1">
+                            <svg class="w-5 h-5 fill-black text-black" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                        </button>
+                    </div>
+                </template>
+
+                <div x-show="wishlist.length === 0" class="text-center py-20 text-gray-400 font-mono text-xs">
+                    <p>Список избранного пуст</p>
+                </div>
+            </div>
+
+            <!-- Cart Footer -->
+            <div x-show="cartTab === 'cart' && cart.length > 0" class="p-6 border-t border-gray-200 bg-gray-50 space-y-4 font-mono">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500 uppercase" x-text="t('total')">ИТОГО:</span>
+                    <span class="font-bold text-black" x-text="formatPrice(cartTotalPrice)"></span>
+                </div>
+                <button @click="checkoutModalOpen = true; cartDrawerOpen = false" 
+                        class="w-full py-3.5 bg-black text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors shadow-lg"
+                        x-text="t('checkout')">
+                    ОФОРМИТЬ ЗАКАЗ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 12. CHECKOUT MODAL -->
+    <div x-show="checkoutModalOpen" 
+         x-transition.opacity 
+         class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" 
+         x-cloak>
+        <div @click.away="checkoutModalOpen = false"
+             class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 border border-gray-200 space-y-4 font-mono">
+            <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                <h3 class="font-lora text-lg font-bold uppercase tracking-wider text-black">ОФОРМЛЕНИЕ ЗАКАЗА</h3>
+                <button @click="checkoutModalOpen = false" class="p-1 hover:opacity-60 text-black">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form @submit.prevent="submitCheckout()" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-gray-500 uppercase mb-1">Ваше имя *</label>
+                    <input type="text" required placeholder="Анна Иванова" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black">
+                </div>
+                <div>
+                    <label class="block text-gray-500 uppercase mb-1">Номер телефона *</label>
+                    <input type="tel" required placeholder="+998 90 123 45 67" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black">
+                </div>
+                <div>
+                    <label class="block text-gray-500 uppercase mb-1">Город и адрес доставки *</label>
+                    <textarea required placeholder="Ташкент, ул. Амира Темура, 12" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black"></textarea>
+                </div>
+                <div>
+                    <label class="block text-gray-500 uppercase mb-1">Способ оплаты</label>
+                    <select class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black">
+                        <option>Оплата картой при получении (Terminal)</option>
+                        <option>Наличными курьеру</option>
+                        <option>Онлайн оплата (Payme / Click)</option>
+                    </select>
+                </div>
+
+                <div class="pt-3 border-t border-gray-200">
+                    <div class="flex justify-between font-bold text-sm mb-3">
+                        <span>К ОПЛАТЕ:</span>
+                        <span x-text="formatPrice(cartTotalPrice)"></span>
+                    </div>
+                    <button type="submit" class="w-full py-3.5 bg-black text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors">
+                        ПОДТВЕРДИТЬ И ОТПРАВИТЬ ЗАКАЗ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DATA INJECTION FROM DJANGO -->
     <script>
-        function streetwear222App() {
+        window.__STREETWEAR_CATALOG__ = {{ streetwear_catalog_json|safe }};
+        window.__STREETWEAR_CATEGORIES__ = {{ streetwear_categories_json|safe }};
+        window.__STREETWEAR_I18N__ = {{ streetwear_i18n_json|safe }};
+        window.__CURRENT_LANG__ = "{{ lang|default:'ru' }}";
+    </script>
+
+    <!-- ALPINE.JS CONTROLLER (PSIH 1:1 REPLICA) -->
+    <script>
+        function psihStoreApp() {
             return {
-                lang: '{{ current_lang|default:"uz" }}',
-                isScrolled: false,
+                products: window.__STREETWEAR_CATALOG__ || [],
+                categories: window.__STREETWEAR_CATEGORIES__ || [],
+                i18n: window.__STREETWEAR_I18N__ || {},
+                currentLang: window.__CURRENT_LANG__ || 'ru',
+
+                // View Modes & Filtering
+                displayMode: 'models',
+                selectedCategory: '',
+                currentCategoryTitle: 'WOMEN',
+                searchQuery: '',
+                minPrice: null,
+                maxPrice: null,
+                inStockOnly: false,
+                sortBy: 'default',
+                sortLabel: '',
+
+                // Layout & Navigation State
+                gridCols: window.innerWidth < 768 ? 2 : 4,
+                filterIslandVisible: true,
+                lastScrollY: 0,
+
+                // Popovers & Drawers
+                menuDrawerOpen: false,
+                menuSubmenu: '',
+                filterDrawerOpen: false,
+                sortMenuOpen: false,
+                searchOpen: false,
                 cartDrawerOpen: false,
-                toastMessage: '',
-                activeCategory: 'all',
-                activeCardId: null,
-                justAddedId: null,
-                mobileNavIndex: 0,
-                scrollProgress: 30,
+                cartTab: 'cart',
+                checkoutModalOpen: false,
 
-                // All Products from Storebox backend
-                allProducts: {{ outfit_products_json|default:'[]'|safe }},
-                cartItems: {{ cart_json|default:'{}'|safe }},
+                // Cart & Wishlist
+                cart: [],
+                wishlist: [],
 
-                // Virtual Try-on Outfit Builder State
-                activeSlot: 'top',
-                selectedTop: null,
-                selectedBottom: null,
-                selectedShoes: null,
+                initApp() {
+                    try {
+                        const savedCart = localStorage.getItem('crystal_lami_cart');
+                        if (savedCart) this.cart = JSON.parse(savedCart);
+                        const savedWish = localStorage.getItem('crystal_lami_wishlist');
+                        if (savedWish) this.wishlist = JSON.parse(savedWish);
+                    } catch (e) {}
 
-                // Outfit Presets matching real styles
-                outfitPresets: [
-                    {
-                        title: '01. Graphite & Cognac',
-                        topSlug: 'zip-hudi-kakao',
-                        bottomSlug: 'jogger-shim-kakao',
-                        shoesSlug: 'krossovka-espresso'
-                    },
-                    {
-                        title: '02. Ecru Cardigan & Denim',
-                        topSlug: 'kardigan-kabu72-08',
-                        bottomSlug: 'shim-shimo-76160',
-                        shoesSlug: 'krossovka-kulrang'
-                    },
-                    {
-                        title: '03. Terracotta & Graphite',
-                        topSlug: 'polzamok-trikotaj-grafit',
-                        bottomSlug: 'shim-grafit',
-                        shoesSlug: 'krossovka-espresso'
-                    }
-                ],
+                    window.addEventListener('scroll', () => {
+                        const currentY = window.scrollY;
+                        if (currentY > 150) {
+                            if (currentY > this.lastScrollY && currentY - this.lastScrollY > 10) {
+                                this.filterIslandVisible = false;
+                            } else if (this.lastScrollY - currentY > 10) {
+                                this.filterIslandVisible = true;
+                            }
+                        } else {
+                            this.filterIslandVisible = true;
+                        }
+                        this.lastScrollY = currentY;
+                    }, { passive: true });
 
-                // UI Translations Dictionary
-                translations: {
-                    uz: {
-                        navCollection: "Kolleksiya",
-                        navOutfit: "Obraz yig'ish",
-                        navAbout: "Konseptsiya",
-                        navCraft: "Sifat & Mato",
-                        navStore: "Showroom",
-                        profile: "Profil",
-                        cart: "Savat",
-                        size: "O'lcham",
-                        addToCart: "Savatga qo'shish",
-                        heroEyebrow: "Toshkent · Erkaklar kiyimi",
-                        heroTitle: "SHAHAR RUHI <br>VA ERKIN <br>QOMAT.",
-                        heroSubtitle: "Mualliflik ko'cha modasi va mustahkam bichim. Tabiiy sara matolar, toza chiziqlar va har bir harakatdagi mutlaq erkinlik.",
-                        viewCollection: "Kolleksiyani ko'rish",
-                        buildOutfit: "Obraz yig'ish",
-                        manifestoKicker: "/ Yangi madaniyat",
-                        manifestoTitle: "SARA MATOLAR, TOZA CHIZIQLAR VA SHAHARNING ERKIN NAFASI",
-                        manifestoText: "AURA ATELIER — shahar ritmi, mualliflik bichimi va sifat uyg'unligi. Har bir detal va toza siluet zamonaviy qulaylik va o'ziga xos uslub uchun yaratilgan.",
-                        collectionKicker: "/ Drop 01",
-                        collectionTitle: "Yangi kolleksiya",
-                        catAll: "Barchasi",
-                        catTops: "Top",
-                        catBottoms: "Shim",
-                        catShoes: "Poyabzal",
-                        builderKicker: "/ Virtual kiyinish",
-                        builderTitle: "O‘z obrazingni <br>yig‘.",
-                        builderText: "Elementlarni tanlang, kombinatsiyani ko‘ring va tayyor look’ni bir bosishda savatga qo‘shing.",
-                        slotTop: "Ustki",
-                        slotBottom: "Shim",
-                        slotShoes: "Oyoq kiyim",
-                        previewTitle: "OBRAZ KO‘RINISHI",
-                        reset: "Tozalash",
-                        yourLook: "Sizning look'ingiz",
-                        addOutfitToCart: "Look’ni savatga +",
-                        presets: "Tayyor obrazlar",
-                        craftKicker: "Atelye & Sifat",
-                        craftTitle: "Sara matolar va benuqson tikuv san'ati",
-                        craftSubtitle: "Biz bir mavsumlik kiyim yaratmaymiz. O'zbekistonning eng sara paxtasi, mustahkam furnitura va poytaxt atelyesining mahoratli ijrosi.",
-                        craftPillar1Title: "Premium sifatli trikotaj",
-                        craftPillar1Text: "100% tabiiy uzoq tolali paxta. Qalin, nafas oluvchi va shaklini uzoq vaqt yo'qotmaydigan oliy sifatli mato.",
-                        craftPillar2Title: "Oliy toifali furnitura",
-                        craftPillar2Text: "Sayqallangan metall elementlar va mustahkam fermuarlar. Yumshoq sirpanish va ko'p yillik chidamlilik kafolati.",
-                        craftPillar3Title: "Toshkent Atelyesi",
-                        craftPillar3Text: "Har bir kiyim tajribali ustalar tomonidan nazoratdan o'tadi. Mustahkamlangan choklar va qulay qomat bichimi.",
-                        craftQuote: "«Haqiqiy uslub bu — qulaylik va toza shaklning uyg'unligidir.»",
-                        locationBadge: "Flagship do'kon",
-                        locationTitle: "TOSHKENT FLAGSHIP SHOWROOM",
-                        hours: "Ish vaqti",
-                        openNow: "Ochiq",
-                        phone: "Telefon",
-                        route: "Yo'nalish",
-                        mHome: "Asosiy",
-                        mCollection: "Kolleksiya",
-                        mOutfit: "Obraz",
-                        mCraft: "Sifat",
-                        mStore: "Manzil",
-                        yourCart: "Savatdagi mahsulotlar",
-                        cartEmpty: "Savatingiz hozircha bo'sh",
-                        continueShopping: "Xarid qilish",
-                        total: "Jami to'lov:",
-                        checkout: "Buyurtmani rasmiylashtirish",
-                        add: "Qo'shish"
-                    },
-                    ru: {
-                        navCollection: "Коллекция",
-                        navOutfit: "Собери образ",
-                        navAbout: "Концепция",
-                        navCraft: "Качество и Крой",
-                        navStore: "Магазин",
-                        profile: "Профиль",
-                        cart: "Корзина",
-                        size: "Размер",
-                        addToCart: "Добавить в корзину",
-                        heroEyebrow: "Ташкент · Мужская одежда",
-                        heroTitle: "ФОРМА <br>И СВОБОДА <br>УЛИЦ.",
-                        heroSubtitle: "Авторский стритвир с безупречным кроем. Премиальные натуральные ткани, чистые линии и свобода самовыражения в каждом движении.",
-                        viewCollection: "Смотреть коллекцию",
-                        buildOutfit: "Собрать образ",
-                        manifestoKicker: "/ Новая культура",
-                        manifestoTitle: "ПРЕМИАЛЬНЫЕ МАТЕРИАЛЫ, ЧИСТЫЕ ЛИНИИ И СВОБОДНЫЙ ДУХ ГОРОДА",
-                        manifestoText: "AURA ATELIER — синергия авторского кроя и эстетики современного города. Мы переосмысливаем стритвир, объединяя чистый силуэт, долговечные ткани и комфорт каждого движения.",
-                        collectionKicker: "/ Drop 01",
-                        collectionTitle: "Новая коллекция",
-                        catAll: "Все",
-                        catTops: "Топы",
-                        catBottoms: "Брюки",
-                        catShoes: "Обувь",
-                        builderKicker: "/ Виртуальная примерка",
-                        builderTitle: "Собери свой <br>образ.",
-                        builderText: "Выберите вещи, посмотрите сочетание на манекене и добавьте готовый образ в корзину в один клик.",
-                        slotTop: "Верх",
-                        slotBottom: "Брюки",
-                        slotShoes: "Обувь",
-                        previewTitle: "ПРЕДПРОСМОТР ОБРАЗА",
-                        reset: "Сбросить",
-                        yourLook: "Ваш образ",
-                        addOutfitToCart: "Образ в корзину +",
-                        presets: "Готовые луки",
-                        craftKicker: "Ателье и Мастерство",
-                        craftTitle: "Безупречные материалы и авторский пошив",
-                        craftSubtitle: "Мы создаем вещи вне времени. Отборный длинноволокнистый хлопок, премиальная фурнитура и ручной контроль каждого шва в ташкентском ателье.",
-                        craftPillar1Title: "Премиальный плотный трикотаж",
-                        craftPillar1Text: "100% натуральный отборный хлопок. Дышащий, тактильно приятный материал, сохраняющий форму и структуру после многочисленных стирок.",
-                        craftPillar2Title: "Премиальная фурнитура",
-                        craftPillar2Text: "Металлические замки и усиленные элементы высшей категории с плавным ходом и долговечной надежностью.",
-                        craftPillar3Title: "Ташкентское Ателье",
-                        craftPillar3Text: "Локальный пошив с контролем качества каждого изделия. Усиленные строчки, идеальная посадка и внимание к каждой детали.",
-                        craftQuote: "«Истинный стиль рождается там, где форма встречается с абсолютным комфортом.»",
-                        locationBadge: "Флагманский шоурум",
-                        locationTitle: "ТАШКЕНТ ФЛАГМАНСКИЙ ШОУРУМ",
-                        hours: "Часы работы",
-                        openNow: "Открыто",
-                        phone: "Телефон",
-                        route: "Маршрут",
-                        mHome: "Главная",
-                        mCollection: "Коллекция",
-                        mOutfit: "Образ",
-                        mCraft: "Качество",
-                        mStore: "Магазин",
-                        yourCart: "Корзина покупок",
-                        cartEmpty: "Корзина пока пуста",
-                        continueShopping: "Перейти к покупкам",
-                        total: "Итого к оплате:",
-                        checkout: "Оформить заказ",
-                        add: "Добавить"
-                    }
+                    this.updateCategoryTitle();
                 },
 
                 t(key) {
-                    const l = this.translations[this.lang] || this.translations['uz'];
-                    return l[key] || this.translations['uz'][key] || key;
+                    const dict = this.i18n[this.currentLang] || this.i18n['ru'] || {};
+                    if (dict[key]) return dict[key];
+                    if (key === 'navCatalog') return dict['catalog'] || 'КАТАЛОГ';
+                    if (key === 'navClothing') return dict['clothing'] || 'ОДЕЖДА';
+                    if (key === 'navShoes') return dict['shoes'] || 'ОБУВЬ';
+                    if (key === 'navBags') return dict['bags'] || 'СУМКИ';
+                    if (key === 'navAccessories') return dict['accessories'] || 'АКСЕССУАРЫ';
+                    if (key === 'navPerfume') return dict['perfume'] || 'ПАРФЮМ';
+                    return key;
                 },
 
-                get manifestoHtml() {
-                    const text = this.t('manifestoTitle');
-                    const words = text.split(/\s+/);
-                    return words.map((w, idx) => `<span style="--w: ${idx}">${w}</span>`).join(' ');
+                getProductName(product) {
+                    if (this.currentLang === 'uz') return product.name_uz || product.name_ru || product.name;
+                    if (this.currentLang === 'en') return product.name_en || product.name_ru || product.name;
+                    return product.name_ru || product.name;
+                },
+
+                getCategoryName(cat) {
+                    if (this.currentLang === 'uz') return cat.name_uz || cat.name_ru || cat.name;
+                    if (this.currentLang === 'en') return cat.name_en || cat.name_ru || cat.name;
+                    return cat.name_ru || cat.name;
+                },
+
+                setLanguage(code) {
+                    this.currentLang = code;
+                    try {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('lang', code);
+                        window.history.replaceState({}, '', url.toString());
+                    } catch (e) {}
+                    this.updateCategoryTitle();
+                },
+
+                updateCategoryTitle() {
+                    const isRu = this.currentLang === 'ru';
+                    const isUz = this.currentLang === 'uz';
+                    const defaultTitle = isRu ? 'ЖЕНСКАЯ КОЛЛЕКЦИЯ' : (isUz ? 'AYOLLAR KOLLEKSIYASI' : 'WOMEN COLLECTION');
+
+                    if (!this.selectedCategory) {
+                        this.currentCategoryTitle = defaultTitle;
+                        return;
+                    }
+                    if (this.selectedCategory === 'clothing') {
+                        this.currentCategoryTitle = this.t('clothing') || 'ОДЕЖДА';
+                        return;
+                    }
+                    if (this.selectedCategory === 'shoes') {
+                        this.currentCategoryTitle = this.t('shoes') || 'ОБУВЬ';
+                        return;
+                    }
+                    if (this.selectedCategory === 'bags') {
+                        this.currentCategoryTitle = this.t('bags') || 'СУМКИ';
+                        return;
+                    }
+                    if (this.selectedCategory === 'accessories') {
+                        this.currentCategoryTitle = this.t('accessories') || 'АКСЕССУАРЫ';
+                        return;
+                    }
+                    if (this.selectedCategory === 'fragrance' || this.selectedCategory === 'perfume') {
+                        this.currentCategoryTitle = this.t('perfume') || 'ПАРФЮМ';
+                        return;
+                    }
+                    const found = this.categories.find(c => c.slug === this.selectedCategory);
+                    if (found) {
+                        this.currentCategoryTitle = this.getCategoryName(found).toUpperCase();
+                    } else {
+                        this.currentCategoryTitle = defaultTitle;
+                    }
+                },
+
+                toggleMenu() {
+                    this.menuDrawerOpen = !this.menuDrawerOpen;
+                    if (!this.menuDrawerOpen) {
+                        this.menuSubmenu = '';
+                    } else {
+                        this.filterDrawerOpen = false;
+                        this.sortMenuOpen = false;
+                    }
+                },
+
+                selectCategory(slug) {
+                    this.selectedCategory = slug;
+                    this.updateCategoryTitle();
+                    this.menuDrawerOpen = false;
+                    this.menuSubmenu = '';
+                    this.filterDrawerOpen = false;
+                    const el = document.getElementById('catalog-title-section');
+                    if (el) {
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - 65;
+                        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                    } else {
+                        window.scrollTo({ top: 350, behavior: 'smooth' });
+                    }
+                },
+
+                toggleGridDensity() {
+                    if (window.innerWidth < 768) {
+                        this.gridCols = this.gridCols === 2 ? 1 : 2;
+                    } else {
+                        this.gridCols = this.gridCols === 4 ? 2 : 4;
+                    }
+                },
+
+                get gridDensityLabel() {
+                    if (window.innerWidth < 768) {
+                        return this.gridCols === 2 ? '2 | 1' : '1 | 2';
+                    }
+                    return this.gridCols === 4 ? '4 | 2' : '2 | 4';
+                },
+
+                setSort(sortType, label) {
+                    this.sortBy = sortType;
+                    this.sortLabel = label;
+                    this.sortMenuOpen = false;
+                },
+
+                resetFilters() {
+                    this.selectedCategory = '';
+                    this.updateCategoryTitle();
+                    this.minPrice = null;
+                    this.maxPrice = null;
+                    this.inStockOnly = false;
+                    this.searchQuery = '';
+                    this.sortBy = 'default';
+                    this.sortLabel = '';
+                    this.filterDrawerOpen = false;
                 },
 
                 get filteredProducts() {
-                    if (this.activeCategory === 'all') return this.allProducts;
-                    return this.allProducts.filter(p => p.category_slug === this.activeCategory);
-                },
+                    let list = this.products.slice();
 
-                get currentSlotProducts() {
-                    return this.allProducts.filter(p => p.slot === this.activeSlot);
-                },
-
-                get outfitTotalPrice() {
-                    let sum = 0;
-                    if (this.selectedTop) sum += this.selectedTop.price;
-                    if (this.selectedBottom) sum += this.selectedBottom.price;
-                    if (this.selectedShoes) sum += this.selectedShoes.price;
-                    return sum;
-                },
-
-                get cartCount() {
-                    return Object.values(this.cartItems).reduce((sum, it) => sum + (it.quantity || 1), 0);
-                },
-
-                get cartTotal() {
-                    return Object.values(this.cartItems).reduce((sum, it) => sum + (it.total_price || (it.price * (it.quantity || 1))), 0);
-                },
-
-                formatMoney(val) {
-                    if (!val) return '0';
-                    return Math.round(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-                },
-
-                init() {
-                    // Check URL parameter for initial language
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const qLang = urlParams.get('lang');
-                    if (qLang && (qLang === 'uz' || qLang === 'ru')) {
-                        this.lang = qLang;
-                    }
-
-                    const updateScroll = () => {
-                        this.isScrolled = window.scrollY > 40;
-                        this.updateActiveSectionIndex();
-                        this.updateManifestoScroll();
-                    };
-                    window.addEventListener('scroll', updateScroll);
-
-                    const carousel = document.getElementById('lookbook-carousel');
-                    if (carousel) {
-                        carousel.addEventListener('scroll', () => {
-                            const maxScroll = carousel.scrollWidth - carousel.clientWidth;
-                            if (maxScroll > 0) {
-                                this.scrollProgress = Math.min(100, Math.max(10, (carousel.scrollLeft / maxScroll) * 100));
-                            }
-                        });
-                    }
-
-                    this.$nextTick(() => {
-                        if (window.lucide) lucide.createIcons();
-                        this.applyOutfitPreset(0);
-                        this.updateManifestoScroll();
-                    });
-                },
-
-                updateManifestoScroll() {
-                    const el = document.getElementById('manifesto-heading');
-                    if (!el) return;
-                    const rect = el.getBoundingClientRect();
-                    const windowH = window.innerHeight;
-                    const progress = Math.min(1.2, Math.max(0, (windowH - rect.top) / (rect.height + windowH * 0.4)));
-                    el.style.setProperty('--p', progress);
-                    const words = this.t('manifestoTitle').split(/\s+/).length;
-                    el.style.setProperty('--n', words);
-                },
-
-                updateActiveSectionIndex() {
-                    const sections = ['home', 'collection', 'outfit-builder', 'craft', 'location'];
-                    const scrollY = window.scrollY + 200;
-                    for (let i = sections.length - 1; i >= 0; i--) {
-                        const el = document.getElementById(sections[i]);
-                        if (el && el.offsetTop <= scrollY) {
-                            this.mobileNavIndex = i;
-                            break;
-                        }
-                    }
-                },
-
-                switchLang(newLang) {
-                    this.lang = newLang;
-                    document.cookie = "storebox_lang=" + newLang + "; path=/; max-age=" + (365*24*3600);
-                    document.cookie = "django_language=" + newLang + "; path=/; max-age=" + (365*24*3600);
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('lang', newLang);
-                    window.location.href = url.toString();
-                },
-
-                scrollLookbook(direction) {
-                    const el = document.getElementById('lookbook-carousel');
-                    if (el) {
-                        el.scrollBy({ left: direction * 350, behavior: 'smooth' });
-                    }
-                },
-
-                toggleCardPicker(id) {
-                    if (this.activeCardId === id) {
-                        this.activeCardId = null;
-                    } else {
-                        this.activeCardId = id;
-                    }
-                },
-
-                async quickAddSize(product, variation) {
-                    try {
-                        const res = await fetch('/store/{{ store.subdomain }}/cart/add/', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                product_id: product.id,
-                                variation_id: variation ? variation.id : null,
-                                quantity: 1
-                            })
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            this.cartItems = data.cart;
-                            this.justAddedId = product.id;
-                            this.activeCardId = null;
-                            this.showToast(product.name + " (" + (variation ? variation.name : '') + ") " + (this.lang === 'ru' ? "добавлен в корзину!" : "savatga qo'shildi!"));
-                            setTimeout(() => { this.justAddedId = null; }, 2000);
-                            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-                        }
-                    } catch (e) {
-                        console.error("Quick add error", e);
-                    }
-                },
-
-                isProductSelected(item) {
-                    if (item.slot === 'top' && this.selectedTop && this.selectedTop.id === item.id) return true;
-                    if (item.slot === 'bottom' && this.selectedBottom && this.selectedBottom.id === item.id) return true;
-                    if (item.slot === 'shoes' && this.selectedShoes && this.selectedShoes.id === item.id) return true;
-                    return false;
-                },
-
-                selectSlotProduct(item) {
-                    if (item.slot === 'top') this.selectedTop = item;
-                    if (item.slot === 'bottom') this.selectedBottom = item;
-                    if (item.slot === 'shoes') this.selectedShoes = item;
-                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-                },
-
-                resetOutfit() {
-                    this.selectedTop = null;
-                    this.selectedBottom = null;
-                    this.selectedShoes = null;
-                    this.showToast(this.lang === 'ru' ? "Образ сброшен" : "Obraz tozalandi");
-                },
-
-                applyOutfitPreset(idx) {
-                    const preset = this.outfitPresets[idx];
-                    if (!preset) return;
-                    this.selectedTop = this.allProducts.find(p => p.slug === preset.topSlug) || null;
-                    this.selectedBottom = this.allProducts.find(p => p.slug === preset.bottomSlug) || null;
-                    this.selectedShoes = this.allProducts.find(p => p.slug === preset.shoesSlug) || null;
-                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-                },
-
-                async addCompleteOutfitToCart() {
-                    const itemsToAdd = [];
-                    if (this.selectedTop) {
-                        const vId = (this.selectedTop.variations && this.selectedTop.variations.length) ? this.selectedTop.variations[0].id : null;
-                        itemsToAdd.push({ product_id: this.selectedTop.id, variation_id: vId, quantity: 1 });
-                    }
-                    if (this.selectedBottom) {
-                        const vId = (this.selectedBottom.variations && this.selectedBottom.variations.length) ? this.selectedBottom.variations[0].id : null;
-                        itemsToAdd.push({ product_id: this.selectedBottom.id, variation_id: vId, quantity: 1 });
-                    }
-                    if (this.selectedShoes) {
-                        const vId = (this.selectedShoes.variations && this.selectedShoes.variations.length) ? this.selectedShoes.variations[0].id : null;
-                        itemsToAdd.push({ product_id: this.selectedShoes.id, variation_id: vId, quantity: 1 });
-                    }
-
-                    if (itemsToAdd.length === 0) {
-                        this.showToast(this.lang === 'ru' ? "Выберите вещи для образа" : "Look uchun kiyim tanlang");
-                        return;
-                    }
-
-                    try {
-                        const res = await fetch('/store/{{ store.subdomain }}/cart/add/', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ items: itemsToAdd })
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            this.cartItems = data.cart;
-                            this.showToast(this.lang === 'ru' ? "Готовый образ добавлен в корзину! ⚡️" : "Tayyor look savatga qo'shildi! ⚡️");
-                            this.cartDrawerOpen = true;
-                            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-                        }
-                    } catch (e) {
-                        console.error("Batch add error", e);
-                    }
-                },
-
-                async updateCart(key, delta = 0, action = null) {
-                    try {
-                        const payload = { item_key: key };
-                        if (action === 'remove' || delta === 0) {
-                            payload.action = 'remove';
+                    if (this.selectedCategory) {
+                        if (this.selectedCategory === 'shoes') {
+                            list = list.filter(p => p.category_slug === 'shoes' || p.category_slug === 'sneakers');
+                        } else if (this.selectedCategory === 'perfume' || this.selectedCategory === 'fragrance') {
+                            list = list.filter(p => p.category_slug === 'perfume' || p.category_slug === 'fragrance' || p.category_slug === 'bodycare');
+                        } else if (this.selectedCategory === 'bags') {
+                            list = list.filter(p => p.category_slug === 'bags' || p.category_slug === 'clutches');
+                        } else if (this.selectedCategory === 'clothing') {
+                            list = list.filter(p => ['clothing', 'outerwear', 'hoodies', 'pants', 'dresses', 'knitwear'].includes(p.category_slug));
+                        } else if (this.selectedCategory === 'accessories') {
+                            list = list.filter(p => ['accessories', 'hats', 'caps'].includes(p.category_slug));
                         } else {
-                            payload.quantity_delta = delta;
+                            list = list.filter(p => p.category_slug === this.selectedCategory);
                         }
-                        const res = await fetch('/store/{{ store.subdomain }}/cart/update/', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
+                    }
+
+                    if (this.searchQuery.trim()) {
+                        const q = this.searchQuery.toLowerCase();
+                        list = list.filter(p => {
+                            const name = this.getProductName(p).toLowerCase();
+                            const desc = (p.description || '').toLowerCase();
+                            return name.includes(q) || desc.includes(q);
                         });
-                        const data = await res.json();
-                        if (data.success) {
-                            this.cartItems = data.cart;
-                            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                    }
+
+                    if (this.minPrice !== null && this.minPrice > 0) {
+                        list = list.filter(p => p.price >= this.minPrice);
+                    }
+                    if (this.maxPrice !== null && this.maxPrice > 0) {
+                        list = list.filter(p => p.price <= this.maxPrice);
+                    }
+
+                    if (this.inStockOnly) {
+                        list = list.filter(p => p.is_in_stock);
+                    }
+
+                    if (this.sortBy === 'price_asc') {
+                        list.sort((a, b) => a.price - b.price);
+                    } else if (this.sortBy === 'price_desc') {
+                        list.sort((a, b) => b.price - a.price);
+                    } else if (this.sortBy === 'name') {
+                        list.sort((a, b) => this.getProductName(a).localeCompare(this.getProductName(b)));
+                    }
+
+                    return list;
+                },
+
+                addToCartDirect(product, variation) {
+                    this.addItemToCart(product, variation.name, variation.price);
+                    this.openDrawer('cart');
+                },
+
+                quickAddToCart(product) {
+                    const firstVar = (product.variations && product.variations.length > 0) ? product.variations[0] : null;
+                    const sizeName = firstVar ? firstVar.name : 'ONE SIZE';
+                    const price = firstVar ? firstVar.price : product.price;
+                    this.addItemToCart(product, sizeName, price);
+                    this.openDrawer('cart');
+                },
+
+                addItemToCart(product, size, price) {
+                    const cartId = `${product.id}-${size}`;
+                    const existing = this.cart.find(it => it.cartId === cartId);
+                    if (existing) {
+                        existing.qty += 1;
+                    } else {
+                        this.cart.push({
+                            id: product.id,
+                            cartId: cartId,
+                            name: this.getProductName(product),
+                            price: price,
+                            size: size,
+                            qty: 1,
+                            image: product.mockup_image || product.model_image || product.primary_image
+                        });
+                    }
+                    this.saveCart();
+                },
+
+                updateCartQty(index, delta) {
+                    if (this.cart[index]) {
+                        this.cart[index].qty += delta;
+                        if (this.cart[index].qty <= 0) {
+                            this.cart.splice(index, 1);
                         }
-                    } catch (e) {
-                        console.error("Cart update error", e);
+                        this.saveCart();
                     }
                 },
 
-                showToast(msg) {
-                    this.toastMessage = msg;
-                    setTimeout(() => { this.toastMessage = ''; }, 3000);
+                removeFromCart(index) {
+                    this.cart.splice(index, 1);
+                    this.saveCart();
+                },
+
+                saveCart() {
+                    try {
+                        localStorage.setItem('crystal_lami_cart', JSON.stringify(this.cart));
+                    } catch (e) {}
+                },
+
+                get cartTotalCount() {
+                    return this.cart.reduce((sum, it) => sum + it.qty, 0);
+                },
+
+                get cartTotalPrice() {
+                    return this.cart.reduce((sum, it) => sum + (it.price * it.qty), 0);
+                },
+
+                isWishlisted(productId) {
+                    return this.wishlist.some(it => it.id === productId);
+                },
+
+                toggleWishlist(product) {
+                    const idx = this.wishlist.findIndex(it => it.id === product.id);
+                    if (idx > -1) {
+                        this.wishlist.splice(idx, 1);
+                    } else {
+                        this.wishlist.push({
+                            id: product.id,
+                            name: this.getProductName(product),
+                            price: product.price,
+                            image: product.mockup_image || product.model_image || product.primary_image
+                        });
+                    }
+                    try {
+                        localStorage.setItem('crystal_lami_wishlist', JSON.stringify(this.wishlist));
+                    } catch (e) {}
+                },
+
+                openDrawer(tab) {
+                    this.cartTab = tab;
+                    this.cartDrawerOpen = true;
+                    this.menuDrawerOpen = false;
+                    this.filterDrawerOpen = false;
+                    this.sortMenuOpen = false;
+                },
+
+                openModal(type) {
+                    this.menuDrawerOpen = false;
+                    if (type === 'support') {
+                        alert('Служба заботы CRYSTALL AMI:\nTelegram: @crystallami_care\nТелефон: +998 71 200 00 22\nЕжедневно с 10:00 до 22:00');
+                    } else if (type === 'about') {
+                        alert('CRYSTALL AMI — бутик авторской женской моды, премиальной обуви, сумок и селективного парфюма.\nТашкент, Узбекистан.');
+                    } else if (type === 'social') {
+                        window.open('https://instagram.com', '_blank');
+                    }
+                },
+
+                closeAll() {
+                    this.menuDrawerOpen = false;
+                    this.menuSubmenu = '';
+                    this.filterDrawerOpen = false;
+                    this.sortMenuOpen = false;
+                    this.cartDrawerOpen = false;
+                    this.searchOpen = false;
+                    this.checkoutModalOpen = false;
+                },
+
+                submitCheckout() {
+                    alert('Ваш заказ успешно оформлен! Наш консьерж свяжется с вами для подтверждения доставки.');
+                    this.cart = [];
+                    this.saveCart();
+                    this.checkoutModalOpen = false;
+                },
+
+                formatPrice(val) {
+                    if (!val && val !== 0) return '';
+                    return Number(val).toLocaleString('ru-RU') + ' UZS';
                 }
-            }
+            };
         }
     </script>
 </body>

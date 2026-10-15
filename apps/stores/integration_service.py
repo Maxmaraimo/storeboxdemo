@@ -192,6 +192,31 @@ class IntegrationSyncService:
                 msg = "Yandex Delivery B2B kuryerlik tarmog'i bilan aloqa o'rnatildi!"
                 return cls._success(store, slug, service_name, msg, latency, {"client_id": client_id})
 
+            # 8. CLOPOS POS
+            elif slug == "clopos":
+                from apps.stores.clopos_client import CloposClient
+                api_token = creds.get("api_token") or config.get("api_token") or ""
+                branch_id = config.get("branch_id") or ""
+                test_res = CloposClient.test_connection(
+                    api_token=api_token,
+                    branch_id=branch_id,
+                    config=config,
+                    creds=creds,
+                )
+                if test_res.get("success"):
+                    return cls._success(
+                        store, slug, service_name,
+                        test_res.get("message"),
+                        test_res.get("latency_ms", 32),
+                        test_res.get("details"),
+                    )
+                else:
+                    return cls._fail(
+                        store, slug, service_name,
+                        test_res.get("message"),
+                        test_res.get("details"),
+                    )
+
             # DEFAULT FALLBACK FOR ALL OTHER SERVICES
             else:
                 latency = max(35, int((time.time() - start_time) * 1000))
@@ -200,6 +225,212 @@ class IntegrationSyncService:
 
         except Exception as e:
             return cls._fail(store, slug, service_name, f"Kutilmagan xatolik: {str(e)}")
+
+    @classmethod
+    def fetch_catalog(cls, store: Store, slug: str, config: dict = None, creds: dict = None) -> dict:
+        """
+        Fetches the live POS / Warehouse catalog for any POS or Warehouse integration
+        (Clopos, iiko, r_keeper, Poster, Jowi, Allpos, Billz, Smartup, MoySklad, 1C, REGOS, ERA)
+        and annotates each item with `is_linked` if already imported into the store.
+        """
+        meta = cls._get_meta(slug)
+        service_name = meta.get("name", slug)
+        category = meta.get("category", "pos")
+
+        integ = StoreIntegration.objects.filter(store=store, service_slug=slug).first()
+        merged_config = {}
+        merged_creds = {}
+        if integ:
+            merged_config.update(integ.config or {})
+            merged_creds.update(integ.get_credentials() or {})
+        if config:
+            merged_config.update(config)
+        if creds:
+            merged_creds.update(creds)
+
+        if slug == "billz":
+            from apps.stores.billz_client import BillzClient
+            res = BillzClient.fetch_all_products(
+                api_key=merged_creds.get("api_key") or "",
+                company_id=merged_config.get("company_id") or "",
+                shop_id=merged_config.get("shop_id") or "",
+                server_url=merged_config.get("server_url"),
+            )
+            raw_products = res.get("products", [])
+            venue_id = merged_config.get("shop_id") or "1"
+            venue_name = merged_config.get("shop_name") or "Billz Ombor"
+            source = res.get("source", "billz")
+        else:
+            from apps.stores.clopos_client import CloposClient
+            res = CloposClient.fetch_all_products(
+                api_token=merged_creds.get("api_token") or merged_creds.get("api_key") or merged_creds.get("access_token") or "",
+                branch_id=merged_config.get("branch_id") or merged_config.get("spot_id") or merged_config.get("warehouse_id") or "1",
+                config=merged_config,
+                creds=merged_creds,
+            )
+            raw_products = res.get("products", [])
+            venue_id = res.get("venue_id", "1")
+            venue_name = res.get("venue_name", "Uzb")
+            source = res.get("source", f"{slug}_api")
+
+        existing_barcodes = set(
+            Product.objects.filter(store=store).exclude(barcode="").values_list("barcode", flat=True)
+        )
+        existing_slugs = set(
+            Product.objects.filter(store=store).values_list("slug", flat=True)
+        )
+        existing_names = set(
+            Product.objects.filter(store=store).values_list("name_ru", flat=True)
+        ) | set(
+            Product.objects.filter(store=store).values_list("name_uz", flat=True)
+        )
+
+        annotated_products = []
+        categories_map = {}
+        stations_map = {}
+        type_counts = {"all": 0, "GOODS": 0, "DISH": 0, "TIMER": 0}
+
+        for idx, item in enumerate(raw_products, start=1):
+            pid = str(item.get("id") or idx)
+            name = str(item.get("name") or "")
+            barcode = str(item.get("barcode") or pid)
+            expected_slug_clopos = slugify(f"clopos-{pid}-{store.id}")
+            expected_slug_ext = slugify(f"{slug}-{pid}-{store.id}")
+
+            is_linked = (
+                expected_slug_clopos in existing_slugs
+                or expected_slug_ext in existing_slugs
+                or (barcode and barcode in existing_barcodes)
+                or (name and name in existing_names)
+            )
+
+            p_type = str(item.get("type") or ("GOODS" if category == "warehouse" else "DISH")).upper()
+            if p_type not in ("GOODS", "DISH", "TIMER"):
+                p_type = "GOODS"
+
+            type_counts["all"] += 1
+            type_counts[p_type] = type_counts.get(p_type, 0) + 1
+
+            cat_name = str(item.get("category_name") or "").strip()
+            station_name = str(item.get("station_name") or "").strip()
+
+            cat_key = cat_name if cat_name else "Без категории"
+            categories_map[cat_key] = categories_map.get(cat_key, 0) + 1
+
+            if station_name:
+                stations_map[station_name] = stations_map.get(station_name, 0) + 1
+
+            # Strictly preserve photo presence (empty string if no photo)
+            img_url = str(item.get("image_url") or "").strip()
+            if not img_url.startswith("http"):
+                img_url = ""
+
+            cost_price = float(item.get("cost_price") or 0)
+            price = float(item.get("price") or 0)
+            markup_rate = float(item.get("markup_rate") if item.get("markup_rate") is not None else (
+                round(((price - cost_price) / cost_price) * 100, 2) if cost_price > 0 and price > 0 else (100.0 if price > 0 else 0.0)
+            ))
+            gross_margin = float(item.get("gross_margin") if item.get("gross_margin") is not None else (
+                round(((price - cost_price) / price) * 100, 2) if price > 0 and cost_price > 0 else (100.0 if price > 0 else 0.0)
+            ))
+
+            annotated_products.append({
+                "id": pid,
+                "name": name,
+                "status": int(item.get("status", 1)),
+                "status_label_ru": item.get("status_label_ru") or "Активный",
+                "status_label_uz": item.get("status_label_uz") or "Faol",
+                "giftable": bool(item.get("giftable", False)),
+                "giftable_label_ru": item.get("giftable_label_ru") or ("Да" if item.get("giftable") else "Нет"),
+                "giftable_label_uz": item.get("giftable_label_uz") or ("Ha" if item.get("giftable") else "Yo'q"),
+                "type": p_type,
+                "type_label_ru": item.get("type_label_ru") or ("Тех. карта" if p_type == "DISH" else ("Таймер" if p_type == "TIMER" else "Товар")),
+                "type_label_uz": item.get("type_label_uz") or ("Tex. karta" if p_type == "DISH" else ("Taymer" if p_type == "TIMER" else "Tovar")),
+                "category_name": cat_name,
+                "station_name": station_name,
+                "tax_name": str(item.get("tax_name") or ""),
+                "cost_price": cost_price,
+                "price": price,
+                "markup_rate": markup_rate,
+                "gross_margin": gross_margin,
+                "stock": int(item.get("stock") if item.get("stock") is not None else 50),
+                "unit": item.get("unit") or ("Порция" if p_type == "DISH" else "Шт"),
+                "barcode": barcode,
+                "sku": str(item.get("sku") or f"{slug.upper()[:3]}-{pid}"),
+                "image_url": img_url,
+                "color": item.get("color") or "#64748b",
+                "is_linked": is_linked,
+            })
+
+        categories_list = [
+            {"id": k, "name": k, "count": v}
+            for k, v in sorted(categories_map.items(), key=lambda x: (-x[1], x[0]))
+        ]
+        stations_list = [
+            {"id": k, "name": k, "count": v}
+            for k, v in sorted(stations_map.items(), key=lambda x: (-x[1], x[0]))
+        ]
+
+        linked_count = sum(1 for p in annotated_products if p["is_linked"])
+
+        return {
+            "success": True,
+            "slug": slug,
+            "service_name": service_name,
+            "venue_id": venue_id,
+            "venue_name": venue_name,
+            "source": source,
+            "total_count": len(annotated_products),
+            "linked_count": linked_count,
+            "type_counts": type_counts,
+            "categories": categories_list,
+            "stations": stations_list,
+            "products": annotated_products,
+        }
+
+    @classmethod
+    def import_selected(cls, store: Store, slug: str, items: list) -> dict:
+        """
+        Imports the user-selected POS/Warehouse products into StoreBox.
+        Preserves real photos if present and keeps `image_url=""` if the product has no photo.
+        """
+        meta = cls._get_meta(slug)
+        service_name = meta.get("name", slug)
+        now = timezone.now()
+
+        if not items or not isinstance(items, list):
+            return {"success": False, "error": "Import qilish uchun tovarlar tanlanmagan."}
+
+        from apps.stores.clopos_client import CloposClient
+        sync_res = CloposClient.sync_to_storebox(store, items)
+
+        integ = StoreIntegration.objects.filter(store=store, service_slug=slug).first()
+        if integ:
+            integ.last_sync_at = now
+            integ.last_sync_status = "success"
+            integ.last_sync_message = (
+                f"{sync_res['total_synced']} ta tovar ({sync_res['created_count']} yangi, {sync_res['updated_count']} yangilandi) muvaffaqiyatli yuklandi"
+            )
+            integ.save(update_fields=["last_sync_at", "last_sync_status", "last_sync_message", "updated_at"])
+
+        record_integration_log(
+            store=store,
+            slug=slug,
+            name=service_name,
+            event_type="IMPORT_SELECTED",
+            status="SUCCESS",
+            message=f"{service_name} dan {sync_res['total_synced']} ta mahsulot do'kon katalogiga qo'shildi.",
+            details=sync_res,
+        )
+
+        return {
+            "success": True,
+            "created": sync_res["created_count"],
+            "updated": sync_res["updated_count"],
+            "total_synced": sync_res["total_synced"],
+            "categories_count": sync_res["categories_count"],
+            "message": f"{service_name}: {sync_res['total_synced']} ta tovar muvaffaqiyatli import qilindi ({sync_res['created_count']} yangi, {sync_res['updated_count']} yangilandi)!",
+        }
 
     @classmethod
     def sync_data(cls, store: Store, slug: str) -> dict:
@@ -281,107 +512,39 @@ class IntegrationSyncService:
                     "last_synced": now.isoformat(),
                 }
 
-            synced_products = 0
-            cat_name = f"{service_name} Ombordan"
-            category_obj, _ = Category.objects.get_or_create(
-                store=store,
-                slug=f"ext-{slug}-{store.id}",
-                defaults={
-                    "name_uz": cat_name,
-                    "name_ru": f"{service_name} (Склад)",
-                    "name_en": f"{service_name} Warehouse",
-                    "sort_order": 1,
-                    "is_active": True,
-                }
-            )
-
-            # Sample synced items matching real retail inventory from Billz / POS
-            default_catalog_items = [
-                {
-                    "name": f"{service_name}: Erkaklar ko'ylagi Classic",
-                    "price": 280000,
-                    "cost": 180000,
-                    "stock": 25,
-                    "barcode": f"8690{store.id}001",
-                    "image_url": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80"
-                },
-                {
-                    "name": f"{service_name}: Oversize Futbolka Cotton",
-                    "price": 140000,
-                    "cost": 85000,
-                    "stock": 42,
-                    "barcode": f"8690{store.id}002",
-                    "image_url": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&q=80"
-                },
-                {
-                    "name": f"{service_name}: Jinsi shim Slim Fit",
-                    "price": 320000,
-                    "cost": 210000,
-                    "stock": 18,
-                    "barcode": f"8690{store.id}003",
-                    "image_url": "https://images.unsplash.com/photo-1542272604-780c96856592?w=600&q=80"
-                },
-                {
-                    "name": f"{service_name}: Qishki Xudi Fleece",
-                    "price": 260000,
-                    "cost": 160000,
-                    "stock": 14,
-                    "barcode": f"8690{store.id}004",
-                    "image_url": "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&q=80"
-                },
-                {
-                    "name": f"{service_name}: Charm kamar Premium",
-                    "price": 110000,
-                    "cost": 65000,
-                    "stock": 30,
-                    "barcode": f"8690{store.id}005",
-                    "image_url": "https://images.unsplash.com/photo-1624222247344-550fa60580dc?w=600&q=80"
-                },
-                {
-                    "name": f"{service_name}: Sport paypoqlar to'plami (5 juft)",
-                    "price": 45000,
-                    "cost": 25000,
-                    "stock": 60,
-                    "barcode": f"8690{store.id}006",
-                    "image_url": "https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=600&q=80"
-                },
-            ]
-
+            # 2. CLOPOS & POS / WAREHOUSE CATALOG SYNC
             if slug == "yespos":
                 try:
                     from apps.catalog.yespos_client import YesPosClient
                     res = YesPosClient().sync_store_products(store)
-                    synced_products = res.get("synced_count", len(default_catalog_items))
-                except Exception:
-                    pass
-
-            # Create or update real products in StoreBox catalog
-            for item in default_catalog_items:
-                p_slug = slugify(f"{slug}-{item['name']}-{store.id}")
-                prod, created = Product.objects.update_or_create(
-                    store=store,
-                    slug=p_slug,
-                    defaults={
-                        "category": category_obj,
-                        "name_uz": item["name"],
-                        "name_ru": item["name"],
-                        "name_en": item["name"],
-                        "price": Decimal(str(item["price"])),
-                        "cost_price": Decimal(str(item["cost"])),
-                        "margin": round(Decimal(str(((item["price"] - item["cost"]) / item["cost"]) * 100)), 1),
-                        "stock": item["stock"],
-                        "barcode": item["barcode"],
-                        "image_url": item.get("image_url", ""),
-                        "track_stock": True,
-                        "is_active": True,
+                    synced_products = res.get("synced_count", 0)
+                    integ.last_sync_at = now
+                    integ.last_sync_status = "success"
+                    integ.last_sync_message = f"YES POS: {synced_products} ta tovar yangilandi"
+                    integ.save(update_fields=["last_sync_at", "last_sync_status", "last_sync_message", "updated_at"])
+                    return {
+                        "success": True,
+                        "message": f"YES POS bilan sinxronizatsiya yakunlandi! {synced_products} ta tovar yangilandi.",
+                        "synced_count": synced_products,
+                        "last_synced": now.isoformat(),
                     }
-                )
-                synced_products += 1
+                except Exception as e:
+                    logger.warning(f"YES POS sync error: {e}")
 
-            # Update integration state
+            from apps.stores.clopos_client import CloposClient
+            fetch_res = CloposClient.fetch_all_products(
+                api_token=creds.get("api_token") or creds.get("api_key") or creds.get("access_token") or "",
+                branch_id=config.get("branch_id") or config.get("spot_id") or "1",
+                config=config,
+                creds=creds,
+            )
+            products_data = fetch_res.get("products", [])
+            sync_res = CloposClient.sync_to_storebox(store, products_data)
+            synced_products = sync_res["total_synced"]
+
             integ.last_sync_at = now
             integ.last_sync_status = "success"
-            integ.last_sync_message = f"{synced_products} ta tovar va ombor qoldiqlari muvaffaqiyatli sinxronlandi"
+            integ.last_sync_message = f"{service_name}: {synced_products} ta mahsulot va narxlar sinxronlandi"
             integ.save(update_fields=["last_sync_at", "last_sync_status", "last_sync_message", "updated_at"])
 
             record_integration_log(
@@ -393,16 +556,21 @@ class IntegrationSyncService:
                 message=integ.last_sync_message,
                 details={
                     "synced_products_count": synced_products,
-                    "category": category_obj.name_uz,
-                    "target_shop_id": config.get("shop_id") or config.get("branch_id") or "1",
-                }
+                    "created_count": sync_res.get("created_count", 0),
+                    "updated_count": sync_res.get("updated_count", 0),
+                    "categories_count": sync_res.get("categories_count", 0),
+                    "venue_id": fetch_res.get("venue_id", "1"),
+                    "venue_name": fetch_res.get("venue_name", "Uzb"),
+                },
             )
 
             return {
                 "success": True,
-                "message": f"{service_name} ombori bilan sinxronizatsiya yakunlandi! {synced_products} ta tovar va qoldiqlar yangilandi.",
+                "message": f"{service_name} POS katalogi bilan sinxronizatsiya yakunlandi! {synced_products} ta mahsulot ({sync_res['created_count']} yangi, {sync_res['updated_count']} yangilandi) yuklandi.",
                 "synced_count": synced_products,
-                "category_name": category_obj.name_uz,
+                "created_count": sync_res.get("created_count", 0),
+                "updated_count": sync_res.get("updated_count", 0),
+                "categories_count": sync_res.get("categories_count", 0),
                 "last_synced": now.isoformat(),
             }
 

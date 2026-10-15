@@ -11,6 +11,81 @@ from .serializers import UserSerializer, StoreSerializer, BranchSerializer
 FLAGSHIP_STORE_IDS = [77, 79, 15, 1, 80]
 
 
+def _is_demo_flagship_user(user) -> bool:
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    uname = (getattr(user, "username", "") or "").strip()
+    phone = (getattr(user, "phone", "") or "").strip().replace(" ", "")
+    return uname in ("admin", "998900000001", "+998900000001") or phone in ("998900000001", "+998900000001")
+
+
+def ensure_merchant_empty_store(user):
+    """
+    Ensures a newly registered merchant account has its own clean, empty Store
+    (0 products, 0 categories, 0 orders, 0 customers, 0 integrations).
+    """
+    if not user or not user.is_authenticated:
+        return None
+    existing = Store.objects.filter(owner=user).order_by("id").first()
+    if existing:
+        return existing
+
+    from apps.orders.models import StoreStaff
+    from apps.payments.models import StorePaymentSetting
+    import re
+
+    if StoreStaff.objects.filter(user=user, is_active=True).exists():
+        return None
+
+    clean_digits = re.sub(r"\D", "", getattr(user, "phone", "") or user.username or "")
+    suffix = clean_digits[-6:] if len(clean_digits) >= 6 else str(user.id)
+    base_sub = f"store-{suffix}"
+    sub = base_sub
+    c = 1
+    while Store.objects.filter(subdomain=sub).exists():
+        sub = f"{base_sub}-{c}"
+        c += 1
+
+    store = Store.objects.create(
+        owner=user,
+        name="Мой магазин",
+        business_type=Store.BusinessTypes.STORE,
+        subdomain=sub,
+        is_active=True,
+    )
+    StorePaymentSetting.objects.get_or_create(
+        store=store,
+        defaults={
+            "click_enabled": False,
+            "click_service_id": "",
+            "click_merchant_id": "",
+            "click_secret_key": "",
+            "payme_enabled": False,
+            "payme_merchant_id": "",
+            "payme_secret_key": "",
+            "uzum_enabled": False,
+            "uzum_merchant_id": "",
+            "uzum_secret_key": "",
+            "multicard_enabled": False,
+            "multicard_app_id": "",
+            "multicard_secret": "",
+            "multicard_store_id": "",
+        },
+    )
+    StoreStaff.objects.get_or_create(
+        user=user,
+        store=store,
+        defaults={
+            "name": user.get_full_name() or user.username,
+            "phone": getattr(user, "phone", ""),
+            "role": "ADMIN",
+        },
+    )
+    return store
+
+
 def get_accessible_stores(user):
     from django.db.models import Q, Case, When, IntegerField
     from apps.orders.models import StoreStaff
@@ -19,9 +94,10 @@ def get_accessible_stores(user):
     staff_store_ids = list(
         StoreStaff.objects.filter(user=user, is_active=True).values_list("store_id", flat=True)
     )
-    qs = Store.objects.filter(
-        Q(owner=user) | Q(id__in=staff_store_ids) | Q(id__in=FLAGSHIP_STORE_IDS)
-    ).distinct()
+    q_filter = Q(owner=user) | Q(id__in=staff_store_ids)
+    if _is_demo_flagship_user(user):
+        q_filter = q_filter | Q(id__in=FLAGSHIP_STORE_IDS)
+    qs = Store.objects.filter(q_filter).distinct()
     return qs.order_by(
         Case(
             When(owner=user, then=0),
@@ -67,7 +143,7 @@ def get_merchant_store(request):
                 staff = StoreStaff.objects.filter(store_id=sid, user=user, is_active=True).select_related("store").first()
                 if staff:
                     store = staff.store
-            if not store and (user.is_superuser or sid in FLAGSHIP_STORE_IDS):
+            if not store and _is_demo_flagship_user(user) and (user.is_superuser or sid in FLAGSHIP_STORE_IDS):
                 store = Store.objects.filter(id=sid).first()
             if not store:
                 # Allow switching if the store exists in accessible stores
@@ -88,8 +164,11 @@ def get_merchant_store(request):
         if staff and staff.store:
             store = staff.store
 
-    if not store and user.is_superuser:
-        store = Store.objects.filter(is_active=True).first()
+    if not store:
+        if _is_demo_flagship_user(user):
+            store = Store.objects.filter(is_active=True).first()
+        else:
+            store = ensure_merchant_empty_store(user)
 
     request.tenant = store
     return store
@@ -232,8 +311,25 @@ def register_view(request):
         role=User.Roles.MERCHANT
     )
     login(request, user)
+    for key in ("active_store_id", "merchant_current_store_id", "selected_store_id", "current_store_subdomain"):
+        request.session.pop(key, None)
+
+    store = ensure_merchant_empty_store(user)
+    stores = get_accessible_stores(user)
+    if store:
+        request.session["active_store_id"] = store.id
+        request.session["merchant_current_store_id"] = store.id
+        request.session["selected_store_id"] = store.id
+        request.session["current_store_subdomain"] = store.subdomain
+        request.session.modified = True
+    perms = get_user_permissions(user, store) if store else None
+
     return Response({
         "user": UserSerializer(user).data,
+        "store": StoreSerializer(store).data if store else None,
+        "active_store_id": store.id if store else None,
+        "stores": StoreSerializer(stores, many=True).data,
+        "permissions": perms,
         "message": "Ro'yxatdan o'tish muvaffaqiyatli yakunlandi"
     }, status=201)
 
@@ -263,7 +359,7 @@ def me_view(request):
     stores = get_accessible_stores(user)
     if not stores.exists() and store:
         stores = Store.objects.filter(id=store.id)
-    elif not stores.exists():
+    elif not stores.exists() and _is_demo_flagship_user(user):
         stores = Store.objects.filter(is_active=True)[:10]
 
     perms = get_user_permissions(user, store) if store else None
@@ -300,7 +396,7 @@ def switch_store_view(request, store_id):
             store_id=store_id, user=request.user, is_active=True
         ).select_related("store").first()
         store = staff.store if staff else None
-    if not store and (request.user.is_superuser or int(store_id) in FLAGSHIP_STORE_IDS):
+    if not store and _is_demo_flagship_user(request.user) and (request.user.is_superuser or int(store_id) in FLAGSHIP_STORE_IDS):
         store = Store.objects.filter(id=store_id).first()
     if not store:
         store = get_accessible_stores(request.user).filter(id=store_id).first()
@@ -342,7 +438,7 @@ def create_store_view(request):
         return Response({"error": "Do'kon nomi kiritilishi shart"}, status=400)
 
     custom_sub = request.data.get("subdomain", "").strip().lower()
-    b_type = request.data.get("business_type", Store.BusinessTypes.ONLINE_STORE)
+    b_type = request.data.get("business_type", Store.BusinessTypes.STORE)
 
     if custom_sub:
         sub = slugify(custom_sub)
@@ -468,20 +564,22 @@ def sms_verify_code_view(request):
     # 3. Log in to session
     login(request, user)
 
-    for key in ("merchant_current_store_id", "selected_store_id", "current_store_subdomain"):
+    for key in ("active_store_id", "merchant_current_store_id", "selected_store_id", "current_store_subdomain"):
         request.session.pop(key, None)
 
     store = get_merchant_store(request)
-    stores = Store.objects.filter(owner=user).order_by("id")
+    stores = get_accessible_stores(user)
     if store:
+        request.session["active_store_id"] = store.id
         request.session["merchant_current_store_id"] = store.id
         request.session["selected_store_id"] = store.id
         request.session["current_store_subdomain"] = store.subdomain
+        request.session.modified = True
     perms = get_user_permissions(user, store) if store else None
 
     from apps.orders.models import StoreStaff
     from apps.stores.models import Branch
-    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists()
+    is_courier = StoreStaff.objects.filter(user=user, is_courier=True, is_active=True).exists() and not Store.objects.filter(owner=user).exists() and not user.is_superuser
 
     user_branch = None
     if store:
@@ -495,6 +593,7 @@ def sms_verify_code_view(request):
         "success": True,
         "user": UserSerializer(user).data,
         "store": StoreSerializer(store).data if store else None,
+        "active_store_id": store.id if store else None,
         "stores": StoreSerializer(stores, many=True).data,
         "permissions": perms,
         "is_courier": is_courier,

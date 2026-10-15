@@ -87,6 +87,7 @@ export interface SidekickMessage {
   sender: "user" | "assistant" | "system_voice";
   text: string;
   isVoice?: boolean;
+  image_url?: string | null;
   action?: SidekickAction | null;
   data_card?: SidekickDataCard | null;
   audio_base64?: string | null;
@@ -175,6 +176,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
   const [liveTranscript, setLiveTranscript] = useState("");
   const [lastVoiceCard, setLastVoiceCard] = useState<{
     text: string;
+    image_url?: string | null;
     action?: SidekickAction | null;
     data_card?: SidekickDataCard | null;
   } | null>(null);
@@ -662,11 +664,12 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
         navigate(spaTarget);
       }
 
-      // 2. Append Assistant Message with Data Card & Azure Speech Audio
+      // 2. Append Assistant Message with Image URL, Data Card & Azure Speech Audio
       const assistantMsg: SidekickMessage = {
         id: "a_" + Date.now(),
         sender: "assistant",
         text: data.text || "Готово.",
+        image_url: data.image_url || null,
         action: data.action || null,
         data_card: data.data_card || null,
         audio_base64: data.audio_base64 || null,
@@ -792,6 +795,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
 
       setLastVoiceCard({
         text: data.text,
+        image_url: data.image_url || null,
         action: data.action,
         data_card: data.data_card,
       });
@@ -800,6 +804,7 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
         id: "a_" + Date.now(),
         sender: "assistant",
         text: data.text || "Выполнено.",
+        image_url: data.image_url || null,
         action: data.action || null,
         data_card: data.data_card || null,
         audio_base64: data.audio_base64 || null,
@@ -976,8 +981,8 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             prompt: "Tahlil bo'limiga o't va oxirgi 30 kunlik tushumni ko'rsat",
           },
           {
-            label: "Bugungi tushum va buyurtmalar",
-            prompt: "Bugungi savdo ko'rsatkichlarini ko'rsat",
+            label: "Foto yaratish (FLUX)",
+            prompt: "Burger uchun foto yarat",
           },
           {
             label: "Oxirgi buyurtmalarni qidirish",
@@ -995,8 +1000,8 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             prompt: "Go to analytics and show me revenue for the last 30 days",
           },
           {
-            label: "7-day store performance",
-            prompt: "Show store metrics for the last 7 days",
+            label: "Create Product Photo (FLUX)",
+            prompt: "Create photo of a gourmet burger",
           },
           {
             label: "Find recent orders",
@@ -1013,12 +1018,12 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
             prompt: "Перейди в аналитику и покажи выручку за 30 дней",
           },
           {
-            label: "Сводка продаж за 7 дней",
-            prompt: "Покажи показатели магазина за 7 дней",
+            label: "Создать фото товара (FLUX)",
+            prompt: "Создай фото сочного бургера",
           },
           {
-            label: "Найти последние заказы",
-            prompt: "Найди последние заказы магазина",
+            label: "Последние заказы магазина",
+            prompt: "Покажи последние заказы магазина",
           },
           {
             label: "Сгенерировать карточку товара",
@@ -1528,8 +1533,16 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
               </div>
 
               {lastVoiceCard && (
-                <div className="w-full max-w-[340px] max-h-44 overflow-y-auto space-y-2 px-1">
-                  {lastVoiceCard.data_card ? (
+                <div className="w-full max-w-[340px] max-h-56 overflow-y-auto space-y-2 px-1">
+                  {lastVoiceCard.image_url ? (
+                    <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800 shadow-2xs p-2.5">
+                      <img
+                        src={lastVoiceCard.image_url}
+                        alt="Generated FLUX Image"
+                        className="w-full max-h-48 object-contain rounded-xl bg-[#141519]"
+                      />
+                    </div>
+                  ) : lastVoiceCard.data_card ? (
                     renderDataCard(lastVoiceCard.data_card, "voice_live")
                   ) : (
                     <div className="rounded-2xl bg-[#f6f6f7] dark:bg-zinc-900 border border-[#e1e3e5] dark:border-zinc-800 p-3 text-[12px] text-[#202223] dark:text-zinc-200 leading-relaxed">
@@ -1801,6 +1814,25 @@ export const SidekickPanel: React.FC<SidekickPanelProps> = ({ isOpen, onClose })
                           </div>
                         )}
 
+                        {m.image_url && (
+                          <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-[#e3e5e7] dark:border-zinc-800 shadow-2xs p-2.5 space-y-2 text-left">
+                            <img
+                              src={m.image_url}
+                              alt="Generated FLUX Image"
+                              className="w-full max-h-64 object-contain rounded-xl bg-[#141519]"
+                            />
+                            <div className="flex items-center justify-end">
+                              <a
+                                href={m.image_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 rounded-lg bg-[#f1f2f4] hover:bg-[#e3e5e7] dark:bg-zinc-800 text-[11px] font-semibold text-[#202223] dark:text-zinc-200 transition"
+                              >
+                                {uiLang === "uz" ? "Yuklab olish" : uiLang === "en" ? "Download" : "Скачать"}
+                              </a>
+                            </div>
+                          </div>
+                        )}
                         {m.data_card && renderDataCard(m.data_card, m.id)}
                       </div>
                     </div>

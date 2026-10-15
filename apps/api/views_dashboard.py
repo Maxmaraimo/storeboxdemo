@@ -514,10 +514,10 @@ def dashboard_summary_view(request):
     setup_guide = {
         "has_products": products_cnt > 0,
         "products_count": products_cnt,
-        "has_theme": bool(getattr(store, "primary_color", None) or getattr(store, "description", None)),
+        "has_theme": bool(getattr(store, "logo", None) or getattr(store, "description", None) or (products_cnt > 0 and getattr(store, "primary_color", None))),
         "has_payments": bool(payments_configured or getattr(store, "click_service_id", None) or getattr(store, "payme_merchant_id", None)),
         "has_delivery": bool(getattr(store, "delivery_price", 0) > 0 or branches_cnt > 0),
-        "has_domain": bool(getattr(store, "custom_domain", None) or getattr(store, "subdomain", None)),
+        "has_domain": bool(getattr(store, "custom_domain", None) or getattr(store, "telegram_bot_username", None) or (products_cnt > 0 and getattr(store, "subdomain", None))),
     }
 
     resp = Response({

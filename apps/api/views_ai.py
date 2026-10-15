@@ -89,6 +89,8 @@ def ai_assistant_chat_view(request):
             )
             reply_text = f"Готово! Фото товара обработано в студийном стиле ({res.get('theme_title', 'Студия')})."
             audio_b64 = synthesize_voice(reply_text, language=lang) if voice_enabled else None
+            first_prod = Product.objects.filter(store=store, is_active=True).first()
+            img_url = res.get("image_url")
             return Response({
                 "status": "success",
                 "text": reply_text,
@@ -96,8 +98,25 @@ def ai_assistant_chat_view(request):
                 "data_card": {
                     "type": "image_studio",
                     "title": res.get("theme_title", "Студийное фото"),
-                    "image_url": res.get("image_url"),
+                    "image_url": img_url,
                     "product_name": data.get("product_name") or "Товар",
+                },
+                "media_card": {
+                    "type": "IMAGE",
+                    "url": img_url,
+                    "product_name": data.get("product_name") or (first_prod.name_ru if first_prod else "Товар"),
+                    "target_id": first_prod.id if first_prod else None,
+                    "actions": [
+                        {
+                            "label": "Прикрепить к товару",
+                            "action": "ATTACH_TO_PRODUCT",
+                            "target_id": first_prod.id if first_prod else None,
+                        },
+                        {
+                            "label": "Скачать",
+                            "action": "DOWNLOAD",
+                        },
+                    ],
                 },
                 "audio_base64": audio_b64,
                 "use_browser_tts": False,
@@ -118,9 +137,10 @@ def ai_assistant_chat_view(request):
     response_payload = {
         "status": "success",
         "text": result.get("text", ""),
+        "image_url": result.get("image_url"),
+        "audio_base64": audio_base64,
         "action": result.get("action"),
         "data_card": result.get("data_card"),
-        "audio_base64": audio_base64,
         "use_browser_tts": False,
         "store": {
             "id": store.id,
@@ -153,7 +173,7 @@ def ai_status_view(request):
 
     return Response({
         "status": "online",
-        "provider": "Google Gemini 2.5 Flash + Microsoft Azure Speech Services",
+        "provider": "Google Gemini 2.5 Flash + Microsoft Azure Speech Services + Pollinations FLUX",
         "gemini": {
             "available": has_gemini,
             "model": getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash"),
@@ -192,6 +212,12 @@ def ai_quick_actions_view(request):
             "badge": metrics["revenue"],
         },
         {
+            "id": "create_image",
+            "title": "Создать фото (FLUX)",
+            "prompt": "Создай фото сочного бургера",
+            "badge": "FLUX",
+        },
+        {
             "id": "search_orders",
             "title": "Последние заказы",
             "prompt": "Покажи последние заказы магазина",
@@ -202,12 +228,6 @@ def ai_quick_actions_view(request):
             "title": "Создать карточку товара",
             "prompt": "Сгенерируй карточку товара для нового хита продаж",
             "badge": "AI Контент",
-        },
-        {
-            "id": "nav_customers",
-            "title": "Открыть базу клиентов",
-            "prompt": "Перейди в раздел клиенты",
-            "badge": f"{metrics['customers_count']} клиентов",
         },
     ]
     return Response({"actions": actions, "store": metrics})
@@ -301,11 +321,11 @@ def ai_save_to_catalog_view(request):
     if not store:
         return Response({"error": "Магазин не найден"}, status=404)
 
-    name = (request.data.get("name") or "Новый товар").strip()
+    name = (request.data.get("name") or request.data.get("product_name") or "Новый товар").strip()
     description = (request.data.get("description") or "").strip()
     price = request.data.get("price") or 250000
     stock = request.data.get("stock") or 25
-    image_url = request.data.get("image_url") or ""
+    image_url = (request.data.get("image_url") or "").strip()
 
     first_cat = Category.objects.filter(store=store, is_active=True).first()
     slug = f"{slugify(name) or 'item'}-{uuid.uuid4().hex[:4]}"
@@ -326,11 +346,6 @@ def ai_save_to_catalog_view(request):
         image_url=image_url,
         unit=Product.Units.DONA,
     )
-
-    if image_url:
-        rel_path = image_url.replace(settings.MEDIA_URL, "").lstrip("/")
-        if os.path.exists(os.path.join(settings.MEDIA_ROOT, rel_path)):
-            ProductImage.objects.create(product=product, image=rel_path, is_primary=True, sort_order=0)
 
     return Response({
         "success": True,
@@ -364,3 +379,4 @@ def ai_generate_description_view(request):
         "category": dc["category"],
         "data_card": dc,
     })
+

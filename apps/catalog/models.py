@@ -73,8 +73,7 @@ class Category(models.Model):
             if lang == src_l:
                 return val
             is_untranslated_cyrillic = bool(re.search(r'[\u0400-\u04FF]', val)) and lang in ['en', 'tr']
-            is_identical_to_src = val.lower() == source_text.lower()
-            if not is_untranslated_cyrillic and not is_identical_to_src:
+            if not is_untranslated_cyrillic:
                 return val
 
         auto_val = auto_translate_text(source_text, target_lang=lang, src_lang=src_l)
@@ -157,6 +156,14 @@ class Product(models.Model):
         auto_populate_product_translations(self, save=False)
         super().save(*args, **kwargs)
 
+    @property
+    def name(self):
+        return self.name_ru or self.name_uz or self.name_en or ''
+
+    @property
+    def description(self):
+        return self.description_ru or self.description_uz or self.description_en or ''
+
     def get_name(self, lang='uz'):
         import re
         from apps.catalog.translations import auto_translate_text, detect_text_language
@@ -180,8 +187,7 @@ class Product(models.Model):
             if lang == src_l:
                 return val
             is_untranslated_cyrillic = bool(re.search(r'[\u0400-\u04FF]', val)) and lang in ['en', 'tr']
-            is_identical_to_src = val.lower() == source_text.lower()
-            if not is_untranslated_cyrillic and not is_identical_to_src:
+            if not is_untranslated_cyrillic:
                 return val
 
         auto_val = auto_translate_text(source_text, target_lang=lang, src_lang=src_l)
@@ -214,8 +220,7 @@ class Product(models.Model):
             if lang == src_dl:
                 return val
             is_untranslated_cyrillic = bool(re.search(r'[\u0400-\u04FF]', val)) and lang in ['en', 'tr']
-            is_identical_to_src = val.lower() == source_text.lower()
-            if not is_untranslated_cyrillic and not is_identical_to_src:
+            if not is_untranslated_cyrillic:
                 return val
 
         auto_val = auto_translate_text(source_text, target_lang=lang, src_lang=src_dl)

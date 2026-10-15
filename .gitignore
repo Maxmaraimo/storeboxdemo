@@ -2,6 +2,7 @@ venv/
 *.pyc
 __pycache__/
 *.sqlite3
+*.sqlite3-*
 media/
 staticfiles/
 .env
@@ -18,4 +19,5 @@ scratch/
 static/images/candidates/
 static/images/candidates_curated/
 примерыстиль/
+clothescrystallami/
 .ai_models/

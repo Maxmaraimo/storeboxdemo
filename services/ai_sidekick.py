@@ -36,7 +36,7 @@ _GEMINI_SESSION = requests.Session()
 _GEMINI_SESSION.trust_env = False
 _GEMINI_ADAPTER = HTTPAdapter(pool_connections=4, pool_maxsize=8, max_retries=0)
 _GEMINI_SESSION.mount("https://", _GEMINI_ADAPTER)
-_RESOLVED_GEMINI_MODEL: Optional[str] = "models/gemini-flash-lite-latest"
+_RESOLVED_GEMINI_MODEL: Optional[str] = "models/gemini-3.5-flash"
 
 
 def _warmup_gemini_connection() -> None:
@@ -56,6 +56,8 @@ threading.Thread(target=_warmup_gemini_connection, daemon=True).start()
 SYSTEM_INSTRUCTION = (
     "Ты — StoreBox Sidekick, интеллектуальный персональный управляющий интернет-магазином на платформе StoreBox (аналог Shopify). "
     "Общайся живо, лаконично (1–3 коротких предложения), профессионально, как реальный бизнес-партнер. "
+    "Если пользователь просит создать фото, нарисовать или сгенерировать изображение (слова «создай фото», «нарисуй», «сгенерируй изображение», «сделай фото»), "
+    "обязательно вызывай инструмент create_image с кратким описанием на английском языке (prompt). "
     "КРИТИЧЕСКИ ВАЖНО: Отвечай СТРОГО на том языке, на котором обратился продавец в своем последнем сообщении "
     "(узбекский латиницей, русский или английский), даже если предыдущие сообщения были на другом языке или узбекский записан кириллицей. "
     "Не повторяй формальные фразы о том, кто ты такой, при каждом сообщении. Управляй платформой через доступные инструменты."
@@ -161,6 +163,23 @@ GEMINI_FUNCTION_DECLARATIONS = [
                 },
             },
             "required": ["title", "description"],
+        },
+    },
+    {
+        "name": "create_image",
+        "description": (
+            "Генерирует картинку или фото товара через Pollinations FLUX. "
+            "Вызывай, если видишь слова 'создай фото', 'нарисуй', 'сгенерируй изображение', 'сделай фото'."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "prompt": {
+                    "type": "STRING",
+                    "description": "краткое описание на английском",
+                },
+            },
+            "required": ["prompt"],
         },
     },
 ]
@@ -526,6 +545,16 @@ class SidekickBrain:
             "data_card": data_card,
         }
 
+    def create_image(self, prompt: str = "") -> Dict[str, Any]:
+        from services.image_service import generate_flux_image
+
+        clean_prompt = (prompt or "product").strip()
+        image_url = generate_flux_image(clean_prompt)
+        return {
+            "image_url": image_url,
+            "prompt": clean_prompt,
+        }
+
     def generate_product_data(
         self,
         title: str = "",
@@ -585,6 +614,8 @@ class SidekickBrain:
                 prompt=fn_args.get("prompt", ""),
                 lang=lang,
             )
+        if fn_name == "create_image":
+            return self.create_image(prompt=fn_args.get("prompt", ""))
         return {}
 
     def _format_fast_tool_reply(self, fn_name: str, tool_result: Dict[str, Any], lang: str) -> str:
@@ -642,6 +673,9 @@ class SidekickBrain:
                 return f"Prepared the product card for '{pname}' (suggested price: {pprice}). You can add it to your catalog with one click."
             return f"Карточка товара «{pname}» готова (рекомендуемая цена: {pprice}). Вы можете добавить её в каталог в один клик."
 
+        if fn_name == "create_image":
+            return "Вот изображение по вашему запросу:"
+
         return "Tayyor." if lang == "uz" else "Done." if lang == "en" else "Готово."
 
     # ------------------------------------------------------------------
@@ -650,14 +684,22 @@ class SidekickBrain:
     def _try_instant_intent(self, user_msg: str, user_lang: str) -> Optional[Dict[str, Any]]:
         """
         Executes high-frequency store commands (navigation, live metrics, order search,
-        and greetings) directly against the live Django ORM in ~5ms so the assistant
-        responds + speaks in <0.5s total without waiting for an external LLM roundtrip.
-        Returns None for open-ended questions, advice, or product generation.
+        and greetings) directly so the assistant responds fast.
         """
         t = (user_msg or "").strip()
-        if not t or len(t) > 160:
+        if not t or len(t) > 220:
             return None
         t_low = t.lower()
+
+        # Do not intercept image generation, product generation, or open-ended questions
+        if re.search(
+            r"\b(придумай\w*|сгенерируй\w*|создай\w*|нарисуй\w*|сделай\w*\s+фото|описание\s+товара|карточк\w*|добавь\s+товар|"
+            r"фото\w*|картинк\w*|изображен\w*|баннер\w*|rasm\w*|foto\w*|banner\w*|photo\w*|image\w*|draw\w*|"
+            r"почему|зачем|как\s+увеличить|как\s+поднять|совет|рекомендац|стратеги|"
+            r"yarat\w*|chiz\w*|tavsif|nega|qanday\s+qilib|maslahat|create|generate|why|how\s+to)\b",
+            t_low,
+        ):
+            return None
 
         # Detect optional greeting prefix (e.g. "Ассалому алайкум менга махсулотларни курсат")
         greeting_prefix = ""
@@ -669,15 +711,6 @@ class SidekickBrain:
             greeting_prefix = "Привет! " if "привет" in t_low else "Здравствуйте! "
         elif re.search(r"^(hello|hi|hey)\b", t_low):
             greeting_prefix = "Hello! "
-
-        # Do not intercept product generation / creative writing / "how to" / "why" questions
-        if re.search(
-            r"\b(придумай|сгенерируй|создай\s+товар|описание\s+товара|карточк|добавь\s+товар|"
-            r"почему|зачем|как\s+увеличить|как\s+поднять|совет|рекомендац|стратеги|"
-            r"yarat|tavsif|nega|qanday\s+qilib|maslahat|create\s+product|generate|why|how\s+to)\b",
-            t_low,
-        ):
-            return None
 
         # 1. Store Metrics / Revenue / Financial Analytics
         is_metrics_query = bool(
@@ -714,6 +747,7 @@ class SidekickBrain:
                 "lang": user_lang,
                 "action": None,
                 "data_card": tool_res.get("data_card"),
+                "image_url": None,
             }
 
         # 2. Specific Order Search (by ID, status, or "recent/latest orders")
@@ -737,6 +771,7 @@ class SidekickBrain:
                 "lang": user_lang,
                 "action": None,
                 "data_card": tool_res.get("data_card"),
+                "image_url": None,
             }
 
         # 3. Section Navigation (e.g., "Ассалому алайкум менга махсулотларни курсат", "Открой товары", "Покажи аналитику")
@@ -788,6 +823,7 @@ class SidekickBrain:
                 "lang": user_lang,
                 "action": nav_res.get("action"),
                 "data_card": extra_card,
+                "image_url": None,
             }
 
         # 4. Pure Greeting / "How are you?" / Store Status Check
@@ -819,6 +855,7 @@ class SidekickBrain:
                 "lang": user_lang,
                 "action": None,
                 "data_card": None,
+                "image_url": None,
             }
 
         return None
@@ -839,7 +876,8 @@ class SidekickBrain:
 
         candidate_models = [
             _RESOLVED_GEMINI_MODEL,
-            "models/gemini-flash-lite-latest",
+            "models/gemini-3.5-flash",
+            "models/gemini-3.8-flash",
             "models/gemini-flash-latest",
         ]
         models = list(dict.fromkeys([m for m in candidate_models if m]))
@@ -848,7 +886,7 @@ class SidekickBrain:
         for model_name in models:
             url = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={api_key}"
             try:
-                resp = _GEMINI_SESSION.post(url, headers=headers, json=payload, timeout=4.5, verify=False)
+                resp = _GEMINI_SESSION.post(url, headers=headers, json=payload, timeout=6.0, verify=False)
                 if resp.status_code == 200:
                     data = resp.json()
                     if isinstance(data, dict) and data.get("candidates"):
@@ -878,10 +916,9 @@ class SidekickBrain:
 
     def process_chat(self, message: str, history: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
         """
-        Ultra-low-latency hybrid pipeline (<0.5s - 1.2s total):
+        Ultra-low-latency hybrid pipeline:
         1. Instant ORM Intent Router (~5ms) for navigation, live store metrics, order lookups, and greetings.
-        2. Direct Gemini Flash-Lite call (~0.45s) with thinkingBudget=0 for open-ended questions & product generation.
-        Enforces strict reply language matching the user's message language ('uz', 'ru', or 'en').
+        2. Direct Gemini call with Function Calling (`create_image`, `generate_product_data`, etc.).
         """
         user_msg = (message or "").strip()
         user_lang = detect_language(user_msg, fallback=self.lang)
@@ -934,12 +971,23 @@ class SidekickBrain:
 
         contents.append({"role": "user", "parts": [{"text": f"{user_msg}{prompt_suffix}"}]})
 
-        # Only attach the heavy function declaration schema if the query looks like product creation or tool usage
-        needs_tools = bool(
+        msg_low = user_msg.lower()
+        is_image_intent = bool(
+            re.search(
+                r"(создай\w*\s+фото|сделай\w*\s+фото|сгенерируй\w*\s+(изображен|фото|картинк)|"
+                r"создай\w*\s+(изображен|картинк)|нарисуй\w*|фото\s+для|rasm\s+(yarat|chiz)|"
+                r"create\s+(photo|image)|generate\s+(photo|image)|draw\b)",
+                msg_low,
+            )
+        )
+
+        needs_tools = is_image_intent or bool(
             re.search(
                 r"\b(придумай|сгенерируй|создай|товар|карточк|описание|открой|покажи|перейди|найди|"
-                r"yarat|tavsif|mahsulot|och|korsat|ko'rsat|create|generate|open|show)\b",
-                user_msg.lower(),
+                r"фото|картинк|изображен|нарисуй|сделай|"
+                r"yarat|tavsif|mahsulot|och|korsat|ko'rsat|rasm|foto|chiz|"
+                r"create|generate|open|show|photo|image|draw)\b",
+                msg_low,
             )
         )
 
@@ -948,18 +996,37 @@ class SidekickBrain:
             "contents": contents,
             "generationConfig": {
                 "temperature": 0.4,
-                "maxOutputTokens": 75,
+                "maxOutputTokens": 90,
             },
         }
-        if needs_tools:
+        if is_image_intent:
+            payload["tools"] = [{"functionDeclarations": GEMINI_FUNCTION_DECLARATIONS}]
+            payload["toolConfig"] = {
+                "functionCallingConfig": {
+                    "mode": "ANY",
+                    "allowedFunctionNames": ["create_image"],
+                }
+            }
+        elif needs_tools:
             payload["tools"] = [{"functionDeclarations": GEMINI_FUNCTION_DECLARATIONS}]
             payload["toolConfig"] = {"functionCallingConfig": {"mode": "AUTO"}}
 
         action_obj: Optional[Dict[str, Any]] = None
         data_card_obj: Optional[Dict[str, Any]] = None
+        image_url_obj: Optional[str] = None
 
         first_response = self._call_gemini(payload)
         if not first_response:
+            if is_image_intent:
+                img_res = self.create_image(prompt=user_msg)
+                return {
+                    "status": "success",
+                    "text": "Вот изображение по вашему запросу:",
+                    "lang": user_lang,
+                    "action": None,
+                    "data_card": None,
+                    "image_url": img_res.get("image_url"),
+                }
             err_msg = (
                 "Gemini API bilan bog'lanib bo'lmadi. Internet aloqasini tekshiring."
                 if user_lang == "uz"
@@ -973,6 +1040,7 @@ class SidekickBrain:
                 "lang": user_lang,
                 "action": None,
                 "data_card": None,
+                "image_url": None,
             }
 
         candidate_content = first_response["candidates"][0].get("content", {})
@@ -992,15 +1060,23 @@ class SidekickBrain:
                     action_obj = tool_result["action"]
                 if tool_result.get("data_card"):
                     data_card_obj = tool_result["data_card"]
+                if tool_result.get("image_url"):
+                    image_url_obj = tool_result["image_url"]
 
                 seg = self._format_fast_tool_reply(fn_name, tool_result, lang=user_lang)
                 if seg and seg not in reply_segments:
                     reply_segments.append(seg)
 
-            if first_text and detect_language(first_text, fallback=user_lang) == user_lang:
+            if image_url_obj:
+                final_text = "Вот изображение по вашему запросу:"
+            elif first_text and detect_language(first_text, fallback=user_lang) == user_lang:
                 final_text = first_text
             else:
                 final_text = " ".join(reply_segments).strip()
+        elif is_image_intent:
+            img_res = self.create_image(prompt=user_msg)
+            image_url_obj = img_res.get("image_url")
+            final_text = "Вот изображение по вашему запросу:"
         else:
             final_text = first_text
 
@@ -1010,4 +1086,6 @@ class SidekickBrain:
             "lang": user_lang,
             "action": action_obj,
             "data_card": data_card_obj,
+            "image_url": image_url_obj,
         }
+

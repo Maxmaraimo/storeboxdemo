@@ -156,6 +156,9 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {
+                'timeout': 20,
+            },
         }
     }
 
@@ -290,5 +293,7 @@ GROQ_MODEL = os.environ.get('GROQ_MODEL', 'qwen/qwen3.8-27b')
 HF_TOKEN = os.environ.get('HF_TOKEN', os.environ.get('HUGGING_FACE_HUB_TOKEN', ''))
 KREA_MODEL_ID = os.environ.get('KREA_MODEL_ID', 'krea/Krea-2-Turbo')
 DIFFUSERS_DEVICE = os.environ.get('DIFFUSERS_DEVICE', 'mps')
+
+POLLINATIONS_API_KEY = os.environ.get('POLLINATIONS_API_KEY', 'sk_YCfYsnTkM1HHC5hUR222zY78u2RyExm1')
 
 

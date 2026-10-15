@@ -232,7 +232,13 @@ export const WarehousePage: React.FC = () => {
               </span>
             </button>
             <Link
-              to="/settings/integrations"
+              to={
+                connectedIntegration.slug === "billz"
+                  ? "/billz"
+                  : connectedIntegration.slug === "yespos"
+                  ? "/yespos"
+                  : `/integrations/${connectedIntegration.slug}`
+              }
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 text-xs font-medium hover:bg-white/60 transition-colors"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />

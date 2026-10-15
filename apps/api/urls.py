@@ -97,6 +97,8 @@ urlpatterns = [
     path("integrations/<str:slug>/disconnect/", views_integrations.integration_disconnect_view, name="integration_disconnect"),
     path("integrations/<str:slug>/test/", views_integrations.integration_test_view, name="integration_test"),
     path("integrations/<str:slug>/sync/", views_integrations.integration_sync_view, name="integration_sync"),
+    path("integrations/<str:slug>/catalog/", views_integrations.integration_catalog_view, name="integration_catalog"),
+    path("integrations/<str:slug>/import/", views_integrations.integration_import_view, name="integration_import"),
     path("integrations/<str:slug>/logs/", views_integrations.integration_logs_view, name="integration_logs"),
 
     # Chats & Messages
@@ -146,7 +148,7 @@ urlpatterns = [
     path("telegram/setup-menu/", views_telegram.telegram_setup_menu_view, name="telegram_setup_menu"),
     path("telegram/test/", views_telegram.telegram_test_view, name="telegram_test"),
 
-    # AI Assistant (StoreBox Sidekick — Gemini + Microsoft Azure Speech Services)
+    # AI Assistant (StoreBox Sidekick — Gemini + Microsoft Azure Speech Services + Pollinations FLUX)
     path("ai/assistant/chat/", views_ai.ai_assistant_chat_view, name="ai_assistant_chat"),
     path("ai/chat/", views_ai.ai_assistant_chat_view, name="ai_chat"),
     path("ai/status/", views_ai.ai_status_view, name="ai_status"),

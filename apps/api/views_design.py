@@ -89,13 +89,13 @@ def design_theme_get_view(request):
         },
         {
             "id": "streetwear",
-            "name": "Streetwear & Lookbook (222 FMA)",
-            "name_ru": "Стритвир и Лукбук (222 FMA)",
-            "name_en": "Streetwear & Lookbook (222 FMA)",
-            "description": "Qorong'i premium dizayn, 'O'z obrazingni yarat' interaktiv konstruktori va neon aksentlar",
-            "description_ru": "Темный премиальный дизайн, интерактивный конструктор 'Собери свой образ', лукбук и неоновые акценты",
-            "description_en": "Dark luxury streetwear aesthetic, interactive 'Outfit Builder', lookbook & neon accents",
-            "badge": "Dark Luxury & Outfits",
+            "name": "Streetwear & Lookbook (Crystal Lami / PSIH)",
+            "name_ru": "Стритвир и Лукбук (Crystal Lami / PSIH)",
+            "name_en": "Streetwear & Lookbook (Crystal Lami / PSIH)",
+            "description": "Qorong'i avangard stritvir, modellar va mok-aplar rejimi, suzuvchi 4|2 va 2|1 paneli va monospace taymerlar",
+            "description_ru": "Темный авангардный стритвир, переключатель моделей и пакшотов, плавающее меню 4|2 и 2|1, лукбук и моноширинные таймеры",
+            "description_en": "Dark luxury avant-garde streetwear, models vs mockups toggle, floating 4|2 & 2|1 bar, lookbook and monospace timers",
+            "badge": "Dark Luxury & PSIH",
             "icon": "flame"
         }
     ]

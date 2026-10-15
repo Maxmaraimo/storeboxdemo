@@ -1,687 +1,1184 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="{{ lang }}" class="scroll-smooth">
+<html lang="{{ lang|default:'ru' }}" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{{ product.display_name }} — {{ store.name }}</title>
-    <meta name="description" content="{{ product.display_description|default:product.display_name }}">
+    <title>{{ product.name_ru|default:product.name }} — {{ store.name|default:'CRYSTALL AMI' }}</title>
+    <meta name="description" content="{{ product.description_ru|default:product.name }}">
     <link rel="icon" type="image/svg+xml" href="{% static 'images/streetwear/logo_emblem.svg' %}">
 
-    <!-- Fonts: Barlow Condensed, Inter, Manrope -->
+    <!-- Fonts: IBM Plex Mono & Lora (1:1 with psihclothes.ru) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
-    <!-- Base Tailwind & 222 FMA CSS -->
+    <!-- Tailwind & Alpine.js -->
     <link rel="stylesheet" href="{% static 'css/storefront-tailwind.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/222fma.css' %}">
     <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
-    <script src="{% static 'vendor/lucide.min.js' %}"></script>
 
     <style>
         [x-cloak] { display: none !important; }
 
         :root {
-            --ink: #0c0d0b;
-            --paper: #ffffff;
-            --paper-warm: #fcfcfc;
-            --olive: #737861;
-            --olive-soft: #777c64;
-            --line: rgba(12, 13, 11, 0.08);
-            --font-display: 'Barlow Condensed', 'Manrope', sans-serif;
-            --font-sans: Inter, sans-serif;
+            --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+            --font-heading: 'Lora', Georgia, serif;
+            --color-black: #000000;
+            --color-white: #ffffff;
+            --color-border: #e5e5e5;
         }
 
         body {
             background-color: #ffffff;
-            color: #0c0d0b;
-            font-family: var(--font-sans);
+            color: #000000;
+            font-family: var(--font-mono);
             -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
+            -moz-osx-font-smoothing: grayscale;
             margin: 0;
             padding: 0;
+            overflow-x: hidden;
         }
 
-        .font-condensed {
-            font-family: var(--font-display);
+        .font-lora { font-family: var(--font-heading); }
+        .font-mono { font-family: var(--font-mono); }
+
+        /* Running Marquee */
+        @keyframes infiniteMarquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: infiniteMarquee 26s linear infinite;
         }
 
-        /* Top Bar */
-        .detail-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
+        /* 1:1 PSIH Product Page Architecture */
+        .pp { background: #ffffff; min-height: 100vh; }
+        .pp__layout {
+            display: grid;
+            grid-template-columns: 58fr 1px 42fr;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 1024px) {
+            .pp__layout {
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+            }
+        }
+
+        /* 3:4 Aspect Ratio */
+        .aspect-product {
+            aspect-ratio: 3 / 4;
+        }
+
+        /* Back Button Pill (Exact PSIH style) */
+        .pp__back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px 8px 12px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: #000;
             background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 9999px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            transition: all .25s cubic-bezier(.25, .46, .45, .94);
+            user-select: none;
+        }
+        .pp__back-btn:hover {
+            background: #000;
+            color: #fff;
+            border-color: #000;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+        }
+        .pp__back-btn:hover .pp__back-arrow {
+            transform: translateX(-3px);
+        }
+
+        /* Vertical Divider */
+        .pp__divider {
+            width: 1px;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.12) 15%, rgba(0, 0, 0, 0.12) 85%, transparent 100%);
+            flex-shrink: 0;
+        }
+
+        /* Gallery Frames */
+        .pp__gallery-frame {
+            position: relative;
+            width: 100%;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #ffffff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 40px;
+        }
+        .pp__gallery-img {
+            max-height: 85vh;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            user-select: none;
+            transition: transform .6s cubic-bezier(.25, .46, .45, .94);
+        }
+
+        /* Snap Gallery on Mobile */
+        .snap-gallery {
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .snap-item {
+            scroll-snap-align: center;
+            scroll-snap-stop: always;
+        }
+
+        /* Size Pill */
+        .pp__size-pill {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 9px 18px;
+            border: 1px solid #000;
+            border-radius: 9999px;
+            background: transparent;
+            color: #000;
+            cursor: pointer;
+            transition: all .25s ease;
+            min-width: 54px;
+            text-align: center;
+        }
+        .pp__size-pill:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+        .pp__size-pill.selected {
+            background: #000;
+            color: #fff;
+        }
+
+        /* Accordion */
+        .pp__accordion {
+            margin-top: 36px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .pp__accordion-item {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .pp__accordion-trigger {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            background: transparent;
+            border: none;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            cursor: pointer;
+            color: #000;
+        }
+        .pp__accordion-trigger:hover { opacity: .6; }
+
+        /* Frosted Glass Floating Islands (1:1 with PSIH) */
+        .frosted-island {
+            background: rgba(255, 255, 255, 0.78);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(12, 13, 11, 0.06);
-            height: 72px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            border-radius: 999px;
-            background: rgba(12, 13, 11, 0.05);
-            color: #0c0d0b;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 13px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(12, 13, 11, 0.08);
+        /* Floating Capsule */
+        .shadow-float {
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.14);
         }
 
-        .back-btn:hover {
-            background: #0c0d0b;
-            color: #ffffff;
-            border-color: #0c0d0b;
-            transform: translateX(-2px);
+        /* Architectural Grid & Borders (PSIH 1:1) */
+        .catalog-grid {
+            display: grid;
+            gap: 1px;
+            background-color: var(--color-border);
+            border: 1px solid var(--color-border);
         }
 
-        .cart-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: 999px;
-            background: #0c0d0b;
-            color: #ffffff;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 13px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            border: none;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-        }
-
-        .cart-pill:hover {
-            background: #222;
-            transform: scale(1.02);
-        }
-
-        /* Lang switcher */
-        .lang-pill {
-            display: inline-flex;
-            align-items: center;
-            background: rgba(12, 13, 11, 0.05);
-            border-radius: 999px;
-            padding: 3px;
-            border: 1px solid rgba(12, 13, 11, 0.08);
-        }
-        .lang-pill a {
-            padding: 5px 12px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 700;
-            font-family: var(--font-display);
-            color: #666;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-        .lang-pill a.active {
-            background: #0c0d0b;
-            color: #ffffff;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-
-        /* Packshot Stage */
-        .packshot-stage {
-            background: #fbfbfb;
-            border: 1px solid rgba(12, 13, 11, 0.06);
-            border-radius: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            aspect-ratio: 1 / 1;
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04);
-        }
-
-        .packshot-stage img {
-            width: 82%;
-            height: 82%;
-            object-fit: contain;
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-            filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.08));
-        }
-
-        .packshot-stage:hover img {
-            transform: scale(1.05);
-        }
-
-        /* Size Pill Buttons */
-        .size-btn {
-            height: 48px;
-            min-width: 54px;
-            padding: 0 16px;
-            border-radius: 12px;
-            border: 1.5px solid rgba(12, 13, 11, 0.15);
-            background: #ffffff;
-            color: #0c0d0b;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 14px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .size-btn:hover {
-            border-color: #0c0d0b;
-            background: #f7f7f7;
-        }
-
-        .size-btn.active {
-            background: #0c0d0b;
-            color: #ffffff;
-            border-color: #0c0d0b;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Cart Drawer */
-        .drawer-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(6px);
-            z-index: 100;
-            transition: opacity 0.3s ease;
-        }
-        .drawer-panel {
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            max-width: 440px;
-            background: #ffffff;
-            z-index: 101;
-            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .drawer-open .drawer-panel {
-            transform: translateX(0);
-        }
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #ffffff; }
+        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 999px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 
-<body x-data="streetwearDetailApp()" x-init="init()" :class="cartDrawerOpen ? 'drawer-open' : ''">
+<body class="min-h-full flex flex-col bg-white text-black selection:bg-black selection:text-white pb-28 lg:pb-0"
+      x-data="pdpApp()"
+      x-init="initApp()"
+      @keydown.escape="closeAll()">
 
-    <!-- FIXED TOP BAR -->
-    <header class="detail-nav">
-        <!-- Left: Prominent Back to Store Link (compact on mobile) -->
-        <a href="/store/{{ store.subdomain }}/#collection" class="back-btn" :title="t('backToStore')">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            <span class="hidden sm:inline" x-text="t('backToStore')"></span>
-        </a>
-
-        <!-- Center: Brand Wordmark -->
-        <a href="/store/{{ store.subdomain }}/#home" class="flex items-center">
-            <img src="{% static 'images/streetwear/logo_wordmark_dark.svg' %}" alt="AURA ATELIER" class="h-6 sm:h-7 w-auto">
-        </a>
-
-        <!-- Right: Lang Switcher & Cart Pill -->
-        <div class="flex items-center gap-2 sm:gap-3">
-            <div class="lang-pill">
-                <a href="?lang=uz" :class="currentLang === 'uz' ? 'active' : ''">UZ</a>
-                <a href="?lang=ru" :class="currentLang === 'ru' ? 'active' : ''">RU</a>
-            </div>
-
-            <button @click="cartDrawerOpen = true" class="cart-pill">
-                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-                <span class="hidden sm:inline" x-text="t('cart') + ' (' + cartCount + ')'"></span>
-                <span class="sm:hidden font-mono font-bold text-xs" x-text="'(' + cartCount + ')'"></span>
-            </button>
+    <!-- 0. FLOATING TOAST ALERT (1:1 WITH PSIHCLOTHES.RU) -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 z-[10000] transition-all duration-500 ease-in-out pointer-events-none"
+         :class="toastVisible ? 'translate-y-8 opacity-100' : '-translate-y-full opacity-0'">
+        <div class="inline-flex items-center gap-2.5 px-6 py-3.5 min-w-[220px] max-w-[90vw] bg-white border border-neutral-300 rounded-xl shadow-2xl font-mono text-xs font-bold uppercase tracking-wider text-black pointer-events-auto">
+            <svg class="w-4 h-4 text-black shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span x-text="toastMessage"></span>
         </div>
-    </header>
+    </div>
 
-    <!-- MAIN PRODUCT SECTION -->
-    <main class="pt-28 pb-20 px-6 sm:px-10 lg:px-16 max-w-7xl mx-auto">
-        <!-- Breadcrumbs -->
-        <nav class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400 font-condensed mb-8">
-            <a href="/store/{{ store.subdomain }}/#home" class="hover:text-black">AURA</a>
-            <span>/</span>
-            <a href="/store/{{ store.subdomain }}/#collection" class="hover:text-black" x-text="t('collection')"></a>
-            <span>/</span>
-            <span class="text-black">{{ product.display_name }}</span>
-        </nav>
+    <!-- 1. FLOATING BACK BUTTON (PSIH 1:1) -->
+    <div class="fixed top-4 left-4 sm:top-6 sm:left-6 z-50 select-none">
+        <button type="button" 
+                @click="goBack()" 
+                class="pp__back-btn"
+                aria-label="Назад в каталог">
+            <svg class="w-3.5 h-3.5 pp__back-arrow transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            <span x-text="t('back_short')">НАЗАД</span>
+        </button>
+    </div>
 
-        <!-- Product Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+    <!-- 3. MAIN PRODUCT DETAIL PAGE LAYOUT (58fr / 1px / 42fr - PSIH 1:1) -->
+    <main class="w-full bg-white select-none">
+        <div class="pp__layout">
             
-            <!-- LEFT: Big Transparent Studio Packshot -->
-            <div class="lg:col-span-7 space-y-4">
-                <div class="packshot-stage">
-                    <img :src="selectedImage"
-                         @error="$event.target.src = '/static/images/streetwear/packshot_cardigan_ecru.png'"
-                         alt="{{ product.display_name }}" 
-                         class="object-contain">
-                    
-                    <!-- Top Corner Badges -->
-                    <div class="absolute top-6 left-6 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur border border-black/5 text-[11px] font-bold uppercase tracking-wider font-condensed text-black shadow-sm">
-                        DROP 01
+            <!-- LEFT COLUMN: EDITORIAL GALLERY -->
+            <div class="pp__gallery">
+                
+                <!-- Desktop Vertical Feed of Studio Images -->
+                <div class="hidden lg:flex flex-col">
+                    <template x-for="(imgUrl, idx) in productData.images" :key="idx">
+                        <div class="pp__gallery-frame">
+                            <img :src="imgUrl" 
+                                 :alt="getProductName()" 
+                                 class="pp__gallery-img"
+                                 loading="lazy">
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Mobile Swipeable Horizontal Snap Carousel -->
+                <div class="lg:hidden relative w-full h-[62vh] max-h-[580px] bg-white overflow-hidden border-b border-gray-100">
+                    <div class="snap-gallery w-full h-full flex overflow-x-auto no-scrollbar"
+                         @scroll="handleMobileScroll($event)">
+                        <template x-for="(imgUrl, idx) in productData.images" :key="idx">
+                            <div class="snap-item w-screen h-full shrink-0 flex items-center justify-center p-6 bg-white">
+                                <img :src="imgUrl" 
+                                     :alt="getProductName()" 
+                                     class="max-h-full max-w-full object-contain select-none">
+                            </div>
+                        </template>
                     </div>
-                    <div class="absolute top-6 right-6 px-3.5 py-1.5 rounded-full bg-black text-white text-[11px] font-bold uppercase tracking-wider font-condensed">
-                        NEW
+
+                    <!-- Mobile Dots Indicator -->
+                    <div class="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none"
+                         x-show="productData.images && productData.images.length > 1">
+                        <template x-for="(imgUrl, idx) in productData.images" :key="idx">
+                            <span class="h-1.5 rounded-full transition-all duration-300"
+                                  :class="mobileActiveIndex === idx ? 'bg-black w-4' : 'bg-black/20 w-1.5'"></span>
+                        </template>
                     </div>
                 </div>
 
-                <!-- Multiple Photos Gallery (if available) -->
-                {% if not product.streetwear_image_url and images and images|length > 1 %}
-                <div class="flex items-center gap-3 pt-2">
-                    {% for img in images %}
-                    <button @click="selectedImage = '{{ img.image.url }}'" 
-                            class="w-20 h-20 rounded-xl overflow-hidden border-2 bg-gray-50 p-2 transition-all cursor-pointer"
-                            :class="selectedImage === '{{ img.image.url }}' ? 'border-black' : 'border-gray-200 hover:border-gray-400'">
-                        <img src="{{ img.image.url }}" alt="{{ product.display_name }}" class="w-full h-full object-contain">
-                    </button>
-                    {% endfor %}
-                </div>
-                {% endif %}
             </div>
 
-            <!-- RIGHT: Details, Size Selection & Add to Cart -->
-            <div class="lg:col-span-5 space-y-8">
-                <!-- Header -->
-                <div class="space-y-3 border-b border-gray-100 pb-6">
-                    <span class="text-xs font-bold uppercase tracking-widest text-[#737861] font-condensed block">
-                        AURA ATELIER · TASHKENT ARCHITECTURE
+            <!-- MIDDLE COLUMN: 1PX DIVIDER (DESKTOP) -->
+            <div class="pp__divider hidden lg:block"></div>
+
+            <!-- RIGHT COLUMN: STICKY PRODUCT INFO (PSIH 1:1) -->
+            <div class="lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] lg:overflow-y-auto no-scrollbar flex flex-col justify-start lg:justify-center px-6 sm:px-12 lg:px-16 py-8 lg:py-12 bg-white">
+                
+                <!-- Breadcrumbs -->
+                <div class="text-center font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-6 sm:mb-8">
+                    <a :href="'/store/{{ store.subdomain }}/?lang=' + currentLang" class="hover:text-black transition-colors" x-text="t('catalog')">КАТАЛОГ</a>
+                    <span class="mx-1.5">/</span>
+                    <span x-text="getProductCategory()"></span>
+                    <span class="mx-1.5">/</span>
+                    <span class="text-black font-semibold" x-text="getProductName()"></span>
+                </div>
+
+                <!-- Product Title (PSIH Lora style) -->
+                <h1 class="font-lora text-2xl sm:text-3xl lg:text-4xl font-normal uppercase tracking-[0.14em] text-center text-black leading-tight"
+                    x-text="getProductName()">
+                    {{ product.name_ru|default:product.name }}
+                </h1>
+
+                <!-- Price -->
+                <div class="text-center font-mono text-sm sm:text-base mt-3 tracking-wider flex items-center justify-center gap-3">
+                    <template x-if="productData.old_price">
+                        <span class="line-through text-neutral-400 font-normal" x-text="formatPrice(productData.old_price)"></span>
+                    </template>
+                    <span class="font-bold text-black text-lg" x-text="formatPrice(selectedPrice)">
+                        {{ product.price|floatformat:0 }} UZS
                     </span>
-                    <h1 class="font-condensed font-black text-3xl sm:text-5xl uppercase tracking-tight text-[#0c0d0b] leading-[1.05]">
-                        {{ product.display_name }}
-                    </h1>
-                    <div class="flex items-baseline gap-3 pt-2">
-                        <span class="font-condensed font-extrabold text-3xl text-[#0c0d0b]">
-                            {{ product.price|floatformat:0 }} UZS
-                        </span>
-                        <span class="text-xs font-semibold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-md">
-                            ● В НАЛИЧИИ В ШОУРУМЕ
-                        </span>
-                    </div>
                 </div>
 
-                <!-- Description -->
-                <div class="space-y-4">
-                    <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
-                        {{ product.display_description|default:"Свободный силуэт с выверенной линией плеча. Плотное хлопковое полотно премиального качества высшего сорта удерживает архитектурную форму и обеспечивает непревзойденный комфорт в городском ритме." }}
-                    </p>
-                    
-                    <!-- Specifications Pills -->
-                    <div class="grid grid-cols-2 gap-3 pt-2">
-                        <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block font-condensed" x-text="t('material')"></span>
-                            <span class="text-xs font-bold text-black font-condensed" x-text="t('materialValue')"></span>
-                        </div>
-                        <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block font-condensed" x-text="t('cut')"></span>
-                            <span class="text-xs font-bold text-black font-condensed" x-text="t('cutValue')"></span>
-                        </div>
-                    </div>
+                <!-- Collection Label -->
+                <div class="text-center font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-400 mt-3">
+                    КОЛЛЕКЦИЯ — CRYSTALL AMI SS26
                 </div>
 
-                <!-- Size Selection -->
-                <div class="space-y-3 pt-2">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider font-condensed">
-                        <span class="text-gray-900" x-text="t('selectSize')"></span>
-                        <span class="text-gray-400">ТАБЛИЦА РАЗМЕРОВ (ОВЕРСАЙЗ)</span>
+                <!-- "ДОЛЯМИ" Installments Badge (1:1 with psihclothes) -->
+                <div class="flex items-center justify-center gap-2 mt-5 cursor-pointer hover:opacity-75 transition-opacity"
+                     @click="showSizeAlert(t('dolyami_text').replace('{price}', formatPrice(Math.round(selectedPrice / 4))))">
+                    <span class="bg-black text-white font-mono text-[9px] font-bold px-2 py-0.5 rounded-xs tracking-wider"
+                          x-text="t('dolyami_badge')">
+                        IIII ДОЛЯМИ
+                    </span>
+                    <span class="font-mono text-xs text-neutral-600">
+                        4 платежа по <strong class="text-black" x-text="formatPrice(Math.round(selectedPrice / 4))"></strong> без переплат
+                    </span>
+                    <span class="text-neutral-400 text-xs">›</span>
+                </div>
+
+                <!-- Utility Row: Share & Size Guide -->
+                <div class="flex items-center justify-center gap-6 mt-6 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                    <button type="button" 
+                            @click="shareProduct()" 
+                            class="hover:text-black flex items-center gap-1.5 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
+                        </svg>
+                        <span x-text="t('share')">ПОДЕЛИТЬСЯ</span>
+                    </button>
+                    <span class="text-neutral-300">•</span>
+                    <button type="button" 
+                            @click="sizeChartOpen = true" 
+                            class="hover:text-black flex items-center gap-1.5 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                        </svg>
+                        <span x-text="t('size_guide')">ТАБЛИЦА РАЗМЕРОВ</span>
+                    </button>
+                </div>
+
+                <!-- Sizes Selector (Pill style 1:1 with PSIH) -->
+                <div class="mt-8">
+                    <div class="text-center font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-3"
+                         x-text="t('select_size')">
+                        ВЫБЕРИТЕ РАЗМЕР
                     </div>
-                    
-                    <div class="flex flex-wrap gap-2.5">
-                        {% if variations %}
-                            {% for v in variations %}
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <template x-for="(v, idx) in productData.variations" :key="idx">
                             <button type="button" 
-                                    @click="selectedSize = '{{ v.id }}'; selectedSizeName = '{{ v.display_name }}'"
-                                    :class="selectedSize === '{{ v.id }}' ? 'active' : ''"
-                                    class="size-btn">
-                                {{ v.display_name }}
+                                    @click="selectVariation(v)"
+                                    :class="selectedSize === getVariationName(v) ? 'selected' : ''"
+                                    class="pp__size-pill"
+                                    x-text="getVariationName(v)">
                             </button>
-                            {% endfor %}
-                        {% else %}
-                            <button type="button" @click="selectedSize = 'S'; selectedSizeName = 'S'" :class="selectedSize === 'S' ? 'active' : ''" class="size-btn">S</button>
-                            <button type="button" @click="selectedSize = 'M'; selectedSizeName = 'M'" :class="selectedSize === 'M' ? 'active' : ''" class="size-btn">M</button>
-                            <button type="button" @click="selectedSize = 'L'; selectedSizeName = 'L'" :class="selectedSize === 'L' ? 'active' : ''" class="size-btn">L</button>
-                            <button type="button" @click="selectedSize = 'XL'; selectedSizeName = 'XL'" :class="selectedSize === 'XL' ? 'active' : ''" class="size-btn">XL</button>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Quantity & Add to Cart -->
-                <div class="space-y-4 pt-4">
-                    <div class="flex items-center gap-4">
-                        <!-- Qty Selector -->
-                        <div class="flex items-center border border-gray-200 rounded-full h-14 px-3 bg-white">
-                            <button @click="qty > 1 ? qty-- : null" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 font-bold text-lg text-gray-700">-</button>
-                            <span class="w-10 text-center font-bold text-sm font-condensed" x-text="qty"></span>
-                            <button @click="qty++" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 font-bold text-lg text-gray-700">+</button>
-                        </div>
-
-                        <!-- Add to Cart CTA -->
-                        <button @click="addToCart()" 
-                                :disabled="addingToCart"
-                                class="flex-1 h-14 rounded-full bg-[#0c0d0b] text-white hover:bg-black transition-all duration-200 font-condensed font-bold text-sm sm:text-base uppercase tracking-wider shadow-xl flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50">
-                            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                            <span x-text="addingToCart ? t('adding') : t('addToCart')"></span>
+                        </template>
+                        <button x-show="!productData.variations || productData.variations.length === 0" 
+                                class="pp__size-pill selected"
+                                x-text="t('one_size')">
+                            ONE SIZE
                         </button>
                     </div>
-
-                    <!-- Direct Back to Store secondary link -->
-                    <div class="text-center pt-2">
-                        <a href="/store/{{ store.subdomain }}/#collection" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-black font-condensed transition-colors">
-                            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-                            <span x-text="t('backToStoreFull')"></span>
-                        </a>
-                    </div>
                 </div>
 
-                <!-- Guarantee Accordion -->
-                <div class="border-t border-gray-100 pt-6 space-y-3">
-                    <div class="flex items-center gap-3 text-xs text-gray-600 font-medium">
-                        <i data-lucide="truck" class="w-4 h-4 text-[#737861]"></i>
-                        <span x-text="t('deliveryPerk')"></span>
+                <!-- Add to Cart Action (Right Column 1:1 with PSIH) -->
+                <div class="mt-6 flex items-center gap-3">
+                    <button type="button" 
+                            @click="addToCart()" 
+                            class="flex-1 py-3.5 px-6 bg-black text-white hover:bg-neutral-800 transition-all rounded-full font-mono text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        <span x-text="t('add_to_cart')">ДОБАВИТЬ В КОРЗИНУ</span>
+                    </button>
+                    <button type="button" 
+                            @click="toggleWishlist()" 
+                            class="w-12 h-12 flex items-center justify-center rounded-full border border-neutral-300 hover:border-black transition-colors text-black shrink-0"
+                            :aria-label="t('wishlist')">
+                        <svg class="w-5 h-5" :class="isWishlisted ? 'fill-black text-black' : 'text-black'" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Expandable Accordions (PSIH 1:1 style) -->
+                <div class="pp__accordion">
+                    <!-- ОПИСАНИЕ (Collapsed by default) -->
+                    <div class="pp__accordion-item" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="pp__accordion-trigger">
+                            <span x-text="t('description')">ОПИСАНИЕ</span>
+                            <span class="text-base font-light transition-transform" x-text="open ? '−' : '+'"></span>
+                        </button>
+                        <div x-show="open" x-transition class="pb-5 font-mono text-xs text-neutral-600 leading-relaxed"
+                             x-text="getProductDescription()">
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3 text-xs text-gray-600 font-medium">
-                        <i data-lucide="refresh-cw" class="w-4 h-4 text-[#737861]"></i>
-                        <span x-text="t('returnPerk')"></span>
+
+                    <!-- СОСТАВ И МАТЕРИАЛЫ -->
+                    <div class="pp__accordion-item" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="pp__accordion-trigger">
+                            <span x-text="t('composition')">СОСТАВ И МАТЕРИАЛЫ</span>
+                            <span class="text-base font-light transition-transform" x-text="open ? '−' : '+'"></span>
+                        </button>
+                        <div x-show="open" x-transition class="pb-5 font-mono text-xs text-neutral-600 leading-relaxed"
+                             x-text="t('composition_text')">
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3 text-xs text-gray-600 font-medium">
-                        <i data-lucide="shield-check" class="w-4 h-4 text-[#737861]"></i>
-                        <span x-text="t('qualityPerk')"></span>
+
+                    <!-- ДОСТАВКА И ОПЛАТА -->
+                    <div class="pp__accordion-item" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" class="pp__accordion-trigger">
+                            <span x-text="t('delivery')">ДОСТАВКА И ОПЛАТА</span>
+                            <span class="text-base font-light transition-transform" x-text="open ? '−' : '+'"></span>
+                        </button>
+                        <div x-show="open" x-transition class="pb-5 font-mono text-xs text-neutral-600 leading-relaxed space-y-1.5">
+                            <p x-text="'• ' + t('delivery_line1')"></p>
+                            <p x-text="'• ' + t('delivery_line2')"></p>
+                            <p x-text="'• ' + t('delivery_line3')"></p>
+                        </div>
                     </div>
                 </div>
 
             </div>
+
         </div>
 
-        <!-- RELATED PRODUCTS -->
-        {% if related_products %}
-        <section class="mt-24 pt-16 border-t border-gray-100">
-            <div class="flex items-center justify-between mb-8">
-                <div>
-                    <span class="text-xs font-bold uppercase tracking-widest text-[#737861] font-condensed block">
-                        DROP 01 · COMPLETE THE WARDROBE
-                    </span>
-                    <h2 class="font-condensed font-black text-2xl sm:text-4xl uppercase tracking-tight text-[#0c0d0b]">
-                        {% if lang == 'uz' %}Tavsiya etilgan mahsulotlar{% else %}Вам также может понравиться{% endif %}
-                    </h2>
-                </div>
-                <a href="/store/{{ store.subdomain }}/#collection" class="text-xs font-bold uppercase tracking-wider text-black font-condensed flex items-center gap-1 hover:underline">
-                    {% if lang == 'uz' %}Barchasi{% else %}Вся коллекция{% endif %} →
-                </a>
-            </div>
+        <!-- 4. НЕДАВНО ПРОСМОТРЕННЫЕ (PSIH 1:1 REPLICA) -->
+        <section class="border-t border-black bg-white select-none">
+            <div class="py-12 px-4 sm:px-8 max-w-7xl mx-auto">
+                <h2 class="text-center text-xs font-bold uppercase tracking-[0.2em] mb-8 font-mono text-black"
+                    x-text="t('recently_viewed')">
+                    НЕДАВНО ПРОСМОТРЕННЫЕ
+                </h2>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {% for rp in related_products %}
-                <a href="/store/{{ store.subdomain }}/product/{{ rp.id }}/" class="group block">
-                    <div class="aspect-square rounded-2xl bg-gray-50 border border-gray-100 p-6 overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:shadow-lg group-hover:border-gray-200">
-                        <img src="{{ rp.streetwear_image_url|default:'/static/images/streetwear/packshot_cardigan_ecru.png' }}" alt="{{ rp.display_name }}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="pt-3">
-                        <h4 class="font-condensed font-bold text-sm uppercase text-black group-hover:text-[#737861] transition-colors truncate">
-                            {{ rp.display_name }}
-                        </h4>
-                        <span class="text-xs font-bold text-gray-500 font-condensed">
-                            {{ rp.price|floatformat:0 }} UZS
-                        </span>
-                    </div>
-                </a>
-                {% endfor %}
+                <div class="catalog-grid grid-cols-2 md:grid-cols-4">
+                    <template x-for="(rp, idx) in relatedItems.slice(0, 4)" :key="'rv-' + idx">
+                        <article class="group relative bg-white flex flex-col transition-all duration-200 hover:shadow-lg">
+                            <a :href="'/store/{{ store.subdomain }}/product/' + rp.id + '/?lang=' + currentLang" 
+                               class="block text-black no-underline flex-1 flex flex-col">
+                                <div class="relative aspect-product bg-white overflow-hidden w-full p-2.5 flex items-center justify-center select-none" style="aspect-ratio: 3/4;">
+                                    <img :src="rp.primary_image" 
+                                         :alt="getRelatedName(rp)" 
+                                         loading="lazy"
+                                         class="h-full w-full object-contain select-none transition-transform duration-700 ease-out group-hover:scale-[1.03]">
+                                </div>
+                                <div class="flex flex-col items-center justify-start gap-1 px-2 py-3.5 bg-white text-center">
+                                    <h3 class="text-[12px] sm:text-[13px] font-medium tracking-wider uppercase truncate w-full px-2 text-black font-mono"
+                                        x-text="getRelatedName(rp)"></h3>
+                                    <div class="flex items-center justify-center gap-1.5 mt-0.5 font-mono text-[12px] font-medium whitespace-nowrap">
+                                        <span class="text-black font-semibold"
+                                              x-text="formatPrice(rp.price)"></span>
+                                    </div>
+                                    <div class="flex items-center justify-center gap-1.5 mt-0.5">
+                                        <div class="w-4 h-4 rounded-full flex items-center justify-center box-border border border-black p-[1px]">
+                                            <div class="w-full h-full rounded-full bg-black"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </article>
+                    </template>
+                </div>
             </div>
         </section>
-        {% endif %}
+
+        <!-- 5. ВАМ МОЖЕТ ПОНРАВИТЬСЯ (PSIH 1:1 REPLICA) -->
+        <section class="border-t border-black bg-white select-none">
+            <div class="py-12 px-4 sm:px-8 max-w-7xl mx-auto">
+                <h2 class="text-center text-xs font-bold uppercase tracking-[0.2em] mb-8 font-mono text-black"
+                    x-text="t('you_may_like')">
+                    ВАМ МОЖЕТ ПОНРАВИТЬСЯ
+                </h2>
+
+                <div class="catalog-grid grid-cols-2 md:grid-cols-4">
+                    <template x-for="(rp, idx) in relatedItems.slice(4, 8)" :key="'rec-' + idx">
+                        <article class="group relative bg-white flex flex-col transition-all duration-200 hover:shadow-lg">
+                            <a :href="'/store/{{ store.subdomain }}/product/' + rp.id + '/?lang=' + currentLang" 
+                               class="block text-black no-underline flex-1 flex flex-col">
+                                <div class="relative aspect-product bg-white overflow-hidden w-full p-2.5 flex items-center justify-center select-none" style="aspect-ratio: 3/4;">
+                                    <img :src="rp.primary_image" 
+                                         :alt="getRelatedName(rp)" 
+                                         loading="lazy"
+                                         class="h-full w-full object-contain select-none transition-transform duration-700 ease-out group-hover:scale-[1.03]">
+                                </div>
+                                <div class="flex flex-col items-center justify-start gap-1 px-2 py-3.5 bg-white text-center">
+                                    <h3 class="text-[12px] sm:text-[13px] font-medium tracking-wider uppercase truncate w-full px-2 text-black font-mono"
+                                        x-text="getRelatedName(rp)"></h3>
+                                    <div class="flex items-center justify-center gap-1.5 mt-0.5 font-mono text-[12px] font-medium whitespace-nowrap">
+                                        <span class="text-black font-semibold"
+                                              x-text="formatPrice(rp.price)"></span>
+                                    </div>
+                                    <div class="flex items-center justify-center gap-1.5 mt-0.5">
+                                        <div class="w-4 h-4 rounded-full flex items-center justify-center box-border border border-black p-[1px]">
+                                            <div class="w-full h-full rounded-full bg-black"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </article>
+                    </template>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <!-- SLIDE-OVER CART DRAWER -->
-    <div x-show="cartDrawerOpen" x-cloak class="drawer-backdrop" @click="cartDrawerOpen = false"></div>
-    <aside class="drawer-panel" x-show="cartDrawerOpen" x-cloak>
-        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <i data-lucide="shopping-bag" class="w-5 h-5 text-black"></i>
-                <h3 class="font-condensed font-bold text-xl uppercase tracking-tight text-black" x-text="t('cartTitle')"></h3>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 font-bold font-condensed" x-text="cartCount"></span>
-            </div>
-            <button @click="cartDrawerOpen = false" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-        </div>
-
-        <div class="flex-1 overflow-y-auto p-6 space-y-4">
-            <template x-if="cartItems.length === 0">
-                <div class="h-64 flex flex-col items-center justify-center text-center space-y-3">
-                    <i data-lucide="shopping-bag" class="w-10 h-10 text-gray-300"></i>
-                    <p class="text-sm text-gray-500 font-medium" x-text="t('cartEmpty')"></p>
-                    <a href="/store/{{ store.subdomain }}/#collection" @click="cartDrawerOpen = false" class="px-5 py-2.5 rounded-full bg-black text-white font-condensed font-bold text-xs uppercase" x-text="t('exploreDrop')"></a>
-                </div>
-            </template>
-
-            <template x-for="item in cartItems" :key="item.key">
-                <div class="flex gap-3 p-3 rounded-2xl bg-gray-50 border border-gray-100 items-center">
-                    <img :src="item.image" :alt="item.name" class="w-16 h-16 rounded-xl object-contain bg-white p-1 border border-gray-100">
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-condensed font-bold text-sm uppercase text-black truncate" x-text="item.name"></h4>
-                        <small class="text-xs text-gray-500 block" x-show="item.variation_name" x-text="'Размер: ' + item.variation_name"></small>
-                        <span class="font-condensed font-bold text-sm text-black block mt-1" x-text="formatMoney(item.price) + ' UZS'"></span>
-                    </div>
-                    <div class="flex flex-col items-end gap-1.5">
-                        <button @click="updateCartQty(item.key, 0, 'remove')" class="text-red-400 hover:text-red-600 p-1" title="Удалить">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+    <!-- 8. MINIMALIST ARCHITECTURAL FOOTER (1:1 WITH PSIH & STOREBOX) -->
+    <footer class="w-full bg-white border-t border-black select-none text-black font-mono">
+        <!-- Newsletter Subscription Block -->
+        <div class="border-b border-black/10 py-12 px-6 md:px-12">
+            <div class="max-w-xl mx-auto text-center" x-data="{ email: '', subscribed: false }">
+                <h3 class="font-lora text-xl md:text-2xl uppercase tracking-[0.2em] mb-2" x-text="t('newsletter_title')">РАССЫЛКА</h3>
+                <p class="text-[11px] md:text-xs text-neutral-500 uppercase tracking-wider mb-6" x-text="t('newsletter_desc')">
+                    Подпишитесь на рассылку, чтобы первыми узнавать о новых коллекциях и эксклюзивных предложениях.
+                </p>
+                <div x-show="!subscribed">
+                    <form @submit.prevent="if(email.trim()) subscribed = true" class="flex items-center justify-center max-w-md mx-auto border-b border-black pb-1">
+                        <input type="email" 
+                               x-model="email" 
+                               required 
+                               :placeholder="t('newsletter_placeholder')" 
+                               class="w-full bg-transparent text-xs font-mono tracking-wider uppercase text-black placeholder-neutral-400 outline-none py-2 px-1">
+                        <button type="submit" 
+                                class="px-4 py-2 font-mono text-xs font-bold uppercase tracking-widest hover:opacity-60 transition-opacity" 
+                                x-text="t('newsletter_btn')">
+                            OK
                         </button>
-                        <div class="flex items-center gap-1.5">
-                            <button @click="updateCartQty(item.key, -1)" class="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-100">-</button>
-                            <span class="text-xs font-bold w-4 text-center" x-text="item.quantity"></span>
-                            <button @click="updateCartQty(item.key, 1)" class="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-100">+</button>
-                        </div>
-                    </div>
+                    </form>
                 </div>
-            </template>
+                <div x-show="subscribed" x-cloak class="text-xs font-bold tracking-wider text-black py-2" x-text="t('newsletter_success')">
+                    Спасибо за подписку на рассылку!
+                </div>
+            </div>
         </div>
 
-        <div class="p-6 border-t border-gray-100 bg-gray-50/50 space-y-4">
-            <div class="flex items-center justify-between text-sm">
-                <span class="text-gray-500 font-medium uppercase font-condensed" x-text="t('subtotal')"></span>
-                <span class="font-condensed font-black text-xl text-black" x-text="formatMoney(cartSubtotal) + ' UZS'"></span>
+        <!-- Links Grid: 3 Columns (Поддержка, Компания, Соцсети) -->
+        <div class="max-w-6xl mx-auto px-6 md:px-12 py-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+            <!-- 1. ПОДДЕРЖКА -->
+            <div class="flex flex-col items-center md:items-start space-y-2.5">
+                <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2" x-text="t('support_title')">ПОДДЕРЖКА</h4>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('delivery_customs')">ДОСТАВКА И ТАМОЖНЯ</a>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('return_refund')">ВОЗВРАТ И ВОЗМЕЩЕНИЕ</a>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('preorder')">ПРЕДЗАКАЗ</a>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('garment_care')">УХОД ЗА ИЗДЕЛИЯМИ</a>
             </div>
-            <a href="/store/{{ store.subdomain }}/checkout/" class="w-full bg-[#0c0d0b] text-white hover:bg-black font-condensed font-bold text-sm uppercase py-4 rounded-full flex items-center justify-center gap-2 shadow-lg transition-all">
-                <span x-text="t('checkout')"></span>
-                <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </a>
+
+            <!-- 2. КОМПАНИЯ -->
+            <div class="flex flex-col items-center md:items-start space-y-2.5">
+                <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2" x-text="t('company_title')">КОМПАНИЯ</h4>
+                <a href="#" @click.prevent="openModal('about')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('about_brand')">О БРЕНДЕ</a>
+                <a href="#" @click.prevent="openModal('support')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('contacts')">КОНТАКТЫ</a>
+                <a href="#" @click.prevent="openModal('about')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('offer')">ОФЕРТА</a>
+                <a href="#" @click.prevent="openModal('about')" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('privacy')">КОНФИДЕНЦИАЛЬНОСТЬ</a>
+            </div>
+
+            <!-- 3. СОЦСЕТИ -->
+            <div class="flex flex-col items-center md:items-start space-y-2.5">
+                <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2" x-text="t('socials_title')">СОЦСЕТИ</h4>
+                <a href="https://vk.com" target="_blank" rel="noopener noreferrer" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('vkontakte')">ВКОНТАКТЕ</a>
+                <a href="https://t.me" target="_blank" rel="noopener noreferrer" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('telegram')">ТЕЛЕГРАМ</a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-xs uppercase tracking-wider hover:opacity-60 transition-opacity" x-text="t('instagram')">INSTAGRAM</a>
+            </div>
+        </div>
+
+        <!-- Bottom Line: Copyright & StoreBox Attribution -->
+        <div class="border-t border-black/10 py-6 px-6 text-center text-[10px] md:text-[11px] text-neutral-500 uppercase tracking-widest">
+            <p>
+                © 2026 {{ store.name|default:'CRYSTALL AMI' }}. <span x-text="t('rights_reserved')">ВСЕ ПРАВА ЗАЩИЩЕНЫ.</span> • 
+                <a href="https://storebox.uz" target="_blank" class="hover:text-black font-semibold underline decoration-neutral-300 hover:decoration-black transition-colors" x-text="t('powered_by_storebox')">
+                    Работает на платформе StoreBox
+                </a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- 6. FLOATING BOTTOM ACTION CAPSULE (1:1 WITH PSIH) -->
+    <!-- Positioned at bottom: 80px on mobile, centered, hides on desktop since desktop has right panel button! -->
+    <aside class="lg:hidden fixed left-1/2 -translate-x-1/2 z-40 select-none transition-all duration-300"
+           style="bottom: calc(80px + env(safe-area-inset-bottom, 0px));"
+           :class="!menuDrawerOpen ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-24 opacity-0 pointer-events-none'">
+        <div class="frosted-island w-[360px] h-[56px] flex items-center justify-between p-1.5 rounded-2xl max-w-[min(360px,calc(100vw-32px))]">
+            <!-- Add to Cart Trigger with Size Check -->
+            <button type="button" 
+                    @click="addToCart()" 
+                    class="flex-1 h-full bg-black text-white hover:bg-neutral-800 transition-all rounded-xl font-mono text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+                <span x-text="t('add_to_cart')">ДОБАВИТЬ В КОРЗИНУ</span>
+            </button>
+
+            <!-- Bookmark Button -->
+            <button type="button" 
+                    @click="toggleWishlist()" 
+                    class="w-[44px] h-full flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors ml-1 text-black"
+                    :aria-label="t('wishlist')">
+                <svg class="w-5 h-5" :class="isWishlisted ? 'fill-black text-black' : 'text-black'" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                </svg>
+            </button>
         </div>
     </aside>
 
-    <!-- TOAST NOTIFICATION -->
-    <div x-show="toastMessage" x-cloak class="fixed bottom-8 right-6 z-50 bg-[#0c0d0b] text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transition-all border border-white/20" x-transition>
-        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-        <span class="text-xs font-bold uppercase tracking-wider font-condensed" x-text="toastMessage"></span>
+    <!-- 6b. FLOATING MENU CARD (POPOVER 1:1 WITH PSIH) -->
+    <!-- Positioned at bottom: 74px, centered horizontally directly above navigation island -->
+    <div x-show="menuDrawerOpen" 
+         x-transition.opacity 
+         class="fixed inset-0 z-[9998] bg-black/25 backdrop-blur-[3px]" 
+         @click="menuDrawerOpen = false; menuSubmenu = ''" 
+         x-cloak></div>
+
+    <div x-show="menuDrawerOpen" 
+         x-transition 
+         class="fixed left-1/2 -translate-x-1/2 z-[9999] w-[360px]" 
+         style="bottom: 74px; max-width: calc(100vw - 32px);" 
+         x-cloak>
+        <div class="relative w-[360px] max-h-[72vh] text-gray-900 flex flex-col bg-white rounded-2xl overflow-hidden shadow-2xl border border-neutral-200" 
+             style="max-width: min(360px, -24px + 100vw);">
+            
+            <!-- STATE 1: MAIN MENU (PSIH 1:1) -->
+            <div x-show="menuSubmenu === ''">
+                <div class="border-b border-neutral-200 px-5 py-3.5 flex items-center">
+                    <h2 class="flex-1 text-center font-lora text-[15px] uppercase tracking-wide">МЕНЮ</h2>
+                </div>
+                
+                <!-- Category Links with Chevrons -->
+                <div class="px-5 py-2 border-b border-neutral-200">
+                    <button @click="menuSubmenu = 'collections'" 
+                            class="w-full flex items-center justify-between py-3 text-black hover:text-gray-600 transition-colors">
+                        <span class="w-4 h-4 flex-shrink-0"></span>
+                        <span class="flex-1 text-center font-mono text-[14px]">Коллекции</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4 text-gray-400 flex-shrink-0"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                    <button @click="menuSubmenu = 'women'" 
+                            class="w-full flex items-center justify-between py-3 text-black hover:text-gray-600 transition-colors">
+                        <span class="w-4 h-4 flex-shrink-0"></span>
+                        <span class="flex-1 text-center font-mono text-[14px]">Женское</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4 text-gray-400 flex-shrink-0"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                    <a :href="'/store/{{ store.subdomain }}/?lang=' + currentLang" 
+                       class="w-full flex items-center justify-between py-3 text-black hover:text-gray-600 transition-colors">
+                        <span class="w-4 h-4 flex-shrink-0"></span>
+                        <span class="flex-1 text-center font-mono text-[14px]">Все товары</span>
+                        <span class="w-4 h-4 flex-shrink-0"></span>
+                    </a>
+                </div>
+
+                <!-- Footer Links & Language Switcher -->
+                <div class="px-5 py-3 space-y-0.5">
+                    <a :href="'/store/{{ store.subdomain }}/?lang=' + currentLang + '#support'" class="block w-full text-center py-2 font-mono text-[13px] text-gray-700 hover:text-black transition-colors uppercase tracking-wider">
+                        ПОДДЕРЖКА
+                    </a>
+                    <a :href="'/store/{{ store.subdomain }}/?lang=' + currentLang + '#about'" class="block w-full text-center py-2 font-mono text-[13px] text-gray-700 hover:text-black transition-colors uppercase tracking-wider">
+                        ПРО КОМПАНИЮ
+                    </a>
+                    <a :href="'/store/{{ store.subdomain }}/?lang=' + currentLang + '#social'" class="block w-full text-center py-2 font-mono text-[13px] text-gray-700 hover:text-black transition-colors uppercase tracking-wider">
+                        СЛЕДИТЕ ЗА НАМИ
+                    </a>
+                    
+                    <!-- Language Switcher Pill -->
+                    <div class="pt-2.5 flex items-center justify-center gap-2 font-mono text-[13px]">
+                        <span class="text-gray-500">Язык:</span>
+                        <button type="button" @click="setLanguage('ru')" 
+                                class="px-2 py-0.5 rounded transition-colors"
+                                :class="currentLang === 'ru' ? 'bg-black text-white font-bold' : 'text-gray-700 hover:text-black'">RU</button>
+                        <span class="text-gray-300">/</span>
+                        <button type="button" @click="setLanguage('uz')" 
+                                class="px-2 py-0.5 rounded transition-colors"
+                                :class="currentLang === 'uz' ? 'bg-black text-white font-bold' : 'text-gray-700 hover:text-black'">UZ</button>
+                        <span class="text-gray-300">/</span>
+                        <button type="button" @click="setLanguage('en')" 
+                                class="px-2 py-0.5 rounded transition-colors"
+                                :class="currentLang === 'en' ? 'bg-black text-white font-bold' : 'text-gray-700 hover:text-black'">EN</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATE 2: WOMEN SUBCATEGORIES MENU (PSIH 1:1) -->
+            <div x-show="menuSubmenu === 'women'">
+                <div class="border-b border-neutral-200 px-5 py-3.5 flex items-center justify-between">
+                    <button @click="menuSubmenu = ''" class="p-1 -ml-1 text-black hover:opacity-60 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                    <h2 class="flex-1 text-center font-lora text-[15px] uppercase tracking-wide">ЖЕНСКОЕ</h2>
+                    <div class="w-5"></div>
+                </div>
+                
+                <div class="px-5 py-2 overflow-y-auto max-h-[55vh] space-y-1">
+                    <a :href="'/store/{{ store.subdomain }}/?lang=' + currentLang" 
+                       class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">Все</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </a>
+
+                    <template x-for="cat in categories" :key="cat.slug">
+                        <a :href="'/store/{{ store.subdomain }}/?category=' + cat.slug + '&lang=' + currentLang" 
+                           class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                            <span class="w-4 h-4"></span>
+                            <span class="flex-1 text-center" x-text="getCategoryName(cat)"></span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                        </a>
+                    </template>
+                </div>
+            </div>
+
+            <!-- STATE 3: COLLECTIONS SUBMENU -->
+            <div x-show="menuSubmenu === 'collections'">
+                <div class="border-b border-neutral-200 px-5 py-3.5 flex items-center justify-between">
+                    <button @click="menuSubmenu = ''" class="p-1 -ml-1 text-black hover:opacity-60 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                    <h2 class="flex-1 text-center font-lora text-[15px] uppercase tracking-wide">КОЛЛЕКЦИИ</h2>
+                    <div class="w-5"></div>
+                </div>
+                
+                <div class="px-5 py-2 overflow-y-auto max-h-[55vh] space-y-1">
+                    <a :href="'/store/{{ store.subdomain }}/?lang=' + currentLang" 
+                       class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">SS26 RESORT COLLECTION</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </a>
+                    <a :href="'/store/{{ store.subdomain }}/?category=bags&lang=' + currentLang" 
+                       class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">HAUTE MAROQUINERIE (BAGS)</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </a>
+                    <a :href="'/store/{{ store.subdomain }}/?category=shoes&lang=' + currentLang" 
+                       class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">ATELIER FOOTWEAR</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </a>
+                    <a :href="'/store/{{ store.subdomain }}/?category=perfume&lang=' + currentLang" 
+                       class="w-full flex items-center justify-between py-2 text-black hover:text-gray-600 transition-colors font-mono text-[14px]">
+                        <span class="w-4 h-4"></span>
+                        <span class="flex-1 text-center font-medium">SELECTIVE HAUTE PARFUM</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                    </a>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <!-- SCRIPT APPLICATION -->
-    <script>
-        function streetwearDetailApp() {
-            return {
-                currentLang: '{{ current_lang|default:"ru" }}',
-                selectedImage: '{{ product.streetwear_image_url|default:"/static/images/streetwear/packshot_cardigan_ecru.png" }}',
-                selectedSize: '{% if variations %}{{ variations.0.id }}{% else %}M{% endif %}',
-                selectedSizeName: '{% if variations %}{{ variations.0.display_name }}{% else %}M{% endif %}',
-                qty: 1,
-                addingToCart: false,
-                cartDrawerOpen: false,
-                cartItems: [],
-                cartCount: {{ cart_count|default:0 }},
-                cartSubtotal: {{ cart_subtotal|default:0 }},
-                toastMessage: '',
+    <!-- 6c. FLOATING BOTTOM NAVIGATION ISLAND (DOCK 1:1 WITH PSIH) -->
+    <!-- Positioned at bottom: 14px, centered horizontally, exactly 10px below action capsule -->
+    <div class="navigation-island fixed left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 ease-out select-none" 
+         style="bottom: calc(14px + env(safe-area-inset-bottom, 0px));">
+        <div class="frosted-island h-[56px] flex items-center justify-center rounded-2xl w-[360px] max-w-[calc(100vw-24px)] transition-all">
+            <nav class="flex items-center justify-between w-full h-full px-4 relative overflow-hidden" aria-label="Bottom Navigation Island">
+                
+                <!-- 1: Menu Button -->
+                <button @click="menuDrawerOpen = !menuDrawerOpen" 
+                        aria-label="Меню" 
+                        title="Меню"
+                        class="w-[44px] h-[44px] flex items-center justify-center hover:opacity-70 transition-opacity">
+                    <svg x-show="!menuDrawerOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu">
+                        <line x1="4" x2="20" y1="12" y2="12"></line>
+                        <line x1="4" x2="20" y1="6" y2="6"></line>
+                        <line x1="4" x2="20" y1="18" y2="18"></line>
+                    </svg>
+                    <svg x-show="menuDrawerOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </svg>
+                </button>
 
-                i18n: {
-                    uz: {
-                        backToStore: "← Do'konga qaytish",
-                        backToStoreFull: "Kolleksiyaga qaytish va boshqa modellarni ko'rish",
-                        collection: "Kolleksiya",
-                        selectSize: "O'lchamni tanlang",
-                        addToCart: "Savatga qo'shish +",
-                        adding: "Qo'shilmoqda...",
-                        cart: "Savat",
-                        cartTitle: "Sizning buyurtmangiz",
-                        cartEmpty: "Savatchangiz bo'sh",
-                        exploreDrop: "Kolleksiyani ko'rish",
-                        subtotal: "Jami summa",
-                        checkout: "Buyurtmani rasmiylashtirish",
-                        material: "Material",
-                        materialValue: "100% SARA TABIIY PAXTA",
-                        cut: "Bichim",
-                        cutValue: "RELAXED OVERSIZE",
-                        deliveryPerk: "Toshkent bo'ylab 2 soat ichida tezkor yetkazish",
-                        returnPerk: "14 kun davomida bepul o'lcham almashtirish",
-                        qualityPerk: "Haqiqiy oliy sifatli zich tabiiy mato",
-                        addedToast: "Mahsulot savatga qo'shildi!"
-                    },
-                    ru: {
-                        backToStore: "← Назад в магазин",
-                        backToStoreFull: "Вернуться к коллекции и смотреть другие вещи",
-                        collection: "Коллекция",
-                        selectSize: "Выберите размер",
-                        addToCart: "Добавить в корзину +",
-                        adding: "Добавление...",
-                        cart: "Корзина",
-                        cartTitle: "Ваш заказ",
-                        cartEmpty: "Ваша корзина пуста",
-                        exploreDrop: "Смотреть коллекцию",
-                        subtotal: "Итого",
-                        checkout: "Оформить заказ",
-                        material: "Материал",
-                        materialValue: "100% ПРЕМИАЛЬНЫЙ ХЛОПОК",
-                        cut: "Крой",
-                        cutValue: "RELAXED OVERSIZE",
-                        deliveryPerk: "Экспресс-доставка по Ташкенту в день заказа",
-                        returnPerk: "Бесплатный обмен размера в течение 14 дней",
-                        qualityPerk: "Премиальные дышащие натуральные ткани",
-                        addedToast: "Товар успешно добавлен в корзину!"
-                    }
+                <!-- 2: Search Button (Go to catalog search) -->
+                <a :href="'/store/{{ store.subdomain }}/?search=true&lang=' + currentLang" 
+                   aria-label="Поиск" 
+                   title="Поиск"
+                   class="w-[44px] h-[44px] flex items-center justify-center hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+                        <path d="m21 21-4.34-4.34"></path>
+                        <circle cx="11" cy="11" r="8"></circle>
+                    </svg>
+                </a>
+
+                <!-- 3: Brand Monogram / Home (Go to Catalog) -->
+                <a :href="'/store/{{ store.subdomain }}/?lang=' + currentLang" 
+                   aria-label="Главная" 
+                   title="Главная"
+                   class="w-[44px] h-[44px] flex items-center justify-center group hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers text-black">
+                        <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+                        <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+                        <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+                    </svg>
+                </a>
+
+                <!-- 4: Account / Profile Button -->
+                <a :href="'/store/{{ store.subdomain }}/profile/?lang=' + currentLang" 
+                   aria-label="Аккаунт" 
+                   title="Аккаунт"
+                   class="w-[44px] h-[44px] flex items-center justify-center hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </a>
+
+                <!-- 5: Cart Button with Red Badge -->
+                <button @click="cartDrawerOpen = true; menuDrawerOpen = false" 
+                        aria-label="Корзина" 
+                        title="Корзина"
+                        class="relative w-[44px] h-[44px] flex items-center justify-center hover:opacity-70 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-bag">
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        <path d="M3.103 6.034h17.794"></path>
+                        <path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"></path>
+                    </svg>
+                    <span x-show="cartTotalCount > 0" 
+                          x-text="cartTotalCount" 
+                          class="absolute top-1.5 right-1.5 bg-[#e53935] text-white font-mono text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs"></span>
+                </button>
+
+            </nav>
+        </div>
+    </div>
+
+    <!-- 7. SIZE GUIDE MODAL (PSIH 1:1) -->
+    <div x-show="sizeChartOpen" 
+         x-transition.opacity 
+         class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" 
+         x-cloak>
+        <div @click.away="sizeChartOpen = false" 
+             class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+                <h3 class="font-mono text-xs font-bold uppercase tracking-widest text-black" x-text="t('size_guide')">ТАБЛИЦА РАЗМЕРОВ</h3>
+                <button type="button" @click="sizeChartOpen = false" class="text-black hover:opacity-60 text-lg leading-none">✕</button>
+            </div>
+            <div class="mt-4 overflow-x-auto">
+                <table class="w-full font-mono text-xs text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-neutral-200 text-neutral-400 text-[10px] uppercase">
+                            <th class="py-2.5 px-3">Размер</th>
+                            <th class="py-2.5 px-3 text-center">Грудь (см)</th>
+                            <th class="py-2.5 px-3 text-center">Талия (см)</th>
+                            <th class="py-2.5 px-3 text-center">Длина (см)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-100 text-black">
+                        <tr><td class="py-2.5 px-3 font-bold">S</td><td class="py-2.5 px-3 text-center">92-96</td><td class="py-2.5 px-3 text-center">72-76</td><td class="py-2.5 px-3 text-center">68</td></tr>
+                        <tr><td class="py-2.5 px-3 font-bold">M</td><td class="py-2.5 px-3 text-center">98-102</td><td class="py-2.5 px-3 text-center">78-82</td><td class="py-2.5 px-3 text-center">70</td></tr>
+                        <tr><td class="py-2.5 px-3 font-bold">L</td><td class="py-2.5 px-3 text-center">104-108</td><td class="py-2.5 px-3 text-center">84-88</td><td class="py-2.5 px-3 text-center">72</td></tr>
+                        <tr><td class="py-2.5 px-3 font-bold">XL</td><td class="py-2.5 px-3 text-center">110-116</td><td class="py-2.5 px-3 text-center">90-96</td><td class="py-2.5 px-3 text-center">74</td></tr>
+                    </tbody>
+                </table>
+                <p class="mt-4 text-[10px] font-mono text-neutral-400 leading-relaxed text-center">
+                    Если вы сомневаетесь между двумя размерами, рекомендуем выбрать больший для свободной оверсайз-посадки.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. CART SLIDE-OVER DRAWER -->
+    <div x-show="cartDrawerOpen" 
+         x-transition.opacity 
+         class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end" 
+         x-cloak>
+        <div @click.away="cartDrawerOpen = false" 
+             class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between p-6">
+            <div>
+                <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+                    <span class="font-lora text-base font-bold uppercase tracking-widest text-black" x-text="t('cart')">КОРЗИНА</span>
+                    <button type="button" @click="cartDrawerOpen = false" class="p-1 text-black hover:opacity-60 text-lg">✕</button>
+                </div>
+
+                <div class="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                    <template x-for="(item, idx) in cart" :key="idx">
+                        <div class="flex gap-3 py-3 border-b border-gray-100 items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <img :src="item.image || productData.images[0]" class="w-14 h-18 object-contain rounded-md border border-gray-100 p-1">
+                                <div class="font-mono">
+                                    <h4 class="text-xs font-bold text-black uppercase" x-text="item.name"></h4>
+                                    <p class="text-[10px] text-gray-500 uppercase mt-0.5" x-text="item.size ? 'Размер: ' + item.size : ''"></p>
+                                    <p class="text-xs font-bold text-black mt-1" x-text="formatPrice(item.price)"></p>
+                                </div>
+                            </div>
+                            <button type="button" @click="removeFromCart(idx)" class="text-gray-400 hover:text-red-600 text-sm p-1">✕</button>
+                        </div>
+                    </template>
+                    <div x-show="cart.length === 0" class="text-center py-12 text-gray-400 font-mono text-xs uppercase" x-text="t('empty_cart')">
+                        Ваша корзина пуста
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Footer -->
+            <div class="border-t border-gray-200 pt-4" x-show="cart.length > 0">
+                <div class="flex justify-between items-center font-mono text-sm mb-4">
+                    <span class="text-gray-500 uppercase" x-text="t('total')">ИТОГО:</span>
+                    <span class="font-bold text-black" x-text="formatPrice(cartSubtotal)"></span>
+                </div>
+                <a :href="'/store/{{ store.subdomain }}/checkout/?lang=' + currentLang" 
+                   class="w-full py-4 bg-black text-white rounded-xl font-mono text-xs font-bold uppercase tracking-widest block text-center hover:bg-neutral-800 transition-colors shadow-md">
+                    <span x-text="t('checkout')">ОФОРМИТЬ ЗАКАЗ</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. ALPINE.JS APP LOGIC -->
+    <script>
+        function pdpApp() {
+            return {
+                currentLang: '{{ lang|default:"ru" }}',
+                productData: {{ product_data_json|safe|default:'{}' }},
+                relatedItems: {{ related_items_json|safe|default:'[]' }},
+                categories: {{ streetwear_categories_json|safe|default:'[]' }},
+                i18n: {{ streetwear_i18n_json|safe|default:'{}' }},
+                
+                selectedSize: null,
+                selectedPrice: 0,
+                mobileActiveIndex: 0,
+                
+                sizeChartOpen: false,
+                cartDrawerOpen: false,
+                menuDrawerOpen: false,
+                menuSubmenu: '',
+                wishlist: [],
+                cart: [],
+
+                toastVisible: false,
+                toastMessage: '',
+                toastTimer: null,
+
+                initApp() {
+                    this.selectedPrice = Number(this.productData.price || 0);
+
+                    // Load Wishlist & Cart from LocalStorage
+                    try {
+                        const savedWish = localStorage.getItem('crystal_lami_wishlist');
+                        if (savedWish) this.wishlist = JSON.parse(savedWish);
+                        const savedCart = localStorage.getItem('crystal_lami_cart');
+                        if (savedCart) this.cart = JSON.parse(savedCart);
+                    } catch (e) {}
+
+                    // Track recently viewed in localStorage
+                    try {
+                        let rv = JSON.parse(localStorage.getItem('crystal_lami_recently_viewed') || '[]');
+                        rv = rv.filter(id => id !== this.productData.id);
+                        rv.unshift(this.productData.id);
+                        if (rv.length > 12) rv = rv.slice(0, 12);
+                        localStorage.setItem('crystal_lami_recently_viewed', JSON.stringify(rv));
+                    } catch (e) {}
                 },
 
                 t(key) {
-                    return this.i18n[this.currentLang][key] || key;
-                },
-
-                formatMoney(amount) {
-                    return Number(amount || 0).toLocaleString('ru-RU').replace(/,/g, ' ');
-                },
-
-                init() {
-                    lucide.createIcons();
-                    // Load session cart
-                    const initialCart = {{ cart_json|safe|default:"{}" }};
-                    this.syncCart(initialCart);
-                },
-
-                syncCart(cartObj) {
-                    const items = [];
-                    let totalCount = 0;
-                    let sub = 0;
-                    for (const [key, item] of Object.entries(cartObj || {})) {
-                        items.push({
-                            key: key,
-                            id: item.product_id,
-                            name: item.name,
-                            price: item.price,
-                            quantity: item.quantity,
-                            image: item.image || item.image_url || '{% static "images/streetwear/packshot_cardigan_ecru.png" %}',
-                            variation_name: item.variation_name || ''
-                        });
-                        totalCount += (item.quantity || 1);
-                        sub += (item.total_price || (item.price * item.quantity));
+                    const l = this.currentLang || 'ru';
+                    if (this.i18n && this.i18n[l] && this.i18n[l][key]) {
+                        return this.i18n[l][key];
                     }
-                    this.cartItems = items;
-                    this.cartCount = totalCount;
-                    this.cartSubtotal = sub;
-                    this.$nextTick(() => lucide.createIcons());
+                    if (this.i18n && this.i18n['ru'] && this.i18n['ru'][key]) {
+                        return this.i18n['ru'][key];
+                    }
+                    return key;
                 },
 
                 showToast(msg) {
+                    if (this.toastTimer) clearTimeout(this.toastTimer);
                     this.toastMessage = msg;
-                    setTimeout(() => { this.toastMessage = ''; }, 3000);
+                    this.toastVisible = true;
+                    this.toastTimer = setTimeout(() => {
+                        this.toastVisible = false;
+                    }, 2800);
                 },
 
-                async addToCart() {
-                    this.addingToCart = true;
-                    try {
-                        const payload = {
-                            product_id: {{ product.id }},
-                            quantity: this.qty,
-                            variation_id: this.selectedSize && !isNaN(this.selectedSize) ? parseInt(this.selectedSize) : null
-                        };
-                        const resp = await fetch('/store/{{ store.subdomain }}/cart/add/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': '{{ csrf_token }}'
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        const data = await resp.json();
-                        if (data.cart) {
-                            this.syncCart(data.cart);
-                        } else {
-                            this.cartCount += this.qty;
-                        }
-                        this.showToast(this.t('addedToast'));
-                        this.cartDrawerOpen = true;
-                    } catch (e) {
-                        console.error('Error adding to cart:', e);
-                    } finally {
-                        this.addingToCart = false;
+                showSizeAlert(msg) {
+                    this.showToast(msg || this.t('please_select_size'));
+                },
+
+                shareProduct() {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(window.location.href);
+                        this.showToast(this.t('share_copied'));
+                    } else {
+                        this.showToast(this.t('share_copied'));
                     }
                 },
 
-                async updateCartQty(itemKey, delta = 0, action = null) {
-                    try {
-                        const item = this.cartItems.find(i => i.key === itemKey);
-                        if (!item && !action) return;
-                        let payload = { item_key: itemKey };
-                        if (action === 'remove' || (item && item.quantity + delta <= 0)) {
-                            payload.action = 'remove';
-                        } else {
-                            payload.quantity = (item ? item.quantity : 1) + delta;
-                        }
-                        const resp = await fetch('/store/{{ store.subdomain }}/cart/update/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': '{{ csrf_token }}'
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        const data = await resp.json();
-                        if (data.cart) {
-                            this.syncCart(data.cart);
-                        }
-                    } catch (e) {
-                        console.error('Error updating cart:', e);
+                goBack() {
+                    if (document.referrer && document.referrer.includes('/store/{{ store.subdomain }}')) {
+                        window.history.back();
+                    } else {
+                        window.location.href = '/store/{{ store.subdomain }}/?lang=' + this.currentLang;
                     }
+                },
+
+                setLanguage(lang) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('lang', lang);
+                    window.location.href = url.toString();
+                },
+
+                getProductName() {
+                    const l = this.currentLang;
+                    return this.productData['name_' + l] || this.productData['name_ru'] || this.productData['name_uz'] || '';
+                },
+
+                getProductDescription() {
+                    const l = this.currentLang;
+                    let desc = this.productData['description_' + l] || this.productData['description_ru'] || this.productData['description_uz'] || '';
+                    return desc
+                        .replace(/\*\*(.*?)\*\*/g, '$1')
+                        .replace(/\*(.*?)\*/g, '$1')
+                        .replace(/__(.*?)__/g, '$1')
+                        .replace(/_(.*?)_/g, '$1')
+                        .replace(/#{1,6}\s+/g, '')
+                        .trim();
+                },
+
+                getProductCategory() {
+                    const l = this.currentLang;
+                    return this.productData['category_name_' + l] || this.productData['category_name_ru'] || '';
+                },
+
+                getVariationName(v) {
+                    const l = this.currentLang;
+                    return v['name_' + l] || v['name_ru'] || v['name_uz'] || '';
+                },
+
+                getRelatedName(rp) {
+                    const l = this.currentLang;
+                    return rp['name_' + l] || rp['name_ru'] || rp['name_uz'] || '';
+                },
+
+                formatPrice(num) {
+                    if (!num && num !== 0) return '';
+                    return Number(num).toLocaleString('ru-RU').replace(/,/g, ' ') + ' UZS';
+                },
+
+                selectVariation(v) {
+                    this.selectedSize = this.getVariationName(v);
+                    if (v.price) this.selectedPrice = Number(v.price);
+                },
+
+                handleMobileScroll(e) {
+                    const el = e.target;
+                    const index = Math.round(el.scrollLeft / el.clientWidth);
+                    this.mobileActiveIndex = index;
+                },
+
+                get isWishlisted() {
+                    return this.wishlist.includes(this.productData.id);
+                },
+
+                toggleWishlist() {
+                    const id = this.productData.id;
+                    const idx = this.wishlist.indexOf(id);
+                    if (idx > -1) {
+                        this.wishlist.splice(idx, 1);
+                        this.showToast('УДАЛЕНО ИЗ ИЗБРАННОГО');
+                    } else {
+                        this.wishlist.push(id);
+                        this.showToast('ДОБАВЛЕНО В ИЗБРАННОЕ');
+                    }
+                    try {
+                        localStorage.setItem('crystal_lami_wishlist', JSON.stringify(this.wishlist));
+                    } catch (e) {}
+                },
+
+                addToCart() {
+                    // Size validation: if product has variations and none chosen, show toast alert!
+                    if (this.productData.variations && this.productData.variations.length > 0 && !this.selectedSize) {
+                        this.showSizeAlert(this.t('please_select_size'));
+                        return;
+                    }
+
+                    // Add item to cart
+                    const cartItem = {
+                        product_id: this.productData.id,
+                        name: this.getProductName(),
+                        price: Number(this.selectedPrice),
+                        size: this.selectedSize || 'ONE SIZE',
+                        image: this.productData.images ? this.productData.images[0] : '',
+                        quantity: 1
+                    };
+                    this.cart.push(cartItem);
+
+                    try {
+                        localStorage.setItem('crystal_lami_cart', JSON.stringify(this.cart));
+                    } catch (e) {}
+
+                    // Server session sync
+                    fetch('/store/{{ store.subdomain }}/api/cart/add/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            product_id: this.productData.id,
+                            variation_id: null,
+                            quantity: 1,
+                            selected_size: this.selectedSize
+                        })
+                    }).catch(() => {});
+
+                    this.showToast('ТОВАР ДОБАВЛЕН В КОРЗИНУ');
+                },
+
+                removeFromCart(idx) {
+                    this.cart.splice(idx, 1);
+                    try {
+                        localStorage.setItem('crystal_lami_cart', JSON.stringify(this.cart));
+                    } catch (e) {}
+                },
+
+                get cartTotalCount() {
+                    return this.cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+                },
+
+                get cartSubtotal() {
+                    return this.cart.reduce((sum, item) => sum + (Number(item.price) * (item.quantity || 1)), 0);
+                },
+
+                getCategoryName(cat) {
+                    if (!cat) return '';
+                    const l = this.currentLang || 'ru';
+                    if (l === 'uz' && cat.name_uz) return cat.name_uz;
+                    if (l === 'en' && cat.name_en) return cat.name_en;
+                    return cat.name_ru || cat.name || '';
+                },
+
+                openModal(type) {
+                    this.menuDrawerOpen = false;
+                    if (type === 'support') {
+                        alert('Служба заботы CRYSTALL AMI:\nTelegram: @crystallami_care\nТелефон: +998 71 200 00 22\nЕжедневно с 10:00 до 22:00');
+                    } else if (type === 'about') {
+                        alert('CRYSTALL AMI — бутик авторской женской моды, премиальной обуви, сумок и селективного парфюма.\nТашкент, Узбекистан.');
+                    } else if (type === 'social') {
+                        window.open('https://instagram.com', '_blank');
+                    }
+                },
+
+                closeAll() {
+                    this.sizeChartOpen = false;
+                    this.cartDrawerOpen = false;
+                    this.menuDrawerOpen = false;
+                    this.menuSubmenu = '';
                 }
-            }
+            };
         }
+        window.pdpApp = pdpApp;
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('pdpApp', pdpApp);
+        });
     </script>
 </body>
 </html>

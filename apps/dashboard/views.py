@@ -4526,7 +4526,9 @@ def yespos_image_proxy(request):
     # 2. Fetch directly from official YES POS media server
     remote_url = f"http://app.yespos.uz:8263/getImage?path={clean_path}"
     try:
-        resp = requests.get(remote_url, timeout=4.5)
+        sess = requests.Session()
+        sess.trust_env = False
+        resp = sess.get(remote_url, timeout=4.5)
         if resp.status_code == 200 and len(resp.content) > 100:
             content = resp.content
             ext = 'png' if content.startswith(b'\x89PNG') or '.png' in clean_path.lower() else 'jpg'
@@ -4538,6 +4540,18 @@ def yespos_image_proxy(request):
             return response
     except Exception as e:
         logger.warning(f"Could not fetch YES POS image {clean_path}: {e}")
+
+    # 3. Fallback to local disk cache even if force_refresh was requested
+    for ext_candidate in ['png', 'jpg', 'jpeg', 'webp']:
+        test_file = os.path.join(cache_dir, f"{path_hash}.{ext_candidate}")
+        if os.path.exists(test_file) and os.path.getsize(test_file) > 100:
+            content_type = 'image/png' if ext_candidate == 'png' else ('image/webp' if ext_candidate == 'webp' else 'image/jpeg')
+            try:
+                response = FileResponse(open(test_file, 'rb'), content_type=content_type)
+                response['Cache-Control'] = 'public, max-age=86400'
+                return response
+            except Exception:
+                pass
 
     return HttpResponse(_FALLBACK_PRODUCT_SVG, content_type='image/svg+xml')
 
