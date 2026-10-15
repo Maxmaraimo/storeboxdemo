@@ -118,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   const storefrontUrl = store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#");
 
   return (
-    <header className="h-14 bg-white/90 dark:bg-[#211b2e]/95 backdrop-blur-xl border-b border-[#dfe5ef] dark:border-[#3b304e] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-colors select-none shadow-[0_4px_20px_-2px_rgba(33,27,46,0.08)]">
+    <header className="h-[var(--storebox-topbar-height)] shrink-0 bg-white/90 dark:bg-[#211b2e]/95 backdrop-blur-xl border-b border-[#dfe5ef] dark:border-[#3b304e] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-colors select-none shadow-[0_4px_20px_-2px_rgba(33,27,46,0.08)]">
       {/* 1. Left: Mobile Toggle & Global Search */}
       <div className="flex items-center gap-2.5 flex-1 max-w-2xl">
         {onOpenMobileMenu && (
@@ -164,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
 
         {/* Full-width Mobile Search Bar Overlay */}
         {mobileSearchOpen && (
-          <div className="fixed inset-x-0 top-0 h-14 bg-white dark:bg-[#211b2e] border-b border-slate-200 dark:border-zinc-800 px-4 flex items-center gap-3 z-50 animate-in fade-in">
+          <div className="fixed inset-x-0 top-0 h-[var(--storebox-topbar-height)] bg-white dark:bg-[#211b2e] border-b border-slate-200 dark:border-zinc-800 px-4 flex items-center gap-3 z-50 animate-in fade-in">
             <Search className="w-4 h-4 text-slate-400 shrink-0" />
             <input
               autoFocus
