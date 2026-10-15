@@ -148,7 +148,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                 ? "Search store (products, orders, customers)..."
                 : "Qidiruv (mahsulot, buyurtma, mijoz)..."
             }
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#f6f6f7] dark:bg-zinc-800/80 border border-[#e1e3e5] dark:border-zinc-700/60 focus:bg-white dark:focus:bg-zinc-900 focus:border-[#6d5a88] dark:focus:border-zinc-500 text-xs text-[#211b2e] dark:text-zinc-100 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#f6f6f7] dark:bg-zinc-800/80 border border-[#e1e3e5] dark:border-zinc-700/60 focus:bg-white dark:focus:bg-zinc-900 focus:border-[#211b2e] dark:focus:border-zinc-500 text-xs text-[#211b2e] dark:text-zinc-100 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
@@ -198,10 +198,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
         <button
           type="button"
           onClick={toggleTheme}
-          className="w-8 h-8 rounded-lg border border-[#e1e3e5] dark:border-zinc-700 bg-white dark:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-[#f6f6f7] dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+          className="w-8 h-8 rounded-lg border border-[#e1e3e5] dark:border-zinc-700 bg-white dark:bg-zinc-800 flex items-center justify-center text-[#211b2e] dark:text-zinc-300 hover:bg-[#f6f6f7] dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           title={isDark ? "Светлая тема" : "Темная тема"}
         >
-          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
         </button>
 
 
@@ -239,7 +239,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                     onClick={async () => {
                       await markAllRead();
                     }}
-                    className="text-[11px] font-medium text-[#6d5a88] hover:underline cursor-pointer"
+                    className="text-[11px] font-medium text-[#211b2e] hover:underline cursor-pointer"
                   >
                     {lang === "ru" ? "Прочитать все" : "Barchasini o'qish"}
                   </button>
@@ -378,7 +378,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                           onClick={() => handleSelectStore(s.id)}
                           className={`w-full flex items-center justify-between px-3.5 py-2 transition-colors text-left cursor-pointer ${
                             isSelected
-                              ? "font-semibold text-[#6d5a88] dark:text-violet-300 bg-[#f2eef8] dark:bg-violet-950/30"
+                              ? "font-semibold text-[#211b2e] dark:text-white bg-[#211b2e]/10 dark:bg-white/10"
                               : "text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
                           }`}
                         >
@@ -386,7 +386,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                             <div
                               className={`w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold shrink-0 ${
                                 isSelected
-                                  ? "bg-[#6d5a88] text-white"
+                                  ? "bg-[#211b2e] text-white"
                                   : "bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
                               }`}
                             >
@@ -402,9 +402,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                             </div>
                           </div>
                           {switchingStoreId === s.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6d5a88] shrink-0" />
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#211b2e] dark:text-white shrink-0" />
                           ) : (
-                            isSelected && <Check className="w-3.5 h-3.5 text-[#6d5a88] shrink-0" />
+                            isSelected && <Check className="w-3.5 h-3.5 text-[#211b2e] dark:text-white shrink-0" />
                           )}
                         </button>
                       );
@@ -417,7 +417,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                   href="/onboarding/?new=1"
                   className="w-full flex items-center gap-2 px-3.5 py-2 text-zinc-900 dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-medium transition-colors cursor-pointer text-left mt-0.5"
                 >
-                  <Plus className="w-3.5 h-3.5 text-[#6d5a88]" />
+                  <Plus className="w-3.5 h-3.5 text-[#211b2e] dark:text-white" />
                   <span>{lang === "ru" ? "Добавить магазин" : lang === "en" ? "Add store" : "Do'kon qo'shish"}</span>
                 </a>
               </div>

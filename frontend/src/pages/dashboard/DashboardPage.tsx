@@ -346,7 +346,7 @@ export const DashboardPage: React.FC = () => {
       {
         label: lang === "ru" ? "Завершены" : lang === "en" ? "Completed" : "Bajarilgan",
         data: hourlyOrders?.completed || [],
-        backgroundColor: "#8e7bae",
+        backgroundColor: "#211b2e",
         borderRadius: 4,
         maxBarThickness: 12,
       },
@@ -570,7 +570,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#dfe5ef] pt-3 text-[11px] dark:border-zinc-700">
             <div className="flex min-w-0 items-center gap-1 text-[#686475]">
-              <span className="font-semibold text-[#50465f] dark:text-[#c7badb]">
+              <span className="font-semibold text-[#211b2e] dark:text-white">
                 {metrics?.new_orders || 0} {lang === "ru" ? "новых" : "yangi"}
               </span>
               <span>•</span>
@@ -641,7 +641,7 @@ export const DashboardPage: React.FC = () => {
             type="button"
             aria-pressed={showBranches}
             onClick={() => setShowBranches((visible) => !visible)}
-            className={`inline-flex items-center gap-2 rounded-[10px] border px-3 py-2 text-xs font-medium transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6d5a88] ${showBranches ? "border-[#211b2e] bg-[#211b2e] text-white shadow-[0_6px_16px_rgba(33,27,46,.18)]" : "border-[#dfe5ef] bg-white text-[#686475] hover:border-[#6d5a88] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"}`}
+            className={`inline-flex items-center gap-2 rounded-[10px] border px-3 py-2 text-xs font-medium transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] ${showBranches ? "border-[#211b2e] bg-[#211b2e] text-white shadow-[0_6px_16px_rgba(33,27,46,.18)]" : "border-[#dfe5ef] bg-white text-[#686475] hover:border-[#211b2e] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"}`}
           >
             <StoreIcon className="h-3.5 w-3.5" />
             {lang === "ru" ? "Филиалы" : lang === "en" ? "Branches" : "Filiallar"}
@@ -824,7 +824,7 @@ export const DashboardPage: React.FC = () => {
               {lang === "ru" ? "По числу неотменённых заказов за выбранный период" : lang === "en" ? "By non-cancelled orders in this period" : "Tanlangan davrdagi bekor qilinmagan buyurtmalar soni bo'yicha"}
             </p>
           </div>
-          <Link to="/customers" className="shrink-0 text-xs font-medium text-[#6d5a88] hover:underline dark:text-[#bcacd1]">
+          <Link to="/customers" className="shrink-0 text-xs font-medium text-[#211b2e] hover:underline dark:text-white">
             {lang === "ru" ? "Все клиенты →" : lang === "en" ? "All customers →" : "Barcha mijozlar →"}
           </Link>
         </div>
@@ -842,7 +842,7 @@ export const DashboardPage: React.FC = () => {
                 <tr key={`${customer.customer_phone}-${index}`} className="hover:bg-[#faf9fc] dark:hover:bg-zinc-800/40">
                   <td className="px-5 py-3 font-medium text-[#211b2e] dark:text-white">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ebe5f2] font-semibold text-[#5a4770] dark:bg-zinc-700 dark:text-white">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#211b2e]/10 font-semibold text-[#211b2e] dark:bg-white/15 dark:text-white">
                         {(customer.name || "?").trim().charAt(0).toUpperCase() || "?"}
                       </span>
                       <span className="truncate">{customer.name || (lang === "ru" ? "Без имени" : "Nomsiz")}</span>
@@ -924,7 +924,7 @@ export const DashboardPage: React.FC = () => {
                     className="flex items-center justify-between p-2.5 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800/80 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800/50 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <span className="w-5 shrink-0 text-center text-[11px] font-semibold tabular-nums text-[#6d5a88] dark:text-[#c7badb]">
+                      <span className="w-5 shrink-0 text-center text-[11px] font-semibold tabular-nums text-[#211b2e] dark:text-white">
                         {String(idx + 1).padStart(2, "0")}
                       </span>
                       <div className="truncate">
@@ -960,7 +960,7 @@ export const DashboardPage: React.FC = () => {
                   </div>
                   <div className="p-3 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7] text-center">
                     <span className="text-xs font-semibold text-[#211b2e] dark:text-white">Группа B (~15%)</span>
-                    <div className="text-xs text-[#6d5a88] font-semibold mt-1">
+                    <div className="text-xs text-[#211b2e] dark:text-white font-semibold mt-1">
                       {abcAnalysis?.group_b.count || 0} {lang === "ru" ? "тов." : "ta"}
                     </div>
                   </div>
@@ -1002,7 +1002,7 @@ export const DashboardPage: React.FC = () => {
                   >
                     <div className="flex items-center justify-between text-xs gap-2">
                       <div className="flex items-center gap-2 font-medium text-[#211b2e] dark:text-white truncate">
-                        <MapPin className="w-3.5 h-3.5 text-[#6d5a88] shrink-0" />
+                        <MapPin className="w-3.5 h-3.5 text-[#211b2e] dark:text-white shrink-0" />
                         <span className="truncate">{lang === "ru" ? reg.name_ru : reg.name_uz}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs shrink-0">
