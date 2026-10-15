@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  MapPin,
   Calendar,
   RefreshCw,
   Globe,
@@ -48,6 +47,8 @@ ChartJS.register(
   Filler
 );
 ChartJS.defaults.font.family = 'Inter, "Segoe UI", Arial, sans-serif';
+
+const rankingRowClassName = "rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800/80 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800/50 transition-colors";
 
 const TelegramLogo = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
@@ -923,7 +924,7 @@ export const DashboardPage: React.FC = () => {
                 {topProducts.map((p, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-2.5 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800/80 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800/50 transition-colors"
+                    className={`${rankingRowClassName} flex items-center justify-between p-2.5`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <span className="w-5 shrink-0 text-center text-[11px] font-semibold tabular-nums text-[#211b2e] dark:text-white">
@@ -996,27 +997,31 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-2.5">
-                {regionsBreakdown.slice(0, 6).map((reg) => (
+            <div className="space-y-2">
+                {regionsBreakdown.slice(0, 6).map((reg, idx) => (
                   <div
                     key={reg.code}
-                    className="p-2.5 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7]/60 dark:bg-zinc-900/40 space-y-1.5"
+                    className={`${rankingRowClassName} relative overflow-hidden p-2.5`}
                   >
-                    <div className="flex items-center justify-between text-xs gap-2">
-                      <div className="flex items-center gap-2 font-medium text-[#211b2e] dark:text-white truncate">
-                        <MapPin className="w-3.5 h-3.5 text-[#211b2e] dark:text-white shrink-0" />
-                        <span className="truncate">{lang === "ru" ? reg.name_ru : reg.name_uz}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="w-5 shrink-0 text-center text-[11px] font-semibold tabular-nums text-[#211b2e] dark:text-white">
+                          {String(idx + 1).padStart(2, "0")}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="truncate text-xs font-medium text-[#211b2e] dark:text-white">
+                            {lang === "ru" ? reg.name_ru : reg.name_uz}
+                          </div>
+                          <div className="truncate text-[11px] text-[#6d7175]">
+                            {reg.orders} {lang === "ru" ? "зак." : "ta"} ({reg.share_pct}%)
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs shrink-0">
-                        <span className="text-[#6d7175]">
-                          {reg.orders} {lang === "ru" ? "зак." : "ta"} ({reg.share_pct}%)
-                        </span>
-                        <span className="font-semibold text-[#211b2e] dark:text-white">
-                          {formatMoney(reg.revenue)}
-                        </span>
+                      <div className="shrink-0 text-right text-xs font-semibold text-[#211b2e] dark:text-white">
+                        {formatMoney(reg.revenue)}
                       </div>
                     </div>
-                    <div className="w-full h-1.5 rounded-full bg-[#e1e3e5] dark:bg-zinc-800 overflow-hidden">
+                    <div className="absolute bottom-1 left-2.5 right-2.5 h-1 overflow-hidden rounded-full bg-[#e1e3e5] dark:bg-zinc-800">
                       <div
                         className="h-full bg-lime-400 rounded-full transition-all duration-300"
                         style={{ width: `${Math.max(reg.orders > 0 ? 6 : 0, reg.share_pct)}%` }}
