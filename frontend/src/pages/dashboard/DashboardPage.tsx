@@ -356,11 +356,7 @@ export const DashboardPage: React.FC = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: "top",
-        align: "end",
-        labels: { usePointStyle: true, pointStyle: "circle", boxWidth: 8, color: "#686475", font: { size: 11 } },
-      },
+      legend: { display: false },
       tooltip: { backgroundColor: "#211b2e", padding: 10, cornerRadius: 9 },
     },
     scales: {
@@ -523,14 +519,18 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Refresh Button */}
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="w-8 h-8 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-[#686475] dark:text-zinc-300 hover:bg-[#f6f6f7] dark:hover:bg-zinc-800 transition-colors shadow-[0_1px_0_rgba(0,0,0,0.05)] cursor-pointer"
-            title={lang === "ru" ? "Обновить данные" : "Ma'lumotlarni yangilash"}
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-[#00a86b]" : ""}`} />
-          </button>
+          <div className="storebox-segmented-control">
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="storebox-segmented-tab storebox-segmented-tab--icon is-active"
+              aria-label={lang === "ru" ? "Обновить данные" : lang === "en" ? "Refresh data" : "Ma'lumotlarni yangilash"}
+              aria-busy={isFetching}
+              title={lang === "ru" ? "Обновить данные" : lang === "en" ? "Refresh data" : "Ma'lumotlarni yangilash"}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -805,6 +805,14 @@ export const DashboardPage: React.FC = () => {
         <p className="mt-1 text-xs text-[#6d7175] dark:text-zinc-400">
           {lang === "ru" ? "Новые, отменённые и завершённые за выбранный период" : lang === "en" ? "New, cancelled and completed in the selected period" : "Tanlangan davrdagi yangi, bekor qilingan va bajarilgan buyurtmalar"}
         </p>
+        <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-[#686475] dark:text-zinc-400" aria-label={lang === "ru" ? "Обозначения графика" : lang === "en" ? "Chart legend" : "Grafik belgilari"}>
+          {hourlyOrderData.datasets.map((dataset) => (
+            <li key={dataset.label} className="inline-flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dataset.backgroundColor }} aria-hidden="true" />
+              <span>{dataset.label}</span>
+            </li>
+          ))}
+        </ul>
         <div className="mt-4 h-[260px] w-full sm:h-[310px]">
           {isLoading ? (
             <div className="h-full animate-pulse rounded-xl bg-[#f0edf4] dark:bg-zinc-900" />
@@ -890,26 +898,20 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {/* Segmented Switcher */}
-              <div className="inline-flex rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5">
+              <div className="storebox-segmented-control" role="group" aria-label={lang === "ru" ? "Режим списка товаров" : lang === "en" ? "Product list view" : "Mahsulotlar ro'yxati ko'rinishi"}>
                 <button
                   type="button"
+                  aria-pressed={productTab === "top"}
                   onClick={() => setProductTab("top")}
-                  className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
-                    productTab === "top"
-                      ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
-                      : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
-                  }`}
+                  className={`storebox-segmented-tab ${productTab === "top" ? "is-active" : ""}`}
                 >
                   {lang === "ru" ? "Топ" : "Top"}
                 </button>
                 <button
                   type="button"
+                  aria-pressed={productTab === "abc"}
                   onClick={() => setProductTab("abc")}
-                  className={`px-2.5 py-1 text-xs rounded-[9px] transition-colors cursor-pointer ${
-                    productTab === "abc"
-                      ? "bg-[#211b2e] text-white shadow-[0_4px_10px_rgba(33,27,46,0.24)] dark:bg-white dark:text-[#211b2e] font-medium"
-                      : "text-[#686475] dark:text-zinc-400 hover:text-[#211b2e] font-normal"
-                  }`}
+                  className={`storebox-segmented-tab ${productTab === "abc" ? "is-active" : ""}`}
                 >
                   ABC
                 </button>

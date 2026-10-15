@@ -217,6 +217,7 @@ h1, h2, h3, h4 {
   outline: 2px solid #211b2e;
   outline-offset: 2px;
 }
+.storebox-segmented-tab--icon { width: 32px; padding: 0; }
 .storebox-segmented-control--full { width: 100%; }
 .storebox-segmented-control--full > .storebox-segmented-tab { flex: 1 1 0; min-width: 0; }
 .dark .storebox-segmented-control {
