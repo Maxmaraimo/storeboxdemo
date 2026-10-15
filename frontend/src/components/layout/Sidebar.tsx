@@ -158,7 +158,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
   const navSections = useMemo(
     () => [
       {
-        title: null,
         items: [
           {
             path: "/",
@@ -250,7 +249,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
         ],
       },
       {
-        title: lang === "ru" ? "Каналы продаж" : lang === "en" ? "Sales channels" : "Savdo kanallari",
         items: [
           {
             path: "/themes",
@@ -492,10 +490,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
         <nav className="storebox-sidebar-nav flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-5 no-scrollbar" aria-label={lang === "ru" ? "Навигация" : lang === "en" ? "Navigation" : "Navigatsiya"}>
           {navSections.map((section, sIdx) => (
             <div key={sIdx} className="space-y-1">
-              <div className="storebox-sidebar-section-title px-3 pb-1.5 pt-1">
-                {section.title || (lang === "ru" ? "Рабочее пространство" : lang === "en" ? "Workspace" : "Ish maydoni")}
-              </div>
-
               {section.items.map((item: any) => {
                 const isItemActive = isNavItemActive(item.path);
                 const showSub = isSectionExpanded(item) && item.subItems;
