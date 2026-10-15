@@ -788,7 +788,7 @@ export const DashboardPage: React.FC = () => {
                     <span className="font-semibold tabular-nums text-[#211b2e] dark:text-white">{channel.count}</span>
                   </div>
                   <div className="ml-11 h-1.5 overflow-hidden rounded-full bg-[#eae7ef] dark:bg-zinc-800" role="progressbar" aria-label={channel.label} aria-valuenow={share} aria-valuemin={0} aria-valuemax={100}>
-                    <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${share}%`, backgroundColor: channel.color }} />
+                    <div className="h-full rounded-full bg-lime-400 transition-[width] duration-500" style={{ width: `${share}%` }} />
                   </div>
                 </div>
               );
@@ -1016,7 +1016,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-[#e1e3e5] dark:bg-zinc-800 overflow-hidden">
                       <div
-                        className="h-full bg-[#6d5a88] rounded-full transition-all duration-300"
+                        className="h-full bg-lime-400 rounded-full transition-all duration-300"
                         style={{ width: `${Math.max(reg.orders > 0 ? 6 : 0, reg.share_pct)}%` }}
                       />
                     </div>
