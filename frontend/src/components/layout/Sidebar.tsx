@@ -328,8 +328,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
 
     return (
       <div className="flex flex-col h-full min-h-0 animate-in fade-in slide-in-from-left-2 duration-150">
-        <div className="storebox-sidebar-brand p-3.5 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="storebox-sidebar-brand px-3.5">
+          <div className="flex w-full items-center justify-between">
             <button
               type="button"
               onClick={() => {
@@ -353,7 +353,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
               </button>
             )}
           </div>
+        </div>
 
+        <div className="storebox-sidebar-settings-tools space-y-3 p-3.5">
           <div className="storebox-sidebar-store-card flex items-center gap-2.5">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="storebox-sidebar-store-avatar w-8 h-8 text-white font-bold text-xs flex items-center justify-center shrink-0">
@@ -451,8 +453,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
   const renderMainSidebar = (isMobile: boolean = false) => {
     return (
       <div className="flex flex-col h-full min-h-0">
-        <div className="storebox-sidebar-brand px-3.5 py-3">
-          <div className="flex items-center justify-between gap-2">
+        <div className="storebox-sidebar-brand px-3.5">
+          <div className="flex w-full items-center justify-between gap-2">
             <Link
               to="/"
               onClick={() => isMobile && onCloseMobile && onCloseMobile()}
@@ -570,20 +572,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
   const renderCollapsedSidebar = () => {
     const flatItems = navSections.flatMap((s) => s.items);
     return (
-      <div className="storebox-sidebar-rail flex flex-col h-full items-center py-3 justify-between overflow-visible">
-        <div className="flex flex-col items-center gap-2 w-full">
-          <Link
-            to="/"
-            className="storebox-sidebar-logo w-10 h-10 flex items-center justify-center shrink-0"
-            title={`StoreBox — ${store?.name || "Dashboard"}`}
-            aria-label="StoreBox"
-          >
-            <BrandMark />
-          </Link>
+      <div className="storebox-sidebar-rail flex flex-col h-full items-center pb-3 justify-between overflow-visible">
+        <div className="flex flex-col items-center w-full">
+          <div className="storebox-sidebar-brand w-full justify-center">
+            <Link
+              to="/"
+              className="storebox-sidebar-logo w-10 h-10 flex items-center justify-center shrink-0"
+              title={`StoreBox — ${store?.name || "Dashboard"}`}
+              aria-label="StoreBox"
+            >
+              <BrandMark />
+            </Link>
+          </div>
 
-          <div className="storebox-sidebar-rail-divider w-7 h-px my-0.5" />
-
-          <div className="flex flex-col items-center gap-1 w-full px-1.5">
+          <div className="flex flex-col items-center gap-1 w-full px-1.5 pt-4">
             {flatItems.map((item: any) => {
               const isItemActive = isNavItemActive(item.path);
               const Icon = item.icon;
