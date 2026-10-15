@@ -3,7 +3,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Calendar,
-  RefreshCw,
   Globe,
   Instagram,
   BarChart3,
@@ -194,7 +193,7 @@ export const DashboardPage: React.FC = () => {
     return `${Math.round(sum).toLocaleString("uz-UZ")} UZS`;
   };
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["dashboard-summary", store?.id, period, branch, startDateParam, endDateParam],
     queryFn: async () => {
       const storeParam = store?.id ? `&store_id=${store.id}` : "";
@@ -266,8 +265,8 @@ export const DashboardPage: React.FC = () => {
         borderRadius: chartType === "bar" ? 5 : 0,
         fill: chartType === "line",
         tension: 0.35,
-        pointBackgroundColor: "#211b2e",
-        pointBorderColor: "#FFFFFF",
+        pointBackgroundColor: "#a3e635",
+        pointBorderColor: "#a3e635",
         pointBorderWidth: 1.5,
         pointRadius: chartType === "line" ? 3 : 0,
         pointHoverRadius: 5.5,
@@ -381,7 +380,7 @@ export const DashboardPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Action Controls: Periods, Currency, Refresh */}
+        {/* Action Controls: Periods and Currency */}
         <div className="flex flex-wrap items-center gap-2 max-w-full">
           {/* Period selector */}
           <div ref={datePickerRef} className="relative max-w-full">
@@ -519,19 +518,6 @@ export const DashboardPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Refresh Button */}
-          <div className="storebox-segmented-control">
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="storebox-segmented-tab storebox-segmented-tab--icon is-active"
-              aria-label={lang === "ru" ? "Обновить данные" : lang === "en" ? "Refresh data" : "Ma'lumotlarni yangilash"}
-              aria-busy={isFetching}
-              title={lang === "ru" ? "Обновить данные" : lang === "en" ? "Refresh data" : "Ma'lumotlarni yangilash"}
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
-            </button>
-          </div>
         </div>
       </div>
 

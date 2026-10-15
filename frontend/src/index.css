@@ -300,6 +300,11 @@ h1, h2, h3, h4 {
 .storebox-map-pin--order { background: #a3e635; color: #211b2e; }
 .storebox-map-pin--order::after { border-top-color: #a3e635; }
 
+.storebox-dashboard-map ymaps[class$="copyright__wrap"],
+.storebox-dashboard-map ymaps[class$="copyrights-promo"] {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dashboard-kpi-card { transition: none; }
   .dashboard-kpi-card:hover { transform: none; }

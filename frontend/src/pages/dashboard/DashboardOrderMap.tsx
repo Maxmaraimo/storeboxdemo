@@ -197,5 +197,5 @@ export function DashboardOrderMap(props: DashboardOrderMapProps) {
 
   if (loadFailed) return <OpenStreetMapFallback {...props} />;
 
-  return <div ref={containerRef} className="h-full w-full" aria-label="Yandex Maps" />;
+  return <div ref={containerRef} className="storebox-dashboard-map h-full w-full" aria-label="Yandex Maps" />;
 }
