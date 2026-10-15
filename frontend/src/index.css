@@ -213,7 +213,7 @@ h1, h2, h3, h4 {
   box-shadow: 0 4px 14px rgba(33, 27, 46, 0.3);
 }
 .storebox-segmented-tab:focus-visible {
-  outline: 2px solid #6d5a88;
+  outline: 2px solid #211b2e;
   outline-offset: 2px;
 }
 .storebox-segmented-control--full { width: 100%; }
@@ -295,8 +295,8 @@ h1, h2, h3, h4 {
 }
 .storebox-map-pin svg { width: 21px; height: 21px; }
 .storebox-map-pin--branch { background: #211b2e; }
-.storebox-map-pin--order { background: #695780; }
-.storebox-map-pin--order::after { border-top-color: #695780; }
+.storebox-map-pin--order { background: #a3e635; color: #211b2e; }
+.storebox-map-pin--order::after { border-top-color: #a3e635; }
 
 @media (prefers-reduced-motion: reduce) {
   .dashboard-kpi-card { transition: none; }
