@@ -250,7 +250,7 @@ export const DashboardPage: React.FC = () => {
     ...(metrics?.instagram_cnt ? [{ key: "instagram", label: "Instagram", count: metrics.instagram_cnt, color: "#c071a8", icon: Instagram }] : []),
   ];
 
-  // Use the marketing site's ink and violet palette for dashboard charts.
+  // Keep the line chart ink-colored and use the dashboard's lime accent for bars.
   const chartData = {
     labels: charts?.labels || [],
     datasets: [
@@ -259,7 +259,7 @@ export const DashboardPage: React.FC = () => {
         data: (charts?.revenue || []).map((val) =>
           currency === "USD" ? Number((val / UZS_TO_USD_RATE).toFixed(2)) : val
         ),
-        backgroundColor: chartType === "bar" ? "#211b2e" : "rgba(33, 27, 46, 0.13)",
+        backgroundColor: chartType === "bar" ? "#a3e635" : "rgba(33, 27, 46, 0.13)",
         borderColor: "#211b2e",
         borderWidth: chartType === "line" ? 2.5 : 0,
         borderRadius: chartType === "bar" ? 5 : 0,
