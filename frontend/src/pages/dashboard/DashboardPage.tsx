@@ -224,6 +224,23 @@ export const DashboardPage: React.FC = () => {
   const topProducts = data?.top_products || [];
   const topCustomers = data?.top_customers || [];
   const abcAnalysis = data?.abc_analysis;
+  const abcGroups = [
+    {
+      code: "A",
+      label: lang === "ru" ? "Лидеры выручки" : lang === "en" ? "Revenue leaders" : "Tushum yetakchilari",
+      stats: abcAnalysis?.group_a,
+    },
+    {
+      code: "B",
+      label: lang === "ru" ? "Средний вклад" : lang === "en" ? "Medium contribution" : "O'rtacha ulush",
+      stats: abcAnalysis?.group_b,
+    },
+    {
+      code: "C",
+      label: lang === "ru" ? "Остальные товары" : lang === "en" ? "Other products" : "Qolgan mahsulotlar",
+      stats: abcAnalysis?.group_c,
+    },
+  ];
   const validCoordinates = (lat: number, lng: number) =>
     Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
   const mapOrders = useMemo(
@@ -594,18 +611,9 @@ export const DashboardPage: React.FC = () => {
       {/* Order geography: delivery addresses and optional branch locations. */}
       <section className="dashboard-panel overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
         <div className="flex flex-wrap items-center justify-between gap-3 p-5">
-          <div>
-            <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
-              {lang === "ru" ? "Карта заказов" : lang === "en" ? "Order map" : "Buyurtma xaritasi"}
-            </h2>
-            <p className="mt-1 text-xs text-[#6d7175] dark:text-zinc-400">
-              {lang === "ru"
-                ? `${mapOrders.length} адресов доставки с координатами за выбранный период`
-                : lang === "en"
-                ? `${mapOrders.length} delivery locations with coordinates in this period`
-                : `Tanlangan davrda koordinatali ${mapOrders.length} ta yetkazib berish manzili`}
-            </p>
-          </div>
+          <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
+            {lang === "ru" ? "Карта заказов" : lang === "en" ? "Order map" : "Buyurtma xaritasi"}
+          </h2>
           <button
             type="button"
             aria-pressed={showBranches}
@@ -752,7 +760,6 @@ export const DashboardPage: React.FC = () => {
               );
             })}
           </div>
-          {channelTotal === 0 && <p className="mt-6 text-xs text-[#6d7175]">{lang === "ru" ? "За выбранный период заказов нет" : lang === "en" ? "No orders in this period" : "Tanlangan davrda buyurtmalar yo'q"}</p>}
         </div>
       </div>
 
@@ -893,27 +900,25 @@ export const DashboardPage: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="space-y-3">
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="p-3 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7] text-center">
-                    <span className="text-xs font-semibold text-[#211b2e] dark:text-white">Группа A (~80%)</span>
-                    <div className="text-xs text-[#00a86b] font-semibold mt-1">
-                      {abcAnalysis?.group_a.count || 0} {lang === "ru" ? "тов." : "ta"}
+              <div className="space-y-2">
+                {abcGroups.map(({ code, label, stats }) => (
+                  <div key={code} className={`${rankingRowClassName} flex items-center justify-between gap-3 p-2.5`}>
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f6f6f7] text-xs font-semibold text-[#211b2e] dark:bg-zinc-800 dark:text-white">
+                        {code}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate text-xs font-medium text-[#211b2e] dark:text-white">{label}</div>
+                        <div className="text-[11px] text-[#6d7175] dark:text-zinc-400">
+                          {stats?.count ?? 0} {lang === "ru" ? "тов." : lang === "en" ? "products" : "mahsulot"} · {stats?.pct ?? 0}% {lang === "ru" ? "выручки" : lang === "en" ? "of revenue" : "tushumdan"}
+                        </div>
+                      </div>
                     </div>
+                    <span className="shrink-0 text-right text-xs font-semibold tabular-nums text-[#211b2e] dark:text-white">
+                      {formatMoney(stats?.revenue ?? 0)}
+                    </span>
                   </div>
-                  <div className="p-3 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7] text-center">
-                    <span className="text-xs font-semibold text-[#211b2e] dark:text-white">Группа B (~15%)</span>
-                    <div className="text-xs text-[#211b2e] dark:text-white font-semibold mt-1">
-                      {abcAnalysis?.group_b.count || 0} {lang === "ru" ? "тов." : "ta"}
-                    </div>
-                  </div>
-                  <div className="p-3 rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-[#f6f6f7] text-center">
-                    <span className="text-xs font-semibold text-[#211b2e] dark:text-white">Группа C (~5%)</span>
-                    <div className="text-xs text-[#686475] mt-1">
-                      {abcAnalysis?.group_c.count || 0} {lang === "ru" ? "тов." : "ta"}
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             )}
           </div>
