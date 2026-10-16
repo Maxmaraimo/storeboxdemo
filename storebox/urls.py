@@ -10,7 +10,7 @@ from apps.core import views as core_views
 from apps.api import views_dashboard
 
 urlpatterns = [
-    path('favicon.ico', RedirectView.as_view(url='/static/images/storebox-favicon.svg', permanent=True), name='favicon'),
+    path('favicon.ico', RedirectView.as_view(url='/static/images/storebox-favicon.svg?v=3', permanent=True), name='favicon'),
     path('admin/', admin.site.urls),
     path('django-admin/', admin.site.urls),
 
