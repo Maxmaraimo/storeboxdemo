@@ -247,6 +247,9 @@ export const OrdersPage: React.FC = () => {
 
   const draftsList = draftOrders.filter((d) => d.type === "draft");
   const abandonedList = draftOrders.filter((d) => d.type === "abandoned");
+  const draftActionLabel = urlTab === "drafts"
+    ? lang === "ru" ? "Отправить счёт" : lang === "en" ? "Send invoice" : "Hisob yuborish"
+    : lang === "ru" ? "Напомнить в Telegram" : lang === "en" ? "Remind in Telegram" : "Telegramda eslatish";
   const createOrderButton = (
     <button
       type="button"
@@ -309,9 +312,10 @@ export const OrdersPage: React.FC = () => {
                             "success"
                           )
                         }
-                        className="px-3 py-1.5 rounded-[8px] bg-[#202223] hover:bg-black text-white text-[11px] font-semibold cursor-pointer transition"
+                        className="inline-flex min-h-9 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-[#d8d1e2] bg-white px-3 py-1.5 text-xs font-medium text-[#211b2e] transition-colors hover:border-[#b9acc9] hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-[#30263f] cursor-pointer"
                       >
-                        {urlTab === "drafts" ? "Отправить счет" : "Вернуть клиента в TG"}
+                        <Send className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        {draftActionLabel}
                       </button>
                     </td>
                   </tr>
