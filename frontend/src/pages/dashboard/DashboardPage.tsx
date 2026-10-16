@@ -367,20 +367,8 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* 1. Header Bar: Store Title & Period Controls */}
+      {/* Period and currency controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[26px] font-bold text-[#171321] dark:text-white tracking-[-0.04em] leading-tight">
-            {store?.name || (lang === "ru" ? "Панель управления" : "Boshqaruv paneli")}
-          </h1>
-          <p className="text-xs text-[#6d7175] font-normal mt-0.5">
-            {lang === "ru"
-              ? "Сводка показателей продаж, заказов и региональной активности по магазину"
-              : "Savdo, buyurtmalar va hududiy ko'rsatkichlar"}
-          </p>
-        </div>
-
-        {/* Action Controls: Periods and Currency */}
         <div className="flex flex-wrap items-center gap-2 max-w-full">
           {/* Period selector */}
           <div ref={datePickerRef} className="relative max-w-full">
@@ -555,7 +543,7 @@ export const DashboardPage: React.FC = () => {
               </span>
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#dfe5ef] pt-3 text-[11px] dark:border-zinc-700">
+          <div className="mt-4 border-t border-[#dfe5ef] pt-3 text-[11px] dark:border-zinc-700">
             <div className="flex min-w-0 items-center gap-1 text-[#686475]">
               <span className="font-semibold text-[#211b2e] dark:text-white">
                 {metrics?.new_orders || 0} {lang === "ru" ? "новых" : "yangi"}
@@ -565,9 +553,6 @@ export const DashboardPage: React.FC = () => {
                 {metrics?.ready_orders || 0} {lang === "ru" ? "готовых" : "tayyor"}
               </span>
             </div>
-            <Link to="/orders" className="shrink-0 font-semibold text-[#211b2e] hover:underline dark:text-white">
-              {lang === "ru" ? "Все →" : "Barchasi →"}
-            </Link>
           </div>
         </div>
 
@@ -582,13 +567,10 @@ export const DashboardPage: React.FC = () => {
               {isLoading ? "..." : metrics?.total_customers || 0}
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between gap-2 border-t border-[#dfe5ef] pt-3 text-[11px] dark:border-zinc-700">
+          <div className="mt-4 border-t border-[#dfe5ef] pt-3 text-[11px] dark:border-zinc-700">
             <span className="truncate text-[#686475]">
               {lang === "ru" ? "Покупатели магазина" : "Do'kon xaridorlari"}
             </span>
-            <Link to="/customers" className="shrink-0 font-semibold text-[#211b2e] hover:underline dark:text-white">
-              CRM →
-            </Link>
           </div>
         </div>
 
@@ -648,22 +630,16 @@ export const DashboardPage: React.FC = () => {
       <div className="sidekick-adaptive-grid grid grid-cols-1 xl:grid-cols-12 gap-5">
         {/* Left: Revenue Dynamics Chart (8 cols) */}
         <div className="dashboard-panel xl:col-span-8 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
-                {chartType === "heatmap"
-                  ? lang === "ru"
-                    ? "Карта активности заказов"
-                    : "Faollik taqvimi"
-                  : lang === "ru"
-                  ? "Динамика выручки"
-                  : "Tushum dinamikasi"}
-              </h2>
-              <div className="text-xs text-[#6d7175] mt-0.5">
-                {formatMoney(metrics?.revenue || 0)}{" "}
-                {lang === "ru" ? `(${store?.name || ""})` : ""}
-              </div>
-            </div>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
+              {chartType === "heatmap"
+                ? lang === "ru"
+                  ? "Карта активности заказов"
+                  : "Faollik taqvimi"
+                : lang === "ru"
+                ? "Динамика выручки"
+                : "Tushum dinamikasi"}
+            </h2>
 
             {/* Bar is the primary view; line and heatmap remain available. */}
             <div className="inline-flex rounded-[12px] border border-[#dfe5ef] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0.5 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
@@ -784,10 +760,7 @@ export const DashboardPage: React.FC = () => {
         <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
           {lang === "ru" ? "Заказы по часам" : lang === "en" ? "Orders by hour" : "Soatlar bo'yicha buyurtmalar"}
         </h2>
-        <p className="mt-1 text-xs text-[#6d7175] dark:text-zinc-400">
-          {lang === "ru" ? "Новые, отменённые и завершённые за выбранный период" : lang === "en" ? "New, cancelled and completed in the selected period" : "Tanlangan davrdagi yangi, bekor qilingan va bajarilgan buyurtmalar"}
-        </p>
-        <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-[#686475] dark:text-zinc-400" aria-label={lang === "ru" ? "Обозначения графика" : lang === "en" ? "Chart legend" : "Grafik belgilari"}>
+        <ul className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-[#686475] dark:text-zinc-400" aria-label={lang === "ru" ? "Обозначения графика" : lang === "en" ? "Chart legend" : "Grafik belgilari"}>
           {hourlyOrderData.datasets.map((dataset) => (
             <li key={dataset.label} className="inline-flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dataset.backgroundColor }} aria-hidden="true" />
@@ -806,14 +779,9 @@ export const DashboardPage: React.FC = () => {
 
       <section className="overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
         <div className="flex items-center justify-between gap-3 p-5">
-          <div>
-            <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
-              {lang === "ru" ? "Топ-10 покупателей" : lang === "en" ? "Top 10 customers" : "10 ta eng yaxshi mijozlar"}
-            </h2>
-            <p className="mt-1 text-xs text-[#6d7175] dark:text-zinc-400">
-              {lang === "ru" ? "По числу неотменённых заказов за выбранный период" : lang === "en" ? "By non-cancelled orders in this period" : "Tanlangan davrdagi bekor qilinmagan buyurtmalar soni bo'yicha"}
-            </p>
-          </div>
+          <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
+            {lang === "ru" ? "Топ-10 покупателей" : lang === "en" ? "Top 10 customers" : "10 ta eng yaxshi mijozlar"}
+          </h2>
           <Link to="/customers" className="shrink-0 text-xs font-medium text-[#211b2e] hover:underline dark:text-white">
             {lang === "ru" ? "Все клиенты →" : lang === "en" ? "All customers →" : "Barcha mijozlar →"}
           </Link>
@@ -855,29 +823,20 @@ export const DashboardPage: React.FC = () => {
         {/* Left: Top Products (6 cols) */}
         <div className="xl:col-span-6 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
-                  {productTab === "top"
-                    ? lang === "ru"
-                      ? "Лидеры продаж"
-                      : lang === "en"
-                      ? "Top Products"
-                      : "Sotuv yetakchilari"
-                    : lang === "ru"
-                    ? "ABC-анализ продаж"
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
+                {productTab === "top"
+                  ? lang === "ru"
+                    ? "Лидеры продаж"
                     : lang === "en"
-                    ? "ABC Sales Analysis"
-                    : "ABC tahlil"}
-                </h2>
-                <div className="text-xs text-[#6d7175] mt-0.5">
-                  {lang === "ru"
-                    ? "Товары с наибольшим вкладом в выручку"
-                    : lang === "en"
-                    ? "Products with the highest revenue contribution"
-                    : "Eng ko'p sotilgan tovarlar"}
-                </div>
-              </div>
+                    ? "Top Products"
+                    : "Sotuv yetakchilari"
+                  : lang === "ru"
+                  ? "ABC-анализ продаж"
+                  : lang === "en"
+                  ? "ABC Sales Analysis"
+                  : "ABC tahlil"}
+              </h2>
 
               {/* Segmented Switcher */}
               <div className="storebox-segmented-control" role="group" aria-label={lang === "ru" ? "Режим списка товаров" : lang === "en" ? "Product list view" : "Mahsulotlar ro'yxati ko'rinishi"}>
@@ -963,20 +922,9 @@ export const DashboardPage: React.FC = () => {
         {/* Right: regional activity. The map now has its own full-width section above. */}
         <div className="xl:col-span-6 bg-white dark:bg-[#211b2e] rounded-[18px] border border-[#dfe5ef] dark:border-zinc-800 p-5 shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] flex flex-col justify-between min-w-0">
           <div>
-            <div className="mb-4">
-              <div>
-                <h2 className="text-sm font-semibold text-[#211b2e] dark:text-white">
-                  {lang === "ru" ? "Активность по регионам Узбекистана" : lang === "en" ? "Regional Activity in Uzbekistan" : "O'zbekiston viloyatlari bo'yicha faollik"}
-                </h2>
-                <div className="text-xs text-[#6d7175] mt-0.5">
-                  {lang === "ru"
-                    ? "Распределение заказов по областям РУз"
-                    : lang === "en"
-                    ? "Order distribution across regions of Uzbekistan"
-                    : "Viloyatlar kesimida buyurtmalar taqsimoti"}
-                </div>
-              </div>
-            </div>
+            <h2 className="mb-4 text-sm font-semibold text-[#211b2e] dark:text-white">
+              {lang === "ru" ? "Активность по регионам Узбекистана" : lang === "en" ? "Regional Activity in Uzbekistan" : "O'zbekiston viloyatlari bo'yicha faollik"}
+            </h2>
 
             <div className="space-y-2">
                 {regionsBreakdown.slice(0, 6).map((reg, idx) => (
