@@ -320,7 +320,7 @@ export const PageBreadcrumbs: React.FC = () => {
   const { lang, store } = useAuth();
 
   const pathname = location.pathname.replace(/\/+$/, "") || "/";
-  if (pathname === "/" || pathname === "/orders" || pathname.startsWith("/settings")) {
+  if (pathname === "/" || pathname === "/orders" || pathname === "/products" || pathname.startsWith("/settings")) {
     return null;
   }
 
