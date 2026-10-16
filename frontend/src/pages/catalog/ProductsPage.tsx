@@ -304,6 +304,8 @@ export const ProductsPage: React.FC = () => {
 
   const rawProducts = productsData?.products || [];
   const categories = categoriesData?.categories || [];
+  const getProductCategoryName = (product: Product) =>
+    getCategoryName(categories.find((category) => category.id === product.category)) || product.category_name || "—";
 
   const products = rawProducts.filter((p) => {
     if (statusFilter === "active") return p.is_active;
@@ -727,7 +729,7 @@ export const ProductsPage: React.FC = () => {
               onClick={() => setStatusFilter("active")}
               className={`storebox-segmented-tab ${statusFilter === "active" ? "is-active" : ""}`}
             >
-              {lang === "ru" ? "В наличии" : "Sotuvda"}
+              {lang === "ru" ? "В продаже" : "Sotuvda"}
             </button>
             <button
               type="button"
@@ -746,10 +748,10 @@ export const ProductsPage: React.FC = () => {
             type="button"
             onClick={() => handleExportCsv(products)}
             disabled={products.length === 0}
-            className="px-3 py-1.5 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 shadow-2xs disabled:opacity-40 cursor-pointer"
+            className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#d8d1e2] bg-white px-3 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:opacity-40 dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer"
             title={lang === "ru" ? "Экспорт в CSV" : "CSV eksport"}
           >
-            <Download className="w-3.5 h-3.5 text-zinc-500" />
+            <Download className="h-4 w-4" aria-hidden="true" />
             <span>{lang === "ru" ? "Экспорт" : "Eksport"}</span>
           </button>
 
@@ -757,10 +759,10 @@ export const ProductsPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setImportModalOpen(true)}
-            className="px-3 py-1.5 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#d8d1e2] bg-white px-3 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer"
             title={lang === "ru" ? "Импорт товаров" : "Import qilish"}
           >
-            <Upload className="w-3.5 h-3.5 text-zinc-500" />
+            <Upload className="h-4 w-4" aria-hidden="true" />
             <span>{lang === "ru" ? "Импорт" : "Import"}</span>
           </button>
 
@@ -769,37 +771,34 @@ export const ProductsPage: React.FC = () => {
               type="button"
               data-testid="create-product-btn"
               onClick={openCreateModal}
-              className="px-3.5 py-1.5 bg-[#18181B] hover:bg-zinc-800 text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#211b2e] bg-[#211b2e] px-3.5 text-xs font-medium text-white shadow-[0_4px_10px_rgba(33,27,46,0.2)] transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-[#f0edf4] dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="h-4 w-4" aria-hidden="true" />
               <span>{lang === "ru" ? "Добавить товар" : "Yangi mahsulot"}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Bulk Actions Banner */}
+      {/* Bulk actions */}
       {selectedProductIds.length > 0 && (
-        <div className="p-3 bg-zinc-900 text-white rounded-xl flex items-center justify-between gap-3 text-xs shadow-md animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
-            <span className="font-medium">
-              {lang === "ru"
-                ? `Выбрано: ${selectedProductIds.length}`
-                : `Tanlandi: ${selectedProductIds.length}`}
-            </span>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#dfe5ef] bg-white px-4 py-3 text-xs text-[#211b2e] dark:border-zinc-800 dark:bg-[#211b2e] dark:text-white">
+          <span className="font-medium">
+            {lang === "ru"
+              ? `Выбрано: ${selectedProductIds.length}`
+              : `Tanlandi: ${selectedProductIds.length}`}
+          </span>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() =>
                 bulkToggleStatusMutation.mutate({ ids: selectedProductIds, is_active: true })
               }
               disabled={bulkToggleStatusMutation.isPending}
-              className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] font-medium transition-colors cursor-pointer"
+              className="min-h-8 rounded-[9px] border border-[#d8d1e2] px-3 text-xs font-medium text-[#211b2e] transition-colors hover:bg-[#f7f4fa] disabled:opacity-50 dark:border-zinc-700 dark:text-white dark:hover:bg-[#30263f] cursor-pointer"
             >
-              {lang === "ru" ? "В наличие" : "Faollashtirish"}
+              {lang === "ru" ? "В продажу" : "Sotuvga qaytarish"}
             </button>
             <button
               type="button"
@@ -807,9 +806,9 @@ export const ProductsPage: React.FC = () => {
                 bulkToggleStatusMutation.mutate({ ids: selectedProductIds, is_active: false })
               }
               disabled={bulkToggleStatusMutation.isPending}
-              className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] font-medium transition-colors cursor-pointer"
+              className="min-h-8 rounded-[9px] border border-[#d8d1e2] px-3 text-xs font-medium text-[#211b2e] transition-colors hover:bg-[#f7f4fa] disabled:opacity-50 dark:border-zinc-700 dark:text-white dark:hover:bg-[#30263f] cursor-pointer"
             >
-              {lang === "ru" ? "В стоп-лист" : "To'xtatish"}
+              {lang === "ru" ? "В стоп-лист" : "Stop-listga o'tkazish"}
             </button>
             <button
               type="button"
@@ -825,15 +824,16 @@ export const ProductsPage: React.FC = () => {
                 }
               }}
               disabled={bulkDeleteMutation.isPending}
-              className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1"
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-[9px] border border-[#e8d1d6] px-3 text-xs font-medium text-[#aa3e51] transition-colors hover:bg-[#fcf4f5] disabled:opacity-50 dark:border-[#634552] dark:text-[#f1a9b7] dark:hover:bg-[#3b2a36] cursor-pointer"
             >
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="h-3.5 w-3.5" />
               <span>{lang === "ru" ? "Удалить" : "O'chirish"}</span>
             </button>
             <button
               type="button"
               onClick={() => setSelectedProductIds([])}
-              className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer ml-1"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] text-[#8b8497] transition-colors hover:bg-[#f0edf4] hover:text-[#211b2e] dark:hover:bg-[#30263f] dark:hover:text-white cursor-pointer"
+              aria-label={lang === "ru" ? "Снять выделение" : "Tanlovni bekor qilish"}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -842,25 +842,27 @@ export const ProductsPage: React.FC = () => {
       )}
 
       {/* Product table: search and category filters */}
-      <div className="bg-white rounded-xl border border-zinc-200/80 shadow-xs divide-y divide-zinc-100">
+      <div className="overflow-hidden rounded-[14px] border border-[#dfe5ef] bg-white dark:border-zinc-800 dark:bg-[#211b2e]">
         {/* Search & Category Filter Row */}
-        <div className="p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="w-full sm:max-w-md relative">
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="flex flex-col gap-3 border-b border-[#e6e3eb] px-4 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700">
+          <div className="relative w-full sm:max-w-[380px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9690a2]" aria-hidden="true" />
             <input
               type="text"
+              aria-label={lang === "ru" ? "Поиск товаров" : "Mahsulotlarni qidirish"}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={lang === "ru" ? "Поиск по названию или штрихкоду..." : "Mahsulot qidirish..."}
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
+              className="w-full rounded-[10px] border border-[#e6e3eb] bg-[#f7f6f9] py-2 pl-10 pr-3 text-xs text-[#211b2e] placeholder:text-[#9690a2] focus:border-[#211b2e] focus:bg-white focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white dark:focus:border-white"
             />
           </div>
 
-          <div className="w-full sm:w-auto flex items-center gap-2">
+          <div className="flex w-full items-center sm:w-auto">
             <select
+              aria-label={lang === "ru" ? "Категория товаров" : "Mahsulotlar kategoriyasi"}
               value={selectedCategory || ""}
               onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
-              className="w-full sm:w-48 px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
+              className="w-full rounded-[10px] border border-[#e6e3eb] bg-[#f7f6f9] px-3 py-2 text-xs text-[#211b2e] focus:border-[#211b2e] focus:bg-white focus:outline-none sm:w-48 dark:border-zinc-700 dark:bg-[#30263f] dark:text-white dark:focus:border-white"
             >
               <option value="">{lang === "ru" ? "Все категории" : "Barcha kategoriyalar"}</option>
               {categories.map((c) => (
@@ -872,50 +874,52 @@ export const ProductsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Clean Polaris Table */}
+        {/* Product list */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-50/75 text-zinc-500 font-medium border-b border-zinc-200/80 select-none">
+          <table className="w-full min-w-[900px] border-collapse text-left text-[13px]">
+            <thead className="select-none border-b border-[#e6e3eb] bg-[#f7f6f9] text-xs text-[#767084] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
-                <th className="py-2.5 px-2.5 w-8 text-center">
+                <th className="w-10 px-3 py-3 text-center">
                   <input
                     type="checkbox"
-                    checked={
-                      products.length > 0 && selectedProductIds.length === products.length
-                    }
+                    aria-label={lang === "ru" ? "Выбрать все товары" : "Barcha mahsulotlarni tanlash"}
+                    disabled={products.length === 0}
+                    checked={products.length > 0 && products.every((p) => selectedProductIds.includes(p.id))}
                     onChange={() => {
-                      if (selectedProductIds.length === products.length) {
-                        setSelectedProductIds([]);
+                      const visibleIds = new Set(products.map((p) => p.id));
+                      if (products.every((p) => selectedProductIds.includes(p.id))) {
+                        setSelectedProductIds((prev) => prev.filter((id) => !visibleIds.has(id)));
                       } else {
-                        setSelectedProductIds(products.map((p) => p.id));
+                        setSelectedProductIds((prev) => [...new Set([...prev, ...visibleIds])]);
                       }
                     }}
-                    className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer"
+                    className="cursor-pointer rounded border-[#cfc9d8] accent-[#211b2e] focus:ring-[#211b2e]"
                   />
                 </th>
-                <th className="py-2.5 px-2.5">{lang === "ru" ? "Товар" : "Tovar"}</th>
-                <th className="py-2.5 px-2.5">{lang === "ru" ? "Категория" : "Kategoriya"}</th>
-                <th className="py-2.5 px-2.5 whitespace-nowrap">{lang === "ru" ? "Цена" : "Narx"}</th>
-                <th className="py-2.5 px-2.5 whitespace-nowrap">{lang === "ru" ? "Остаток" : "Qoldiq"}</th>
-                <th className="py-2.5 px-2.5 whitespace-nowrap">{lang === "ru" ? "Статус" : "Holat"}</th>
-                <th className="py-2.5 px-2.5 text-right whitespace-nowrap">{lang === "ru" ? "Действия" : "Amallar"}</th>
+                <th className="px-3 py-3 font-medium">{lang === "ru" ? "Товар" : "Tovar"}</th>
+                <th className="px-3 py-3 font-medium">{lang === "ru" ? "Категория" : "Kategoriya"}</th>
+                <th className="whitespace-nowrap px-3 py-3 font-medium">{lang === "ru" ? "Цена" : "Narx"}</th>
+                <th className="whitespace-nowrap px-3 py-3 font-medium">{lang === "ru" ? "Остаток" : "Qoldiq"}</th>
+                <th className="whitespace-nowrap px-3 py-3 font-medium">{lang === "ru" ? "Статус" : "Holat"}</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-medium">{lang === "ru" ? "Действия" : "Amallar"}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 font-normal text-zinc-700">
+            <tbody className="divide-y divide-[#eeebf1] text-[#211b2e] dark:divide-zinc-800 dark:text-zinc-200">
               {products.map((p) => (
                 <tr
                   key={p.id}
                   onClick={() => openEditModal(p)}
-                  className={`hover:bg-zinc-50/80 transition-colors cursor-pointer group ${
-                    selectedProductIds.includes(p.id) ? "bg-zinc-50/90" : ""
-                  } ${!p.is_active || p.stock === 0 ? "opacity-80" : ""}`}
+                  className={`group cursor-pointer transition-colors hover:bg-[#faf9fc] dark:hover:bg-[#30263f] ${
+                    selectedProductIds.includes(p.id) ? "bg-[#f3f0f8] dark:bg-[#30263f]" : ""
+                  }`}
                 >
                   <td
-                    className="py-2.5 px-2.5 text-center"
+                    className="px-3 py-3.5 text-center"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <input
                       type="checkbox"
+                      aria-label={`${lang === "ru" ? "Выбрать товар" : "Mahsulotni tanlash"}: ${getProductName(p)}`}
                       checked={selectedProductIds.includes(p.id)}
                       onChange={(e) => {
                         e.stopPropagation();
@@ -925,12 +929,12 @@ export const ProductsPage: React.FC = () => {
                             : [...prev, p.id]
                         );
                       }}
-                      className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer"
+                      className="cursor-pointer rounded border-[#cfc9d8] accent-[#211b2e] focus:ring-[#211b2e]"
                     />
                   </td>
 
-                  <td className="py-2.5 px-2.5 max-w-[200px] sm:max-w-[260px] xl:max-w-[340px]">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                  <td className="max-w-[340px] px-3 py-3.5">
+                    <div className="flex min-w-0 items-center gap-3">
                       {p.primary_image_url ? (
                         <img
                           src={p.primary_image_url}
@@ -939,72 +943,64 @@ export const ProductsPage: React.FC = () => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = "/static/images/placeholder.svg";
                           }}
-                          className="w-9 h-9 rounded-lg object-cover border border-zinc-200 shrink-0 bg-white"
+                          className="h-10 w-10 shrink-0 rounded-[9px] border border-[#e6e3eb] bg-white object-cover"
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-lg bg-zinc-100 text-zinc-400 flex items-center justify-center shrink-0 border border-zinc-200/60">
-                          <Package className="w-4 h-4" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border border-[#e6e3eb] bg-[#f7f6f9] text-[#a49aaf]">
+                          <Package className="h-4 w-4" aria-hidden="true" />
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-semibold text-zinc-900 group-hover:text-black truncate max-w-full">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="min-w-0 truncate font-medium text-[#211b2e] dark:text-white" title={getProductName(p)}>
                             {getProductName(p)}
                           </span>
-                          {p.is_yespos && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.2 rounded border border-zinc-200 bg-zinc-50 text-zinc-600 shrink-0">
-                              YES POS
-                            </span>
-                          )}
                           {(p as any).has_constructor && (
                             <Link
                               to="/constructor"
                               onClick={(e) => e.stopPropagation()}
-                              className="text-[10px] text-zinc-500 hover:text-zinc-900 underline shrink-0"
+                              className="shrink-0 text-[11px] text-[#686475] underline-offset-2 hover:underline dark:text-zinc-400"
                               title={lang === "ru" ? "Конструктор" : "Konstruktor"}
                             >
-                              [Конструктор]
+                              {lang === "ru" ? "Конструктор" : "Konstruktor"}
                             </Link>
                           )}
                         </div>
-                        {p.barcode && (
-                          <div className="text-[11px] text-zinc-400 font-mono truncate">
-                            #{p.barcode}
+                        {(p.barcode || p.is_yespos) && (
+                          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-[#8b8497] dark:text-zinc-400">
+                            {p.barcode && <span className="truncate">{p.barcode}</span>}
+                            {p.barcode && p.is_yespos && <span aria-hidden="true">·</span>}
+                            {p.is_yespos && <span className="shrink-0">YES POS</span>}
                           </div>
                         )}
                       </div>
                     </div>
                   </td>
 
-                  <td className="py-2.5 px-2.5 text-zinc-500 max-w-[120px] truncate">
-                    {p.category_name || "—"}
+                  <td className="px-3 py-3.5 text-[#686475] dark:text-zinc-300">
+                    <span className="block max-w-[160px] truncate" title={getProductCategoryName(p)}>
+                      {getProductCategoryName(p)}
+                    </span>
                   </td>
 
-                  <td className="py-2.5 px-2.5 whitespace-nowrap">
-                    <div className="font-semibold text-zinc-900 tabular-nums">
+                  <td className="whitespace-nowrap px-3 py-3.5">
+                    <div className="font-semibold tabular-nums text-[#211b2e] dark:text-white">
                       {Number(p.price).toLocaleString()} UZS
                     </div>
                     {p.old_price && (
-                      <div className="text-[10px] text-zinc-400 line-through tabular-nums">
+                      <div className="mt-1 text-[11px] tabular-nums text-[#8b8497] line-through dark:text-zinc-400">
                         {Number(p.old_price).toLocaleString()} UZS
                       </div>
                     )}
                   </td>
 
-                  <td className="py-2.5 px-2.5 whitespace-nowrap">
-                    {p.stock === 0 ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FFE4E6] text-[#BE123C] border border-[#FECDD3]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48]" />
-                        0 {p.unit || "dona"}
-                      </span>
-                    ) : (
-                      <span className="text-zinc-800 font-medium tabular-nums">
-                        {p.stock} {p.unit || "dona"}
-                      </span>
-                    )}
+                  <td className="whitespace-nowrap px-3 py-3.5">
+                    <span className={`tabular-nums ${p.stock === 0 ? "text-[#8b8497] dark:text-zinc-400" : "text-[#494456] dark:text-zinc-200"}`}>
+                      {p.stock} {p.unit || "dona"}
+                    </span>
                   </td>
 
-                  <td className="py-2.5 px-2.5 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-3 py-3.5">
                     {canEditProduct ? (
                       <button
                         type="button"
@@ -1013,47 +1009,42 @@ export const ProductsPage: React.FC = () => {
                           toggleStatusMutation.mutate({ id: p.id, is_active: !p.is_active });
                         }}
                         disabled={toggleStatusMutation.isPending}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-colors cursor-pointer border ${
-                          p.is_active
-                            ? "bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0]"
-                            : "bg-zinc-100 text-zinc-600 border-zinc-200"
-                        }`}
+                        title={p.is_active
+                          ? (lang === "ru" ? "Переместить в стоп-лист" : "Stop-listga o'tkazish")
+                          : (lang === "ru" ? "Вернуть в продажу" : "Sotuvga qaytarish")}
+                        className="inline-flex min-h-8 items-center gap-2 rounded-[8px] px-2 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f0edf4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer"
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            p.is_active ? "bg-[#16A34A]" : "bg-zinc-400"
+                          className={`h-2 w-2 shrink-0 rounded-full ${
+                            p.is_active ? "bg-[#a3e635]" : "bg-[#a49aaf]"
                           }`}
+                          aria-hidden="true"
                         />
                         <span>
                           {p.is_active
-                            ? (lang === "ru" ? "Активен" : "Faol")
-                            : (lang === "ru" ? "Черновик" : "Qoralama")}
+                            ? (lang === "ru" ? "В продаже" : "Sotuvda")
+                            : (lang === "ru" ? "Стоп-лист" : "Stop-list")}
                         </span>
                       </button>
                     ) : (
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                          p.is_active
-                            ? "bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0]"
-                            : "bg-zinc-100 text-zinc-600 border-zinc-200"
-                        }`}
-                      >
+                      <span className="inline-flex items-center gap-2 text-xs font-medium text-[#494456] dark:text-zinc-200">
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            p.is_active ? "bg-[#16A34A]" : "bg-zinc-400"
+                          className={`h-2 w-2 shrink-0 rounded-full ${
+                            p.is_active ? "bg-[#a3e635]" : "bg-[#a49aaf]"
                           }`}
+                          aria-hidden="true"
                         />
                         <span>
                           {p.is_active
-                            ? (lang === "ru" ? "Активен" : "Faol")
-                            : (lang === "ru" ? "Черновик" : "Qoralama")}
+                            ? (lang === "ru" ? "В продаже" : "Sotuvda")
+                            : (lang === "ru" ? "Стоп-лист" : "Stop-list")}
                         </span>
                       </span>
                     )}
                   </td>
 
-                  <td className="py-2.5 px-2.5 text-right whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-1">
+                  <td className="whitespace-nowrap px-3 py-3.5 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
                       {canEditProduct && (
                         <button
                           type="button"
@@ -1061,10 +1052,11 @@ export const ProductsPage: React.FC = () => {
                             e.stopPropagation();
                             openEditModal(p);
                           }}
-                          className="p-1 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] text-[#8b8497] transition-colors hover:bg-[#f0edf4] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-[#30263f] dark:hover:text-white cursor-pointer"
                           title={lang === "ru" ? "Редактировать" : "Tahrirlash"}
+                          aria-label={lang === "ru" ? "Редактировать товар" : "Mahsulotni tahrirlash"}
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
+                          <Edit2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                       )}
                       {canDeleteProduct && (
@@ -1082,10 +1074,11 @@ export const ProductsPage: React.FC = () => {
                               deleteMutation.mutate(p.id);
                             }
                           }}
-                          className="p-1 rounded hover:bg-rose-50 text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] text-[#8b8497] transition-colors hover:bg-[#fcf4f5] hover:text-[#aa3e51] focus-visible:outline-2 focus-visible:outline-[#aa3e51] dark:hover:bg-[#3b2a36] dark:hover:text-[#f1a9b7] cursor-pointer"
                           title={lang === "ru" ? "Удалить" : "O'chirish"}
+                          aria-label={lang === "ru" ? "Удалить товар" : "Mahsulotni o'chirish"}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                       )}
                     </div>
@@ -1093,10 +1086,12 @@ export const ProductsPage: React.FC = () => {
                 </tr>
               ))}
 
-              {products.length === 0 && !isLoading && (
+              {products.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-zinc-400 text-xs">
-                    {lang === "ru" ? "Товары не найдены" : "Mahsulotlar topilmadi"}
+                  <td colSpan={7} className="px-4 py-14 text-center text-sm text-[#767084] dark:text-zinc-400">
+                    {isLoading
+                      ? (lang === "ru" ? "Загрузка товаров..." : "Mahsulotlar yuklanmoqda...")
+                      : (lang === "ru" ? "Товары не найдены" : "Mahsulotlar topilmadi")}
                   </td>
                 </tr>
               )}
