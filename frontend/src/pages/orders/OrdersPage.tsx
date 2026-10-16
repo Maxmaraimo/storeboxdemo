@@ -283,81 +283,25 @@ export const OrdersPage: React.FC = () => {
 
   const draftsList = draftOrders.filter((d) => d.type === "draft");
   const abandonedList = draftOrders.filter((d) => d.type === "abandoned");
+  const createOrderButton = (
+    <button
+      type="button"
+      onClick={() => setShowCreateModal(true)}
+      className="px-3.5 py-2 rounded-[8px] bg-[#202223] hover:bg-black text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+    >
+      <Plus className="w-4 h-4" />
+      <span>Создать заказ</span>
+    </button>
+  );
 
   return (
     <div className="space-y-5">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-[#202223] dark:text-white tracking-tight">
-              {urlTab === "drafts"
-                ? lang === "uz"
-                  ? "Qoralamalar (Черновики)"
-                  : "Черновики заказов"
-                : urlTab === "abandoned"
-                ? lang === "uz"
-                  ? "Tugallanmagan xaridlar"
-                  : "Незавершенные оформления заказов"
-                : t("orders_list_title") || "Заказы"}
-            </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#bbf7d0] text-[#14532d]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
-              Live
-            </span>
-          </div>
-          <p className="text-xs text-[#6d7175] mt-0.5">
-            {urlTab === "drafts"
-              ? "Создавайте заказы вручную по телефону или в мессенджере и отправляйте клиенту счет на оплату"
-              : urlTab === "abandoned"
-              ? "Корзины покупателей, которые перешли к оплате, но не завершили оформление заказа"
-              : t("orders_list_subtitle") || "Управление заказами интернет-магазина и Telegram Mini App"}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Order sections share the dashboard's segmented control. */}
-          <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Разделы заказов" : "Buyurtma bo'limlari"}>
-            <button
-              type="button"
-              aria-pressed={!urlTab}
-              onClick={() => setSearchParams({})}
-              className={`storebox-segmented-tab ${!urlTab ? "is-active" : ""}`}
-            >
-              Все заказы ({counts.all})
-            </button>
-            <button
-              type="button"
-              aria-pressed={urlTab === "drafts"}
-              onClick={() => setSearchParams({ tab: "drafts" })}
-              className={`storebox-segmented-tab ${urlTab === "drafts" ? "is-active" : ""}`}
-            >
-              Черновики ({draftsList.length})
-            </button>
-            <button
-              type="button"
-              aria-pressed={urlTab === "abandoned"}
-              onClick={() => setSearchParams({ tab: "abandoned" })}
-              className={`storebox-segmented-tab ${urlTab === "abandoned" ? "is-active" : ""}`}
-            >
-              Брошенные корзины ({abandonedList.length})
-            </button>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(true)}
-            className="px-3.5 py-2 rounded-[8px] bg-[#202223] hover:bg-black text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Создать заказ</span>
-          </button>
-        </div>
-      </div>
-
       {/* DRAFTS OR ABANDONED CHECKOUTS VIEW */}
       {(urlTab === "drafts" || urlTab === "abandoned") ? (
         <div className="bg-white dark:bg-[#18181B] rounded-[12px] border border-[#e1e3e5] dark:border-zinc-800 shadow-2xs overflow-hidden">
+          <div className="flex justify-end px-4 py-3 border-b border-[#e3e5e7] dark:border-zinc-800">
+            {createOrderButton}
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-[#f6f6f7] dark:bg-zinc-900 text-[#6d7175] font-semibold border-b border-[#e3e5e7] dark:border-zinc-800 text-[11px]">
@@ -450,10 +394,13 @@ export const OrdersPage: React.FC = () => {
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
             </div>
-            <div className="text-xs font-medium text-slate-500">
-              {t("showing_orders_format")
-                ? t("showing_orders_format").replace("{count}", String(orders.length))
-                : `Показано заказов: ${orders.length}`}
+            <div className="flex items-center gap-3 ml-auto">
+              <div className="text-xs font-medium text-slate-500">
+                {t("showing_orders_format")
+                  ? t("showing_orders_format").replace("{count}", String(orders.length))
+                  : `Показано заказов: ${orders.length}`}
+              </div>
+              {createOrderButton}
             </div>
           </div>
 
