@@ -4,36 +4,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Search,
   ShoppingBag,
-  BellRing,
-  Truck,
-  Wallet,
-  Clock,
-  CheckCircle,
-  XCircle,
   Send,
-  Globe,
-  ChevronRight,
   X,
-  MapPin,
   ExternalLink,
   Printer,
-  Phone,
   Maximize2,
   Minimize2,
   Eye,
-  AlertTriangle,
-  Building2,
-  ChefHat,
-  Sliders,
-  Flame,
-  Plus,
-  FileEdit,
-  ShoppingCart
+  Plus
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
-import { Order } from "../../types";
+import { Order, OrderItem } from "../../types";
 
 interface DraftOrderItem {
   id: string;
@@ -234,6 +217,43 @@ export const OrdersPage: React.FC = () => {
         {getOrderStatusLabel(st)}
       </span>
     );
+  };
+
+  const getOrderItemDetails = (item: OrderItem): string[] => {
+    const options = (item.custom_options || {}) as Record<string, any>;
+    const details: string[] = [];
+    const choiceName = (choice: any) =>
+      typeof choice === "string"
+        ? choice
+        : [choice?.group_name, choice?.name || choice?.name_ru || choice?.name_uz]
+            .filter(Boolean)
+            .join(": ");
+    const appendChoices = (choices: any[] | undefined, prefix = "") => {
+      if (Array.isArray(choices)) {
+        choices.forEach((choice) => {
+          const name = choiceName(choice);
+          if (name) details.push(`${prefix}${name}${choice?.count > 1 ? ` × ${choice.count}` : ""}`);
+        });
+      }
+    };
+
+    if (options.style === "spicy") details.push("Sriracha");
+    if (options.style === "classic") details.push(lang === "ru" ? "Классический" : lang === "en" ? "Classic" : "Klassik");
+    if (options.crust) details.push(`${lang === "ru" ? "Основа" : lang === "en" ? "Base" : "Asos"}: ${choiceName(options.crust)}`);
+    appendChoices(options.single_choices);
+    appendChoices(options.multiple_choices);
+    appendChoices(options.quantity_choices, "+ ");
+    appendChoices(options.removed_ingredients, "− ");
+    if (options.bun) details.push(`${lang === "ru" ? "Булочка" : lang === "en" ? "Bun" : "Bulochka"}: ${choiceName(options.bun)}`);
+    appendChoices(options.patties);
+    appendChoices(options.cheeses);
+    appendChoices(options.toppings, "+ ");
+    appendChoices(options.sauces);
+
+    if (!details.length && (item.custom_summary || item.variation_name)) {
+      details.push(...(item.custom_summary || item.variation_name || "").split("•").map((part) => part.trim()).filter(Boolean));
+    }
+    return details;
   };
 
   const tabs = [
@@ -571,587 +591,203 @@ export const OrdersPage: React.FC = () => {
         </div>
       )}
 
-      {/* FULL / SLIDE-OVER ORDER DETAIL MODAL */}
+      {/* ORDER DETAIL MODAL */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#17131f]/60 p-3 sm:p-6">
           <div
-            className={`w-full ${
-              isWideModal ? "max-w-5xl" : "max-w-xl"
-            } bg-white dark:bg-[#18181b] border border-slate-200/80 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] transition-all duration-200`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="selected-order-title"
+            className={(isWideModal ? "max-w-4xl" : "max-w-2xl") + " flex max-h-[92vh] w-full flex-col overflow-hidden rounded-[16px] border border-[#e6e3eb] bg-white shadow-2xl dark:border-zinc-700 dark:bg-[#211b2e]"}
           >
-            {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-4 bg-slate-50/70 dark:bg-zinc-900/50">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <span className="font-semibold text-xl text-neutral-900 dark:text-white">
-                  #{selectedOrder.order_number}
-                </span>
-                <span
-                  className={`px-2.5 py-0.5 rounded-md text-xs font-medium border ${
-                    selectedOrder.status === "COMPLETED"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300"
-                      : selectedOrder.status === "CANCELLED"
-                      ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800"
-                      : selectedOrder.status === "IN_DELIVERY"
-                      ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800"
-                      : selectedOrder.status === "READY"
-                      ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800"
-                      : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
-                  }`}
-                >
-                  {getOrderStatusLabel(selectedOrder.status) || selectedOrder.status_display}
-                </span>
-                {selectedOrder.source === "TMA" ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                    <Send className="w-3 h-3" /> Telegram Bot
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                    <Globe className="w-3 h-3" /> {t("website_channel") || "Veb-sayt"}
-                  </span>
-                )}
-                <span className="text-xs text-slate-400 hidden sm:inline">
-                  {new Date(selectedOrder.created_at).toLocaleString()}
-                </span>
+            <div className="flex items-start justify-between gap-4 border-b border-[#e6e3eb] px-5 py-4 dark:border-zinc-700 sm:px-6">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                  <h2 id="selected-order-title" className="text-lg font-semibold text-[#211b2e] dark:text-white">
+                    #{selectedOrder.order_number}
+                  </h2>
+                  {getOrderStatusBadge(selectedOrder.status)}
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-[#767084] dark:text-zinc-400">
+                  <span>{new Date(selectedOrder.created_at).toLocaleString(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "uz-UZ")}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{selectedOrder.source === "TMA" ? "Telegram Mini App" : t("website_channel") || "Veb-sayt"}</span>
+                </div>
               </div>
-
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/orders/${selectedOrder.id}`)}
-                  title={t("open_full_page") || "To`liq sahifada ochish"}
-                  className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors flex items-center gap-1.5 text-xs font-bold"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span className="hidden md:inline">{t("open_full_page") || "To`liq sahifa"}</span>
+              <div className="flex shrink-0 items-center gap-1">
+                <button type="button" onClick={() => navigate("/orders/" + selectedOrder.id)} title={t("open_full_page") || "Open full page"} aria-label={t("open_full_page") || "Open full page"} className="rounded-lg p-2 text-[#767084] hover:bg-[#f4f2f6] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white">
+                  <ExternalLink className="h-4 w-4" />
                 </button>
-                <button
-                  type="button"
-                  title={t("print_receipt") || "Chek chiqarish"}
-                  onClick={() => window.print()}
-                  className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors flex items-center gap-1.5 text-xs font-bold"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span className="hidden md:inline">{t("print_receipt") || "Chop etish"}</span>
+                <button type="button" onClick={() => window.print()} title={t("print_receipt") || "Print receipt"} aria-label={t("print_receipt") || "Print receipt"} className="rounded-lg p-2 text-[#767084] hover:bg-[#f4f2f6] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white">
+                  <Printer className="h-4 w-4" />
                 </button>
-                <button
-                  type="button"
-                  title={isWideModal ? (t("collapse") || "Kichraytirish") : (t("expand") || "Kengaytirish")}
-                  onClick={() => setIsWideModal(!isWideModal)}
-                  className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors hidden sm:flex"
-                >
-                  {isWideModal ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                <button type="button" onClick={() => setIsWideModal(!isWideModal)} title={isWideModal ? t("collapse") : t("expand")} aria-label={isWideModal ? t("collapse") : t("expand")} className="hidden rounded-lg p-2 text-[#767084] hover:bg-[#f4f2f6] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white sm:inline-flex">
+                  {isWideModal ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedOrder(null)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
+                <button type="button" onClick={() => { setSelectedOrder(null); setConfirmCancelOrderId(null); }} title={lang === "ru" ? "Закрыть" : lang === "en" ? "Close" : "Yopish"} aria-label={lang === "ru" ? "Закрыть" : lang === "en" ? "Close" : "Yopish"} className="rounded-lg p-2 text-[#767084] hover:bg-[#f4f2f6] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white">
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1">
-              <div className={`grid grid-cols-1 ${isWideModal ? "lg:grid-cols-12" : ""} gap-6`}>
-                {/* Left Column: Products & Financials */}
-                <div className={`${isWideModal ? "lg:col-span-7" : ""} space-y-6`}>
-                  {/* Products List */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold tracking-wider uppercase text-slate-400">
-                        {t("order_contents") || "Buyurtma tarkibi"} ({selectedOrder.items?.length || 0})
-                      </h4>
-                      <span className="text-xs font-bold text-slate-500">
-                        {selectedOrder.items?.reduce((acc, it) => acc + it.quantity, 0) || 0} {t("unit_pcs") || "dona"}
-                      </span>
-                    </div>
-                    <div className="border border-slate-100 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
-                      {selectedOrder.items?.map((item) => {
-                        const opts = (item.custom_options || {}) as any;
-                        const isCustom = Boolean(
-                          item.custom_image_url ||
-                          (item.custom_options && Object.keys(item.custom_options).length > 0) ||
-                          item.custom_summary ||
-                          (item.variation_name && (item.variation_name.includes("•") || item.variation_name.includes("retsept") || item.variation_name.includes("рецепт"))) ||
-                          (item.product_name && (item.product_name.includes("Конструктор") || item.product_name.includes("Custom")))
-                        );
-
-                        if (isCustom) {
-                          return (
-                            <div
-                              key={item.id}
-                              className="p-3.5 sm:p-4 bg-gradient-to-r from-amber-500/[0.06] via-orange-500/[0.02] to-transparent dark:from-amber-500/[0.08] border-l-4 border-l-amber-500 space-y-3"
-                            >
-                              <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
-                                <div className="flex items-start gap-3 sm:gap-4 flex-1">
-                                  {/* Composite Photo or Image */}
-                                  <div
-                                    onClick={() => item.product_image && setPreviewImage(item.product_image)}
-                                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-amber-500/10 dark:bg-zinc-800 border-2 border-amber-300/80 dark:border-amber-500/30 p-1 flex flex-col items-center justify-center shrink-0 overflow-hidden relative group cursor-pointer shadow-xs hover:border-amber-400 transition-colors"
-                                    title="Нажмите для просмотра фото"
-                                  >
-                                    {item.product_image ? (
-                                      <img
-                                        src={item.product_image}
-                                        alt={item.product_name}
-                                        className="w-full h-full object-contain filter drop-shadow-md group-hover:scale-105 transition-transform duration-200"
-                                      />
-                                    ) : (
-                                      <ShoppingBag className="w-8 h-8 text-amber-500" />
-                                    )}
-                                    <span className="absolute bottom-1 inset-x-1 bg-black/75 backdrop-blur-xs text-white text-[8px] font-bold py-0.5 rounded text-center opacity-90 group-hover:opacity-100 flex items-center justify-center gap-0.5">
-                                      <Eye className="w-2.5 h-2.5" /> Фото
-                                    </span>
-                                  </div>
-
-                                  {/* Item Info & Ingredients */}
-                                  <div className="space-y-2 flex-1 min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">
-                                        {item.product_name}
-                                      </span>
-                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white shadow-2xs">
-                                        <Sliders className="w-3 h-3 stroke-[2.5]" /> Кастомный рецепт
-                                      </span>
-                                    </div>
-
-                                    {/* Structured Ingredients / Recipe for Kitchen Staff */}
-                                    <div className="bg-white/95 dark:bg-zinc-800/95 rounded-xl p-2.5 sm:p-3 border border-amber-200/80 dark:border-amber-800/40 space-y-2 text-xs shadow-2xs">
-                                      <div className="flex items-center justify-between border-b border-amber-100 dark:border-white/5 pb-1">
-                                        <div className="flex items-center gap-1.5 text-[10px] font-black text-amber-800 dark:text-amber-300 uppercase tracking-wider">
-                                          <ChefHat className="w-3.5 h-3.5 text-amber-600" />
-                                          <span>Состав и модификаторы для кухни:</span>
-                                        </div>
-                                      </div>
-
-                                      {/* 1. Style / Crust */}
-                                      {(opts.style || opts.crust) && (
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                          {opts.style === 'spicy' && (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                              <Flame className="w-3 h-3 text-rose-500" />
-                                              Острый (Sriracha)
-                                            </span>
-                                          )}
-                                          {opts.style === 'classic' && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                              Классический
-                                            </span>
-                                          )}
-                                          {opts.crust && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                              Основа: {opts.crust}
-                                            </span>
-                                          )}
-                                        </div>
-                                      )}
-
-                                      {/* 2. Single Choices & Multiple Choices */}
-                                      {((opts.single_choices && opts.single_choices.length > 0) || (opts.multiple_choices && opts.multiple_choices.length > 0)) && (
-                                        <div className="flex flex-wrap gap-1">
-                                          {[...(opts.single_choices || []), ...(opts.multiple_choices || [])].map((sc: any, scIdx: number) => {
-                                            const text = typeof sc === 'string' ? sc : `${sc.group_name ? sc.group_name + ': ' : ''}${sc.name}`;
-                                            return (
-                                              <span key={scIdx} className="bg-amber-50 dark:bg-zinc-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded-md font-semibold text-[10px] border border-amber-200/70">
-                                                {text}
-                                              </span>
-                                            );
-                                          })}
-                                        </div>
-                                      )}
-
-                                      {/* 3. Added Toppings (Quantity Choices) */}
-                                      {opts.quantity_choices && opts.quantity_choices.length > 0 && (
-                                        <div className="space-y-1">
-                                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Добавлено к блюду:</div>
-                                          <div className="flex flex-wrap gap-1">
-                                            {opts.quantity_choices.map((qc: any, qcIdx: number) => (
-                                              <span key={qcIdx} className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-zinc-700 text-emerald-800 dark:text-emerald-300 border border-emerald-200/70">
-                                                + {qc.name} ({qc.count}×)
-                                              </span>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {/* 4. Removed Ingredients */}
-                                      {opts.removed_ingredients && opts.removed_ingredients.length > 0 && (
-                                        <div className="space-y-1">
-                                          <div className="text-[10px] font-bold text-rose-500 uppercase tracking-tight">Убрать / Исключить:</div>
-                                          <div className="flex flex-wrap gap-1">
-                                            {opts.removed_ingredients.map((rem: any, remIdx: number) => {
-                                              const remText = typeof rem === 'string' ? rem : (rem.name || rem.name_ru || rem.name_uz);
-                                              return (
-                                                <span key={remIdx} className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/70">
-                                                  {remText.startsWith('-') ? remText : `- ${remText}`}
-                                                </span>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {/* 5. Legacy 3D Burger Options */}
-                                      {opts.bun && (
-                                        <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                                          Булочка: <b>{opts.bun.name}</b>
-                                        </div>
-                                      )}
-                                      {opts.patties && opts.patties.length > 0 && (
-                                        <div className="flex flex-wrap gap-1">
-                                          {opts.patties.map((p: any, idx: number) => (
-                                            <span key={idx} className="bg-amber-50 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-700 border border-amber-200">
-                                              {p.count > 1 ? `${p.count}× ` : ''}{p.name}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
-                                      {opts.cheeses && opts.cheeses.length > 0 && (
-                                        <div className="flex flex-wrap gap-1">
-                                          {opts.cheeses.map((c: any, idx: number) => (
-                                            <span key={idx} className="bg-amber-50 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-700 border border-amber-200">
-                                              {c.count > 1 ? `${c.count}× ` : ''}{c.name}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
-                                      {opts.toppings && opts.toppings.length > 0 && (
-                                        <div className="flex flex-wrap gap-1">
-                                          {opts.toppings.map((t: any, idx: number) => (
-                                            <span key={idx} className="bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] font-bold text-emerald-800 border border-emerald-200">
-                                              + {t.count > 1 ? `${t.count}× ` : ''}{t.name}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
-                                      {opts.sauces && opts.sauces.length > 0 && (
-                                        <div className="flex flex-wrap gap-1">
-                                          {opts.sauces.map((s: any, idx: number) => (
-                                            <span key={idx} className="bg-rose-50 px-1.5 py-0.5 rounded text-[10px] font-semibold text-rose-700 border border-rose-200">
-                                              {s.name}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
-
-                                      {/* 6. Fallback string if structured arrays not populated */}
-                                      {!opts.quantity_choices?.length && !opts.single_choices?.length && !opts.removed_ingredients?.length && !opts.bun && (item.custom_summary || item.variation_name) && (
-                                        <div className="flex flex-wrap gap-1">
-                                          {(item.custom_summary || item.variation_name).split('•').map((part: string, idx: number) => (
-                                            <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-zinc-700 text-slate-800 dark:text-slate-200 border border-amber-200 dark:border-amber-800/60 shadow-2xs">
-                                              {part.trim()}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    <div className="text-xs text-slate-500 font-mono font-bold">
-                                      {item.quantity} шт. × {Number(item.unit_price).toLocaleString()} UZS
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="font-black text-slate-900 dark:text-white text-base sm:text-lg whitespace-nowrap self-end sm:self-center font-mono">
-                                  {Number(item.total_price).toLocaleString()} UZS
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <div
-                            key={item.id}
-                            className="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-base shrink-0 overflow-hidden border border-slate-200/60 dark:border-white/10">
-                                {item.product_image ? (
-                                  <img src={item.product_image} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  <ShoppingBag className="w-5 h-5 text-neutral-400" />
-                                )}
-                              </div>
-                              <div>
-                                <div className="font-bold text-slate-900 dark:text-white text-sm">
-                                  {item.product_name}
-                                </div>
-                                {item.variation_name && (
-                                  <div className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5 line-clamp-2">
-                                    {item.variation_name}
-                                  </div>
-                                )}
-                                <div className="text-xs text-slate-400 mt-1">
-                                  {item.quantity} × {Number(item.unit_price).toLocaleString()} UZS
-                                </div>
-                              </div>
-                            </div>
-                            <div className="font-bold text-slate-900 dark:text-white text-sm whitespace-nowrap font-mono">
-                              {Number(item.total_price).toLocaleString()} UZS
-                            </div>
+            <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+              <section aria-label={t("order_contents") || "Order items"}>
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-[#211b2e] dark:text-white">{t("order_contents") || "Order items"}</h3>
+                  <span className="text-xs tabular-nums text-[#767084] dark:text-zinc-400">
+                    {selectedOrder.items?.reduce((count, item) => count + item.quantity, 0) || 0} {t("unit_pcs") || "pcs"}
+                  </span>
+                </div>
+                <div className="mt-3 divide-y divide-[#ebe8ef] border-y border-[#ebe8ef] dark:divide-zinc-700 dark:border-zinc-700">
+                  {selectedOrder.items?.map((item) => {
+                    const itemImage = item.custom_image_url || item.product_image;
+                    const details = getOrderItemDetails(item);
+                    return (
+                      <div key={item.id} className="flex items-start gap-3 py-3">
+                        {itemImage ? (
+                          <button type="button" onClick={() => setPreviewImage(itemImage)} className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-[#e6e3eb] bg-[#f7f6f9] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:border-zinc-700" aria-label={lang === "ru" ? "Показать фото товара" : lang === "en" ? "View product image" : "Mahsulot rasmini ko'rish"}>
+                            <img src={itemImage} alt="" className="h-full w-full object-cover" />
+                          </button>
+                        ) : (
+                          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#e6e3eb] bg-[#f7f6f9] text-[#9690a2] dark:border-zinc-700 dark:bg-zinc-800">
+                            <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-[#211b2e] dark:text-white">{item.product_name}</div>
+                          {details.length > 0 && (
+                            <div className="mt-0.5 text-xs leading-5 text-[#767084] dark:text-zinc-400">{details.join(" · ")}</div>
+                          )}
+                          <div className="mt-1 text-xs tabular-nums text-[#767084] dark:text-zinc-400">
+                            {item.quantity} × {Number(item.unit_price).toLocaleString()} UZS
                           </div>
-                        );
-                      })}
-                      {(!selectedOrder.items || selectedOrder.items.length === 0) && (
-                        <div className="p-6 text-center text-xs text-slate-400">
-                          Tovarlar ko`rsatilmagan
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Financial Breakdown Card */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 space-y-2.5 text-xs">
-                    <div className="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-3">
-                      {t("financial_report") || "Moliyaviy hisobot"}
-                    </div>
-                    <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                      <span>{t("delivery_service_fee") || "Yetkazib berish xizmati:"}</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">
-                        {Number(selectedOrder.delivery_fee || 0).toLocaleString()} UZS
-                      </span>
-                    </div>
-                    {Number(selectedOrder.discount_amount) > 0 && (
-                      <div className="flex justify-between text-rose-600 dark:text-rose-400">
-                        <span>{t("discount_label") || "Chegirma:"}</span>
-                        <span className="font-bold">
-                          -{Number(selectedOrder.discount_amount).toLocaleString()} UZS
-                        </span>
+                        <div className="shrink-0 pt-0.5 text-sm font-medium tabular-nums text-[#211b2e] dark:text-white">
+                          {Number(item.total_price).toLocaleString()} UZS
+                        </div>
                       </div>
-                    )}
-                    <div className="flex justify-between items-center text-base sm:text-lg font-bold pt-3 border-t border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
-                      <span>{t("total_payment") || "Jami to'lov:"}</span>
-                      <span className="text-slate-900 dark:text-white">
-                        {Number(selectedOrder.total_amount).toLocaleString()} UZS
-                      </span>
+                    );
+                  })}
+                  {(!selectedOrder.items || selectedOrder.items.length === 0) && (
+                    <p className="py-5 text-sm text-[#767084] dark:text-zinc-400">
+                      {lang === "ru" ? "Товары не указаны" : lang === "en" ? "No items listed" : "Mahsulotlar ko'rsatilmagan"}
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              <section className="border-t border-[#ebe8ef] pt-5 dark:border-zinc-700">
+                <h3 className="text-sm font-semibold text-[#211b2e] dark:text-white">
+                  {lang === "ru" ? "Оплата" : lang === "en" ? "Payment" : "To'lov"}
+                </h3>
+                <div className="mt-3 grid gap-x-8 gap-y-3 text-xs sm:grid-cols-2">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[#767084] dark:text-zinc-400">{t("payment_method_label") || "Payment method"}</span>
+                    <span className="text-right font-medium text-[#211b2e] dark:text-white">{selectedOrder.payment_method_display || (lang === "ru" ? "Наличные" : lang === "en" ? "Cash" : "Naqd pul")}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[#767084] dark:text-zinc-400">{t("payment_status_label") || "Payment status"}</span>
+                    <span className="text-right font-medium text-[#211b2e] dark:text-white">{selectedOrder.payment_status_display || (lang === "ru" ? "Ожидается" : lang === "en" ? "Pending" : "Kutilmoqda")}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[#767084] dark:text-zinc-400">{t("delivery_service_fee") || "Delivery"}</span>
+                    <span className="font-medium tabular-nums text-[#211b2e] dark:text-white">{Number(selectedOrder.delivery_fee || 0).toLocaleString()} UZS</span>
+                  </div>
+                  {Number(selectedOrder.discount_amount) > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-[#767084] dark:text-zinc-400">{t("discount_label") || "Discount"}</span>
+                      <span className="font-medium tabular-nums text-[#211b2e] dark:text-white">−{Number(selectedOrder.discount_amount).toLocaleString()} UZS</span>
                     </div>
-                    <div className="pt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] font-sans border-t border-slate-200/60 dark:border-white/5 text-slate-500">
-                      <span>{t("payment_method_label") || "To'lov usuli:"} <b>{selectedOrder.payment_method_display || (t("cash") || "Naqd pul")}</b></span>
-                      <span>{t("payment_status_label") || "Holati:"} <b className="text-slate-800 dark:text-slate-200">{selectedOrder.payment_status_display || (t("pending") || "Kutilmoqda")}</b></span>
-                    </div>
+                  )}
+                  <div className="flex items-baseline justify-between gap-3 border-t border-[#ebe8ef] pt-3 dark:border-zinc-700 sm:col-span-2">
+                    <span className="font-medium text-[#494456] dark:text-zinc-300">{t("total_payment") || "Total"}</span>
+                    <span className="text-base font-semibold tabular-nums text-[#211b2e] dark:text-white">{Number(selectedOrder.total_amount).toLocaleString()} UZS</span>
                   </div>
                 </div>
+              </section>
 
-                {/* Right Column: Actions, Customer & Delivery Map */}
-                <div className={`${isWideModal ? "lg:col-span-5" : ""} space-y-5`}>
-                  {/* Status Progression Buttons */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-white/10 space-y-2.5">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                      {t("change_status_title") || "Holatni o'zgartirish"}
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "PROCESSING" })}
-                        className="py-2.5 px-3 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Clock className="w-3.5 h-3.5" /> {t("to_processing") || "Jarayonga"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "READY" })}
-                        className="py-2.5 px-3 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" /> {t("ready") || "Tayyor"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "IN_DELIVERY" })}
-                        className="py-2.5 px-3 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Truck className="w-3.5 h-3.5" /> {t("in_courier") || "Kuryerda"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "COMPLETED" })}
-                        className="py-2.5 px-3 rounded-lg bg-emerald-600 text-white font-medium text-xs hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" /> {t("delivered") || "Yetkazildi"}
-                      </button>
-                      {confirmCancelOrderId === selectedOrder.id ? (
-                        <div className="col-span-2 p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-2">
-                          <div className="text-[11px] font-bold text-rose-800">
-                            {lang === "ru"
-                              ? "Подтверждаете отмену заказа? Товары вернутся на склад."
-                              : lang === "en"
-                              ? "Confirm order cancellation? Items will return to stock."
-                              : "Buyurtmani bekor qilishni tasdiqlaysizmi? Mahsulotlar qoldiqqa qaytariladi."}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "CANCELLED" });
-                                setConfirmCancelOrderId(null);
-                              }}
-                              className="flex-1 py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer"
-                            >
-                              {lang === "ru" ? "Да, отменить заказ" : lang === "en" ? "Yes, cancel order" : "Ha, bekor qilish"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setConfirmCancelOrderId(null)}
-                              className="py-1.5 px-3 rounded-lg bg-white border border-rose-200 text-rose-700 hover:bg-rose-100 font-semibold text-xs transition-colors cursor-pointer"
-                            >
-                              {lang === "ru" ? "Нет" : lang === "en" ? "No" : "Yo'q"}
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmCancelOrderId(selectedOrder.id)}
-                          className="py-2.5 px-3 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs col-span-2 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <XCircle className="w-3.5 h-3.5" /> {t("cancel_return_stock_btn") || "Bekor qilish (Qoldiqni qaytarish)"}
-                        </button>
-                      )}
-                    </div>
+              <div className="grid gap-5 border-t border-[#ebe8ef] pt-5 dark:border-zinc-700 sm:grid-cols-2 sm:gap-8">
+                <section>
+                  <h3 className="text-sm font-semibold text-[#211b2e] dark:text-white">{t("customer_details_title") || "Customer"}</h3>
+                  <p className="mt-2 text-sm font-medium text-[#211b2e] dark:text-white">{selectedOrder.customer_name}</p>
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                    {selectedOrder.customer_phone && (
+                      <a href={"tel:" + selectedOrder.customer_phone} className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{selectedOrder.customer_phone}</a>
+                    )}
+                    {selectedOrder.customer_phone && (
+                      <a href={"https://t.me/+" + selectedOrder.customer_phone.replace(/\D/g, "")} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">Telegram</a>
+                    )}
                   </div>
-
-                  {/* Branch Information */}
-                  <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-amber-500" />
-                        <span>{t("branch_assigned") || "Biriktirilgan filial"}</span>
-                      </div>
+                  <h3 className="mt-5 text-sm font-semibold text-[#211b2e] dark:text-white">{t("delivery_address_title") || "Delivery address"}</h3>
+                  <p className="mt-2 text-sm leading-5 text-[#494456] dark:text-zinc-300">
+                    {selectedOrder.delivery_address || t("address_not_specified")}
+                  </p>
+                  {selectedOrder.delivery_lat != null && selectedOrder.delivery_lng != null && (
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                      <a href={"https://yandex.uz/maps/?rtext=~" + selectedOrder.delivery_lat + "," + selectedOrder.delivery_lng + "&rtt=auto"} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{t("yandex_navigator") || "Yandex Maps"}</a>
+                      <a href={"https://maps.google.com/?q=" + selectedOrder.delivery_lat + "," + selectedOrder.delivery_lng} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">Google Maps</a>
+                    </div>
+                  )}
+                </section>
+                <section className="border-t border-[#ebe8ef] pt-5 dark:border-zinc-700 sm:border-l sm:border-t-0 sm:py-0 sm:pl-8">
+                  <h3 className="text-sm font-semibold text-[#211b2e] dark:text-white">{t("branch_assigned") || "Branch"}</h3>
+                  {selectedOrder.branch_name ? (
+                    <>
+                      <p className="mt-2 text-sm font-medium text-[#211b2e] dark:text-white">{selectedOrder.branch_name}</p>
+                      {selectedOrder.branch_address && <p className="mt-1 text-xs leading-5 text-[#767084] dark:text-zinc-400">{selectedOrder.branch_address}</p>}
+                      {selectedOrder.branch_phone && (
+                        <a href={"tel:" + selectedOrder.branch_phone} className="mt-2 inline-block text-xs text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{selectedOrder.branch_phone}</a>
+                      )}
                       {selectedOrder.branch?.is_accepting_orders !== undefined && (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${selectedOrder.branch?.is_accepting_orders ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
-                          {selectedOrder.branch?.is_accepting_orders ? (t("branch_open") || "Ochiq") : (t("branch_closed") || "Yopiq")}
-                        </span>
+                        <p className="mt-2 text-xs text-[#767084] dark:text-zinc-400">
+                          {selectedOrder.branch.is_accepting_orders
+                            ? lang === "ru" ? "Принимает заказы" : lang === "en" ? "Accepting orders" : "Buyurtmalarni qabul qiladi"
+                            : lang === "ru" ? "Заказы приостановлены" : lang === "en" ? "Orders paused" : "Buyurtmalar to'xtatilgan"}
+                        </p>
                       )}
-                    </div>
-                    {selectedOrder.branch_name ? (
-                      <div className="space-y-1.5">
-                        <div className="font-bold text-slate-900 dark:text-white text-sm">
-                          {selectedOrder.branch_name}
-                        </div>
-                        {selectedOrder.branch_address && (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>{selectedOrder.branch_address}</span>
-                          </div>
-                        )}
-                        {selectedOrder.branch_phone && (
-                          <div className="flex items-center gap-2 pt-1">
-                            <a
-                              href={`tel:${selectedOrder.branch_phone}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-zinc-800 hover:bg-amber-100 text-amber-900 dark:text-amber-200 text-xs font-bold transition-colors"
-                            >
-                              <Phone className="w-3.5 h-3.5 text-amber-600" />
-                              <span>{selectedOrder.branch_phone}</span>
-                            </a>
-                          </div>
-                        )}
-                        <div className="text-[11px] text-slate-400 italic pt-1">
-                          {t("branch_auto_routed_notice") || "Mijoz manziliga eng yaqin ochiq filialga yo'naltirildi"}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs text-slate-400 italic">
-                        {t("branch_unassigned") || "Filial biriktirilmagan"}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Customer Information */}
-                  <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 space-y-2">
-                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      {t("customer_details_title") || "Mijoz ma'lumotlari"}
-                    </div>
-                    <div className="font-bold text-slate-900 dark:text-white text-base">
-                      {selectedOrder.customer_name}
-                    </div>
-                    <div className="flex items-center gap-2 pt-1">
-                      <a
-                        href={`tel:${selectedOrder.customer_phone}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
-                      >
-                        <Phone className="w-3.5 h-3.5" />
-                        {selectedOrder.customer_phone}
-                      </a>
-                      {selectedOrder.customer_phone && (
-                        <a
-                          href={`https://t.me/+${selectedOrder.customer_phone.replace(/\D/g, "")}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold transition-colors"
-                        >
-                          <Send className="w-3.5 h-3.5" /> Telegram
-                        </a>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Delivery Location & Map */}
-                  <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-rose-500" /> {t("delivery_address_title") || "Yetkazib berish manzili"}
-                      </div>
-                      {selectedOrder.delivery_lat && selectedOrder.delivery_lng && (
-                        <div className="text-[10px] text-slate-400">
-                          {Number(selectedOrder.delivery_lat).toFixed(4)}, {Number(selectedOrder.delivery_lng).toFixed(4)}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-zinc-800/60 p-3 rounded-xl border border-slate-200/60 dark:border-white/5">
-                      {selectedOrder.delivery_address || (t("address_not_specified") || "Manzil ko'rsatilmagan")}
-                    </div>
-
-                    {/* Interactive External Map Links & Route Buttons */}
-                    {selectedOrder.delivery_lat && selectedOrder.delivery_lng ? (
-                      <div className="space-y-2.5">
-                        {/* Primary Route Buttons: Yandex Navigator & Google Maps */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <a
-                            href={`https://yandex.uz/maps/?rtext=~${selectedOrder.delivery_lat},${selectedOrder.delivery_lng}&rtt=auto`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="py-2 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-                          >
-                            <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                            <span>{t("yandex_navigator") || "Yandex Navigator"}</span>
-                          </a>
-                          <a
-                            href={`https://maps.google.com/?q=${selectedOrder.delivery_lat},${selectedOrder.delivery_lng}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors border border-blue-200/80"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
-                            <span>Google Maps</span>
-                          </a>
-                        </div>
-                        {/* Map Preview Frame */}
-                        <div className="w-full h-44 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 relative">
-                          <iframe
-                            title="Xarita"
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            loading="lazy"
-                            src={`https://maps.google.com/maps?q=${selectedOrder.delivery_lat},${selectedOrder.delivery_lng}&hl=ru&z=15&output=embed`}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs text-slate-400 italic bg-slate-50 dark:bg-zinc-800/40 p-2.5 rounded-xl text-center">
-                        {t("no_gps_coordinates") || "Geolokatsiya koordinatalari mavjud emas"}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-sm text-[#767084] dark:text-zinc-400">{t("branch_unassigned") || "No branch assigned"}</p>
+                  )}
+                </section>
               </div>
+            </div>
+
+            <div className="border-t border-[#e6e3eb] px-5 py-4 dark:border-zinc-700 sm:px-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mr-2 text-xs font-medium text-[#767084] dark:text-zinc-400">{t("change_status_title") || "Change status"}</span>
+                {(["PROCESSING", "READY", "IN_DELIVERY", "COMPLETED"] as const).map((nextStatus) => (
+                  <button
+                    key={nextStatus}
+                    type="button"
+                    disabled={updateStatusMutation.isPending || selectedOrder.status === nextStatus}
+                    onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: nextStatus })}
+                    className={(selectedOrder.status === nextStatus
+                      ? "border-[#211b2e] bg-[#211b2e] text-white dark:border-white dark:bg-white dark:text-[#211b2e]"
+                      : "border-[#d8d1e2] bg-white text-[#494456] hover:border-[#a99bb9] hover:bg-[#f7f6f9] dark:border-zinc-600 dark:bg-transparent dark:text-zinc-200 dark:hover:bg-white/10") +
+                      " rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:cursor-default"}
+                  >
+                    {getOrderStatusLabel(nextStatus)}
+                  </button>
+                ))}
+              </div>
+              {confirmCancelOrderId === selectedOrder.id ? (
+                <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#ebe8ef] pt-3 text-xs dark:border-zinc-700">
+                  <span className="mr-auto text-[#a33b4c]">
+                    {lang === "ru" ? "Отменить заказ? Товары вернутся на склад." : lang === "en" ? "Cancel this order? Items will return to stock." : "Buyurtma bekor qilinsinmi? Mahsulotlar qoldiqqa qaytariladi."}
+                  </span>
+                  <button type="button" onClick={() => setConfirmCancelOrderId(null)} className="rounded-lg border border-[#d8d1e2] px-3 py-1.5 font-medium text-[#494456] hover:bg-[#f7f6f9] dark:border-zinc-600 dark:text-zinc-200">{lang === "ru" ? "Нет" : lang === "en" ? "No" : "Yo'q"}</button>
+                  <button type="button" disabled={updateStatusMutation.isPending} onClick={() => { updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "CANCELLED" }); setConfirmCancelOrderId(null); }} className="rounded-lg border border-[#a33b4c] bg-[#a33b4c] px-3 py-1.5 font-medium text-white hover:bg-[#8e2c3e] disabled:opacity-50">{lang === "ru" ? "Да, отменить" : lang === "en" ? "Yes, cancel" : "Ha, bekor qilish"}</button>
+                </div>
+              ) : selectedOrder.status !== "CANCELLED" && selectedOrder.status !== "COMPLETED" && (
+                <button type="button" onClick={() => setConfirmCancelOrderId(selectedOrder.id)} className="mt-3 text-xs font-medium text-[#a33b4c] underline decoration-[#d8a4ae] underline-offset-2 hover:text-[#8e2c3e]">
+                  {t("cancel_return_stock_btn") || "Cancel order"}
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
-
       {/* BURGER PHOTO PREVIEW LIGHTBOX */}
       {previewImage && (
         <div
