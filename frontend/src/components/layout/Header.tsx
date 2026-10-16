@@ -8,13 +8,10 @@ import {
   Moon,
   LogOut,
   Check,
-  Plus,
   Store as StoreIcon,
-  Settings as SettingsIcon,
   ShoppingCart,
   MessageSquare,
   Menu,
-  User,
   UserPlus,
   X,
   Loader2,
@@ -116,6 +113,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   ];
 
   const storefrontUrl = store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#");
+  const profileName = user?.first_name
+    ? `${user.first_name} ${user.last_name || ""}`.trim()
+    : user?.username || user?.phone || "Admin";
+  const profileDetail = user?.phone && user.phone !== profileName
+    ? user.phone
+    : !user?.phone && store?.name !== profileName
+      ? store?.name
+      : null;
 
   return (
     <header className="h-[var(--storebox-topbar-height)] shrink-0 bg-white/90 dark:bg-[#211b2e]/95 backdrop-blur-xl border-b border-[#dfe5ef] dark:border-[#3b304e] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-colors select-none shadow-[0_4px_20px_-2px_rgba(33,27,46,0.08)]">
@@ -355,11 +360,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
             <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg py-1.5 z-50 text-xs divide-y divide-slate-100 dark:divide-zinc-800">
               <div className="px-3.5 py-2">
                 <div className="font-semibold text-slate-900 dark:text-white truncate">
-                  {user?.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : (user?.username || user?.phone || "Admin")}
+                  {profileName}
                 </div>
-                <div className="text-[11px] text-slate-500 truncate">
-                  {user?.phone || store?.name || "StoreBox"}
-                </div>
+                {profileDetail && <div className="text-[11px] text-slate-500 truncate">{profileDetail}</div>}
               </div>
 
               {/* Stores switcher */}
@@ -413,24 +416,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                     <div className="px-3.5 py-1 text-slate-600 dark:text-zinc-400">{store?.name || "StoreBox"}</div>
                   )}
                 </div>
-                <a
-                  href="/onboarding/?new=1"
-                  className="w-full flex items-center gap-2 px-3.5 py-2 text-zinc-900 dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-medium transition-colors cursor-pointer text-left mt-0.5"
-                >
-                  <Plus className="w-3.5 h-3.5 text-[#211b2e] dark:text-white" />
-                  <span>{lang === "ru" ? "Добавить магазин" : lang === "en" ? "Add store" : "Do'kon qo'shish"}</span>
-                </a>
               </div>
 
               <div className="py-1">
-                <Link
-                  to="/settings"
-                  onClick={() => setUserOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-1.5 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <SettingsIcon className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{lang === "ru" ? "Настройки" : lang === "en" ? "Settings" : "Sozlamalar"}</span>
-                </Link>
                 <a
                   href={storefrontUrl}
                   target="_blank"
@@ -450,17 +438,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
                   <UserPlus className="w-3.5 h-3.5 text-slate-400" />
                   <span>{lang === "ru" ? "Добавить аккаунт" : lang === "en" ? "Add account" : "Yangi hisob yaratish"}</span>
                 </a>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUserOpen(false);
-                    window.location.href = "/dashboard/login/?switch=1";
-                  }}
-                  className="w-full flex items-center gap-2 px-3.5 py-1.5 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer text-left"
-                >
-                  <User className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{lang === "ru" ? "Сменить аккаунт" : lang === "en" ? "Switch account" : "Boshqa hisobga o'tish"}</span>
-                </button>
                 <button
                   type="button"
                   data-testid="header-logout-btn"

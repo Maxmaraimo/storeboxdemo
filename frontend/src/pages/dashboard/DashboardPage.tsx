@@ -641,11 +641,6 @@ export const DashboardPage: React.FC = () => {
           ) : (
             <DashboardOrderMap orders={mapOrders} branches={mapBranches} showBranches={showBranches} currency={currency} />
           )}
-          {!isLoading && mapOrders.length === 0 && (
-            <div className="pointer-events-none absolute bottom-4 left-4 z-[400] rounded-xl border border-[#e4e0ea] bg-white/95 px-3 py-2 text-xs text-[#686475] shadow-sm backdrop-blur-sm">
-              {lang === "ru" ? "У заказов за этот период пока нет GPS-координат" : lang === "en" ? "No order GPS coordinates for this period yet" : "Bu davr buyurtmalarida hali GPS koordinatalari yo'q"}
-            </div>
-          )}
         </div>
       </section>
 
