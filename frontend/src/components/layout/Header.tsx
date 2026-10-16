@@ -113,14 +113,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   ];
 
   const storefrontUrl = store?.storefront_url || (store?.subdomain ? `/store/${store.subdomain}/` : "#");
-  const profileName = user?.first_name
-    ? `${user.first_name} ${user.last_name || ""}`.trim()
-    : user?.username || user?.phone || "Admin";
-  const profileDetail = user?.phone && user.phone !== profileName
-    ? user.phone
-    : !user?.phone && store?.name !== profileName
-      ? store?.name
-      : null;
+  const isPhoneLike = (value: string) =>
+    /^[+\d\s().-]+$/.test(value.trim()) && value.replace(/\D/g, "").length >= 7;
+  const accountName = store?.name?.trim() && !isPhoneLike(store.name) ? store.name.trim() : "StoreBox";
+  const fullName = [user?.first_name, user?.last_name]
+    .map((part) => part?.trim() || "")
+    .filter((part) => part && !isPhoneLike(part))
+    .join(" ");
+  const username = user?.username?.trim() || "";
+  const userName = fullName || (username && !isPhoneLike(username) ? username : "") ||
+    (lang === "ru" ? "Пользователь" : lang === "en" ? "User" : "Foydalanuvchi");
 
   return (
     <header className="h-[var(--storebox-topbar-height)] shrink-0 bg-white/90 dark:bg-[#211b2e]/95 backdrop-blur-xl border-b border-[#dfe5ef] dark:border-[#3b304e] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-colors select-none shadow-[0_4px_20px_-2px_rgba(33,27,46,0.08)]">
@@ -347,10 +349,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
             </div>
             <div className="hidden sm:block text-left text-xs">
               <div className="font-semibold text-slate-900 dark:text-white leading-tight truncate max-w-[120px]">
-                {store?.name || (user?.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : "Admin")}
+                {accountName}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-zinc-400 leading-tight truncate max-w-[120px]">
-                {user?.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : user?.phone || "Admin"}
+                {userName}
               </div>
             </div>
             <ChevronDown className="w-3 h-3 text-slate-400" />
@@ -360,9 +362,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
             <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg py-1.5 z-50 text-xs divide-y divide-slate-100 dark:divide-zinc-800">
               <div className="px-3.5 py-2">
                 <div className="font-semibold text-slate-900 dark:text-white truncate">
-                  {profileName}
+                  {accountName}
                 </div>
-                {profileDetail && <div className="text-[11px] text-slate-500 truncate">{profileDetail}</div>}
+                {userName !== accountName && <div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">{userName}</div>}
               </div>
 
               {/* Stores switcher */}

@@ -41,7 +41,7 @@ def normalize_unit(unit_str):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "phone", "first_name", "last_name", "role"]
+        fields = ["id", "username", "phone", "first_name", "last_name", "role"]
 
 
 class StoreSerializer(serializers.ModelSerializer):
