@@ -219,57 +219,21 @@ export const OrdersPage: React.FC = () => {
   };
 
   const getOrderStatusBadge = (st: string) => {
-    switch (st?.toUpperCase()) {
-      case "COMPLETED":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#bbf7d0] text-[#14532d]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
-            <span>{getOrderStatusLabel(st)}</span>
-          </span>
-        );
-      case "NEW":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#bbf7d0] text-[#14532d]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a] animate-pulse" />
-            <span>{getOrderStatusLabel(st)}</span>
-          </span>
-        );
-      case "PROCESSING":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-900">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-600" />
-            <span>{getOrderStatusLabel(st)}</span>
-          </span>
-        );
-      case "READY":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-100 text-indigo-900">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-            <span>{getOrderStatusLabel(st)}</span>
-          </span>
-        );
-      case "IN_DELIVERY":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-900">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-            <span>{getOrderStatusLabel(st)}</span>
-          </span>
-        );
-      case "CANCELLED":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-100 text-rose-800">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-            <span>{getOrderStatusLabel(st)}</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-zinc-100 text-zinc-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-            <span>{st}</span>
-          </span>
-        );
-    }
+    const normalizedStatus = st?.toUpperCase();
+    const dotColor = normalizedStatus === "NEW"
+      ? "bg-[#a3e635]"
+      : normalizedStatus === "CANCELLED"
+      ? "bg-[#d18b95]"
+      : normalizedStatus === "COMPLETED"
+      ? "bg-[#211b2e] dark:bg-white"
+      : "bg-[#a49aaf]";
+
+    return (
+      <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs font-medium text-[#494456] dark:text-zinc-200">
+        <span className={`h-2 w-2 shrink-0 rounded-full ${dotColor}`} aria-hidden="true" />
+        {getOrderStatusLabel(st)}
+      </span>
+    );
   };
 
   const tabs = [
@@ -287,10 +251,10 @@ export const OrdersPage: React.FC = () => {
     <button
       type="button"
       onClick={() => setShowCreateModal(true)}
-      className="px-3.5 py-2 rounded-[8px] bg-[#202223] hover:bg-black text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+      className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-[10px] border border-[#211b2e] bg-[#211b2e] px-3.5 py-2 text-xs font-medium text-white shadow-[0_4px_10px_rgba(33,27,46,0.2)] transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-[#f0edf4] dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer"
     >
-      <Plus className="w-4 h-4" />
-      <span>Создать заказ</span>
+      <Plus className="h-4 w-4" aria-hidden="true" />
+      <span>{lang === "ru" ? "Создать заказ" : lang === "en" ? "Create order" : "Buyurtma yaratish"}</span>
     </button>
   );
 
@@ -359,67 +323,61 @@ export const OrdersPage: React.FC = () => {
       ) : (
         <>
           {/* STATUS TABS */}
-          <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Статус заказа" : "Buyurtma holati"}>
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                aria-pressed={status === tab.id}
-                onClick={() => setStatus(tab.id)}
-                className={`storebox-segmented-tab ${status === tab.id ? "is-active" : ""}`}
-              >
-                <span>{tab.label}</span>
-                <span
-                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${
-                    status === tab.id
-                      ? "bg-white/20 text-white"
-                      : "bg-[#e2ddec] text-[#6a6476] dark:bg-[#4a4058] dark:text-[#ded7e9]"
-                  }`}
+          <div className="w-full overflow-x-auto no-scrollbar">
+            <div className="storebox-segmented-control storebox-segmented-control--full !flex mx-auto min-w-[760px] max-w-[980px]" role="group" aria-label={lang === "ru" ? "Статус заказа" : "Buyurtma holati"}>
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  aria-pressed={status === tab.id}
+                  onClick={() => setStatus(tab.id)}
+                  className={`storebox-segmented-tab ${status === tab.id ? "is-active" : ""}`}
                 >
-                  {tab.count}
-                </span>
-              </button>
-            ))}
+                  <span>{tab.label}</span>
+                  <span className={`text-[11px] tabular-nums ${status === tab.id ? "text-white/75" : "text-[#9690a2] dark:text-[#a9a1b6]"}`}>
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* SEARCH BAR */}
-          <div className="bg-white rounded-xl border border-slate-200/80 p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
-            <div className="flex-1 max-w-md relative">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("search_order_ph") || "Поиск по номеру заказа (#RB-...), имени клиента или телефону..."}
-                className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal placeholder-slate-400 focus:outline-none focus:border-[#202223] focus:bg-white transition-all"
-              />
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
-            </div>
-            <div className="flex items-center gap-3 ml-auto">
-              <div className="text-xs font-medium text-slate-500">
-                {t("showing_orders_format")
-                  ? t("showing_orders_format").replace("{count}", String(orders.length))
-                  : `Показано заказов: ${orders.length}`}
+          {/* SEARCH AND ORDERS TABLE */}
+          <div className="overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
+            <div className="flex flex-col gap-3 border-b border-[#e6e3eb] px-4 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700">
+              <div className="relative w-full sm:max-w-[380px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9690a2]" aria-hidden="true" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("search_order_ph") || "Поиск по номеру заказа, имени или телефону..."}
+                  className="w-full rounded-[10px] border border-[#e6e3eb] bg-[#f7f6f9] py-2 pl-10 pr-3 text-xs text-[#211b2e] placeholder:text-[#9690a2] focus:border-[#211b2e] focus:bg-white focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white dark:focus:border-white"
+                />
               </div>
-              {createOrderButton}
+              <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+                <span className="whitespace-nowrap text-xs font-medium text-[#686475] dark:text-zinc-400">
+                  {t("showing_orders_format")
+                    ? t("showing_orders_format").replace("{count}", String(orders.length))
+                    : `Показано заказов: ${orders.length}`}
+                </span>
+                {createOrderButton}
+              </div>
             </div>
-          </div>
-
-          {/* ORDERS TABLE */}
-          <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200/80 text-[10px] uppercase tracking-wider">
+              <table className="w-full min-w-[900px] border-collapse text-left text-xs">
+                <thead className="border-b border-[#e6e3eb] bg-[#f7f6f9] text-[11px] text-[#767084] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
                   <tr>
-                    <th className="py-2.5 px-3 whitespace-nowrap">{t("th_order_num") || "Заказ"}</th>
-                    <th className="py-2.5 px-3">{t("th_client") || "Клиент"}</th>
-                    <th className="py-2.5 px-3">{t("th_branch") || "Филиал"}</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">{t("th_payment") || "Оплата"}</th>
-                    <th className="py-2.5 px-3 hidden md:table-cell">{t("th_delivery") || "Доставка"}</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">{t("th_status") || "Статус"}</th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">{t("th_action") || "Действие"}</th>
+                    <th className="whitespace-nowrap px-3 py-3 font-medium">{t("th_order_num") || "Заказ"}</th>
+                    <th className="px-3 py-3 font-medium">{t("th_client") || "Клиент"}</th>
+                    <th className="px-3 py-3 font-medium">{t("th_branch") || "Филиал"}</th>
+                    <th className="whitespace-nowrap px-3 py-3 font-medium">{t("th_payment") || "Оплата"}</th>
+                    <th className="px-3 py-3 font-medium">{t("th_delivery") || "Доставка"}</th>
+                    <th className="whitespace-nowrap px-3 py-3 font-medium">{t("th_status") || "Статус"}</th>
+                    <th className="whitespace-nowrap px-3 py-3 text-right font-medium">{t("th_action") || "Действие"}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
+                <tbody className="divide-y divide-[#eeebf1] font-normal text-[#211b2e] dark:divide-zinc-800 dark:text-zinc-200">
                   {orders.map((order) => (
                     <tr
                       id={`order-row-${order.id}`}
@@ -428,72 +386,66 @@ export const OrdersPage: React.FC = () => {
                         setHighlightedOrderId(order.id);
                         setSelectedOrder(order);
                       }}
-                      className={`hover:bg-slate-50 transition-colors cursor-pointer group ${
-                        highlightedOrderId === order.id ? "bg-[#f1f8f5] ring-1 ring-inset ring-[#00a86b]/40" : ""
+                      className={`group cursor-pointer transition-colors hover:bg-[#faf9fc] dark:hover:bg-[#30263f] ${
+                        highlightedOrderId === order.id ? "bg-[#f3f0f8] ring-1 ring-inset ring-[#d8d1e2] dark:bg-[#30263f]" : ""
                       }`}
                     >
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-slate-900 group-hover:text-[#008060] transition-colors">
+                      <td className="whitespace-nowrap px-3 py-3.5">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-semibold text-[#211b2e] dark:text-white">
                             #{order.order_number}
                           </span>
-                          {order.source === "TMA" ? (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                              <Send className="w-2.5 h-2.5" /> TG
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                              <Globe className="w-2.5 h-2.5" /> {t("website_channel") || "Сайт"}
-                            </span>
-                          )}
+                          <span className="text-[11px] text-[#8b8497] dark:text-zinc-400">
+                            {order.source === "TMA" ? "Telegram" : t("website_channel") || "Сайт"}
+                          </span>
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
+                        <div className="mt-1 text-[11px] text-[#8b8497] dark:text-zinc-400">
                           {new Date(order.created_at).toLocaleString()}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 min-w-[115px] max-w-[160px]">
-                        <div className="font-medium text-slate-900 truncate">{order.customer_name}</div>
-                        <div className="text-[11px] text-slate-500 whitespace-nowrap">{order.customer_phone}</div>
+                      <td className="min-w-[120px] max-w-[160px] px-3 py-3.5">
+                        <div className="truncate font-medium text-[#211b2e] dark:text-white" title={order.customer_name}>{order.customer_name}</div>
+                        <div className="mt-1 whitespace-nowrap text-[11px] text-[#8b8497] dark:text-zinc-400">{order.customer_phone}</div>
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="px-3 py-3.5">
                         {order.branch_name ? (
-                          <div
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#f1f8f5] text-[#14532d] border border-[#bbf7d0] max-w-[130px] xl:max-w-[165px] truncate"
-                            title={order.branch_name}
-                          >
-                            <Building2 className="w-3 h-3 shrink-0 text-[#16a34a]" />
-                            <span className="truncate">{order.branch_name}</span>
-                          </div>
+                          <span className="block max-w-[130px] truncate text-[#494456] dark:text-zinc-300" title={order.branch_name}>
+                            {order.branch_name}
+                          </span>
                         ) : (
-                          <span className="text-slate-400 text-[11px] italic whitespace-nowrap">
+                          <span className="whitespace-nowrap text-[#8b8497] dark:text-zinc-400">
                             {t("branch_unassigned") || "Основной склад"}
                           </span>
                         )}
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <div className="font-bold text-slate-900 tabular-nums">
+                      <td className="whitespace-nowrap px-3 py-3.5">
+                        <div className="font-semibold tabular-nums text-[#211b2e] dark:text-white">
                           {Number(order.total_amount).toLocaleString()} UZS
                         </div>
-                        <div className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{order.payment_method_display}</div>
+                        <div className="mt-1 max-w-[120px] truncate text-[11px] text-[#8b8497] dark:text-zinc-400">{order.payment_method_display}</div>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-500 text-[11px] max-w-[130px] xl:max-w-[210px] truncate hidden md:table-cell">
-                        {order.delivery_address || (t("address_not_specified") || "Адрес не указан")}
+                      <td className="px-3 py-3.5 text-[#686475] dark:text-zinc-300">
+                        <span className="block max-w-[150px] truncate" title={order.delivery_address || undefined}>
+                          {order.delivery_address || (t("address_not_specified") || "Адрес не указан")}
+                        </span>
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">{getOrderStatusBadge(order.status)}</td>
-                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      <td className="whitespace-nowrap px-3 py-3.5">{getOrderStatusBadge(order.status)}</td>
+                      <td className="whitespace-nowrap px-3 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             title={t("view_details") || "Просмотр"}
+                            aria-label={t("view_details") || "Просмотр"}
                             onClick={() => setSelectedOrder(order)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] text-[#8b8497] transition-colors hover:bg-[#f0edf4] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-[#3b304e] dark:hover:text-white cursor-pointer"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <Link
                             title={t("open_full_page") || "Открыть заказ"}
+                            aria-label={t("open_full_page") || "Открыть заказ"}
                             to={`/orders/${order.id}`}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] text-[#8b8497] transition-colors hover:bg-[#f0edf4] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-[#3b304e] dark:hover:text-white"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </Link>
@@ -503,25 +455,10 @@ export const OrdersPage: React.FC = () => {
                   ))}
                   {orders.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-16 px-4 text-center">
-                        <div className="max-w-sm mx-auto flex flex-col items-center space-y-3">
-                          <div className="w-16 h-16 rounded-2xl bg-[#f1f8f5] border border-[#bbf7d0] flex items-center justify-center text-[#16a34a]">
-                            <ShoppingBag className="w-8 h-8" />
-                          </div>
-                          <h3 className="text-sm font-bold text-[#202223]">
-                            Ваши заказы будут отображаться здесь
-                          </h3>
-                          <p className="text-xs text-[#6d7175] leading-relaxed">
-                            Здесь вы сможете принимать оплату через Click, Payme и Uzum, назначать курьеров и отслеживать доставку.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => setShowCreateModal(true)}
-                            className="px-4 py-2 rounded-[8px] bg-[#202223] hover:bg-black text-white text-xs font-semibold cursor-pointer transition"
-                          >
-                            Создать заказ вручную
-                          </button>
-                        </div>
+                      <td colSpan={7} className="px-4 py-14 text-center text-sm text-[#767084] dark:text-zinc-400">
+                        {isLoading
+                          ? lang === "ru" ? "Загрузка заказов..." : lang === "en" ? "Loading orders..." : "Buyurtmalar yuklanmoqda..."
+                          : lang === "ru" ? "Заказов пока нет" : lang === "en" ? "No orders yet" : "Hozircha buyurtmalar yo'q"}
                       </td>
                     </tr>
                   )}
