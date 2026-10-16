@@ -708,25 +708,39 @@ export const ProductsPage: React.FC = () => {
   // --------------------------------------------------------------------------
   return (
     <div className="space-y-4">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold text-zinc-900 tracking-tight">
-              {lang === "ru" ? "Товары" : "Mahsulotlar"}
-            </h1>
-            <span className="text-xs text-zinc-500 font-normal">
-              ({productsData?.total ?? rawProducts.length})
-            </span>
+      <h1 className="sr-only">{lang === "ru" ? "Товары" : "Mahsulotlar"}</h1>
+      {/* Product filters and actions */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 max-w-full overflow-x-auto no-scrollbar">
+          <div className="storebox-segmented-control" role="group" aria-label={lang === "ru" ? "Статус товаров" : "Mahsulot holati"}>
+            <button
+              type="button"
+              aria-pressed={statusFilter === "all"}
+              onClick={() => setStatusFilter("all")}
+              className={`storebox-segmented-tab ${statusFilter === "all" ? "is-active" : ""}`}
+            >
+              {lang === "ru" ? "Все товары" : "Barchasi"} ({rawProducts.length})
+            </button>
+            <button
+              type="button"
+              aria-pressed={statusFilter === "active"}
+              onClick={() => setStatusFilter("active")}
+              className={`storebox-segmented-tab ${statusFilter === "active" ? "is-active" : ""}`}
+            >
+              {lang === "ru" ? "В наличии" : "Sotuvda"}
+            </button>
+            <button
+              type="button"
+              aria-pressed={statusFilter === "draft"}
+              onClick={() => setStatusFilter("draft")}
+              className={`storebox-segmented-tab ${statusFilter === "draft" ? "is-active" : ""}`}
+            >
+              {lang === "ru" ? "Стоп-лист" : "Stop-list"}
+            </button>
           </div>
-          <p className="text-xs text-zinc-500 font-normal mt-0.5">
-            {lang === "ru"
-              ? "Управление каталогом товаров, ценами и складскими остатками"
-              : "Katalogdagi tovarlar, narxlar va qoldiqlar"}
-          </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {/* Export CSV button */}
           <button
             type="button"
@@ -827,38 +841,8 @@ export const ProductsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filter Card: Status Tabs, Search & Category */}
+      {/* Product table: search and category filters */}
       <div className="bg-white rounded-xl border border-zinc-200/80 shadow-xs divide-y divide-zinc-100">
-        {/* Status Tabs */}
-        <div className="px-3 py-2">
-          <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Статус товаров" : "Mahsulot holati"}>
-            <button
-              type="button"
-              aria-pressed={statusFilter === "all"}
-              onClick={() => setStatusFilter("all")}
-              className={`storebox-segmented-tab ${statusFilter === "all" ? "is-active" : ""}`}
-            >
-              {lang === "ru" ? "Все товары" : "Barchasi"} ({rawProducts.length})
-            </button>
-            <button
-              type="button"
-              aria-pressed={statusFilter === "active"}
-              onClick={() => setStatusFilter("active")}
-              className={`storebox-segmented-tab ${statusFilter === "active" ? "is-active" : ""}`}
-            >
-              {lang === "ru" ? "В наличии" : "Sotuvda"}
-            </button>
-            <button
-              type="button"
-              aria-pressed={statusFilter === "draft"}
-              onClick={() => setStatusFilter("draft")}
-              className={`storebox-segmented-tab ${statusFilter === "draft" ? "is-active" : ""}`}
-            >
-              {lang === "ru" ? "Стоп-лист" : "Stop-list"}
-            </button>
-          </div>
-        </div>
-
         {/* Search & Category Filter Row */}
         <div className="p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="w-full sm:max-w-md relative">
