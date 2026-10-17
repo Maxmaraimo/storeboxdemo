@@ -172,10 +172,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
             badge: newOrdersCount > 0 ? String(newOrdersCount) : null,
             subItems: [
               {
-                path: "/orders?tab=drafts",
-                label: lang === "ru" ? "Черновики" : lang === "en" ? "Drafts" : "Qoralamalar",
-              },
-              {
                 path: "/orders?tab=abandoned",
                 label:
                   lang === "ru"
@@ -183,6 +179,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
                     : lang === "en"
                     ? "Abandoned checkouts"
                     : "Tugallanmagan savatlar",
+              },
+              {
+                path: "/orders?tab=drafts",
+                label: lang === "ru" ? "Черновики" : lang === "en" ? "Drafts" : "Qoralamalar",
               },
             ],
           },
