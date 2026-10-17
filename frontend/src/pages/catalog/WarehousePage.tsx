@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
-import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Package, Search, Plus, AlertCircle, ArrowDownUp, X, RefreshCw, SlidersHorizontal, CheckCircle2, Download, Upload } from "lucide-react";
+import { Package, Search, Plus, X, CheckCircle2, Download, Upload } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Product } from "../../types";
@@ -21,33 +20,11 @@ export const WarehousePage: React.FC = () => {
   const [newCostPrice, setNewCostPrice] = useState("");
   const [formError, setFormError] = useState("");
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["products", store?.id, search],
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["products", store?.id, "warehouse", search],
     queryFn: async () => {
       const res = await api.get(`/products/?q=${encodeURIComponent(search)}&store_id=${store?.id || ""}`);
       return res.data as { products: Product[]; total: number };
-    },
-  });
-
-  const { data: integrationsData } = useQuery({
-    queryKey: ["integrations-list", store?.id],
-    queryFn: async () => {
-      const res = await api.get(`/integrations/?store_id=${store?.id || ""}`);
-      return res.data as { integrations: any[] };
-    },
-  });
-
-  const connectedIntegration = (integrationsData?.integrations || []).find(
-    (i: any) => i.is_connected && (i.category === "warehouse" || i.category === "pos")
-  );
-
-  const syncMutation = useMutation({
-    mutationFn: async (slug: string) => {
-      return (await api.post(`/integrations/${slug}/sync/`)).data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["integrations-list"] });
     },
   });
 
@@ -91,6 +68,9 @@ export const WarehousePage: React.FC = () => {
   };
 
   const allProducts = data?.products || [];
+  const getProductName = (product: Product) => lang === "ru"
+    ? product.name_ru || product.name_uz
+    : lang === "en" ? product.name_en || product.name_uz || product.name_ru : product.name_uz || product.name_ru;
   const products = allProducts.filter((p) => {
     const s = p.stock ?? 0;
     if (stockFilter === "in_stock") return s > 10;
@@ -138,124 +118,30 @@ export const WarehousePage: React.FC = () => {
     setTimeout(() => setCsvNotice(""), 4000);
   };
 
+  const secondaryButtonClass = "inline-flex min-h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-[#d8d1e2] bg-white px-3 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:opacity-40 dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer";
+  const primaryButtonClass = "inline-flex min-h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-[#211b2e] bg-[#211b2e] px-3.5 text-xs font-medium text-white transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:opacity-40 dark:border-[#f0edf4] dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer";
+  const fieldClass = "min-h-9 w-full rounded-[10px] border border-[#d8d1e2] bg-[#f8f7fa] px-3 text-[13px] text-[#211b2e] outline-none focus:border-[#8b8497] focus:ring-2 focus:ring-[#211b2e]/10 dark:border-zinc-700 dark:bg-[#191520] dark:text-zinc-100";
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-[#202223] tracking-tight">{t("warehouse_title") || t("warehouse") || "Omborxona"}</h1>
-          <p className="text-xs text-[#6d7175] mt-1 font-normal">{t("warehouse_subtitle") || "Mahsulot qoldiqlari, minimal zaxira va ombor harakati"}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleImportCsv}
-            className="hidden"
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="px-3 py-2 bg-white border border-[#e1e3e5] text-[#202223] rounded-[8px] text-xs font-medium hover:bg-[#f6f6f7] transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <Upload className="w-3.5 h-3.5 text-[#5c5f62]" />
-            <span>{lang === "ru" ? "Импорт CSV" : "Import CSV"}</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="px-3 py-2 bg-white border border-[#e1e3e5] text-[#202223] rounded-[8px] text-xs font-medium hover:bg-[#f6f6f7] transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5 text-[#5c5f62]" />
-            <span>{lang === "ru" ? "Экспорт CSV" : "Eksport CSV"}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => openModal()}
-            className="px-3.5 py-2 bg-[#008060] text-white rounded-[8px] text-xs font-medium hover:bg-[#006e52] transition-colors flex items-center gap-2 shadow-2xs cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{t("stock_in") || "Kirim qilish"}</span>
-          </button>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <h1 className="sr-only">{t("warehouse_title") || "Omborxona"}</h1>
 
       {csvNotice && (
-        <div className="p-3 rounded-[10px] bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-[#008060]" />
+        <div role="status" className="flex items-center gap-2 rounded-[10px] border border-[#dfe5ef] bg-white p-3 text-xs text-[#494456] dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200">
+          <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{csvNotice}</span>
         </div>
       )}
 
-      {/* Active Warehouse Integration Live Sync Banner */}
-      {connectedIntegration && (
-        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-950/30 dark:to-neutral-900 border border-emerald-200/90 dark:border-emerald-800/60 rounded-[10px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0 shadow-2xs">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-900 dark:text-white">
-                  {connectedIntegration.name} {lang === 'ru' ? 'интеграция активна' : 'integratsiyasi faol'}
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  LIVE SYNC
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
-                {lang === 'ru'
-                  ? `Остатки и товары синхронизируются с ${connectedIntegration.name}. Последнее обновление: `
-                  : `Qoldiqlar va mahsulotlar ${connectedIntegration.name} bilan sinxronlanmoqda. Oxirgi yangilanish: `}
-                <span className="font-mono font-medium text-slate-700 dark:text-neutral-300">
-                  {connectedIntegration.last_synced
-                    ? new Date(connectedIntegration.last_synced).toLocaleString(lang === 'ru' ? 'ru-RU' : 'uz-UZ', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
-                    : (lang === 'ru' ? 'Недавно' : 'Yaqinda')}
-                </span>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => syncMutation.mutate(connectedIntegration.slug)}
-              disabled={syncMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 hover:bg-slate-50 text-slate-700 dark:text-neutral-200 text-xs font-medium transition-all shadow-2xs cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-              <span>
-                {syncMutation.isPending
-                  ? (lang === 'ru' ? 'Синхронизация...' : 'Sinxronlanmoqda...')
-                  : (lang === 'ru' ? 'Синхронизировать' : 'Sinxronlash')}
-              </span>
-            </button>
-            <Link
-              to={
-                connectedIntegration.slug === "billz"
-                  ? "/billz"
-                  : connectedIntegration.slug === "yespos"
-                  ? "/yespos"
-                  : `/integrations/${connectedIntegration.slug}`
-              }
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 text-xs font-medium hover:bg-white/60 transition-colors"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>{lang === 'ru' ? 'Настройки' : 'Sozlamalar'}</span>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white rounded-[10px] border border-[#e1e3e5] shadow-[0_1px_0_rgba(0,0,0,0.05)] overflow-hidden">
-        <div className="p-3.5 border-b border-[#e1e3e5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="storebox-segmented-control min-w-0 max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Остатки товаров" : "Mahsulot qoldiqlari"}>
+      <div className="overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
+        <div className="flex flex-col gap-3 border-b border-[#e6e3eb] px-4 py-3 sm:flex-row sm:items-center dark:border-zinc-700">
+          <div className="min-w-0 flex-1 overflow-x-auto no-scrollbar">
+          <div className="storebox-segmented-control min-w-max" role="group" aria-label={lang === "ru" ? "Остатки товаров" : lang === "en" ? "Stock level" : "Mahsulot qoldiqlari"}>
             {[
-              { id: "all", label: lang === "ru" ? "Все" : "Barchasi", count: allProducts.length },
-              { id: "in_stock", label: lang === "ru" ? "В наличии" : "Yetarli", count: allProducts.filter((p) => (p.stock ?? 0) > 10).length },
-              { id: "low_stock", label: lang === "ru" ? "Мало на складе" : "Kam qoldi", count: allProducts.filter((p) => (p.stock ?? 0) > 0 && (p.stock ?? 0) <= 10).length },
-              { id: "out_of_stock", label: lang === "ru" ? "Нет в наличии" : "Tugagan", count: allProducts.filter((p) => (p.stock ?? 0) === 0).length },
+              { id: "all", label: lang === "ru" ? "Все" : lang === "en" ? "All" : "Barchasi", count: allProducts.length },
+              { id: "in_stock", label: lang === "ru" ? "В наличии" : lang === "en" ? "In stock" : "Yetarli", count: allProducts.filter((p) => (p.stock ?? 0) > 10).length },
+              { id: "low_stock", label: lang === "ru" ? "Мало на складе" : lang === "en" ? "Low stock" : "Kam qoldi", count: allProducts.filter((p) => (p.stock ?? 0) > 0 && (p.stock ?? 0) <= 10).length },
+              { id: "out_of_stock", label: lang === "ru" ? "Нет в наличии" : lang === "en" ? "Out of stock" : "Tugagan", count: allProducts.filter((p) => (p.stock ?? 0) === 0).length },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -268,92 +154,112 @@ export const WarehousePage: React.FC = () => {
               </button>
             ))}
           </div>
+          </div>
+          <button type="button" onClick={() => openModal()} className={`${primaryButtonClass} self-start sm:self-auto`}>
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            <span>{t("stock_in") || "Kirim qilish"}</span>
+          </button>
+        </div>
 
-          <div className="relative flex-1 max-w-sm">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="flex flex-col gap-3 border-b border-[#e6e3eb] px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700">
+          <div className="relative w-full sm:max-w-[380px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9690a2]" aria-hidden="true" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label={t("search_warehouse_ph") || "Nomi yoki shtrix-kod bo'yicha qidiruv"}
               placeholder={t("search_warehouse_ph") || "Nomi yoki shtrix-kod bo'yicha qidiruv..."}
-              className="w-full pl-9 pr-3 py-2 bg-[#f6f6f7] border border-[#e1e3e5] rounded-[8px] text-xs font-normal focus:outline-none focus:border-[#008060]"
+              className={`${fieldClass} pl-9 pr-3`}
             />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <input ref={fileInputRef} type="file" accept=".csv" onChange={handleImportCsv} className="hidden" />
+            <button type="button" onClick={handleExportCsv} disabled={isLoading || isError || !allProducts.length} className={secondaryButtonClass}>
+              <Download className="h-4 w-4" aria-hidden="true" />
+              <span>{lang === "ru" ? "Экспорт CSV" : lang === "en" ? "Export CSV" : "Eksport CSV"}</span>
+            </button>
+            <button type="button" onClick={() => fileInputRef.current?.click()} className={secondaryButtonClass}>
+              <Upload className="h-4 w-4" aria-hidden="true" />
+              <span>{lang === "ru" ? "Импорт CSV" : "Import CSV"}</span>
+            </button>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[1000px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-slate-200/80 bg-slate-50 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
-                <th className="p-3.5">{t("th_product") || "Mahsulot"}</th>
-                <th className="p-3.5">{t("th_barcode") || "Shtrix-kod"}</th>
-                <th className="p-3.5 text-right">{t("th_stock_qty") || "Qoldiq"}</th>
-                <th className="p-3.5 text-right">{t("th_cost_price") || "Tan narx"}</th>
-                <th className="p-3.5 text-right">{t("th_retail_price") || "Sotuv narxi"}</th>
-                <th className="p-3.5 text-center">{t("th_status") || "Holat"}</th>
-                <th className="p-3.5 text-right">{t("th_action") || "Amal"}</th>
+              <tr className="border-b border-[#e6e3eb] bg-[#f8f7fa] text-xs text-[#81798f] dark:border-zinc-700 dark:bg-[#191520] dark:text-zinc-400">
+                <th scope="col" className="px-4 py-3 font-medium">{t("th_product") || "Mahsulot"}</th>
+                <th scope="col" className="whitespace-nowrap px-4 py-3 font-medium">{t("th_barcode") || "Shtrix-kod"}</th>
+                <th scope="col" className="whitespace-nowrap px-4 py-3 text-right font-medium">{t("th_stock_qty") || "Qoldiq"}</th>
+                <th scope="col" className="whitespace-nowrap px-4 py-3 text-right font-medium">{t("th_cost_price") || "Tan narx"}</th>
+                <th scope="col" className="whitespace-nowrap px-4 py-3 text-right font-medium">{t("th_retail_price") || "Sotuv narxi"}</th>
+                <th scope="col" className="px-4 py-3 font-medium">{t("th_status") || "Holat"}</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">{t("th_action") || "Amal"}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
+            <tbody className="divide-y divide-[#efecf3] text-[13px] text-[#494456] dark:divide-zinc-800 dark:text-zinc-200">
               {products.map((p) => {
                 const stock = p.stock ?? 0;
-                const costPrice = (p as any).cost_price ? Number((p as any).cost_price) : 0;
+                const costPrice = Number(p.cost_price || 0);
                 const price = Number(p.price);
+                const statusLabel = stock > 10
+                  ? (lang === "ru" ? "В наличии" : lang === "en" ? "In stock" : "Yetarli")
+                  : stock > 0
+                    ? (lang === "ru" ? "Мало на складе" : lang === "en" ? "Low stock" : "Kam qoldi")
+                    : (lang === "ru" ? "Нет в наличии" : lang === "en" ? "Out of stock" : "Tugagan");
 
                 return (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-3.5 font-medium text-slate-900 flex items-center gap-3">
+                  <tr key={p.id} className="transition-colors hover:bg-[#faf9fc] dark:hover:bg-[#30263f]/40">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
                       {p.primary_image_url ? (
-                        <img src={p.primary_image_url} alt="" className="w-9 h-9 rounded-md object-cover border border-slate-100" />
+                        <img src={p.primary_image_url} alt="" className="h-10 w-10 shrink-0 rounded-[9px] border border-[#e6e3eb] object-cover dark:border-zinc-700" />
                       ) : (
-                        <div className="w-9 h-9 rounded-md bg-slate-100 flex items-center justify-center text-slate-400">
-                          <Package className="w-4 h-4" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border border-[#e6e3eb] bg-[#f8f7fa] text-[#9690a2] dark:border-zinc-700 dark:bg-[#191520]">
+                          <Package className="h-4 w-4" aria-hidden="true" />
                         </div>
                       )}
-                      <div>
-                        <div>{p.name_uz || p.name_ru}</div>
-                        <div className="text-[10px] text-slate-400 font-normal">{p.category_name || "—"}</div>
+                      <div className="min-w-0">
+                        <div className="max-w-[240px] truncate font-medium text-[#211b2e] dark:text-zinc-100" title={getProductName(p)}>{getProductName(p)}</div>
+                        <div className="mt-1 max-w-[240px] truncate text-[11px] text-[#8b8497]">{p.category_name || "—"}</div>
+                      </div>
                       </div>
                     </td>
-                    <td className="p-3.5 font-mono text-slate-400">{p.barcode || "—"}</td>
-                    <td className="p-3.5 text-right font-medium text-slate-900">{stock} {t("unit_pcs") || p.unit || "dona"}</td>
-                    <td className="p-3.5 text-right font-mono text-slate-500">
-                      {costPrice ? `${costPrice.toLocaleString()} UZS` : "—"}
+                    <td className="whitespace-nowrap px-4 py-3 tabular-nums text-[#8b8497]">{p.barcode || "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-[#211b2e] dark:text-zinc-100">{stock} {p.unit || t("unit_pcs") || "dona"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-[#81798f] dark:text-zinc-400">
+                      {costPrice ? `${costPrice.toLocaleString("ru-RU")} UZS` : "—"}
                     </td>
-                    <td className="p-3.5 text-right font-mono font-medium text-slate-900">{price.toLocaleString()} UZS</td>
-                    <td className="p-3.5 text-center">
-                      {stock > 10 && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {lang === "ru" ? "В наличии" : t("stock_sufficient") || "Yetarli"}
-                        </span>
-                      )}
-                      {stock > 0 && stock <= 10 && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                          {lang === "ru" ? "Мало на складе" : t("stock_low") || "Kam qoldi"}
-                        </span>
-                      )}
-                      {stock === 0 && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                          {lang === "ru" ? "Нет в наличии" : t("stock_empty") || "Tugagan"}
-                        </span>
-                      )}
+                    <td className="whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums text-[#211b2e] dark:text-zinc-100">{price.toLocaleString("ru-RU")} UZS</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs">
+                        <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${stock > 10 ? "bg-[#a3e635]" : stock > 0 ? "bg-[#a49aaf]" : "bg-[#d18b95]"}`} />
+                        {statusLabel}
+                      </span>
                     </td>
-                    <td className="p-3.5 text-right">
+                    <td className="px-4 py-3 text-right">
                       <button
                         type="button"
                         onClick={() => openModal(p.id)}
-                        className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-[11px] font-medium cursor-pointer"
+                        className={secondaryButtonClass}
                       >
-                        {t("btn_add_stock") || "+ Kirim"}
+                        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        {lang === "ru" ? "Приход" : lang === "en" ? "Add stock" : "Kirim"}
                       </button>
                     </td>
                   </tr>
                 );
               })}
-              {products.length === 0 && !isLoading && (
+              {(isLoading || isError || products.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400">
-                    {t("products_not_found") || "Mahsulotlar topilmadi"}
+                  <td colSpan={7} className="px-4 py-12 text-center text-[#8b8497]" role="status">
+                    {isLoading
+                      ? (lang === "ru" ? "Загрузка…" : lang === "en" ? "Loading…" : "Yuklanmoqda…")
+                      : isError
+                        ? (lang === "ru" ? "Не удалось загрузить товары" : lang === "en" ? "Unable to load products" : "Mahsulotlarni yuklab bo'lmadi")
+                        : t("products_not_found") || "Mahsulotlar topilmadi"}
                   </td>
                 </tr>
               )}
@@ -364,78 +270,82 @@ export const WarehousePage: React.FC = () => {
 
       {/* ADJUST STOCK MODAL */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-semibold text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#151020]/50 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="warehouse-adjust-title" className="max-h-[calc(100dvh-2rem)] w-full max-w-md space-y-4 overflow-y-auto rounded-[18px] border border-[#dfe5ef] bg-white p-5 text-[#211b2e] shadow-xl dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-100">
+            <div className="flex items-center justify-between gap-3 border-b border-[#e6e3eb] pb-3 dark:border-zinc-700">
+              <h3 id="warehouse-adjust-title" className="text-sm font-semibold">
                 {t("adjust_stock_title") || "Kirim qilish (Zaxirani oshirish)"}
               </h3>
               <button
                 type="button"
                 onClick={closeModal}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                aria-label={lang === "ru" ? "Закрыть" : lang === "en" ? "Close" : "Yopish"}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-[#8b8497] transition-colors hover:bg-[#f0edf4] hover:text-[#211b2e] dark:hover:bg-[#30263f] dark:hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="p-3 rounded-lg bg-rose-50 text-rose-700 text-xs font-medium">
+              <div role="alert" className="rounded-[10px] border border-[#e8d1d6] bg-[#fcf4f5] p-3 text-xs text-[#aa3e51] dark:border-[#634552] dark:bg-[#3b2a36] dark:text-[#f1a9b7]">
                 {formError}
               </div>
             )}
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label htmlFor="warehouse-product" className="mb-1.5 block text-xs font-medium">
                   {t("select_product") || "Mahsulot *"}
                 </label>
                 <select
+                  id="warehouse-product"
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal focus:outline-none focus:border-blue-600"
+                  className={fieldClass}
                 >
                   <option value="">{t("select_product") || "Mahsulotni tanlang"}</option>
-                  {products.map((p) => (
+                  {allProducts.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name_uz || p.name_ru} ({t("th_stock_qty") || "Qoldiq"}: {p.stock ?? 0})
+                      {getProductName(p)} ({t("th_stock_qty") || "Qoldiq"}: {p.stock ?? 0})
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label htmlFor="warehouse-quantity" className="mb-1.5 block text-xs font-medium">
                   {t("inflow_qty_label") || "Kirim miqdori (dona) *"}
                 </label>
                 <input
+                  id="warehouse-quantity"
                   type="number"
                   value={deltaQty}
                   onChange={(e) => setDeltaQty(e.target.value)}
                   placeholder="50"
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal font-mono focus:outline-none focus:border-blue-600"
+                  className={`${fieldClass} tabular-nums`}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label htmlFor="warehouse-cost" className="mb-1.5 block text-xs font-medium">
                   {t("new_cost_price_label") || "Yangi tan narxi (ixtiyoriy, UZS)"}
                 </label>
                 <input
+                  id="warehouse-cost"
                   type="number"
                   value={newCostPrice}
                   onChange={(e) => setNewCostPrice(e.target.value)}
                   placeholder="25000"
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-normal font-mono focus:outline-none focus:border-blue-600"
+                  className={`${fieldClass} tabular-nums`}
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2 border-t border-[#e6e3eb] pt-4 dark:border-zinc-700">
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer"
+                className={secondaryButtonClass}
               >
                 {t("cancel") || "Bekor qilish"}
               </button>
@@ -443,7 +353,7 @@ export const WarehousePage: React.FC = () => {
                 type="button"
                 onClick={() => adjustMutation.mutate()}
                 disabled={adjustMutation.isPending}
-                className="px-4 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+                className={primaryButtonClass}
               >
                 {adjustMutation.isPending ? (t("saving") || "Saqlanmoqda...") : (t("save") || "Saqlash")}
               </button>
