@@ -84,9 +84,9 @@ export const OrderFilters: React.FC<Props> = ({ value, restrictedBranch, onApply
         </button>
       </div>
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
-        <label className="grid gap-2 text-xs font-medium">
-          <span>{label("Филиал", "Filial", "Branch")}</span>
-          <select value={restrictedBranch ? String(restrictedBranch.id) : draft.branch}
+        <div className="grid gap-2 text-xs font-medium">
+          <label htmlFor="order-filter-branch">{label("Филиал", "Filial", "Branch")}</label>
+          <select id="order-filter-branch" value={restrictedBranch ? String(restrictedBranch.id) : draft.branch}
             disabled={Boolean(restrictedBranch) || branches.isLoading || branches.isError}
             onChange={event => setDraft(current => ({ ...current, branch: event.target.value }))} className={selectClass}>
             {restrictedBranch ? <option value={restrictedBranch.id}>{restrictedBranch.name}</option> : <>
@@ -94,15 +94,15 @@ export const OrderFilters: React.FC<Props> = ({ value, restrictedBranch, onApply
               {branches.data?.branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
             </>}
           </select>
-        </label>
-        <label className="grid gap-2 text-xs font-medium">
-          <span>{label("Сотрудник (курьер)", "Xodim (kuryer)", "Employee (courier)")}</span>
-          <select value={draft.courier} onChange={event => setDraft(current => ({ ...current, courier: event.target.value }))} className={selectClass}>
+        </div>
+        <div className="grid gap-2 text-xs font-medium">
+          <label htmlFor="order-filter-courier">{label("Сотрудник (курьер)", "Xodim (kuryer)", "Employee (courier)")}</label>
+          <select id="order-filter-courier" value={draft.courier} onChange={event => setDraft(current => ({ ...current, courier: event.target.value }))} className={selectClass}>
             <option value="ALL">{label("Все курьеры", "Barcha kuryerlar", "All couriers")}</option>
             <option value="unassigned">{label("Не назначен", "Biriktirilmagan", "Unassigned")}</option>
             {couriers.data?.couriers.map(courier => <option key={courier.id} value={courier.id}>{courier.name}{!courier.is_active ? label(" (неактивен)", " (faol emas)", " (inactive)") : ""}</option>)}
           </select>
-        </label>
+        </div>
         {(branches.isLoading || couriers.isLoading) && <p role="status" className="text-xs text-[#8b8497]">{label("Загрузка списка…", "Ro'yxat yuklanmoqda…", "Loading options…")}</p>}
         {(branches.isError || couriers.isError) && <div role="alert" className="space-y-2 text-xs text-[#aa3e51] dark:text-[#f1a9b7]">
           <p>{label("Не удалось загрузить список", "Ro'yxatni yuklab bo'lmadi", "Unable to load options")}</p>
@@ -116,24 +116,24 @@ export const OrderFilters: React.FC<Props> = ({ value, restrictedBranch, onApply
             <span>{option.name}</span>
           </label>)}
         </fieldset>)}
-        <label className="grid gap-2 text-xs font-medium">
-          <span>{label("Канал заказа", "Buyurtma kanali", "Order channel")}</span>
-          <select value={draft.source} onChange={event => setDraft(current => ({ ...current, source: event.target.value }))} className={selectClass}>
+        <div className="grid gap-2 text-xs font-medium">
+          <label htmlFor="order-filter-source">{label("Канал заказа", "Buyurtma kanali", "Order channel")}</label>
+          <select id="order-filter-source" value={draft.source} onChange={event => setDraft(current => ({ ...current, source: event.target.value }))} className={selectClass}>
             <option value="ALL">{label("Все каналы", "Barcha kanallar", "All channels")}</option>
             <option value="WEB">{label("Веб-сайт", "Veb-sayt", "Website")}</option>
             <option value="TMA">Telegram Mini App</option><option value="INSTAGRAM">Instagram</option>
           </select>
-        </label>
-        <label className="grid gap-2 text-xs font-medium">
-          <span>{label("Статус оплаты", "To'lov holati", "Payment status")}</span>
-          <select value={draft.paymentStatus} onChange={event => setDraft(current => ({ ...current, paymentStatus: event.target.value }))} className={selectClass}>
+        </div>
+        <div className="grid gap-2 text-xs font-medium">
+          <label htmlFor="order-filter-payment-status">{label("Статус оплаты", "To'lov holati", "Payment status")}</label>
+          <select id="order-filter-payment-status" value={draft.paymentStatus} onChange={event => setDraft(current => ({ ...current, paymentStatus: event.target.value }))} className={selectClass}>
             <option value="ALL">{label("Любой статус", "Barcha holatlar", "Any status")}</option>
             <option value="PENDING">{label("Ожидает оплаты", "To'lov kutilmoqda", "Pending")}</option>
             <option value="PAID">{label("Оплачено", "To'langan", "Paid")}</option>
             <option value="FAILED">{label("Ошибка оплаты", "To'lov xatosi", "Failed")}</option>
             <option value="REFUNDED">{label("Возврат", "Qaytarilgan", "Refunded")}</option>
           </select>
-        </label>
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-2 border-t border-[#e6e3eb] p-3 dark:border-zinc-700">
         <button type="button" onClick={() => setDraft({ ...DEFAULT_ORDER_FILTERS, branch: restrictedBranch ? value.branch : "all" })}
