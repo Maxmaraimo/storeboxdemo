@@ -7,6 +7,7 @@ import {
   X,
   ExternalLink,
   Printer,
+  ChevronDown,
   Maximize2,
   Minimize2,
   Eye,
@@ -32,6 +33,8 @@ interface DraftOrderItem {
   created_at: string;
   type: "draft" | "abandoned";
 }
+
+const ORDER_FLOW_STATUSES = ["NEW", "PROCESSING", "READY", "IN_DELIVERY", "COMPLETED"] as const;
 
 export const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -712,11 +715,6 @@ export const OrdersPage: React.FC = () => {
                   </h2>
                   {getOrderStatusBadge(selectedOrder.status)}
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[12px] text-[#767084] dark:text-zinc-400">
-                  <span>{new Date(selectedOrder.created_at).toLocaleString(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "uz-UZ")}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{selectedOrder.source === "TMA" ? "Telegram Mini App" : t("website_channel") || "Veb-sayt"}</span>
-                </div>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
                 <button type="button" onClick={() => navigate("/orders/" + selectedOrder.id)} title={t("open_full_page") || "Open full page"} aria-label={t("open_full_page") || "Open full page"} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#e6e3eb] px-2.5 text-xs font-medium text-[#494456] hover:bg-[#f7f6f9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-white/10">
@@ -747,27 +745,40 @@ export const OrdersPage: React.FC = () => {
                     </button>
                   )}
                 </div>
-                <div className="mt-3 overflow-x-auto">
-                  <div className="inline-flex min-w-max overflow-hidden rounded-lg border border-[#e6e3eb] bg-white dark:border-zinc-700 dark:bg-transparent" role="group" aria-label={t("change_status_title") || "Change status"}>
-                    <span aria-current={selectedOrder.status === "NEW" ? "step" : undefined} className={(selectedOrder.status === "NEW" ? "bg-[#211b2e] text-white dark:bg-white dark:text-[#211b2e]" : "text-[#9690a2] dark:text-zinc-500") + " inline-flex min-h-9 items-center border-r border-[#e6e3eb] px-3 text-xs font-medium dark:border-zinc-700"}>
-                      {getOrderStatusLabel("NEW")}
-                    </span>
-                    {(["PROCESSING", "READY", "IN_DELIVERY", "COMPLETED"] as const).map((nextStatus) => (
-                      <button
-                        key={nextStatus}
-                        type="button"
-                        aria-current={selectedOrder.status === nextStatus ? "step" : undefined}
-                        disabled={updateStatusMutation.isPending || selectedOrder.status === nextStatus}
-                        onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: nextStatus })}
-                        className={(selectedOrder.status === nextStatus
-                          ? "bg-[#211b2e] text-white dark:bg-white dark:text-[#211b2e]"
-                          : "text-[#494456] hover:bg-[#f7f6f9] dark:text-zinc-200 dark:hover:bg-white/10") +
-                          " min-h-9 border-r border-[#e6e3eb] px-3 text-xs font-medium transition-colors last:border-r-0 focus-visible:relative focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#211b2e] disabled:cursor-default dark:border-zinc-700"}
-                      >
-                        {getOrderStatusLabel(nextStatus)}
-                      </button>
-                    ))}
-                  </div>
+                <div className="mt-4 overflow-x-auto pb-1">
+                  <ol className="flex min-w-[520px]" aria-label={t("change_status_title") || "Change status"}>
+                    {ORDER_FLOW_STATUSES.map((step, index) => {
+                      const isCurrent = selectedOrder.status === step;
+                      const circleClass = isCurrent
+                        ? "border-[#211b2e] bg-[#211b2e] text-white dark:border-white dark:bg-white dark:text-[#211b2e]"
+                        : "border-[#cfcad7] bg-white text-[#767084] dark:border-zinc-600 dark:bg-[#211b2e] dark:text-zinc-400";
+                      const labelClass = isCurrent
+                        ? "font-semibold text-[#211b2e] dark:text-white"
+                        : "font-medium text-[#767084] dark:text-zinc-400";
+                      return (
+                        <li key={step} className="relative min-w-0 flex-1 text-center">
+                          {index < ORDER_FLOW_STATUSES.length - 1 && <span className="absolute left-1/2 top-4 h-px w-full bg-[#d9d5df] dark:bg-zinc-600" aria-hidden="true" />}
+                          {step === "NEW" ? (
+                            <div aria-current={isCurrent ? "step" : undefined} className="relative z-10 flex flex-col items-center gap-2">
+                              <span className={circleClass + " flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold tabular-nums"}>{index + 1}</span>
+                              <span className={labelClass + " px-1 text-xs"}>{getOrderStatusLabel(step)}</span>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              aria-current={isCurrent ? "step" : undefined}
+                              disabled={updateStatusMutation.isPending || isCurrent}
+                              onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: step })}
+                              className="relative z-10 flex w-full flex-col items-center gap-2 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:cursor-default"
+                            >
+                              <span className={circleClass + " flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold tabular-nums transition-colors"}>{index + 1}</span>
+                              <span className={labelClass + " px-1 text-xs"}>{getOrderStatusLabel(step)}</span>
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
                 </div>
                 {confirmCancelOrderId === selectedOrder.id ? (
                   <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#ebe8ef] pt-3 text-xs dark:border-zinc-700">
@@ -821,16 +832,19 @@ export const OrdersPage: React.FC = () => {
                 </div>
               </section>
 
-              <div className="grid gap-5 border-t border-[#ebe8ef] pt-5 dark:border-zinc-700 sm:grid-cols-2 sm:gap-8">
-                <section>
-                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("customer_details_title") || "Customer"}</h3>
-                  <dl className="mt-2 divide-y divide-[#ebe8ef] text-[13px] dark:divide-zinc-700">
-                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3">
+              <div className="space-y-3 border-t border-[#ebe8ef] pt-5 dark:border-zinc-700">
+                <details open key={"order-info-" + selectedOrder.id} className="group overflow-hidden rounded-lg border border-[#e6e3eb] dark:border-zinc-700">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[13px] font-semibold text-[#211b2e] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#211b2e] dark:text-white [&::-webkit-details-marker]:hidden">
+                    {lang === "ru" ? "Информация о заказе" : lang === "en" ? "Order information" : "Buyurtma haqida ma'lumot"}
+                    <ChevronDown className="h-4 w-4 shrink-0 text-[#767084] transition-transform group-open:rotate-180 dark:text-zinc-400" aria-hidden="true" />
+                  </summary>
+                  <dl className="divide-y divide-[#ebe8ef] border-t border-[#ebe8ef] px-4 py-1 text-[13px] dark:divide-zinc-700 dark:border-zinc-700">
+                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
                       <dt className="text-[#767084] dark:text-zinc-400">{t("th_name") || "Name"}</dt>
                       <dd className="min-w-0 font-medium text-[#211b2e] dark:text-white">{selectedOrder.customer_name}</dd>
                     </div>
                     {selectedOrder.customer_phone && (
-                      <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3">
+                      <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
                         <dt className="text-[#767084] dark:text-zinc-400">{t("phone_number_label") || "Phone"}</dt>
                         <dd className="flex min-w-0 flex-wrap gap-x-3 gap-y-1">
                           <a href={"tel:" + selectedOrder.customer_phone} className="text-[#211b2e] underline decoration-[#c8c2d0] underline-offset-2 hover:decoration-[#211b2e] dark:text-white">{selectedOrder.customer_phone}</a>
@@ -838,12 +852,23 @@ export const OrdersPage: React.FC = () => {
                         </dd>
                       </div>
                     )}
+                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
+                      <dt className="text-[#767084] dark:text-zinc-400">{t("order_date") || "Date"}</dt>
+                      <dd className="min-w-0 text-[#211b2e] dark:text-white">{new Date(selectedOrder.created_at).toLocaleString(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "uz-UZ")}</dd>
+                    </div>
+                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
+                      <dt className="text-[#767084] dark:text-zinc-400">{t("th_source") || "Source"}</dt>
+                      <dd className="min-w-0 text-[#211b2e] dark:text-white">{selectedOrder.source === "TMA" ? "Telegram Mini App" : t("website_channel") || "Veb-sayt"}</dd>
+                    </div>
                   </dl>
-                </section>
-                <section className="border-t border-[#ebe8ef] pt-5 dark:border-zinc-700 sm:border-l sm:border-t-0 sm:py-0 sm:pl-8">
-                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("delivery_info") || "Delivery"}</h3>
-                  <dl className="mt-2 divide-y divide-[#ebe8ef] text-[13px] dark:divide-zinc-700">
-                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3">
+                </details>
+                <details open key={"delivery-info-" + selectedOrder.id} className="group overflow-hidden rounded-lg border border-[#e6e3eb] dark:border-zinc-700">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[13px] font-semibold text-[#211b2e] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#211b2e] dark:text-white [&::-webkit-details-marker]:hidden">
+                    {t("delivery_info") || "Delivery information"}
+                    <ChevronDown className="h-4 w-4 shrink-0 text-[#767084] transition-transform group-open:rotate-180 dark:text-zinc-400" aria-hidden="true" />
+                  </summary>
+                  <dl className="divide-y divide-[#ebe8ef] border-t border-[#ebe8ef] px-4 py-1 text-[13px] dark:divide-zinc-700 dark:border-zinc-700">
+                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
                       <dt className="text-[#767084] dark:text-zinc-400">{t("branch_assigned") || "Branch"}</dt>
                       <dd className="min-w-0 text-[#211b2e] dark:text-white">
                         {selectedOrder.branch_name ? (
@@ -859,7 +884,7 @@ export const OrdersPage: React.FC = () => {
                         )}
                       </dd>
                     </div>
-                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3">
+                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
                       <dt className="text-[#767084] dark:text-zinc-400">{t("delivery_address_title") || "Address"}</dt>
                       <dd className="min-w-0 leading-5 text-[#211b2e] dark:text-white">
                         {selectedOrder.delivery_address || t("address_not_specified")}
@@ -872,7 +897,7 @@ export const OrdersPage: React.FC = () => {
                       </dd>
                     </div>
                   </dl>
-                </section>
+                </details>
               </div>
             </div>
 
