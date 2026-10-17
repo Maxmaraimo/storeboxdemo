@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -47,6 +47,8 @@ export const OrdersPage: React.FC = () => {
   const [sourceFilter, setSourceFilter] = useState("ALL");
   const [paymentFilter, setPaymentFilter] = useState("ALL");
   const [showFilters, setShowFilters] = useState(false);
+  const filtersRef = useRef<HTMLDivElement>(null);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [highlightedOrderId, setHighlightedOrderId] = useState<number | null>(null);
   const [confirmCancelOrderId, setConfirmCancelOrderId] = useState<number | null>(null);
@@ -135,6 +137,27 @@ export const OrdersPage: React.FC = () => {
       setSearch(urlQ);
     }
   }, [urlQ]);
+
+  useEffect(() => {
+    if (!showFilters) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (filtersRef.current && !filtersRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowFilters(false);
+        filterButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [showFilters]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["orders", store?.id, status, search, branch, sourceFilter, paymentFilter],
@@ -281,7 +304,7 @@ export const OrdersPage: React.FC = () => {
     <button
       type="button"
       onClick={() => setShowCreateModal(true)}
-      className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-[10px] border border-[#211b2e] bg-[#211b2e] px-3.5 py-2 text-xs font-medium text-white shadow-[0_4px_10px_rgba(33,27,46,0.2)] transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-[#f0edf4] dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer"
+      className="inline-flex min-h-9 w-[150px] shrink-0 items-center justify-center gap-2 rounded-[10px] border border-[#211b2e] bg-[#211b2e] px-3.5 py-2 text-xs font-medium text-white shadow-[0_4px_10px_rgba(33,27,46,0.2)] transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-[#f0edf4] dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer"
     >
       <Plus className="h-4 w-4" aria-hidden="true" />
       <span>{lang === "ru" ? "Создать заказ" : lang === "en" ? "Create order" : "Buyurtma yaratish"}</span>
@@ -354,7 +377,7 @@ export const OrdersPage: React.FC = () => {
       ) : (
         <>
           {/* ORDER CONTROLS AND TABLE */}
-          <div className="overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
+          <div className="overflow-visible rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
             <div className="flex items-center gap-3 border-b border-[#e6e3eb] px-4 py-3 dark:border-zinc-700">
               <div className="min-w-0 flex-1 overflow-x-auto no-scrollbar">
                 <div className="storebox-segmented-control min-w-max" role="group" aria-label={lang === "ru" ? "Статус заказа" : "Buyurtma holati"}>
@@ -387,47 +410,50 @@ export const OrdersPage: React.FC = () => {
                   className="w-full rounded-[10px] border border-[#e6e3eb] bg-[#f7f6f9] py-2 pl-10 pr-3 text-xs text-[#211b2e] placeholder:text-[#9690a2] focus:border-[#211b2e] focus:bg-white focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white dark:focus:border-white"
                 />
               </div>
-              <button
-                type="button"
-                aria-expanded={showFilters}
-                aria-controls="order-additional-filters"
-                onClick={() => setShowFilters((open) => !open)}
-                className={`inline-flex min-h-[42px] shrink-0 items-center gap-2 rounded-[10px] border px-3 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] cursor-pointer ${showFilters || activeFilterCount ? "border-[#211b2e] bg-[#f0edf4] text-[#211b2e] dark:border-[#b9acc9] dark:bg-[#30263f] dark:text-white" : "border-[#e6e3eb] bg-white text-[#494456] hover:bg-[#f7f6f9] dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f]"}`}
-              >
-                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                <span>{lang === "ru" ? "Фильтр" : lang === "en" ? "Filter" : "Filtr"}</span>
-                {activeFilterCount > 0 && <span className="tabular-nums">{activeFilterCount}</span>}
-              </button>
-            </div>
-            {showFilters && (
-              <div id="order-additional-filters" className="flex flex-wrap items-end gap-3 border-b border-[#e6e3eb] bg-[#fbfafc] px-4 py-3 dark:border-zinc-700 dark:bg-[#261e33]">
-                <label className="grid min-w-[160px] flex-1 gap-1.5 text-xs font-medium text-[#494456] dark:text-zinc-200 sm:max-w-[220px]">
-                  <span>{lang === "ru" ? "Канал заказа" : lang === "en" ? "Order channel" : "Buyurtma kanali"}</span>
-                  <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="min-h-9 w-full rounded-[9px] border border-[#e6e3eb] bg-white px-2.5 text-xs text-[#211b2e] focus:border-[#211b2e] focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white">
-                    <option value="ALL">{lang === "ru" ? "Все каналы" : lang === "en" ? "All channels" : "Barcha kanallar"}</option>
-                    <option value="WEB">{lang === "ru" ? "Веб-сайт" : lang === "en" ? "Website" : "Veb-sayt"}</option>
-                    <option value="TMA">Telegram Mini App</option>
-                    <option value="INSTAGRAM">Instagram</option>
-                  </select>
-                </label>
-                <label className="grid min-w-[160px] flex-1 gap-1.5 text-xs font-medium text-[#494456] dark:text-zinc-200 sm:max-w-[220px]">
-                  <span>{lang === "ru" ? "Оплата" : lang === "en" ? "Payment" : "To'lov"}</span>
-                  <select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)} className="min-h-9 w-full rounded-[9px] border border-[#e6e3eb] bg-white px-2.5 text-xs text-[#211b2e] focus:border-[#211b2e] focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white">
-                    <option value="ALL">{lang === "ru" ? "Любая" : lang === "en" ? "Any" : "Barchasi"}</option>
-                    <option value="PENDING">{lang === "ru" ? "Ожидает оплаты" : lang === "en" ? "Pending" : "To'lov kutilmoqda"}</option>
-                    <option value="PAID">{lang === "ru" ? "Оплачено" : lang === "en" ? "Paid" : "To'langan"}</option>
-                    <option value="FAILED">{lang === "ru" ? "Ошибка оплаты" : lang === "en" ? "Failed" : "To'lov xatosi"}</option>
-                    <option value="REFUNDED">{lang === "ru" ? "Возврат" : lang === "en" ? "Refunded" : "Qaytarilgan"}</option>
-                  </select>
-                </label>
-                {activeFilterCount > 0 && (
-                  <button type="button" onClick={() => { setSourceFilter("ALL"); setPaymentFilter("ALL"); }} className="min-h-9 rounded-[9px] px-2 text-xs font-medium text-[#686475] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:text-zinc-300 dark:hover:text-white cursor-pointer">
-                    {lang === "ru" ? "Сбросить" : lang === "en" ? "Reset" : "Tozalash"}
-                  </button>
+              <div ref={filtersRef} className="relative shrink-0">
+                <button
+                  ref={filterButtonRef}
+                  type="button"
+                  aria-expanded={showFilters}
+                  aria-controls={showFilters ? "order-additional-filters" : undefined}
+                  onClick={() => setShowFilters((open) => !open)}
+                  className={`inline-flex min-h-9 w-[150px] items-center justify-center gap-2 rounded-[10px] border px-3.5 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] cursor-pointer ${showFilters || activeFilterCount ? "border-[#211b2e] bg-[#f0edf4] text-[#211b2e] dark:border-[#b9acc9] dark:bg-[#30263f] dark:text-white" : "border-[#e6e3eb] bg-white text-[#494456] hover:bg-[#f7f6f9] dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f]"}`}
+                >
+                  <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  <span>{lang === "ru" ? "Фильтр" : lang === "en" ? "Filter" : "Filtr"}</span>
+                  {activeFilterCount > 0 && <span className="tabular-nums">{activeFilterCount}</span>}
+                </button>
+                {showFilters && (
+                  <div id="order-additional-filters" role="group" aria-label={lang === "ru" ? "Фильтры заказов" : lang === "en" ? "Order filters" : "Buyurtma filtrlari"} className="absolute right-0 top-full z-50 mt-2 w-64 rounded-[12px] border border-[#e6e3eb] bg-white p-3 shadow-[0_14px_32px_rgba(33,27,46,0.18)] dark:border-zinc-700 dark:bg-[#30263f]">
+                    <label className="grid gap-1.5 text-xs font-medium text-[#494456] dark:text-zinc-200">
+                      <span>{lang === "ru" ? "Канал заказа" : lang === "en" ? "Order channel" : "Buyurtma kanali"}</span>
+                      <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="min-h-9 w-full rounded-[9px] border border-[#e6e3eb] bg-white px-2.5 text-xs text-[#211b2e] focus:border-[#211b2e] focus:outline-none dark:border-zinc-700 dark:bg-[#211b2e] dark:text-white">
+                        <option value="ALL">{lang === "ru" ? "Все каналы" : lang === "en" ? "All channels" : "Barcha kanallar"}</option>
+                        <option value="WEB">{lang === "ru" ? "Веб-сайт" : lang === "en" ? "Website" : "Veb-sayt"}</option>
+                        <option value="TMA">Telegram Mini App</option>
+                        <option value="INSTAGRAM">Instagram</option>
+                      </select>
+                    </label>
+                    <label className="mt-3 grid gap-1.5 text-xs font-medium text-[#494456] dark:text-zinc-200">
+                      <span>{lang === "ru" ? "Оплата" : lang === "en" ? "Payment" : "To'lov"}</span>
+                      <select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)} className="min-h-9 w-full rounded-[9px] border border-[#e6e3eb] bg-white px-2.5 text-xs text-[#211b2e] focus:border-[#211b2e] focus:outline-none dark:border-zinc-700 dark:bg-[#211b2e] dark:text-white">
+                        <option value="ALL">{lang === "ru" ? "Любая" : lang === "en" ? "Any" : "Barchasi"}</option>
+                        <option value="PENDING">{lang === "ru" ? "Ожидает оплаты" : lang === "en" ? "Pending" : "To'lov kutilmoqda"}</option>
+                        <option value="PAID">{lang === "ru" ? "Оплачено" : lang === "en" ? "Paid" : "To'langan"}</option>
+                        <option value="FAILED">{lang === "ru" ? "Ошибка оплаты" : lang === "en" ? "Failed" : "To'lov xatosi"}</option>
+                        <option value="REFUNDED">{lang === "ru" ? "Возврат" : lang === "en" ? "Refunded" : "Qaytarilgan"}</option>
+                      </select>
+                    </label>
+                    {activeFilterCount > 0 && (
+                      <button type="button" onClick={() => { setSourceFilter("ALL"); setPaymentFilter("ALL"); }} className="mt-3 text-xs font-medium text-[#686475] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:text-zinc-300 dark:hover:text-white cursor-pointer">
+                        {lang === "ru" ? "Сбросить" : lang === "en" ? "Reset" : "Tozalash"}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-            <div className="overflow-x-auto">
+            </div>
+            <div className="overflow-x-auto rounded-b-[18px]">
               <table className="w-full min-w-[900px] border-collapse text-left text-xs">
                 <thead className="border-b border-[#e6e3eb] bg-[#f7f6f9] text-[11px] text-[#767084] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
                   <tr>
