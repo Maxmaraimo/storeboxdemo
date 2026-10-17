@@ -49,6 +49,8 @@ export const OrdersPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const filtersRef = useRef<HTMLDivElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const createOrderButtonRef = useRef<HTMLButtonElement>(null);
+  const [actionButtonWidth, setActionButtonWidth] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [highlightedOrderId, setHighlightedOrderId] = useState<number | null>(null);
   const [confirmCancelOrderId, setConfirmCancelOrderId] = useState<number | null>(null);
@@ -158,6 +160,17 @@ export const OrdersPage: React.FC = () => {
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [showFilters]);
+
+  useEffect(() => {
+    const button = createOrderButtonRef.current;
+    if (!button) return;
+    const syncButtonWidth = () => setActionButtonWidth(button.getBoundingClientRect().width);
+    syncButtonWidth();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(syncButtonWidth);
+    observer.observe(button);
+    return () => observer.disconnect();
+  }, [lang, urlTab]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["orders", store?.id, status, search, branch, sourceFilter, paymentFilter],
@@ -302,9 +315,10 @@ export const OrdersPage: React.FC = () => {
     : lang === "ru" ? "Напомнить в Telegram" : lang === "en" ? "Remind in Telegram" : "Telegramda eslatish";
   const createOrderButton = (
     <button
+      ref={createOrderButtonRef}
       type="button"
       onClick={() => setShowCreateModal(true)}
-      className="inline-flex min-h-9 w-[150px] shrink-0 items-center justify-center gap-2 rounded-[10px] border border-[#211b2e] bg-[#211b2e] px-3.5 py-2 text-xs font-medium text-white shadow-[0_4px_10px_rgba(33,27,46,0.2)] transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-[#f0edf4] dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer"
+      className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-[#211b2e] bg-[#211b2e] px-3.5 py-2 text-xs font-medium text-white shadow-[0_4px_10px_rgba(33,27,46,0.2)] transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-[#f0edf4] dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer"
     >
       <Plus className="h-4 w-4" aria-hidden="true" />
       <span>{lang === "ru" ? "Создать заказ" : lang === "en" ? "Create order" : "Buyurtma yaratish"}</span>
@@ -417,6 +431,7 @@ export const OrdersPage: React.FC = () => {
                   aria-expanded={showFilters}
                   aria-controls={showFilters ? "order-additional-filters" : undefined}
                   onClick={() => setShowFilters((open) => !open)}
+                  style={actionButtonWidth === null ? undefined : { width: actionButtonWidth }}
                   className={`inline-flex min-h-9 w-[150px] items-center justify-center gap-2 rounded-[10px] border px-3.5 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] cursor-pointer ${showFilters || activeFilterCount ? "border-[#211b2e] bg-[#f0edf4] text-[#211b2e] dark:border-[#b9acc9] dark:bg-[#30263f] dark:text-white" : "border-[#e6e3eb] bg-white text-[#494456] hover:bg-[#f7f6f9] dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f]"}`}
                 >
                   <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
