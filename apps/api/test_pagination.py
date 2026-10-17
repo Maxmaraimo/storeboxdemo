@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.catalog.models import Category, Product
-from apps.orders.models import Order
+from apps.orders.models import Customer, Order
 from apps.stores.models import Branch, Store
 
 
@@ -94,7 +94,7 @@ class TablePaginationTests(TestCase):
         self.assertEqual(self.get_list("orders", limit="bad")["total"], 23)
 
     def test_empty_filtered_results_use_zero_total_and_first_page(self):
-        for kind in ("orders", "products"):
+        for kind in ("orders", "products", "customers"):
             result = self.get_list(kind, page=99, page_size=10)
             self.assertEqual((result["total"], result["page"], result["total_pages"]), (0, 1, 1))
             self.assertEqual(result[kind], [])
@@ -123,3 +123,32 @@ class TablePaginationTests(TestCase):
         Product.objects.filter(id=products[0].id).delete()
         result = self.get_list("products", page=2, page_size=10)
         self.assertEqual((result["page"], result["total_pages"], result["total"]), (1, 1, 10))
+
+    def test_customer_pages_reach_past_100_and_keep_legacy_response(self):
+        customers = Customer.objects.bulk_create([
+            Customer(store=self.store, name=f"Customer {index}", phone=f"+99890{index:07}")
+            for index in range(105)
+        ])
+        Customer.objects.filter(store=self.store).update(created_at=timezone.now())
+        Customer.objects.create(store=self.other_store, name="Private", phone="+998900000000")
+        first = self.get_list("customers", page=1, page_size=10)
+        last = self.get_list("customers", page=11, page_size=10)
+        self.assertEqual(first["total"], 105)
+        self.assertEqual(last["total_pages"], 11)
+        self.assertEqual([row["id"] for row in first["customers"]], [c.id for c in reversed(customers[-10:])])
+        self.assertEqual([row["id"] for row in last["customers"]], [c.id for c in reversed(customers[:5])])
+        legacy = self.get_list("customers")
+        self.assertEqual(len(legacy["customers"]), 100)
+        self.assertNotIn("page", legacy)
+
+    def test_customer_search_is_store_scoped_and_applies_before_pagination(self):
+        for index in range(3):
+            Customer.objects.create(store=self.store, name=f"VIP {index}", phone=f"+99890123456{index}")
+        Customer.objects.create(store=self.store, name="Other", phone="+998900000000")
+        Customer.objects.create(store=self.other_store, name="VIP private", phone="+998901234560")
+        result = self.get_list("customers", q="VIP", page=2, page_size=2)
+        self.assertEqual((result["total"], len(result["customers"])), (3, 1))
+        self.assertTrue(result["customers"][0]["name"].startswith("VIP"))
+        result = self.get_list("customers", q="+998901234560", page=1, page_size=10)
+        self.assertEqual(result["total"], 1)
+        self.assertEqual(result["customers"][0]["name"], "VIP 0")

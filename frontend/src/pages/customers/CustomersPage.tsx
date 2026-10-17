@@ -1,29 +1,31 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Users,
   Search,
   Gift,
   Phone,
   Calendar,
   ShoppingBag,
   ExternalLink,
-  Plus,
   X,
   CreditCard,
   UserCheck,
   CheckCircle2,
-  Clock,
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Customer } from "../../types";
+import { PaginationMetadata } from "../../types/pagination";
+import { TablePagination } from "../../components/ui/TablePagination";
+import { useTablePagination } from "../../hooks/useTablePagination";
 
 export const CustomersPage: React.FC = () => {
   const { t, lang, store } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const paginationScope = JSON.stringify([store?.id, search]);
+  const { page, pageSize, setPage, setPageSize } = useTablePagination(paginationScope);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [bonusModalCustomer, setBonusModalCustomer] = useState<Customer | null>(null);
   const [bonusPoints, setBonusPoints] = useState(1000);
@@ -46,13 +48,19 @@ export const CustomersPage: React.FC = () => {
     setTimeout(() => setNoteSavedId(null), 2000);
   };
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["customers", store?.id, search],
+  const { data, isLoading, isFetching, isPlaceholderData, isError } = useQuery({
+    queryKey: ["customers", store?.id, paginationScope, page, pageSize],
+    enabled: Boolean(store?.id),
+    placeholderData: (previous, previousQuery) => previousQuery?.queryKey[2] === paginationScope ? previous : undefined,
     queryFn: async () => {
-      const res = await api.get(`/customers/?q=${encodeURIComponent(search)}&store_id=${store?.id || ""}`);
-      return res.data as { customers: Customer[]; total: number };
+      const res = await api.get("/customers/", { params: { q: search, store_id: store?.id, page, page_size: pageSize } });
+      return res.data as PaginationMetadata & { customers: Customer[] };
     },
   });
+
+  useEffect(() => {
+    if (data && !isPlaceholderData && data.page !== page) setPage(data.page);
+  }, [data, isPlaceholderData, page, setPage]);
 
   const bonusMutation = useMutation({
     mutationFn: async () => {
@@ -75,90 +83,83 @@ export const CustomersPage: React.FC = () => {
   });
 
   const customers = data?.customers || [];
+  const openBonusModal = (customer: Customer) => {
+    bonusMutation.reset();
+    setBonusModalCustomer(customer);
+  };
+  const secondaryButtonClass = "inline-flex min-h-9 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-[#d8d1e2] bg-white px-3 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:opacity-40 dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer";
+  const primaryButtonClass = "inline-flex min-h-9 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-[#211b2e] px-3.5 text-xs font-medium text-white transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:opacity-40 dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer";
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="pb-12">
       <h1 className="sr-only">{t("customers_list_title") || "Mijozlar"}</h1>
 
-      {/* SEARCH */}
-      <div className="bg-white rounded-[10px] border border-[#e1e3e5] p-3 sm:p-4 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex items-center justify-between gap-4">
-        <div className="flex-1 max-w-md relative">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("search_customer_ph") || "Mijoz ismi yoki telefon raqami..."}
-            className="w-full pl-9 pr-4 py-2 rounded-[8px] bg-[#f6f6f7] border border-[#e1e3e5] text-xs text-[#202223] placeholder-zinc-400 focus:outline-none focus:border-[#008060] transition-colors"
-          />
-          <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
+        <div className="flex items-center border-b border-[#e6e3eb] px-4 py-3 dark:border-zinc-700">
+          <div className="relative w-full sm:max-w-[380px]">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label={t("search_customer_ph") || "Mijoz ismi yoki telefon raqami"}
+              placeholder={t("search_customer_ph") || "Mijoz ismi yoki telefon raqami..."}
+              className="min-h-9 w-full rounded-[10px] border border-[#d8d1e2] bg-[#f8f7fa] pl-9 pr-3 text-xs text-[#211b2e] placeholder:text-[#9690a2] outline-none focus:border-[#8b8497] focus:ring-2 focus:ring-[#211b2e]/10 dark:border-zinc-700 dark:bg-[#191520] dark:text-zinc-100"
+            />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9690a2]" aria-hidden="true" />
+          </div>
         </div>
-        <div className="text-xs font-medium text-[#6d7175]">
-          {(t("total_customers_format") || "Jami: {count} ta").replace("{count}", String(customers.length))}
-        </div>
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-white rounded-[10px] border border-[#e1e3e5] overflow-hidden shadow-[0_1px_0_rgba(0,0,0,0.05)]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#f6f6f7] text-[#6d7175] font-medium border-b border-[#e1e3e5]">
+        <div className="overflow-x-auto" aria-busy={isFetching}>
+          <table className="w-full min-w-[1000px] border-collapse text-left text-[13px]">
+            <thead className="border-b border-[#e6e3eb] bg-[#f8f7fa] text-xs text-[#81798f] dark:border-zinc-700 dark:bg-[#191520] dark:text-zinc-400">
               <tr>
-                <th className="py-2.5 px-4">{t("th_name") || "Mijoz"}</th>
-                <th className="py-2.5 px-4">{t("th_phone") || "Telefon"}</th>
-                <th className="py-2.5 px-4">{t("th_orders_qty") || "Buyurtmalar"}</th>
-                <th className="py-2.5 px-4">{lang === "ru" ? "Сумма покупок (LTV)" : "Xarid summasi (LTV)"}</th>
-                <th className="py-2.5 px-4">{t("th_bonus") || "Bonus ball"}</th>
-                <th className="py-2.5 px-4">{t("th_joined_date") || "Qo'shilgan sana"}</th>
-                <th className="py-2.5 px-4 text-right">{t("th_actions") || "Harakat"}</th>
+                <th scope="col" className="px-4 py-3 font-medium">{t("th_name") || "Mijoz"}</th>
+                <th scope="col" className="whitespace-nowrap px-4 py-3 font-medium">{t("th_phone") || "Telefon"}</th>
+                <th scope="col" className="whitespace-nowrap px-4 py-3 text-right font-medium">{t("th_orders_qty") || "Buyurtmalar"}</th>
+                <th scope="col" className="whitespace-nowrap px-4 py-3 text-right font-medium">{lang === "ru" ? "Сумма покупок (LTV)" : lang === "en" ? "Total spent (LTV)" : "Xarid summasi (LTV)"}</th>
+                <th scope="col" className="whitespace-nowrap px-4 py-3 text-right font-medium">{t("th_bonus") || "Bonus ball"}</th>
+                <th scope="col" className="whitespace-nowrap px-4 py-3 font-medium">{t("th_joined_date") || "Qo'shilgan sana"}</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">{t("th_actions") || "Harakat"}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#e1e3e5] font-normal text-[#202223]">
+            <tbody className="divide-y divide-[#efecf3] text-[#494456] dark:divide-zinc-800 dark:text-zinc-200">
               {customers.map((c) => {
-                const ltv = Number((c as any).total_spent || 0);
+                const ltv = Number(c.total_spent || 0);
                 return (
                   <tr
                     key={c.id}
                     onClick={() => setSelectedCustomer(c)}
-                    className="hover:bg-[#f6f6f7] transition-colors cursor-pointer group"
+                    className="cursor-pointer transition-colors hover:bg-[#faf9fc] dark:hover:bg-[#30263f]/40"
                   >
-                    <td className="py-3 px-4 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-zinc-100 text-zinc-800 font-bold text-xs flex items-center justify-center shrink-0 border border-zinc-200">
-                        {c.name?.charAt(0)?.toUpperCase() || "M"}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#202223] group-hover:text-black">
-                          {c.name}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e6e3eb] bg-[#f8f7fa] text-xs font-medium text-[#81798f] dark:border-zinc-700 dark:bg-[#191520] dark:text-zinc-400">
+                          {c.name?.charAt(0)?.toUpperCase() || "M"}
                         </div>
-                        <div className="text-[11px] text-zinc-400">ID #{c.id}</div>
+                        <div>
+                          <button type="button" onClick={event => { event.stopPropagation(); setSelectedCustomer(c); }} className="block max-w-[220px] truncate rounded-sm text-left font-medium text-[#211b2e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:text-zinc-100 cursor-pointer" title={c.name}>
+                            {c.name}
+                          </button>
+                          <div className="mt-1 text-[11px] text-[#8b8497]">ID #{c.id}</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-zinc-600 font-mono text-xs">{c.phone}</td>
-                    <td className="py-3 px-4 font-semibold text-zinc-900">
-                      <span className="inline-flex items-center gap-1">
-                        <ShoppingBag className="w-3.5 h-3.5 text-zinc-400" />
-                        {c.orders_count}
-                      </span>
+                    <td className="whitespace-nowrap px-4 py-3 tabular-nums text-[#81798f] dark:text-zinc-400">{c.phone}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">{c.orders_count}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums text-[#211b2e] dark:text-zinc-100">
+                      {ltv.toLocaleString("ru-RU")} {store?.currency || "UZS"}
                     </td>
-                    <td className="py-3 px-4 font-mono font-semibold text-[#202223]">
-                      {ltv.toLocaleString()} {store?.currency || "UZS"}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-[#008060] border border-emerald-200">
-                        <Gift className="w-3 h-3 text-[#008060]" />
-                        <span>{c.bonus_balance} {t("points_unit") || "ball"}</span>
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-zinc-500 text-xs">
-                      {new Date(c.created_at).toLocaleDateString()}
+                    <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">{c.bonus_balance.toLocaleString("ru-RU")}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-[#81798f] dark:text-zinc-400">
+                      {new Date(c.created_at).toLocaleDateString(lang === "ru" ? "ru-RU" : lang === "en" ? "en-GB" : "uz-UZ")}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setBonusModalCustomer(c);
+                          openBonusModal(c);
                         }}
-                        className="px-2.5 py-1 rounded-[8px] border border-[#e1e3e5] hover:border-zinc-300 bg-white hover:bg-[#f6f6f7] text-[11px] font-medium text-[#202223] transition-colors cursor-pointer shadow-2xs"
+                        className={secondaryButtonClass}
                       >
                         {t("give_bonus_btn_short") || "Ball berish"}
                       </button>
@@ -166,16 +167,19 @@ export const CustomersPage: React.FC = () => {
                   </tr>
                 );
               })}
-              {customers.length === 0 && !isLoading && (
+              {(isLoading || isError || customers.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-zinc-400">
-                    {t("no_customers_found") || "Mijozlar topilmadi"}
+                  <td colSpan={7} role="status" className="px-4 py-12 text-center text-[#8b8497]">
+                    {isLoading ? (lang === "ru" ? "Загрузка…" : lang === "en" ? "Loading…" : "Yuklanmoqda…")
+                      : isError ? (lang === "ru" ? "Не удалось загрузить клиентов" : lang === "en" ? "Unable to load customers" : "Mijozlarni yuklab bo'lmadi")
+                      : t("no_customers_found") || "Mijozlar topilmadi"}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        <TablePagination total={data?.total ?? 0} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} busy={isFetching} />
       </div>
 
       {/* CUSTOMER DETAIL DRAWER */}
@@ -335,7 +339,7 @@ export const CustomersPage: React.FC = () => {
                   <div className="space-y-2">
                     <button
                       type="button"
-                      onClick={() => setBonusModalCustomer(selectedCustomer)}
+                      onClick={() => openBonusModal(selectedCustomer)}
                       className="w-full py-2.5 px-3 rounded-[8px] border border-[#e1e3e5] hover:border-[#202223] hover:bg-[#f6f6f7] text-xs font-semibold text-[#202223] transition-all flex items-center justify-between cursor-pointer"
                     >
                       <span className="flex items-center gap-2">
@@ -376,39 +380,42 @@ export const CustomersPage: React.FC = () => {
       {/* BONUS MODAL */}
       {bonusModalCustomer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white border border-zinc-200 rounded-xl p-5 max-w-sm w-full shadow-2xl space-y-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="customer-bonus-title" className="max-h-[calc(100dvh-2rem)] w-full max-w-sm space-y-4 overflow-y-auto rounded-[18px] border border-[#dfe5ef] bg-white p-5 text-[#211b2e] shadow-xl dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-100">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm text-zinc-900">
+              <h3 id="customer-bonus-title" className="text-sm font-semibold">
                 {t("bonus_modal_title") || "Bonus ball berish"}
               </h3>
               <button
                 type="button"
                 onClick={() => setBonusModalCustomer(null)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                aria-label={lang === "ru" ? "Закрыть" : lang === "en" ? "Close" : "Yopish"}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-[#8b8497] hover:bg-[#f0edf4] dark:hover:bg-[#30263f] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-[#81798f] dark:text-zinc-400">
               {t("customer_label") || "Mijoz:"}{" "}
-              <b className="text-zinc-900 font-semibold">{bonusModalCustomer.name}</b>
+              <span className="font-medium text-[#211b2e] dark:text-zinc-100">{bonusModalCustomer.name}</span>
             </p>
             <div>
-              <label className="block text-[11px] font-medium text-zinc-600 mb-1">
-                Ball miqdori
+              <label htmlFor="customer-bonus-amount" className="mb-1.5 block text-xs font-medium">
+                {lang === "ru" ? "Количество баллов" : lang === "en" ? "Points" : "Ball miqdori"}
               </label>
               <input
+                id="customer-bonus-amount"
                 type="number"
                 value={bonusPoints}
                 onChange={(e) => setBonusPoints(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-semibold text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900"
+                className="min-h-9 w-full rounded-[10px] border border-[#d8d1e2] bg-[#f8f7fa] px-3 text-[13px] tabular-nums outline-none focus:border-[#8b8497] focus:ring-2 focus:ring-[#211b2e]/10 dark:border-zinc-700 dark:bg-[#191520]"
               />
             </div>
-            <div className="flex gap-2 pt-2">
+            {bonusMutation.isError && <p role="alert" className="text-xs text-[#aa3e51] dark:text-[#f1a9b7]">{lang === "ru" ? "Не удалось сохранить. Попробуйте ещё раз." : lang === "en" ? "Unable to save. Please try again." : "Saqlab bo'lmadi. Qayta urinib ko'ring."}</p>}
+            <div className="flex gap-2 border-t border-[#e6e3eb] pt-4 dark:border-zinc-700">
               <button
                 type="button"
                 onClick={() => setBonusModalCustomer(null)}
-                className="flex-1 py-2 rounded-lg bg-zinc-100 hover:bg-zinc-200 font-medium text-xs text-zinc-700 transition-colors cursor-pointer"
+                className={`${secondaryButtonClass} flex-1`}
               >
                 {t("btn_cancel") || "Bekor qilish"}
               </button>
@@ -416,9 +423,9 @@ export const CustomersPage: React.FC = () => {
                 type="button"
                 onClick={() => bonusMutation.mutate()}
                 disabled={bonusMutation.isPending}
-                className="flex-1 py-2 rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 font-medium text-xs transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                className={`${primaryButtonClass} flex-1`}
               >
-                {bonusMutation.isPending ? "Saqlanmoqda..." : t("give_bonus_btn") || "Berish"}
+                {bonusMutation.isPending ? (lang === "ru" ? "Сохранение…" : lang === "en" ? "Saving…" : "Saqlanmoqda…") : t("give_bonus_btn") || "Berish"}
               </button>
             </div>
           </div>

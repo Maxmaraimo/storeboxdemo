@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from apps.orders.models import Customer
 from .views_auth import get_merchant_store
 from .serializers import CustomerSerializer
+from .pagination import paginate_queryset
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -14,7 +15,7 @@ def customers_list_view(request):
         return Response({"error": "Dokon topilmadi"}, status=404)
 
     query = request.GET.get("q", "").strip()
-    qs = Customer.objects.filter(store=store).order_by("-created_at")
+    qs = Customer.objects.filter(store=store).order_by("-created_at", "-id")
 
     if query:
         qs = qs.filter(
@@ -22,9 +23,10 @@ def customers_list_view(request):
             Q(phone__icontains=query)
         )
 
+    customers, pagination = paginate_queryset(request, qs, default_limit=100)
     return Response({
-        "customers": CustomerSerializer(qs[:100], many=True).data,
-        "total": qs.count()
+        "customers": CustomerSerializer(customers, many=True).data,
+        **pagination,
     })
 
 @api_view(["POST"])
