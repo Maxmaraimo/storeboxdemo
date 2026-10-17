@@ -19,6 +19,18 @@ def orders_list_view(request):
     branch_id = request.GET.get("branch") or request.GET.get("branch_id")
     source_param = request.GET.get("source", "").upper()
     payment_status_param = request.GET.get("payment_status", "").upper()
+    courier_id = request.GET.get("courier_id", "")
+
+    def selected_choices(param, choices):
+        return {
+            value.strip().upper()
+            for group in request.GET.getlist(param)
+            for value in group.split(",")
+            if value.strip().upper() in choices
+        }
+
+    payment_methods = selected_choices("payment_method", Order.PaymentMethods.values)
+    delivery_methods = selected_choices("delivery_method", Order.DeliveryMethods.values)
 
     from apps.orders.models import StoreStaff
     from apps.stores.models import Branch
@@ -47,6 +59,14 @@ def orders_list_view(request):
         orders_qs = orders_qs.filter(source=source_param)
     if payment_status_param in Order.PaymentStatuses.values:
         orders_qs = orders_qs.filter(payment_status=payment_status_param)
+    if payment_methods:
+        orders_qs = orders_qs.filter(payment_method__in=payment_methods)
+    if delivery_methods:
+        orders_qs = orders_qs.filter(delivery_method__in=delivery_methods)
+    if courier_id == "unassigned":
+        orders_qs = orders_qs.filter(courier__isnull=True)
+    elif courier_id.isdecimal():
+        orders_qs = orders_qs.filter(courier_id=int(courier_id))
 
     # Calculate status counts across all orders
     counts = {

@@ -17,10 +17,11 @@ import {
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
-import { Order, OrderItem } from "../../types";
+import { BranchItem, Order, OrderItem } from "../../types";
 import { PaginationMetadata } from "../../types/pagination";
 import { TablePagination } from "../../components/ui/TablePagination";
 import { useTablePagination } from "../../hooks/useTablePagination";
+import { DEFAULT_ORDER_FILTERS, OrderFilters } from "./OrderFilters";
 
 interface DraftOrderItem {
   id: string;
@@ -49,9 +50,9 @@ export const OrdersPage: React.FC = () => {
 
   const [status, setStatus] = useState("ALL");
   const [search, setSearch] = useState(urlQ);
-  const [sourceFilter, setSourceFilter] = useState("ALL");
-  const [paymentFilter, setPaymentFilter] = useState("ALL");
-  const paginationScope = JSON.stringify([store?.id, status, search, branch, sourceFilter, paymentFilter, urlTab]);
+  const [filters, setFilters] = useState(DEFAULT_ORDER_FILTERS);
+  const appliedFilters = { ...filters, branch };
+  const paginationScope = JSON.stringify([store?.id, status, search, appliedFilters, urlTab]);
   const { page, pageSize, setPage, setPageSize } = useTablePagination(paginationScope);
   const [showFilters, setShowFilters] = useState(false);
   const filtersRef = useRef<HTMLDivElement>(null);
@@ -188,13 +189,18 @@ export const OrdersPage: React.FC = () => {
       const res = await api.get("/orders/", { params: {
         status, q: search, store_id: store?.id,
         branch: branch !== "all" ? branch : undefined,
-        source: sourceFilter !== "ALL" ? sourceFilter : undefined,
-        payment_status: paymentFilter !== "ALL" ? paymentFilter : undefined,
+        source: filters.source !== "ALL" ? filters.source : undefined,
+        payment_status: filters.paymentStatus !== "ALL" ? filters.paymentStatus : undefined,
+        courier_id: filters.courier !== "ALL" ? filters.courier : undefined,
+        payment_method: filters.paymentMethods.length ? filters.paymentMethods.join(",") : undefined,
+        delivery_method: filters.deliveryMethods.length ? filters.deliveryMethods.join(",") : undefined,
         page, page_size: pageSize, focus_order: urlOrderId || undefined,
       } });
       return res.data as PaginationMetadata & {
         counts: Record<string, number>;
         orders: Order[];
+        user_branch: BranchItem | null;
+        is_branch_restricted: boolean;
       };
     },
   });
@@ -322,7 +328,9 @@ export const OrdersPage: React.FC = () => {
     { id: "IN_DELIVERY", label: t("status_delivering") || "Доставка", count: counts.in_delivery },
     { id: "HISTORY", label: t("status_completed") || "Выполненные", count: counts.history },
   ];
-  const activeFilterCount = Number(sourceFilter !== "ALL") + Number(paymentFilter !== "ALL");
+  const activeFilterCount = Number(branch !== "all" && !data?.is_branch_restricted)
+    + Number(filters.source !== "ALL") + Number(filters.paymentStatus !== "ALL")
+    + Number(filters.courier !== "ALL") + Number(filters.paymentMethods.length > 0) + Number(filters.deliveryMethods.length > 0);
 
   const draftsList = draftOrders.filter((d) => d.type === "draft");
   const abandonedList = draftOrders.filter((d) => d.type === "abandoned");
@@ -464,32 +472,21 @@ export const OrdersPage: React.FC = () => {
                   {activeFilterCount > 0 && <span className="tabular-nums">{activeFilterCount}</span>}
                 </button>
                 {showFilters && (
-                  <div id="order-additional-filters" role="group" aria-label={lang === "ru" ? "Фильтры заказов" : lang === "en" ? "Order filters" : "Buyurtma filtrlari"} className="absolute right-0 top-full z-50 mt-2 w-64 rounded-[12px] border border-[#e6e3eb] bg-white p-3 shadow-[0_14px_32px_rgba(33,27,46,0.18)] dark:border-zinc-700 dark:bg-[#30263f]">
-                    <label className="grid gap-1.5 text-xs font-medium text-[#494456] dark:text-zinc-200">
-                      <span>{lang === "ru" ? "Канал заказа" : lang === "en" ? "Order channel" : "Buyurtma kanali"}</span>
-                      <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="min-h-9 w-full rounded-[9px] border border-[#e6e3eb] bg-white px-2.5 text-xs text-[#211b2e] focus:border-[#211b2e] focus:outline-none dark:border-zinc-700 dark:bg-[#211b2e] dark:text-white">
-                        <option value="ALL">{lang === "ru" ? "Все каналы" : lang === "en" ? "All channels" : "Barcha kanallar"}</option>
-                        <option value="WEB">{lang === "ru" ? "Веб-сайт" : lang === "en" ? "Website" : "Veb-sayt"}</option>
-                        <option value="TMA">Telegram Mini App</option>
-                        <option value="INSTAGRAM">Instagram</option>
-                      </select>
-                    </label>
-                    <label className="mt-3 grid gap-1.5 text-xs font-medium text-[#494456] dark:text-zinc-200">
-                      <span>{lang === "ru" ? "Оплата" : lang === "en" ? "Payment" : "To'lov"}</span>
-                      <select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)} className="min-h-9 w-full rounded-[9px] border border-[#e6e3eb] bg-white px-2.5 text-xs text-[#211b2e] focus:border-[#211b2e] focus:outline-none dark:border-zinc-700 dark:bg-[#211b2e] dark:text-white">
-                        <option value="ALL">{lang === "ru" ? "Любая" : lang === "en" ? "Any" : "Barchasi"}</option>
-                        <option value="PENDING">{lang === "ru" ? "Ожидает оплаты" : lang === "en" ? "Pending" : "To'lov kutilmoqda"}</option>
-                        <option value="PAID">{lang === "ru" ? "Оплачено" : lang === "en" ? "Paid" : "To'langan"}</option>
-                        <option value="FAILED">{lang === "ru" ? "Ошибка оплаты" : lang === "en" ? "Failed" : "To'lov xatosi"}</option>
-                        <option value="REFUNDED">{lang === "ru" ? "Возврат" : lang === "en" ? "Refunded" : "Qaytarilgan"}</option>
-                      </select>
-                    </label>
-                    {activeFilterCount > 0 && (
-                      <button type="button" onClick={() => { setSourceFilter("ALL"); setPaymentFilter("ALL"); }} className="mt-3 text-xs font-medium text-[#686475] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:text-zinc-300 dark:hover:text-white cursor-pointer">
-                        {lang === "ru" ? "Сбросить" : lang === "en" ? "Reset" : "Tozalash"}
-                      </button>
-                    )}
-                  </div>
+                  <OrderFilters
+                    value={appliedFilters}
+                    restrictedBranch={data?.is_branch_restricted ? data.user_branch : null}
+                    onClose={() => { setShowFilters(false); filterButtonRef.current?.focus(); }}
+                    onApply={next => {
+                      setFilters(next);
+                      setSearchParams(current => {
+                        const params = new URLSearchParams(current);
+                        if (next.branch === "all") params.delete("branch"); else params.set("branch", next.branch);
+                        return params;
+                      });
+                      setShowFilters(false);
+                      filterButtonRef.current?.focus();
+                    }}
+                  />
                 )}
               </div>
             </div>
