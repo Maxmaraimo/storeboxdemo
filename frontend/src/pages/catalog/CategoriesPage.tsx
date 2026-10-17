@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FolderTree, Store, Package, Plus, Edit2, Trash2, X, Check, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
+import { FolderTree, Package, Plus, Edit2, Trash2, X, Check, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Category } from "../../types";
@@ -163,18 +163,10 @@ export const CategoriesPage: React.FC = () => {
   const categories = data?.categories || [];
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            {t("categories_list_title") || "Kategoriyalar ro`yxati"}
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {t("categories_list_subtitle") || "Katalog mahsulotlarini bo`limlar bo`yicha ajratish"}
-          </p>
-        </div>
-        {canEditCategory && (
+    <div className="space-y-4">
+      <h1 className="sr-only">{t("categories_list_title") || "Kategoriyalar ro`yxati"}</h1>
+      {canEditCategory && (
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={openCreateModal}
@@ -183,30 +175,8 @@ export const CategoriesPage: React.FC = () => {
             <Plus className="w-4 h-4" />
             <span>{t("new_category") || "Yangi kategoriya"}</span>
           </button>
-        )}
-      </div>
-
-      {/* BANNER */}
-      <div className="p-4 rounded-xl bg-white border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <Store className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold text-slate-900">
-              {t("category_visibility_banner") || "Saytda qaysi kategoriyalar ko`rinishini boshqaring"}
-            </h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              {t("category_visibility_desc") || "«Saytda ko`rsatish» tugmasi orqali kategoriyani bir zumda saytga qo`shishingiz mumkin"}
-            </p>
-          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-medium text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
-            {t("total_categories") || "Jami:"} <b className="font-mono text-slate-900">{categories.length}</b> {t("categories_unit") || "ta kategoriya"}
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* CATEGORIES TABLE */}
       <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs">
