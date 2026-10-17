@@ -755,33 +755,45 @@ export const OrdersPage: React.FC = () => {
               </section>
 
               <section className="border-t border-[#ebe8ef] py-5 dark:border-zinc-700">
-                <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">
-                  {lang === "ru" ? "Оплата" : lang === "en" ? "Payment" : "To'lov"}
-                </h3>
-                <div className="mt-3 grid gap-x-8 gap-y-3 text-[13px] sm:grid-cols-2">
-                  <div className="flex justify-between gap-3">
-                    <span className="text-[#767084] dark:text-zinc-400">{t("payment_method_label") || "Payment method"}</span>
-                    <span className="text-right font-medium text-[#211b2e] dark:text-white">{selectedOrder.payment_method_display || (lang === "ru" ? "Наличные" : lang === "en" ? "Cash" : "Naqd pul")}</span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-[#767084] dark:text-zinc-400">{t("payment_status_label") || "Payment status"}</span>
-                    <span className="text-right font-medium text-[#211b2e] dark:text-white">{selectedOrder.payment_status_display || (lang === "ru" ? "Ожидается" : lang === "en" ? "Pending" : "Kutilmoqda")}</span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-[#767084] dark:text-zinc-400">{t("delivery_service_fee") || "Delivery"}</span>
-                    <span className="font-medium tabular-nums text-[#211b2e] dark:text-white">{Number(selectedOrder.delivery_fee || 0).toLocaleString()} UZS</span>
-                  </div>
-                  {Number(selectedOrder.discount_amount) > 0 && (
-                    <div className="flex justify-between gap-3">
-                      <span className="text-[#767084] dark:text-zinc-400">{t("discount_label") || "Discount"}</span>
-                      <span className="font-medium tabular-nums text-[#211b2e] dark:text-white">−{Number(selectedOrder.discount_amount).toLocaleString()} UZS</span>
-                    </div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("change_status_title") || "Change status"}</h3>
+                  {confirmCancelOrderId !== selectedOrder.id && selectedOrder.status !== "CANCELLED" && selectedOrder.status !== "COMPLETED" && (
+                    <button type="button" onClick={() => setConfirmCancelOrderId(selectedOrder.id)} className="inline-flex min-h-9 items-center rounded-lg border border-[#e4c4ca] px-3 text-xs font-medium text-[#a33b4c] hover:bg-[#fbf4f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a33b4c] dark:border-[#67404d] dark:hover:bg-white/5">
+                      {t("cancel_return_stock_btn") || "Cancel order"}
+                    </button>
                   )}
-                  <div className="flex items-baseline justify-between gap-3 border-t border-[#ebe8ef] pt-3 dark:border-zinc-700 sm:col-span-2">
-                    <span className="font-medium text-[#494456] dark:text-zinc-300">{t("total_payment") || "Total"}</span>
-                    <span className="text-[15px] font-semibold tabular-nums text-[#211b2e] dark:text-white">{Number(selectedOrder.total_amount).toLocaleString()} UZS</span>
+                </div>
+                <div className="mt-3 overflow-x-auto">
+                  <div className="inline-flex min-w-max overflow-hidden rounded-lg border border-[#e6e3eb] bg-white dark:border-zinc-700 dark:bg-transparent" role="group" aria-label={t("change_status_title") || "Change status"}>
+                    <span aria-current={selectedOrder.status === "NEW" ? "step" : undefined} className={(selectedOrder.status === "NEW" ? "bg-[#211b2e] text-white dark:bg-white dark:text-[#211b2e]" : "text-[#9690a2] dark:text-zinc-500") + " inline-flex min-h-9 items-center border-r border-[#e6e3eb] px-3 text-xs font-medium dark:border-zinc-700"}>
+                      {getOrderStatusLabel("NEW")}
+                    </span>
+                    {(["PROCESSING", "READY", "IN_DELIVERY", "COMPLETED"] as const).map((nextStatus) => (
+                      <button
+                        key={nextStatus}
+                        type="button"
+                        aria-current={selectedOrder.status === nextStatus ? "step" : undefined}
+                        disabled={updateStatusMutation.isPending || selectedOrder.status === nextStatus}
+                        onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: nextStatus })}
+                        className={(selectedOrder.status === nextStatus
+                          ? "bg-[#211b2e] text-white dark:bg-white dark:text-[#211b2e]"
+                          : "text-[#494456] hover:bg-[#f7f6f9] dark:text-zinc-200 dark:hover:bg-white/10") +
+                          " min-h-9 border-r border-[#e6e3eb] px-3 text-xs font-medium transition-colors last:border-r-0 focus-visible:relative focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#211b2e] disabled:cursor-default dark:border-zinc-700"}
+                      >
+                        {getOrderStatusLabel(nextStatus)}
+                      </button>
+                    ))}
                   </div>
                 </div>
+                {confirmCancelOrderId === selectedOrder.id ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#ebe8ef] pt-3 text-xs dark:border-zinc-700">
+                    <span className="mr-auto text-[#a33b4c]">
+                      {lang === "ru" ? "Отменить заказ? Товары вернутся на склад." : lang === "en" ? "Cancel this order? Items will return to stock." : "Buyurtma bekor qilinsinmi? Mahsulotlar qoldiqqa qaytariladi."}
+                    </span>
+                    <button type="button" onClick={() => setConfirmCancelOrderId(null)} className="min-h-9 rounded-lg border border-[#e6e3eb] px-3 font-medium text-[#494456] hover:bg-[#f7f6f9] dark:border-zinc-600 dark:text-zinc-200">{lang === "ru" ? "Нет" : lang === "en" ? "No" : "Yo'q"}</button>
+                    <button type="button" disabled={updateStatusMutation.isPending} onClick={() => { updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "CANCELLED" }); setConfirmCancelOrderId(null); }} className="min-h-9 rounded-lg bg-[#a33b4c] px-3 font-medium text-white hover:bg-[#8e2c3e] disabled:opacity-50">{lang === "ru" ? "Да, отменить" : lang === "en" ? "Yes, cancel" : "Ha, bekor qilish"}</button>
+                  </div>
+                ) : null}
               </section>
 
               <div className="grid gap-5 border-t border-[#ebe8ef] pt-5 dark:border-zinc-700 sm:grid-cols-2 sm:gap-8">
@@ -832,45 +844,33 @@ export const OrdersPage: React.FC = () => {
             </div>
 
             <div className="border-t border-[#e6e3eb] px-5 py-4 dark:border-zinc-700 sm:px-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("change_status_title") || "Change status"}</span>
-                {confirmCancelOrderId !== selectedOrder.id && selectedOrder.status !== "CANCELLED" && selectedOrder.status !== "COMPLETED" && (
-                  <button type="button" onClick={() => setConfirmCancelOrderId(selectedOrder.id)} className="inline-flex min-h-9 items-center rounded-lg border border-[#e4c4ca] px-3 text-xs font-medium text-[#a33b4c] hover:bg-[#fbf4f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a33b4c] dark:border-[#67404d] dark:hover:bg-white/5">
-                    {t("cancel_return_stock_btn") || "Cancel order"}
-                  </button>
+              <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">
+                {lang === "ru" ? "Оплата" : lang === "en" ? "Payment" : "To'lov"}
+              </h3>
+              <div className="mt-3 grid gap-x-8 gap-y-3 text-[13px] sm:grid-cols-2">
+                <div className="flex justify-between gap-3">
+                  <span className="text-[#767084] dark:text-zinc-400">{t("payment_method_label") || "Payment method"}</span>
+                  <span className="text-right font-medium text-[#211b2e] dark:text-white">{selectedOrder.payment_method_display || (lang === "ru" ? "Наличные" : lang === "en" ? "Cash" : "Naqd pul")}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-[#767084] dark:text-zinc-400">{t("payment_status_label") || "Payment status"}</span>
+                  <span className="text-right font-medium text-[#211b2e] dark:text-white">{selectedOrder.payment_status_display || (lang === "ru" ? "Ожидается" : lang === "en" ? "Pending" : "Kutilmoqda")}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-[#767084] dark:text-zinc-400">{t("delivery_service_fee") || "Delivery"}</span>
+                  <span className="font-medium tabular-nums text-[#211b2e] dark:text-white">{Number(selectedOrder.delivery_fee || 0).toLocaleString()} UZS</span>
+                </div>
+                {Number(selectedOrder.discount_amount) > 0 && (
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[#767084] dark:text-zinc-400">{t("discount_label") || "Discount"}</span>
+                    <span className="font-medium tabular-nums text-[#211b2e] dark:text-white">−{Number(selectedOrder.discount_amount).toLocaleString()} UZS</span>
+                  </div>
                 )}
-              </div>
-              <div className="mt-3 overflow-x-auto">
-                <div className="inline-flex min-w-max overflow-hidden rounded-lg border border-[#e6e3eb] bg-white dark:border-zinc-700 dark:bg-transparent" role="group" aria-label={t("change_status_title") || "Change status"}>
-                  <span aria-current={selectedOrder.status === "NEW" ? "step" : undefined} className={(selectedOrder.status === "NEW" ? "bg-[#211b2e] text-white dark:bg-white dark:text-[#211b2e]" : "text-[#9690a2] dark:text-zinc-500") + " inline-flex min-h-9 items-center border-r border-[#e6e3eb] px-3 text-xs font-medium dark:border-zinc-700"}>
-                    {getOrderStatusLabel("NEW")}
-                  </span>
-                  {(["PROCESSING", "READY", "IN_DELIVERY", "COMPLETED"] as const).map((nextStatus) => (
-                    <button
-                      key={nextStatus}
-                      type="button"
-                      aria-current={selectedOrder.status === nextStatus ? "step" : undefined}
-                      disabled={updateStatusMutation.isPending || selectedOrder.status === nextStatus}
-                      onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: nextStatus })}
-                      className={(selectedOrder.status === nextStatus
-                        ? "bg-[#211b2e] text-white dark:bg-white dark:text-[#211b2e]"
-                        : "text-[#494456] hover:bg-[#f7f6f9] dark:text-zinc-200 dark:hover:bg-white/10") +
-                        " min-h-9 border-r border-[#e6e3eb] px-3 text-xs font-medium transition-colors last:border-r-0 focus-visible:relative focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#211b2e] disabled:cursor-default dark:border-zinc-700"}
-                    >
-                      {getOrderStatusLabel(nextStatus)}
-                    </button>
-                  ))}
+                <div className="flex items-baseline justify-between gap-3 border-t border-[#ebe8ef] pt-3 dark:border-zinc-700 sm:col-span-2">
+                  <span className="font-medium text-[#494456] dark:text-zinc-300">{t("total_payment") || "Total"}</span>
+                  <span className="text-[15px] font-semibold tabular-nums text-[#211b2e] dark:text-white">{Number(selectedOrder.total_amount).toLocaleString()} UZS</span>
                 </div>
               </div>
-              {confirmCancelOrderId === selectedOrder.id ? (
-                <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#ebe8ef] pt-3 text-xs dark:border-zinc-700">
-                  <span className="mr-auto text-[#a33b4c]">
-                    {lang === "ru" ? "Отменить заказ? Товары вернутся на склад." : lang === "en" ? "Cancel this order? Items will return to stock." : "Buyurtma bekor qilinsinmi? Mahsulotlar qoldiqqa qaytariladi."}
-                  </span>
-                  <button type="button" onClick={() => setConfirmCancelOrderId(null)} className="min-h-9 rounded-lg border border-[#e6e3eb] px-3 font-medium text-[#494456] hover:bg-[#f7f6f9] dark:border-zinc-600 dark:text-zinc-200">{lang === "ru" ? "Нет" : lang === "en" ? "No" : "Yo'q"}</button>
-                  <button type="button" disabled={updateStatusMutation.isPending} onClick={() => { updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "CANCELLED" }); setConfirmCancelOrderId(null); }} className="min-h-9 rounded-lg bg-[#a33b4c] px-3 font-medium text-white hover:bg-[#8e2c3e] disabled:opacity-50">{lang === "ru" ? "Да, отменить" : lang === "en" ? "Yes, cancel" : "Ha, bekor qilish"}</button>
-                </div>
-              ) : null}
             </div>
           </div>
         </div>
