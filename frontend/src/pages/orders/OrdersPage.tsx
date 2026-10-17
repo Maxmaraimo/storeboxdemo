@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Search,
-  ShoppingBag,
   Send,
   X,
   ExternalLink,
@@ -678,63 +677,62 @@ export const OrdersPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="selected-order-title"
-            className={(isWideModal ? "max-w-4xl" : "max-w-2xl") + " flex max-h-[92vh] w-full flex-col overflow-hidden rounded-[16px] border border-[#e6e3eb] bg-white shadow-2xl dark:border-zinc-700 dark:bg-[#211b2e]"}
+            className={(isWideModal ? "max-w-4xl" : "max-w-2xl") + " flex max-h-[92vh] w-full flex-col overflow-hidden rounded-xl border border-[#e6e3eb] bg-white shadow-2xl dark:border-zinc-700 dark:bg-[#211b2e]"}
           >
-            <div className="flex items-start justify-between gap-4 border-b border-[#e6e3eb] px-5 py-4 dark:border-zinc-700 sm:px-6">
+            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 border-b border-[#e6e3eb] px-5 py-4 dark:border-zinc-700 sm:px-6">
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                  <h2 id="selected-order-title" className="text-lg font-semibold text-[#211b2e] dark:text-white">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <h2 id="selected-order-title" className="text-[17px] font-semibold tracking-tight text-[#211b2e] dark:text-white">
                     #{selectedOrder.order_number}
                   </h2>
                   {getOrderStatusBadge(selectedOrder.status)}
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-[#767084] dark:text-zinc-400">
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[12px] text-[#767084] dark:text-zinc-400">
                   <span>{new Date(selectedOrder.created_at).toLocaleString(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "uz-UZ")}</span>
                   <span aria-hidden="true">·</span>
                   <span>{selectedOrder.source === "TMA" ? "Telegram Mini App" : t("website_channel") || "Veb-sayt"}</span>
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <button type="button" onClick={() => navigate("/orders/" + selectedOrder.id)} title={t("open_full_page") || "Open full page"} aria-label={t("open_full_page") || "Open full page"} className="rounded-lg p-2 text-[#767084] hover:bg-[#f4f2f6] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white">
-                  <ExternalLink className="h-4 w-4" />
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button type="button" onClick={() => navigate("/orders/" + selectedOrder.id)} title={t("open_full_page") || "Open full page"} aria-label={t("open_full_page") || "Open full page"} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#e6e3eb] px-2.5 text-xs font-medium text-[#494456] hover:bg-[#f7f6f9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-white/10">
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span className="hidden md:inline">{t("open_full_page")}</span>
                 </button>
-                <button type="button" onClick={() => window.print()} title={t("print_receipt") || "Print receipt"} aria-label={t("print_receipt") || "Print receipt"} className="rounded-lg p-2 text-[#767084] hover:bg-[#f4f2f6] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white">
-                  <Printer className="h-4 w-4" />
+                <button type="button" onClick={() => window.print()} title={t("print_receipt") || "Print receipt"} aria-label={t("print_receipt") || "Print receipt"} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#e6e3eb] px-2.5 text-xs font-medium text-[#494456] hover:bg-[#f7f6f9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-white/10">
+                  <Printer className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span className="hidden md:inline">{t("print_receipt")}</span>
                 </button>
-                <button type="button" onClick={() => setIsWideModal(!isWideModal)} title={isWideModal ? t("collapse") : t("expand")} aria-label={isWideModal ? t("collapse") : t("expand")} className="hidden rounded-lg p-2 text-[#767084] hover:bg-[#f4f2f6] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white sm:inline-flex">
-                  {isWideModal ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                <span className="mx-0.5 hidden h-5 w-px bg-[#e6e3eb] dark:bg-zinc-700 sm:block" aria-hidden="true" />
+                <button type="button" onClick={() => setIsWideModal(!isWideModal)} title={isWideModal ? t("collapse") : t("expand")} aria-label={isWideModal ? t("collapse") : t("expand")} className="hidden h-9 w-9 items-center justify-center rounded-lg text-[#767084] hover:bg-[#f7f6f9] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white sm:inline-flex">
+                  {isWideModal ? <Minimize2 className="h-4 w-4" aria-hidden="true" /> : <Maximize2 className="h-4 w-4" aria-hidden="true" />}
                 </button>
-                <button type="button" onClick={() => { setSelectedOrder(null); setConfirmCancelOrderId(null); }} title={lang === "ru" ? "Закрыть" : lang === "en" ? "Close" : "Yopish"} aria-label={lang === "ru" ? "Закрыть" : lang === "en" ? "Close" : "Yopish"} className="rounded-lg p-2 text-[#767084] hover:bg-[#f4f2f6] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white">
-                  <X className="h-4 w-4" />
+                <button type="button" onClick={() => { setSelectedOrder(null); setConfirmCancelOrderId(null); }} title={lang === "ru" ? "Закрыть" : lang === "en" ? "Close" : "Yopish"} aria-label={lang === "ru" ? "Закрыть" : lang === "en" ? "Close" : "Yopish"} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#767084] hover:bg-[#f7f6f9] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:hover:bg-white/10 dark:hover:text-white">
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
-              <section aria-label={t("order_contents") || "Order items"}>
+            <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+              <section aria-label={t("order_contents") || "Order items"} className="pb-5">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-[#211b2e] dark:text-white">{t("order_contents") || "Order items"}</h3>
-                  <span className="text-xs tabular-nums text-[#767084] dark:text-zinc-400">
+                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("order_contents") || "Order items"}</h3>
+                  <span className="text-xs font-medium tabular-nums text-[#767084] dark:text-zinc-400">
                     {selectedOrder.items?.reduce((count, item) => count + item.quantity, 0) || 0} {t("unit_pcs") || "pcs"}
                   </span>
                 </div>
-                <div className="mt-3 divide-y divide-[#ebe8ef] border-y border-[#ebe8ef] dark:divide-zinc-700 dark:border-zinc-700">
+                <div className="mt-3 divide-y divide-[#ebe8ef] border-t border-[#ebe8ef] dark:divide-zinc-700 dark:border-zinc-700">
                   {selectedOrder.items?.map((item) => {
                     const itemImage = item.custom_image_url || item.product_image;
                     const details = getOrderItemDetails(item);
                     return (
                       <div key={item.id} className="flex items-start gap-3 py-3">
-                        {itemImage ? (
+                        {itemImage && (
                           <button type="button" onClick={() => setPreviewImage(itemImage)} className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-[#e6e3eb] bg-[#f7f6f9] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:border-zinc-700" aria-label={lang === "ru" ? "Показать фото товара" : lang === "en" ? "View product image" : "Mahsulot rasmini ko'rish"}>
                             <img src={itemImage} alt="" className="h-full w-full object-cover" />
                           </button>
-                        ) : (
-                          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#e6e3eb] bg-[#f7f6f9] text-[#9690a2] dark:border-zinc-700 dark:bg-zinc-800">
-                            <ShoppingBag className="h-4 w-4" aria-hidden="true" />
-                          </span>
                         )}
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-[#211b2e] dark:text-white">{item.product_name}</div>
+                          <div className="text-[13px] font-medium text-[#211b2e] dark:text-white">{item.product_name}</div>
                           {details.length > 0 && (
                             <div className="mt-0.5 text-xs leading-5 text-[#767084] dark:text-zinc-400">{details.join(" · ")}</div>
                           )}
@@ -742,7 +740,7 @@ export const OrdersPage: React.FC = () => {
                             {item.quantity} × {Number(item.unit_price).toLocaleString()} UZS
                           </div>
                         </div>
-                        <div className="shrink-0 pt-0.5 text-sm font-medium tabular-nums text-[#211b2e] dark:text-white">
+                        <div className="shrink-0 pt-0.5 text-[13px] font-semibold tabular-nums text-[#211b2e] dark:text-white">
                           {Number(item.total_price).toLocaleString()} UZS
                         </div>
                       </div>
@@ -756,11 +754,11 @@ export const OrdersPage: React.FC = () => {
                 </div>
               </section>
 
-              <section className="border-t border-[#ebe8ef] pt-5 dark:border-zinc-700">
-                <h3 className="text-sm font-semibold text-[#211b2e] dark:text-white">
+              <section className="border-t border-[#ebe8ef] py-5 dark:border-zinc-700">
+                <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">
                   {lang === "ru" ? "Оплата" : lang === "en" ? "Payment" : "To'lov"}
                 </h3>
-                <div className="mt-3 grid gap-x-8 gap-y-3 text-xs sm:grid-cols-2">
+                <div className="mt-3 grid gap-x-8 gap-y-3 text-[13px] sm:grid-cols-2">
                   <div className="flex justify-between gap-3">
                     <span className="text-[#767084] dark:text-zinc-400">{t("payment_method_label") || "Payment method"}</span>
                     <span className="text-right font-medium text-[#211b2e] dark:text-white">{selectedOrder.payment_method_display || (lang === "ru" ? "Наличные" : lang === "en" ? "Cash" : "Naqd pul")}</span>
@@ -781,16 +779,16 @@ export const OrdersPage: React.FC = () => {
                   )}
                   <div className="flex items-baseline justify-between gap-3 border-t border-[#ebe8ef] pt-3 dark:border-zinc-700 sm:col-span-2">
                     <span className="font-medium text-[#494456] dark:text-zinc-300">{t("total_payment") || "Total"}</span>
-                    <span className="text-base font-semibold tabular-nums text-[#211b2e] dark:text-white">{Number(selectedOrder.total_amount).toLocaleString()} UZS</span>
+                    <span className="text-[15px] font-semibold tabular-nums text-[#211b2e] dark:text-white">{Number(selectedOrder.total_amount).toLocaleString()} UZS</span>
                   </div>
                 </div>
               </section>
 
               <div className="grid gap-5 border-t border-[#ebe8ef] pt-5 dark:border-zinc-700 sm:grid-cols-2 sm:gap-8">
                 <section>
-                  <h3 className="text-sm font-semibold text-[#211b2e] dark:text-white">{t("customer_details_title") || "Customer"}</h3>
-                  <p className="mt-2 text-sm font-medium text-[#211b2e] dark:text-white">{selectedOrder.customer_name}</p>
-                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("customer_details_title") || "Customer"}</h3>
+                  <p className="mt-2 text-[13px] font-medium text-[#211b2e] dark:text-white">{selectedOrder.customer_name}</p>
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
                     {selectedOrder.customer_phone && (
                       <a href={"tel:" + selectedOrder.customer_phone} className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{selectedOrder.customer_phone}</a>
                     )}
@@ -798,8 +796,8 @@ export const OrdersPage: React.FC = () => {
                       <a href={"https://t.me/+" + selectedOrder.customer_phone.replace(/\D/g, "")} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">Telegram</a>
                     )}
                   </div>
-                  <h3 className="mt-5 text-sm font-semibold text-[#211b2e] dark:text-white">{t("delivery_address_title") || "Delivery address"}</h3>
-                  <p className="mt-2 text-sm leading-5 text-[#494456] dark:text-zinc-300">
+                  <h3 className="mt-5 text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("delivery_address_title") || "Delivery address"}</h3>
+                  <p className="mt-2 text-[13px] leading-5 text-[#494456] dark:text-zinc-300">
                     {selectedOrder.delivery_address || t("address_not_specified")}
                   </p>
                   {selectedOrder.delivery_lat != null && selectedOrder.delivery_lng != null && (
@@ -810,10 +808,10 @@ export const OrdersPage: React.FC = () => {
                   )}
                 </section>
                 <section className="border-t border-[#ebe8ef] pt-5 dark:border-zinc-700 sm:border-l sm:border-t-0 sm:py-0 sm:pl-8">
-                  <h3 className="text-sm font-semibold text-[#211b2e] dark:text-white">{t("branch_assigned") || "Branch"}</h3>
+                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("branch_assigned") || "Branch"}</h3>
                   {selectedOrder.branch_name ? (
                     <>
-                      <p className="mt-2 text-sm font-medium text-[#211b2e] dark:text-white">{selectedOrder.branch_name}</p>
+                      <p className="mt-2 text-[13px] font-medium text-[#211b2e] dark:text-white">{selectedOrder.branch_name}</p>
                       {selectedOrder.branch_address && <p className="mt-1 text-xs leading-5 text-[#767084] dark:text-zinc-400">{selectedOrder.branch_address}</p>}
                       {selectedOrder.branch_phone && (
                         <a href={"tel:" + selectedOrder.branch_phone} className="mt-2 inline-block text-xs text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{selectedOrder.branch_phone}</a>
@@ -834,36 +832,45 @@ export const OrdersPage: React.FC = () => {
             </div>
 
             <div className="border-t border-[#e6e3eb] px-5 py-4 dark:border-zinc-700 sm:px-6">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="mr-2 text-xs font-medium text-[#767084] dark:text-zinc-400">{t("change_status_title") || "Change status"}</span>
-                {(["PROCESSING", "READY", "IN_DELIVERY", "COMPLETED"] as const).map((nextStatus) => (
-                  <button
-                    key={nextStatus}
-                    type="button"
-                    disabled={updateStatusMutation.isPending || selectedOrder.status === nextStatus}
-                    onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: nextStatus })}
-                    className={(selectedOrder.status === nextStatus
-                      ? "border-[#211b2e] bg-[#211b2e] text-white dark:border-white dark:bg-white dark:text-[#211b2e]"
-                      : "border-[#d8d1e2] bg-white text-[#494456] hover:border-[#a99bb9] hover:bg-[#f7f6f9] dark:border-zinc-600 dark:bg-transparent dark:text-zinc-200 dark:hover:bg-white/10") +
-                      " rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:cursor-default"}
-                  >
-                    {getOrderStatusLabel(nextStatus)}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("change_status_title") || "Change status"}</span>
+                {confirmCancelOrderId !== selectedOrder.id && selectedOrder.status !== "CANCELLED" && selectedOrder.status !== "COMPLETED" && (
+                  <button type="button" onClick={() => setConfirmCancelOrderId(selectedOrder.id)} className="inline-flex min-h-9 items-center rounded-lg border border-[#e4c4ca] px-3 text-xs font-medium text-[#a33b4c] hover:bg-[#fbf4f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a33b4c] dark:border-[#67404d] dark:hover:bg-white/5">
+                    {t("cancel_return_stock_btn") || "Cancel order"}
                   </button>
-                ))}
+                )}
+              </div>
+              <div className="mt-3 overflow-x-auto">
+                <div className="inline-flex min-w-max overflow-hidden rounded-lg border border-[#e6e3eb] bg-white dark:border-zinc-700 dark:bg-transparent" role="group" aria-label={t("change_status_title") || "Change status"}>
+                  <span aria-current={selectedOrder.status === "NEW" ? "step" : undefined} className={(selectedOrder.status === "NEW" ? "bg-[#211b2e] text-white dark:bg-white dark:text-[#211b2e]" : "text-[#9690a2] dark:text-zinc-500") + " inline-flex min-h-9 items-center border-r border-[#e6e3eb] px-3 text-xs font-medium dark:border-zinc-700"}>
+                    {getOrderStatusLabel("NEW")}
+                  </span>
+                  {(["PROCESSING", "READY", "IN_DELIVERY", "COMPLETED"] as const).map((nextStatus) => (
+                    <button
+                      key={nextStatus}
+                      type="button"
+                      aria-current={selectedOrder.status === nextStatus ? "step" : undefined}
+                      disabled={updateStatusMutation.isPending || selectedOrder.status === nextStatus}
+                      onClick={() => updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: nextStatus })}
+                      className={(selectedOrder.status === nextStatus
+                        ? "bg-[#211b2e] text-white dark:bg-white dark:text-[#211b2e]"
+                        : "text-[#494456] hover:bg-[#f7f6f9] dark:text-zinc-200 dark:hover:bg-white/10") +
+                        " min-h-9 border-r border-[#e6e3eb] px-3 text-xs font-medium transition-colors last:border-r-0 focus-visible:relative focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#211b2e] disabled:cursor-default dark:border-zinc-700"}
+                    >
+                      {getOrderStatusLabel(nextStatus)}
+                    </button>
+                  ))}
+                </div>
               </div>
               {confirmCancelOrderId === selectedOrder.id ? (
                 <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#ebe8ef] pt-3 text-xs dark:border-zinc-700">
                   <span className="mr-auto text-[#a33b4c]">
                     {lang === "ru" ? "Отменить заказ? Товары вернутся на склад." : lang === "en" ? "Cancel this order? Items will return to stock." : "Buyurtma bekor qilinsinmi? Mahsulotlar qoldiqqa qaytariladi."}
                   </span>
-                  <button type="button" onClick={() => setConfirmCancelOrderId(null)} className="rounded-lg border border-[#d8d1e2] px-3 py-1.5 font-medium text-[#494456] hover:bg-[#f7f6f9] dark:border-zinc-600 dark:text-zinc-200">{lang === "ru" ? "Нет" : lang === "en" ? "No" : "Yo'q"}</button>
-                  <button type="button" disabled={updateStatusMutation.isPending} onClick={() => { updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "CANCELLED" }); setConfirmCancelOrderId(null); }} className="rounded-lg border border-[#a33b4c] bg-[#a33b4c] px-3 py-1.5 font-medium text-white hover:bg-[#8e2c3e] disabled:opacity-50">{lang === "ru" ? "Да, отменить" : lang === "en" ? "Yes, cancel" : "Ha, bekor qilish"}</button>
+                  <button type="button" onClick={() => setConfirmCancelOrderId(null)} className="min-h-9 rounded-lg border border-[#e6e3eb] px-3 font-medium text-[#494456] hover:bg-[#f7f6f9] dark:border-zinc-600 dark:text-zinc-200">{lang === "ru" ? "Нет" : lang === "en" ? "No" : "Yo'q"}</button>
+                  <button type="button" disabled={updateStatusMutation.isPending} onClick={() => { updateStatusMutation.mutate({ orderId: selectedOrder.id, newStatus: "CANCELLED" }); setConfirmCancelOrderId(null); }} className="min-h-9 rounded-lg bg-[#a33b4c] px-3 font-medium text-white hover:bg-[#8e2c3e] disabled:opacity-50">{lang === "ru" ? "Да, отменить" : lang === "en" ? "Yes, cancel" : "Ha, bekor qilish"}</button>
                 </div>
-              ) : selectedOrder.status !== "CANCELLED" && selectedOrder.status !== "COMPLETED" && (
-                <button type="button" onClick={() => setConfirmCancelOrderId(selectedOrder.id)} className="mt-3 text-xs font-medium text-[#a33b4c] underline decoration-[#d8a4ae] underline-offset-2 hover:text-[#8e2c3e]">
-                  {t("cancel_return_stock_btn") || "Cancel order"}
-                </button>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
