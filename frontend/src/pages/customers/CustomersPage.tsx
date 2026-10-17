@@ -78,20 +78,7 @@ export const CustomersPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#202223] tracking-tight">
-            {t("customers_list_title") || "Mijozlar"}
-          </h1>
-          <p className="text-xs text-[#6d7175] mt-0.5">
-            {(t("customers_list_subtitle_format") || "{count} ta faol mijozlar va sodiqlik dasturi").replace(
-              "{count}",
-              String(customers.length)
-            )}
-          </p>
-        </div>
-      </div>
+      <h1 className="sr-only">{t("customers_list_title") || "Mijozlar"}</h1>
 
       {/* SEARCH */}
       <div className="bg-white rounded-[10px] border border-[#e1e3e5] p-3 sm:p-4 shadow-[0_1px_0_rgba(0,0,0,0.05)] flex items-center justify-between gap-4">
