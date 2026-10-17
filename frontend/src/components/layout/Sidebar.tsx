@@ -215,12 +215,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onCloseM
             icon: Users,
             label: lang === "ru" ? "Клиенты" : lang === "en" ? "Customers" : "Mijozlar",
             badge: null,
-            subItems: [
-              {
-                path: "/customers?tab=segments",
-                label: lang === "ru" ? "Сегменты" : lang === "en" ? "Segments" : "Segmentlar",
-              },
-            ],
           },
           {
             path: "/marketing",
