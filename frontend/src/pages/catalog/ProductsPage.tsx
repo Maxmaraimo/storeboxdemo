@@ -711,140 +711,139 @@ export const ProductsPage: React.FC = () => {
   return (
     <div className="space-y-4">
       <h1 className="sr-only">{lang === "ru" ? "Товары" : "Mahsulotlar"}</h1>
-      {/* Product filters and actions */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 max-w-full overflow-x-auto no-scrollbar">
-          <div className="storebox-segmented-control" role="group" aria-label={lang === "ru" ? "Статус товаров" : "Mahsulot holati"}>
+      {/* Product controls and table */}
+      <div className="overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
+        <div className="flex flex-col gap-3 border-b border-[#e6e3eb] px-4 py-3 sm:flex-row sm:items-center dark:border-zinc-700">
+          <div className="min-w-0 flex-1 overflow-x-auto no-scrollbar">
+            <div className="storebox-segmented-control min-w-max" role="group" aria-label={lang === "ru" ? "Статус товаров" : "Mahsulot holati"}>
+              <button
+                type="button"
+                aria-pressed={statusFilter === "all"}
+                onClick={() => setStatusFilter("all")}
+                className={`storebox-segmented-tab ${statusFilter === "all" ? "is-active" : ""}`}
+              >
+                {lang === "ru" ? "Все товары" : "Barchasi"} ({rawProducts.length})
+              </button>
+              <button
+                type="button"
+                aria-pressed={statusFilter === "active"}
+                onClick={() => setStatusFilter("active")}
+                className={`storebox-segmented-tab ${statusFilter === "active" ? "is-active" : ""}`}
+              >
+                {lang === "ru" ? "В продаже" : "Sotuvda"}
+              </button>
+              <button
+                type="button"
+                aria-pressed={statusFilter === "draft"}
+                onClick={() => setStatusFilter("draft")}
+                className={`storebox-segmented-tab ${statusFilter === "draft" ? "is-active" : ""}`}
+              >
+                {lang === "ru" ? "Стоп-лист" : "Stop-list"}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+            {/* Export CSV button */}
             <button
               type="button"
-              aria-pressed={statusFilter === "all"}
-              onClick={() => setStatusFilter("all")}
-              className={`storebox-segmented-tab ${statusFilter === "all" ? "is-active" : ""}`}
+              onClick={() => handleExportCsv(products)}
+              disabled={products.length === 0}
+              className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#d8d1e2] bg-white px-3 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:opacity-40 dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer"
+              title={lang === "ru" ? "Экспорт в CSV" : "CSV eksport"}
             >
-              {lang === "ru" ? "Все товары" : "Barchasi"} ({rawProducts.length})
+              <Download className="h-4 w-4" aria-hidden="true" />
+              <span>{lang === "ru" ? "Экспорт" : "Eksport"}</span>
             </button>
+
+            {/* Import button */}
             <button
               type="button"
-              aria-pressed={statusFilter === "active"}
-              onClick={() => setStatusFilter("active")}
-              className={`storebox-segmented-tab ${statusFilter === "active" ? "is-active" : ""}`}
+              onClick={() => setImportModalOpen(true)}
+              className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#d8d1e2] bg-white px-3 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer"
+              title={lang === "ru" ? "Импорт товаров" : "Import qilish"}
             >
-              {lang === "ru" ? "В продаже" : "Sotuvda"}
+              <Upload className="h-4 w-4" aria-hidden="true" />
+              <span>{lang === "ru" ? "Импорт" : "Import"}</span>
             </button>
-            <button
-              type="button"
-              aria-pressed={statusFilter === "draft"}
-              onClick={() => setStatusFilter("draft")}
-              className={`storebox-segmented-tab ${statusFilter === "draft" ? "is-active" : ""}`}
-            >
-              {lang === "ru" ? "Стоп-лист" : "Stop-list"}
-            </button>
+
+            {canEditProduct && (
+              <button
+                type="button"
+                data-testid="create-product-btn"
+                onClick={openCreateModal}
+                className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#211b2e] bg-[#211b2e] px-3.5 text-xs font-medium text-white shadow-[0_4px_10px_rgba(33,27,46,0.2)] transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-[#f0edf4] dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer"
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                <span>{lang === "ru" ? "Добавить товар" : "Yangi mahsulot"}</span>
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          {/* Export CSV button */}
-          <button
-            type="button"
-            onClick={() => handleExportCsv(products)}
-            disabled={products.length === 0}
-            className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#d8d1e2] bg-white px-3 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:opacity-40 dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer"
-            title={lang === "ru" ? "Экспорт в CSV" : "CSV eksport"}
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            <span>{lang === "ru" ? "Экспорт" : "Eksport"}</span>
-          </button>
+        {/* Bulk actions */}
+        {selectedProductIds.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6e3eb] px-4 py-3 text-xs text-[#211b2e] dark:border-zinc-700 dark:text-white">
+            <span className="font-medium">
+              {lang === "ru"
+                ? `Выбрано: ${selectedProductIds.length}`
+                : `Tanlandi: ${selectedProductIds.length}`}
+            </span>
 
-          {/* Import button */}
-          <button
-            type="button"
-            onClick={() => setImportModalOpen(true)}
-            className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#d8d1e2] bg-white px-3 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer"
-            title={lang === "ru" ? "Импорт товаров" : "Import qilish"}
-          >
-            <Upload className="h-4 w-4" aria-hidden="true" />
-            <span>{lang === "ru" ? "Импорт" : "Import"}</span>
-          </button>
-
-          {canEditProduct && (
-            <button
-              type="button"
-              data-testid="create-product-btn"
-              onClick={openCreateModal}
-              className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#211b2e] bg-[#211b2e] px-3.5 text-xs font-medium text-white shadow-[0_4px_10px_rgba(33,27,46,0.2)] transition-colors hover:bg-[#151020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] dark:border-[#f0edf4] dark:bg-[#f0edf4] dark:text-[#211b2e] dark:hover:bg-white cursor-pointer"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              <span>{lang === "ru" ? "Добавить товар" : "Yangi mahsulot"}</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Bulk actions */}
-      {selectedProductIds.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#dfe5ef] bg-white px-4 py-3 text-xs text-[#211b2e] dark:border-zinc-800 dark:bg-[#211b2e] dark:text-white">
-          <span className="font-medium">
-            {lang === "ru"
-              ? `Выбрано: ${selectedProductIds.length}`
-              : `Tanlandi: ${selectedProductIds.length}`}
-          </span>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                bulkToggleStatusMutation.mutate({ ids: selectedProductIds, is_active: true })
-              }
-              disabled={bulkToggleStatusMutation.isPending}
-              className="min-h-8 rounded-[9px] border border-[#d8d1e2] px-3 text-xs font-medium text-[#211b2e] transition-colors hover:bg-[#f7f4fa] disabled:opacity-50 dark:border-zinc-700 dark:text-white dark:hover:bg-[#30263f] cursor-pointer"
-            >
-              {lang === "ru" ? "В продажу" : "Sotuvga qaytarish"}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                bulkToggleStatusMutation.mutate({ ids: selectedProductIds, is_active: false })
-              }
-              disabled={bulkToggleStatusMutation.isPending}
-              className="min-h-8 rounded-[9px] border border-[#d8d1e2] px-3 text-xs font-medium text-[#211b2e] transition-colors hover:bg-[#f7f4fa] disabled:opacity-50 dark:border-zinc-700 dark:text-white dark:hover:bg-[#30263f] cursor-pointer"
-            >
-              {lang === "ru" ? "В стоп-лист" : "Stop-listga o'tkazish"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (
-                  confirm(
-                    lang === "ru"
-                      ? `Удалить ${selectedProductIds.length} выбранных товаров?`
-                      : `Tanlangan ${selectedProductIds.length} ta mahsulotni o'chirasizmi?`
-                  )
-                ) {
-                  bulkDeleteMutation.mutate(selectedProductIds);
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  bulkToggleStatusMutation.mutate({ ids: selectedProductIds, is_active: true })
                 }
-              }}
-              disabled={bulkDeleteMutation.isPending}
-              className="inline-flex min-h-8 items-center gap-1.5 rounded-[9px] border border-[#e8d1d6] px-3 text-xs font-medium text-[#aa3e51] transition-colors hover:bg-[#fcf4f5] disabled:opacity-50 dark:border-[#634552] dark:text-[#f1a9b7] dark:hover:bg-[#3b2a36] cursor-pointer"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              <span>{lang === "ru" ? "Удалить" : "O'chirish"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedProductIds([])}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] text-[#8b8497] transition-colors hover:bg-[#f0edf4] hover:text-[#211b2e] dark:hover:bg-[#30263f] dark:hover:text-white cursor-pointer"
-              aria-label={lang === "ru" ? "Снять выделение" : "Tanlovni bekor qilish"}
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+                disabled={bulkToggleStatusMutation.isPending}
+                className="min-h-8 rounded-[9px] border border-[#d8d1e2] px-3 text-xs font-medium text-[#211b2e] transition-colors hover:bg-[#f7f4fa] disabled:opacity-50 dark:border-zinc-700 dark:text-white dark:hover:bg-[#30263f] cursor-pointer"
+              >
+                {lang === "ru" ? "В продажу" : "Sotuvga qaytarish"}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  bulkToggleStatusMutation.mutate({ ids: selectedProductIds, is_active: false })
+                }
+                disabled={bulkToggleStatusMutation.isPending}
+                className="min-h-8 rounded-[9px] border border-[#d8d1e2] px-3 text-xs font-medium text-[#211b2e] transition-colors hover:bg-[#f7f4fa] disabled:opacity-50 dark:border-zinc-700 dark:text-white dark:hover:bg-[#30263f] cursor-pointer"
+              >
+                {lang === "ru" ? "В стоп-лист" : "Stop-listga o'tkazish"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    confirm(
+                      lang === "ru"
+                        ? `Удалить ${selectedProductIds.length} выбранных товаров?`
+                        : `Tanlangan ${selectedProductIds.length} ta mahsulotni o'chirasizmi?`
+                    )
+                  ) {
+                    bulkDeleteMutation.mutate(selectedProductIds);
+                  }
+                }}
+                disabled={bulkDeleteMutation.isPending}
+                className="inline-flex min-h-8 items-center gap-1.5 rounded-[9px] border border-[#e8d1d6] px-3 text-xs font-medium text-[#aa3e51] transition-colors hover:bg-[#fcf4f5] disabled:opacity-50 dark:border-[#634552] dark:text-[#f1a9b7] dark:hover:bg-[#3b2a36] cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>{lang === "ru" ? "Удалить" : "O'chirish"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedProductIds([])}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] text-[#8b8497] transition-colors hover:bg-[#f0edf4] hover:text-[#211b2e] dark:hover:bg-[#30263f] dark:hover:text-white cursor-pointer"
+                aria-label={lang === "ru" ? "Снять выделение" : "Tanlovni bekor qilish"}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Product table: search and category filters */}
-      <div className="overflow-hidden rounded-[14px] border border-[#dfe5ef] bg-white dark:border-zinc-800 dark:bg-[#211b2e]">
         {/* Search & Category Filter Row */}
-        <div className="flex flex-col gap-3 border-b border-[#e6e3eb] px-4 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700">
+        <div className="flex flex-col gap-3 border-b border-[#e6e3eb] px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700">
           <div className="relative w-full sm:max-w-[380px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9690a2]" aria-hidden="true" />
             <input
