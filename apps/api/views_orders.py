@@ -16,6 +16,8 @@ def orders_list_view(request):
     status_param = request.GET.get("status", "ALL").upper()
     query = request.GET.get("q", "").strip()
     branch_id = request.GET.get("branch") or request.GET.get("branch_id")
+    source_param = request.GET.get("source", "").upper()
+    payment_status_param = request.GET.get("payment_status", "").upper()
 
     from apps.orders.models import StoreStaff
     from apps.stores.models import Branch
@@ -39,6 +41,11 @@ def orders_list_view(request):
             orders_qs = orders_qs.filter(branch_id=int(branch_id))
         except (ValueError, TypeError):
             pass
+
+    if source_param in Order.Sources.values:
+        orders_qs = orders_qs.filter(source=source_param)
+    if payment_status_param in Order.PaymentStatuses.values:
+        orders_qs = orders_qs.filter(payment_status=payment_status_param)
 
     # Calculate status counts across all orders
     counts = {

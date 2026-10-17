@@ -11,7 +11,8 @@ import {
   Maximize2,
   Minimize2,
   Eye,
-  Plus
+  Plus,
+  SlidersHorizontal
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
@@ -43,6 +44,9 @@ export const OrdersPage: React.FC = () => {
 
   const [status, setStatus] = useState("ALL");
   const [search, setSearch] = useState(urlQ);
+  const [sourceFilter, setSourceFilter] = useState("ALL");
+  const [paymentFilter, setPaymentFilter] = useState("ALL");
+  const [showFilters, setShowFilters] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [highlightedOrderId, setHighlightedOrderId] = useState<number | null>(null);
   const [confirmCancelOrderId, setConfirmCancelOrderId] = useState<number | null>(null);
@@ -133,10 +137,12 @@ export const OrdersPage: React.FC = () => {
   }, [urlQ]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["orders", store?.id, status, search, branch],
+    queryKey: ["orders", store?.id, status, search, branch, sourceFilter, paymentFilter],
     queryFn: async () => {
       const branchParam = branch !== "all" ? `&branch=${branch}` : "";
-      const res = await api.get(`/orders/?status=${status}&q=${encodeURIComponent(search)}${branchParam}&store_id=${store?.id || ""}`);
+      const sourceParam = sourceFilter !== "ALL" ? `&source=${sourceFilter}` : "";
+      const paymentParam = paymentFilter !== "ALL" ? `&payment_status=${paymentFilter}` : "";
+      const res = await api.get(`/orders/?status=${status}&q=${encodeURIComponent(search)}${branchParam}${sourceParam}${paymentParam}&store_id=${store?.id || ""}`);
       return res.data as {
         counts: Record<string, number>;
         orders: Order[];
@@ -264,6 +270,7 @@ export const OrdersPage: React.FC = () => {
     { id: "IN_DELIVERY", label: t("status_delivering") || "Доставка", count: counts.in_delivery },
     { id: "HISTORY", label: t("status_completed") || "Выполненные", count: counts.history },
   ];
+  const activeFilterCount = Number(sourceFilter !== "ALL") + Number(paymentFilter !== "ALL");
 
   const draftsList = draftOrders.filter((d) => d.type === "draft");
   const abandonedList = draftOrders.filter((d) => d.type === "abandoned");
@@ -361,24 +368,65 @@ export const OrdersPage: React.FC = () => {
               </div>
               {createOrderButton}
             </div>
-            <div className="overflow-x-auto border-b border-[#e6e3eb] px-4 py-3 no-scrollbar dark:border-zinc-700">
-              <div className="storebox-segmented-control storebox-segmented-control--full !flex mx-auto min-w-[760px] max-w-[980px]" role="group" aria-label={lang === "ru" ? "Статус заказа" : "Buyurtma holati"}>
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    aria-pressed={status === tab.id}
-                    onClick={() => setStatus(tab.id)}
-                    className={`storebox-segmented-tab ${status === tab.id ? "is-active" : ""}`}
-                  >
-                    <span>{tab.label}</span>
-                    <span className={`text-[11px] tabular-nums ${status === tab.id ? "text-white/75" : "text-[#9690a2] dark:text-[#a9a1b6]"}`}>
-                      {tab.count}
-                    </span>
-                  </button>
-                ))}
+            <div className="flex items-center gap-3 border-b border-[#e6e3eb] px-4 py-3 dark:border-zinc-700">
+              <div className="min-w-0 flex-1 overflow-x-auto no-scrollbar">
+                <div className="storebox-segmented-control min-w-max" role="group" aria-label={lang === "ru" ? "Статус заказа" : "Buyurtma holati"}>
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      aria-pressed={status === tab.id}
+                      onClick={() => setStatus(tab.id)}
+                      className={`storebox-segmented-tab ${status === tab.id ? "is-active" : ""}`}
+                    >
+                      <span>{tab.label}</span>
+                      <span className={`text-[11px] tabular-nums ${status === tab.id ? "text-white/75" : "text-[#9690a2] dark:text-[#a9a1b6]"}`}>
+                        {tab.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
+              <button
+                type="button"
+                aria-expanded={showFilters}
+                aria-controls="order-additional-filters"
+                onClick={() => setShowFilters((open) => !open)}
+                className={`inline-flex min-h-[42px] shrink-0 items-center gap-2 rounded-[10px] border px-3 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] cursor-pointer ${showFilters || activeFilterCount ? "border-[#211b2e] bg-[#f0edf4] text-[#211b2e] dark:border-[#b9acc9] dark:bg-[#30263f] dark:text-white" : "border-[#e6e3eb] bg-white text-[#494456] hover:bg-[#f7f6f9] dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f]"}`}
+              >
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                <span>{lang === "ru" ? "Фильтр" : lang === "en" ? "Filter" : "Filtr"}</span>
+                {activeFilterCount > 0 && <span className="tabular-nums">{activeFilterCount}</span>}
+              </button>
             </div>
+            {showFilters && (
+              <div id="order-additional-filters" className="flex flex-wrap items-end gap-3 border-b border-[#e6e3eb] bg-[#fbfafc] px-4 py-3 dark:border-zinc-700 dark:bg-[#261e33]">
+                <label className="grid min-w-[160px] flex-1 gap-1.5 text-xs font-medium text-[#494456] dark:text-zinc-200 sm:max-w-[220px]">
+                  <span>{lang === "ru" ? "Канал заказа" : lang === "en" ? "Order channel" : "Buyurtma kanali"}</span>
+                  <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="min-h-9 w-full rounded-[9px] border border-[#e6e3eb] bg-white px-2.5 text-xs text-[#211b2e] focus:border-[#211b2e] focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white">
+                    <option value="ALL">{lang === "ru" ? "Все каналы" : lang === "en" ? "All channels" : "Barcha kanallar"}</option>
+                    <option value="WEB">{lang === "ru" ? "Веб-сайт" : lang === "en" ? "Website" : "Veb-sayt"}</option>
+                    <option value="TMA">Telegram Mini App</option>
+                    <option value="INSTAGRAM">Instagram</option>
+                  </select>
+                </label>
+                <label className="grid min-w-[160px] flex-1 gap-1.5 text-xs font-medium text-[#494456] dark:text-zinc-200 sm:max-w-[220px]">
+                  <span>{lang === "ru" ? "Оплата" : lang === "en" ? "Payment" : "To'lov"}</span>
+                  <select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)} className="min-h-9 w-full rounded-[9px] border border-[#e6e3eb] bg-white px-2.5 text-xs text-[#211b2e] focus:border-[#211b2e] focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white">
+                    <option value="ALL">{lang === "ru" ? "Любая" : lang === "en" ? "Any" : "Barchasi"}</option>
+                    <option value="PENDING">{lang === "ru" ? "Ожидает оплаты" : lang === "en" ? "Pending" : "To'lov kutilmoqda"}</option>
+                    <option value="PAID">{lang === "ru" ? "Оплачено" : lang === "en" ? "Paid" : "To'langan"}</option>
+                    <option value="FAILED">{lang === "ru" ? "Ошибка оплаты" : lang === "en" ? "Failed" : "To'lov xatosi"}</option>
+                    <option value="REFUNDED">{lang === "ru" ? "Возврат" : lang === "en" ? "Refunded" : "Qaytarilgan"}</option>
+                  </select>
+                </label>
+                {activeFilterCount > 0 && (
+                  <button type="button" onClick={() => { setSourceFilter("ALL"); setPaymentFilter("ALL"); }} className="min-h-9 rounded-[9px] px-2 text-xs font-medium text-[#686475] hover:text-[#211b2e] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:text-zinc-300 dark:hover:text-white cursor-pointer">
+                    {lang === "ru" ? "Сбросить" : lang === "en" ? "Reset" : "Tozalash"}
+                  </button>
+                )}
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[900px] border-collapse text-left text-xs">
                 <thead className="border-b border-[#e6e3eb] bg-[#f7f6f9] text-[11px] text-[#767084] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
