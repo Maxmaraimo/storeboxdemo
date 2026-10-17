@@ -42,7 +42,7 @@ export function TablePagination({ total, page, pageSize, onPageChange, onPageSiz
         </select>
       </label>
       <span role="status" className="tabular-nums sm:ml-auto">{range}</span>
-      <nav className="ml-auto flex items-center gap-1 sm:ml-0" aria-label={lang === "ru" ? "Страницы таблицы" : lang === "en" ? "Table pages" : "Jadval sahifalari"}>
+      <nav className="flex w-full items-center gap-1 sm:w-auto" aria-label={lang === "ru" ? "Страницы таблицы" : lang === "en" ? "Table pages" : "Jadval sahifalari"}>
         {actions.map(({ Icon, page: targetPage, disabled, label }) => (
           <button
             key={label}
