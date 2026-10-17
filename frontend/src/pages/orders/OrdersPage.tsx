@@ -713,48 +713,7 @@ export const OrdersPage: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-              <section aria-label={t("order_contents") || "Order items"} className="pb-5">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("order_contents") || "Order items"}</h3>
-                  <span className="text-xs font-medium tabular-nums text-[#767084] dark:text-zinc-400">
-                    {selectedOrder.items?.reduce((count, item) => count + item.quantity, 0) || 0} {t("unit_pcs") || "pcs"}
-                  </span>
-                </div>
-                <div className="mt-3 divide-y divide-[#ebe8ef] border-t border-[#ebe8ef] dark:divide-zinc-700 dark:border-zinc-700">
-                  {selectedOrder.items?.map((item) => {
-                    const itemImage = item.custom_image_url || item.product_image;
-                    const details = getOrderItemDetails(item);
-                    return (
-                      <div key={item.id} className="flex items-start gap-3 py-3">
-                        {itemImage && (
-                          <button type="button" onClick={() => setPreviewImage(itemImage)} className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-[#e6e3eb] bg-[#f7f6f9] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:border-zinc-700" aria-label={lang === "ru" ? "Показать фото товара" : lang === "en" ? "View product image" : "Mahsulot rasmini ko'rish"}>
-                            <img src={itemImage} alt="" className="h-full w-full object-cover" />
-                          </button>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[13px] font-medium text-[#211b2e] dark:text-white">{item.product_name}</div>
-                          {details.length > 0 && (
-                            <div className="mt-0.5 text-xs leading-5 text-[#767084] dark:text-zinc-400">{details.join(" · ")}</div>
-                          )}
-                          <div className="mt-1 text-xs tabular-nums text-[#767084] dark:text-zinc-400">
-                            {item.quantity} × {Number(item.unit_price).toLocaleString()} UZS
-                          </div>
-                        </div>
-                        <div className="shrink-0 pt-0.5 text-[13px] font-semibold tabular-nums text-[#211b2e] dark:text-white">
-                          {Number(item.total_price).toLocaleString()} UZS
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {(!selectedOrder.items || selectedOrder.items.length === 0) && (
-                    <p className="py-5 text-sm text-[#767084] dark:text-zinc-400">
-                      {lang === "ru" ? "Товары не указаны" : lang === "en" ? "No items listed" : "Mahsulotlar ko'rsatilmagan"}
-                    </p>
-                  )}
-                </div>
-              </section>
-
-              <section className="border-t border-[#ebe8ef] py-5 dark:border-zinc-700">
+              <section className="pb-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("change_status_title") || "Change status"}</h3>
                   {confirmCancelOrderId !== selectedOrder.id && selectedOrder.status !== "CANCELLED" && selectedOrder.status !== "COMPLETED" && (
@@ -796,49 +755,98 @@ export const OrdersPage: React.FC = () => {
                 ) : null}
               </section>
 
+              <section aria-label={t("order_contents") || "Order items"} className="border-t border-[#ebe8ef] py-5 dark:border-zinc-700">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("order_contents") || "Order items"}</h3>
+                  <span className="text-xs font-medium tabular-nums text-[#767084] dark:text-zinc-400">
+                    {selectedOrder.items?.reduce((count, item) => count + item.quantity, 0) || 0} {t("unit_pcs") || "pcs"}
+                  </span>
+                </div>
+                <div className="mt-3 divide-y divide-[#ebe8ef] border-t border-[#ebe8ef] dark:divide-zinc-700 dark:border-zinc-700">
+                  {selectedOrder.items?.map((item) => {
+                    const itemImage = item.custom_image_url || item.product_image;
+                    const details = getOrderItemDetails(item);
+                    return (
+                      <div key={item.id} className="flex items-start gap-3 py-3">
+                        {itemImage && (
+                          <button type="button" onClick={() => setPreviewImage(itemImage)} className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-[#e6e3eb] bg-[#f7f6f9] focus-visible:outline-2 focus-visible:outline-[#211b2e] dark:border-zinc-700" aria-label={lang === "ru" ? "Показать фото товара" : lang === "en" ? "View product image" : "Mahsulot rasmini ko'rish"}>
+                            <img src={itemImage} alt="" className="h-full w-full object-cover" />
+                          </button>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[13px] font-medium text-[#211b2e] dark:text-white">{item.product_name}</div>
+                          {details.length > 0 && (
+                            <div className="mt-0.5 text-xs leading-5 text-[#767084] dark:text-zinc-400">{details.join(" · ")}</div>
+                          )}
+                          <div className="mt-1 text-xs tabular-nums text-[#767084] dark:text-zinc-400">
+                            {item.quantity} × {Number(item.unit_price).toLocaleString()} UZS
+                          </div>
+                        </div>
+                        <div className="shrink-0 pt-0.5 text-[13px] font-semibold tabular-nums text-[#211b2e] dark:text-white">
+                          {Number(item.total_price).toLocaleString()} UZS
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {(!selectedOrder.items || selectedOrder.items.length === 0) && (
+                    <p className="py-5 text-sm text-[#767084] dark:text-zinc-400">
+                      {lang === "ru" ? "Товары не указаны" : lang === "en" ? "No items listed" : "Mahsulotlar ko'rsatilmagan"}
+                    </p>
+                  )}
+                </div>
+              </section>
+
               <div className="grid gap-5 border-t border-[#ebe8ef] pt-5 dark:border-zinc-700 sm:grid-cols-2 sm:gap-8">
                 <section>
                   <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("customer_details_title") || "Customer"}</h3>
-                  <p className="mt-2 text-[13px] font-medium text-[#211b2e] dark:text-white">{selectedOrder.customer_name}</p>
-                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
-                    {selectedOrder.customer_phone && (
-                      <a href={"tel:" + selectedOrder.customer_phone} className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{selectedOrder.customer_phone}</a>
-                    )}
-                    {selectedOrder.customer_phone && (
-                      <a href={"https://t.me/+" + selectedOrder.customer_phone.replace(/\D/g, "")} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">Telegram</a>
-                    )}
-                  </div>
-                  <h3 className="mt-5 text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("delivery_address_title") || "Delivery address"}</h3>
-                  <p className="mt-2 text-[13px] leading-5 text-[#494456] dark:text-zinc-300">
-                    {selectedOrder.delivery_address || t("address_not_specified")}
-                  </p>
-                  {selectedOrder.delivery_lat != null && selectedOrder.delivery_lng != null && (
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                      <a href={"https://yandex.uz/maps/?rtext=~" + selectedOrder.delivery_lat + "," + selectedOrder.delivery_lng + "&rtt=auto"} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{t("yandex_navigator") || "Yandex Maps"}</a>
-                      <a href={"https://maps.google.com/?q=" + selectedOrder.delivery_lat + "," + selectedOrder.delivery_lng} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">Google Maps</a>
+                  <dl className="mt-2 divide-y divide-[#ebe8ef] text-[13px] dark:divide-zinc-700">
+                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3">
+                      <dt className="text-[#767084] dark:text-zinc-400">{t("th_name") || "Name"}</dt>
+                      <dd className="min-w-0 font-medium text-[#211b2e] dark:text-white">{selectedOrder.customer_name}</dd>
                     </div>
-                  )}
+                    {selectedOrder.customer_phone && (
+                      <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3">
+                        <dt className="text-[#767084] dark:text-zinc-400">{t("phone_number_label") || "Phone"}</dt>
+                        <dd className="flex min-w-0 flex-wrap gap-x-3 gap-y-1">
+                          <a href={"tel:" + selectedOrder.customer_phone} className="text-[#211b2e] underline decoration-[#c8c2d0] underline-offset-2 hover:decoration-[#211b2e] dark:text-white">{selectedOrder.customer_phone}</a>
+                          <a href={"https://t.me/+" + selectedOrder.customer_phone.replace(/\D/g, "")} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">Telegram</a>
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
                 </section>
                 <section className="border-t border-[#ebe8ef] pt-5 dark:border-zinc-700 sm:border-l sm:border-t-0 sm:py-0 sm:pl-8">
-                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("branch_assigned") || "Branch"}</h3>
-                  {selectedOrder.branch_name ? (
-                    <>
-                      <p className="mt-2 text-[13px] font-medium text-[#211b2e] dark:text-white">{selectedOrder.branch_name}</p>
-                      {selectedOrder.branch_address && <p className="mt-1 text-xs leading-5 text-[#767084] dark:text-zinc-400">{selectedOrder.branch_address}</p>}
-                      {selectedOrder.branch_phone && (
-                        <a href={"tel:" + selectedOrder.branch_phone} className="mt-2 inline-block text-xs text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{selectedOrder.branch_phone}</a>
-                      )}
-                      {selectedOrder.branch?.is_accepting_orders !== undefined && (
-                        <p className="mt-2 text-xs text-[#767084] dark:text-zinc-400">
-                          {selectedOrder.branch.is_accepting_orders
-                            ? lang === "ru" ? "Принимает заказы" : lang === "en" ? "Accepting orders" : "Buyurtmalarni qabul qiladi"
-                            : lang === "ru" ? "Заказы приостановлены" : lang === "en" ? "Orders paused" : "Buyurtmalar to'xtatilgan"}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="mt-2 text-sm text-[#767084] dark:text-zinc-400">{t("branch_unassigned") || "No branch assigned"}</p>
-                  )}
+                  <h3 className="text-[13px] font-semibold text-[#211b2e] dark:text-white">{t("delivery_info") || "Delivery"}</h3>
+                  <dl className="mt-2 divide-y divide-[#ebe8ef] text-[13px] dark:divide-zinc-700">
+                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3">
+                      <dt className="text-[#767084] dark:text-zinc-400">{t("branch_assigned") || "Branch"}</dt>
+                      <dd className="min-w-0 text-[#211b2e] dark:text-white">
+                        {selectedOrder.branch_name ? (
+                          <>
+                            <span className="font-medium">{selectedOrder.branch_name}</span>
+                            {selectedOrder.branch_address && <span className="mt-1 block text-xs leading-5 text-[#767084] dark:text-zinc-400">{selectedOrder.branch_address}</span>}
+                            {selectedOrder.branch_phone && (
+                              <a href={"tel:" + selectedOrder.branch_phone} className="mt-1 inline-block text-xs text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{selectedOrder.branch_phone}</a>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-[#767084] dark:text-zinc-400">{t("branch_unassigned") || "No branch assigned"}</span>
+                        )}
+                      </dd>
+                    </div>
+                    <div className="grid grid-cols-1 gap-0.5 py-2 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-3">
+                      <dt className="text-[#767084] dark:text-zinc-400">{t("delivery_address_title") || "Address"}</dt>
+                      <dd className="min-w-0 leading-5 text-[#211b2e] dark:text-white">
+                        {selectedOrder.delivery_address || t("address_not_specified")}
+                        {selectedOrder.delivery_lat != null && selectedOrder.delivery_lng != null && (
+                          <span className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                            <a href={"https://yandex.uz/maps/?rtext=~" + selectedOrder.delivery_lat + "," + selectedOrder.delivery_lng + "&rtt=auto"} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">{t("yandex_navigator") || "Yandex Maps"}</a>
+                            <a href={"https://maps.google.com/?q=" + selectedOrder.delivery_lat + "," + selectedOrder.delivery_lng} target="_blank" rel="noreferrer" className="text-[#494456] underline decoration-[#c8c2d0] underline-offset-2 hover:text-[#211b2e] dark:text-zinc-300">Google Maps</a>
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                  </dl>
                 </section>
               </div>
             </div>
