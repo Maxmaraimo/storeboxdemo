@@ -92,6 +92,7 @@ export const AppLayout: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300">
         <Header
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          sidekickOpen={sidekickOpen}
         />
 
         <main

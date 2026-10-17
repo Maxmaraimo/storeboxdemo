@@ -23,9 +23,10 @@ import { Language } from "../../i18n/translations";
 
 interface HeaderProps {
   onOpenMobileMenu?: () => void;
+  sidekickOpen?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, sidekickOpen = false }) => {
   const { user, store, stores, switchStore, logout, lang, setLang, t } = useAuth();
   const { totalUnread, notifications, markAllRead, markOneRead } = useNotifications();
   const navigate = useNavigate();
@@ -125,9 +126,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
     (lang === "ru" ? "Пользователь" : lang === "en" ? "User" : "Foydalanuvchi");
 
   return (
-    <header className="h-[var(--storebox-topbar-height)] shrink-0 bg-white/90 dark:bg-[#211b2e]/95 backdrop-blur-xl border-b border-[#dfe5ef] dark:border-[#3b304e] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-colors select-none shadow-[0_4px_20px_-2px_rgba(33,27,46,0.08)]">
+    <header className="h-[var(--storebox-topbar-height)] shrink-0 bg-white/90 dark:bg-[#211b2e]/95 backdrop-blur-xl border-b border-[#dfe5ef] dark:border-[#3b304e] sticky top-0 z-30 transition-colors select-none shadow-[0_4px_20px_-2px_rgba(33,27,46,0.08)]">
+      <div className={`mx-auto flex h-full w-full max-w-[1440px] items-center justify-between px-3 sm:px-5 ${sidekickOpen ? "lg:px-4 xl:px-5" : "lg:px-8"}`}>
       {/* 1. Left: Mobile Toggle & Global Search */}
-      <div className="flex items-center gap-2.5 flex-1 max-w-2xl">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 max-w-2xl">
         {onOpenMobileMenu && (
           <button
             type="button"
@@ -453,6 +455,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
             </div>
           )}
         </div>
+      </div>
       </div>
     </header>
   );

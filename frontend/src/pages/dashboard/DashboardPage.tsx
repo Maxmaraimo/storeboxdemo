@@ -385,10 +385,10 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-8">
       {/* Period and currency controls */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-2 max-w-full">
+      <div className="flex min-w-0 items-center">
+        <div className="flex min-w-0 max-w-full items-center gap-2">
           {/* Period selector */}
-          <div ref={datePickerRef} className="relative max-w-full">
+          <div ref={datePickerRef} className="relative min-w-0">
             <div className="storebox-segmented-control max-w-full overflow-x-auto no-scrollbar" role="group" aria-label={lang === "ru" ? "Период статистики" : lang === "en" ? "Statistics period" : "Statistika davri"}>
               {periods.map((p) => (
                 <button
@@ -504,7 +504,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Currency Switcher */}
-          <div className="storebox-segmented-control" role="group" aria-label={lang === "ru" ? "Валюта статистики" : lang === "en" ? "Statistics currency" : "Statistika valyutasi"}>
+          <div className="storebox-segmented-control shrink-0" role="group" aria-label={lang === "ru" ? "Валюта статистики" : lang === "en" ? "Statistics currency" : "Statistika valyutasi"}>
             <button
               type="button"
               aria-pressed={currency === "UZS"}
