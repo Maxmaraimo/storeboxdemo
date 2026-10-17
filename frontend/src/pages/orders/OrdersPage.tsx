@@ -17,6 +17,9 @@ import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
 import { Order, OrderItem } from "../../types";
+import { PaginationMetadata } from "../../types/pagination";
+import { TablePagination } from "../../components/ui/TablePagination";
+import { useTablePagination } from "../../hooks/useTablePagination";
 
 interface DraftOrderItem {
   id: string;
@@ -45,6 +48,8 @@ export const OrdersPage: React.FC = () => {
   const [search, setSearch] = useState(urlQ);
   const [sourceFilter, setSourceFilter] = useState("ALL");
   const [paymentFilter, setPaymentFilter] = useState("ALL");
+  const paginationScope = JSON.stringify([store?.id, status, search, branch, sourceFilter, paymentFilter, urlTab]);
+  const { page, pageSize, setPage, setPageSize } = useTablePagination(paginationScope);
   const [showFilters, setShowFilters] = useState(false);
   const filtersRef = useRef<HTMLDivElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
@@ -129,6 +134,7 @@ export const OrdersPage: React.FC = () => {
     setShowCreateModal(false);
     setNewCustomerName("");
     setNewProductTitle("");
+    setPage(1);
     setSearchParams({ tab: "drafts" });
     notify(`Черновик заказа #${item.number} успешно создан`, "success");
   };
@@ -171,20 +177,28 @@ export const OrdersPage: React.FC = () => {
     return () => observer.disconnect();
   }, [lang, urlTab]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["orders", store?.id, status, search, branch, sourceFilter, paymentFilter],
+  const { data, isLoading, isFetching, isPlaceholderData, isError } = useQuery({
+    queryKey: ["orders", store?.id, paginationScope, page, pageSize, urlOrderId],
+    enabled: Boolean(store?.id) && urlTab !== "drafts" && urlTab !== "abandoned",
+    placeholderData: (previous, previousQuery) => previousQuery?.queryKey[2] === paginationScope ? previous : undefined,
     queryFn: async () => {
-      const branchParam = branch !== "all" ? `&branch=${branch}` : "";
-      const sourceParam = sourceFilter !== "ALL" ? `&source=${sourceFilter}` : "";
-      const paymentParam = paymentFilter !== "ALL" ? `&payment_status=${paymentFilter}` : "";
-      const res = await api.get(`/orders/?status=${status}&q=${encodeURIComponent(search)}${branchParam}${sourceParam}${paymentParam}&store_id=${store?.id || ""}`);
-      return res.data as {
+      const res = await api.get("/orders/", { params: {
+        status, q: search, store_id: store?.id,
+        branch: branch !== "all" ? branch : undefined,
+        source: sourceFilter !== "ALL" ? sourceFilter : undefined,
+        payment_status: paymentFilter !== "ALL" ? paymentFilter : undefined,
+        page, page_size: pageSize, focus_order: urlOrderId || undefined,
+      } });
+      return res.data as PaginationMetadata & {
         counts: Record<string, number>;
         orders: Order[];
-        total: number;
       };
     },
   });
+
+  useEffect(() => {
+    if (data && !isPlaceholderData && data.page !== page) setPage(data.page);
+  }, [data, isPlaceholderData, page, setPage]);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, newStatus }: { orderId: number; newStatus: string }) => {
@@ -309,6 +323,9 @@ export const OrdersPage: React.FC = () => {
 
   const draftsList = draftOrders.filter((d) => d.type === "draft");
   const abandonedList = draftOrders.filter((d) => d.type === "abandoned");
+  const draftRows = urlTab === "drafts" ? draftsList : abandonedList;
+  const draftPage = Math.min(page, Math.max(1, Math.ceil(draftRows.length / pageSize)));
+  const visibleDraftRows = draftRows.slice((draftPage - 1) * pageSize, draftPage * pageSize);
   const draftActionLabel = urlTab === "drafts"
     ? lang === "ru" ? "Отправить счёт" : lang === "en" ? "Send invoice" : "Hisob yuborish"
     : lang === "ru" ? "Напомнить в Telegram" : lang === "en" ? "Remind in Telegram" : "Telegramda eslatish";
@@ -346,7 +363,7 @@ export const OrdersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1f2f4] dark:divide-zinc-800 text-[#202223] dark:text-zinc-200">
-                {(urlTab === "drafts" ? draftsList : abandonedList).map((d) => (
+                {visibleDraftRows.map((d) => (
                   <tr key={d.id} className="hover:bg-[#f6f6f7]/60 transition">
                     <td className="py-3.5 px-4 font-bold">#{d.number}</td>
                     <td className="py-3.5 px-4 text-[#6d7175]">{d.created_at}</td>
@@ -383,9 +400,15 @@ export const OrdersPage: React.FC = () => {
                     </td>
                   </tr>
                 ))}
+                {draftRows.length === 0 && (
+                  <tr><td colSpan={7} className="px-4 py-14 text-center text-sm text-[#767084] dark:text-zinc-400">
+                    {lang === "ru" ? "Записей пока нет" : lang === "en" ? "No records yet" : "Hozircha yozuvlar yo'q"}
+                  </td></tr>
+                )}
               </tbody>
             </table>
           </div>
+          <TablePagination total={draftRows.length} page={draftPage} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
         </div>
       ) : (
         <>
@@ -467,7 +490,7 @@ export const OrdersPage: React.FC = () => {
                 )}
               </div>
             </div>
-            <div className="overflow-x-auto rounded-b-[18px]">
+            <div className="overflow-x-auto" aria-busy={isFetching}>
               <table className="w-full min-w-[900px] border-collapse text-left text-xs">
                 <thead className="border-b border-[#e6e3eb] bg-[#f7f6f9] text-[11px] text-[#767084] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
                   <tr>
@@ -561,6 +584,7 @@ export const OrdersPage: React.FC = () => {
                       <td colSpan={7} className="px-4 py-14 text-center text-sm text-[#767084] dark:text-zinc-400">
                         {isLoading
                           ? lang === "ru" ? "Загрузка заказов..." : lang === "en" ? "Loading orders..." : "Buyurtmalar yuklanmoqda..."
+                          : isError ? lang === "ru" ? "Не удалось загрузить заказы" : lang === "en" ? "Could not load orders" : "Buyurtmalarni yuklab bo'lmadi"
                           : lang === "ru" ? "Заказов пока нет" : lang === "en" ? "No orders yet" : "Hozircha buyurtmalar yo'q"}
                       </td>
                     </tr>
@@ -568,6 +592,7 @@ export const OrdersPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+            <TablePagination total={data?.total ?? 0} page={data?.page ?? page} pageSize={data?.page_size ?? pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} busy={isFetching || isError} />
           </div>
         </>
       )}

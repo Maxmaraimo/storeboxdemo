@@ -13,6 +13,7 @@ from apps.catalog.models import Product, Category, ProductImage
 from apps.orders.permissions import has_staff_permission
 from .views_auth import get_merchant_store
 from .serializers import ProductSerializer, CategorySerializer, normalize_unit
+from .pagination import paginate_queryset
 
 
 def _get_unique_slug(model_cls, store, name, exclude_id=None):
@@ -95,9 +96,18 @@ def products_list_create_view(request):
             Q(ikpu_code__icontains=query)
         )
 
+    all_total = qs.count()
+    status_filter = request.GET.get("status", "all").lower()
+    if status_filter == "active":
+        qs = qs.filter(is_active=True)
+    elif status_filter == "draft":
+        qs = qs.filter(is_active=False)
+
+    page_products, pagination = paginate_queryset(request, qs, default_limit=150)
     return Response({
-        "products": ProductSerializer(qs[:150], many=True).data,
-        "total": qs.count()
+        "products": ProductSerializer(page_products, many=True).data,
+        "counts": {"all": all_total},
+        **pagination,
     })
 
 

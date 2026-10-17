@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -24,17 +24,32 @@ import {
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { Product, Category } from "../../types";
+import { PaginationMetadata } from "../../types/pagination";
+import { TablePagination } from "../../components/ui/TablePagination";
+import { useTablePagination } from "../../hooks/useTablePagination";
+import { useNotification } from "../../context/NotificationContext";
+
+type ProductsResponse = PaginationMetadata & { products: Product[]; counts: { all: number } };
 
 export const ProductsPage: React.FC = () => {
   const { t, lang, hasPermission, store } = useAuth();
+  const { notify } = useNotification();
   const canEditProduct = hasPermission("products", "edit");
   const canDeleteProduct = hasPermission("products", "delete");
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft">("all");
+  const paginationScope = JSON.stringify([store?.id, selectedCategory, search, statusFilter]);
+  const { page, pageSize, setPage, setPageSize } = useTablePagination(paginationScope);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const productFilters = { q: search, category: selectedCategory || undefined, status: statusFilter, store_id: store?.id };
+
+  useEffect(() => {
+    setSelectedProductIds([]);
+  }, [store?.id, selectedCategory, search, statusFilter]);
 
   const getCategoryName = (c?: Category | null) => {
     if (!c) return "";
@@ -117,15 +132,19 @@ export const ProductsPage: React.FC = () => {
     }
   };
 
-  const { data: productsData, isLoading } = useQuery({
-    queryKey: ["products", store?.id, selectedCategory, search],
+  const { data: productsData, isLoading, isFetching, isPlaceholderData, isError } = useQuery({
+    queryKey: ["products", store?.id, paginationScope, page, pageSize],
+    enabled: Boolean(store?.id),
+    placeholderData: (previous, previousQuery) => previousQuery?.queryKey[2] === paginationScope ? previous : undefined,
     queryFn: async () => {
-      let url = `/products/?q=${encodeURIComponent(search)}`;
-      if (selectedCategory) url += `&category=${selectedCategory}`;
-      const res = await api.get(url);
-      return res.data as { products: Product[]; total: number };
+      const res = await api.get("/products/", { params: { ...productFilters, page, page_size: pageSize } });
+      return res.data as ProductsResponse;
     },
   });
+
+  useEffect(() => {
+    if (productsData && !isPlaceholderData && productsData.page !== page) setPage(productsData.page);
+  }, [productsData, isPlaceholderData, page, setPage]);
 
   const { data: categoriesData } = useQuery({
     queryKey: ["categories", store?.id],
@@ -237,16 +256,38 @@ export const ProductsPage: React.FC = () => {
       p.barcode || "",
       p.is_active ? "Active" : "Draft",
     ]);
-    const csvContent =
-      "data:text/csv;charset=utf-8,\uFEFF" +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const downloadUrl = URL.createObjectURL(new Blob([csvContent], { type: "text/csv;charset=utf-8;" }));
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", downloadUrl);
     link.setAttribute("download", `storebox_products_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+  };
+
+  const handleExportAll = async () => {
+    setIsExporting(true);
+    try {
+      const allProducts: Product[] = [];
+      let exportPage = 1;
+      while (true) {
+        const response = await api.get("/products/", {
+          params: { ...productFilters, page: exportPage, page_size: 100 },
+          headers: { "X-Store-Id": String(store?.id) },
+        });
+        const batch = response.data as ProductsResponse;
+        allProducts.push(...batch.products);
+        if (!batch.page || batch.page >= batch.total_pages || batch.products.length === 0) break;
+        exportPage = batch.page + 1;
+      }
+      handleExportCsv(allProducts);
+    } catch {
+      notify(lang === "ru" ? "Не удалось экспортировать товары" : lang === "en" ? "Could not export products" : "Mahsulotlarni eksport qilib bo'lmadi", "error");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const openCreateModal = () => {
@@ -302,16 +343,10 @@ export const ProductsPage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const rawProducts = productsData?.products || [];
+  const products = productsData?.products || [];
   const categories = categoriesData?.categories || [];
   const getProductCategoryName = (product: Product) =>
     getCategoryName(categories.find((category) => category.id === product.category)) || product.category_name || "—";
-
-  const products = rawProducts.filter((p) => {
-    if (statusFilter === "active") return p.is_active;
-    if (statusFilter === "draft") return !p.is_active;
-    return true;
-  });
 
   const numPrice = Number(formPrice) || 0;
   const numCost = Number(formCostPrice) || 0;
@@ -722,7 +757,7 @@ export const ProductsPage: React.FC = () => {
                 onClick={() => setStatusFilter("all")}
                 className={`storebox-segmented-tab ${statusFilter === "all" ? "is-active" : ""}`}
               >
-                {lang === "ru" ? "Все товары" : "Barchasi"} ({rawProducts.length})
+                {lang === "ru" ? "Все товары" : "Barchasi"} ({productsData?.counts.all ?? 0})
               </button>
               <button
                 type="button"
@@ -747,12 +782,12 @@ export const ProductsPage: React.FC = () => {
             {/* Export CSV button */}
             <button
               type="button"
-              onClick={() => handleExportCsv(products)}
-              disabled={products.length === 0}
+              onClick={handleExportAll}
+              disabled={isExporting || !productsData?.total}
               className="inline-flex min-h-9 items-center gap-2 rounded-[10px] border border-[#d8d1e2] bg-white px-3 text-xs font-medium text-[#494456] transition-colors hover:bg-[#f7f4fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#211b2e] disabled:opacity-40 dark:border-zinc-700 dark:bg-[#211b2e] dark:text-zinc-200 dark:hover:bg-[#30263f] cursor-pointer"
               title={lang === "ru" ? "Экспорт в CSV" : "CSV eksport"}
             >
-              <Download className="h-4 w-4" aria-hidden="true" />
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
               <span>{lang === "ru" ? "Экспорт" : "Eksport"}</span>
             </button>
 
@@ -874,7 +909,7 @@ export const ProductsPage: React.FC = () => {
         </div>
 
         {/* Product list */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" aria-busy={isFetching}>
           <table className="w-full min-w-[900px] border-collapse text-left text-[13px]">
             <thead className="select-none border-b border-[#e6e3eb] bg-[#f7f6f9] text-xs text-[#767084] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
@@ -1090,6 +1125,7 @@ export const ProductsPage: React.FC = () => {
                   <td colSpan={7} className="px-4 py-14 text-center text-sm text-[#767084] dark:text-zinc-400">
                     {isLoading
                       ? (lang === "ru" ? "Загрузка товаров..." : "Mahsulotlar yuklanmoqda...")
+                      : isError ? (lang === "ru" ? "Не удалось загрузить товары" : lang === "en" ? "Could not load products" : "Mahsulotlarni yuklab bo'lmadi")
                       : (lang === "ru" ? "Товары не найдены" : "Mahsulotlar topilmadi")}
                   </td>
                 </tr>
@@ -1097,6 +1133,7 @@ export const ProductsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        <TablePagination total={productsData?.total ?? 0} page={productsData?.page ?? page} pageSize={productsData?.page_size ?? pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} busy={isFetching || isError} />
       </div>
 
       {/* Import Modal */}

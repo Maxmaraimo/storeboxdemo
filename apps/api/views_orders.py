@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from apps.orders.models import Order
 from .views_auth import get_merchant_store
 from .serializers import OrderSerializer, BranchSerializer
+from .pagination import paginate_queryset
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -32,7 +33,7 @@ def orders_list_view(request):
         if staff_profile and staff_profile.branch:
             user_branch = staff_profile.branch
 
-    orders_qs = Order.objects.filter(store=store).select_related("store", "branch").prefetch_related("items").order_by("-created_at")
+    orders_qs = Order.objects.filter(store=store).select_related("store", "branch").prefetch_related("items").order_by("-created_at", "-id")
 
     if user_branch:
         orders_qs = orders_qs.filter(branch=user_branch)
@@ -78,14 +79,22 @@ def orders_list_view(request):
             Q(customer_phone__icontains=query)
         )
 
-    # Simple limit / pagination
-    limit = int(request.GET.get("limit", 50))
-    orders_data = OrderSerializer(orders_qs[:limit], many=True).data
+    focus = None
+    focus_value = request.GET.get("focus_order", "").lstrip("#").strip()
+    if "page" in request.GET and focus_value:
+        focus_filter = Q(order_number=focus_value)
+        if focus_value.isdecimal():
+            focus_filter |= Q(id=int(focus_value))
+        focus = orders_qs.filter(focus_filter).first()
+    page_orders, pagination = paginate_queryset(
+        request, orders_qs, default_limit=50, allow_limit=True, focus=focus
+    )
+    orders_data = OrderSerializer(page_orders, many=True).data
 
     return Response({
         "counts": counts,
         "orders": orders_data,
-        "total": orders_qs.count(),
+        **pagination,
         "user_branch": BranchSerializer(user_branch).data if user_branch else None,
         "is_branch_restricted": bool(user_branch)
     })
