@@ -353,21 +353,8 @@ export const OrdersPage: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* SEARCH AND ORDERS TABLE */}
+          {/* ORDER CONTROLS AND TABLE */}
           <div className="overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
-            <div className="flex flex-col gap-3 border-b border-[#e6e3eb] px-4 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700">
-              <div className="relative w-full sm:max-w-[380px]">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9690a2]" aria-hidden="true" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t("search_order_ph") || "Поиск по номеру заказа, имени или телефону..."}
-                  className="w-full rounded-[10px] border border-[#e6e3eb] bg-[#f7f6f9] py-2 pl-10 pr-3 text-xs text-[#211b2e] placeholder:text-[#9690a2] focus:border-[#211b2e] focus:bg-white focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white dark:focus:border-white"
-                />
-              </div>
-              {createOrderButton}
-            </div>
             <div className="flex items-center gap-3 border-b border-[#e6e3eb] px-4 py-3 dark:border-zinc-700">
               <div className="min-w-0 flex-1 overflow-x-auto no-scrollbar">
                 <div className="storebox-segmented-control min-w-max" role="group" aria-label={lang === "ru" ? "Статус заказа" : "Buyurtma holati"}>
@@ -386,6 +373,19 @@ export const OrdersPage: React.FC = () => {
                     </button>
                   ))}
                 </div>
+              </div>
+              {createOrderButton}
+            </div>
+            <div className="flex items-center justify-between gap-3 border-b border-[#e6e3eb] px-4 py-3 dark:border-zinc-700">
+              <div className="relative min-w-0 flex-1 sm:max-w-[380px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9690a2]" aria-hidden="true" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("search_order_ph") || "Поиск по номеру заказа, имени или телефону..."}
+                  className="w-full rounded-[10px] border border-[#e6e3eb] bg-[#f7f6f9] py-2 pl-10 pr-3 text-xs text-[#211b2e] placeholder:text-[#9690a2] focus:border-[#211b2e] focus:bg-white focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white dark:focus:border-white"
+                />
               </div>
               <button
                 type="button"
