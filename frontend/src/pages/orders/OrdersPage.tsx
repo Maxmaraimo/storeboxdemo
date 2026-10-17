@@ -346,26 +346,6 @@ export const OrdersPage: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* STATUS TABS */}
-          <div className="w-full overflow-x-auto no-scrollbar">
-            <div className="storebox-segmented-control storebox-segmented-control--full !flex mx-auto min-w-[760px] max-w-[980px]" role="group" aria-label={lang === "ru" ? "Статус заказа" : "Buyurtma holati"}>
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  aria-pressed={status === tab.id}
-                  onClick={() => setStatus(tab.id)}
-                  className={`storebox-segmented-tab ${status === tab.id ? "is-active" : ""}`}
-                >
-                  <span>{tab.label}</span>
-                  <span className={`text-[11px] tabular-nums ${status === tab.id ? "text-white/75" : "text-[#9690a2] dark:text-[#a9a1b6]"}`}>
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* SEARCH AND ORDERS TABLE */}
           <div className="overflow-hidden rounded-[18px] border border-[#dfe5ef] bg-white shadow-[0_12px_34px_-18px_rgba(33,27,46,0.28)] dark:border-zinc-800 dark:bg-[#211b2e]">
             <div className="flex flex-col gap-3 border-b border-[#e6e3eb] px-4 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700">
@@ -379,13 +359,24 @@ export const OrdersPage: React.FC = () => {
                   className="w-full rounded-[10px] border border-[#e6e3eb] bg-[#f7f6f9] py-2 pl-10 pr-3 text-xs text-[#211b2e] placeholder:text-[#9690a2] focus:border-[#211b2e] focus:bg-white focus:outline-none dark:border-zinc-700 dark:bg-[#30263f] dark:text-white dark:focus:border-white"
                 />
               </div>
-              <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
-                <span className="whitespace-nowrap text-xs font-medium text-[#686475] dark:text-zinc-400">
-                  {t("showing_orders_format")
-                    ? t("showing_orders_format").replace("{count}", String(orders.length))
-                    : `Показано заказов: ${orders.length}`}
-                </span>
-                {createOrderButton}
+              {createOrderButton}
+            </div>
+            <div className="overflow-x-auto border-b border-[#e6e3eb] px-4 py-3 no-scrollbar dark:border-zinc-700">
+              <div className="storebox-segmented-control storebox-segmented-control--full !flex mx-auto min-w-[760px] max-w-[980px]" role="group" aria-label={lang === "ru" ? "Статус заказа" : "Buyurtma holati"}>
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    aria-pressed={status === tab.id}
+                    onClick={() => setStatus(tab.id)}
+                    className={`storebox-segmented-tab ${status === tab.id ? "is-active" : ""}`}
+                  >
+                    <span>{tab.label}</span>
+                    <span className={`text-[11px] tabular-nums ${status === tab.id ? "text-white/75" : "text-[#9690a2] dark:text-[#a9a1b6]"}`}>
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
             <div className="overflow-x-auto">
